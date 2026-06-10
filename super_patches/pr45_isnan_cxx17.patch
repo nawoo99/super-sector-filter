@@ -1,0 +1,91 @@
+diff --git a/super_planner/include/ros_interface/ros2/ros2_adapter.hpp b/super_planner/include/ros_interface/ros2/ros2_adapter.hpp
+index 28a7b6d..97af9da 100644
+--- a/super_planner/include/ros_interface/ros2/ros2_adapter.hpp
++++ b/super_planner/include/ros_interface/ros2/ros2_adapter.hpp
+@@ -176,7 +176,7 @@ namespace ros_interface {
+             // * 1) Visualize the color
+             double t_sum = traj.getTotalDuration();
+             auto sim_clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
+-            if (t_sum < 1e-2 || isnan(t_sum) || traj.empty()) {
++            if (t_sum < 1e-2 || std::isnan(t_sum) || traj.empty()) {
+                 std::cout << REDPURPLE << "[Trajectory::Visualize] ERROR, the total duration is too small" << RESET
+                           << std::endl;
+                 return;
+@@ -313,7 +313,7 @@ namespace ros_interface {
+             const auto &have_seed_line = poly.HaveSeedLine();
+             const auto &seed_line = poly.seed_line;
+             auto sim_clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
+-            if (isnan(planes.sum())) {
++            if (std::isnan(planes.sum())) {
+                 printf(" -- [Poly] ERROR, try to visualize polytope with NaN, force return.\n");
+                 return;
+             }
+@@ -342,7 +342,7 @@ namespace ros_interface {
+             mesh.leftCols(oldTris.cols()) = oldTris;
+             mesh.rightCols(curTris.cols()) = curTris;
+ 
+-            if (isnan(mesh.sum())) {
++            if (std::isnan(mesh.sum())) {
+                 printf(" -- [WARN] Trying to publish ill polytope.\n");
+                 return;
+             }
+@@ -652,7 +652,7 @@ namespace ros_interface {
+             auto sim_clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
+             static int cnt = 0;
+             Vec3f cur_pos = pt;
+-            if (isnan(pt.x()) || isnan(pt.y()) || isnan(pt.z())) {
++            if (std::isnan(pt.x()) || std::isnan(pt.y()) || std::isnan(pt.z())) {
+                 return;
+             }
+             marker_ball.header.frame_id = "world";
+diff --git a/super_planner/src/super_core/fsm.cpp b/super_planner/src/super_core/fsm.cpp
+index 5991dfd..8f63321 100755
+--- a/super_planner/src/super_core/fsm.cpp
++++ b/super_planner/src/super_core/fsm.cpp
+@@ -202,7 +202,7 @@ namespace fsm {
+         }
+ 
+         if (cfg_.click_yaw_en) {
+-            if (isnan(q.w()) || isnan(q.x()) || isnan(q.y()) || isnan(q.z())) {
++            if (std::isnan(q.w()) || std::isnan(q.x()) || std::isnan(q.y()) || std::isnan(q.z())) {
+                 gi_.goal_yaw = NAN;
+                 ros_ptr_->info(" -- [Fsm] Receive click goal at: [{}, {}, {}]; goal yaw disabled",
+                                gi_.goal_p.x(), gi_.goal_p.y(), gi_.goal_p.z());
+diff --git a/super_planner/src/super_core/super_planner.cpp b/super_planner/src/super_core/super_planner.cpp
+index a7a9826..0dc1607 100755
+--- a/super_planner/src/super_core/super_planner.cpp
++++ b/super_planner/src/super_core/super_planner.cpp
+@@ -347,13 +347,13 @@ namespace super_planner {
+         yaw = cmd_traj_info_.getYaw((eval_t))[0];
+         yaw_dot = cmd_traj_info_.getYawRate((eval_t))[0];
+ 
+-        if (isnan(yaw)) {
++        if (std::isnan(yaw)) {
+             yaw = last_yaw;
+             yaw_dot = 0;
+         } else {
+             last_yaw = yaw;
+         }
+-        if (isnan(yaw_dot)) {
++        if (std::isnan(yaw_dot)) {
+             yaw_dot = 0;
+         }
+ 
+@@ -791,7 +791,7 @@ namespace super_planner {
+ 
+ 
+         bool free_end{true};
+-        if (cfg_.goal_yaw_en && !isnan(gi_.goal_yaw) && connected_goal) {
++        if (cfg_.goal_yaw_en && !std::isnan(gi_.goal_yaw) && connected_goal) {
+             free_end = false;
+             fina_yaw[0] = gi_.goal_yaw;
+         }
+@@ -1044,7 +1044,7 @@ namespace super_planner {
+             Vec4f yaw_goal{0, 0, 0, 0};
+             bool free_end{true};
+             if (cfg_.goal_yaw_en) {
+-                if (!isnan(gi_.goal_yaw)) {
++                if (!std::isnan(gi_.goal_yaw)) {
+                     free_end = false;
+                     yaw_goal[0] = gi_.goal_yaw;
+                 }

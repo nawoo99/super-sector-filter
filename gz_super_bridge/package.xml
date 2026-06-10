@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>gz_super_bridge</name>
+  <version>0.0.1</version>
+  <description>Bridge nodes to run SUPER planner against a Gazebo/PX4 pipeline:
+    LiDAR sector-filter + sensor->world transform feeding ROG-Map.</description>
+  <maintainer email="nawoo5407@gmail.com">nawoo</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>pcl_conversions</depend>
+  <depend>nav_msgs</depend>
+  <depend>libpcl-all-dev</depend>
+  <depend>eigen</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
