@@ -95,7 +95,7 @@ source is **not modified** for the filter — it lives entirely in `cloud_prepro
 | G2 | ROG-Map builds occupancy from the Gazebo cloud | ✅ (17k cells, 100% within 2 m) |
 | G3 | SUPER plans a trajectory to a goal | ✅ takeoff to 1.5 m, then goal → SUPER plans & executes (fsm WAIT_GOAL→exec→WAIT_GOAL) |
 | G4 | PX4 follows SUPER's command (mars→quadrotor cmd bridge) | ✅ drone autonomously flew to the goal (reached, d=0.6 m) |
-| G5 | Full loop + collision metric | 🟡 partial: collision metric verified + SUPER crosses the field, but SUPER commands a **descending** trajectory → drone grounds before the goal (open issue) |
+| G5 | Field traversal + collision metric | ✅ 12 m traverse to goal (d=0.5 m), altitude held 1.0–1.5 m, metrics: min clearance 0.29 m, **1 collision** (sector ON) |
 | G6 | sector on/off comparison | ✅ ~55% fewer points → **~66% lower ROG-Map update time** |
 
 ### G6 result — sector filter effect on ROG-Map cost
@@ -134,39 +134,30 @@ Reproduce: `python3 scripts/g6_analyze.py`.
   Neither SUPER nor offboard.py is modified.
 - **OFFBOARD arming needs `COM_RCL_EXCEPT 4`** — otherwise PX4 preflight blocks
   arming with "No connection to the GCS". `g_bringup.sh` also sets
-  `NAV_RCL_ACT 0` / `NAV_DLL_ACT 0`. Under heavy load the Gazebo **GUI client
-  (`gz sim -g`) starves ekf2** ("ekf2 missing data") — run headless / kill the
-  GUI for reliable arming.
-- **Takeoff (offboard-from-ground) is flaky — two distinct causes:**
-  1. **Single-shot OFFBOARD/ARM drop (fixed).** `/keyboard_cmd` is one
-     `std_msgs/String`; if the OFFBOARD or ARM message is dropped the drone sits
-     in *Hold* (or armed-but-Hold) and never engages. `g_fly.py` now **resends
-     OFFBOARD then ARM every 1 s until the climb starts** (z>0.6). Confirmed:
-     re-publishing OFFBOARD flips nav-state Hold→Offboard.
-  2. **[open] Armed+Offboard+full-thrust but no lift (intermittent).** Even with
-     `arming_state=2`, `nav_state=14 (OFFBOARD)`, preflight OK and the controller
-     commanding full up-thrust (`thrust_body z=-1.0`), the drone can stay on the
-     ground. `actuator_motors` then shows an **uneven mix** (e.g. `[0.07, 0.39,
-     0.03, 1.0]`) — thrust spent on attitude correction, not climb — i.e. a
-     Gazebo physics / EKF-attitude divergence (drone effectively stuck/tilted).
-     It worked cleanly *once* (G3/G4 + the first G5 traverse), so it's
-     intermittent and environmental (PX4 SITL + this custom `x500_lidar_3d`
-     model), not an integration defect. Needs a stable-takeoff recipe before G5
-     collision stats can be collected at scale.
+  `NAV_RCL_ACT 0` / `NAV_DLL_ACT 0` / `COM_ARM_WO_GPS 0`.
+- **Run Gazebo HEADLESS — do NOT kill the GUI after start (the key takeoff fix).**
+  Killing `gz sim -g` after startup corrupts the gz_bridge **actuator** forwarding:
+  PX4 motor outputs never reach `/model/.../command/motor_speed`, so the rotors
+  stay silent even though PX4 is armed+OFFBOARD and commands full up-thrust
+  (`thrust_body z=-1.0`; `actuator_motors` go to an uneven attitude-saturating mix
+  and the drone never leaves the ground). `g_bringup.sh` launches with `HEADLESS=1`
+  so the GUI client never starts — takeoff is then reliable (and cloud recovers to
+  full 10 Hz). This was the long-standing "armed but no lift" blocker.
+- **Single-shot OFFBOARD/ARM can drop** — `/keyboard_cmd` is one `std_msgs/String`;
+  a dropped message leaves the drone in *Hold*. `g_fly.py` resends OFFBOARD then
+  ARM every 1 s until the climb starts (z>0.6).
+- **`virtual_ground_height` must sit just below the start, not far below the real
+  floor.** Real Gazebo floor is z=0; setting it to -1.5 let SUPER plan a descent
+  into the ground (drone sank before the goal). `static_gazebo.yaml` uses **-0.3**
+  (below the `z≈0.04` ground start, just under the floor) — altitude is then held
+  at ~1.5 m across the traverse.
+- **Far goals time out in A\***; SUPER plans within the mapped/observed region, so
+  drive it with goals a few metres out (the planned waypoint loop fits this).
 - **Collision metric is geometric, not a contact sensor** — `collision_monitor.py`
   parses pillar centers (cylinders r=0.25) from the world SDF and computes min
   clearance + debounced collision count from `/odometry`; no SDF edit / sim
-  restart. Logic verified (reads correct clearance), but launch it *fresh per
-  flight* — a long-lived instance can go stale on the best-effort odom QoS.
-- **[G5 open issue] SUPER commands a descending trajectory** — with goal z=1.5 the
-  drone takes off to 1.4 m then SUPER's `/super/pos_cmd` z steadily drops
-  (`FP recv z=0.97→0.84…`) and the drone grounds before the goal. offboard.py
-  tracks position-only and follows faithfully, so the descent is SUPER-side.
-  **Likely cause:** `static_gazebo.yaml` sets `virtual_ground_height: -1.5`, but
-  the real Gazebo floor is z=0 — SUPER thinks it has 1.5 m of room below and
-  plans down into the real ground. (It was set to -1.5 only to clear the
-  `z≈0.04` ground-start "odom below virtual ground" check.) **Next step:** raise
-  it to ≈ -0.3 (below the start, just below the real floor) and re-test G5.
+  restart. Launch it *fresh per flight* (a long-lived instance can go stale on the
+  best-effort odom QoS).
 
 ## Acknowledgements
 
