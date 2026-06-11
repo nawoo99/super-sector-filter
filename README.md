@@ -94,7 +94,26 @@ source is **not modified** for the filter — it lives entirely in `cloud_prepro
 | G3 | SUPER plans a trajectory to a goal | ✅ takeoff to 1.5 m, then goal → SUPER plans & executes (fsm WAIT_GOAL→exec→WAIT_GOAL) |
 | G4 | PX4 follows SUPER's command (mars→quadrotor cmd bridge) | ✅ drone autonomously flew to the goal (reached, d=0.6 m) |
 | G5 | Full loop + collision metric (Gazebo contact) | ⬜ |
-| G6 | sector on/off comparison | ⬜ |
+| G6 | sector on/off comparison | ✅ ~55% fewer points → **~66% lower ROG-Map update time** |
+
+### G6 result — sector filter effect on ROG-Map cost
+
+Controlled A/B at a fixed drone pose (same scene, only `sector_enable` toggled;
+`rm_performance_log.csv`, ~460/710 steady-state frames):
+
+| metric | sector ON | sector OFF | reduction |
+|--------|----------:|-----------:|----------:|
+| PointCloudNumber | 1553 pts | 3474 pts | 55.3% |
+| Raycast | 0.172 ms | 0.522 ms | **67.1%** |
+| Total (map update) | 0.282 ms | 0.830 ms | **66.1%** |
+| Update_cache | 0.109 ms | 0.307 ms | 64.6% |
+
+The raycast-time reduction (67%) exceeds the point reduction (55%): the sector
+drops the *long* rear/side rays into open space (max-range), while the kept
+forward cone is obstacle-blocked (short rays) — so per-point raycast saving is
+amplified. (Absolute times are small here because voxel(0.15)+stride(2) already
+thin the cloud; the **relative** reduction is the rate-independent contribution.)
+Reproduce: `python3 scripts/g6_analyze.py`.
 
 ### Key findings / gotchas
 - **PX4 SITL must run under a TTY (tmux)** — a plain background `&` makes its
