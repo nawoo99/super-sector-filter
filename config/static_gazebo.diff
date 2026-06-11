@@ -1,14 +1,30 @@
-113c113
-<   fix_map_origin: [ 0,0,1.5 ]
----
->   fix_map_origin: [ 0,0,1.0 ]
-117,118c117,118
-<   virtual_ceil_height: 3.5
-<   virtual_ground_height: -0.1
----
->   virtual_ceil_height: 4.0
->   virtual_ground_height: -1.5
-143c143
-<     enable: false
----
->     enable: true
+--- /root/super_ws/src/SUPER/super_planner/config/static_dense.yaml	2026-06-09 17:47:50.653836184 +0900
++++ /root/super_ws/src/SUPER/super_planner/config/static_gazebo.yaml	2026-06-11 11:46:13.846479215 +0900
+@@ -110,12 +110,15 @@
+   unk_inflation_step: 1
+   map_size: [ 15,110,6 ]
+   # If the map rolling is disable, the map origin [m] should be set.
+-  fix_map_origin: [ 0,0,1.5 ]
++  fix_map_origin: [ 0,0,1.0 ]
+   frontier_extraction_en: false
+ 
+   # Virtual ceil and ground
+-  virtual_ceil_height: 3.5
+-  virtual_ground_height: -0.1
++  # NOTE: real Gazebo floor is z=0; keep virtual ground just below the ground-start
++  # z (~0.04) but NOT far below the real floor, or SUPER plans a descent into the
++  # ground (G5 open issue). -0.3 clears the start check without inviting descent.
++  virtual_ceil_height: 4.0
++  virtual_ground_height: -0.3
+ 
+   load_pcd_en: false
+ 
+@@ -140,7 +143,7 @@
+ 
+ 
+   visualization:
+-    enable: false
++    enable: true
+     # when enabled, use rqt_reconfigure to change the visualization parameters.
+     use_dynamic_reconfigure: false
+     # The rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.

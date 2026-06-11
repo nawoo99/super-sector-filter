@@ -149,8 +149,12 @@ Reproduce: `python3 scripts/g6_analyze.py`.
 - **[G5 open issue] SUPER commands a descending trajectory** — with goal z=1.5 the
   drone takes off to 1.4 m then SUPER's `/super/pos_cmd` z steadily drops
   (`FP recv z=0.97→0.84…`) and the drone grounds before the goal. offboard.py
-  tracks position-only and follows faithfully, so the descent is SUPER-side
-  (goal-z / cruise-height / map-origin handling) — to resolve before G5 passes.
+  tracks position-only and follows faithfully, so the descent is SUPER-side.
+  **Likely cause:** `static_gazebo.yaml` sets `virtual_ground_height: -1.5`, but
+  the real Gazebo floor is z=0 — SUPER thinks it has 1.5 m of room below and
+  plans down into the real ground. (It was set to -1.5 only to clear the
+  `z≈0.04` ground-start "odom below virtual ground" check.) **Next step:** raise
+  it to ≈ -0.3 (below the start, just below the real floor) and re-test G5.
 
 ## Acknowledgements
 

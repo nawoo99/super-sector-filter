@@ -114,8 +114,11 @@ rog_map:
   frontier_extraction_en: false
 
   # Virtual ceil and ground
+  # NOTE: real Gazebo floor is z=0; keep virtual ground just below the ground-start
+  # z (~0.04) but NOT far below the real floor, or SUPER plans a descent into the
+  # ground (G5 open issue). -0.3 clears the start check without inviting descent.
   virtual_ceil_height: 4.0
-  virtual_ground_height: -1.5
+  virtual_ground_height: -0.3
 
   load_pcd_en: false
 
