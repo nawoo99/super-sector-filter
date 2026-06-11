@@ -9,7 +9,7 @@ echo "=== cleanup ==="
 tmux kill-session -t "$SESSION" 2>/dev/null
 for pat in "cloud_preprocessor" "velodyne_3d_lidar" "px4_odometry" "pose_to_aligned" \
            "gz sim" "MicroXRCEAgent" "px4_sitl_default/bin/px4" "make px4_sitl" \
-           "static_transform_publisher" "fsm_node"; do
+           "static_transform_publisher" "fsm_node" "cmd_bridge.py" "offboard.py"; do
   for pid in $(pgrep -f "$pat" 2>/dev/null); do kill -9 "$pid" 2>/dev/null; done
 done
 for pid in $(ss -tulnp 2>/dev/null | grep ":8888" | grep -oP 'pid=\K[0-9]+'); do kill -9 "$pid" 2>/dev/null; done
@@ -34,6 +34,15 @@ for i in $(seq 1 24); do
   fi
 done
 
+echo "=== PX4 params: allow OFFBOARD arming without RC/GCS link ==="
+# Without these, PX4 preflight blocks arming ("No connection to the GCS"):
+#   COM_RCL_EXCEPT bit2(=4) exempts OFFBOARD from the RC/GCS-link requirement.
+#   NAV_RCL_ACT/NAV_DLL_ACT 0 disable RC/data-link-loss failsafes for sim.
+for p in "param set COM_RCL_EXCEPT 4" "param set NAV_RCL_ACT 0" "param set NAV_DLL_ACT 0"; do
+  tmux send-keys -t "$SESSION:uav" "$p" Enter
+  sleep 1
+done
+
 echo "=== lidar bridge in tmux ==="
 tmux new-window -t "$SESSION" -n lidar
 tmux send-keys -t "$SESSION:lidar" "source /opt/ros/humble/setup.bash; source /root/ros_gz_ws/install/setup.bash; source /root/ws_custom_px4_sensor/install/setup.bash; ros2 launch velodyne_3d_lidar_simulation px4_3d_lidar.launch.py world_name:=$WORLD lidar_model_name:=x500_lidar_3d_0 lidar_sensor_name:=lidar_3d_v3 rviz:=false" Enter
@@ -53,8 +62,22 @@ tmux send-keys -t "$SESSION:cpp" "source /opt/ros/humble/setup.bash && source /r
 sleep 4
 
 echo "=== [6] SUPER fsm_node (ROG-Map + planner) ==="
+# SUPER's cmd output (mars_quadrotor_msgs) is remapped to /super/pos_cmd so it
+# does NOT collide with offboard.py's /planning/pos_cmd (quadrotor_msgs);
+# cmd_bridge converts mars->quadrotor onto /planning/pos_cmd.
 tmux new-window -t "$SESSION" -n fsm
-tmux send-keys -t "$SESSION:fsm" "source /opt/ros/humble/setup.bash && source /root/super_ws/install/local_setup.bash && ros2 run super_planner fsm_node --ros-args -p config_name:=static_gazebo.yaml -p use_sim_time:=true -r /lidar_slam/odom:=/odometry" Enter
-sleep 10
+tmux send-keys -t "$SESSION:fsm" "source /opt/ros/humble/setup.bash && source /root/super_ws/install/local_setup.bash && ros2 run super_planner fsm_node --ros-args -p config_name:=static_gazebo.yaml -p use_sim_time:=true -r /lidar_slam/odom:=/odometry -r /planning/pos_cmd:=/super/pos_cmd" Enter
+sleep 8
+
+echo "=== [7] cmd_bridge (mars PositionCommand -> quadrotor PositionCommand) ==="
+tmux new-window -t "$SESSION" -n bridge
+tmux send-keys -t "$SESSION:bridge" "source /opt/ros/humble/setup.bash && source /root/super_ws/install/setup.bash && source /root/ego-planner-swarm/install/setup.bash && python3 /root/commands/super_gazebo/cmd_bridge.py" Enter
+sleep 2
+
+echo "=== [8] offboard.py (PX4 offboard controller) ==="
+tmux new-window -t "$SESSION" -n offb
+tmux send-keys -t "$SESSION:offb" "source /opt/ros/humble/setup.bash && source /root/px4_control_ws/install/setup.bash && source /root/ego-planner-swarm/install/setup.bash && python3 /root/px4_control_ws/src/px4_keyboard_control/px4_keyboard_control/offboard.py" Enter
+sleep 3
 
 echo "=== bringup 완료 (tmux: $SESSION) ==="
+echo "    이륙+goal:  python3 /root/commands/super_gazebo/g_fly.py --goal X Y Z"

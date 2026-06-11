@@ -39,6 +39,8 @@ config/
   static_gazebo.diff     diff vs SUPER's static_dense.yaml
 scripts/
   g_bringup.sh           One-shot tmux bringup of the whole stack
+  cmd_bridge.py          mars_quadrotor_msgs -> quadrotor_msgs PositionCommand
+  g_fly.py               Takeoff -> hover -> goal sequencer (drives offboard.py)
 super_patches/
   pr44_pcl_conversions.patch   SUPER ROS2 build fix (unmerged upstream PR #44)
   pr45_isnan_cxx17.patch       SUPER ROS2 build fix (unmerged upstream PR #45)
@@ -89,8 +91,8 @@ source is **not modified** for the filter — it lives entirely in `cloud_prepro
 | Build | SUPER ROS2 Humble (+2 patches) | ✅ |
 | G1 | `/cloud_registered` overlaps obstacles in world frame | ✅ (99% within 2 m) |
 | G2 | ROG-Map builds occupancy from the Gazebo cloud | ✅ (17k cells, 100% within 2 m) |
-| G3 | SUPER plans a trajectory to a goal | ⚠️ goal interface works; A* needs the drone **airborne** (ground start is invalid) |
-| G4 | PX4 follows SUPER's command (mars→quadrotor cmd converter) | ⬜ |
+| G3 | SUPER plans a trajectory to a goal | ✅ takeoff to 1.5 m, then goal → SUPER plans & executes (fsm WAIT_GOAL→exec→WAIT_GOAL) |
+| G4 | PX4 follows SUPER's command (mars→quadrotor cmd bridge) | ✅ drone autonomously flew to the goal (reached, d=0.6 m) |
 | G5 | Full loop + collision metric (Gazebo contact) | ⬜ |
 | G6 | sector on/off comparison | ⬜ |
 
@@ -103,9 +105,17 @@ source is **not modified** for the filter — it lives entirely in `cloud_prepro
   sim-time stamp, which is what SUPER needs.
 - **Ground start blocks planning** — the experiment must do *takeoff → stabilize
   → send goal*; a grounded drone's start is not in free space, so A* times out.
-- SUPER's command output is `mars_quadrotor_msgs/PositionCommand`, a superset of
-  `quadrotor_msgs/PositionCommand`, so a trivial field-copy converter bridges it
-  to a PX4 offboard controller (G4, in progress).
+  `g_fly.py` climbs to 1.5 m and holds before issuing the goal.
+- **SUPER and offboard.py both want `/planning/pos_cmd` but with different
+  message types** (`mars_quadrotor_msgs` vs `quadrotor_msgs` — different type
+  hash ⇒ no connection). SUPER's output is remapped to `/super/pos_cmd` and
+  `cmd_bridge.py` copies the common field subset onto `/planning/pos_cmd`.
+  Neither SUPER nor offboard.py is modified.
+- **OFFBOARD arming needs `COM_RCL_EXCEPT 4`** — otherwise PX4 preflight blocks
+  arming with "No connection to the GCS". `g_bringup.sh` also sets
+  `NAV_RCL_ACT 0` / `NAV_DLL_ACT 0`. Under heavy load the Gazebo **GUI client
+  (`gz sim -g`) starves ekf2** ("ekf2 missing data") — run headless / kill the
+  GUI for reliable arming.
 
 ## Acknowledgements
 
