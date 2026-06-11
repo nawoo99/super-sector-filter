@@ -45,8 +45,8 @@ class GFly(Node):
         self.odom = None          # latest (x,y,z)
         self.start_t = time.time()
         self.phase = "wait_odom"
-        self.offb_sent = False
-        self.arm_sent = False
+        self.last_offb_t = -10.0   # /keyboard_cmd is single-shot String; resend
+        self.last_arm_t = -10.0    # until the climb actually starts (drops happen)
         self.goal_sent = False
         self.hover_t0 = None
         self.goal_t0 = None
@@ -114,13 +114,14 @@ class GFly(Node):
         # always hold the hover setpoint (POSITION-mode fallback)
         self.publish_hover()
 
-        # OFFBOARD at t=1.0, ARM at t=4.0
-        if not self.offb_sent and t > 1.0:
-            self.keyboard("OFFBOARD"); self.offb_sent = True
-            self.get_logger().info("-> OFFBOARD")
-        if not self.arm_sent and t > 4.0:
-            self.keyboard("ARM"); self.arm_sent = True
-            self.get_logger().info("-> ARM")
+        # Robustly (re)request OFFBOARD then ARM until the climb actually starts.
+        # /keyboard_cmd is a single std_msgs/String; a dropped message leaves the
+        # drone in Hold (armed but grounded), so we resend every 1 s while still low.
+        if self.phase == "climbing" and self.odom is not None and self.odom[2] < 0.6:
+            if t > 1.0 and (t - self.last_offb_t) > 1.0:
+                self.keyboard("OFFBOARD"); self.last_offb_t = t
+            if t > 3.0 and (t - self.last_arm_t) > 1.0:
+                self.keyboard("ARM"); self.last_arm_t = t
 
         # detect hover reached
         if self.phase in ("wait_odom", "climbing"):

@@ -137,10 +137,22 @@ Reproduce: `python3 scripts/g6_analyze.py`.
   `NAV_RCL_ACT 0` / `NAV_DLL_ACT 0`. Under heavy load the Gazebo **GUI client
   (`gz sim -g`) starves ekf2** ("ekf2 missing data") — run headless / kill the
   GUI for reliable arming.
-- **EKF must settle before takeoff** — on a fresh bringup the drone arms but does
-  *not* climb until the EKF yaw converges (watch `vehicle_local_position`:
-  `heading_good_for_control`, and wait ~1–2 min). Flying too soon = armed but
-  grounded. A proper fix is to gate `g_fly.py` takeoff on the EKF-ready flags.
+- **Takeoff (offboard-from-ground) is flaky — two distinct causes:**
+  1. **Single-shot OFFBOARD/ARM drop (fixed).** `/keyboard_cmd` is one
+     `std_msgs/String`; if the OFFBOARD or ARM message is dropped the drone sits
+     in *Hold* (or armed-but-Hold) and never engages. `g_fly.py` now **resends
+     OFFBOARD then ARM every 1 s until the climb starts** (z>0.6). Confirmed:
+     re-publishing OFFBOARD flips nav-state Hold→Offboard.
+  2. **[open] Armed+Offboard+full-thrust but no lift (intermittent).** Even with
+     `arming_state=2`, `nav_state=14 (OFFBOARD)`, preflight OK and the controller
+     commanding full up-thrust (`thrust_body z=-1.0`), the drone can stay on the
+     ground. `actuator_motors` then shows an **uneven mix** (e.g. `[0.07, 0.39,
+     0.03, 1.0]`) — thrust spent on attitude correction, not climb — i.e. a
+     Gazebo physics / EKF-attitude divergence (drone effectively stuck/tilted).
+     It worked cleanly *once* (G3/G4 + the first G5 traverse), so it's
+     intermittent and environmental (PX4 SITL + this custom `x500_lidar_3d`
+     model), not an integration defect. Needs a stable-takeoff recipe before G5
+     collision stats can be collected at scale.
 - **Collision metric is geometric, not a contact sensor** — `collision_monitor.py`
   parses pillar centers (cylinders r=0.25) from the world SDF and computes min
   clearance + debounced collision count from `/odometry`; no SDF edit / sim
