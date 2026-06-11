@@ -38,7 +38,7 @@ echo "=== PX4 params: allow OFFBOARD arming without RC/GCS link ==="
 # Without these, PX4 preflight blocks arming ("No connection to the GCS"):
 #   COM_RCL_EXCEPT bit2(=4) exempts OFFBOARD from the RC/GCS-link requirement.
 #   NAV_RCL_ACT/NAV_DLL_ACT 0 disable RC/data-link-loss failsafes for sim.
-for p in "param set COM_RCL_EXCEPT 4" "param set NAV_RCL_ACT 0" "param set NAV_DLL_ACT 0"; do
+for p in "param set COM_RCL_EXCEPT 4" "param set NAV_RCL_ACT 0" "param set NAV_DLL_ACT 0" "param set COM_ARM_WO_GPS 0"; do
   tmux send-keys -t "$SESSION:uav" "$p" Enter
   sleep 1
 done
