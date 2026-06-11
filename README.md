@@ -41,6 +41,8 @@ scripts/
   g_bringup.sh           One-shot tmux bringup of the whole stack
   cmd_bridge.py          mars_quadrotor_msgs -> quadrotor_msgs PositionCommand
   g_fly.py               Takeoff -> hover -> goal sequencer (drives offboard.py)
+  g6_analyze.py          sector ON/OFF perf-log comparison
+  collision_monitor.py   geometric collision / min-obstacle-distance metric (G5)
 super_patches/
   pr44_pcl_conversions.patch   SUPER ROS2 build fix (unmerged upstream PR #44)
   pr45_isnan_cxx17.patch       SUPER ROS2 build fix (unmerged upstream PR #45)
@@ -93,7 +95,7 @@ source is **not modified** for the filter — it lives entirely in `cloud_prepro
 | G2 | ROG-Map builds occupancy from the Gazebo cloud | ✅ (17k cells, 100% within 2 m) |
 | G3 | SUPER plans a trajectory to a goal | ✅ takeoff to 1.5 m, then goal → SUPER plans & executes (fsm WAIT_GOAL→exec→WAIT_GOAL) |
 | G4 | PX4 follows SUPER's command (mars→quadrotor cmd bridge) | ✅ drone autonomously flew to the goal (reached, d=0.6 m) |
-| G5 | Full loop + collision metric (Gazebo contact) | ⬜ |
+| G5 | Full loop + collision metric | 🟡 partial: collision metric verified + SUPER crosses the field, but SUPER commands a **descending** trajectory → drone grounds before the goal (open issue) |
 | G6 | sector on/off comparison | ✅ ~55% fewer points → **~66% lower ROG-Map update time** |
 
 ### G6 result — sector filter effect on ROG-Map cost
@@ -135,6 +137,20 @@ Reproduce: `python3 scripts/g6_analyze.py`.
   `NAV_RCL_ACT 0` / `NAV_DLL_ACT 0`. Under heavy load the Gazebo **GUI client
   (`gz sim -g`) starves ekf2** ("ekf2 missing data") — run headless / kill the
   GUI for reliable arming.
+- **EKF must settle before takeoff** — on a fresh bringup the drone arms but does
+  *not* climb until the EKF yaw converges (watch `vehicle_local_position`:
+  `heading_good_for_control`, and wait ~1–2 min). Flying too soon = armed but
+  grounded. A proper fix is to gate `g_fly.py` takeoff on the EKF-ready flags.
+- **Collision metric is geometric, not a contact sensor** — `collision_monitor.py`
+  parses pillar centers (cylinders r=0.25) from the world SDF and computes min
+  clearance + debounced collision count from `/odometry`; no SDF edit / sim
+  restart. Logic verified (reads correct clearance), but launch it *fresh per
+  flight* — a long-lived instance can go stale on the best-effort odom QoS.
+- **[G5 open issue] SUPER commands a descending trajectory** — with goal z=1.5 the
+  drone takes off to 1.4 m then SUPER's `/super/pos_cmd` z steadily drops
+  (`FP recv z=0.97→0.84…`) and the drone grounds before the goal. offboard.py
+  tracks position-only and follows faithfully, so the descent is SUPER-side
+  (goal-z / cruise-height / map-origin handling) — to resolve before G5 passes.
 
 ## Acknowledgements
 
