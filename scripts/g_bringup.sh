@@ -19,9 +19,12 @@ tmux new-session -d -s "$SESSION" -n agent
 tmux send-keys -t "$SESSION:agent" "MicroXRCEAgent udp4 -p 8888" Enter
 sleep 2
 
-echo "=== PX4 + Gazebo ($WORLD) in tmux ==="
+echo "=== PX4 + Gazebo ($WORLD) in tmux — HEADLESS (no GUI client) ==="
+# HEADLESS=1: the gz GUI client never starts. Killing the GUI *after* start was
+# corrupting the gz_bridge actuator forwarding (PX4 motor outputs never reached
+# /model/.../command/motor_speed -> rotors silent -> armed-but-no-lift).
 tmux new-window -t "$SESSION" -n uav
-tmux send-keys -t "$SESSION:uav" "cd /root/px4/PX4-Autopilot && PX4_GZ_WORLD=$WORLD make px4_sitl gz_x500_lidar_3d" Enter
+tmux send-keys -t "$SESSION:uav" "cd /root/px4/PX4-Autopilot && HEADLESS=1 PX4_GZ_WORLD=$WORLD make px4_sitl gz_x500_lidar_3d" Enter
 
 echo "=== PX4 odometry 흐를 때까지 대기 ==="
 source /opt/ros/humble/setup.bash 2>/dev/null
