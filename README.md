@@ -190,6 +190,13 @@ Field is square ±12 m (`AREA=24`); the SUPER map is therefore enlarged to
 `map_size [28,28,6]` (the old `[15,110,6]` only covered x∈[±7.5] — obstacles past
 that were unmapped/flown blind).
 
+Validated end-to-end on `default_seed3` (100 obstacles): the baked world loads in
+PX4, SUPER navigates the ±12 field to the goal, altitude holds, and
+`collision_monitor` reads the 100 obstacles from the same SDF. **Gotcha for the
+campaign:** place loop waypoints in obstacle-free spots — a goal sitting next to a
+pillar makes the drone graze it while hovering and inflates the collision count
+(score collisions during *transit*, not goal-hover).
+
 ## Acknowledgements
 
 Built on [SUPER](https://github.com/hku-mars/SUPER) and
