@@ -43,6 +43,7 @@ scripts/
   g_fly.py               Takeoff -> hover -> goal sequencer (drives offboard.py)
   g6_analyze.py          sector ON/OFF perf-log comparison
   collision_monitor.py   geometric collision / min-obstacle-distance metric (G5)
+  gen_world.py           bakes per-seed static obstacle worlds for the campaign
 super_patches/
   pr44_pcl_conversions.patch   SUPER ROS2 build fix (unmerged upstream PR #44)
   pr45_isnan_cxx17.patch       SUPER ROS2 build fix (unmerged upstream PR #45)
@@ -154,10 +155,40 @@ Reproduce: `python3 scripts/g6_analyze.py`.
 - **Far goals time out in A\***; SUPER plans within the mapped/observed region, so
   drive it with goals a few metres out (the planned waypoint loop fits this).
 - **Collision metric is geometric, not a contact sensor** — `collision_monitor.py`
-  parses pillar centers (cylinders r=0.25) from the world SDF and computes min
-  clearance + debounced collision count from `/odometry`; no SDF edit / sim
-  restart. Launch it *fresh per flight* (a long-lived instance can go stale on the
-  best-effort odom QoS).
+  reads each obstacle's `(x, y, radius)` straight from the world SDF (matching
+  `<model name="pylon_*/pillar_*">` → `<pose>` + cylinder `<radius>`, per obstacle)
+  and computes min surface clearance + debounced collision count from `/odometry`;
+  no SDF edit / sim restart. Launch it *fresh per flight* (a long-lived instance can
+  go stale on the best-effort odom QoS).
+
+## Campaign maps (seeded static worlds)
+
+`gen_world.py` bakes a **complete static world SDF per seed** (cylinders only;
+radius encodes obstacle size) by reusing the PX4 world boilerplate. This is the
+*stable* path vs runtime `gz service` spawning: deterministic, no spawn failures,
+sector-ON/OFF see a byte-identical world, and the **same SDF is the single source
+of truth** for both Gazebo and `collision_monitor.py`.
+
+12-seed design (one-factor-at-a-time, 2 replicates/condition):
+
+| seeds | condition | radius | count |
+|-------|-----------|-------:|------:|
+| 1,2   | small     | 0.15 | 100 |
+| 3,4   | medium size (= baseline) | 0.25 | 100 |
+| 5,6   | large     | 0.40 | 100 |
+| 7,8   | dense     | 0.25 | 160 |
+| 9,10  | medium spacing (= baseline) | 0.25 | 100 |
+| 11,12 | sparse    | 0.25 | 50  |
+
+```bash
+python3 scripts/gen_world.py --all        # writes default_seed1..12.sdf into PX4 worlds/
+bash scripts/g_bringup.sh default_seed7   # HEADLESS, sector via SECTOR=true/false
+python3 scripts/collision_monitor.py --world default_seed7
+```
+
+Field is square ±12 m (`AREA=24`); the SUPER map is therefore enlarged to
+`map_size [28,28,6]` (the old `[15,110,6]` only covered x∈[±7.5] — obstacles past
+that were unmapped/flown blind).
 
 ## Acknowledgements
 

@@ -108,7 +108,11 @@ rog_map:
   inflation_step: 3
   unk_inflation_en: false
   unk_inflation_step: 1
-  map_size: [ 15,110,6 ]
+  # FIXED map (sliding disabled), centered at fix_map_origin → covers ±size/2.
+  # Campaign worlds are square ±12 m (gen_world.py AREA=24), so the box must reach
+  # ±14 in x AND y; the old [15,110,6] (a long y-corridor from SUPER's benchmark)
+  # only covered x∈[-7.5,7.5] → obstacles past that were unmapped (blind flight).
+  map_size: [ 28,28,6 ]
   # If the map rolling is disable, the map origin [m] should be set.
   fix_map_origin: [ 0,0,1.0 ]
   frontier_extraction_en: false

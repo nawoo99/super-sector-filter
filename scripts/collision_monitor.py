@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 # collision_monitor.py  —  geometric collision / min-obstacle-distance metric
 # -------------------------------------------------------------------
-# Instead of a Gazebo contact sensor (needs SDF edit + sim restart), we use the
-# known pillar positions (parsed from the world SDF) + live /odometry to compute:
-#   - min clearance = min over pillars of (center_dist - pillar_radius) - drone_radius
-#       (surface-to-surface; negative => overlap/collision)
-#   - collision episodes: debounced count (one per continuous contact, like the
-#     EGO benchmark's "count as 1")
-#   - min drone-center-to-pillar-surface distance over the run
-# Pillars are cylinders (radius 0.25, z in [0,3]) so horizontal distance suffices
-# at the 1.5 m flight height.
+# Instead of a Gazebo contact sensor (needs SDF edit + sim restart), we parse the
+# obstacle (x, y, radius) straight from the world SDF Gazebo loads, and combine with
+# live /odometry to compute:
+#   - min surface clearance = min over obstacles of (center_dist - obstacle_radius)
+#       i.e. drone-center to nearest obstacle surface
+#   - collision episodes: debounced count (one per continuous contact) when that
+#     clearance drops below the drone radius (body overlaps the obstacle)
+# Obstacles are vertical cylinders spanning the flight height, so horizontal distance
+# suffices. The world SDF is the single source of truth (same file the sim loads);
+# radius is read PER obstacle, so size-varying campaign seeds work unchanged.
 #
-#   source /opt/ros/humble/setup.bash ; python3 collision_monitor.py --world default_36
-# Writes a summary line to --out on exit (SIGINT).
+#   source /opt/ros/humble/setup.bash
+#   python3 collision_monitor.py --world default_seed7       # WORLD_DIR/<name>.sdf
+#   python3 collision_monitor.py --world-sdf /path/to.sdf    # explicit file
+# Writes a summary line to --out on exit (SIGINT/SIGTERM).
 # -------------------------------------------------------------------
 import argparse
 import math
@@ -24,60 +27,68 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from nav_msgs.msg import Odometry
 
-PILLAR_R = 0.25
 DRONE_R = 0.30          # x500 effective horizontal radius
 WORLD_DIR = "/root/px4/PX4-Autopilot/Tools/simulation/gz/worlds"
 
 
-def load_pillars(world):
-    path = f"{WORLD_DIR}/{world}.sdf"
-    txt = open(path).read()
-    # pillar model poses sit at z≈1.5 (cylinders of length 3 centered at 1.5)
-    pillars = []
-    for m in re.finditer(r"<pose>\s*([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)", txt):
-        x, y, z = float(m.group(1)), float(m.group(2)), float(m.group(3))
-        if abs(z - 1.5) < 0.05:
-            pillars.append((x, y))
-    return pillars
+def load_obstacles(sdf_path):
+    """Parse obstacle (x, y, radius) from the world SDF — the SAME file Gazebo loads.
+    Robust: matches each `<model name="pylon_*"/"pillar_*">` block and reads its
+    <pose> and cylinder <radius> (no height heuristic; per-obstacle radius so it
+    handles the size-varying campaign seeds)."""
+    txt = open(sdf_path).read()
+    obs = []
+    for blk in re.findall(r'<model name="(?:pylon|pillar)[^"]*">(.*?)</model>', txt, re.DOTALL):
+        mp = re.search(r"<pose>\s*([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)", blk)
+        mr = re.search(r"<radius>\s*([-\d.eE+]+)", blk)
+        if mp and mr:
+            obs.append((float(mp.group(1)), float(mp.group(2)), float(mr.group(1))))
+    return obs
+
+
+def resolve_sdf(args):
+    if args.world_sdf:
+        return args.world_sdf
+    return f"{WORLD_DIR}/{args.world}.sdf"
 
 
 class CollisionMonitor(Node):
     def __init__(self, args):
         super().__init__("collision_monitor")
         self.args = args
-        self.pillars = load_pillars(args.world)
-        self.coll_thresh = PILLAR_R + DRONE_R           # center-dist collision threshold
-        self.min_surface = float("inf")                 # min (center_dist - PILLAR_R) seen
+        self.sdf_path = resolve_sdf(args)
+        self.obstacles = load_obstacles(self.sdf_path)   # list of (x, y, radius)
+        self.min_surface = float("inf")                  # min (center_dist - obstacle_radius) seen
         self.collisions = 0
         self.in_coll = False
-        self.coll_pillars = set()
+        self.coll_obs = set()
         self.n = 0
+        radii = sorted({round(r, 3) for _, _, r in self.obstacles})
         self.get_logger().info(
-            f"loaded {len(self.pillars)} pillars from {args.world}; "
-            f"collision if center-dist < {self.coll_thresh:.2f} m (pillar {PILLAR_R}+drone {DRONE_R})")
+            f"loaded {len(self.obstacles)} obstacles from {self.sdf_path} (radii={radii}); "
+            f"collision if surface clearance < drone_R {DRONE_R} m")
         self.sub = self.create_subscription(Odometry, "/odometry", self.cb, qos_profile_sensor_data)
         self.create_timer(2.0, self.heartbeat)
 
     def cb(self, m: Odometry):
-        if not self.pillars:
+        if not self.obstacles:
             return
         x = m.pose.pose.position.x
         y = m.pose.pose.position.y
-        # nearest pillar
-        best_d = min(math.hypot(x - px, y - py) for px, py in self.pillars)
-        self.min_surface = min(self.min_surface, best_d - PILLAR_R)
+        # nearest obstacle by SURFACE distance (accounts for per-obstacle radius)
+        px, py, pr = min(self.obstacles, key=lambda o: math.hypot(x - o[0], y - o[1]) - o[2])
+        surf = math.hypot(x - px, y - py) - pr           # drone-center to obstacle surface
+        self.min_surface = min(self.min_surface, surf)
         self.n += 1
-        # debounced collision episode (rising edge)
-        if best_d < self.coll_thresh:
+        # collision when the drone body (radius DRONE_R) overlaps the obstacle surface
+        if surf < DRONE_R:
             if not self.in_coll:
                 self.collisions += 1
                 self.in_coll = True
-                # record which pillar
-                px, py = min(self.pillars, key=lambda p: math.hypot(x - p[0], y - p[1]))
-                self.coll_pillars.add((round(px, 1), round(py, 1)))
+                self.coll_obs.add((round(px, 1), round(py, 1)))
                 self.get_logger().warn(
-                    f"*** COLLISION #{self.collisions} near pillar ({px:.1f},{py:.1f}) "
-                    f"center_dist={best_d:.2f} ***")
+                    f"*** COLLISION #{self.collisions} near ({px:.1f},{py:.1f}) "
+                    f"surf_clearance={surf:.2f} ***")
         else:
             self.in_coll = False
 
@@ -87,9 +98,9 @@ class CollisionMonitor(Node):
                 f"min surface clearance so far = {self.min_surface:.2f} m | collisions={self.collisions}")
 
     def summary(self):
-        line = (f"world={self.args.world} pillars={len(self.pillars)} "
+        line = (f"world={self.args.world} obstacles={len(self.obstacles)} "
                 f"collisions={self.collisions} min_surface_clearance_m={self.min_surface:.3f} "
-                f"coll_pillars={sorted(self.coll_pillars)} samples={self.n}")
+                f"coll_obs={sorted(self.coll_obs)} samples={self.n}")
         self.get_logger().info("=== SUMMARY ===")
         self.get_logger().info(line)
         if self.args.out:
@@ -99,7 +110,8 @@ class CollisionMonitor(Node):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--world", default="default_36")
+    ap.add_argument("--world", default="default_36", help="world name -> WORLD_DIR/<name>.sdf")
+    ap.add_argument("--world-sdf", default=None, dest="world_sdf", help="explicit world SDF path (overrides --world)")
     ap.add_argument("--out", default="/tmp/g5_collision.txt")
     args = ap.parse_args()
 
