@@ -7,9 +7,10 @@
 #
 # Long legs are auto-subdivided into <= --max-leg nav points so SUPER's A* (which
 # plans within the observed region) can solve each hop; only the CORNERS trigger
-# the adaptive full-view recovery hook (a no-op placeholder here — step 3 wires the
-# runtime sector toggle). Collisions/clearance are scored by collision_monitor.py
-# running alongside.
+# the adaptive full-view recovery: the cloud_preprocessor sector filter is dropped
+# (full 360 view) via /sector/enable while hovering at each corner, then restored.
+# Use --no-adaptive to keep the sector ON for the A/B comparison. Collisions/
+# clearance are scored by collision_monitor.py running alongside.
 #
 #   source /opt/ros/humble/setup.bash
 #   python3 g_mission.py [--c 9] [--z 1.5] [--max-leg 9] [--corner-hover 3]
@@ -23,7 +24,7 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data, QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 
 
 def yaw_to_quat(yaw):
@@ -79,6 +80,8 @@ class GMission(Node):
         self.pub_sp = self.create_publisher(PoseStamped, "/position_cmd", 10)
         self.pub_kc = self.create_publisher(String, "/keyboard_cmd", 10)
         self.pub_goal = self.create_publisher(PoseStamped, "/planning/click_goal", goal_qos)
+        self.pub_sector = self.create_publisher(Bool, "/sector/enable", 1)
+        self.sector_on = True   # track current sector state (adaptive recovery)
 
         self.create_timer(0.05, self.tick)
         self.create_timer(1.0, self.log_status)
@@ -100,6 +103,15 @@ class GMission(Node):
 
     def keyboard(self, s):
         m = String(); m.data = s; self.pub_kc.publish(m)
+
+    def set_sector(self, on):
+        """Toggle the cloud_preprocessor sector filter at runtime (adaptive recovery).
+        on=False -> full 360 view (catch side obstacles the +/-60 sector misses)."""
+        if not self.args.adaptive or on == self.sector_on:
+            return
+        m = Bool(); m.data = bool(on); self.pub_sector.publish(m)
+        self.sector_on = on
+        self.get_logger().info(f"    [adaptive] sector -> {'ON' if on else 'OFF (full-view)'}")
 
     def publish_hover(self):
         _, _, _, hyaw = self.home
@@ -166,9 +178,11 @@ class GMission(Node):
         reach = self.args.reach_corner if is_corner else self.args.reach_nav
         if d < reach:
             if is_corner:
-                # --- adaptive full-view recovery hook (placeholder; step 3 toggles sector) ---
+                # --- adaptive full-view recovery: drop the sector filter while hovering
+                #     at the corner so ROG-Map sees the side obstacles the +/-60 cone misses ---
                 if self.recover_t0 is None:
                     self.recover_t0 = time.time()
+                    self.set_sector(False)   # full 360 view
                     self.get_logger().info(
                         f"*** CORNER {self.wi} reached ({x:.1f},{y:.1f}) d={d:.2f} -> RECOVERY (full-view) {self.args.corner_hover}s ***")
                 if time.time() - self.recover_t0 < self.args.corner_hover:
@@ -183,6 +197,7 @@ class GMission(Node):
             self.advance()
 
     def advance(self):
+        self.set_sector(True)   # restore sector filter when leaving a corner
         self.wi += 1
         if self.wi >= len(self.wps):
             self.phase = "done"
@@ -211,6 +226,10 @@ def main():
     ap.add_argument("--reach-corner", type=float, default=1.0, dest="reach_corner", help="advance radius at corners [m]")
     ap.add_argument("--corner-hover", type=float, default=3.0, dest="corner_hover", help="dwell at each corner [s]")
     ap.add_argument("--leg-timeout", type=float, default=40.0, dest="leg_timeout", help="per-waypoint timeout [s]")
+    ap.add_argument("--adaptive", dest="adaptive", action="store_true", default=True,
+                    help="adaptive full-view recovery: drop sector at corners (default on)")
+    ap.add_argument("--no-adaptive", dest="adaptive", action="store_false",
+                    help="disable recovery (sector stays ON the whole loop) for the A/B comparison")
     args = ap.parse_args()
 
     rclpy.init()

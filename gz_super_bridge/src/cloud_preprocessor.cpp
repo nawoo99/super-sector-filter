@@ -15,6 +15,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -23,6 +24,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <Eigen/Geometry>
+#include <atomic>
 #include <cmath>
 #include <mutex>
 #include <string>
@@ -47,6 +49,9 @@ public:
     sector_enable_ = declare_parameter<bool>("sector_enable", true);
     min_angle_rad_ = declare_parameter<double>("min_angle_deg", -60.0) * M_PI / 180.0;
     max_angle_rad_ = declare_parameter<double>("max_angle_deg",  60.0) * M_PI / 180.0;
+    // runtime toggle: publish Bool here to turn the sector filter off (full 360 view)
+    // for adaptive recovery at waypoints, then back on.
+    sector_toggle_topic_ = declare_parameter<std::string>("sector_toggle_topic", "/sector/enable");
 
     // --- performance options (match EGO defaults) ---
     use_stride_ = declare_parameter<bool>("use_stride", true);
@@ -70,6 +75,10 @@ public:
         input_topic_, rclcpp::SensorDataQoS(),
         std::bind(&CloudPreprocessor::cloudCallback, this, std::placeholders::_1));
 
+    sector_sub_ = create_subscription<std_msgs::msg::Bool>(
+        sector_toggle_topic_, rclcpp::QoS(1).reliable(),
+        std::bind(&CloudPreprocessor::sectorToggleCallback, this, std::placeholders::_1));
+
     rclcpp::QoS qos(rclcpp::KeepLast(5));
     qos.reliability(rclcpp::ReliabilityPolicy::Reliable);
     pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(output_topic_, qos);
@@ -82,6 +91,15 @@ public:
   }
 
 private:
+  void sectorToggleCallback(const std_msgs::msg::Bool::SharedPtr msg)
+  {
+    const bool prev = sector_enable_.exchange(msg->data);
+    if (prev != msg->data) {
+      RCLCPP_INFO(get_logger(), "sector filter -> %s (runtime toggle)",
+                  msg->data ? "ON (sector)" : "OFF (full 360 view)");
+    }
+  }
+
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
   {
     std::lock_guard<std::mutex> lk(odom_mtx_);
@@ -170,9 +188,10 @@ private:
   }
 
   // params
-  std::string input_topic_, output_topic_, odom_topic_, target_frame_;
+  std::string input_topic_, output_topic_, odom_topic_, target_frame_, sector_toggle_topic_;
   double odom_timeout_;
-  bool sector_enable_, use_stride_, use_voxel_;
+  std::atomic<bool> sector_enable_{true};   // runtime-toggleable (adaptive full-view recovery)
+  bool use_stride_, use_voxel_;
   double min_angle_rad_, max_angle_rad_, voxel_leaf_;
   int stride_;
   std::vector<double> ext_xyz_, ext_rpy_;
@@ -186,6 +205,7 @@ private:
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sector_sub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_;
 };
 
