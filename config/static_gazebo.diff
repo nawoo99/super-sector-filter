@@ -1,6 +1,23 @@
 --- /root/super_ws/src/SUPER/super_planner/config/static_dense.yaml	2026-06-09 17:47:50.653836184 +0900
-+++ config/static_gazebo.yaml	2026-06-12 16:06:28.862857123 +0900
-@@ -108,14 +108,21 @@
++++ config/static_gazebo.yaml	2026-06-15 16:00:54.749512468 +0900
+@@ -39,9 +39,13 @@
+     print_optimizer_log: false
+ 
+   boundary:
+-    max_vel: 8.0
+-    max_acc: 15.0
+-    max_jerk: 120.0
++    # Tamed for the tight +/-12 campaign field: SUPER's 8 m/s default crosses the
++    # 24 m field in ~3 s, and offboard's position-only tracking can't follow ->
++    # big z-overshoots and ground contact. 2.5 m/s gives stable, repeatable loops.
++    # (Same limits for sector ON/OFF, so the comparison is unaffected.)
++    max_vel: 2.5
++    max_acc: 5.0
++    max_jerk: 40.0
+     max_omg: 2.5
+     max_acc_thr: 17.0
+     min_acc_thr: 6.0
+@@ -108,14 +112,28 @@
    inflation_step: 3
    unk_inflation_en: false
    unk_inflation_step: 1
@@ -21,12 +38,19 @@
 +  # NOTE: real Gazebo floor is z=0; keep virtual ground just below the ground-start
 +  # z (~0.04) but NOT far below the real floor, or SUPER plans a descent into the
 +  # ground (G5 open issue). -0.3 clears the start check without inviting descent.
-+  virtual_ceil_height: 4.0
-+  virtual_ground_height: -0.3
++  # Narrow z-band [1.0, 2.0] around the 1.5 m flight altitude. Obstacles are
++  # ground-rooted 3 m pillars, so the drone can neither fly over (ceil<3) nor
++  # under them -> it MUST navigate laterally (what the sector-filter FoV study
++  # needs). A wide band just let SUPER's optimizer wander in z (saw it climb to
++  # 3.2 m / dip to -0.3 m and crash); the tight band removes that freedom.
++  # Takeoff (z=0.04) is below the floor, but that only makes ROG-Map skip its
++  # update (warning, not fatal) until the offboard-driven climb passes 1.0 m.
++  virtual_ceil_height: 2.0
++  virtual_ground_height: 1.0
  
    load_pcd_en: false
  
-@@ -140,7 +147,7 @@
+@@ -140,7 +158,7 @@
  
  
    visualization:
