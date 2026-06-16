@@ -16,7 +16,9 @@
 #   python3 g_mission.py [--c 9] [--z 1.5] [--max-leg 9] [--corner-hover 3]
 # -------------------------------------------------------------------------------------
 import argparse
+import json
 import math
+import os
 import time
 
 import rclpy
@@ -70,6 +72,13 @@ class GMission(Node):
         self.wi = 0
         self.wp_sent_t = 0.0
         self.recover_t0 = None
+        # campaign metrics
+        self.mission_t0 = None        # wall time the loop actually started
+        self.perf_row_start = None    # rm_performance_log.csv data-row count at loop start
+        self.corners_reached = 0
+        self.timeouts = 0
+        self.metrics_written = False
+        self.exit_after = None        # set when campaign-mode should shut down
 
         goal_qos = QoSProfile(depth=1)
         goal_qos.reliability = ReliabilityPolicy.BEST_EFFORT
@@ -104,6 +113,12 @@ class GMission(Node):
     def keyboard(self, s):
         m = String(); m.data = s; self.pub_kc.publish(m)
 
+    def publish_sector_raw(self, on):
+        """Unconditionally publish the sector state (used once for the per-mode base:
+        full=OFF, sector/adaptive=ON). Bypasses the adaptive gate in set_sector()."""
+        m = Bool(); m.data = bool(on); self.pub_sector.publish(m)
+        self.sector_on = on
+
     def set_sector(self, on):
         """Toggle the cloud_preprocessor sector filter at runtime (adaptive recovery).
         on=False -> full 360 view (catch side obstacles the +/-60 sector misses)."""
@@ -112,6 +127,41 @@ class GMission(Node):
         m = Bool(); m.data = bool(on); self.pub_sector.publish(m)
         self.sector_on = on
         self.get_logger().info(f"    [adaptive] sector -> {'ON' if on else 'OFF (full-view)'}")
+
+    def perf_rows(self):
+        """Current data-row count of the ROG-Map performance log (excludes header).
+        Used to slice exactly the frames that belong to THIS mission for the campaign."""
+        try:
+            with open(self.args.perf_log) as f:
+                n = sum(1 for _ in f)
+            return max(0, n - 1)
+        except OSError:
+            return None
+
+    def write_metrics(self, success):
+        if self.metrics_written or not self.args.metrics_out:
+            return
+        self.metrics_written = True
+        mt = (time.time() - self.mission_t0) if self.mission_t0 else 0.0
+        rec = {
+            "mode": self.args.mode,
+            "seed": self.args.seed,
+            "run": self.args.run,
+            "success": bool(success),
+            "mission_time_s": round(mt, 2),
+            "perf_row_start": self.perf_row_start,
+            "perf_row_end": self.perf_rows(),
+            "n_waypoints": len(self.wps),
+            "corners_reached": self.corners_reached,
+            "timeouts": self.timeouts,
+        }
+        try:
+            os.makedirs(os.path.dirname(self.args.metrics_out) or ".", exist_ok=True)
+            with open(self.args.metrics_out, "w") as f:
+                json.dump(rec, f)
+            self.get_logger().info(f"*** METRICS -> {self.args.metrics_out}: {rec} ***")
+        except OSError as e:
+            self.get_logger().error(f"metrics write failed: {e}")
 
     def publish_hover(self):
         _, _, _, hyaw = self.home
@@ -152,13 +202,25 @@ class GMission(Node):
                     self.hover_t0 = time.time()
                 elif time.time() - self.hover_t0 > 2.0:
                     self.phase = "mission"
-                    self.get_logger().info(f"*** HOVER at z={self.odom[2]:.2f} -> start loop ***")
+                    # per-mode sector base: full=OFF(360), sector/adaptive=ON(+/-60)
+                    self.publish_sector_raw(self.args.sector_base == "on")
+                    self.mission_t0 = time.time()
+                    self.perf_row_start = self.perf_rows()
+                    self.get_logger().info(
+                        f"*** HOVER at z={self.odom[2]:.2f} -> start loop "
+                        f"(mode={self.args.mode}, sector_base={self.args.sector_base}, "
+                        f"perf_row_start={self.perf_row_start}) ***")
                     self.send_current_wp()
             else:
                 self.hover_t0 = None
 
         if self.phase == "mission":
             self.run_mission()
+
+        # campaign mode: shut down a moment after the loop ends so the runner advances
+        if self.exit_after is not None and time.time() > self.exit_after:
+            self.write_metrics(self.phase == "done")
+            rclpy.shutdown()
 
     def send_current_wp(self):
         x, y, z, _ = self.wps[self.wi]
@@ -182,6 +244,7 @@ class GMission(Node):
                 #     at the corner so ROG-Map sees the side obstacles the +/-60 cone misses ---
                 if self.recover_t0 is None:
                     self.recover_t0 = time.time()
+                    self.corners_reached += 1
                     self.set_sector(False)   # full 360 view
                     self.get_logger().info(
                         f"*** CORNER {self.wi} reached ({x:.1f},{y:.1f}) d={d:.2f} -> RECOVERY (full-view) {self.args.corner_hover}s ***")
@@ -192,19 +255,35 @@ class GMission(Node):
 
         # per-leg timeout safety
         if time.time() - self.wp_sent_t > self.args.leg_timeout:
+            self.timeouts += 1
             self.get_logger().warn(f"*** WP {self.wi} TIMEOUT (d={d:.2f}) -> skip ***")
             self.recover_t0 = None
             self.advance()
+
+        # overall mission timeout safety (campaign): never hang a seed forever
+        if self.mission_t0 and (time.time() - self.mission_t0) > self.args.mission_timeout:
+            self.get_logger().warn("*** MISSION TIMEOUT -> abort loop (success=False) ***")
+            self.finish(success=False)
 
     def advance(self):
         self.set_sector(True)   # restore sector filter when leaving a corner
         self.wi += 1
         if self.wi >= len(self.wps):
-            self.phase = "done"
             self.get_logger().info("*** LOOP COMPLETE -> hold at home ***")
-            self.hold = (self.home[0], self.home[1], float(self.args.z))
+            self.finish(success=True)
             return
         self.send_current_wp()
+
+    def finish(self, success):
+        """End the loop: hold at home, write metrics, and (campaign mode) schedule exit."""
+        if self.phase == "done":
+            return
+        self.phase = "done"
+        self.hold = (self.home[0], self.home[1], float(self.args.z))
+        self.write_metrics(success)
+        if self.args.metrics_out:
+            # let the drone settle at home, then the campaign exit-check shuts us down
+            self.exit_after = time.time() + self.args.settle
 
     def log_status(self):
         if self.odom is None:
@@ -230,17 +309,38 @@ def main():
                     help="adaptive full-view recovery: drop sector at corners (default on)")
     ap.add_argument("--no-adaptive", dest="adaptive", action="store_false",
                     help="disable recovery (sector stays ON the whole loop) for the A/B comparison")
+    # --- campaign metrics (Step 4) ---
+    ap.add_argument("--mode", default="adaptive", help="label recorded in metrics (full|sector|adaptive)")
+    ap.add_argument("--seed", default="", help="seed label recorded in metrics")
+    ap.add_argument("--run", default="", help="run index recorded in metrics")
+    ap.add_argument("--sector-base", default="on", choices=["on", "off"], dest="sector_base",
+                    help="sector state to publish at loop start (full=off, sector/adaptive=on)")
+    ap.add_argument("--metrics-out", default=None, dest="metrics_out",
+                    help="write JSON metrics here at loop end and exit (campaign mode)")
+    ap.add_argument("--perf-log", dest="perf_log",
+                    default="/root/super_ws/src/SUPER/rog_map/log/rm_performance_log.csv",
+                    help="ROG-Map performance log to slice for this mission")
+    ap.add_argument("--mission-timeout", type=float, default=240.0, dest="mission_timeout",
+                    help="abort the whole loop after this many seconds (campaign safety)")
+    ap.add_argument("--settle", type=float, default=4.0,
+                    help="hold at home this long after loop end before exiting (campaign)")
     args = ap.parse_args()
 
     rclpy.init()
     node = GMission(args)
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
         pass
     finally:
+        # campaign safety: make sure metrics land even on an unexpected exit
+        try:
+            node.write_metrics(node.phase == "done")
+        except Exception:
+            pass
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

@@ -197,6 +197,44 @@ campaign:** place loop waypoints in obstacle-free spots — a goal sitting next 
 pillar makes the drone graze it while hovering and inflates the collision count
 (score collisions during *transit*, not goal-hover).
 
+## Campaign runner & analysis (Steps 4-5)
+
+`g_campaign.py` automates the A/B/C study. For each seed world it brings the stack
+up **once**, then flies the perimeter loop in three modes, `--runs` times each:
+
+| mode | sector filter | g_mission flags |
+|------|---------------|-----------------|
+| `full`     | OFF the whole loop (360 view baseline)    | `--no-adaptive --sector-base off` |
+| `sector`   | ON the whole loop (+/-60, no recovery)    | `--no-adaptive --sector-base on`  |
+| `adaptive` | ON on legs, OFF (full-view) at corners    | (adaptive default) `--sector-base on` |
+
+All three fly the identical waypoint path and dwell at corners, so only the filter
+behaviour differs. Per `(seed, run, mode)` we record into `results/campaign.csv`:
+
+- **mission time**, success, corners reached, leg timeouts
+- **ROG-Map mapping cost** -- `Total / Raycast / Update_cache / Inflation` (ms) and
+  `PointCloudNumber`, sliced to *exactly this mission's frames*. `g_mission` stamps
+  the perf-log data-row range at loop start/end, so we slice cleanly without
+  restarting the planner (the log is truncated only once per bring-up). ROG-Map
+  logs `Total=0` on skipped frames (odom below the virtual-ground band / no new
+  points), so we also report `*_active_mean` over frames that actually mapped.
+- **CPU%** of `fsm_node` and `cloud_preprocessor` -- exact `utime+stime` delta from
+  `/proc/<pid>/stat` over the loop window (picks the busiest matching pid so a
+  ros2/shell wrapper can't be sampled by mistake).
+- **collisions + min surface clearance** -- `collision_monitor.py`, fresh per run.
+
+```bash
+source /opt/ros/humble/setup.bash
+python3 scripts/g_campaign.py --seeds 11 --runs 1                 # smoke: 1 seed x 3 modes
+python3 scripts/g_campaign.py --seeds 1-12 --runs 5               # full campaign
+python3 scripts/g_analyze.py results/campaign.csv --csv-out tables.csv
+```
+
+`g_analyze.py` aggregates mean +/- std per mode and the headline **reduction vs the
+`full` baseline**: the efficiency claim (sector cuts points / Total / Raycast / CPU)
+against the safety cost (sector raises collisions / lowers clearance) and how much
+of that safety the **adaptive** corner recovery buys back.
+
 ## Acknowledgements
 
 Built on [SUPER](https://github.com/hku-mars/SUPER) and
