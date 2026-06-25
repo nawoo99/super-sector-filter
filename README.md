@@ -235,6 +235,31 @@ python3 scripts/g_analyze.py results/campaign.csv --csv-out tables.csv
 against the safety cost (sector raises collisions / lowers clearance) and how much
 of that safety the **adaptive** corner recovery buys back.
 
+## Quick launchers & watching (RViz)
+
+`scripts/super_aliases.sh` (source it from `~/.bashrc`) adds seed-indexed launchers,
+EGO-style:
+
+```bash
+super 1          # seed-1 map, sector filter OFF (full 360 baseline)
+super_sec 1      # seed-1 map, sector filter ON  (+/-60 cone)
+super_watch 1 adaptive   # HEADLESS sim + RViz + one perimeter loop to eyeball
+                         # mode = full | sector | adaptive
+```
+
+The sim runs **HEADLESS** (the Gazebo GUI is the takeoff-stability fix — never
+started). You watch in **RViz** instead (`scripts/super_watch.rviz`, fixed frame
+`world`), which shows more than the Gazebo view would: the sector-filtered
+`/cloud_registered` (a +/-60 wedge — or a full ring at corners in adaptive mode),
+the ROG-Map occupancy the planner avoids (`/rog_map/inf_occ`), and SUPER's
+committed trajectory + A* path + goal. All displays use Best-Effort QoS so they
+bind to any publisher. Compare `super_watch N full` (full ring) vs
+`super_watch N sector` (wedge) to *see* the mapping-cost reduction.
+
+> `watch.sh` must guard the ROS `source` with `set +u; … ; set -u` — under `set -u`
+> `source /opt/ros/humble/setup.bash` aborts the script (ROS setup references unset
+> vars), which silently kills the launcher right before RViz.
+
 ## Acknowledgements
 
 Built on [SUPER](https://github.com/hku-mars/SUPER) and
