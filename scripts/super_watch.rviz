@@ -1,0 +1,120 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+    Property Tree Widget:
+      Expanded: true
+Visualization Manager:
+  Global Options:
+    Background Color: 32; 36; 40
+    Fixed Frame: world
+    Frame Rate: 30
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 30
+      Color: 80; 80; 80
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Names: true
+      Marker Scale: 1.5
+    - Class: rviz_default_plugins/PointCloud2
+      Name: cloud_registered (sector)
+      Enabled: true
+      Topic:
+        Value: /cloud_registered
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+        Depth: 5
+      Style: Flat Squares
+      Size (m): 0.06
+      Color Transformer: FlatColor
+      Color: 0; 255; 128
+    - Class: rviz_default_plugins/PointCloud2
+      Name: rog_map inf_occ
+      Enabled: true
+      Topic:
+        Value: /rog_map/inf_occ
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+        Depth: 5
+      Style: Boxes
+      Size (m): 0.15
+      Color Transformer: FlatColor
+      Color: 255; 90; 60
+    - Class: rviz_default_plugins/PointCloud2
+      Name: rog_map occ
+      Enabled: false
+      Topic:
+        Value: /rog_map/occ
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+        Depth: 5
+      Style: Boxes
+      Size (m): 0.1
+      Color Transformer: FlatColor
+      Color: 255; 200; 0
+    - Class: rviz_default_plugins/Odometry
+      Name: odometry
+      Enabled: true
+      Topic:
+        Value: /odometry
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+        Depth: 5
+      Keep: 1
+      Shape: Arrow
+      Covariance:
+        Value: false
+    - Class: rviz_default_plugins/MarkerArray
+      Name: committed_traj
+      Enabled: true
+      Topic:
+        Value: /visualization/committed_traj
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/MarkerArray
+      Name: frontend_path (A*)
+      Enabled: true
+      Topic:
+        Value: /visualization/frontend_path
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/MarkerArray
+      Name: goal
+      Enabled: true
+      Topic:
+        Value: /visualization/goal
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/Path
+      Name: fsm/path
+      Enabled: true
+      Topic:
+        Value: /fsm/path
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+        Depth: 5
+      Color: 0; 170; 255
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Name: Current View
+      Distance: 38
+      Pitch: 1.2
+      Yaw: 0.79
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+Window Geometry:
+  Height: 900
+  Width: 1400

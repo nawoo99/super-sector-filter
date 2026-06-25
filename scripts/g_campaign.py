@@ -29,7 +29,6 @@ import os
 import signal
 import statistics as st
 import subprocess
-import sys
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -204,6 +203,14 @@ def topic_alive(topic):
         return False
 
 
+def kill_group(proc):
+    """SIGKILL a Popen's whole process group (proc started with preexec_fn=os.setsid)."""
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+    except (ProcessLookupError, OSError):
+        pass
+
+
 def teardown():
     log("=== teardown ===")
     subprocess.run(["tmux", "kill-session", "-t", "gsuper"], check=False,
@@ -246,7 +253,20 @@ def run_mode(world, seed, run, mode, args, tmpdir):
     fsm_cpu = CpuMeter("fsm_node")
     cpp_cpu = CpuMeter("cloud_preprocessor")
     fsm_cpu.start(); cpp_cpu.start()
-    rc = subprocess.run(["bash", "-c", miss_cmd], timeout=args.mission_timeout + 120).returncode
+    # own process group so a hung mission can be killed as a TREE: a bare
+    # subprocess.run(timeout=) would raise TimeoutExpired (crashing the campaign and
+    # orphaning the collision monitor), and would kill only the bash wrapper -- leaving
+    # the g_mission child alive, still publishing setpoints into the NEXT mode.
+    miss = subprocess.Popen(["bash", "-c", miss_cmd], preexec_fn=os.setsid)
+    try:
+        rc = miss.wait(timeout=args.mission_timeout + 120)
+    except subprocess.TimeoutExpired:
+        log(f"  !! {tag}: mission HUNG past {args.mission_timeout + 120:.0f}s -> kill process group")
+        kill_group(miss)
+        try:
+            rc = miss.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            rc = -9
     fsm_pct = fsm_cpu.stop()
     cpp_pct = cpp_cpu.stop()
 
@@ -313,6 +333,12 @@ def main():
     args = ap.parse_args()
 
     seeds = parse_seeds(args.seeds)
+    present = [s for s in seeds if os.path.exists(f"{WORLD_DIR}/default_seed{s}.sdf")]
+    if len(present) != len(seeds):
+        log(f"  missing SDF, skipping seeds: {[s for s in seeds if s not in present]}")
+    seeds = present
+    if not seeds:
+        log("no seed worlds to run"); return
     os.makedirs(args.tmpdir, exist_ok=True)
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fresh = not os.path.exists(args.out)
@@ -328,11 +354,16 @@ def main():
     try:
         for seed in seeds:
             world = f"default_seed{seed}"
-            sdf = f"{WORLD_DIR}/{world}.sdf"
-            if not os.path.exists(sdf):
-                log(f"  SKIP seed {seed}: {sdf} missing"); continue
-            bringup(world, args.ready_timeout)
+            ready = bringup(world, args.ready_timeout)
             try:
+                if not ready:
+                    log(f"  seed {seed}: stack NOT ready -> record failures for all modes, skip flights")
+                    for run in range(1, args.runs + 1):
+                        for mode in args.modes:
+                            writer.writerow({"seed": seed, "run": run, "mode": mode,
+                                             "world": world, "success": False, "mission_rc": "no_bringup"})
+                            out_f.flush(); done += 1
+                    continue
                 for run in range(1, args.runs + 1):
                     for mode in args.modes:
                         rec = run_mode(world, seed, run, mode, args, args.tmpdir)

@@ -183,6 +183,16 @@ class GMission(Node):
         self.pub_goal.publish(g)
 
     def tick(self):
+        # campaign safety: if the loop never starts (e.g. odom never arrives, climb stalls),
+        # don't hang forever -- abort cleanly so the runner can move to the next mode.
+        if (self.args.metrics_out and self.phase not in ("mission", "done")
+                and (time.time() - self.start_t) > self.args.startup_timeout):
+            self.get_logger().warn(
+                f"*** STARTUP TIMEOUT ({self.args.startup_timeout:.0f}s, phase={self.phase}) "
+                f"-> abort (success=False) ***")
+            self.write_metrics(False)
+            rclpy.shutdown()
+            return
         if self.home is None:
             return
         t = time.time() - self.start_t
@@ -324,6 +334,8 @@ def main():
                     help="abort the whole loop after this many seconds (campaign safety)")
     ap.add_argument("--settle", type=float, default=4.0,
                     help="hold at home this long after loop end before exiting (campaign)")
+    ap.add_argument("--startup-timeout", type=float, default=120.0, dest="startup_timeout",
+                    help="abort if the loop never starts within this many seconds (campaign safety)")
     args = ap.parse_args()
 
     rclpy.init()
