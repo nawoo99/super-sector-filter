@@ -24,3 +24,14 @@ super_sec() { _super_bringup true  "$1"; }   # sector filter ON (+/-60)
 # watch ONE run with RViz (sim stays HEADLESS; you watch in RViz, which shows the
 # sector-filtered cloud, ROG-Map occupancy, and SUPER's path/goal).
 super_watch() { bash "${SUPER_DIR}/watch.sh" "${1:-11}" "${2:-adaptive}"; }
+
+# tear down the whole sim stack (sim + RViz + flight/control nodes).
+super_exit() {
+  tmux kill-server 2>/dev/null
+  for pat in rviz2 g_mission.py watch.sh collision_monitor.py cmd_bridge.py offboard.py \
+             cloud_preprocessor fsm_node "gz sim" MicroXRCEAgent "px4_sitl_default/bin/px4" \
+             "make px4_sitl" px4_odometry velodyne_3d_lidar static_transform_publisher; do
+    pkill -9 -f "$pat" 2>/dev/null
+  done
+  echo "[super] stack torn down"
+}

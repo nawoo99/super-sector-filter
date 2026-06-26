@@ -245,6 +245,7 @@ super 1          # seed-1 map, sector filter OFF (full 360 baseline)
 super_sec 1      # seed-1 map, sector filter ON  (+/-60 cone)
 super_watch 1 adaptive   # HEADLESS sim + RViz + one perimeter loop to eyeball
                          # mode = full | sector | adaptive
+super_exit               # tear down the whole stack (sim + RViz + nodes)
 ```
 
 The sim runs **HEADLESS** (the Gazebo GUI is the takeoff-stability fix — never
