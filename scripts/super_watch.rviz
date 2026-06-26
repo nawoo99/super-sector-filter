@@ -41,23 +41,25 @@ Visualization Manager:
         History Policy: Keep Last
         Depth: 5
       Style: Boxes
-      Size (m): 0.15
+      Size (m): 0.12
+      Alpha: 0.22
       Color Transformer: FlatColor
-      Color: 255; 90; 60
+      Color: 235; 70; 50
     - Class: rviz_default_plugins/PointCloud2
-      Name: rog_map occ
-      Enabled: false
+      Name: rog_map occ (obstacles)
+      Enabled: true
       Topic:
         Value: /rog_map/occ
         Reliability Policy: Best Effort
         History Policy: Keep Last
         Depth: 5
       Style: Boxes
-      Size (m): 0.1
+      Size (m): 0.06
+      Alpha: 1.0
       Color Transformer: FlatColor
-      Color: 255; 200; 0
+      Color: 255; 170; 0
     - Class: rviz_default_plugins/Odometry
-      Name: odometry
+      Name: odometry (drone)
       Enabled: true
       Topic:
         Value: /odometry
@@ -65,7 +67,9 @@ Visualization Manager:
         History Policy: Keep Last
         Depth: 5
       Keep: 1
-      Shape: Arrow
+      Shape: Axes
+      Axes Length: 1.2
+      Axes Radius: 0.25
       Covariance:
         Value: false
     - Class: rviz_default_plugins/MarkerArray
