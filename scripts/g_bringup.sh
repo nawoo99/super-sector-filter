@@ -24,7 +24,12 @@ echo "=== PX4 + Gazebo ($WORLD) in tmux — HEADLESS (no GUI client) ==="
 # corrupting the gz_bridge actuator forwarding (PX4 motor outputs never reached
 # /model/.../command/motor_speed -> rotors silent -> armed-but-no-lift).
 tmux new-window -t "$SESSION" -n uav
-tmux send-keys -t "$SESSION:uav" "cd /root/px4/PX4-Autopilot && HEADLESS=${HEADLESS:-1} PX4_GZ_WORLD=$WORLD make px4_sitl gz_x500_lidar_3d" Enter
+# PX4 starts the gz GUI only when HEADLESS is UNSET (`[ -z "$HEADLESS" ]` in
+# px4-rc.gzsim, which then runs `gz sim -g` right after the server so the drone
+# syncs). So GUI=1 must DROP the var entirely -- HEADLESS=0 would STILL be headless.
+# Default keeps HEADLESS=1 (no GUI = the takeoff-stability fix).
+GZ_HDL="HEADLESS=1 "; [ "${GUI:-}" = "1" ] && GZ_HDL=""
+tmux send-keys -t "$SESSION:uav" "cd /root/px4/PX4-Autopilot && ${GZ_HDL}PX4_GZ_WORLD=$WORLD make px4_sitl gz_x500_lidar_3d" Enter
 
 echo "=== PX4 odometry 흐를 때까지 대기 ==="
 source /opt/ros/humble/setup.bash 2>/dev/null

@@ -16,7 +16,7 @@
 set -u
 SEED="${1:-11}"
 MODE="${2:-adaptive}"
-GUI="${3:-}"          # "gui" -> start Gazebo GUI WITH the server (drone visible)
+GUIMODE="${3:-}"      # "gui" -> start Gazebo GUI WITH the server (drone visible)
 WORLD="default_seed${SEED}"
 HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 RVIZ_CFG="$HERE/super_watch.rviz"
@@ -35,9 +35,9 @@ esac
 # the Gazebo GUI WITH the server so the (runtime-spawned) drone is visible -- a late
 # `gz sim -g` attach can't show it. GUI adds render load (ekf2 may lag); don't close
 # the GUI alone mid-flight (corrupts the actuator bridge) -- end with super_exit.
-HEAD=1; [ "$GUI" = "gui" ] && { HEAD=0; echo "=== [watch] GUI mode: Gazebo GUI ON from boot (drone visible) ==="; }
-echo "=== [watch] bringup $WORLD (HEADLESS=$HEAD), sector=$SEC, mode=$MODE ==="
-SECTOR="$SEC" HEADLESS="$HEAD" bash "$HERE/g_bringup.sh" "$WORLD"
+GZGUI=0; [ "$GUIMODE" = "gui" ] && { GZGUI=1; echo "=== [watch] GUI mode: PX4 starts the Gazebo GUI (drone visible) ==="; }
+echo "=== [watch] bringup $WORLD (gui=$GZGUI), sector=$SEC, mode=$MODE ==="
+SECTOR="$SEC" GUI="$GZGUI" bash "$HERE/g_bringup.sh" "$WORLD"
 
 # NOTE: ROS setup.bash references unset vars -> would abort under `set -u`; guard it.
 set +u; source /opt/ros/humble/setup.bash 2>/dev/null; set -u
