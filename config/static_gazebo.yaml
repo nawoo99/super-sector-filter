@@ -130,16 +130,16 @@ rog_map:
   fix_map_origin: [ 0,0,1.0 ]
   frontier_extraction_en: false
 
-  # Virtual ceil and ground -- aligned with the ORIGINAL SUPER `static_dense`
-  # (ground -0.1, ceil 3.5) EXCEPT the ceiling is capped just below the 3 m pillar
-  # tops. Band = [-0.1, 2.8] (2.9 m, ~ the original 3.6 m): SUPER gets the 3D
-  # freedom + recovery margin it was designed for, so its escape search no longer
-  # TIME_OUTs and a momentary dip is recoverable (the old ground=1.0 made any dip
-  # below 1 m FATAL -> unrecoverable PlanFromRest loop -> crash).
-  # ceil 2.8 < pillar 3 m => the drone still cannot fly OVER obstacles, so it must
-  # avoid laterally -- the sector-filter (horizontal +/-60) premise is preserved.
+  # Virtual band [0.5, 2.8]. ceil 2.8 < pillar 3 m so the drone can't fly OVER
+  # obstacles (lateral avoidance = the sector-filter premise). ground RAISED from
+  # the original -0.1 to 0.5: at -0.1 the LiDAR's ground returns (z~0) were mapped as
+  # an OCCUPIED layer, and when the drone sank to ~0.3 m it got sandwiched between
+  # that ground-occupancy and the pillars -> CIRI corridor generation failed
+  # (GeneratePolytopeFromLine) and it rammed obstacles. ground 0.5 drops the ground
+  # returns (below the floor) and keeps SUPER from planning the drone down onto the
+  # floor, while still leaving a 2.3 m band (vs the old fatal 1 m) for 3D weaving.
   virtual_ceil_height: 2.8
-  virtual_ground_height: -0.1
+  virtual_ground_height: 0.5
 
   load_pcd_en: false
 
