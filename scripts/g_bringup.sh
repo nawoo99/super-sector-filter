@@ -29,7 +29,11 @@ tmux new-window -t "$SESSION" -n uav
 # syncs). So GUI=1 must DROP the var entirely -- HEADLESS=0 would STILL be headless.
 # Default keeps HEADLESS=1 (no GUI = the takeoff-stability fix).
 GZ_HDL="HEADLESS=1 "; [ "${GUI:-}" = "1" ] && GZ_HDL=""
-tmux send-keys -t "$SESSION:uav" "cd /root/px4/PX4-Autopilot && ${GZ_HDL}PX4_GZ_WORLD=$WORLD make px4_sitl gz_x500_lidar_3d" Enter
+# The drone is included statically in the world SDF (so the gz GUI shows it), so PX4
+# must ATTACH to it (PX4_GZ_MODEL_NAME) instead of spawning a duplicate. For a world
+# made with `gen_world.py --no-drone`, set NODRONE=1 to let PX4 spawn instead.
+if [ "${NODRONE:-0}" = "1" ]; then GZ_MODEL=""; else GZ_MODEL="PX4_GZ_MODEL_NAME=x500_lidar_3d_0 "; fi
+tmux send-keys -t "$SESSION:uav" "cd /root/px4/PX4-Autopilot && ${GZ_HDL}${GZ_MODEL}PX4_GZ_WORLD=$WORLD make px4_sitl gz_x500_lidar_3d" Enter
 
 echo "=== PX4 odometry 흐를 때까지 대기 ==="
 source /opt/ros/humble/setup.bash 2>/dev/null

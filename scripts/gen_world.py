@@ -113,9 +113,24 @@ def obstacle_block(i, x, y, r):
     )
 
 
-def build_world(template_text, world_name, positions, radius):
-    # reuse the PX4 boilerplate (physics/ground/sun/spherical_coords); the PX4
-    # drone model is added at runtime, so the world only needs ground + obstacles.
+# Drone included statically so the Gazebo GUI shows it (a runtime `create`-spawned
+# model does NOT sync to the gz GUI). PX4 then ATTACHES to it via
+# PX4_GZ_MODEL_NAME=x500_lidar_3d_0 (set in g_bringup) instead of spawning. Placed at
+# the cleared center (MARGIN disc) so it never overlaps an obstacle.
+DRONE_NAME = "x500_lidar_3d_0"
+DRONE_BLOCK = (
+    "    <!-- Vehicle: static include so the Gazebo GUI renders it; PX4 attaches via\n"
+    f"         PX4_GZ_MODEL_NAME={DRONE_NAME} (g_bringup) instead of spawning. -->\n"
+    "    <include>\n"
+    "      <uri>model://x500_lidar_3d</uri>\n"
+    f"      <name>{DRONE_NAME}</name>\n"
+    "      <pose>0 0 0.2 0 0 0</pose>\n"
+    "    </include>\n"
+)
+
+
+def build_world(template_text, world_name, positions, radius, with_drone=True):
+    # reuse the PX4 boilerplate (physics/ground/sun/spherical_coords).
     head = template_text
     # cut the old obstacles: from the obstacle comment (or first pylon) onward
     cut = head.find("<!-- Obstacles")
@@ -127,12 +142,13 @@ def build_world(template_text, world_name, positions, radius):
     # rename the world so PX4_GZ_WORLD=<world_name> and /world/<world_name>/* match
     head = re.sub(r'<world name="[^"]*">', f'<world name="{world_name}">', head, count=1)
 
+    drone = DRONE_BLOCK if with_drone else ""
     obstacles = "".join(obstacle_block(i, x, y, radius) for i, (x, y) in enumerate(positions))
     comment = f"    <!-- Obstacles: gen_world.py r={radius} count={len(positions)} (cylinders) -->\n"
-    return head.rstrip() + "\n\n" + comment + obstacles + "  </world>\n</sdf>\n"
+    return head.rstrip() + "\n\n" + drone + comment + obstacles + "  </world>\n</sdf>\n"
 
 
-def gen_one(seed, template_text, out_dir):
+def gen_one(seed, template_text, out_dir, with_drone=True):
     cond = SEED_CONDITION[seed]
     size_key, count_key = CONDITIONS[cond]
     radius = SIZES[size_key]
@@ -143,7 +159,7 @@ def gen_one(seed, template_text, out_dir):
     pts = generate_positions(count, AREA, min_dist, clear_zones(), rng)
 
     world_name = f"default_seed{seed}"
-    sdf = build_world(template_text, world_name, pts, radius)
+    sdf = build_world(template_text, world_name, pts, radius, with_drone=with_drone)
     out_path = os.path.join(out_dir, f"{world_name}.sdf")
     with open(out_path, "w") as f:
         f.write(sdf)
@@ -166,6 +182,8 @@ def main():
     ap.add_argument("--all", action="store_true", help="generate all 12 seeds")
     ap.add_argument("--template", default=DEFAULT_TEMPLATE, help="world SDF to reuse boilerplate from")
     ap.add_argument("--out-dir", default=DEFAULT_OUTDIR)
+    ap.add_argument("--no-drone", action="store_true",
+                    help="omit the static drone include (PX4 will spawn it; gz GUI won't show it)")
     args = ap.parse_args()
 
     with open(args.template) as f:
@@ -180,7 +198,7 @@ def main():
     for s in seeds:
         if s not in SEED_CONDITION:
             print(f"  seed {s}: not in 1..12, skip"); continue
-        placed, want = gen_one(s, template_text, args.out_dir)
+        placed, want = gen_one(s, template_text, args.out_dir, with_drone=not args.no_drone)
         if placed < want:
             print(f"    ! only placed {placed}/{want} (field too tight for the spacing); "
                   f"raise --area or lower count for this condition")
