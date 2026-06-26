@@ -23,7 +23,8 @@ super_sec() { _super_bringup true  "$1"; }   # sector filter ON (+/-60)
 
 # watch ONE run with RViz (sim stays HEADLESS; you watch in RViz, which shows the
 # sector-filtered cloud, ROG-Map occupancy, and SUPER's path/goal).
-super_watch() { bash "${SUPER_DIR}/watch.sh" "${1:-11}" "${2:-adaptive}"; }
+#   super_watch N mode gui   -> also start Gazebo GUI from boot (drone visible)
+super_watch() { bash "${SUPER_DIR}/watch.sh" "${1:-11}" "${2:-adaptive}" "${3:-}"; }
 
 # tear down the whole sim stack (sim + RViz + flight/control nodes).
 super_exit() {
