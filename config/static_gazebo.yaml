@@ -41,10 +41,13 @@ traj_opt:
   boundary:
     # Tamed for the tight +/-12 campaign field: SUPER's 8 m/s default crosses the
     # 24 m field in ~3 s, and offboard's position-only tracking can't follow ->
-    # big z-overshoots and ground contact. 2.5 m/s gives stable, repeatable loops.
+    # big z-overshoots and ground contact. Dense seeds need a slower profile: at
+    # 2.5 m/s the offboard tracking OVERSHOT the (tight 0.3 m) corridors between
+    # obstacles and clipped a pylon, then fell below the virtual ground and got
+    # stuck (SUPER PathSearch TIME_OUT loop). 1.2 m/s tracks the tight paths.
     # (Same limits for sector ON/OFF, so the comparison is unaffected.)
-    max_vel: 2.5
-    max_acc: 5.0
+    max_vel: 1.2
+    max_acc: 3.0
     max_jerk: 40.0
     max_omg: 2.5
     max_acc_thr: 17.0
@@ -109,7 +112,12 @@ astar:
 rog_map:
   resolution: 0.05
   inflation_resolution: 0.1
-  inflation_step: 3
+  # inflation = step * inflation_resolution. step 3 = 0.3 m ~= drone radius, but on
+  # the 0.9 m-gap dense fields that left only 0.3 m free corridors -> SUPER's escape
+  # A* timed out (could not thread them) and the drone got boxed in. step 2 = 0.2 m
+  # widens the planner corridors to 0.5 m (faster, completes) while keeping a 0.2 m
+  # margin; the slower max_vel (1.2) covers the reduced margin so the body still clears.
+  inflation_step: 2
   unk_inflation_en: false
   unk_inflation_step: 1
   # FIXED map (sliding disabled), centered at fix_map_origin → covers ±size/2.
