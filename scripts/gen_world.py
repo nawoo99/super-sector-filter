@@ -35,8 +35,7 @@ AREA = 24.0          # square field side [m]; obstacles in [-AREA/2, AREA/2]
 MARGIN = 3.0         # central takeoff-clear radius [m] (drone starts at 0,0)
 OBST_LENGTH = 3.0    # cylinder height [m]; spans z in [0, 3], drone flies at 1.5
 OBST_Z = OBST_LENGTH / 2.0
-GAP = 0.9            # min SURFACE gap between obstacles [m]; >= drone diameter (~0.6)
-                     # so every random layout stays traversable
+# (obstacle min-spacing is now per-density condition -- see GAPS below)
 
 # ---- perimeter-loop waypoints (kept clear so the mission can hover/recover there) ----
 CORNER_C = 9.0       # the 4 loop-corner waypoints sit at (+/-C, +/-C)
@@ -53,10 +52,15 @@ def clear_zones(c=CORNER_C):
     return [(0.0, 0.0, MARGIN)] + [(cx, cy, CORNER_CLEAR) for cx, cy in corner_waypoints(c)]
 
 # ---- the two study axes ----
+# Obstacle COUNT is fixed at 100 for EVERY seed; density is varied by the GAP (the
+# minimum surface spacing between obstacles), not by the count.
+COUNT = 100                                                # obstacles per seed (unified)
 SIZES = {"small": 0.15, "medium": 0.25, "large": 0.40}     # cylinder radius [m]
-COUNTS = {"dense": 160, "medium": 100, "sparse": 50}       # obstacle count (density)
+GAPS  = {"dense": 0.8, "medium": 1.1, "sparse": 1.5}       # min SURFACE gap [m]; bigger = sparser
+                                                           # (all >= drone diameter ~0.6 -> traversable;
+                                                           #  capped so 100 obstacles still fit the +/-12 field)
 
-# condition -> (size_key, count_key)
+# condition -> (size_key, gap_key)
 CONDITIONS = {
     "small":    ("small",  "medium"),
     "large":    ("large",  "medium"),
@@ -65,14 +69,14 @@ CONDITIONS = {
     "baseline": ("medium", "medium"),   # medium size AND medium spacing
 }
 
-# 12-seed map
+# 10-seed map. Count fixed at 100. The old 9,10 (baseline duplicates of 3,4) are
+# dropped; density (dense/sparse) is now the GAP, so 9,10 are the sparse pair.
 SEED_CONDITION = {
-    1: "small",   2: "small",
-    3: "baseline", 4: "baseline",   # "medium size"  (= medium,medium)
-    5: "large",   6: "large",
-    7: "dense",   8: "dense",
-    9: "baseline", 10: "baseline",  # "medium spacing" (= medium,medium)
-    11: "sparse", 12: "sparse",
+    1: "small",    2: "small",
+    3: "baseline", 4: "baseline",
+    5: "large",    6: "large",
+    7: "dense",    8: "dense",
+    9: "sparse",  10: "sparse",
 }
 
 DEFAULT_TEMPLATE = "/root/px4/PX4-Autopilot/Tools/simulation/gz/worlds/default_36.sdf"
@@ -85,7 +89,7 @@ def generate_positions(n, area, min_dist, zones, rng):
     pts = []
     half = area / 2.0
     attempts = 0
-    while len(pts) < n and attempts < n * 400:
+    while len(pts) < n and attempts < n * 1000:
         attempts += 1
         x = rng.uniform(-half, half)
         y = rng.uniform(-half, half)
@@ -150,10 +154,11 @@ def build_world(template_text, world_name, positions, radius, with_drone=True):
 
 def gen_one(seed, template_text, out_dir, with_drone=True):
     cond = SEED_CONDITION[seed]
-    size_key, count_key = CONDITIONS[cond]
+    size_key, gap_key = CONDITIONS[cond]
     radius = SIZES[size_key]
-    count = COUNTS[count_key]
-    min_dist = 2 * radius + GAP
+    gap = GAPS[gap_key]
+    count = COUNT
+    min_dist = 2 * radius + gap
 
     rng = random.Random(seed)
     pts = generate_positions(count, AREA, min_dist, clear_zones(), rng)
@@ -172,14 +177,14 @@ def gen_one(seed, template_text, out_dir, with_drone=True):
             f.write(f"{x:.3f},{y:.3f},{radius:.3f}\n")
 
     print(f"  seed {seed:2d} [{cond:8s}] size={size_key}(r={radius}) "
-          f"spacing={count_key}(want {count}, placed {len(pts)}) -> {out_path}")
+          f"gap={gap_key}({gap}m) (want {count}, placed {len(pts)}) -> {out_path}")
     return len(pts), count
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--seed", type=int, help="single seed 1..12")
-    ap.add_argument("--all", action="store_true", help="generate all 12 seeds")
+    ap.add_argument("--seed", type=int, help="single seed 1..10")
+    ap.add_argument("--all", action="store_true", help="generate all 10 seeds")
     ap.add_argument("--template", default=DEFAULT_TEMPLATE, help="world SDF to reuse boilerplate from")
     ap.add_argument("--out-dir", default=DEFAULT_OUTDIR)
     ap.add_argument("--no-drone", action="store_true",
@@ -189,7 +194,7 @@ def main():
     with open(args.template) as f:
         template_text = f.read()
 
-    seeds = list(range(1, 13)) if args.all else ([args.seed] if args.seed else [])
+    seeds = list(range(1, 11)) if args.all else ([args.seed] if args.seed else [])
     if not seeds:
         ap.error("give --seed N or --all")
     os.makedirs(args.out_dir, exist_ok=True)

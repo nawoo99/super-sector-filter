@@ -169,19 +169,24 @@ radius encodes obstacle size) by reusing the PX4 world boilerplate. This is the
 sector-ON/OFF see a byte-identical world, and the **same SDF is the single source
 of truth** for both Gazebo and `collision_monitor.py`.
 
-12-seed design (one-factor-at-a-time, 2 replicates/condition):
+10-seed design (one-factor-at-a-time, 2 replicates/condition). **Obstacle count is
+fixed at 100 for every seed; density is varied by the GAP (min surface spacing
+between obstacles), not the count:**
 
-| seeds | condition | radius | count |
-|-------|-----------|-------:|------:|
-| 1,2   | small     | 0.15 | 100 |
-| 3,4   | medium size (= baseline) | 0.25 | 100 |
-| 5,6   | large     | 0.40 | 100 |
-| 7,8   | dense     | 0.25 | 160 |
-| 9,10  | medium spacing (= baseline) | 0.25 | 100 |
-| 11,12 | sparse    | 0.25 | 50  |
+| seeds | condition | radius | gap | count |
+|-------|-----------|-------:|----:|------:|
+| 1,2   | small     | 0.15 | 1.1 | 100 |
+| 3,4   | baseline  | 0.25 | 1.1 | 100 |
+| 5,6   | large     | 0.40 | 1.1 | 100 |
+| 7,8   | dense     | 0.25 | 0.8 | 100 |
+| 9,10  | sparse    | 0.25 | 1.5 | 100 |
+
+Size axis (1–6) varies the radius at a fixed gap; density axis (7–10 vs baseline)
+varies the gap at a fixed radius. All gaps are >= the drone diameter (~0.6 m) so
+every layout stays traversable, and capped so 100 obstacles fit the ±12 m field.
 
 ```bash
-python3 scripts/gen_world.py --all        # writes default_seed1..12.sdf into PX4 worlds/
+python3 scripts/gen_world.py --all        # writes default_seed1..10.sdf into PX4 worlds/
 bash scripts/g_bringup.sh default_seed7   # HEADLESS, sector via SECTOR=true/false
 python3 scripts/collision_monitor.py --world default_seed7
 ```
@@ -225,8 +230,8 @@ behaviour differs. Per `(seed, run, mode)` we record into `results/campaign.csv`
 
 ```bash
 source /opt/ros/humble/setup.bash
-python3 scripts/g_campaign.py --seeds 11 --runs 1                 # smoke: 1 seed x 3 modes
-python3 scripts/g_campaign.py --seeds 1-12 --runs 5               # full campaign
+python3 scripts/g_campaign.py --seeds 9 --runs 1                  # smoke: 1 seed (sparse) x 3 modes
+python3 scripts/g_campaign.py --seeds 1-10 --runs 5              # full campaign
 python3 scripts/g_analyze.py results/campaign.csv --csv-out tables.csv
 ```
 

@@ -19,8 +19,8 @@
 # without restarting the planner.
 #
 #   source /opt/ros/humble/setup.bash
-#   python3 g_campaign.py --seeds 11 --runs 1                 # smoke: one seed, all modes
-#   python3 g_campaign.py --seeds 1-12 --runs 5 --modes full sector adaptive
+#   python3 g_campaign.py --seeds 9 --runs 1                  # smoke: one seed (sparse), all modes
+#   python3 g_campaign.py --seeds 1-10 --runs 5 --modes full sector adaptive
 # ------------------------------------------------------------------------------------
 import argparse
 import csv
@@ -316,7 +316,7 @@ FIELDS = ["seed", "run", "mode", "world", "success", "mission_time_s",
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--seeds", default="11", help="seed list e.g. '11' or '1-12' or '1,3,5'")
+    ap.add_argument("--seeds", default="9", help="seed list e.g. '9' or '1-10' or '1,3,5'")
     ap.add_argument("--runs", type=int, default=1, help="runs per (seed, mode)")
     ap.add_argument("--modes", nargs="+", default=["full", "sector", "adaptive"],
                     choices=list(MODES.keys()))
