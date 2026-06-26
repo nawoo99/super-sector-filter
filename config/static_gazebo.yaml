@@ -39,16 +39,18 @@ traj_opt:
     print_optimizer_log: false
 
   boundary:
-    # Aligned with the ORIGINAL SUPER `static_dense` benchmark (max_vel 8 / acc 15 /
-    # jerk 120). Cramming SUPER into a 1 m band at 1.2 m/s was far outside its design
-    # envelope (it needs 3D freedom + speed to plan) and made its escape search
-    # TIME_OUT in dense fields. We restore the original dynamics and widen the z-band
-    # (see virtual_ground/ceil below); only the ceiling stays below the 3 m pillars so
-    # the drone still can't fly over them (lateral avoidance = the sector-filter premise).
+    # The z-band is widened toward the original SUPER `static_dense` envelope (see
+    # virtual_ground/ceil below) so SUPER's escape search no longer TIME_OUTs. Speed,
+    # though, is set to what our control interface can TRACK, not SUPER's 8 m/s: we
+    # feed SUPER's trajectory to PX4 as POSITION setpoints (offboard.py -> PX4 position
+    # controller), NOT via SUPER's native geometric (attitude+thrust) controller. At
+    # 8 m/s the position controller couldn't follow -> the drone outran the planner
+    # ("Replan over time", corridor-gen failures) and plowed through obstacles. 3 m/s
+    # keeps the drone within the position controller's tracking envelope.
     # (Same limits for sector ON/OFF, so the comparison is unaffected.)
-    max_vel: 8.0
-    max_acc: 15.0
-    max_jerk: 120.0
+    max_vel: 3.0
+    max_acc: 8.0
+    max_jerk: 60.0
     max_omg: 2.5
     max_acc_thr: 17.0
     min_acc_thr: 6.0
