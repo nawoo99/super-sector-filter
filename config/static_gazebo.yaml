@@ -39,16 +39,16 @@ traj_opt:
     print_optimizer_log: false
 
   boundary:
-    # Tamed for the tight +/-12 campaign field: SUPER's 8 m/s default crosses the
-    # 24 m field in ~3 s, and offboard's position-only tracking can't follow ->
-    # big z-overshoots and ground contact. Dense seeds need a slower profile: at
-    # 2.5 m/s the offboard tracking OVERSHOT the (tight 0.3 m) corridors between
-    # obstacles and clipped a pylon, then fell below the virtual ground and got
-    # stuck (SUPER PathSearch TIME_OUT loop). 1.2 m/s tracks the tight paths.
+    # Aligned with the ORIGINAL SUPER `static_dense` benchmark (max_vel 8 / acc 15 /
+    # jerk 120). Cramming SUPER into a 1 m band at 1.2 m/s was far outside its design
+    # envelope (it needs 3D freedom + speed to plan) and made its escape search
+    # TIME_OUT in dense fields. We restore the original dynamics and widen the z-band
+    # (see virtual_ground/ceil below); only the ceiling stays below the 3 m pillars so
+    # the drone still can't fly over them (lateral avoidance = the sector-filter premise).
     # (Same limits for sector ON/OFF, so the comparison is unaffected.)
-    max_vel: 1.2
-    max_acc: 3.0
-    max_jerk: 40.0
+    max_vel: 8.0
+    max_acc: 15.0
+    max_jerk: 120.0
     max_omg: 2.5
     max_acc_thr: 17.0
     min_acc_thr: 6.0
@@ -112,12 +112,11 @@ astar:
 rog_map:
   resolution: 0.05
   inflation_resolution: 0.1
-  # inflation = step * inflation_resolution. step 3 = 0.3 m ~= drone radius, but on
-  # the 0.9 m-gap dense fields that left only 0.3 m free corridors -> SUPER's escape
-  # A* timed out (could not thread them) and the drone got boxed in. step 2 = 0.2 m
-  # widens the planner corridors to 0.5 m (faster, completes) while keeping a 0.2 m
-  # margin; the slower max_vel (1.2) covers the reduced margin so the body still clears.
-  inflation_step: 2
+  # inflation = step * inflation_resolution = 0.3 m (~ drone radius). Original SUPER
+  # `static_dense` value; restored from the risky 0.2 m (which planned paths the body
+  # clipped). The wide z-band below (not a thinner inflation) is what gives the escape
+  # search room, so we keep the safe 0.3 m margin.
+  inflation_step: 3
   unk_inflation_en: false
   unk_inflation_step: 1
   # FIXED map (sliding disabled), centered at fix_map_origin → covers ±size/2.
@@ -129,19 +128,16 @@ rog_map:
   fix_map_origin: [ 0,0,1.0 ]
   frontier_extraction_en: false
 
-  # Virtual ceil and ground
-  # NOTE: real Gazebo floor is z=0; keep virtual ground just below the ground-start
-  # z (~0.04) but NOT far below the real floor, or SUPER plans a descent into the
-  # ground (G5 open issue). -0.3 clears the start check without inviting descent.
-  # Narrow z-band [1.0, 2.0] around the 1.5 m flight altitude. Obstacles are
-  # ground-rooted 3 m pillars, so the drone can neither fly over (ceil<3) nor
-  # under them -> it MUST navigate laterally (what the sector-filter FoV study
-  # needs). A wide band just let SUPER's optimizer wander in z (saw it climb to
-  # 3.2 m / dip to -0.3 m and crash); the tight band removes that freedom.
-  # Takeoff (z=0.04) is below the floor, but that only makes ROG-Map skip its
-  # update (warning, not fatal) until the offboard-driven climb passes 1.0 m.
-  virtual_ceil_height: 2.0
-  virtual_ground_height: 1.0
+  # Virtual ceil and ground -- aligned with the ORIGINAL SUPER `static_dense`
+  # (ground -0.1, ceil 3.5) EXCEPT the ceiling is capped just below the 3 m pillar
+  # tops. Band = [-0.1, 2.8] (2.9 m, ~ the original 3.6 m): SUPER gets the 3D
+  # freedom + recovery margin it was designed for, so its escape search no longer
+  # TIME_OUTs and a momentary dip is recoverable (the old ground=1.0 made any dip
+  # below 1 m FATAL -> unrecoverable PlanFromRest loop -> crash).
+  # ceil 2.8 < pillar 3 m => the drone still cannot fly OVER obstacles, so it must
+  # avoid laterally -- the sector-filter (horizontal +/-60) premise is preserved.
+  virtual_ceil_height: 2.8
+  virtual_ground_height: -0.1
 
   load_pcd_en: false
 
