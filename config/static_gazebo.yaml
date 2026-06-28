@@ -28,7 +28,10 @@ super_planner:
   sensing_horizon: -1
   receding_dis: 1.0
   robot_r: 0.2
-  yaw_dot_max: 3.0
+  # yaw_dot_max lowered 3.0->1.5: at a perimeter corner the velocity heading swings
+  # ~135 deg; at 3.0 rad/s (~172 deg/s) that yaw snap coincided with the altitude sink
+  # (fast yaw bleeds vertical thrust). 1.5 rad/s yaws gently through the corner.
+  yaw_dot_max: 1.5
   # Yaw mode: 1 heading to velocity, 2 heading to goal
   yaw_mode: 1
   mpc_horizon: 15
@@ -48,9 +51,9 @@ traj_opt:
     # ("Replan over time", corridor-gen failures) and plowed through obstacles. 3 m/s
     # keeps the drone within the position controller's tracking envelope.
     # (Same limits for sector ON/OFF, so the comparison is unaffected.)
-    max_vel: 2.5
-    max_acc: 5.0
-    max_jerk: 40.0
+    max_vel: 1.5
+    max_acc: 3.5
+    max_jerk: 25.0
     max_omg: 2.5
     max_acc_thr: 17.0
     min_acc_thr: 6.0

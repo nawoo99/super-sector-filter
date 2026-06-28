@@ -46,11 +46,17 @@ for i in $(seq 1 24); do
   fi
 done
 
-echo "=== PX4 params: allow OFFBOARD arming without RC/GCS link ==="
+echo "=== PX4 params: allow OFFBOARD arming + hold altitude on aggressive turns ==="
 # Without these, PX4 preflight blocks arming ("No connection to the GCS"):
 #   COM_RCL_EXCEPT bit2(=4) exempts OFFBOARD from the RC/GCS-link requirement.
 #   NAV_RCL_ACT/NAV_DLL_ACT 0 disable RC/data-link-loss failsafes for sim.
-for p in "param set COM_RCL_EXCEPT 4" "param set NAV_RCL_ACT 0" "param set NAV_DLL_ACT 0" "param set COM_ARM_WO_GPS 0"; do
+# MPC_TILTMAX_AIR 25: cap the tilt so a sharp corner turn can't pitch the drone hard
+#   enough to lose vertical thrust and sink (the residual corner-sink failure mode).
+# COM_DISARM_LAND -1: never auto-disarm on ground contact -- if the drone dips and
+#   brushes the ground it stays armed and the z-pinned setpoint flies it back up
+#   (without this PX4's land detector strands it on the floor).
+# MPC_Z_VEL_MAX_UP 4: faster climb-back so an altitude dip is recovered quickly.
+for p in "param set COM_RCL_EXCEPT 4" "param set NAV_RCL_ACT 0" "param set NAV_DLL_ACT 0" "param set COM_ARM_WO_GPS 0" "param set MPC_TILTMAX_AIR 25" "param set COM_DISARM_LAND -1" "param set MPC_Z_VEL_MAX_UP 4.0"; do
   tmux send-keys -t "$SESSION:uav" "$p" Enter
   sleep 1
 done
