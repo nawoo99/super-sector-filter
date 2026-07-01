@@ -51,7 +51,7 @@ traj_opt:
     # ("Replan over time", corridor-gen failures) and plowed through obstacles. 3 m/s
     # keeps the drone within the position controller's tracking envelope.
     # (Same limits for sector ON/OFF, so the comparison is unaffected.)
-    max_vel: 1.5
+    max_vel: 1.2
     max_acc: 3.5
     max_jerk: 25.0
     max_omg: 2.5
@@ -117,10 +117,10 @@ astar:
 rog_map:
   resolution: 0.05
   inflation_resolution: 0.1
-  # inflation = step * inflation_resolution = 0.3 m (~ drone radius). Original SUPER
-  # `static_dense` value; restored from the risky 0.2 m (which planned paths the body
-  # clipped). The wide z-band below (not a thinner inflation) is what gives the escape
-  # search room, so we keep the safe 0.3 m margin.
+  # inflation = step * inflation_resolution = 0.3 m. 0.4 over-constrained the dense field
+  # and forced SUPER into long, erratic detours (the drone got lost), so keep 0.3. The
+  # altitude-floor protection in offboard.py is what actually saves a clipped/dipped drone
+  # now (it suppresses horizontal accel and climbs out before it wedges below the ground).
   inflation_step: 3
   unk_inflation_en: false
   unk_inflation_step: 1

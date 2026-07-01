@@ -39,7 +39,11 @@ OBST_Z = OBST_LENGTH / 2.0
 
 # ---- perimeter-loop waypoints (kept clear so the mission can hover/recover there) ----
 CORNER_C = 9.0       # the 4 loop-corner waypoints sit at (+/-C, +/-C)
-CORNER_CLEAR = 1.5   # clear radius [m] around each corner waypoint
+CORNER_CLEAR = 2.5   # clear radius [m] around each corner waypoint. Raised 1.5->2.5:
+                     # the drone makes a ~135 deg turn AT each corner; with obstacles only
+                     # 1.5 m away it clipped one mid-turn (verified: SO3 commanded full
+                     # up-thrust yet the drone was forced down = a collision). 2.5 m gives
+                     # the turn room. Uniform across seeds, so the A/B comparison stays fair.
 
 
 def corner_waypoints(c=CORNER_C):
