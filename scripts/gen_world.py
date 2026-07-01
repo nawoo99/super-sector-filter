@@ -31,7 +31,11 @@ import random
 import re
 
 # ---- field / obstacle geometry ----
-AREA = 24.0          # square field side [m]; obstacles in [-AREA/2, AREA/2]
+AREA = 30.0          # square field side [m]; obstacles in [-15,15]. Enlarged from 24: keeping
+                     # COUNT=100 but spreading them over a bigger field widens the AVERAGE
+                     # gaps (the min-spacing GAPS are unchanged) so the ~0.3 m tracking error
+                     # no longer clips -> reliable clean flight; also makes the +/-9 loop more
+                     # central (obstacles on all sides = detour room, no edge traps).
 MARGIN = 3.0         # central takeoff-clear radius [m] (drone starts at 0,0)
 OBST_LENGTH = 3.0    # cylinder height [m]; spans z in [0, 3], drone flies at 1.5
 OBST_Z = OBST_LENGTH / 2.0
@@ -60,7 +64,7 @@ def clear_zones(c=CORNER_C):
 # minimum surface spacing between obstacles), not by the count.
 COUNT = 100                                                # obstacles per seed (unified)
 SIZES = {"small": 0.15, "medium": 0.25, "large": 0.40}     # cylinder radius [m]
-GAPS  = {"dense": 0.8, "medium": 1.1, "sparse": 1.5}       # min SURFACE gap [m]; bigger = sparser
+GAPS  = {"dense": 1.1, "medium": 1.4, "sparse": 1.8}       # min SURFACE gap [m]; widened
                                                            # (all >= drone diameter ~0.6 -> traversable;
                                                            #  capped so 100 obstacles still fit the +/-12 field)
 

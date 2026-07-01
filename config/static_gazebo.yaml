@@ -51,7 +51,7 @@ traj_opt:
     # ("Replan over time", corridor-gen failures) and plowed through obstacles. 3 m/s
     # keeps the drone within the position controller's tracking envelope.
     # (Same limits for sector ON/OFF, so the comparison is unaffected.)
-    max_vel: 1.0
+    max_vel: 0.9
     max_acc: 3.5
     max_jerk: 25.0
     max_omg: 2.5
@@ -106,6 +106,9 @@ traj_opt:
 
 
 astar:
+  # KEEP this A* grid SMALL (~500). It is a LOCAL search grid (planning_horizon
+  # 7 m), so it need NOT cover the whole enlarged field; bumping it to 680^2 x120 to
+  # 'match' map_size OOM-killed fsm_node at bringup. 500 (+/-12.5 m) covers the +/-9 loop.
   map_voxel_num: [ 500, 500, 100 ]
   visual_process: false
   allow_diag: true
@@ -128,7 +131,7 @@ rog_map:
   # Campaign worlds are square ±12 m (gen_world.py AREA=24), so the box must reach
   # ±14 in x AND y; the old [15,110,6] (a long y-corridor from SUPER's benchmark)
   # only covered x∈[-7.5,7.5] → obstacles past that were unmapped (blind flight).
-  map_size: [ 28,28,6 ]
+  map_size: [ 34,34,6 ]
   # If the map rolling is disable, the map origin [m] should be set.
   fix_map_origin: [ 0,0,1.0 ]
   frontier_extraction_en: false
