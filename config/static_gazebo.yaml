@@ -51,7 +51,7 @@ traj_opt:
     # ("Replan over time", corridor-gen failures) and plowed through obstacles. 3 m/s
     # keeps the drone within the position controller's tracking envelope.
     # (Same limits for sector ON/OFF, so the comparison is unaffected.)
-    max_vel: 1.2
+    max_vel: 1.0
     max_acc: 3.5
     max_jerk: 25.0
     max_omg: 2.5
@@ -142,7 +142,7 @@ rog_map:
   # returns (below the floor) and keeps SUPER from planning the drone down onto the
   # floor, while still leaving a 2.3 m band (vs the old fatal 1 m) for 3D weaving.
   virtual_ceil_height: 2.8
-  virtual_ground_height: 0.5
+  virtual_ground_height: 0.2
 
   load_pcd_en: false
 
