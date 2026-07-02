@@ -51,9 +51,9 @@ traj_opt:
     # ("Replan over time", corridor-gen failures) and plowed through obstacles. 3 m/s
     # keeps the drone within the position controller's tracking envelope.
     # (Same limits for sector ON/OFF, so the comparison is unaffected.)
-    max_vel: 0.9
-    max_acc: 3.5
-    max_jerk: 25.0
+    max_vel: 0.9   # validated clean-flight baseline (a 1.5 probe showed flight quality
+    max_acc: 3.5   # collapses for BOTH modes at 1.5 with the current SO3 controller;
+    max_jerk: 25.0 # 1.5 needs controller re-tuning before it's a fair test)
     max_omg: 2.5
     max_acc_thr: 17.0
     min_acc_thr: 6.0
@@ -106,9 +106,6 @@ traj_opt:
 
 
 astar:
-  # KEEP this A* grid SMALL (~500). It is a LOCAL search grid (planning_horizon
-  # 7 m), so it need NOT cover the whole enlarged field; bumping it to 680^2 x120 to
-  # 'match' map_size OOM-killed fsm_node at bringup. 500 (+/-12.5 m) covers the +/-9 loop.
   map_voxel_num: [ 500, 500, 100 ]
   visual_process: false
   allow_diag: true
