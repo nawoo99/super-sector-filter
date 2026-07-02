@@ -90,6 +90,7 @@ class GMission(Node):
         self.pub_kc = self.create_publisher(String, "/keyboard_cmd", 10)
         self.pub_goal = self.create_publisher(PoseStamped, "/planning/click_goal", goal_qos)
         self.pub_sector = self.create_publisher(Bool, "/sector/enable", 1)
+        self.pub_risk = self.create_publisher(Bool, "/sector/risk_gate", 1)
         self.sector_on = True   # track current sector state (adaptive recovery)
 
         self.create_timer(0.05, self.tick)
@@ -118,6 +119,11 @@ class GMission(Node):
         full=OFF, sector/adaptive=ON). Bypasses the adaptive gate in set_sector()."""
         m = Bool(); m.data = bool(on); self.pub_sector.publish(m)
         self.sector_on = on
+
+    def publish_risk_gate(self, on):
+        """Enable/disable the cloud_preprocessor's risk-gated auto-expansion (adaptive
+        mode = fixed sector that expands to full-view only near side obstacles)."""
+        m = Bool(); m.data = bool(on); self.pub_risk.publish(m)
 
     def set_sector(self, on):
         """Toggle the cloud_preprocessor sector filter at runtime (adaptive recovery).
@@ -214,11 +220,14 @@ class GMission(Node):
                     self.phase = "mission"
                     # per-mode sector base: full=OFF(360), sector/adaptive=ON(+/-60)
                     self.publish_sector_raw(self.args.sector_base == "on")
+                    # adaptive = risk-gated auto-expansion (fixed sector that widens near side obstacles)
+                    self.publish_risk_gate(self.args.risk_gate == "on")
                     self.mission_t0 = time.time()
                     self.perf_row_start = self.perf_rows()
                     self.get_logger().info(
                         f"*** HOVER at z={self.odom[2]:.2f} -> start loop "
                         f"(mode={self.args.mode}, sector_base={self.args.sector_base}, "
+                        f"risk_gate={self.args.risk_gate}, "
                         f"perf_row_start={self.perf_row_start}) ***")
                     self.send_current_wp()
             else:
@@ -325,6 +334,8 @@ def main():
     ap.add_argument("--run", default="", help="run index recorded in metrics")
     ap.add_argument("--sector-base", default="on", choices=["on", "off"], dest="sector_base",
                     help="sector state to publish at loop start (full=off, sector/adaptive=on)")
+    ap.add_argument("--risk-gate", default="off", choices=["on", "off"], dest="risk_gate",
+                    help="risk-gated auto-expansion (adaptive: fixed sector widens to full-view near side obstacles)")
     ap.add_argument("--metrics-out", default=None, dest="metrics_out",
                     help="write JSON metrics here at loop end and exit (campaign mode)")
     ap.add_argument("--perf-log", dest="perf_log",

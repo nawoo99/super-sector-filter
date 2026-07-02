@@ -39,11 +39,16 @@ PERF_LOG = "/root/super_ws/src/SUPER/rog_map/log/rm_performance_log.csv"
 WORLD_DIR = "/root/px4/PX4-Autopilot/Tools/simulation/gz/worlds"
 CLK_TCK = os.sysconf("SC_CLK_TCK") or 100
 
-# mode -> (sector_base, adaptive?)
+# mode -> (sector_base, corner_toggle_adaptive?, risk_gate)
+#   full      sector OFF  (360 baseline)
+#   sector    fixed +/-60, no recovery                     -> shows the safety cost
+#   adaptive  sector ON + risk-gated auto-expansion         -> the fix: widens to full-view
+#             (corner-toggle OFF; the per-frame risk gate      only near side obstacles, so
+#              in cloud_preprocessor is THE mechanism)         it keeps most of the savings
 MODES = {
-    "full":     ("off", False),
-    "sector":   ("on",  False),
-    "adaptive": ("on",  True),
+    "full":     ("off", False, "off"),
+    "sector":   ("on",  False, "off"),
+    "adaptive": ("on",  False, "on"),
 }
 
 ROS_ENV = "source /opt/ros/humble/setup.bash && source /root/super_ws/install/local_setup.bash"
@@ -224,7 +229,7 @@ def teardown():
 
 # ---------- one mission ----------
 def run_mode(world, seed, run, mode, args, tmpdir):
-    sector_base, adaptive = MODES[mode]
+    sector_base, adaptive, risk_gate = MODES[mode]
     tag = f"{world}_run{run}_{mode}"
     metrics_path = os.path.join(tmpdir, f"{tag}.metrics.json")
     coll_path = os.path.join(tmpdir, f"{tag}.coll.txt")
@@ -232,7 +237,7 @@ def run_mode(world, seed, run, mode, args, tmpdir):
         if os.path.exists(p):
             os.remove(p)
 
-    log(f"--- {tag}: sector_base={sector_base} adaptive={adaptive} ---")
+    log(f"--- {tag}: sector_base={sector_base} corner_toggle={adaptive} risk_gate={risk_gate} ---")
     # 1) collision monitor, fresh
     coll_cmd = (f"{ROS_ENV} && python3 {COLL_MON} --world {world} --out {coll_path}")
     coll = subprocess.Popen(["bash", "-c", coll_cmd],
@@ -242,7 +247,8 @@ def run_mode(world, seed, run, mode, args, tmpdir):
 
     # 2) mission (blocks until loop ends + exits in campaign mode)
     mflags = ["--mode", mode, "--seed", str(seed), "--run", str(run),
-              "--sector-base", sector_base, "--metrics-out", metrics_path,
+              "--sector-base", sector_base, "--risk-gate", risk_gate,
+              "--metrics-out", metrics_path,
               "--perf-log", PERF_LOG, "--z", str(args.z), "--c", str(args.c),
               "--corner-hover", str(args.corner_hover),
               "--mission-timeout", str(args.mission_timeout)]
