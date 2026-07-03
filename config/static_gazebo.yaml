@@ -51,9 +51,9 @@ traj_opt:
     # ("Replan over time", corridor-gen failures) and plowed through obstacles. 3 m/s
     # keeps the drone within the position controller's tracking envelope.
     # (Same limits for sector ON/OFF, so the comparison is unaffected.)
-    max_vel: 0.9   # validated clean-flight baseline (a 1.5 probe showed flight quality
-    max_acc: 3.5   # collapses for BOTH modes at 1.5 with the current SO3 controller;
-    max_jerk: 25.0 # 1.5 needs controller re-tuning before it's a fair test)
+    max_vel: 0.9   # validated clean-flight baseline. A re-tuned 1.5 test (see results/
+    max_acc: 3.5   # speed_cmp_1p5) still gave scrappy flight (weak TWR) AND adaptive
+    max_jerk: 25.0 # collided MORE than sector there, so 1.5 was reverted.
     max_omg: 2.5
     max_acc_thr: 17.0
     min_acc_thr: 6.0
