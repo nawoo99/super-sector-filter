@@ -94,7 +94,7 @@ sleep 2
 
 echo "=== [8] offboard.py (PX4 offboard controller) ==="
 tmux new-window -t "$SESSION" -n offb
-tmux send-keys -t "$SESSION:offb" "source /opt/ros/humble/setup.bash && source /root/px4_control_ws/install/setup.bash && source /root/ego-planner-swarm/install/setup.bash && python3 /root/px4_control_ws/src/px4_keyboard_control/px4_keyboard_control/offboard.py" Enter
+tmux send-keys -t "$SESSION:offb" "source /opt/ros/humble/setup.bash && source /root/px4_control_ws/install/setup.bash && source /root/ego-planner-swarm/install/setup.bash && python3 /root/px4_control_ws/src/px4_keyboard_control/px4_keyboard_control/offboard.py --ros-args -p fixed_yaw_deg:=${FIXED_YAW:-999.0}" Enter
 sleep 3
 
 echo "=== bringup 완료 (tmux: $SESSION) ==="

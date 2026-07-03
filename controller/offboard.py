@@ -207,6 +207,12 @@ class OffboardControl(Node):
         #     q_d        = attitude from (thrust_dir, desired yaw)
         #     thr_norm   = THR_HOVER * |thrust_dir| / g
         self.use_so3 = bool(self.declare_parameter("use_so3", True).value)
+        # FIXED-YAW mode: hold heading at fixed_yaw_deg (NED) instead of tracking velocity.
+        # 999 (default) = disabled = track SUPER's yaw. Set e.g. 0 to face NED-north the whole
+        # loop -> the forward sector points away from motion on 3 of the 4 legs (blindspot test).
+        _fy = float(self.declare_parameter("fixed_yaw_deg", 999.0).value)
+        self.fixed_yaw_en = abs(_fy) <= 360.0
+        self.fixed_yaw_ned = math.radians(_fy) if self.fixed_yaw_en else 0.0
         # NOTE the x500 carries the 3D LiDAR -> it is heavy, true hover is ~0.82 of full
         # thrust (weak TWR ~1.2). Keep the feed-forward hover a touch LOW (0.70) and let
         # the altitude integrator trim up to the true value (this gave clean, non-bouncy
@@ -614,7 +620,11 @@ class OffboardControl(Node):
                                math.cos(self.so3_tilt_max)], dtype=float)
 
         # build desired attitude from b3 + desired yaw (NED)
-        yaw = self.fp_yaw_ned
+        # FIXED-YAW mode: hold a constant heading (decoupled from velocity). This exposes
+        # the forward ±60° sector's blindspot on legs where motion is NOT along the heading
+        # (the cone faces away from where the drone is going) -> forward-only sensing misses
+        # obstacles in the path -> the regime where adaptive full-view recovery is needed.
+        yaw = self.fixed_yaw_ned if self.fixed_yaw_en else self.fp_yaw_ned
         b1_des = np.array([math.cos(yaw), math.sin(yaw), 0.0], dtype=float)
         b2 = np.cross(b3, b1_des)
         b2n = float(np.linalg.norm(b2))
@@ -634,7 +644,7 @@ class OffboardControl(Node):
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
         msg.q_d = [float(q[0]), float(q[1]), float(q[2]), float(q[3])]
         msg.thrust_body = [0.0, 0.0, float(-thr_norm)]   # body FRD: up = -z
-        msg.yaw_sp_move_rate = float(self.fp_yaw_dot_ned)
+        msg.yaw_sp_move_rate = 0.0 if self.fixed_yaw_en else float(self.fp_yaw_dot_ned)
         self.attitude_setpoint_pub.publish(msg)
 
         # diagnostic (3 Hz): why does altitude sink during maneuvers?
