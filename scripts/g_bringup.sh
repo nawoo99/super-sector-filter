@@ -76,7 +76,7 @@ timeout 5 ros2 run tf2_ros tf2_echo world x500_lidar_3d_0/link/lidar_3d_v3 2>/de
 
 echo "=== [5] cloud_preprocessor (sector filter + world 변환) ==="
 tmux new-window -t "$SESSION" -n cpp
-tmux send-keys -t "$SESSION:cpp" "source /opt/ros/humble/setup.bash && source /root/super_ws/install/local_setup.bash && ros2 run gz_super_bridge cloud_preprocessor --ros-args -p input_topic:=/points -p odom_topic:=/odometry -p sector_enable:=${SECTOR:-true} -p risk_gate_enable:=${RISK_GATE:-false} -p risk_range:=${RISK_RANGE:-2.0} -p risk_hold_frames:=${RISK_HOLD:-5}" Enter
+tmux send-keys -t "$SESSION:cpp" "source /opt/ros/humble/setup.bash && source /root/super_ws/install/local_setup.bash && ros2 run gz_super_bridge cloud_preprocessor --ros-args -p input_topic:=/points -p odom_topic:=/odometry -p sector_enable:=${SECTOR:-true} -p risk_gate_enable:=${RISK_GATE:-false} -p risk_range:=${RISK_RANGE:-2.0} -p risk_hold_frames:=${RISK_HOLD:-5} -p align_to_velocity:=${ALIGN_VEL:-false}" Enter
 sleep 4
 
 echo "=== [6] SUPER fsm_node (ROG-Map + planner) ==="

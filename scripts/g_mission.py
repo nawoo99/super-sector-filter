@@ -91,6 +91,7 @@ class GMission(Node):
         self.pub_goal = self.create_publisher(PoseStamped, "/planning/click_goal", goal_qos)
         self.pub_sector = self.create_publisher(Bool, "/sector/enable", 1)
         self.pub_risk = self.create_publisher(Bool, "/sector/risk_gate", 1)
+        self.pub_align = self.create_publisher(Bool, "/sector/align_velocity", 1)
         self.sector_on = True   # track current sector state (adaptive recovery)
 
         self.create_timer(0.05, self.tick)
@@ -124,6 +125,12 @@ class GMission(Node):
         """Enable/disable the cloud_preprocessor's risk-gated auto-expansion (adaptive
         mode = fixed sector that expands to full-view only near side obstacles)."""
         m = Bool(); m.data = bool(on); self.pub_risk.publish(m)
+
+    def publish_align_velocity(self, on):
+        """Enable/disable velocity-aligned sector (directional recovery: the ±60 cone
+        points along MOTION instead of body-forward, recovering the fixed-yaw blindspot
+        without full-view over-population)."""
+        m = Bool(); m.data = bool(on); self.pub_align.publish(m)
 
     def set_sector(self, on):
         """Toggle the cloud_preprocessor sector filter at runtime (adaptive recovery).
@@ -222,6 +229,8 @@ class GMission(Node):
                     self.publish_sector_raw(self.args.sector_base == "on")
                     # adaptive = risk-gated auto-expansion (fixed sector that widens near side obstacles)
                     self.publish_risk_gate(self.args.risk_gate == "on")
+                    # velocity-aligned sector (directional recovery for fixed-yaw blindspot)
+                    self.publish_align_velocity(self.args.align_velocity == "on")
                     self.mission_t0 = time.time()
                     self.perf_row_start = self.perf_rows()
                     self.get_logger().info(
@@ -336,6 +345,8 @@ def main():
                     help="sector state to publish at loop start (full=off, sector/adaptive=on)")
     ap.add_argument("--risk-gate", default="off", choices=["on", "off"], dest="risk_gate",
                     help="risk-gated auto-expansion (adaptive: fixed sector widens to full-view near side obstacles)")
+    ap.add_argument("--align-velocity", default="off", choices=["on", "off"], dest="align_velocity",
+                    help="velocity-aligned sector (directional recovery: cone points along motion, not body-forward)")
     ap.add_argument("--metrics-out", default=None, dest="metrics_out",
                     help="write JSON metrics here at loop end and exit (campaign mode)")
     ap.add_argument("--perf-log", dest="perf_log",

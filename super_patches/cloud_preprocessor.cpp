@@ -64,6 +64,17 @@ public:
     risk_hold_frames_ = std::max<int>(0, declare_parameter<int>("risk_hold_frames", 5)); // hysteresis: frames to stay expanded after last trigger
     risk_gate_topic_  = declare_parameter<std::string>("risk_gate_topic", "/sector/risk_gate");
 
+    // --- velocity-aligned sector (directional adaptive recovery) ---
+    // Instead of expanding to full 360 (which floods a dense ROG-Map and destabilizes the
+    // planner), keep ONE ±sector cone but CENTER it on the VELOCITY direction instead of
+    // body-forward. This maps what's ahead-in-MOTION even when heading is decoupled from
+    // velocity (fixed-yaw), recovering the forward-only blindspot WITHOUT over-populating
+    // the map -> keeps the ~64% savings AND stays reliable. Below align_vmin (near-hover)
+    // the velocity direction is ill-defined, so fall back to body-forward.
+    align_to_velocity_ = declare_parameter<bool>("align_to_velocity", false);
+    align_vmin_        = declare_parameter<double>("align_vmin", 0.15);   // m/s min speed to trust vel dir
+    align_topic_       = declare_parameter<std::string>("align_topic", "/sector/align_velocity");
+
     // --- performance options (match EGO defaults) ---
     use_stride_ = declare_parameter<bool>("use_stride", true);
     stride_     = std::max<int>(1, declare_parameter<int>("stride", 2));
@@ -93,6 +104,10 @@ public:
     risk_sub_ = create_subscription<std_msgs::msg::Bool>(
         risk_gate_topic_, rclcpp::QoS(1).reliable(),
         std::bind(&CloudPreprocessor::riskGateCallback, this, std::placeholders::_1));
+
+    align_sub_ = create_subscription<std_msgs::msg::Bool>(
+        align_topic_, rclcpp::QoS(1).reliable(),
+        std::bind(&CloudPreprocessor::alignCallback, this, std::placeholders::_1));
 
     rclcpp::QoS qos(rclcpp::KeepLast(5));
     qos.reliability(rclcpp::ReliabilityPolicy::Reliable);
@@ -125,20 +140,41 @@ private:
     }
   }
 
+  void alignCallback(const std_msgs::msg::Bool::SharedPtr msg)
+  {
+    const bool prev = align_to_velocity_.exchange(msg->data);
+    if (prev != msg->data) {
+      RCLCPP_INFO(get_logger(), "velocity-aligned sector -> %s",
+                  msg->data ? "ON (cone points along motion)" : "OFF (cone = body-forward)");
+    }
+  }
+
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
   {
     std::lock_guard<std::mutex> lk(odom_mtx_);
     // world <- body (world == map identity in this Gazebo setup)
-    T_world_body_.translation() = Eigen::Vector3f(
+    Eigen::Vector3f pos(
         static_cast<float>(msg->pose.pose.position.x),
         static_cast<float>(msg->pose.pose.position.y),
         static_cast<float>(msg->pose.pose.position.z));
+    // world-frame velocity by finite-difference (frame-agnostic vs the twist field), low-pass
+    const double t = now().seconds();
+    if (have_odom_) {
+      const double dt = t - last_odom_t_;
+      if (dt > 1e-3 && dt < 0.5) {
+        Eigen::Vector3f v = (pos - T_world_body_.translation()) / static_cast<float>(dt);
+        const float a = 0.3f;
+        v_world_ = have_vel_ ? (a * v + (1.0f - a) * v_world_) : v;
+        have_vel_ = true;
+      }
+    }
+    T_world_body_.translation() = pos;
     T_world_body_.linear() = Eigen::Quaternionf(
         static_cast<float>(msg->pose.pose.orientation.w),
         static_cast<float>(msg->pose.pose.orientation.x),
         static_cast<float>(msg->pose.pose.orientation.y),
         static_cast<float>(msg->pose.pose.orientation.z)).toRotationMatrix();
-    last_odom_t_ = now().seconds();
+    last_odom_t_ = t;
     have_odom_ = true;
   }
 
@@ -146,6 +182,8 @@ private:
   {
     // require fresh odom for a deterministic world transform
     Eigen::Affine3f T_world_lidar;
+    Eigen::Vector3f v_world(0, 0, 0);
+    bool have_vel_local = false;
     {
       std::lock_guard<std::mutex> lk(odom_mtx_);
       if (!have_odom_) {
@@ -157,6 +195,19 @@ private:
         return;
       }
       T_world_lidar = T_world_body_ * T_body_lidar_;
+      v_world = v_world_; have_vel_local = have_vel_;
+    }
+
+    // sector center angle (sensor frame): body-forward (0) by default, or the VELOCITY
+    // direction when velocity-alignment is on and the drone is moving fast enough.
+    double phi_c = 0.0;
+    bool vel_aligned = false;
+    if (align_to_velocity_.load() && have_vel_local) {
+      if (v_world.head<2>().norm() > static_cast<float>(align_vmin_)) {
+        Eigen::Vector3f v_lidar = T_world_lidar.linear().transpose() * v_world;   // world->sensor
+        phi_c = std::atan2(static_cast<double>(v_lidar.y()), static_cast<double>(v_lidar.x()));
+        vel_aligned = true;
+      }
     }
 
     // 1) ROS -> PCL
@@ -189,7 +240,8 @@ private:
       if (risk_hold_ > 0) { sector_now = false; --risk_hold_; risk_expanded = true; }
     }
 
-    // 2b) sector filter in SENSOR frame (forward = +x). atan2(y,x) is horizontal bearing.
+    // 2b) sector filter in SENSOR frame. Keep points within [min,max] of the sector CENTER
+    //     phi_c (0 = body-forward; velocity bearing when velocity-aligned). atan2(y,x)=bearing.
     pcl::PointCloud<pcl::PointXYZ> filtered;
     filtered.reserve(cloud_sensor.size());
     for (size_t i = 0; i < cloud_sensor.size(); ++i) {
@@ -197,14 +249,20 @@ private:
       const auto& p = cloud_sensor.points[i];
       if (!std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(p.z)) continue;
       if (sector_now) {
-        const double ang = std::atan2(static_cast<double>(p.y), static_cast<double>(p.x));
-        if (ang < min_angle_rad_ || ang > max_angle_rad_) continue;
+        double d = std::atan2(static_cast<double>(p.y), static_cast<double>(p.x)) - phi_c;
+        while (d >  M_PI) d -= 2.0 * M_PI;          // wrap to [-pi, pi]
+        while (d < -M_PI) d += 2.0 * M_PI;
+        if (d < min_angle_rad_ || d > max_angle_rad_) continue;
       }
       filtered.push_back(p);
     }
     if (risk_expanded) {
       RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 2000,
           "risk-gate: side obstacle < %.2fm outside sector -> full-view this frame", risk_range_);
+    }
+    if (vel_aligned) {
+      RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 2000,
+          "velocity-aligned sector: cone centered at %.0f deg (motion dir)", phi_c * 180.0 / M_PI);
     }
     if (filtered.empty()) {
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000,
@@ -242,13 +300,15 @@ private:
   }
 
   // params
-  std::string input_topic_, output_topic_, odom_topic_, target_frame_, sector_toggle_topic_, risk_gate_topic_;
+  std::string input_topic_, output_topic_, odom_topic_, target_frame_, sector_toggle_topic_, risk_gate_topic_, align_topic_;
   double odom_timeout_;
   std::atomic<bool> sector_enable_{true};   // runtime-toggleable (adaptive full-view recovery)
   std::atomic<bool> risk_gate_enable_{false}; // risk-gated auto-expansion of the sector
+  std::atomic<bool> align_to_velocity_{false}; // center the sector on the velocity direction
   double risk_range_{2.0};
   int risk_hold_frames_{5};
   int risk_hold_{0};                        // hysteresis countdown (touched only in cloudCallback)
+  double align_vmin_{0.15};
   bool use_stride_, use_voxel_;
   double min_angle_rad_, max_angle_rad_, voxel_leaf_;
   int stride_;
@@ -257,13 +317,16 @@ private:
   // odom-derived transforms
   std::mutex odom_mtx_;
   bool have_odom_{false};
+  bool have_vel_{false};
   double last_odom_t_{0.0};
+  Eigen::Vector3f v_world_{0, 0, 0};        // world-frame velocity (finite-diff, low-passed)
   Eigen::Affine3f T_world_body_{Eigen::Affine3f::Identity()};
   Eigen::Affine3f T_body_lidar_{Eigen::Affine3f::Identity()};
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sector_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr align_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr risk_sub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_;
 };
