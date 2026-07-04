@@ -163,9 +163,16 @@ private:
       const double dt = t - last_odom_t_;
       if (dt > 1e-3 && dt < 0.5) {
         Eigen::Vector3f v = (pos - T_world_body_.translation()) / static_cast<float>(dt);
-        const float a = 0.3f;
+        const float a = 0.5f;                       // faster tracking -> less lag through turns
         v_world_ = have_vel_ ? (a * v + (1.0f - a) * v_world_) : v;
         have_vel_ = true;
+        // HOLD the last confident motion direction (world). During a corner slowdown the
+        // instantaneous speed dips below vmin; holding the last direction keeps the cone
+        // pointing along travel instead of snapping back to the (blind) body-forward.
+        if (v_world_.head<2>().norm() > static_cast<float>(align_vmin_)) {
+          align_dir_world_ = v_world_.normalized();
+          align_dir_valid_ = true;
+        }
       }
     }
     T_world_body_.translation() = pos;
@@ -182,8 +189,8 @@ private:
   {
     // require fresh odom for a deterministic world transform
     Eigen::Affine3f T_world_lidar;
-    Eigen::Vector3f v_world(0, 0, 0);
-    bool have_vel_local = false;
+    Eigen::Vector3f align_dir_world(1, 0, 0);
+    bool align_dir_valid_local = false;
     {
       std::lock_guard<std::mutex> lk(odom_mtx_);
       if (!have_odom_) {
@@ -195,19 +202,18 @@ private:
         return;
       }
       T_world_lidar = T_world_body_ * T_body_lidar_;
-      v_world = v_world_; have_vel_local = have_vel_;
+      align_dir_world = align_dir_world_; align_dir_valid_local = align_dir_valid_;
     }
 
-    // sector center angle (sensor frame): body-forward (0) by default, or the VELOCITY
-    // direction when velocity-alignment is on and the drone is moving fast enough.
+    // sector center angle (sensor frame): body-forward (0) by default, or the (held) VELOCITY
+    // direction when velocity-alignment is on. Holding the last confident direction (rather
+    // than gating on instantaneous speed) keeps the cone on-travel through corner slowdowns.
     double phi_c = 0.0;
     bool vel_aligned = false;
-    if (align_to_velocity_.load() && have_vel_local) {
-      if (v_world.head<2>().norm() > static_cast<float>(align_vmin_)) {
-        Eigen::Vector3f v_lidar = T_world_lidar.linear().transpose() * v_world;   // world->sensor
-        phi_c = std::atan2(static_cast<double>(v_lidar.y()), static_cast<double>(v_lidar.x()));
-        vel_aligned = true;
-      }
+    if (align_to_velocity_.load() && align_dir_valid_local) {
+      Eigen::Vector3f d_lidar = T_world_lidar.linear().transpose() * align_dir_world;   // world->sensor
+      phi_c = std::atan2(static_cast<double>(d_lidar.y()), static_cast<double>(d_lidar.x()));
+      vel_aligned = true;
     }
 
     // 1) ROS -> PCL
@@ -318,8 +324,10 @@ private:
   std::mutex odom_mtx_;
   bool have_odom_{false};
   bool have_vel_{false};
+  bool align_dir_valid_{false};
   double last_odom_t_{0.0};
   Eigen::Vector3f v_world_{0, 0, 0};        // world-frame velocity (finite-diff, low-passed)
+  Eigen::Vector3f align_dir_world_{1, 0, 0}; // held unit travel direction (world) for the cone
   Eigen::Affine3f T_world_body_{Eigen::Affine3f::Identity()};
   Eigen::Affine3f T_body_lidar_{Eigen::Affine3f::Identity()};
 
