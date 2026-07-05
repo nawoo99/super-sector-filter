@@ -7,8 +7,17 @@
 # at corners in adaptive mode), the ROG-Map occupancy the planner avoids, and
 # SUPER's committed trajectory + A* path + goal.
 #
-#   bash watch.sh <seed> <mode>     mode = full | sector | adaptive   (default adaptive)
-#   bash watch.sh 11 sector
+#   bash watch.sh <seed> <mode> [gui]   mode = full | sector | adaptive
+#   bash watch.sh 7 sector gui
+#   FIXED_YAW=0.0 bash watch.sh 7 sector gui   # hold heading (exposes the blindspot)
+#
+# mode maps to the CURRENT campaign definition:
+#   full     = sector OFF (360)
+#   sector   = fixed +/-60 cone on body-forward (RViz: a wedge fixed to the drone nose)
+#   adaptive = VELOCITY-ALIGNED +/-60 cone (RViz: the wedge rotates to follow MOTION)
+# FIXED_YAW (deg, NED) decouples heading from velocity: with it set, on legs where the
+# drone moves off-heading, the sector wedge points AWAY from travel (blindspot) while the
+# adaptive wedge stays on travel. 999 / unset = heading tracks velocity (no fixed yaw).
 #
 # After the loop the stack stays up so you can keep looking / send more goals.
 # Teardown:  tmux kill-server; pkill -9 -f 'gz sim'; pkill -9 -f fsm_node
@@ -25,19 +34,20 @@ SDF="/root/px4/PX4-Autopilot/Tools/simulation/gz/worlds/${WORLD}.sdf"
 [ -f "$SDF" ] || { echo "[watch] '$SDF' 없음 — 시드 1-12 중에서 고르세요"; exit 1; }
 
 case "$MODE" in
-  full)     SEC=false; MFLAGS="--no-adaptive --sector-base off";;
-  sector)   SEC=true;  MFLAGS="--no-adaptive --sector-base on";;
-  adaptive) SEC=true;  MFLAGS="--sector-base on";;
+  full)     SEC=false; MFLAGS="--no-adaptive --sector-base off --risk-gate off --align-velocity off";;
+  sector)   SEC=true;  MFLAGS="--no-adaptive --sector-base on  --risk-gate off --align-velocity off";;
+  adaptive) SEC=true;  MFLAGS="--no-adaptive --sector-base on  --risk-gate off --align-velocity on";;
   *) echo "[watch] mode = full | sector | adaptive"; exit 1;;
 esac
+FY="${FIXED_YAW:-999.0}"   # fixed heading (deg NED); 999 = track velocity
 
 # HEADLESS by default (Gazebo GUI off = takeoff-stability fix). 3rd arg "gui" starts
 # the Gazebo GUI WITH the server so the (runtime-spawned) drone is visible -- a late
 # `gz sim -g` attach can't show it. GUI adds render load (ekf2 may lag); don't close
 # the GUI alone mid-flight (corrupts the actuator bridge) -- end with super_exit.
 GZGUI=0; [ "$GUIMODE" = "gui" ] && { GZGUI=1; echo "=== [watch] GUI mode: PX4 starts the Gazebo GUI (drone visible) ==="; }
-echo "=== [watch] bringup $WORLD (gui=$GZGUI), sector=$SEC, mode=$MODE ==="
-SECTOR="$SEC" GUI="$GZGUI" bash "$HERE/g_bringup.sh" "$WORLD"
+echo "=== [watch] bringup $WORLD (gui=$GZGUI), sector=$SEC, mode=$MODE, fixed_yaw=$FY ==="
+SECTOR="$SEC" GUI="$GZGUI" FIXED_YAW="$FY" bash "$HERE/g_bringup.sh" "$WORLD"
 
 # NOTE: ROS setup.bash references unset vars -> would abort under `set -u`; guard it.
 set +u; source /opt/ros/humble/setup.bash 2>/dev/null; set -u
