@@ -82,6 +82,41 @@ and it is exactly the user's "path lost / needs replan" idea. So:
   unknown (backup engaged / replan fails) → **expand the FoV toward the goal/velocity**, then
   revert once known-free is re-established.
 
+## Empirical test of the config-level fix (Option 1) — and why it doesn't matter
+
+We tried the config-only fix (`raycasting.enable: true` so free is carved only where the
+±60° sector kept points, `frontend_in_known_free: true` so UNKNOWN is treated as occupied),
+dense seed7, n=1:
+
+| | baseline | config-fix (Option 1) |
+|--|:--:|:--:|
+| OFF sector | [0,1,0] | **3** (regressed) |
+| fixed-yaw sector | [2,2,2] | 3 |
+
+It did **not** convert collisions into conservatism — it made the safe OFF case *worse*.
+Likely cause: the blindspot leaks through **CIRI corridor generation**, which is point-cloud
+based and FoV-unaware — in unsensed directions there are no points, so CIRI treats them as
+free and expands the corridor there regardless of the A* frontend. Fixing this properly needs
+the **corridor-level FoV cut** (`use_fov_cut`), but SUPER's current cut only constrains the
+**vertical** FoV (±29.5°); a horizontal ±60° cut requires modifying `FOVChecker` (a non-trivial
+change to SUPER core). Config reverted to the validated baseline.
+
+## The fix is already demonstrated — at the FILTER level, not the planner level
+
+Both fixes address the SAME root cause — *make sure you sense where you're going*:
+- **Planner-level (Option 1/FoV-cut):** restrict SUPER's known-free corridor to the sensed FoV
+  so it won't commit into unsensed space → conservatism. Hard to do cleanly here (regressed /
+  needs FOVChecker code).
+- **Filter-level (velocity-aligned adaptive — ALREADY BUILT + VALIDATED):** steer the ±60°
+  sensed sector to the *motion* direction so the drone always senses its path. On the fixed-yaw
+  blindspot this recovered **[0,0,0]** collisions while keeping the 64% savings
+  (`results/fixedyaw_3way_seed7.*`).
+
+So the velocity-aligned adaptive sector is the practical, working answer to this diagnosis: it
+prevents the "unsensed = free → collision" failure by never leaving its path unsensed. The
+planner-level FoV-cut is a SUPER-native alternative and a reasonable future-work item, not a
+prerequisite.
+
 ## References
 SUPER: Ren, Zhu, Lu, Cai, Yin, Kong, Lin, Chen, Zhang, "Safety-assured high-speed navigation for
 MAVs," *Sci. Robot.* 10, eado6187 (2025). Code: github.com/hku-mars/SUPER.
