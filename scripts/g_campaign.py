@@ -337,6 +337,8 @@ def main():
     ap.add_argument("--out", default=os.path.join(HERE, "results", "campaign.csv"))
     ap.add_argument("--tmpdir", default="/tmp/campaign")
     ap.add_argument("--no-teardown", action="store_true", help="leave the last stack up")
+    ap.add_argument("--max-attempts", type=int, default=3, dest="max_attempts",
+                    help="retry a (run,mode) this many times if the drone never takes off")
     args = ap.parse_args()
 
     seeds = parse_seeds(args.seeds)
@@ -361,27 +363,35 @@ def main():
     try:
         for seed in seeds:
             world = f"default_seed{seed}"
-            ready = bringup(world, args.ready_timeout)
-            try:
-                if not ready:
-                    log(f"  seed {seed}: stack NOT ready -> record failures for all modes, skip flights")
-                    for run in range(1, args.runs + 1):
-                        for mode in args.modes:
-                            writer.writerow({"seed": seed, "run": run, "mode": mode,
-                                             "world": world, "success": False, "mission_rc": "no_bringup"})
-                            out_f.flush(); done += 1
-                    continue
-                for run in range(1, args.runs + 1):
-                    for mode in args.modes:
+            for run in range(1, args.runs + 1):
+                for mode in args.modes:
+                    # FRESH bringup per (run, mode): a failed mode must never leave the
+                    # drone broken/penetrated for the next one (the back-to-back cascade
+                    # that made adaptive fail to take off after sector stalled). Retry
+                    # pure takeoff failures (random weak-TWR climb stalls) up to N times.
+                    rec = None
+                    for attempt in range(1, args.max_attempts + 1):
+                        ready = bringup(world, args.ready_timeout)
+                        if not ready:
+                            log(f"  {world} r{run} {mode} attempt {attempt}/{args.max_attempts}: bringup NOT ready")
+                            teardown(); continue
                         rec = run_mode(world, seed, run, mode, args, args.tmpdir)
-                        writer.writerow(rec); out_f.flush()
-                        done += 1
-                        el = time.time() - t_start
-                        eta = el / done * (total - done) if done else 0
-                        log(f"=== progress {done}/{total}  elapsed={el/60:.1f}m  eta={eta/60:.1f}m ===")
-            finally:
-                if not (args.no_teardown and seed == seeds[-1]):
-                    teardown()
+                        teardown()
+                        if (rec.get("mission_time_s") or 0) > 0:
+                            break   # took off -> a real result (kept even if the loop later failed)
+                        if attempt < args.max_attempts:
+                            log(f"  {world} r{run} {mode} attempt {attempt}/{args.max_attempts}: "
+                                f"STARTUP FAIL (never took off) -> retry with fresh bringup")
+                        else:
+                            log(f"  {world} r{run} {mode}: startup failed after {args.max_attempts} attempts -> record")
+                    if rec is None:
+                        rec = {"seed": seed, "run": run, "mode": mode, "world": world,
+                               "success": False, "mission_rc": "no_bringup"}
+                    writer.writerow(rec); out_f.flush()
+                    done += 1
+                    el = time.time() - t_start
+                    eta = el / done * (total - done) if done else 0
+                    log(f"=== progress {done}/{total}  elapsed={el/60:.1f}m  eta={eta/60:.1f}m ===")
     except KeyboardInterrupt:
         log("interrupted — partial results saved")
     finally:

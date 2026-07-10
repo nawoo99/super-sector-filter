@@ -245,10 +245,14 @@ class GMission(Node):
         if self.phase == "mission":
             self.run_mission()
 
-        # campaign mode: shut down a moment after the loop ends so the runner advances
+        # campaign mode: shut down a moment after the loop ends so the runner advances.
+        # NOTE: rclpy.shutdown() from inside a timer callback occasionally fails to unwind
+        # spin() (flaky hang: LOOP COMPLETE but the process lived until the campaign's
+        # 360s kill). Metrics are already flushed to disk, so a hard os._exit is the
+        # reliable way for a campaign child to terminate.
         if self.exit_after is not None and time.time() > self.exit_after:
             self.write_metrics(self.phase == "done")
-            rclpy.shutdown()
+            os._exit(0)
 
     def send_current_wp(self):
         x, y, z, _ = self.wps[self.wi]
