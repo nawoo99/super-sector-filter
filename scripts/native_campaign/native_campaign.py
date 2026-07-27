@@ -15,6 +15,50 @@ LOOP_MON = "/tmp/native_loop_monitor.py"
 SECTOR = "/tmp/native_sector.py"
 TMPDIR = "/tmp/native_campaign"
 os.makedirs(TMPDIR, exist_ok=True)
+CLK_TCK = os.sysconf("SC_CLK_TCK") or 100
+
+
+def pgrep(pattern):
+    try:
+        out = subprocess.check_output(["pgrep", "-f", pattern], text=True)
+        return [int(p) for p in out.split()]
+    except subprocess.CalledProcessError:
+        return []
+
+
+def proc_ticks(pid):
+    """utime+stime (clock ticks) for a pid, or None if gone."""
+    try:
+        with open(f"/proc/{pid}/stat") as f:
+            data = f.read()
+        rest = data[data.rfind(")") + 2:].split()
+        return int(rest[11]) + int(rest[12])
+    except (OSError, IndexError, ValueError):
+        return None
+
+
+class CpuMeter:
+    """Average CPU% of the busiest process matching `pattern`, between start()/stop()."""
+    def __init__(self, pattern):
+        self.pattern = pattern
+        self.pid = None
+        self.t0 = None
+        self.ticks0 = None
+
+    def start(self):
+        cand = [(proc_ticks(p) or -1, p) for p in pgrep(self.pattern)]
+        self.pid = max(cand)[1] if cand else None
+        self.t0 = time.time()
+        self.ticks0 = proc_ticks(self.pid) if self.pid else None
+
+    def stop(self):
+        if self.pid is None or self.ticks0 is None:
+            return None
+        ticks1 = proc_ticks(self.pid)
+        dt = time.time() - self.t0
+        if ticks1 is None or dt <= 0:
+            return None
+        return 100.0 * (ticks1 - self.ticks0) / CLK_TCK / dt
 
 LOOP_WPS = "9,9;-9,9;-9,-9;9,-9;0,0"
 LOOP_SWITCH = 1.5
@@ -29,7 +73,8 @@ MODES = ["full", "sector", "adaptive"]
 FIELDS = ["map", "run", "mode", "success", "mission_time_s", "waypoints_reached",
           "n_waypoints", "collisions", "min_clearance_m", "samples",
           "pts_mean", "total_ms_mean", "raycast_ms_mean", "update_ms_mean",
-          "inflation_ms_mean", "kept_pct", "perf_row_start", "perf_row_end"]
+          "inflation_ms_mean", "kept_pct", "fsm_cpu_pct", "filter_cpu_pct",
+          "perf_row_start", "perf_row_end"]
 
 
 def log(msg):
@@ -120,6 +165,10 @@ def run_one(map_name, mode, run, attempt_max=3):
             preexec_fn=os.setsid)
         time.sleep(2)
 
+        fsm_cpu = CpuMeter("fsm_node")
+        filt_cpu = CpuMeter("native_sector.py")
+        fsm_cpu.start(); filt_cpu.start()
+
         mon_cmd = f"python3 {LOOP_MON} '{wps}' {switch} {timeout} {out_json}"
         mon_proc = subprocess.Popen(["bash", "-c", f"{ROS_ENV} && {mon_cmd}"],
                                     preexec_fn=os.setsid)
@@ -132,6 +181,8 @@ def run_one(map_name, mode, run, attempt_max=3):
             except ProcessLookupError:
                 pass
 
+        fsm_cpu_pct = fsm_cpu.stop()
+        filter_cpu_pct = filt_cpu.stop()
         row_end = perf_row_count()
 
         # kept% from the filter log (last report line)
@@ -157,7 +208,8 @@ def run_one(map_name, mode, run, attempt_max=3):
         kill_all()
 
         rec = {"map": map_name, "run": run, "mode": mode,
-               "perf_row_start": row_start, "perf_row_end": row_end, "kept_pct": kept_pct}
+               "perf_row_start": row_start, "perf_row_end": row_end, "kept_pct": kept_pct,
+               "fsm_cpu_pct": fsm_cpu_pct, "filter_cpu_pct": filter_cpu_pct}
         if os.path.exists(out_json):
             rec.update(json.load(open(out_json)))
             rec.update(slice_perf(row_start, row_end))
@@ -171,7 +223,7 @@ def run_one(map_name, mode, run, attempt_max=3):
 
         log(f"  {tag}: success={rec.get('success')} time={rec.get('mission_time_s')}s "
             f"coll={rec.get('collisions')} minclr={rec.get('min_clearance_m')} "
-            f"pts={rec.get('pts_mean')} kept={kept_pct}%")
+            f"pts={rec.get('pts_mean')} kept={kept_pct}% fsm_cpu={fsm_cpu_pct}")
         return rec
 
     return {"map": map_name, "run": run, "mode": mode, "success": False}
