@@ -60,7 +60,7 @@ class CpuMeter:
             return None
         return 100.0 * (ticks1 - self.ticks0) / CLK_TCK / dt
 
-LOOP_WPS = "9,9;-9,9;-9,-9;9,-9;0,0"
+LOOP_WPS = "12,12;-12,12;-12,-12;12,-12;0,0"
 LOOP_SWITCH = 1.5
 LOOP_TIMEOUT = 150.0
 # seed11 = the original SUPER-paper dense-forest map (random_map_2_26609.pcd),
@@ -147,7 +147,7 @@ def run_one(map_name, mode, run, attempt_max=3):
         else:
             launch_cmd = (
                 "ros2 launch mission_planner benchmark_seedmap.launch.py "
-                f"waypoint_data:=loop9.txt drone_config:={map_name}.yaml "
+                f"waypoint_data:=loop12.txt drone_config:={map_name}.yaml "
                 "super_config:=static_seedmaps.yaml"
             )
         launch_proc = subprocess.Popen(
