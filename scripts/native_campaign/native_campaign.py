@@ -63,11 +63,14 @@ class CpuMeter:
 LOOP_WPS = "9,9;-9,9;-9,-9;9,-9;0,0"
 LOOP_SWITCH = 1.5
 LOOP_TIMEOUT = 150.0
+# seed11 = the original SUPER-paper dense-forest map (random_map_2_26609.pcd),
+# NOT a gen_world cylinder map -- straight 100m corridor, launched via
+# benchmark_reference.launch.py / static_reference.yaml.
 REF_WPS = "0,50;0,-50"
 REF_SWITCH = 2.0
 REF_TIMEOUT = 90.0
 
-MAPS = [f"seed{i}" for i in range(1, 11)] + ["reference"]
+MAPS = [f"seed{i}" for i in range(1, 11)] + ["seed11"]
 MODES = ["full", "sector", "adaptive"]
 
 FIELDS = ["map", "run", "mode", "success", "mission_time_s", "waypoints_reached",
@@ -125,8 +128,11 @@ def slice_perf(start, end):
 
 
 def run_one(map_name, mode, run, attempt_max=3):
-    is_ref = (map_name == "reference")
-    wps, switch, timeout = (REF_WPS, REF_SWITCH, REF_TIMEOUT) if is_ref else (LOOP_WPS, LOOP_SWITCH, LOOP_TIMEOUT)
+    is_ref = (map_name == "seed11")  # seed11 = the original SUPER-paper dense-forest map
+    if is_ref:
+        wps, switch, timeout = REF_WPS, REF_SWITCH, REF_TIMEOUT
+    else:
+        wps, switch, timeout = LOOP_WPS, LOOP_SWITCH, LOOP_TIMEOUT
     tag = f"{map_name}_run{run}_{mode}"
     out_json = os.path.join(TMPDIR, f"{tag}.json")
     filt_log = os.path.join(TMPDIR, f"{tag}.filt.log")

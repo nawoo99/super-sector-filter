@@ -1,10 +1,10 @@
 #!/bin/bash
 # One-command visual watch: sim + RViz + filter, all together.
-# Usage: bash watch_native.sh [full|sector|adaptive] [seedN|reference]
+# Usage: bash watch_native.sh [full|sector|adaptive] [seed1..seed10|seed11]
 #   bash watch_native.sh full        # seed1, full mode (default)
 #   bash watch_native.sh sector      # seed1, sector mode
 #   bash watch_native.sh adaptive seed3
-#   bash watch_native.sh sector reference   # original dense-forest corridor
+#   bash watch_native.sh sector seed11   # original SUPER-paper dense-forest corridor
 set -u
 MODE="${1:-full}"
 MAP="${2:-seed1}"
@@ -42,7 +42,8 @@ sleep 1
 
 echo "[watch_native] mode=$MODE map=$MAP"
 
-if [ "$MAP" = "reference" ]; then
+if [ "$MAP" = "seed11" ]; then
+  # seed11 = the original SUPER-paper dense-forest map (random_map_2_26609.pcd)
   stdbuf -oL -eL ros2 launch mission_planner benchmark_reference.launch.py > /tmp/watch_sim.log 2>&1 &
 else
   stdbuf -oL -eL ros2 launch mission_planner benchmark_seedmap.launch.py \
