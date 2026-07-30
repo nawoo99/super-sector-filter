@@ -47,7 +47,7 @@ if [ "$MAP" = "seed11" ]; then
   stdbuf -oL -eL ros2 launch mission_planner benchmark_reference.launch.py > /tmp/watch_sim.log 2>&1 &
 else
   stdbuf -oL -eL ros2 launch mission_planner benchmark_seedmap.launch.py \
-    waypoint_data:=loop12.txt drone_config:="${MAP}.yaml" \
+    waypoint_data:=loop24.txt drone_config:="${MAP}.yaml" \
     super_config:=static_seedmaps_viz.yaml > /tmp/watch_sim.log 2>&1 &
 fi
 SIM_PID=$!

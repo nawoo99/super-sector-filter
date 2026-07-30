@@ -1,25 +1,32 @@
 #!/usr/bin/env python3
-"""Regenerate seeds 1-10 with a bigger field + smaller obstacles, matching
-seed11(reference)'s scale: AREA 40 (+-20, area~1600 m^2 vs seed11's 15x110=1650),
-obstacle radius shifted down to seed11's estimated trunk-scale (0.10/0.15/0.20
-vs old 0.15/0.25/0.40). Density axis (GAPS) and COUNT(100)/CONDITIONS/
-SEED_CONDITION unchanged. Does NOT modify gen_world.py itself (keeps the
-original Gazebo-campaign geometry reproducible); overrides module globals
-locally for this regeneration only.
+"""Regenerate seeds 1-10 with a bigger field, matching seed1-10's mission TIME
+(not area) to seed11: v4 already matched area (1600 vs seed11's 1650 m^2) and
+density (0.10/m^2 each) but average speed still came out ~2x seed1's (~2.87 m/s)
+vs seed11's (~1.40 m/s) -- a structural effect of seed11's long dense corridor,
+not obstacle density. To close the mission-time gap (37s -> seed11's ~70s) the
+loop path itself needs to roughly double: corner distance 12->24 (loop dist
+105.9m->211.9m at the same ~2.87 m/s -> ~74s predicted). Field half-width kept
+at corner+8m margin (same margin convention as v3/v4) -> AREA 64 (+-32,
+4096 m^2, now LARGER than seed11's 1650 m^2 -- trades the old "same area"
+framing for a "same mission duration" framing). Density held at 0.10/m^2 ->
+COUNT 160->410. SIZES/GAPS/CONDITIONS/SEED_CONDITION unchanged from v4. Does
+NOT modify gen_world.py itself (keeps the original Gazebo-campaign geometry
+reproducible); overrides module globals locally for this regeneration only.
 """
 import sys, os, shutil
 sys.path.insert(0, "/root/commands/super_gazebo")
 import gen_world as gw
 
 # --- overrides ---
-gw.AREA = 40.0                                          # +-20 (was 30/+-15)
-gw.SIZES = {"small": 0.10, "medium": 0.15, "large": 0.20}  # was 0.15/0.25/0.40
-gw.COUNT = 160                                          # was 100 -- restores seed11-matched
-                                                          # density (0.10/m^2) after AREA grew;
-                                                          # keeping COUNT=100 with the bigger field
-                                                          # would have DROPPED density to 0.0625/m^2,
-                                                          # below seed11's estimated range (0.055-0.133)
-CORNER_C_NEW = 12.0                                       # loop corners, was 9.0
+gw.AREA = 64.0                                          # +-32 (was 40.0/+-20)
+gw.SIZES = {"small": 0.10, "medium": 0.15, "large": 0.20}  # unchanged from v4
+gw.COUNT = 410                                          # was 160 -- keeps density
+                                                          # ~0.10/m^2 (seed11-matched) now
+                                                          # that AREA grew 1600->4096 m^2
+CORNER_C_NEW = 24.0                                       # loop corners, was 12.0 --
+                                                          # doubles loop path length
+                                                          # (105.9m->211.9m) to close the
+                                                          # mission-time gap vs seed11
 
 out_dir = gw.DEFAULT_OUTDIR
 backup_dir = os.path.join(out_dir, "backup_v1_seeds1-10")
