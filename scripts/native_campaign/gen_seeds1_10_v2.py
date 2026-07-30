@@ -14,6 +14,11 @@ import gen_world as gw
 # --- overrides ---
 gw.AREA = 40.0                                          # +-20 (was 30/+-15)
 gw.SIZES = {"small": 0.10, "medium": 0.15, "large": 0.20}  # was 0.15/0.25/0.40
+gw.COUNT = 160                                          # was 100 -- restores seed11-matched
+                                                          # density (0.10/m^2) after AREA grew;
+                                                          # keeping COUNT=100 with the bigger field
+                                                          # would have DROPPED density to 0.0625/m^2,
+                                                          # below seed11's estimated range (0.055-0.133)
 CORNER_C_NEW = 12.0                                       # loop corners, was 9.0
 
 out_dir = gw.DEFAULT_OUTDIR
