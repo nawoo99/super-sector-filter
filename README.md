@@ -292,6 +292,24 @@ headline numbers require a fresh full campaign. A one-run endpoint smoke is in
 [`results/native_seed1_10_v6_final_endpoint_smoke.csv`](results/native_seed1_10_v6_final_endpoint_smoke.csv);
 it validates the selected upper tier but is not a replacement for that campaign.
 
+## Native seed11 raw-input baseline
+
+The campaign runner distinguishes the true raw LiDAR path from the historical
+`full` mode. `raw` sends `/cloud_registered` directly to SUPER with the current
+3 m/s planner settings; `full` keeps every point but still copies and republishes
+the cloud through the Python filter. Rotate mode order when comparing them:
+
+```bash
+python3 scripts/native_campaign/native_campaign.py \
+  --maps seed11 --modes raw full sector adaptive --runs 10 --rotate-modes \
+  --out results/native_seed11_pipeline_ablation_n10.csv
+```
+
+Mode `upstream` is a separate raw-direct 8 m/s public-example control. It is not
+a reproduction of the paper's 60-map by 18-speed simulation protocol. The
+comparison and interpretation boundary are recorded in
+[`docs/paper_story.md`](docs/paper_story.md).
+
 ## Native seed12/13 blind-sector diagnostic
 
 The native MARSIM campaign has two opt-in corner cases. `seed12` and its

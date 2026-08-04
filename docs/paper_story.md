@@ -1,5 +1,9 @@
 # 논문 스토리 — JKICS v6 (2026-08-04, 고정 1.00 m 간격·장애물 반경 스윕 5회 반복)
 
+> **2026-08-04 baseline 정정:** 기존 `full`은 raw LiDAR를 직접 쓰는 원 논문형 baseline이
+> 아니라 Python에서 100% 점을 복사·재발행한 `relay-full`이었다. seed11 입력 경로 대조실험을
+> 추가해 둘을 분리했으며, 논문 직접 비교 baseline은 앞으로 `raw-direct`로 표기한다.
+
 > **v5→v6 변경 이유:** seed별 간격과 반경을 동시에 바꾸던 설계를 폐기하고, seed1~10의 장애물
 > 표면 간 최소 간격을 1.00 m로 고정한 뒤 반경만 0.150~0.650 m로 변화시켰다. 따라서 v5 결과는
 > 현재 지형의 근거로 사용하지 않으며, 아래 표와 결론은 `native_seed1_11_v6_n5.csv`의 새 165회
@@ -10,9 +14,12 @@
 360° LiDAR 점군을 원격 모니터링·지도 공유에 그대로 전송하면 링크 대역폭을 크게 소모한다.
 본 연구는 SUPER 앞단에서 수평 ±60° 점군만 유지하는 태스크 지향 필터를 비교한다.
 
-- **full:** 360° 원본 점군.
+- **full (`relay-full`):** 360° 점을 모두 유지하지만 Python 복사·재발행 경로를 거친다.
 - **sector:** 기체 기수 기준 고정 ±60°.
 - **adaptive:** 속도 방향 기준 ±60°. 회전 중 기수와 실제 진행방향의 불일치를 보상한다.
+
+seed11 대조실험의 **raw-direct**만 `/cloud_registered`를 SUPER에 직접 연결하므로 원본 입력
+baseline에 해당한다.
 
 메인 플랫폼은 SUPER 원 논문과 같은 MARSIM perfect-drone 환경이다. PerfectDrone은 계획 명령을
 그대로 상태에 반영하므로 결과는 컨트롤러 추종오차가 아니라 센싱·맵핑·계획 파이프라인을 평가한다.
@@ -33,18 +40,21 @@
 
 ### 2.2 seed11
 
-SUPER 원 논문의 `random_map_2_26609.pcd` dense-forest 회랑이다. 원통 CSV 지도가 아니므로 반경
-스윕과 직접 합치지 않고 별도 외부지도 교차검증으로 보고한다. 모드당 10회, 총 30회를 실행했다.
-단, **원 논문과 같은 지도·MARSIM을 쓰지만 전체 실험 스택이 동일한 것은 아니다.** 현재
-`static_reference.yaml`은 외부 Python 필터를 거친 `/cloud_sector`를 구독하고, full도 이 중계를
-거친다. upstream `static_dense.yaml`은 `/cloud_registered`를 직접 구독하며 `max_vel=8.0`이다.
-따라서 seed11 결과를 SUPER 원 논문의 0충돌 재현 실험으로 표현하지 않는다.
+SUPER 공개 저장소의 `random_map_2_26609.pcd` dense-forest 예제 회랑이다. 본 논문의 1080회
+평가는 **110×20 m 무작위 숲 지도 60개(밀도 6단계×seed 10개)×최고속도 1~18 m/s**였고
+최대가속도는 20 m/s²였다. 따라서 seed11 하나를 “논문 1080회 원본 환경”으로 동일시하지
+않는다. 이 지도는 공개 MARSIM 예제와 현 프로젝트 필터를 같은 장애물 배치에서 비교하는
+외부지도 control이다.
+
+입력 경로 효과를 분리하기 위해 현재 3 m/s 설정에서 `raw-direct / relay-full / sector /
+adaptive`를 각 10회, 회차별 모드 순서를 회전해 실행했다. 별도로 공개 저장소 예제형
+`raw-direct, max_vel=8 m/s`도 10회 실행했지만, 이는 논문의 60-map 프로토콜 재현이 아니다.
 
 ## 3. 헤드라인 결과
 
 ### 3.1 seed1~10: 150회
 
-| 지표 | full | sector | **adaptive** |
+| 지표 | full (`relay-full`) | sector | **adaptive** |
 |---|---:|---:|---:|
 | 완주 | **49/50 (98%)** | **50/50 (100%)** | **49/50 (98%)** |
 | 접촉 표시 런 | **15/50 (30%)** | **8/50 (16%)** | **7/50 (14%)** |
@@ -66,26 +76,46 @@ seed7~8은 full 3·sector 2·adaptive 1개 런, seed9~10은 full 8·sector 6·ad
 따라서 v6는 필터만의 문제가 아니라 큰 장애물이 만드는 경로 차단과 SUPER의 잔여 계획 변동성을
 드러낸 스트레스 캠페인이다.
 
-### 3.2 seed11: 모드당 10회, 총 30회
+### 3.2 seed11 현재 설정 input-path ablation: 4조건×10회
 
-| 지표 | full | sector | adaptive |
-|---|---:|---:|---:|
-| 완주 | **10/10** | **10/10** | **10/10** |
-| 접촉 표시 런 | **6/10** | **1/10** | **2/10** |
-| 원시 transition 합계 | 12 | 1 | 4 |
-| 평균 점/frame | 67,749 | 21,435 (**68.4%↓**) | 21,757 (**67.9%↓**) |
-| ROG 총 mapping ms/frame | 14.762 | 6.389 | 6.269 |
-| 실효 ROG 갱신률 | 2.26 Hz | 3.51 Hz | 3.92 Hz |
-| 평균 미션시간 | 73.32 s | 73.41 s | 73.83 s |
+| 지표 | raw-direct | relay-full | sector | **adaptive** |
+|---|---:|---:|---:|---:|
+| 완주 | **10/10** | **9/10** | **10/10** | **10/10** |
+| 접촉 표시 런 | **1/10** | **5/10** | **2/10** | **0/10** |
+| 평균 점/frame | 66,383 | 66,476 | 21,473 | 21,828 |
+| kept | — | 100.0% | 32.55% | 32.58% |
+| ROG 총 mapping ms/frame | 13.405 | 14.241 | 6.182 | 6.330 |
+| 실효 ROG 갱신률 | **3.26 Hz** | **2.60 Hz** | **4.00 Hz** | **3.68 Hz** |
+| fsm CPU | 88.8% | 90.7% | 86.8% | 86.9% |
+| Python 필터 CPU | — | 10.3% | 11.8% | 11.7% |
+| 완주 미션시간 | 73.44 s | 74.24 s | 73.69 s | 73.42 s |
 
-seed11에서도 full의 큰 프레임이 낮은 실효 갱신률과 같이 나타났다. 다만 이 결과는
-원 논문의 다이렉트 입력 baseline이 아니라 본 프로젝트의 외부 필터 파이프라인 비교다.
+raw-direct와 relay-full은 같은 3 m/s 설정에서 프레임당 점수도 같다. 유일한 핵심 차이는
+relay-full이 Python에서 전체 클라우드를 복사·직렬화·재발행한다는 점이다. 이 중계로
+필터 CPU 10.3%가 추가됐고, 프레임당 mapping이 6.2% 느려졌으며, 실효 갱신률은
+3.26→2.60 Hz(**20.4% 감소**)로 낮아졌다. 접촉 런 1/10→5/10은 이 중계 오버헤드가
+기존 full을 불리하게 만든다는 방향성과 일치하지만, n=10이므로 확정적 인과로 과장하지 않는다.
+
+adaptive는 점을 67.2% 줄여 relay-full보다 mapping을 55.6% 줄였고, 10/10 완주·0/10 접촉을
+기록했다. 다만 raw-direct도 1/10 접촉이어서, Python 중계 제거만으로 완전한 0접촉이
+보장되지는 않는다.
+
+### 3.3 공개 upstream 예제형 control: raw-direct 8 m/s×10회
+
+| 완주 | 접촉 표시 런 | 평균 최고속도 | 완주 미션시간 | 실효 ROG 갱신률 |
+|---:|---:|---:|---:|---:|
+| **7/10** | **10/10** | 7.96 m/s | 39.38 s | 4.38 Hz |
+
+이 control은 upstream 예제의 raw topic·8 m/s 프로파일을 현 ROS2 포트에서 실행한 것이다. 논문은
+별도로 생성한 60개 지도, 속도 1~18 m/s, 최대가속도 20 m/s²를 사용했으므로 이 단일
+예제 결과로 논문의 1080회 0충돌을 재현했다거나 반박했다고 주장하지 않는다.
 
 ## 4. 충돌·미완주 해석
 
-세 미완주는 seed9 full run2(2/5 waypoint, 300 s), seed10 adaptive run4(2/5, 300 s),
-seed11 full run2(0/2, 90 s)다. 단순 부팅 실패가 아니라 고난도 구간에서 정체한 런이 포함되므로
-완주율에서 제외하거나 “인프라 오류”로 재분류하지 않는다.
+메인 165회 캠페인의 세 미완주는 seed9 full run2(2/5 waypoint, 300 s), seed10 adaptive
+run4(2/5, 300 s), seed11 full run2(0/2, 90 s)다. 새 seed11 대조실험에서는 relay-full 1회와
+upstream 예제형 raw-direct 3회가 90 s 안에 완주하지 못했다. 단순 부팅 실패가 아니라 경로상
+정체한 런이 포함되므로 완주율에서 제외하거나 “인프라 오류”로 재분류하지 않는다.
 
 이전 1회 정밀 bag 분석에서는 실제 접촉 7건 모두 약 2.93~3.00 m/s에서 발생했고, 몸체 여유
 1 m에서 접촉까지 0.34~0.38 s뿐이었다. 두 adaptive 충돌 대상은 속도 콘 안에 100% 포함돼 있어
@@ -97,7 +127,7 @@ ROG 갱신률을 낮춘다. 가장 타당한 공통 메커니즘은 **가림/미
 false→true 전이를 세므로 반경 0.20 m보다 큰 원통 내부에서 한 관통이 두 번 이상 기록될 수 있다.
 따라서 이 문서는 재현 가능한 보수 지표인 **접촉 표시 런 수**만 헤드라인으로 사용한다.
 
-full의 접촉 런이 더 많은 것은 “시야가 넓으면 항상 더 안전하다”는 이상적 가정이 현재
+relay-full의 접촉 런이 더 많은 것은 “시야가 넓으면 항상 더 안전하다”는 이상적 가정이 현재
 실시간 파이프라인에서 성립하지 않기 때문이다. `rm_performance_log.csv` 행 증가량을 미션시간으로
 나눈 실효 ROG 갱신률은 seed1~10 평균 full **3.88 Hz**, sector **4.87 Hz**, adaptive
 **4.89 Hz**였다. seed10에서는 1.56/2.64/3.09 Hz로 격차가 더 컸다. 3 m/s 기준 갱신 사이
@@ -112,16 +142,27 @@ full의 접촉 런이 더 많은 것은 “시야가 넓으면 항상 더 안전
 1. adaptive는 seed1~10에서 점군 70.5%, raycast 시간 66.9%, 총 mapping 시간 62.1%를 줄였다.
 2. 시스템 CPU 차이는 1~2%p로 작고 필터 CPU가 증가하므로 CPU 절감을 주장하지 않는다.
 3. 완주 시간은 세 모드 모두 약 79 s로 필터에 따른 임무시간 손실이 관찰되지 않았다.
-4. 접촉 표시 런은 full 30%, sector 16%, adaptive 14%였다. adaptive가 최소였지만 sector 대비
+4. 접촉 표시 런은 relay-full 30%, sector 16%, adaptive 14%였다. adaptive가 최소였지만 sector 대비
    차이는 작으며, v6에서는 어떤 모드도 0충돌이 아니므로 “무손실 안전” 주장을 폐기한다.
 5. point cloud, 점유 voxel 전환, A* 경로, `/planning/pos_cmd`를 같은 bag에 기록하지 않아 개별
    접촉의 인과를 완전히 분리할 수 없다. 후속 실험은 이 토픽을 기록하고 signed-solid 충돌 모니터를
    사용해야 한다.
+6. 원 논문 또는 raw LiDAR와 비교할 때는 Python 릴레이를 거친 기존 full을 baseline으로 쓰지
+   않는다. seed11에서 raw-direct는 relay-full보다 실효 갱신률이 20.4% 높고 접촉 표시 런이
+   1/10 대 5/10이었으므로, seed1~10의 full 결과도 raw-direct 재실험 전에는 원 논문 baseline으로
+   해석하지 않는다.
+7. 현 공개 자산만으로는 논문의 60-map×18-speed 프로토콜을 그대로 재현하지 못했다. 공개
+   dense-forest 예제 하나의 결과와 논문 1080회의 결과는 서로 다른 실험으로 보고한다.
 
 ## 6. 재현 자산
 
 - 메인 캠페인: `results/native_seed1_11_v6_n5.csv`
-- seed11 n=10: `results/native_seed11_v6_n10.csv`, `results/native_seed11_v6_n10_summary.csv`
+- seed11 입력 경로 대조: `results/native_seed11_pipeline_ablation_n10.csv`
+- 공개 upstream 예제형 control: `results/native_seed11_upstream_example_n10.csv`
+- 대조실험 통합 요약: `results/native_seed11_pipeline_ablation_summary.csv`
+- 대조실험 smoke: `results/native_seed11_raw_controls_smoke.csv`
+- 선행 seed11 필터 3모드 결과: `results/native_seed11_v6_n10.csv`,
+  `results/native_seed11_v6_n10_summary.csv`
 - 선행 1회 정밀 분석: `results/native_seed1_11_v6_forensics_{summary,episodes}.csv` 및 `.json`
 - 지도 사양: `docs/native_seed1_10_v6.md`
 - 지도 좌표: `scripts/native_campaign/seed1_static.csv` … `seed10_static.csv`

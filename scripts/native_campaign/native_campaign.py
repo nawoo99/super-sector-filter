@@ -97,7 +97,9 @@ REF_TIMEOUT = 90.0
 MAPS = [f"seed{i}" for i in range(1, 11)] + ["seed11"]
 MODES = ["full", "sector", "adaptive"]
 VALID_MAPS = tuple(f"seed{i}" for i in range(1, 16))
-VALID_MODES = ("full", "sector", "velocity", "adaptive", "trigger")
+VALID_MODES = (
+    "raw", "upstream", "full", "sector", "velocity", "adaptive", "trigger"
+)
 
 FIELDS = ["map", "run", "mode", "success", "mission_time_s", "waypoints_reached",
           "n_waypoints", "collisions", "min_clearance_m", "samples",
@@ -364,6 +366,7 @@ def run_one(map_name, mode, run, attempt_max=3):
                 preexec_fn=os.setsid,
             )
 
+        raw_direct = is_ref and mode in ("raw", "upstream")
         filter_options = f" --stats-json {filt_stats_json}"
         if is_dynamic:
             filter_options += (
@@ -374,21 +377,32 @@ def run_one(map_name, mode, run, attempt_max=3):
                 filter_options += " --sector-until-trap"
         elif is_recovery:
             filter_options += " --input-topic /cloud_recovery"
-        filt_proc = subprocess.Popen(
-            [
-                "bash",
-                "-c",
-                f"{ROS_ENV} && python3 {SECTOR} {mode}{filter_options} "
-                f"> {filt_log} 2>&1",
-            ],
-            preexec_fn=os.setsid,
-        )
+        filt_proc = None
+        if not raw_direct:
+            filt_proc = subprocess.Popen(
+                [
+                    "bash",
+                    "-c",
+                    f"{ROS_ENV} && python3 {SECTOR} {mode}{filter_options} "
+                    f"> {filt_log} 2>&1",
+                ],
+                preexec_fn=os.setsid,
+            )
         # The filter must be subscribed before the recovery driver's 3 s
         # auto-start (and before waypoint_mission on the standard maps).
         time.sleep(1.0)
 
         if is_ref:
-            launch_cmd = "ros2 launch mission_planner benchmark_reference.launch.py"
+            if mode == "raw":
+                super_config = "static_reference_raw.yaml"
+            elif mode == "upstream":
+                super_config = "static_upstream_raw.yaml"
+            else:
+                super_config = "static_reference.yaml"
+            launch_cmd = (
+                "ros2 launch mission_planner benchmark_reference.launch.py "
+                f"super_config:={super_config}"
+            )
         elif is_recovery:
             launch_cmd = (
                 "{ ros2 run perfect_drone_sim perfect_drone_node --ros-args "
@@ -417,7 +431,9 @@ def run_one(map_name, mode, run, attempt_max=3):
             kill_group(recovery_mission_proc)
             continue
 
-        required_processes = [("filter", filt_proc)]
+        required_processes = []
+        if filt_proc is not None:
+            required_processes.append(("filter", filt_proc))
         if scenario_proc is not None:
             required_processes.append(("scenario", scenario_proc))
         if recovery_mission_proc is not None:
@@ -438,7 +454,9 @@ def run_one(map_name, mode, run, attempt_max=3):
 
         fsm_cpu = CpuMeter("fsm_node")
         filt_cpu = CpuMeter("native_sector.py")
-        fsm_cpu.start(); filt_cpu.start()
+        fsm_cpu.start()
+        if filt_proc is not None:
+            filt_cpu.start()
 
         if is_dynamic:
             monitor_options = " --cloud-topic /cloud_seed12"
@@ -461,7 +479,7 @@ def run_one(map_name, mode, run, attempt_max=3):
             kill_group(mon_proc)
 
         fsm_cpu_pct = fsm_cpu.stop()
-        filter_cpu_pct = filt_cpu.stop()
+        filter_cpu_pct = filt_cpu.stop() if filt_proc is not None else None
         row_end = perf_row_count()
 
         # Backward-compatible fallback when a filter predates --stats-json.
@@ -601,8 +619,21 @@ def main():
     ap.add_argument("--maps", nargs="+", choices=VALID_MAPS, default=MAPS)
     ap.add_argument("--modes", nargs="+", choices=VALID_MODES, default=MODES)
     ap.add_argument("--runs", type=int, default=1)
+    ap.add_argument(
+        "--rotate-modes",
+        action="store_true",
+        help="rotate requested mode order each run to balance order effects",
+    )
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "native_campaign.csv"))
     args = ap.parse_args()
+
+    if any(mode in ("raw", "upstream") for mode in args.modes):
+        invalid_maps = [map_name for map_name in args.maps if map_name != "seed11"]
+        if invalid_maps:
+            ap.error(
+                "raw/upstream controls are currently defined only for seed11; "
+                f"unsupported maps: {', '.join(invalid_maps)}"
+            )
 
     fresh = not os.path.exists(args.out) or os.path.getsize(args.out) == 0
     if not fresh:
@@ -624,7 +655,11 @@ def main():
     try:
         for map_name in args.maps:
             for run in range(1, args.runs + 1):
-                for mode in args.modes:
+                modes = list(args.modes)
+                if args.rotate_modes and modes:
+                    shift = (run - 1) % len(modes)
+                    modes = modes[shift:] + modes[:shift]
+                for mode in modes:
                     rec = run_one(map_name, mode, run)
                     w.writerow(rec); f.flush()
                     done += 1

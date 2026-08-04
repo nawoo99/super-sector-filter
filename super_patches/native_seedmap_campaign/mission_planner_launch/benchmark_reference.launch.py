@@ -4,6 +4,7 @@ from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
@@ -11,9 +12,12 @@ def generate_launch_description():
     default_config_path = 'waypoint.yaml'
     default_data_path = 'benchmark.txt'
     perfect_drone_sim_config_name = 'dense.yaml'
-    super_config_name = 'static_reference.yaml'
+    super_config_name = LaunchConfiguration('super_config')
 
     ld = LaunchDescription()
+    ld.add_action(DeclareLaunchArgument(
+        'super_config', default_value='static_reference.yaml',
+        description='SUPER planner config file'))
 
     mission_planner = Node(
         package='mission_planner',
