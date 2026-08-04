@@ -34,7 +34,11 @@
 ### 2.2 seed11
 
 SUPER 원 논문의 `random_map_2_26609.pcd` dense-forest 회랑이다. 원통 CSV 지도가 아니므로 반경
-스윕과 직접 합치지 않고 별도 외부지도 교차검증으로 보고한다. 모드당 5회, 총 15회다.
+스윕과 직접 합치지 않고 별도 외부지도 교차검증으로 보고한다. 모드당 10회, 총 30회를 실행했다.
+단, **원 논문과 같은 지도·MARSIM을 쓰지만 전체 실험 스택이 동일한 것은 아니다.** 현재
+`static_reference.yaml`은 외부 Python 필터를 거친 `/cloud_sector`를 구독하고, full도 이 중계를
+거친다. upstream `static_dense.yaml`은 `/cloud_registered`를 직접 구독하며 `max_vel=8.0`이다.
+따라서 seed11 결과를 SUPER 원 논문의 0충돌 재현 실험으로 표현하지 않는다.
 
 ## 3. 헤드라인 결과
 
@@ -62,15 +66,20 @@ seed7~8은 full 3·sector 2·adaptive 1개 런, seed9~10은 full 8·sector 6·ad
 따라서 v6는 필터만의 문제가 아니라 큰 장애물이 만드는 경로 차단과 SUPER의 잔여 계획 변동성을
 드러낸 스트레스 캠페인이다.
 
-### 3.2 seed11: 15회
+### 3.2 seed11: 모드당 10회, 총 30회
 
-| 모드 | 완주 | 접촉 표시 런 |
-|---|---:|---:|
-| full | 4/5 | 5/5 |
-| sector | 5/5 | 2/5 |
-| adaptive | 5/5 | 1/5 |
+| 지표 | full | sector | adaptive |
+|---|---:|---:|---:|
+| 완주 | **10/10** | **10/10** | **10/10** |
+| 접촉 표시 런 | **6/10** | **1/10** | **2/10** |
+| 원시 transition 합계 | 12 | 1 | 4 |
+| 평균 점/frame | 67,749 | 21,435 (**68.4%↓**) | 21,757 (**67.9%↓**) |
+| ROG 총 mapping ms/frame | 14.762 | 6.389 | 6.269 |
+| 실효 ROG 갱신률 | 2.26 Hz | 3.51 Hz | 3.92 Hz |
+| 평균 미션시간 | 73.32 s | 73.41 s | 73.83 s |
 
-seed11에서도 adaptive가 가장 낮았지만 모드당 5회뿐이므로 보조 결과로만 사용한다.
+seed11에서도 full의 큰 프레임이 낮은 실효 갱신률과 같이 나타났다. 다만 이 결과는
+원 논문의 다이렉트 입력 baseline이 아니라 본 프로젝트의 외부 필터 파이프라인 비교다.
 
 ## 4. 충돌·미완주 해석
 
@@ -111,7 +120,8 @@ full의 접촉 런이 더 많은 것은 “시야가 넓으면 항상 더 안전
 
 ## 6. 재현 자산
 
-- 캠페인: `results/native_seed1_11_v6_n5.csv`
+- 메인 캠페인: `results/native_seed1_11_v6_n5.csv`
+- seed11 n=10: `results/native_seed11_v6_n10.csv`, `results/native_seed11_v6_n10_summary.csv`
 - 선행 1회 정밀 분석: `results/native_seed1_11_v6_forensics_{summary,episodes}.csv` 및 `.json`
 - 지도 사양: `docs/native_seed1_10_v6.md`
 - 지도 좌표: `scripts/native_campaign/seed1_static.csv` … `seed10_static.csv`
