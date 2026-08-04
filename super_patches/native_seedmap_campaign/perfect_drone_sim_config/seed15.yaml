@@ -1,0 +1,22 @@
+#############| For UAV simulation |#################################
+# Mirrored quiet base for the controlled-hold recovery diagnostic. The injected
+# rear-open pocket is aligned to velocity at the x=18 m trigger.
+pcd_name: "seed_maps/seed15.pcd"
+mesh_resource: "package://perfect_drone_sim/meshes/yunque-M.dae"
+init_position:
+  x: 0
+  y: 0
+  z: 1.5
+init_yaw: 0.0
+
+#############|For LiDAR perception simulation |####################
+is_360lidar: true
+polar_resolution: 0.4
+downsample_res: 0.1
+vertical_fov: 178.0
+sensing_blind: 0.1
+sensing_horizon: 15
+sensing_rate: 10
+print_time_consumption: false
+lidar_type: 2
+depth_image_en: false

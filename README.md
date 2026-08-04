@@ -161,7 +161,11 @@ Reproduce: `python3 scripts/g6_analyze.py`.
   no SDF edit / sim restart. Launch it *fresh per flight* (a long-lived instance can
   go stale on the best-effort odom QoS).
 
-## Campaign maps (seeded static worlds)
+## Legacy Gazebo campaign maps (seeded static worlds)
+
+> This section records the earlier Gazebo/PX4 100-obstacle design. It is not the
+> current native MARSIM seed1--10 geometry. The native v6 design is documented
+> below; running `scripts/gen_world.py --all` regenerates these legacy worlds.
 
 `gen_world.py` bakes a **complete static world SDF per seed** (cylinders only;
 radius encodes obstacle size) by reusing the PX4 world boilerplate. This is the
@@ -265,6 +269,73 @@ bind to any publisher. Compare `super_watch N full` (full ring) vs
 > `watch.sh` must guard the ROS `source` with `set +u; … ; set -u` — under `set -u`
 > `source /opt/ros/humble/setup.bash` aborts the script (ROS setup references unset
 > vars), which silently kills the launcher right before RViz.
+
+## Native seed1--10 v6 obstacle-size sweep
+
+The current native MARSIM maps keep the v5 mission scale (64 x 64 m, 410
+cylinders, loop corners at +/-24 m) but replace the old size/density conditions
+with one controlled size axis. Every map has a minimum **1.00 m physical
+surface-to-surface gap**; seeds 1--2 through 9--10 use radii 0.150, 0.275,
+0.400, 0.525, and 0.650 m respectively. Thus each tier changes radius by
+0.125 m and diameter by a clearly visible 0.25 m (62.5% of the modeled
+0.40 m drone diameter).
+
+```bash
+python3 scripts/native_campaign/gen_seeds1_10_v2.py
+```
+
+The exact tier table, gap definition, generated assets, backup locations, and
+v5/v6 result-version boundary are in
+[`docs/native_seed1_10_v6.md`](docs/native_seed1_10_v6.md). Existing v5 campaign
+tables remain historical v5 evidence and must not be relabeled as v6; the v6
+headline numbers require a fresh full campaign. A one-run endpoint smoke is in
+[`results/native_seed1_10_v6_final_endpoint_smoke.csv`](results/native_seed1_10_v6_final_endpoint_smoke.csv);
+it validates the selected upper tier but is not a replacement for that campaign.
+
+## Native seed12/13 blind-sector diagnostic
+
+The native MARSIM campaign has two opt-in corner cases. `seed12` and its
+reflected companion `seed13` inject a tagged three-cylinder trap only while its
+complete silhouette is visible to the velocity-aligned sector and hidden from
+the body-aligned sector:
+
+```bash
+python3 scripts/native_campaign/native_campaign.py \
+  --maps seed12 seed13 --modes sector adaptive --runs 5 \
+  --out results/seed12_seed13_operational.csv
+```
+
+Use `SEED12_MATCHED_PREFIX=1` or `SEED13_MATCHED_PREFIX=1` for the stricter
+control in which both runs use body-sector filtering until the trap's first
+cloud frame. Protocol, metrics, initial results, and interpretation are in
+[`docs/seed12_dynamic_scenario.md`](docs/seed12_dynamic_scenario.md).
+
+## Native seed14/15 stall-recovery diagnostic
+
+In the native runner, `adaptive` is the final hybrid: a velocity-aligned +/-60
+degree sector while cruising, 360-degree view after an armed low-speed stall,
+then velocity-sector again after sustained motion resumes. The former
+velocity-only implementation remains available as mode `velocity`; `trigger`
+uses the same fair startup/stall gate but keeps a body-yaw sector while closed.
+
+Seed14 and seed15 use the same controlled approach to `(20,0)`, hold until
+odometry speed has stayed below `0.6 m/s` for `1.6 s`, then release toward
+mirrored final goals. A rear-open pocket is injected at the `x=18 m` crossing.
+The barrier and mission driver are independent of filter state, and both rear
+endpoints lie outside the closed `+/-60 degree` sector. This deliberately tests
+the hybrid arm/open/reclose path; seed12/13 remain the unexpected-popup safety
+tests. A recovery-specific map origin keeps the 40 m goal and bypass inside
+ROG-Map:
+
+```bash
+python3 scripts/native_campaign/native_campaign.py \
+  --maps seed14 seed15 \
+  --modes full sector velocity trigger adaptive --runs 3 \
+  --out results/native_recovery_seed14_15_n3.csv
+```
+
+See [`docs/hybrid_adaptive_recovery.md`](docs/hybrid_adaptive_recovery.md) for
+the state thresholds, validity checks, metrics, and visual watch commands.
 
 ## Acknowledgements
 
