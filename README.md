@@ -310,6 +310,33 @@ a reproduction of the paper's 60-map by 18-speed simulation protocol. The
 comparison and interpretation boundary are recorded in
 [`docs/paper_story.md`](docs/paper_story.md).
 
+The seed11 safety check uses 30 order-rotated runs per mode and stores one JSON
+artifact per run. The reference configs publish `/rog_map/occ` at 2 Hz so each
+contact transition can capture odometry, the raw cloud, occupied voxels, the A*
+frontend path, committed trajectory, position command, and local static PCD:
+
+```bash
+python3 scripts/native_campaign/native_campaign.py \
+  --maps seed11 --modes raw adaptive --runs 30 --rotate-modes \
+  --artifacts-dir results/native_seed11_raw_adaptive_n30_forensics \
+  --out results/native_seed11_raw_adaptive_n30.csv
+```
+
+In the completed forensic campaign, raw/adaptive finished 30/30 and 29/30 and
+marked live-cloud contact in 8/30 and 14/30 runs. The difference was not
+statistically significant (two-sided Fisher p=0.180), but its direction means
+the project does not claim collision-free operation, safety equivalence, or
+even absence of a safety-degradation signal. Adaptive still reduced points by
+66.2%, raycast time by 60.6%, and total mapping time by 51.3%. The occupied-map
+publisher and roughly 55--57% of one CPU core used by the monitor are part of
+this campaign, so its absolute CPU and effective-rate values are only compared
+within this instrumented pair.
+
+Order was balanced, but the contact split was strongly order-sensitive:
+raw/adaptive were 5/15 and 3/15 in raw-first blocks, versus 3/15 and 11/15 in
+adaptive-first blocks (paired exact p=0.210). Treat the aggregate as a timing-
+sensitive system observation, not a universal causal safety ranking.
+
 ## Native seed12/13 blind-sector diagnostic
 
 The native MARSIM campaign has two opt-in corner cases. `seed12` and its

@@ -140,7 +140,9 @@ rog_map:
 
 
   visualization:
-    enable: false
+    # Required by the seed11 contact-forensics campaign so the monitor can
+    # snapshot the occupied ROG voxels at the same instant as a contact event.
+    enable: true
     # when enabled, use rqt_reconfigure to change the visualization parameters.
     use_dynamic_reconfigure: false
     # The rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.

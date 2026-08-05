@@ -142,7 +142,9 @@ rog_map:
 
 
   visualization:
-    enable: false
+    # Match static_reference.yaml: publish occupied ROG voxels at 2 Hz for
+    # contact-event snapshots in the raw-direct control as well.
+    enable: true
     # when enabled, use rqt_reconfigure to change the visualization parameters.
     use_dynamic_reconfigure: false
     # The rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.

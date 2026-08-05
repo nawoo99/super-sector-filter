@@ -9,11 +9,12 @@ Reliability lessons ported from the Gazebo g_campaign.py saga: fresh process
 teardown+restart per (map,mode,run), retry on startup failure, own process group
 so a hung run can be killed as a tree.
 """
-import argparse, csv, fcntl, os, signal, subprocess, sys, time, json, statistics as st
+import argparse, csv, fcntl, os, shutil, signal, subprocess, sys, time, json, statistics as st
 
 ROS_ENV = "source /opt/ros/humble/setup.bash && source /root/super_ws/install/setup.bash"
 PERF_LOG = "/root/super_ws/src/SUPER/rog_map/log/rm_performance_log.csv"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 LOOP_MON = os.path.join(SCRIPT_DIR, "native_loop_monitor.py")
 SECTOR = os.path.join(SCRIPT_DIR, "native_sector.py")
 SEED12_SCENARIO = os.path.join(SCRIPT_DIR, "native_seed12_scenario.py")
@@ -51,21 +52,40 @@ class CpuMeter:
         self.pid = None
         self.t0 = None
         self.ticks0 = None
+        self.t_last = None
+        self.ticks_last = None
 
     def start(self):
         cand = [(proc_ticks(p) or -1, p) for p in pgrep(self.pattern)]
         self.pid = max(cand)[1] if cand else None
         self.t0 = time.time()
         self.ticks0 = proc_ticks(self.pid) if self.pid else None
+        self.t_last = self.t0
+        self.ticks_last = self.ticks0
+
+    def start_pid(self, pid):
+        self.pid = pid
+        self.t0 = time.time()
+        self.ticks0 = proc_ticks(pid)
+        self.t_last = self.t0
+        self.ticks_last = self.ticks0
+
+    def sample(self):
+        if self.pid is None:
+            return
+        ticks = proc_ticks(self.pid)
+        if ticks is not None:
+            self.ticks_last = ticks
+            self.t_last = time.time()
 
     def stop(self):
         if self.pid is None or self.ticks0 is None:
             return None
-        ticks1 = proc_ticks(self.pid)
-        dt = time.time() - self.t0
-        if ticks1 is None or dt <= 0:
+        self.sample()
+        dt = self.t_last - self.t0
+        if self.ticks_last is None or dt <= 0:
             return None
-        return 100.0 * (ticks1 - self.ticks0) / CLK_TCK / dt
+        return 100.0 * (self.ticks_last - self.ticks0) / CLK_TCK / dt
 
 LOOP_WPS = "24,24;-24,24;-24,-24;24,-24;0,0"
 LOOP_SWITCH = 1.5
@@ -85,12 +105,16 @@ RECOVERY_MONITOR_WPS = {
 }
 RECOVERY_SWITCH = 1.5
 RECOVERY_TIMEOUT = float(os.environ.get("RECOVERY_TIMEOUT_S", "120.0"))
-# seed11 = the original SUPER-paper dense-forest map (random_map_2_26609.pcd),
-# NOT a gen_world cylinder map -- straight 100m corridor, launched via
-# benchmark_reference.launch.py / static_reference.yaml.
+# seed11 = SUPER's public dense MARSIM example (random_map_2_26609.pcd), not
+# one of the paper's identified 60-map evaluation assets. It uses an out-and-
+# back corridor mission via benchmark_reference.launch.py.
 REF_WPS = "0,50;0,-50"
 REF_SWITCH = 2.0
 REF_TIMEOUT = 90.0
+REF_PCD = (
+    "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/"
+    "random_map_2_26609.pcd"
+)
 
 # seed12..15 are separate safety/recovery experiments. Keep them opt-in so the
 # original efficiency campaign remains seed1..seed11.
@@ -102,7 +126,14 @@ VALID_MODES = (
 )
 
 FIELDS = ["map", "run", "mode", "success", "mission_time_s", "waypoints_reached",
-          "n_waypoints", "collisions", "min_clearance_m", "samples",
+          "n_waypoints", "collisions", "min_clearance_m",
+          "static_pcd_collisions", "static_pcd_min_distance_m",
+          "static_pcd_clearance_m", "contact_event_count",
+          "first_contact_kind", "first_contact_time_s",
+          "first_contact_distance_m", "first_contact_x", "first_contact_y",
+          "first_contact_z", "first_contact_speed_mps",
+          "first_contact_nearest_x", "first_contact_nearest_y",
+          "first_contact_nearest_z", "forensics_json", "samples",
           "clearance_samples",
           "final_x", "final_y", "final_z", "min_x", "max_x", "min_y", "max_y",
           "path_length_m", "max_speed_mps", "closest_final_goal_distance_m",
@@ -173,6 +204,7 @@ FIELDS = ["map", "run", "mode", "success", "mission_time_s", "waypoints_reached"
           "mission_driver_release_low_speed_duration_s",
           "pts_mean", "total_ms_mean", "raycast_ms_mean", "update_ms_mean",
           "inflation_ms_mean", "kept_pct", "fsm_cpu_pct", "filter_cpu_pct",
+          "monitor_cpu_pct",
           "perf_row_start", "perf_row_end", "input_distance_m",
           "kept_distance_m"]
 
@@ -253,8 +285,8 @@ def slice_perf(start, end):
     }
 
 
-def run_one(map_name, mode, run, attempt_max=3):
-    is_ref = (map_name == "seed11")  # seed11 = the original SUPER-paper dense-forest map
+def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
+    is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_seed12 = (map_name == "seed12")
     is_seed13 = (map_name == "seed13")
     is_dynamic = is_seed12 or is_seed13
@@ -466,20 +498,27 @@ def run_one(map_name, mode, run, attempt_max=3):
             )
         else:
             monitor_options = ""
+        if is_ref:
+            monitor_options += f" --static-pcd {REF_PCD}"
         mon_cmd = (
             f"python3 {LOOP_MON} '{wps}' {switch} {timeout} {out_json}"
             f"{monitor_options}"
         )
         mon_proc = subprocess.Popen(["bash", "-c", f"{ROS_ENV} && {mon_cmd}"],
                                     preexec_fn=os.setsid)
-        try:
-            mon_proc.wait(timeout=timeout + 30)
-        except subprocess.TimeoutExpired:
+        monitor_cpu = CpuMeter("native_loop_monitor.py")
+        monitor_cpu.start_pid(mon_proc.pid)
+        monitor_deadline = time.monotonic() + timeout + 30
+        while mon_proc.poll() is None and time.monotonic() < monitor_deadline:
+            time.sleep(1.0)
+            monitor_cpu.sample()
+        if mon_proc.poll() is None:
             log(f"  {tag}: monitor HUNG -> kill")
             kill_group(mon_proc)
 
         fsm_cpu_pct = fsm_cpu.stop()
         filter_cpu_pct = filt_cpu.stop() if filt_proc is not None else None
+        monitor_cpu_pct = monitor_cpu.stop()
         row_end = perf_row_count()
 
         # Backward-compatible fallback when a filter predates --stats-json.
@@ -503,9 +542,33 @@ def run_one(map_name, mode, run, attempt_max=3):
         rec = {"map": map_name, "run": run, "mode": mode,
                "perf_row_start": row_start, "perf_row_end": row_end, "kept_pct": kept_pct,
                "fsm_cpu_pct": fsm_cpu_pct, "filter_cpu_pct": filter_cpu_pct,
+               "monitor_cpu_pct": monitor_cpu_pct,
                "matched_prefix": matched_prefix if is_dynamic else None}
         if os.path.exists(out_json):
-            rec.update(json.load(open(out_json)))
+            monitor_result = json.load(open(out_json))
+            rec.update(monitor_result)
+            events = monitor_result.get("contact_events") or []
+            if events:
+                first_event = events[0]
+                position = first_event.get("position") or [None, None, None]
+                nearest = first_event.get("nearest_point") or [None, None, None]
+                rec.update({
+                    "first_contact_kind": first_event.get("kind"),
+                    "first_contact_time_s": first_event.get("elapsed_s"),
+                    "first_contact_distance_m": first_event.get("distance_m"),
+                    "first_contact_x": position[0],
+                    "first_contact_y": position[1],
+                    "first_contact_z": position[2],
+                    "first_contact_speed_mps": first_event.get("speed_mps"),
+                    "first_contact_nearest_x": nearest[0],
+                    "first_contact_nearest_y": nearest[1],
+                    "first_contact_nearest_z": nearest[2],
+                })
+            if artifacts_dir:
+                os.makedirs(artifacts_dir, exist_ok=True)
+                artifact_path = os.path.join(artifacts_dir, f"{tag}.json")
+                shutil.copyfile(out_json, artifact_path)
+                rec["forensics_json"] = os.path.relpath(artifact_path, REPO_ROOT)
             rec.update(slice_perf(row_start, row_end))
         else:
             rec["success"] = False
@@ -624,6 +687,10 @@ def main():
         action="store_true",
         help="rotate requested mode order each run to balance order effects",
     )
+    ap.add_argument(
+        "--artifacts-dir",
+        help="copy each run's monitor JSON, including contact context, here",
+    )
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "native_campaign.csv"))
     args = ap.parse_args()
 
@@ -660,7 +727,16 @@ def main():
                     shift = (run - 1) % len(modes)
                     modes = modes[shift:] + modes[:shift]
                 for mode in modes:
-                    rec = run_one(map_name, mode, run)
+                    rec = run_one(
+                        map_name,
+                        mode,
+                        run,
+                        artifacts_dir=(
+                            os.path.abspath(args.artifacts_dir)
+                            if args.artifacts_dir
+                            else None
+                        ),
+                    )
                     w.writerow(rec); f.flush()
                     done += 1
                     el = time.time() - t0
