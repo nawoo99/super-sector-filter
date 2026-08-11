@@ -9,13 +9,14 @@ Reliability lessons ported from the Gazebo g_campaign.py saga: fresh process
 teardown+restart per (map,mode,run), retry on startup failure, own process group
 so a hung run can be killed as a tree.
 """
-import argparse, csv, fcntl, os, shutil, signal, subprocess, sys, time, json, statistics as st
+import argparse, csv, fcntl, os, re, shutil, signal, subprocess, sys, time, json, statistics as st
 
 ROS_ENV = "source /opt/ros/humble/setup.bash && source /root/super_ws/install/setup.bash"
 PERF_LOG = "/root/super_ws/src/SUPER/rog_map/log/rm_performance_log.csv"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 LOOP_MON = os.path.join(SCRIPT_DIR, "native_loop_monitor.py")
+REFERENCE_MON = os.path.join(SCRIPT_DIR, "native_reference_monitor.py")
 SECTOR = os.path.join(SCRIPT_DIR, "native_sector.py")
 SEED12_SCENARIO = os.path.join(SCRIPT_DIR, "native_seed12_scenario.py")
 RECOVERY_SCENARIO = os.path.join(SCRIPT_DIR, "native_recovery_scenario.py")
@@ -106,29 +107,157 @@ RECOVERY_MONITOR_WPS = {
 RECOVERY_SWITCH = 1.5
 RECOVERY_TIMEOUT = float(os.environ.get("RECOVERY_TIMEOUT_S", "120.0"))
 # seed11 = SUPER's public dense MARSIM example (random_map_2_26609.pcd), not
-# one of the paper's identified 60-map evaluation assets. It uses an out-and-
-# back corridor mission via benchmark_reference.launch.py.
-REF_WPS = "0,50;0,-50"
+# one of the paper's identified 60-map evaluation assets.  All current seed11
+# measurements stop at the single outbound goal, (0,-50) -> (0,50).
+REF_WPS = "0,50"
 REF_SWITCH = 2.0
 REF_TIMEOUT = 90.0
+REF_READY_CLOUDS = 5
+REF_STATIONARY_WARMUP_S = 3.0
 REF_PCD = (
     "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/"
     "random_map_2_26609.pcd"
+)
+
+# map0 = one of the actual maps from SUPER's own paper data release
+# (Zenodo doi.org/10.5281/zenodo.14528604, mock_map_opt_26121_20.pcd),
+# NOT the public GitHub demo map (that's seed11). Same +-7.5x110m
+# benchmark scale as the paper describes. Start/goal chosen by scanning
+# for maximum local point clearance near y=-49/+49 (~0.60 m each).
+MAP0_WPS = "-2.5,49"
+MAP0_SWITCH = 2.0
+MAP0_TIMEOUT = 90.0
+MAP0_PCD = (
+    "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/map0.pcd"
 )
 
 # seed12..15 are separate safety/recovery experiments. Keep them opt-in so the
 # original efficiency campaign remains seed1..seed11.
 MAPS = [f"seed{i}" for i in range(1, 11)] + ["seed11"]
 MODES = ["full", "sector", "adaptive"]
-VALID_MAPS = tuple(f"seed{i}" for i in range(1, 16))
+VALID_MAPS = tuple(f"seed{i}" for i in range(1, 16)) + ("map0",)
 VALID_MODES = (
-    "raw", "upstream", "full", "sector", "velocity", "adaptive", "trigger"
+    "raw", "upstream",
+    "raw_v1", "raw_v4", "raw_v7", "raw_v10", "raw_v14", "raw_v18",
+    "raw_oneway_repeat", "raw_oneway_once",
+    "raw_oneway_once_quiet", "raw_oneway_ready", "raw_oneway_guarded",
+    "raw_oneway_guarded_slow",
+    "raw_oneway_guarded_v2",
+    "raw_oneway_guarded_v2_scheduled",
+    "raw_oneway_guarded_v2_reso",
+    "raw_oneway_guarded_v2_corridor",
+    "raw_oneway_guarded_v2_aligned",
+    "raw_oneway_guarded_scheduled",
+    "raw_oneway_guarded_margin",
+    "full", "sector", "velocity", "adaptive", "trigger",
+    # Paper-matched speed sweep for the seed1..10 filter ablation itself
+    # (max_acc=20 m/s^2, max_vel in the paper's swept set) -- distinct from
+    # the raw_v* sweep, which targets seed11/map0's SUPER-as-is comparison.
+    *(f"{base}_v{v}" for base in ("full", "sector", "adaptive")
+      for v in (1, 4, 7, 10, 14, 18)),
+)
+SEEDMAP_SPEED_SWEEP = (1, 4, 7, 10, 14, 18)
+
+REFERENCE_ABLATION_PROFILES = {
+    # Step 1 isolates repeated versus one-shot goal publication.  Everything
+    # else, including ROG visualization, is held fixed.
+    "raw_oneway_repeat": {
+        "waypoint_config": "waypoint_repeat_1hz.yaml",
+        "super_config": "static_reference_raw.yaml",
+    },
+    "raw_oneway_once": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw.yaml",
+    },
+    # Step 2 holds goal-once fixed and removes detailed/ROG visualization load.
+    "raw_oneway_once_quiet": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw_quiet.yaml",
+    },
+    # Step 3 keeps the one-shot/quiet profile and starts planning only after
+    # accepted scans have actually committed to a fresh map.
+    "raw_oneway_ready": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw_ready.yaml",
+    },
+    # Step 4 continuously validates the committed trajectory against fresh map
+    # state and emits a bounded braking trajectory when validation fails.
+    "raw_oneway_guarded": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw_guarded.yaml",
+    },
+    # Step 5b preserves the same guard and reduces only the trajectory dynamic
+    # limits, increasing reaction/stopping distance margin.
+    "raw_oneway_guarded_slow": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw_guarded_slow.yaml",
+    },
+    # Step 5a limits only cruise speed; acceleration, jerk, and emergency
+    # braking authority stay at the guarded baseline values.
+    "raw_oneway_guarded_v2": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw_guarded_v2.yaml",
+    },
+    # Step 5b additionally reduces optimizer timer pressure so fresh map
+    # commits are not starved by 15 Hz replanning.
+    "raw_oneway_guarded_v2_scheduled": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw_guarded_v2_scheduled.yaml",
+    },
+    # Step 5c samples the soft corridor constraints more densely so the
+    # polynomial is less likely to cut between optimizer quadrature points.
+    "raw_oneway_guarded_v2_reso": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw_guarded_v2_reso.yaml",
+    },
+    # Step 5d shortens safe-corridor seed lines after denser constraint
+    # sampling, reducing corner cutting around inflated obstacles.
+    "raw_oneway_guarded_v2_corridor": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw_guarded_v2_corridor.yaml",
+    },
+    # Step 5e aligns the planner's geometric body radius with the guard's
+    # 0.30 m inflated-obstacle margin instead of weakening the map inflation.
+    "raw_oneway_guarded_v2_aligned": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw_guarded_v2_aligned.yaml",
+    },
+    # Step 5c reduces replan timer pressure so committed map updates are not
+    # starved by continuous optimization in the shared safety callback group.
+    "raw_oneway_guarded_scheduled": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw_guarded_scheduled.yaml",
+    },
+    # Step 6 aligns the safe-corridor planning radius with the online inflated
+    # map (0.30 m) and tightens numerical constraint sampling.
+    "raw_oneway_guarded_margin": {
+        "waypoint_config": "waypoint_goal_once.yaml",
+        "super_config": "static_reference_raw_guarded_margin.yaml",
+    },
+}
+RAW_DIRECT_REF_MODES = frozenset(
+    ("raw", "upstream",
+     "raw_v1", "raw_v4", "raw_v7", "raw_v10", "raw_v14", "raw_v18",
+     *REFERENCE_ABLATION_PROFILES.keys())
 )
 
-FIELDS = ["map", "run", "mode", "success", "mission_time_s", "waypoints_reached",
+FIELDS = ["map", "run", "mode", "experiment_profile", "success", "run_valid",
+          "monitor_type", "monitor_flight_cpu_pct", "live_cloud_enabled", "preflight_ready",
+          "preflight_cloud_messages", "preflight_odom_messages", "goal_messages",
+          "position_command_messages", "trajectory_flag2_messages",
+          "trajectory_flag3_messages",
+          "guard_stop_detected", "guard_stop_time_s",
+          "first_position_command_s", "first_trajectory_flag2_s",
+          "first_trajectory_flag3_s",
+          "max_position_command_gap_s", "first_motion_s",
+          "start_pose_error_m", "start_pose_valid", "odom_gap_limit_s",
+          "max_odom_gap_s", "odom_gap_valid", "mission_time_s", "waypoints_reached",
           "n_waypoints", "collisions", "min_clearance_m",
           "static_pcd_collisions", "static_pcd_min_distance_m",
-          "static_pcd_clearance_m", "contact_event_count",
+          "static_pcd_clearance_m", "static_pcd_contact_r015",
+          "static_pcd_contact_r020", "static_pcd_contact_r025",
+          "static_pcd_episodes_r015", "static_pcd_episodes_r020",
+          "static_pcd_episodes_r025", "contact_event_count",
           "first_contact_kind", "first_contact_time_s",
           "first_contact_distance_m", "first_contact_x", "first_contact_y",
           "first_contact_z", "first_contact_speed_mps",
@@ -215,7 +344,8 @@ def log(msg):
 
 def kill_all():
     for n in ("perfect_drone_node", "fsm_node", "waypoint_mission", "native_sector.py",
-              "native_loop_monitor.py", "native_seed12_scenario.py",
+              "native_loop_monitor.py", "native_reference_monitor.py",
+              "native_seed12_scenario.py",
               "native_recovery_scenario.py", "native_recovery_mission.py"):
         subprocess.run(["pkill", "-9", "-f", n], stderr=subprocess.DEVNULL)
     time.sleep(1.5)
@@ -287,17 +417,34 @@ def slice_perf(start, end):
 
 def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
+    is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
     is_seed12 = (map_name == "seed12")
     is_seed13 = (map_name == "seed13")
     is_dynamic = is_seed12 or is_seed13
     is_recovery = map_name in ("seed14", "seed15")
+    # Paper-matched speed sweep on the seed1..10 filter ablation itself:
+    # "sector_v10" -> filter mode "sector" run under static_seedmaps_paper_v10.yaml
+    # (max_acc=20 m/s^2, max_vel=10) instead of the default static_seedmaps.yaml
+    # (max_acc=15, max_vel=3) used by the plain full/sector/adaptive modes.
+    seedmap_sweep_match = re.match(r"^(full|sector|adaptive)_v(\d+)$", mode)
+    base_mode = seedmap_sweep_match.group(1) if seedmap_sweep_match else mode
+    sweep_vel = float(seedmap_sweep_match.group(2)) if seedmap_sweep_match else None
     matched_prefix = (
         is_dynamic
         and os.environ.get(f"{map_name.upper()}_MATCHED_PREFIX", "0").lower()
         in ("1", "true", "yes", "on")
     )
-    if is_ref:
-        wps, switch, timeout = REF_WPS, REF_SWITCH, REF_TIMEOUT
+    if is_ref or is_map0:
+        base_wps, base_switch, base_timeout = (
+            (MAP0_WPS, MAP0_SWITCH, MAP0_TIMEOUT) if is_map0
+            else (REF_WPS, REF_SWITCH, REF_TIMEOUT)
+        )
+        wps, switch, timeout = base_wps, base_switch, base_timeout
+        if mode.startswith("raw_v") and mode[5:].isdigit():
+            # ~100 m goal; give generous margin over 100/max_vel so slow
+            # sweep points (e.g. raw_v1 -> ~100s cruise) don't time out.
+            sweep_vel = float(mode[5:])
+            timeout = max(base_timeout, 100.0 / sweep_vel * 2.0 + 30.0)
     elif is_seed12:
         wps, switch, timeout = SEED12_WPS, LOOP_SWITCH, SEED12_TIMEOUT
     elif is_seed13:
@@ -310,6 +457,11 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
         )
     else:
         wps, switch, timeout = LOOP_WPS, LOOP_SWITCH, LOOP_TIMEOUT
+        if sweep_vel is not None:
+            # loop24's four-corner path is ~220-250 m total; scale the
+            # timeout so low sweep speeds (e.g. 1 m/s -> ~250s cruise)
+            # don't time out and high speeds don't wait needlessly.
+            timeout = max(60.0, 250.0 / sweep_vel + 60.0)
     tag = f"{map_name}_run{run}_{mode}"
     out_json = os.path.join(TMPDIR, f"{tag}.json")
     filt_log = os.path.join(TMPDIR, f"{tag}.filt.log")
@@ -320,6 +472,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
     scenario_trace_csv = os.path.join(TMPDIR, f"{tag}.scenario_trace.csv")
     mission_log = os.path.join(TMPDIR, f"{tag}.mission.log")
     mission_event_json = os.path.join(TMPDIR, f"{tag}.mission_event.json")
+    reference_monitor_log = os.path.join(TMPDIR, f"{tag}.reference_monitor.log")
+    reference_stack_log = os.path.join(TMPDIR, f"{tag}.stack.log")
+    ready_json = os.path.join(TMPDIR, f"{tag}.ready.json")
 
     for attempt in range(1, attempt_max + 1):
         kill_all()
@@ -330,12 +485,15 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
             scenario_event_json,
             scenario_trace_csv,
             mission_event_json,
+            ready_json,
+            ready_json + ".tmp",
         ):
             if os.path.exists(path):
                 os.remove(path)
 
         scenario_proc = None
         recovery_mission_proc = None
+        reference_mission_proc = None
         if is_dynamic:
             # seed13's mirrored funnel geometry needed more reaction margin
             # than seed12's original layout to separate sector from adaptive
@@ -398,7 +556,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
                 preexec_fn=os.setsid,
             )
 
-        raw_direct = is_ref and mode in ("raw", "upstream")
+        raw_direct = (is_ref or is_map0) and mode in RAW_DIRECT_REF_MODES
         filter_options = f" --stats-json {filt_stats_json}"
         if is_dynamic:
             filter_options += (
@@ -415,7 +573,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
                 [
                     "bash",
                     "-c",
-                    f"{ROS_ENV} && python3 {SECTOR} {mode}{filter_options} "
+                    f"{ROS_ENV} && python3 {SECTOR} {base_mode}{filter_options} "
                     f"> {filt_log} 2>&1",
                 ],
                 preexec_fn=os.setsid,
@@ -425,14 +583,44 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
         time.sleep(1.0)
 
         if is_ref:
-            if mode == "raw":
+            if mode in REFERENCE_ABLATION_PROFILES:
+                super_config = REFERENCE_ABLATION_PROFILES[mode]["super_config"]
+                launch_cmd = (
+                    "{ ros2 run perfect_drone_sim perfect_drone_node --ros-args "
+                    "-p config_name:=dense.yaml & "
+                    "ros2 run super_planner fsm_node --ros-args "
+                    f"-p config_name:={super_config} & wait; }} "
+                    f"> {reference_stack_log} 2>&1"
+                )
+            elif mode == "raw":
                 super_config = "static_reference_raw.yaml"
+            elif mode.startswith("raw_v") and mode[5:].isdigit():
+                # Paper speed-sweep replication: "maximum velocity varying
+                # from 1 to 18 m/s" at a fixed max_acc=20 m/s^2. Each
+                # raw_vN config is static_reference_raw.yaml with only
+                # max_vel changed to N.
+                super_config = f"static_reference_raw_v{mode[5:]}.yaml"
             elif mode == "upstream":
                 super_config = "static_upstream_raw.yaml"
             else:
                 super_config = "static_reference.yaml"
+            if mode not in REFERENCE_ABLATION_PROFILES:
+                launch_cmd = (
+                    "ros2 launch mission_planner benchmark_reference.launch.py "
+                    f"super_config:={super_config}"
+                )
+        elif is_map0:
+            # map0 only supports the plain raw-direct comparison and the
+            # paper's speed sweep -- none of seed11's ablation-debugging
+            # profiles apply here.
+            if mode == "raw":
+                super_config = "static_reference_raw.yaml"
+            elif mode.startswith("raw_v") and mode[5:].isdigit():
+                super_config = f"static_reference_raw_v{mode[5:]}.yaml"
+            else:
+                super_config = "static_reference_raw.yaml"
             launch_cmd = (
-                "ros2 launch mission_planner benchmark_reference.launch.py "
+                "ros2 launch mission_planner benchmark_map0.launch.py "
                 f"super_config:={super_config}"
             )
         elif is_recovery:
@@ -443,10 +631,14 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
                 "-p config_name:=static_recovery.yaml & wait; }"
             )
         else:
+            seedmap_super_config = (
+                f"static_seedmaps_paper_v{int(sweep_vel)}.yaml"
+                if sweep_vel is not None else "static_seedmaps.yaml"
+            )
             launch_cmd = (
                 "ros2 launch mission_planner benchmark_seedmap.launch.py "
                 f"waypoint_data:=loop24.txt drone_config:={map_name}.yaml "
-                "super_config:=static_seedmaps.yaml"
+                f"super_config:={seedmap_super_config}"
             )
         launch_proc = subprocess.Popen(
             ["bash", "-c", f"{ROS_ENV} && {launch_cmd}"],
@@ -482,32 +674,88 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
             kill_group(recovery_mission_proc)
             continue
 
-        row_start = perf_row_count()
+        is_reference_ablation = mode in REFERENCE_ABLATION_PROFILES
+        if is_reference_ablation:
+            mon_cmd = (
+                f"python3 {REFERENCE_MON} '{wps}' {switch} {timeout} {out_json} "
+                f"--static-pcd {REF_PCD} --ready-file {ready_json} "
+                f"--ready-clouds {REF_READY_CLOUDS} "
+                f"{'--stop-on-sticky-flag3-s 5.0' if mode.startswith('raw_oneway_guarded') else ''} "
+                f"> {reference_monitor_log} 2>&1"
+            )
+            mon_proc = subprocess.Popen(
+                ["bash", "-c", f"{ROS_ENV} && {mon_cmd}"],
+                preexec_fn=os.setsid,
+            )
+            ready_deadline = time.monotonic() + 45.0
+            while (
+                mon_proc.poll() is None
+                and not os.path.exists(ready_json)
+                and time.monotonic() < ready_deadline
+            ):
+                time.sleep(0.1)
+            if mon_proc.poll() is not None or not os.path.exists(ready_json):
+                log(
+                    f"  {tag} attempt {attempt}/{attempt_max}: "
+                    "reference monitor did not reach READY -> retry"
+                )
+                kill_group(mon_proc)
+                kill_group(launch_proc)
+                kill_all()
+                continue
+            # The monitor is subscribed and the sensor has produced multiple
+            # scans.  Keep the vehicle stationary while ROG consumes them.
+            time.sleep(REF_STATIONARY_WARMUP_S)
 
+        row_start = perf_row_count()
         fsm_cpu = CpuMeter("fsm_node")
         filt_cpu = CpuMeter("native_sector.py")
         fsm_cpu.start()
         if filt_proc is not None:
             filt_cpu.start()
 
-        if is_dynamic:
-            monitor_options = " --cloud-topic /cloud_seed12"
-        elif is_recovery:
-            monitor_options = (
-                " --cloud-topic /cloud_recovery --trap-intensity 14015"
+        if is_reference_ablation:
+            waypoint_config = REFERENCE_ABLATION_PROFILES[mode]["waypoint_config"]
+            reference_mission_cmd = (
+                "ros2 run mission_planner waypoint_mission --ros-args "
+                f"-p config_name:={waypoint_config} "
+                "-p data_name:=benchmark_outbound.txt "
+                f"> {mission_log} 2>&1"
             )
+            reference_mission_proc = subprocess.Popen(
+                ["bash", "-c", f"{ROS_ENV} && {reference_mission_cmd}"],
+                preexec_fn=os.setsid,
+            )
+            monitor_pattern = "native_reference_monitor.py"
         else:
-            monitor_options = ""
-        if is_ref:
-            monitor_options += f" --static-pcd {REF_PCD}"
-        mon_cmd = (
-            f"python3 {LOOP_MON} '{wps}' {switch} {timeout} {out_json}"
-            f"{monitor_options}"
-        )
-        mon_proc = subprocess.Popen(["bash", "-c", f"{ROS_ENV} && {mon_cmd}"],
-                                    preexec_fn=os.setsid)
-        monitor_cpu = CpuMeter("native_loop_monitor.py")
-        monitor_cpu.start_pid(mon_proc.pid)
+            if is_dynamic:
+                monitor_options = " --cloud-topic /cloud_seed12"
+            elif is_recovery:
+                monitor_options = (
+                    " --cloud-topic /cloud_recovery --trap-intensity 14015"
+                )
+            else:
+                monitor_options = ""
+            if is_ref:
+                monitor_options += f" --static-pcd {REF_PCD}"
+            elif is_map0:
+                monitor_options += f" --static-pcd {MAP0_PCD}"
+            mon_cmd = (
+                # "--" guards waypoint strings that start with "-" (e.g.
+                # map0's negative-x goal) from being misread as an option.
+                f"python3 {LOOP_MON} -- '{wps}' {switch} {timeout} {out_json}"
+                f"{monitor_options}"
+            )
+            mon_proc = subprocess.Popen(
+                ["bash", "-c", f"{ROS_ENV} && {mon_cmd}"],
+                preexec_fn=os.setsid,
+            )
+            monitor_pattern = "native_loop_monitor.py"
+
+        monitor_cpu = CpuMeter(monitor_pattern)
+        # The shell waits on the Python child, so sampling the wrapper PID
+        # reports 0%. Resolve the actual monitor process by command pattern.
+        monitor_cpu.start()
         monitor_deadline = time.monotonic() + timeout + 30
         while mon_proc.poll() is None and time.monotonic() < monitor_deadline:
             time.sleep(1.0)
@@ -526,7 +774,6 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
         try:
             for line in open(filt_log):
                 if "kept" in line:
-                    import re
                     m = re.search(r"kept (\d+)%", line)
                     if m:
                         kept_pct = int(m.group(1))
@@ -536,10 +783,12 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
         terminate_group(filt_proc)
         kill_group(scenario_proc)
         kill_group(recovery_mission_proc)
+        kill_group(reference_mission_proc)
         kill_group(launch_proc)
         kill_all()
 
         rec = {"map": map_name, "run": run, "mode": mode,
+               "experiment_profile": mode if is_reference_ablation else None,
                "perf_row_start": row_start, "perf_row_end": row_end, "kept_pct": kept_pct,
                "fsm_cpu_pct": fsm_cpu_pct, "filter_cpu_pct": filter_cpu_pct,
                "monitor_cpu_pct": monitor_cpu_pct,
@@ -569,6 +818,17 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
                 artifact_path = os.path.join(artifacts_dir, f"{tag}.json")
                 shutil.copyfile(out_json, artifact_path)
                 rec["forensics_json"] = os.path.relpath(artifact_path, REPO_ROOT)
+                if is_reference_ablation:
+                    for source, suffix in (
+                        (reference_stack_log, "stack.log"),
+                        (mission_log, "mission.log"),
+                        (reference_monitor_log, "monitor.log"),
+                    ):
+                        if os.path.exists(source):
+                            shutil.copyfile(
+                                source,
+                                os.path.join(artifacts_dir, f"{tag}.{suffix}"),
+                            )
             rec.update(slice_perf(row_start, row_end))
         else:
             rec["success"] = False
@@ -651,6 +911,25 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
             log(f"  {tag} attempt {attempt}/{attempt_max}: no odom samples -> retry")
             continue
         if (
+            is_reference_ablation
+            and rec.get("run_valid") is not True
+            and attempt < attempt_max
+        ):
+            if artifacts_dir and os.path.exists(out_json):
+                invalid_artifact = os.path.join(
+                    artifacts_dir, f"{tag}_attempt{attempt}_invalid.json"
+                )
+                shutil.copyfile(out_json, invalid_artifact)
+            log(
+                f"  {tag} attempt {attempt}/{attempt_max}: "
+                "reference validity failed "
+                f"(ready={rec.get('preflight_ready')}, "
+                f"start_error={rec.get('start_pose_error_m')}, "
+                f"max_odom_gap={rec.get('max_odom_gap_s')}, "
+                f"gap_limit={rec.get('odom_gap_limit_s')}) -> retry"
+            )
+            continue
+        if (
             is_recovery
             and rec.get("valid_spawn") is False
             and attempt < attempt_max
@@ -661,12 +940,24 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
             )
             continue
 
+        contact_count = (
+            rec.get("static_pcd_collisions")
+            if is_reference_ablation
+            else rec.get("collisions")
+        )
+        clearance = (
+            rec.get("static_pcd_clearance_m")
+            if is_reference_ablation
+            else rec.get("min_clearance_m")
+        )
         log(f"  {tag}: success={rec.get('success')} time={rec.get('mission_time_s')}s "
-            f"coll={rec.get('collisions')} minclr={rec.get('min_clearance_m')} "
+            f"coll={contact_count} minclr={clearance} "
             f"pts={rec.get('pts_mean')} kept={kept_pct}% fsm_cpu={fsm_cpu_pct}")
         return rec
 
-    return {"map": map_name, "run": run, "mode": mode, "success": False}
+    return {"map": map_name, "run": run, "mode": mode,
+            "experiment_profile": mode if mode in REFERENCE_ABLATION_PROFILES else None,
+            "success": False, "run_valid": False}
 
 
 def main():
@@ -694,11 +985,13 @@ def main():
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "native_campaign.csv"))
     args = ap.parse_args()
 
-    if any(mode in ("raw", "upstream") for mode in args.modes):
-        invalid_maps = [map_name for map_name in args.maps if map_name != "seed11"]
+    if any(mode in RAW_DIRECT_REF_MODES for mode in args.modes):
+        invalid_maps = [
+            map_name for map_name in args.maps if map_name not in ("seed11", "map0")
+        ]
         if invalid_maps:
             ap.error(
-                "raw/upstream controls are currently defined only for seed11; "
+                "raw-direct controls are currently defined only for seed11/map0; "
                 f"unsupported maps: {', '.join(invalid_maps)}"
             )
 

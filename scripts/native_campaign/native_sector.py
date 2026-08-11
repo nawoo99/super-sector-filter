@@ -39,6 +39,23 @@ def parse_args():
     parser.add_argument("--stall-t", type=float)
     parser.add_argument("--resume-v", type=float)
     parser.add_argument("--resume-t", type=float)
+    parser.add_argument(
+        "--replan-fail-streak-open", type=int, default=5,
+        help="consecutive /planning/replan_status=False before forcing full-open",
+    )
+    parser.add_argument(
+        "--replan-ok-streak-close", type=int, default=15,
+        help="consecutive /planning/replan_status=True (after a guard-open) before re-narrowing",
+    )
+    parser.add_argument(
+        "--no-replan-guard", action="store_true",
+        help="disable the replan-failure-triggered full-open safety valve",
+    )
+    parser.add_argument(
+        "--near-field-radius-m", type=float, default=1.5,
+        help="always keep points within this 3D radius of the drone, "
+             "regardless of sector angle (never blind the near-field)",
+    )
     args, ros_args = parser.parse_known_args()
     return args, ros_args
 
@@ -89,6 +106,20 @@ class SectorFilter(Node):
         self.min_armed_closed_speed_mps = None
         self.trap_event = {}
         self.trap_seen = False
+        self.near_field_radius_m = args.near_field_radius_m
+        self.replan_guard_en = not args.no_replan_guard
+        self.replan_fail_streak_open = args.replan_fail_streak_open
+        self.replan_ok_streak_close = args.replan_ok_streak_close
+        self.replan_guard_open = False
+        self.replan_fail_streak = 0
+        self.replan_ok_streak = 0
+        self.replan_guard_open_frames = 0
+        self.replan_guard_open_transitions = 0
+        self.replan_guard_close_transitions = 0
+        self.replan_status_count = 0
+        self.replan_fail_count = 0
+        self.max_replan_fail_streak = 0
+        self.first_replan_guard_open_time_s = None
         self.stall_v = self.STALL_V if args.stall_v is None else args.stall_v
         self.stall_t = self.STALL_T if args.stall_t is None else args.stall_t
         self.resume_v = self.RESUME_V if args.resume_v is None else args.resume_v
@@ -104,6 +135,11 @@ class SectorFilter(Node):
         self.create_subscription(
             Odometry, "/lidar_slam/odom", self.odom_callback, qos_profile_sensor_data
         )
+        if self.mode != "full" and self.replan_guard_en:
+            self.create_subscription(
+                Bool, "/planning/replan_status", self.replan_status_callback,
+                qos_profile_sensor_data,
+            )
         self.pub = self.create_publisher(
             PointCloud2, args.output_topic, qos_profile_sensor_data
         )
@@ -239,11 +275,48 @@ class SectorFilter(Node):
         if getattr(self, first_name) is None:
             setattr(self, first_name, timestamp)
 
+    def replan_status_callback(self, msg):
+        now = self.now()
+        self.replan_status_count += 1
+        if msg.data:
+            self.replan_ok_streak += 1
+            self.replan_fail_streak = 0
+        else:
+            self.replan_fail_streak += 1
+            self.replan_ok_streak = 0
+            self.replan_fail_count += 1
+            self.max_replan_fail_streak = max(
+                self.max_replan_fail_streak, self.replan_fail_streak
+            )
+
+        if not self.replan_guard_open:
+            if self.replan_fail_streak >= self.replan_fail_streak_open:
+                self.replan_guard_open = True
+                self.replan_guard_open_transitions += 1
+                if self.first_replan_guard_open_time_s is None:
+                    self.first_replan_guard_open_time_s = round(now, 6)
+                self.get_logger().warning(
+                    "%s replan-guard OPEN: %d consecutive replan failures"
+                    % (self.mode, self.replan_fail_streak)
+                )
+                self.publish_state()
+                self.write_stats()
+        else:
+            if self.replan_ok_streak >= self.replan_ok_streak_close:
+                self.replan_guard_open = False
+                self.replan_guard_close_transitions += 1
+                self.get_logger().info(
+                    "%s replan-guard CLOSE: %d consecutive replans succeeded"
+                    % (self.mode, self.replan_ok_streak)
+                )
+                self.publish_state()
+                self.write_stats()
+
     def publish_state(self):
         full_open = Bool()
         full_open.data = self.mode == "full" or (
             self.mode in self.STATEFUL_MODES and self.open
-        )
+        ) or self.replan_guard_open
         trigger_armed = Bool()
         trigger_armed.data = (
             self.mode in self.STATEFUL_MODES and self.armed
@@ -265,14 +338,17 @@ class SectorFilter(Node):
                 self.armed_frames += 1
         effective_open = self.mode == "full" or (
             self.mode in self.STATEFUL_MODES and self.open
-        )
+        ) or self.replan_guard_open
         if effective_open:
             self.open_frames += 1
             self.open_input_points += input_points
+        if self.replan_guard_open:
+            self.replan_guard_open_frames += 1
         passthrough = (
             self.mode == "full"
             or self.drone is None
             or (self.mode in self.STATEFUL_MODES and self.open)
+            or self.replan_guard_open
         )
         if passthrough and not self.args.track_trap:
             self.kept += input_points
@@ -320,11 +396,27 @@ class SectorFilter(Node):
                 - center
             )
             relative = (relative + np.pi) % (2.0 * np.pi) - np.pi
-            output = points[np.abs(relative) <= self.half_angle]
+            keep = np.abs(relative) <= self.half_angle
+            if self.near_field_radius_m > 0.0:
+                near = (
+                    np.linalg.norm(points[:, :3] - self.drone, axis=1)
+                    <= self.near_field_radius_m
+                )
+                keep = keep | near
+            output = points[keep]
 
         self.kept += len(output)
         self.track_trap_kept(output)
-        self.pub.publish(pc2.create_cloud(msg.header, msg.fields, output))
+        # pc2.create_cloud() hardcodes is_dense=False. Points were already
+        # read with skip_nans=True so the output is genuinely dense, but a
+        # non-dense flag makes ROG-map's cloudCallback silently drop the
+        # WHOLE frame (pcl::fromROSMsg copies the flag as-is, no rescan) --
+        # confirmed via fsm_node logs showing most sector/adaptive frames
+        # ("Empty or non-dense point cloud, skip cloud callback") being
+        # dropped, leaving CIRI's occupancy map several meters stale.
+        out_msg = pc2.create_cloud(msg.header, msg.fields, output)
+        out_msg.is_dense = True
+        self.pub.publish(out_msg)
 
     def trap_mask(self, points):
         if not self.args.track_trap or points.size == 0:
@@ -466,6 +558,19 @@ class SectorFilter(Node):
                 if self.min_armed_closed_speed_mps is not None
                 else None
             ),
+            "replan_guard_en": self.replan_guard_en,
+            "replan_fail_streak_open": self.replan_fail_streak_open,
+            "replan_ok_streak_close": self.replan_ok_streak_close,
+            "replan_guard_open": self.replan_guard_open,
+            "replan_guard_open_transitions": self.replan_guard_open_transitions,
+            "replan_guard_close_transitions": self.replan_guard_close_transitions,
+            "replan_guard_open_duty_pct": round(
+                100.0 * self.replan_guard_open_frames / frame_denominator, 3
+            ),
+            "replan_status_count": self.replan_status_count,
+            "replan_fail_count": self.replan_fail_count,
+            "max_replan_fail_streak": self.max_replan_fail_streak,
+            "first_replan_guard_open_time_s": self.first_replan_guard_open_time_s,
         }
 
     def write_stats(self, snapshot=None):
@@ -490,6 +595,17 @@ class SectorFilter(Node):
                 100.0 * self.armed_frames / max(1, self.frames),
                 int(self.open),
                 100.0 * self.open_frames / max(1, self.frames),
+            )
+        if self.replan_guard_en and self.mode != "full":
+            extension += (
+                " guard_open=%d guard_duty=%.0f%% fail_streak=%d/%d max_fail_streak=%d"
+                % (
+                    int(self.replan_guard_open),
+                    100.0 * self.replan_guard_open_frames / max(1, self.frames),
+                    self.replan_fail_streak,
+                    self.replan_fail_streak_open,
+                    self.max_replan_fail_streak,
+                )
             )
         print(
             "[native_sector %s] frames=%d kept %.0f%% (%d/%d pts/frame)%s"
