@@ -1,4 +1,24 @@
-# 논문 스토리 — JKICS v8 (2026-08-11, seed1~10 is_dense 버그 수정 및 재검증)
+# 논문 스토리 — JKICS v9 (2026-08-12, full의 잔여 접촉 원인 심층 분석: corridor 중심정렬 미보장)
+
+> **v8→v9 변경 이유:** §3.5/§4.1에서 남은 접촉을 "loop24가 논문보다 넓은 면적을 훑기 때문"·
+> "회전 중 동역학적 실현불가능"으로 설명했는데, 이번 절에서 그 메커니즘을 더 정밀하게
+> 파고들었다. (1) 접촉 지점 86건의 실제 장애물 배치를 대조하니 92%가 두 번째로 가까운
+> 장애물까지 1 m 이상 여유(중앙값 1.63 m)가 있었다 — 공간 부족이 아니었다. (2)
+> `robot_r`(0.2→0.28), `max_omg`/`max_acc_thr`(2.5/17→4.0/23), `switch_dist`(1.5→0.3→0.1),
+> `planning_horizon`(7→14), `obs_skip_num`(2→1)을 각각(일부는 조합) v=10 m/s에서
+> 실측했다: `obs_skip_num=1`이 완주율 손해 없이 가장 크게 개선(접촉 82%→70%,
+> clearance 0.084→0.141 m), `max_omg`+`max_acc_thr`도 손해 없이 개선(82%→74%),
+> `robot_r`은 크게 개선하지만(82%→50~56%) 완주율을 96%→76%로 깎았고, `planning_horizon`
+> 단독 증가는 재앙적으로 악화됐다(완주율 96%→8%, `replan_forward_dt`를 같이 안 늘려서
+> 매 replan이 시간초과). (3) 접촉 순간 명령 속도·가속도로 실제 순간 회전반경을 직접 계산한
+> 결과(R=|v|³/|v×a|, 282건) **중앙값 11.26 m** — 접촉의 절반 이상이 급선회 중이 아니라 완만한
+> 경로에서 일어났다. 즉 "회전반경 부족"은 일부(하위 10~25%)만 설명하고, 다수는 **CIRI가
+> corridor를 만들 때 A* guide path를 감싸기만 할 뿐 장애물로부터 최대 여유를 갖도록 중앙
+> 정렬하지 않는다는 구조적 특성** 때문으로 재해석했다 — `obs_skip_num=1`의 개선(회전 능력과
+> 무관)이 이를 뒷받침한다. 이 특성은 SUPER 원 코드에 원래 있던 것이며, 논문은 항상 한 방향
+> 편도 미션만 평가해 이 문제를 노출시킨 적이 없다고 추정한다. 접촉 0%는 이 스트레스 조건
+> (medium/high speed + loop24)에서 config 튜닝만으로는 도달 불가능하다고 결론 내렸다 —
+> 필요한 `max_acc`가 물리적으로 비현실적(v=10에서 ~62 m/s², 중력의 6배 이상)이기 때문이다.
 
 > **v7→v8 변경 이유:** v7의 "3.1 seed1~10: 150회" 수치(접촉 표시 런 full 30%·sector 16%·
 > adaptive 14%)는 이후 모니터 판정이 더 엄격해지기 전에 수집된 결과였다. 동일 조건으로
@@ -220,6 +240,92 @@ GitHub `hku-mars/SUPER`(`git ls-files`로 확인)에는 튜토리얼용 `random_
 않는다 — 오히려 “접촉이 0으로 수렴하지 않는 스트레스 조건”에서 sector/adaptive가 여전히
 full과 동등하거나 더 나은 결과를 낸다는 점이 §3.1의 핵심 근거다.
 
+또한 애초에 **직선 편도 미션은 sector/adaptive를 비교할 수 있는 실험이 아니다.** sector는
+기수, adaptive는 속도 방향 기준 ±60° 원뿔을 유지하는데, 직선 비행에서는 기수·속도·목표
+방향이 거의 항상 일치하므로 원뿔이 계속 진행방향을 향해 있어 사실상 full과 같은 것을 본다.
+sector와 adaptive가 실제로 갈리는 지점, 그리고 필터링의 실제 위험이 드러나는 지점은
+방향 전환이 있을 때뿐이다. 따라서 논문 조건(직선 편도)에 맞추는 것과 필터 비교를 의미 있게
+하는 것은 양립하지 않으며, 본 연구는 후자를 선택한다.
+
+한 가지 더 짚어둘 것은, 논문의 “0% 충돌”이 저속 구간에 한정된 주장이 아니라는 점이다. 논문
+본문은 “Across all 1080 experiments with varying flight speed and obstacle density, SUPER
+had no collision or infeasible trajectory, achieving a perfect safe rate”라고 명시해
+1~18 m/s 전 구간에서 성립한다고 주장한다. 따라서 “저속 조건이 논문에 더 가깝다”는 식의
+근사도 성립하지 않는다(실제로 본 프로젝트의 논문 파라미터 900회 중 v=1 부분집합은 full
+2/50(4%)로 낮지만, 이는 논문 조건 근사가 아니라 단순히 더 쉬운 조건이기 때문이다). full의
+접촉률을 인위적으로 0%에 맞추는 단일 레버(속도·방향·미션 형태)는 없었다. 이는 로그·좌표
+대조로 확인한 대로 SUPER의 궤적 최적화가 회전 구간에서 동역학적 실현가능해 탐색에 가끔
+실패하는 정상적 특성이며(§4.1), 결함이 아니라 본 ablation이 논문보다 의도적으로 가혹한
+스트레스 조건임을 재확인해 줄 뿐이다.
+
+### 3.6 full의 잔여 접촉: 공간 부족이 아니라 corridor 중심정렬 미보장
+
+§3.1의 v=10 m/s `full` 150회(is_dense 수정 후 재검증) 중 접촉 이벤트 86건의 실제 좌표를
+`scripts/native_campaign/seed{1..10}_static.csv`(생성 원본 장애물 목록)와 대조했다
+(`results/native_seed1_10_full_n5_contact_coordinates.csv`). 각 접촉 지점에서 가장 가까운
+장애물과 **두 번째로 가까운** 장애물까지의 표면거리를 계산한 결과, 92%(79/86)가 두 번째
+장애물까지 1 m 이상 여유가 있었고 중앙값은 1.63 m였다. 즉 대부분의 접촉은 물리적으로 더
+멀리 돌아갈 공간이 있었는데도 발생했다 — 지도가 너무 빡빡해서가 아니다.
+
+**동역학 한계(회전반경) 가설 검증.** 속도 v로 각속도 ω 이하로 도는 데 필요한 최소 회전반경은
+R_min(v) = max(v/max_omg, v²/max_acc)다. 논문 고정값(max_acc=20)과 기본 max_omg=2.5 기준으로
+계산하면:
+
+| v (m/s) | R_min (m) |
+|---:|---:|
+| 1 | 0.4 |
+| 4 | 1.6 |
+| 7 | 2.8 |
+| 10 | 5.0 |
+| 14 | 9.8 |
+| 18 | 16.2 |
+
+실측 접촉률(§3.1, v=1: 4%, v=4: 52%)과 대략 맞아떨어져 이 가설을 뒷받침하는 듯 보였다.
+그런데 실제 접촉 순간의 명령 속도·가속도(`position_command`)로 순간 회전반경을
+R=|v|³/|v×a|로 직접 계산하자(v=10 캠페인 접촉 282건, `results/native_seed1_10_full_v10_contact_curvature.csv`)
+결과가 달랐다: 최소 0.158 m, 10th 백분위수 3.86 m, 25th 백분위수 5.89 m, **중앙값 11.26 m**.
+즉 접촉의 절반 이상은 급격한 회전 중이 아니라 완만한 경로에서 일어났다 — 회전반경 부족은
+하위 10~25%만 설명한다.
+
+**config 튜닝 실측.** v=10 m/s, `full`, seed1~10×5회를 기준으로 다섯 가지 변경을 각각(일부는
+조합) 실측했다(`results/native_seed1_10_v10_margin_dynamics_ablation.csv`). 기준값은 접촉
+41/50(82%), 완주 48/50(96%), 평균 clearance 0.084 m다.
+
+| 변경 | 접촉 | 완주 | 평균 clearance |
+|---|---:|---:|---:|
+| `max_omg` 2.5→4.0, `max_acc_thr` 17→23 | 37/50 (74%) | 47/50 (94%) | 0.106 m |
+| **`obs_skip_num` 2→1** | **35/50 (70%)** | **48/50 (96%)** | **0.141 m** |
+| `robot_r` 0.2→0.28 | 28/50 (56%) | 38/50 (76%) | 0.178 m |
+| `robot_r`+`max_omg`+`max_acc_thr` 조합 | 25/50 (50%) | 38/50 (76%) | 0.200 m |
+| `switch_dist` 1.5→0.3 | 38/50 (76%) | 48/50 (96%) | 0.093 m |
+| `switch_dist` 1.5→0.1 | 39/50 (78%) | 48/50 (96%) | 0.096 m |
+| `planning_horizon` 7→14 | (58%, 참고용) | **4/50 (8%)** | — |
+
+`robot_r`을 키우면 CIRI가 corridor를 더 보수적으로 판정해(`ciri.cpp`의
+`if(dis < robot_r_) return FAILED`) 접촉은 크게 줄지만 일부 맵에서 아예 경로를 못 찾아
+완주율이 떨어진다. `planning_horizon`을 늘리면 매 replan마다 corridor를 더 길게 이어붙여야
+하는데 계산 시간 예산(`replan_forward_dt=0.1`)은 그대로라 시간초과가 폭증해 완주율이
+붕괴했다. 완주율 손해 없이 개선된 건 `max_omg`/`max_acc_thr`와 **`obs_skip_num`**(corridor
+생성 시 장애물 포인트를 건너뛰지 않고 전부 사용)뿐이었고, 후자가 더 컸다.
+
+**해석.** CIRI(`corridor_generator.cpp`/`ciri.cpp`)는 A* guide path 하나를 정하면 그 선을
+중심으로 corridor를 부풀리는 방식이지, 장애물로부터 최대 여유를 갖도록 "중앙 정렬된" 통로를
+찾는 알고리즘이 아니다. guide path가 이미 한쪽으로 치우쳐 있으면 corridor도, 그 안에서
+최적화된 실제 궤적도 치우친 채로 나온다. `obs_skip_num=1`이 회전 능력과 무관하게 접촉을
+줄인 것은 이 가설과 일치한다 — 장애물 포인트를 누락 없이 봐야 corridor 모양이 실제 여유
+공간에 더 정확히 맞춰진다. 이 구조적 특성은 SUPER 원 코드에 그대로 있으며 본 프로젝트가
+바꾼 게 아니다. 다만 이게 실제로 문제를 일으키려면 (a) 지금 속도·방향에서 연속적으로
+이어져야 하는 guide path 탐색이 관성 때문에 중앙 정렬을 포기하기 쉬운 상황과 (b) 매 replan이
+0.1 s 예산 안에서 빠르게 한 번만 계산되는 상황이 겹쳐야 하는데, 논문의 항상-한-방향 편도
+미션은 이 두 조건을 만든 적이 없다고 추정한다.
+
+**결론.** 이 스트레스 조건(medium/high speed + loop24)에서 접촉 0%는 config 튜닝만으로는
+도달 불가능하다. 최악 곡률(R=0.158 m)까지 커버하려면 v=10에서 max_omg≈63 rad/s,
+max_acc≈633 m/s²(중력의 60배 이상)가 필요해 비현실적이고, 설령 동역학 한계를 무한대로
+풀어도 회전반경과 무관한 절반 이상의 접촉(corridor 중심정렬 문제)은 그대로 남는다. corridor
+생성 알고리즘 자체(guide path를 능동적으로 중앙 정렬하는 단계 추가)를 고치는 건 본 논문의
+범위인 sector 필터를 넘어서는 SUPER 알고리즘 수정이라 시도하지 않는다.
+
 ## 4. 충돌·미완주 해석
 
 v6 메인 165회 캠페인의 세 미완주는 seed9 full run2(2/5 waypoint, 300 s), seed10 adaptive
@@ -309,6 +415,14 @@ replan이 실패하면 SUPER는 이전에 커밋된(최근에 재계산되지 �
     특정 방향이 아니라 **면적 노출량**으로 보인다(§3.5, 직선 프로브 4방향 + 코너 인접도 분석으로
     검증). 이 난이도는 full/sector/adaptive에 동일하게 적용되므로 세 모드 간 비교의 타당성에는
     영향이 없다.
+13. (v9) full의 잔여 접촉을 좌표·순간 회전반경으로 직접 분석한 결과, 92%는 물리적 여유
+    공간이 있었고(§3.6) 절반 이상은 급선회 중이 아니었다(순간 곡률반경 중앙값 11.26 m).
+    `max_omg`/`max_acc_thr`/`obs_skip_num`을 손해 없이 늘려 82%→70~74%까지는 개선했지만
+    (`obs_skip_num=1`이 최선), `robot_r` 확대는 완주율을 깎았고 `planning_horizon` 확대는
+    재앙적으로 악화됐다. 근본 원인은 CIRI가 corridor를 만들 때 A* guide path를 중앙 정렬하지
+    않는 SUPER 자체의 구조적 특성으로 추정하며, 이 스트레스 조건에서 접촉 0%는 config
+    튜닝만으로는 도달 불가능하다고 결론 내린다. corridor 생성 알고리즘 자체를 고치는 것은
+    sector 필터라는 본 논문의 범위를 벗어나므로 시도하지 않는다.
 
 ## 6. 재현 자산
 
@@ -321,6 +435,11 @@ replan이 실패하면 SUPER는 이전에 커밋된(최근에 재계산되지 �
   `super_patches/native_seedmap_campaign/super_planner_src/`,
   `super_patches/native_seedmap_campaign/super_planner_include/`
 - (v8) 논문 파라미터 config: `super_patches/native_seedmap_campaign/super_planner_config/static_seedmaps_paper_v{1,4,7,10,14,18}.yaml`
+- (v9) 접촉 좌표·주변 장애물 대조(86건): `results/native_seed1_10_full_n5_contact_coordinates.csv`
+- (v9) 접촉 순간 순간 회전반경 실측(282건): `results/native_seed1_10_full_v10_contact_curvature.csv`
+- (v9) v=10 margin/dynamics 5종 config 실측(350행): `results/native_seed1_10_v10_margin_dynamics_ablation.csv`
+- (v9) 실험용 config: `super_patches/native_seedmap_campaign/super_planner_config/static_seedmaps_{margin,robotr,omgthr,horizon14,skip1}_v10.yaml`
+- (v9) switch_dist 실험용 미션: `super_patches/native_seedmap_campaign/mission_planner_data/loop24_{close,veryclose}.txt`
 - 메인 캠페인(v6, is_dense 버그 상태 — 참고용, v8로 대체됨): `results/native_seed1_11_v6_n5.csv`
 - seed11 raw/adaptive 30회 본 실험: `results/native_seed11_raw_adaptive_n30.csv`
 - seed11 30회 통계 요약: `results/native_seed11_raw_adaptive_n30_summary.csv`
