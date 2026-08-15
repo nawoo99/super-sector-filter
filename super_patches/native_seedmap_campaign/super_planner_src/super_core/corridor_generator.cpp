@@ -81,14 +81,40 @@ namespace super_planner {
                 }
             }
             if (!overlaps) {
+                if (std::getenv("AVOIDANCE_DEBUG") != nullptr) {
+                    fmt::print(" -- [AVOIDANCE_DEBUG] zone {} center=[{:.3f},{:.3f},{:.3f}] "
+                               "radius={:.3f} SKIPPED (no box overlap) "
+                               "box=[{:.3f},{:.3f},{:.3f}]-[{:.3f},{:.3f},{:.3f}]\n",
+                               i, center.x(), center.y(), center.z(), radius,
+                               box_min.x(), box_min.y(), box_min.z(),
+                               box_max.x(), box_max.y(), box_max.z());
+                }
                 continue;
+            }
+            if (std::getenv("AVOIDANCE_DEBUG") != nullptr) {
+                fmt::print(" -- [AVOIDANCE_DEBUG] zone {} center=[{:.3f},{:.3f},{:.3f}] "
+                           "radius={:.3f} INJECTED into box=[{:.3f},{:.3f},{:.3f}]-[{:.3f},{:.3f},{:.3f}] "
+                           "pc_size_before={}\n",
+                           i, center.x(), center.y(), center.z(), radius,
+                           box_min.x(), box_min.y(), box_min.z(),
+                           box_max.x(), box_max.y(), box_max.z(), pc.size());
             }
             const double sample_r = radius - robot_r_;
             constexpr int kRingPoints = 16;
             for (int k = 0; k < kRingPoints; ++k) {
                 const double theta = 2.0 * M_PI * static_cast<double>(k) / kRingPoints;
-                pc.emplace_back(center.x() + sample_r * std::cos(theta),
-                                center.y() + sample_r * std::sin(theta),
+                // A perfectly symmetric ring was observed to drive CIRI's
+                // ellipsoid fit into a degenerate (NaN/Inf) case for some
+                // seed-line geometries, causing SearchPolytopeOnPath to fail
+                // every attempt with no escape (an 84s stall in one run).
+                // A small deterministic per-point radius jitter breaks the
+                // exact symmetry without materially changing the intended
+                // exclusion radius.
+                const double jitter = 0.03 * sample_r *
+                        std::sin(7.0 * static_cast<double>(k) + 1.0);
+                const double r_k = sample_r + jitter;
+                pc.emplace_back(center.x() + r_k * std::cos(theta),
+                                center.y() + r_k * std::sin(theta),
                                 center.z());
             }
             pc.emplace_back(center.x(), center.y(), center.z() + sample_r);
