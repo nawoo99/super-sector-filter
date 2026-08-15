@@ -1,0 +1,960 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-08-13-21-37-43-775403-livox-2495875
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [waypoint_mission-1]: process started with pid [2495888]
+[INFO] [perfect_drone_node-2]: process started with pid [2495890]
+[INFO] [fsm_node-3]: process started with pid [2495892]
+[waypoint_mission-1] [WARN] [1786624663.829113358] [waypoint_mission]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mission_planner/config/waypoint.yaml
+[waypoint_mission-1] [WARN] [1786624663.829205487] [waypoint_mission]:  -- [MissionPlanner] Load data by file name: /root/super_ws/src/SUPER/mission_planner/data/loop24.txt
+[fsm_node-3]  -- [Bench] Use sim time is false, begin replay.
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_paper_v10.yaml
+[fsm_node-3] [0;32m Load param fsm/timer_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_goal_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_yaw_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/replan_rate success: [0;0m15
+[fsm_node-3] [0;32m Load param fsm/click_height success: [0;0m1.5
+[fsm_node-3] [0;32m Load param fsm/cmd_topic success: [0;0m/planning/pos_cmd
+[fsm_node-3] [0;32m Load param fsm/mpc_cmd_topic success: [0;0m/planning_cmd/poly_traj
+[fsm_node-3] [0;32m Load param fsm/click_goal_topic success: [0;0m/planning/click_goal
+[fsm_node-3] [0;33m Load param fsm/map_readiness/enable failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_accepted_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_committed_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_commit_lag_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_scan_span_s failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_cloud_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/enable failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/shadow failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/validation_sample_dt_s failed, use default value: [0;0m0.01
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/shadow_min_interval_s failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_min_duration_s failed, use default value: [0;0m0.4
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_duration_s failed, use default value: [0;0m2
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_acc_mps2 failed, use default value: [0;0m15
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_jerk_mps3 failed, use default value: [0;0m120
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_paper_v10.yaml
+[fsm_node-3] [0;32m Load param rog_map/esdf/resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/esdf/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/esdf/local_update_box success: [0;0m[5 5 3 ]
+[fsm_node-3] [0;32m Load param rog_map/load_pcd_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/threshold success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/fix_map_origin success: [0;0m[0 0 1.5 ]
+[fsm_node-3] [0;32m Load param rog_map/frontier_extraction_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/cloud_topic success: [0;0m/cloud_sector
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_topic success: [0;0m/lidar_slam/odom
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_timeout success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/use_dynamic_reconfigure success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/pub_unknown_map_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_id success: [0;0mworld
+[fsm_node-3] [0;32m Load param rog_map/visualization/time_rate success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_rate success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/range success: [0;0m[15 15 4 ]
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [0;32m Load param rog_map/inflation_resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_step success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/inflation_step success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/intensity_thresh success: [0;0m-10
+[fsm_node-3] [0;32m Load param rog_map/map_size success: [0;0m[70 70 6 ]
+[fsm_node-3] [0;32m Load param rog_map/point_filt_num success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/raycasting/batch_update_size success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/unk_thresh success: [0;0m1
+[perfect_drone_node-2] [WARN] [1786624663.920080558] [perfect_tracking]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed6.yaml
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_hit success: [0;0m0.9
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_miss success: [0;0m0.49
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_min success: [0;0m0.12
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_max success: [0;0m0.98
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_occ success: [0;0m0.85
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/ray_range success: [0;0m[0.5 100 ]
+[fsm_node-3] [0;32m Load param rog_map/raycasting/local_update_box success: [0;0m[100 100 5 ]
+[fsm_node-3] [0;32m Load param rog_map/virtual_ground_height success: [0;0m-0.1
+[fsm_node-3] [0;32m Load param rog_map/virtual_ceil_height success: [0;0m3.5
+[fsm_node-3] [32m -- [RM-Config] inflation_resolution: 0.1[0m
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: ORIGIN_AT_CORNER.
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: virtual_ceil_height: 3.1500000000000004, virtual_ground_height: 0.25.
+[fsm_node-3] [34m	[ROG] n_free: 1[0m
+[fsm_node-3] [34m	[ROG] n_occ: 1[0m
+[fsm_node-3] [34m	[ROG] l_hit: 2.19722[0m
+[fsm_node-3] [34m	[ROG] l_miss: -0.0400053[0m
+[fsm_node-3] [34m	[ROG] l_min: -1.99243[0m
+[fsm_node-3] [34m	[ROG] l_max: 3.89182[0m
+[fsm_node-3] [34m	[ROG] l_occ: 1.7346[0m
+[fsm_node-3] [34m	[ROG] l_free: -0.00399995[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [CounterMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 709 709  69[0m
+[fsm_node-3] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [InfMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 709 709  69[0m
+[fsm_node-3] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[fsm_node-3] [ProbMap] virtual_ceil_height: 3.15
+[fsm_node-3] [ProbMap] virtual_ground_height: 0.25
+[fsm_node-3] [33m -- [ProbMap] Map sliding disabled, set origin to [  0   0 1.5] -- [0m
+[perfect_drone_node-2] Failed to find match for field 'intensity'.
+[fsm_node-3] [33m -- [Prob-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [ProbMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.05[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 1401 1401  121[0m
+[fsm_node-3] [32m	local_map_size_d: 70.05 70.05  6.05[0m
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_paper_v10.yaml
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_paper_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/pos_constraint_type success: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/piece_num failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/uniform_time_en failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/block_energy_cost success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/opt_accuracy success: [0;0m5e-06
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/integral_reso success: [0;0m15
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_t success: [0;0m1e+07
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_ts failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_pos success: [0;0m5e+09
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_vel success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_acc success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_jerk success: [0;0m-5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_attract success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_thr success: [0;0m-1
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_paper_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m12
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/print_log success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/detailed_log_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/backup_traj_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/goal_vel_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/goal_yaw_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/visual_process success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/use_fov_cut success: [0;0m0
+[fsm_node-3] [0;33m Load param super_planner/fov_horizontal_angle failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param super_planner/fov_center_heading failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/frontend_in_known_free success: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/enable failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/shadow failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/validation_sample_dt_s failed, use default value: [0;0m0.01
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/shadow_min_interval_s failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/safe_corridor_line_max_length success: [0;0m6
+[fsm_node-3] [0;32m Load param super_planner/sensing_horizon success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/obs_skip_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/replan_forward_dt success: [0;0m0.1
+[fsm_node-3] [0;32m Load param super_planner/corridor_bound_dis success: [0;0m0.8
+[fsm_node-3] [0;32m Load param super_planner/corridor_line_max_length success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/planning_horizon success: [0;0m7
+[fsm_node-3] [0;32m Load param super_planner/receding_dis success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/robot_r success: [0;0m0.2
+[fsm_node-3] [0;33m Load param super_planner/corridor_pref_margin failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/iris_iter_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/yaw_mode success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/mpc_horizon success: [0;0m15
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [38;2;050;205;050m -- [Viz] Set resolution_ to 0.05
+[fsm_node-3] [0m[38;2;050;205;050m -- [Viz] Set visualization_en_ to false
+[fsm_node-3] [0mLoad config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_paper_v10.yaml
+[fsm_node-3] [0;32m Load param astar/map_voxel_num success: [0;0m[500 500 100 ]
+[fsm_node-3] [0;32m Load param astar/allow_diag success: [0;0m1
+[fsm_node-3] [0;32m Load param astar/debug_visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param astar/heu_type success: [0;0m2
+[fsm_node-3] [0;32m Load param astar/visual_process success: [0;0m0
+[fsm_node-3] [32m -- [RM] Init Astar-map.[0m
+[fsm_node-3] [34m	map index size: 250 250  50[0m
+[fsm_node-3] [34m	map vox_num: 501 501 101[0m
+[fsm_node-3] [33m -- [Fsm] CLICKGOAL ENABLE.[0m
+[fsm_node-3] [INFO] [1786624667.710752199] [fsm_node]: [32m -- [Fsm-Test] Begin.[0m
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [INIT] to [WAIT_GOAL].
+[fsm_node-3] [0m[32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0 deg[0m
+[fsm_node-3] [INFO] [1786624667.913153025] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [WAIT_GOAL] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624668.439231797] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.0957229.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624668.693216159] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.10447685.
+[fsm_node-3] [32m -- [Fsm 1.003] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786624668.828269903] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.134792249.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624669.165092800] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624669.178672841] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624669.178697997] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624669.178707966] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 2.003] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624670.089512474] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.119435147.
+[fsm_node-3] [WARN] [1786624670.199697650] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.109929765.
+[fsm_node-3] [WARN] [1786624670.233813631] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624670.237039256] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624670.237051880] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624670.237061830] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624670.272184488] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624670.273124600] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624670.273136083] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624670.273143698] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624670.614089877] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 3.013] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624671.577667366] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.104984894.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 4.023] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975  24.025   1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975  24.025   1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624672.607804413] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.093040553.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624672.711504321] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624672.712060639] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624672.712069515] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624672.712076753] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm 5.023] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624672.893122549] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.100426845.
+[fsm_node-3] [33m Yaw rate too large, 6.365042423852024[0m
+[fsm_node-3] [WARN] [1786624673.009390215] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.116013903.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624673.129993635] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 6.033] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786624673.834111572] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.097596372.
+[fsm_node-3] [WARN] [1786624673.933962464] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.099583359.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786624674.107518326] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.108456293.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [33m -- [CIRI] ERROR! maxVolInsEllipsoid failed.[0m
+[fsm_node-3] [33m	 box_min =  5.850000000000001 25.650000000000002  0.450000000000000[0m
+[fsm_node-3] [33m	 box_max = 7.550000000000000 27.250000000000004  1.450000000000000[0m
+[fsm_node-3] [33m	 seed line = 6.750000000000000 26.450000000000003  0.850000000000000 -->  6.650000000000000 26.450000000000003  0.850000000000000[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786624674.280993773] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786624674.281062174] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.178799301292388[0m
+[fsm_node-3] [33m	 box_min =  2.968468232161887 24.769426346504197  0.450000000000000[0m
+[fsm_node-3] [33m	 box_max = 9.775000000000000 27.925000000000001  1.662040890446566[0m
+[fsm_node-3] [33m	 seed line = 8.975000000000000 27.125000000000000  0.775000000000000 -->  3.768468232161887 25.569426346504198  1.062040890446566[0m
+[fsm_node-3] [WARN] [1786624674.636068360] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786624674.636122221] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return FAILED, replan Failed return
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 7.033] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624675.324817506] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090155201.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624675.701564315] [fsm_node]:  -- [SUPER] Replan over time(0.10713839530944824)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786624675.701629018] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [32m -- [Fsm 8.033] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786624675.786706543] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624675.838942288] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624675.838983039] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.137134824.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786624676.072662393] [fsm_node]:  -- [SUPER] Replan over time(0.10229253768920898)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786624676.072734982] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624676.255489851] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624676.255594031] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.105433754.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624676.505553106] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624676.506463049] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624676.506473068] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624676.506480482] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624676.587741199] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624676.588372089] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624676.588383957] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624676.588391347] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624676.645417662] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624676.645516034] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624676.645531006] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624676.673606968] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624676.673702509] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624676.673716420] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624676.769759743] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624676.769861834] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624676.769876330] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm 9.043] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.155354754990101[0m
+[fsm_node-3] [33m	 box_min = -8.420627466979321 25.022973401032175  0.707676205859083[0m
+[fsm_node-3] [33m	 box_max =-6.525000000000000 26.625000000000004  1.925000000000000[0m
+[fsm_node-3] [33m	 seed line =-7.325000000000000 25.825000000000003  1.325000000000000 --> -7.620627466979320 25.822973401032176  1.307676205859083[0m
+[fsm_node-3] [WARN] [1786624676.799800435] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786624676.799868572] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return FAILED, replan Failed return
+[fsm_node-3] [WARN] [1786624676.855000240] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624676.855131749] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624676.855146415] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624677.003851568] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624677.004756503] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624677.004767306] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624677.004774572] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624677.047708530] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624677.047809009] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624677.047879858] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786624677.221701743] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624677.221797454] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624677.221811771] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.150000000000000[0m
+[fsm_node-3] [33m	 box_min = -11.339713561285185  25.175000000000001   0.466953423300789[0m
+[fsm_node-3] [33m	 box_max =-9.625000000000000 26.777027363292646  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line =-10.425000000000001  25.975000000000001   1.075000000000000 --> -10.539713561285184  25.977027363292645   1.066953423300789[0m
+[fsm_node-3] [WARN] [1786624677.247335157] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786624677.247387151] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return FAILED, replan Failed return
+[fsm_node-3] [WARN] [1786624677.380484179] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624677.380561209] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.099862229.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624677.524530975] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090593318.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 10.043] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786624677.832613213] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624677.834247212] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624677.834259373] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624677.834270386] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.093375542.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624677.934675509] [fsm_node]:  -- [SUPER] Replan over time(0.10017681121826172)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786624677.934739774] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [WARN] [1786624678.039417342] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624678.044170792] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624678.044184229] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624678.044199141] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.109329665.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786624678.145562663] [fsm_node]:  -- [SUPER] Replan over time(0.1010584831237793)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786624678.145631425] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [33m Yaw rate too large, 9.708787725236643[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [33m Yaw rate too large, 11.089925743105901[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624678.584720568] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.096704571.
+[fsm_node-3] [33m Yaw rate too large, 7.315106523133545[0m
+[fsm_node-3] [33m Yaw rate too large, 5.349958373626736[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [33m Yaw rate too large, 5.702232740225382[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [33m Yaw rate too large, 7.787003934462810[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.168025534984089[0m
+[fsm_node-3] [33m	 box_min = -22.545819011572355  23.602794571920331   0.725000000000000[0m
+[fsm_node-3] [33m	 box_max =-18.225000000000001  26.575000000000003   2.021352468048845[0m
+[fsm_node-3] [33m	 seed line =-19.025000000000002  25.775000000000002   1.325000000000000 --> -21.745819011572355  24.402794571920332   1.421352468048845[0m
+[fsm_node-3] [WARN] [1786624678.774685922] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786624678.774750253] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return FAILED, replan Failed return
+[fsm_node-3] [32m -- [Fsm 11.052] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 12.053] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624679.966212621] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624679.968240424] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624679.968252317] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m Yaw rate too large, 6.012709462325520[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [33m Yaw rate too large, 6.850337575794005[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [33m Yaw rate too large, 5.374634047735683[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624680.370976743] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624680.386921409] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624680.386963437] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 13.053] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624681.102179679] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624681.102279048] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624681.102295110] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624681.206630616] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.097942703.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624681.548870889] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.110222403.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 14.063] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624682.057822446] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.091169401.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624682.284582757] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.104168423.
+[fsm_node-3] [WARN] [1786624682.387280048] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.102374037.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 15.073] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624683.076157552] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.092719255.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624683.391633039] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.099435866.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786624683.745701152] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.115735074.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 16.073] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624684.031715659] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.10132067.
+[fsm_node-3] [WARN] [1786624684.130009324] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.098003887.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624684.418808286] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624684.570476255] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090679786.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786624684.788486962] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.094398964.
+[fsm_node-3] [32m -- [Fsm 17.083] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624685.308796315] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.096376781.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 18.083] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624686.762846517] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624686.767725683] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624686.767736376] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [32m -- [Fsm 19.083] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 20.093] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624688.182287177] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624688.182373203] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624688.182384600] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624688.250719192] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624688.250808801] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624688.250822895] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624688.314814253] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624688.314909105] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624688.314920498] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624688.381827073] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624688.381911366] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624688.381924902] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624688.448071796] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624688.448160499] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624688.448170132] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624688.607414907] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624688.609602165] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624688.609612149] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786624688.646301644] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624688.646387324] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624688.646397401] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624688.736060634] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624688.736204672] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786624688.736219430] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 21.103] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624689.539957242] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 22.113] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 23.113] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786624690.938427656] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.109825665.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624691.219677216] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.103278348.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786624691.687295296] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.095894208.
+[fsm_node-3] [WARN] [1786624691.784799420] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.09716946.
+[fsm_node-3] [32m -- [Fsm 24.123] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786624691.879965947] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.094894731.
+[fsm_node-3] [WARN] [1786624691.976001282] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.095614417.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624692.199428333] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.0932358.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624692.579482658] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786624692.580154532] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786624692.580164050] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786624692.580173139] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 25.123] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m0.025000000000000 0.025000000000000 1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [0.025000000000000 0.025000000000000 1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Traj finish.[0m
+[fsm_node-3] [INFO] [1786624693.655842148] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [PubCmdCallback] change state from [FOLLOW_TRAJ] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 26.123] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m0.025000000000000 0.025000000000000 1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [0.025000000000000 0.025000000000000 1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 27.133] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m0.025000000000000 0.025000000000000 1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [0.025000000000000 0.025000000000000 1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 28.150] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m0.025000000000000 0.025000000000000 1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [0.025000000000000 0.025000000000000 1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786624696.794020649] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.096359892.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 29.153] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [33m Yaw rate too large, 8.920935282645228[0m
+[fsm_node-3] [WARN] [1786624696.998616998] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090938379.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m0.025000000000000 0.025000000000000 1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [0.025000000000000 0.025000000000000 1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm 30.153] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [32m -- [Fsm] Traj finish.[0m

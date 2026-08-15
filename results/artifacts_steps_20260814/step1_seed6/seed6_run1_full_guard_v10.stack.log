@@ -1,0 +1,1283 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-08-14-10-37-13-834744-livox-2991174
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [waypoint_mission-1]: process started with pid [2991175]
+[INFO] [perfect_drone_node-2]: process started with pid [2991177]
+[INFO] [fsm_node-3]: process started with pid [2991179]
+[waypoint_mission-1] [WARN] [1786671433.905312109] [waypoint_mission]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mission_planner/config/waypoint.yaml
+[waypoint_mission-1] [WARN] [1786671433.905389504] [waypoint_mission]:  -- [MissionPlanner] Load data by file name: /root/super_ws/src/SUPER/mission_planner/data/loop24.txt
+[fsm_node-3]  -- [Bench] Use sim time is false, begin replay.
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param fsm/timer_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_goal_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_yaw_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/replan_rate success: [0;0m15
+[fsm_node-3] [0;32m Load param fsm/click_height success: [0;0m1.5
+[fsm_node-3] [0;32m Load param fsm/cmd_topic success: [0;0m/planning/pos_cmd
+[fsm_node-3] [0;32m Load param fsm/mpc_cmd_topic success: [0;0m/planning_cmd/poly_traj
+[fsm_node-3] [0;32m Load param fsm/click_goal_topic success: [0;0m/planning/click_goal
+[fsm_node-3] [0;33m Load param fsm/map_readiness/enable failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_accepted_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_committed_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_commit_lag_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_scan_span_s failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_cloud_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0.1
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_min_duration_s failed, use default value: [0;0m0.4
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_duration_s failed, use default value: [0;0m2
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_acc_mps2 failed, use default value: [0;0m15
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_jerk_mps3 failed, use default value: [0;0m120
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param rog_map/esdf/resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/esdf/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/esdf/local_update_box success: [0;0m[5 5 3 ]
+[fsm_node-3] [0;32m Load param rog_map/load_pcd_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/threshold success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/fix_map_origin success: [0;0m[0 0 1.5 ]
+[fsm_node-3] [0;32m Load param rog_map/frontier_extraction_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/cloud_topic success: [0;0m/cloud_sector
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_topic success: [0;0m/lidar_slam/odom
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_timeout success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/use_dynamic_reconfigure success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/pub_unknown_map_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_id success: [0;0mworld
+[fsm_node-3] [0;32m Load param rog_map/visualization/time_rate success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_rate success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/range success: [0;0m[15 15 4 ]
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [0;32m Load param rog_map/inflation_resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_step success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/inflation_step success: [0;0m4
+[fsm_node-3] [0;32m Load param rog_map/intensity_thresh success: [0;0m-10
+[fsm_node-3] [0;32m Load param rog_map/map_size success: [0;0m[70 70 6 ]
+[fsm_node-3] [0;32m Load param rog_map/point_filt_num success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/raycasting/batch_update_size success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/unk_thresh success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_hit success: [0;0m0.9
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_miss success: [0;0m0.49
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_min success: [0;0m0.12
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_max success: [0;0m0.98
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_occ success: [0;0m0.85
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/ray_range success: [0;0m[0.5 100 ]
+[fsm_node-3] [0;32m Load param rog_map/raycasting/local_update_box success: [0;0m[100 100 5 ]
+[fsm_node-3] [0;32m Load param rog_map/virtual_ground_height success: [0;0m-0.1
+[fsm_node-3] [0;32m Load param rog_map/virtual_ceil_height success: [0;0m3.5
+[fsm_node-3] [32m -- [RM-Config] inflation_resolution: 0.1[0m
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: ORIGIN_AT_CORNER.
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: virtual_ceil_height: 3.0500000000000003, virtual_ground_height: 0.35000000000000003.
+[fsm_node-3] [34m	[ROG] n_free: 1[0m
+[fsm_node-3] [34m	[ROG] n_occ: 1[0m
+[fsm_node-3] [34m	[ROG] l_hit: 2.19722[0m
+[fsm_node-3] [34m	[ROG] l_miss: -0.0400053[0m
+[fsm_node-3] [34m	[ROG] l_min: -1.99243[0m
+[fsm_node-3] [34m	[ROG] l_max: 3.89182[0m
+[fsm_node-3] [34m	[ROG] l_occ: 1.7346[0m
+[fsm_node-3] [34m	[ROG] l_free: -0.00399995[0m
+[perfect_drone_node-2] [WARN] [1786671434.110769098] [perfect_tracking]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed6.yaml
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [CounterMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 711 711  71[0m
+[fsm_node-3] [32m	local_map_size_d: 71.1 71.1  7.1[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [InfMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 711 711  71[0m
+[fsm_node-3] [32m	local_map_size_d: 71.1 71.1  7.1[0m
+[fsm_node-3] [ProbMap] virtual_ceil_height: 3.05
+[fsm_node-3] [ProbMap] virtual_ground_height: 0.35
+[fsm_node-3] [33m -- [ProbMap] Map sliding disabled, set origin to [  0   0 1.5] -- [0m
+[perfect_drone_node-2] Failed to find match for field 'intensity'.
+[fsm_node-3] [33m -- [Prob-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [ProbMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.05[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 1401 1401  121[0m
+[fsm_node-3] [32m	local_map_size_d: 70.05 70.05  6.05[0m
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/pos_constraint_type success: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/piece_num failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/uniform_time_en failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/block_energy_cost success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/opt_accuracy success: [0;0m5e-06
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/integral_reso success: [0;0m15
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_t success: [0;0m1e+07
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_ts failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_pos success: [0;0m5e+09
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_vel success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_acc success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_jerk success: [0;0m-5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_attract success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_thr success: [0;0m-1
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m12
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/print_log success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/detailed_log_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/backup_traj_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/goal_vel_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/goal_yaw_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/visual_process success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/use_fov_cut success: [0;0m0
+[fsm_node-3] [0;33m Load param super_planner/fov_horizontal_angle failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param super_planner/fov_center_heading failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/frontend_in_known_free success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0.1
+[fsm_node-3] [0;32m Load param super_planner/safe_corridor_line_max_length success: [0;0m6
+[fsm_node-3] [0;32m Load param super_planner/sensing_horizon success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/obs_skip_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/replan_forward_dt success: [0;0m0.1
+[fsm_node-3] [0;32m Load param super_planner/corridor_bound_dis success: [0;0m0.8
+[fsm_node-3] [0;32m Load param super_planner/corridor_line_max_length success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/planning_horizon success: [0;0m7
+[fsm_node-3] [0;32m Load param super_planner/receding_dis success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/robot_r success: [0;0m0.4
+[fsm_node-3] [0;32m Load param super_planner/corridor_pref_margin success: [0;0m0.5
+[fsm_node-3] [0;32m Load param super_planner/iris_iter_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/yaw_mode success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/mpc_horizon success: [0;0m15
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [INFO] [1786671435.421982881] [fsm_node]:  -- [TRAJ_GUARD] mode=enforce sample_dt=0.0050s shadow_min_interval=0.000s inflation_radius=0.400m robot_r=0.400m additional_clearance=0.100m clearance_offsets=6
+[fsm_node-3] [38;2;050;205;050m -- [Viz] Set resolution_ to 0.05
+[fsm_node-3] [0m[38;2;050;205;050m -- [Viz] Set visualization_en_ to false
+[fsm_node-3] [0mLoad config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param astar/map_voxel_num success: [0;0m[500 500 100 ]
+[fsm_node-3] [0;32m Load param astar/allow_diag success: [0;0m1
+[fsm_node-3] [0;32m Load param astar/debug_visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param astar/heu_type success: [0;0m2
+[fsm_node-3] [0;32m Load param astar/visual_process success: [0;0m0
+[fsm_node-3] [32m -- [RM] Init Astar-map.[0m
+[fsm_node-3] [34m	map index size: 250 250  50[0m
+[fsm_node-3] [34m	map vox_num: 501 501 101[0m
+[fsm_node-3] [33m -- [Fsm] CLICKGOAL ENABLE.[0m
+[fsm_node-3] [INFO] [1786671437.066893795] [fsm_node]: [32m -- [Fsm-Test] Begin.[0m
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [INIT] to [WAIT_GOAL].
+[fsm_node-3] [0m[32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0 deg[0m
+[fsm_node-3] [INFO] [1786671438.016191142] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1786671438.199329051] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=1 map=12 samples=229 range=[0.252,1.390]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [WAIT_GOAL] to [GENERATE_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=1 map=12 map_age=0.033s samples=229 range=[0.252,1.390] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 1.123] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786671438.504184844] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.183413986.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.383242742918897[0m
+[fsm_node-3] [33m	 box_min = 4.150000000000000 5.550000000000001 1.350000000000000[0m
+[fsm_node-3] [33m	 box_max =5.850000000000001 7.250000000000000 2.150000000000000[0m
+[fsm_node-3] [33m	 seed line =4.950000000000000 6.350000000000001 1.750000000000000 --> 5.050000000000001 6.450000000000000 1.750000000000000[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671438.532745208] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671438.532800994] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.383242742918897[0m
+[fsm_node-3] [33m	 box_min = 4.150000000000000 5.550000000000001 1.350000000000000[0m
+[fsm_node-3] [33m	 box_max =5.850000000000001 7.250000000000000 2.150000000000000[0m
+[fsm_node-3] [33m	 seed line =4.950000000000000 6.350000000000001 1.750000000000000 --> 5.050000000000001 6.450000000000000 1.750000000000000[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671438.560836440] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671438.560898391] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [ERROR] [1786671438.667255301] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=main_pre_uncertified duration=1.015s speed0=8.823 max_acc=14.392 max_jerk=71.807 dynamics_ok=true path_status=OCCUPIED stop=[3.770,6.602,2.004]
+[fsm_node-3] [ERROR] [1786671438.667332030] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_PATH_UNSAFE] status=OCCUPIED collision_tt=0.465 p=[3.350,5.450,1.950]; executing shortest bounded stop
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=1 map=12 map_age=0.500s samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 3.150] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671440.260569001] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1786671440.398879556] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=2 map=15 samples=240 range=[0.172,1.363]
+[fsm_node-3] [INFO] [1786671440.399063882] [fsm_node]:  -- [TRAJ_GUARD_RECOVERED] trigger=main_pre_uncertified gen=2 map=14
+[fsm_node-3] [ERROR] [1786671440.471073591] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=main_pre_uncertified duration=2.000s speed0=2.648 max_acc=19.943 max_jerk=43.832 dynamics_ok=false path_status=OCCUPIED stop=[11.542,11.995,2.876]
+[fsm_node-3] [ERROR] [1786671440.471134313] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_PATH_UNSAFE] status=OCCUPIED collision_tt=0.750 p=[8.022,9.498,2.489]; executing shortest bounded stop
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=2 map=15 map_age=0.019s samples=240 range=[0.172,1.363] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=2 map=15 map_age=0.087s samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 6.850] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671443.939883624] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671443.939952865] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671444.447840719] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671444.447947443] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 8.300] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671445.383957615] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671445.384023888] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671445.888301007] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671445.888356478] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 9.310] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671446.397968526] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671446.398049296] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671446.904436123] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671446.904491674] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 10.330] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671447.414902766] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671447.414959647] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671447.913862156] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671447.913904193] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 11.340] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671448.427191171] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671448.427243535] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671449.384957557] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671449.385081225] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 12.800] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671449.885024380] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671449.885094335] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671450.388753026] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671450.388817127] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 14.400] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671451.485960766] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671451.486026856] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671451.989447738] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671451.989509241] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 15.600] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671452.688089290] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671452.688160757] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671453.186743707] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671453.186858563] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 16.600] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671453.689613137] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671453.689685722] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671454.192204984] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671454.192300485] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 17.610] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671454.693986105] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671454.694048535] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671455.196292389] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671455.196347071] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 18.620] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671455.705641421] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671455.705687650] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671456.210725916] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671456.210794217] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 19.630] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671456.719936407] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671456.719979021] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 20.890] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671457.971705753] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671457.971740501] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671458.478646530] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671458.478759174] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 24.190] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671461.273080750] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671461.273132994] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671461.785051646] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671461.785111712] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 25.210] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671462.298047029] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671462.298096997] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671462.795265348] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671462.795315007] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 26.220] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671463.308948774] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671463.309015314] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671463.871611491] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671463.871640814] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 27.290] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671464.374440560] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671464.374492116] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671464.886914947] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671464.886959593] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 28.390] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671465.474617139] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671465.474671866] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671465.978071583] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671465.978132479] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 29.400] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671466.486663505] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671466.486715432] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 30.690] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671467.774692664] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671467.774757671] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671468.277227320] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671468.277286023] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 33.790] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671470.875298362] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671470.875348349] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671471.386010469] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671471.386061369] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 35.090] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671472.174167721] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671472.174224945] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671472.674809305] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671472.674854126] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 37.290] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671474.377335054] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671474.377385498] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671474.884670266] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671474.884719171] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 38.300] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671475.386190633] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671475.386254507] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671475.883692362] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671475.883745679] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 39.310] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671476.394459320] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671476.394521747] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671476.899474280] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671476.899529571] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 40.320] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671477.406511070] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671477.406618646] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671477.913186351] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671477.913242309] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 41.490] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671478.574481611] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671478.574539197] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671479.073228542] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671479.073285528] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 42.500] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671479.582163784] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671479.582210031] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671480.085138065] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671480.085207449] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 43.500] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671480.584303067] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671480.584353728] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671481.083727508] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671481.083781406] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 45.290] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671482.374638393] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671482.374689212] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671482.874140958] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671482.874192184] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 46.300] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671483.385252786] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671483.385322512] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671483.975430109] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671483.975482611] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 47.400] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671484.484636062] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671484.484687441] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671484.987148855] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671484.987192237] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 49.990] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671487.076035129] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671487.076091119] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671487.585346618] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671487.585392931] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 51.890] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671488.971917884] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671488.971970307] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671489.474266518] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671489.474327599] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 52.900] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671489.984584790] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671489.984652317] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671490.496789847] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671490.496844636] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 57.190] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671494.273582746] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671494.273637829] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671494.786481193] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671494.786525505] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 58.200] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671495.287290786] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671495.287349075] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671495.787517058] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671495.787558198] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 59.210] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671496.294469465] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671496.294535284] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671496.802005130] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671496.802057145] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 60.220] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671497.309573095] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671497.309644809] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 61.790] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671498.872740822] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671498.872789045] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671499.374873943] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671499.374922379] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 62.800] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671499.887155234] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671499.887212476] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671500.396734685] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671500.396787031] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 64.490] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671501.576238743] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671501.576295273] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671502.086759196] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671502.086817109] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 65.510] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671502.595579659] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671502.595624635] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671503.571596085] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671503.571642648] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 67.000] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671504.083804654] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671504.083877622] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671504.586937916] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671504.586981094] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 68.000] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671505.089388834] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671505.089453449] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 69.790] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671506.871209406] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671506.871248163] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671507.389656793] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671507.389711850] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 70.800] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671507.887451908] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671507.887500673] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671508.393727253] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671508.393786661] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 71.990] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671509.073931229] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671509.073999144] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671509.578584076] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671509.578646489] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 73.190] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671510.273435363] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671510.273490967] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671510.785664862] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671510.785705643] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 74.200] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671511.285964176] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671511.286012717] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671511.797486661] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671511.797536984] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 75.220] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671512.304447840] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671512.304509639] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671512.807866181] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671512.807918828] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 76.230] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671513.319570108] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671513.319616627] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671513.822376803] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671513.822416760] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 77.250] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671514.335243783] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671514.335293241] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671514.836121276] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671514.836169756] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 78.250] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671515.335698925] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671515.335760712] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671515.848196326] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671515.848254508] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 79.260] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671516.348748601] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671516.348827917] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671516.847454397] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671516.847501982] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 80.590] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671517.674486767] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671517.674567938] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671518.182419680] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671518.182516857] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 81.790] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671518.878436153] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671518.878484218] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671519.386176535] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671519.386228328] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 82.990] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671520.076568575] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671520.076623450] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671520.586594583] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671520.586649743] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 84.490] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671521.571293304] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671521.571340044] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671522.077816006] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671522.077871832] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [32m -- [Fsm 85.500] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671522.588111380] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671522.588163543] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m	 box_min = 10.725 11.175  2.475[0m
+[fsm_node-3] [33m	 box_max =12.325 12.775  2.650[0m
+[fsm_node-3] [33m	 seed line =11.525 11.975  2.875 --> 11.525 11.975  2.875[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671523.094378129] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671523.094440276] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.

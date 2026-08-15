@@ -1,0 +1,694 @@
+ -- [Bench] Use sim time is false, begin replay.
+Load config file: /root/super_ws/src/SUPER/super_planner/config/static_reference_raw_guarded_v2_corridor.yaml
+[0;32m Load param fsm/timer_en success: [0;0m1
+[0;32m Load param fsm/click_goal_en success: [0;0m1
+[0;32m Load param fsm/click_yaw_en success: [0;0m1
+[0;32m Load param fsm/replan_rate success: [0;0m5
+[0;32m Load param fsm/click_height success: [0;0m1.5
+[0;32m Load param fsm/cmd_topic success: [0;0m/planning/pos_cmd
+[0;32m Load param fsm/mpc_cmd_topic success: [0;0m/planning_cmd/poly_traj
+[0;32m Load param fsm/click_goal_topic success: [0;0m/planning/click_goal
+[0;32m Load param fsm/map_readiness/enable success: [0;0m1
+[0;32m Load param fsm/map_readiness/min_accepted_scans success: [0;0m5
+[0;32m Load param fsm/map_readiness/min_committed_scans success: [0;0m5
+[0;32m Load param fsm/map_readiness/max_commit_lag_scans success: [0;0m5
+[0;32m Load param fsm/map_readiness/min_scan_span_s success: [0;0m1
+[0;32m Load param fsm/map_readiness/max_cloud_age_s success: [0;0m0.75
+[0;32m Load param fsm/map_readiness/max_map_age_s success: [0;0m0.75
+[0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[0;32m Load param fsm/trajectory_guard/max_map_age_s success: [0;0m0.75
+[0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.01
+[0;32m Load param fsm/trajectory_guard/brake_min_duration_s success: [0;0m0.4
+[0;32m Load param fsm/trajectory_guard/brake_max_duration_s success: [0;0m2
+[0;32m Load param fsm/trajectory_guard/brake_max_acc_mps2 success: [0;0m15
+[0;32m Load param fsm/trajectory_guard/brake_max_jerk_mps3 success: [0;0m120
+[0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[0;32m Load param super_planner/visualization_en success: [0;0m1
+[0;32m Load param rog_map/resolution success: [0;0m0.05
+Load config file: /root/super_ws/src/SUPER/super_planner/config/static_reference_raw_guarded_v2_corridor.yaml
+[0;32m Load param rog_map/esdf/resolution success: [0;0m0.1
+[0;32m Load param rog_map/esdf/enable success: [0;0m0
+[0;32m Load param rog_map/esdf/local_update_box success: [0;0m[5 5 3 ]
+[0;32m Load param rog_map/load_pcd_en success: [0;0m0
+[0;32m Load param rog_map/map_sliding/enable success: [0;0m0
+[0;32m Load param rog_map/map_sliding/threshold success: [0;0m3
+[0;32m Load param rog_map/fix_map_origin success: [0;0m[0 0 1.5 ]
+[0;32m Load param rog_map/frontier_extraction_en success: [0;0m0
+[0;32m Load param rog_map/ros_callback/enable success: [0;0m1
+[0;32m Load param rog_map/ros_callback/cloud_topic success: [0;0m/cloud_registered
+[0;32m Load param rog_map/ros_callback/odom_topic success: [0;0m/lidar_slam/odom
+[0;32m Load param rog_map/ros_callback/odom_timeout success: [0;0m2
+[0;32m Load param rog_map/visualization/enable success: [0;0m0
+[0;32m Load param rog_map/visualization/use_dynamic_reconfigure success: [0;0m0
+[0;32m Load param rog_map/visualization/pub_unknown_map_en success: [0;0m0
+[0;32m Load param rog_map/visualization/frame_id success: [0;0mworld
+[0;32m Load param rog_map/visualization/time_rate success: [0;0m2
+[0;32m Load param rog_map/visualization/frame_rate success: [0;0m0
+[0;32m Load param rog_map/visualization/range success: [0;0m[15 15 4 ]
+[0;32m Load param rog_map/resolution success: [0;0m0.05
+[0;32m Load param rog_map/inflation_resolution success: [0;0m0.1
+[0;32m Load param rog_map/unk_inflation_en success: [0;0m0
+[0;32m Load param rog_map/unk_inflation_step success: [0;0m1
+[0;32m Load param rog_map/inflation_step success: [0;0m3
+[0;32m Load param rog_map/intensity_thresh success: [0;0m-10
+[0;32m Load param rog_map/map_size success: [0;0m[15 110 6 ]
+[0;32m Load param rog_map/point_filt_num success: [0;0m1
+[0;32m Load param rog_map/raycasting/enable success: [0;0m0
+[0;32m Load param rog_map/raycasting/batch_update_size success: [0;0m1
+[0;32m Load param rog_map/raycasting/unk_thresh success: [0;0m1
+[0;32m Load param rog_map/raycasting/p_hit success: [0;0m0.9
+[0;32m Load param rog_map/raycasting/p_miss success: [0;0m0.49
+[0;32m Load param rog_map/raycasting/p_min success: [0;0m0.12
+[0;32m Load param rog_map/raycasting/p_max success: [0;0m0.98
+[0;32m Load param rog_map/raycasting/p_occ success: [0;0m0.85
+[0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[WARN] [1785921961.243388709] [perfect_tracking]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/dense.yaml
+Load config file: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/dense.yaml
+[0;32m Load param mesh_resource success: [0;0mpackage://perfect_drone_sim/meshes/yunque-M.dae
+[0;32m Load param rog_map/raycasting/ray_range success: [0;0m[0.5 100 ]
+[0;32m Load param init_position/x success: [0;0m0
+[0;32m Load param init_position/y success: [0;0m-50
+[0;32m Load param init_position/z success: [0;0m1.5
+[0;32m Load param init_yaw success: [0;0m1.5741
+[0;32m Load param sensing_rate success: [0;0m10
+[0;32m Load param rog_map/raycasting/local_update_box success: [0;0m[100 100 5 ]
+[0;32m Load param rog_map/virtual_ground_height success: [0;0m-0.1
+Load config file: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/dense.yaml
+[0;32m Load param sensing_blind success: [0;0m0.1
+[0;32m Load param sensing_horizon success: [0;0m15
+[0;32m Load param sensing_rate success: [0;0m10
+[0;32m Load param lidar_type success: [0;0m2
+[0;32m Load param pcd_name success: [0;0mrandom_map_2_26609.pcd
+[0;32m Load param is_360lidar success: [0;0m1
+[0;32m Load param polar_resolution success: [0;0m0.4
+[0;33m Load param fx failed, use default value: [0;0m250
+[0;33m Load param fy failed, use default value: [0;0m250
+[0;33m Load param line_number failed, use default value: [0;0m64
+[0;32m Load param downsample_res success: [0;0m0.1
+[0;32m Load param rog_map/virtual_ceil_height success: [0;0m3.5
+[0;33m Load param yaw_fov failed, use default value: [0;0m360
+[32m -- [RM-Config] inflation_resolution: 0.1[0m
+ -- [ROG-Map] Init, resetMapSize: ORIGIN_AT_CORNER.
+ -- [ROG-Map] Init, resetMapSize: virtual_ceil_height: 3.1500000000000004, virtual_ground_height: 0.25.
+[34m	[ROG] n_free: 1[0m
+[34m	[ROG] n_occ: 1[0m
+[0;32m Load param vertical_fov success: [0;0m178
+[34m	[ROG] l_hit: 2.19722[0m
+[34m	[ROG] l_miss: -0.0400053[0m
+[34m	[ROG] l_min: -1.99243[0m
+[34m	[ROG] l_max: 3.89182[0m
+[34m	[ROG] l_occ: 1.7346[0m
+[34m	[ROG] l_free: -0.00399995[0m
+[0;32m Load param depth_image_en success: [0;0m0
+[0;33m Load param inf_point_en failed, use default value: [0;0m0
+[0;32m Load param print_time_consumption success: [0;0m0
+GLAD init success
+Load shader frome: /root/super_ws/src/SUPER/mars_uav_sim/marsim_render/config/pattern/360camera.vs
+[33m -- [Inf-Map] Clear all local map.[0m
+[32m -- [CounterMap] Init successfully -- .[0m
+[32m	resolution: 0.1[0m
+[32m	map_sliding_en: 0[0m
+[32m	local_map_size_i:  159 1109   69[0m
+[32m	local_map_size_d:  15.9 110.9   6.9[0m
+[33m -- [Inf-Map] Clear all local map.[0m
+[32m -- [InfMap] Init successfully -- .[0m
+[32m	resolution: 0.1[0m
+[32m	map_sliding_en: 0[0m
+[32m	local_map_size_i:  159 1109   69[0m
+[32m	local_map_size_d:  15.9 110.9   6.9[0m
+[ProbMap] virtual_ceil_height: 3.15
+[ProbMap] virtual_ground_height: 0.25
+[33m -- [ProbMap] Map sliding disabled, set origin to [  0   0 1.5] -- [0m
+Failed to find match for field 'intensity'.
+Now initing the point cloud data: 
+Number of points = 41.4755X 10000
+Load data finish 
+========== OpenGL Info ==========
+Vendor: NVIDIA Corporation
+Renderer: NVIDIA GeForce RTX 3050 Ti Laptop GPU/PCIe/SSE2
+OpenGL Version: 3.3.0 NVIDIA 550.144.03
+GLSL Version: 3.30 NVIDIA via Cg compiler
+========== OpenGL Info ==========
+[33m -- [Prob-Map] Clear all local map.[0m
+[32m -- [ProbMap] Init successfully -- .[0m
+[32m	resolution: 0.05[0m
+[32m	map_sliding_en: 0[0m
+[32m	local_map_size_i:  301 2201  121[0m
+[32m	local_map_size_d:  15.05 110.05   6.05[0m
+Load config file: /root/super_ws/src/SUPER/super_planner/config/static_reference_raw_guarded_v2_corridor.yaml
+Load config file: /root/super_ws/src/SUPER/super_planner/config/static_reference_raw_guarded_v2_corridor.yaml
+[0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[0;32m Load param traj_opt/exp_traj/pos_constraint_type success: [0;0m1
+[0;33m Load param traj_opt/exp_traj/piece_num failed, use default value: [0;0m1
+[0;33m Load param traj_opt/exp_traj/uniform_time_en failed, use default value: [0;0m0
+[0;32m Load param traj_opt/exp_traj/block_energy_cost success: [0;0m0
+[0;32m Load param traj_opt/exp_traj/opt_accuracy success: [0;0m5e-06
+[0;32m Load param traj_opt/exp_traj/integral_reso success: [0;0m20
+[0;32m Load param traj_opt/exp_traj/smooth_eps success: [0;0m0.01
+[0;32m Load param traj_opt/boundary/max_vel success: [0;0m2
+[0;32m Load param traj_opt/boundary/max_acc success: [0;0m15
+[0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[0;33m Load param traj_opt/exp_traj/penna_scale failed, use default value: [0;0m-1
+[0;32m Load param traj_opt/exp_traj/penna_t success: [0;0m1e+07
+[0;33m Load param traj_opt/exp_traj/penna_ts failed, use default value: [0;0m-1
+[0;32m Load param traj_opt/exp_traj/penna_pos success: [0;0m5e+09
+[0;32m Load param traj_opt/exp_traj/penna_vel success: [0;0m5e+08
+[0;32m Load param traj_opt/exp_traj/penna_acc success: [0;0m5e+08
+[0;32m Load param traj_opt/exp_traj/penna_jerk success: [0;0m-5e+08
+[0;32m Load param traj_opt/exp_traj/penna_attract success: [0;0m5e+08
+[0;32m Load param traj_opt/exp_traj/penna_omg success: [0;0m-1
+[0;32m Load param traj_opt/exp_traj/penna_thr success: [0;0m-1
+Load config file: /root/super_ws/src/SUPER/super_planner/config/static_reference_raw_guarded_v2_corridor.yaml
+[0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m16
+[0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[0;32m Load param traj_opt/boundary/max_vel success: [0;0m2
+[0;32m Load param traj_opt/boundary/max_acc success: [0;0m15
+[0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+Publish local map size: 64259
+[0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+[0;32m Load param super_planner/print_log success: [0;0m0
+[0;32m Load param super_planner/detailed_log_en success: [0;0m0
+[0;32m Load param super_planner/visualization_en success: [0;0m1
+[0;32m Load param super_planner/backup_traj_en success: [0;0m1
+[0;32m Load param super_planner/goal_vel_en success: [0;0m0
+[0;32m Load param super_planner/goal_yaw_en success: [0;0m0
+[0;32m Load param super_planner/visual_process success: [0;0m0
+[0;32m Load param super_planner/use_fov_cut success: [0;0m0
+[0;33m Load param super_planner/fov_horizontal_angle failed, use default value: [0;0m-1
+[0;33m Load param super_planner/fov_center_heading failed, use default value: [0;0m0
+[0;32m Load param super_planner/frontend_in_known_free success: [0;0m0
+[0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.01
+[0;32m Load param super_planner/safe_corridor_line_max_length success: [0;0m6
+[0;32m Load param super_planner/sensing_horizon success: [0;0m-1
+[0;32m Load param super_planner/obs_skip_num success: [0;0m2
+[0;32m Load param super_planner/replan_forward_dt success: [0;0m0.1
+[0;32m Load param super_planner/corridor_bound_dis success: [0;0m0.8
+[0;32m Load param super_planner/corridor_line_max_length success: [0;0m0.5
+[0;32m Load param super_planner/planning_horizon success: [0;0m7
+[0;32m Load param super_planner/receding_dis success: [0;0m1
+[0;32m Load param super_planner/robot_r success: [0;0m0.2
+[0;32m Load param super_planner/iris_iter_num success: [0;0m2
+[0;32m Load param super_planner/yaw_mode success: [0;0m1
+[0;32m Load param super_planner/mpc_horizon success: [0;0m15
+[0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[0;32m Load param rog_map/resolution success: [0;0m0.05
+[INFO] [1785921962.029895844] [fsm_node]:  -- [TRAJ_GUARD] enabled sample_dt=0.0100s inflation_radius=0.300m robot_r=0.200m
+[38;2;050;205;050m -- [Viz] Set resolution_ to 0.05
+[0m[38;2;050;205;050m -- [Viz] Set visualization_en_ to true
+[0mLoad config file: /root/super_ws/src/SUPER/super_planner/config/static_reference_raw_guarded_v2_corridor.yaml
+[0;32m Load param astar/map_voxel_num success: [0;0m[500 500 100 ]
+[0;32m Load param astar/allow_diag success: [0;0m1
+[0;32m Load param astar/debug_visualization_en success: [0;0m0
+[0;32m Load param astar/heu_type success: [0;0m2
+[0;32m Load param astar/visual_process success: [0;0m0
+[32m -- [RM] Init Astar-map.[0m
+Publish local map size: 64368
+Publish local map size: 64233
+Publish local map size: 64416
+Publish local map size: 64274
+Publish local map size: 64137
+Publish local map size: 64149
+Publish local map size: 63996
+Publish local map size: 64319
+Publish local map size: 64304
+ -- [MARSIM] Running FPS: 102.254
+Publish local map size: 64180
+[34m	map index size: 250 250  50[0m
+[34m	map vox_num: 501 501 101[0m
+Publish local map size: 64304
+Publish local map size: 64416
+Publish local map size: 64279
+Publish local map size: 64021
+Publish local map size: 64177
+Publish local map size: 64281
+[33m -- [Fsm] CLICKGOAL ENABLE.[0m
+[INFO] [1785921963.636416297] [fsm_node]: [32m -- [Fsm-Test] Begin.[0m
+Publish local map size: 64274
+Publish local map size: 64265
+Publish local map size: 64259
+Publish local map size: 64110
+Publish local map size: 64111
+ -- [MARSIM] Running FPS: 109.421
+Publish local map size: 64083
+Publish local map size: 64084
+Publish local map size: 64269
+Publish local map size: 64041
+Publish local map size: 64283
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 1.005] Current state: INIT[0m
+Publish local map size: 64188
+Publish local map size: 64182
+Publish local map size: 64121
+Publish local map size: 64006
+Publish local map size: 64158
+ -- [MARSIM] Running FPS: 99.8896
+Publish local map size: 64195
+Publish local map size: 64046
+Publish local map size: 64009
+Publish local map size: 64291
+Publish local map size: 64362
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 2.005] Current state: INIT[0m
+Publish local map size: 64119
+Publish local map size: 64247
+Publish local map size: 64362
+Publish local map size: 64274
+Publish local map size: 64180
+ -- [MARSIM] Running FPS: 99.9239
+Publish local map size: 64122
+Publish local map size: 64265
+Publish local map size: 64183
+Publish local map size: 64149
+Publish local map size: 64265
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 3.015] Current state: INIT[0m
+Publish local map size: 64180
+Publish local map size: 64218
+Publish global map size: 414755
+Publish local map size: 64084
+Publish global map size: 414755
+Publish global map size: 414755
+Publish global map size: 414755
+Publish global map size: 414755
+Publish global map size: 414755
+Publish global map size: 414755
+Publish local map size: 64427
+Publish local map size: 64416
+Publish local map size: 64317
+ -- [MARSIM] Running FPS: 97.5476
+Publish local map size: 64554
+Publish local map size: 64287
+Publish local map size: 64094
+Publish local map size: 64084
+Publish local map size: 64368
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 4.025] Current state: INIT[0m
+Publish local map size: 64200
+Publish local map size: 64070
+Publish local map size: 64397
+Publish local map size: 64036
+ -- [MARSIM] Running FPS: 85.0997
+Publish local map size: 64177
+Publish local map size: 64206
+Publish local map size: 64021
+Publish local map size: 64184
+Publish local map size: 64314
+Publish local map size: 64256
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 5.025] Current state: INIT[0m
+Publish local map size: 64368
+Publish local map size: 64040
+ -- [MARSIM] Running FPS: 79.9117
+Publish local map size: 64121
+Publish local map size: 64213
+Publish local map size: 64366
+Publish local map size: 64048
+Publish local map size: 64195
+Publish local map size: 64241
+Publish local map size: 64218
+Publish local map size: 64183
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 6.032] Current state: INIT[0m
+Publish local map size: 64362
+ -- [MARSIM] Running FPS: 84.1223
+Publish local map size: 64150
+Publish local map size: 64084
+Publish local map size: 64291
+Publish local map size: 64265
+Publish local map size: 64149
+Publish local map size: 64121
+Publish local map size: 64088
+Publish local map size: 64146
+Publish local map size: 64173
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 7.035] Current state: INIT[0m
+Publish local map size: 64094
+ -- [MARSIM] Running FPS: 87.3533
+Publish local map size: 64182
+Publish local map size: 64160
+Publish local map size: 64174
+Publish local map size: 64362
+Publish local map size: 64392
+Publish local map size: 64206
+Publish local map size: 64144
+Publish local map size: 64248
+Publish local map size: 64231
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 8.045] Current state: INIT[0m
+ -- [MARSIM] Running FPS: 89.329
+Publish local map size: 64095
+Publish local map size: 64397
+Publish local map size: 64368
+Publish local map size: 64392
+Publish local map size: 64174
+Publish local map size: 64150
+Publish local map size: 64021
+Publish local map size: 64291
+Publish local map size: 64369
+ -- [MARSIM] Running FPS: 88.6019
+Publish local map size: 64084
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 9.055] Current state: INIT[0m
+Publish local map size: 64119
+Publish local map size: 64073
+Publish local map size: 64177
+Publish local map size: 64283
+Publish local map size: 64076
+Publish local map size: 64276
+Publish local map size: 64059
+Publish local map size: 64083
+ -- [MARSIM] Running FPS: 85.9135
+Publish local map size: 64181
+Publish local map size: 64357
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 10.055] Current state: INIT[0m
+Publish local map size: 64145
+Publish local map size: 64265
+Publish local map size: 64367
+Publish local map size: 64394
+Publish local map size: 64217
+Publish local map size: 64231
+Publish local map size: 64218
+ -- [MARSIM] Running FPS: 82.7018
+Publish local map size: 64009
+Publish local map size: 64184
+Publish local map size: 64291
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 11.055] Current state: INIT[0m
+Publish local map size: 64122
+Publish local map size: 64397
+Publish local map size: 64265
+Publish local map size: 64281
+Publish local map size: 64188
+Publish local map size: 64135
+ -- [MARSIM] Running FPS: 84.4044
+Publish local map size: 64252
+Publish local map size: 64149
+Publish local map size: 64043
+Publish local map size: 64083
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 12.065] Current state: INIT[0m
+Publish local map size: 64246
+Publish local map size: 64177
+Publish local map size: 64217
+Publish local map size: 64173
+Publish local map size: 64241
+ -- [MARSIM] Running FPS: 82.305
+Publish local map size: 64362
+Publish local map size: 64259
+Publish local map size: 64204
+Publish local map size: 64006
+Publish local map size: 64180
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 13.075] Current state: INIT[0m
+Publish local map size: 64289
+Publish local map size: 64180
+Publish local map size: 64005
+Publish local map size: 64159
+Publish local map size: 64068
+ -- [MARSIM] Running FPS: 98.2186
+Publish local map size: 64159
+Publish local map size: 64103
+Publish local map size: 64208
+Publish local map size: 64419
+Publish local map size: 64054
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 14.075] Current state: INIT[0m
+Publish local map size: 64145
+Publish local map size: 64279
+Publish local map size: 64095
+Publish local map size: 64319
+ -- [MARSIM] Running FPS: 88.6693
+Publish local map size: 64368
+Publish local map size: 64413
+Publish local map size: 64048
+Publish local map size: 64065
+Publish local map size: 64160
+Publish local map size: 64274
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 15.085] Current state: INIT[0m
+Publish local map size: 64188
+Publish local map size: 63989
+Publish local map size: 64195
+ -- [MARSIM] Running FPS: 84.4945
+Publish local map size: 64340
+Publish local map size: 64231
+Publish local map size: 64195
+Publish local map size: 64094
+Publish local map size: 64362
+Publish local map size: 64246
+Publish local map size: 64241
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 16.085] Current state: INIT[0m
+Publish local map size: 64356
+[38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [INIT] to [WAIT_GOAL].
+[0m -- [Fsm] MAP_READY accepted=28 committed=28 version=28 lag=0 span=16.043s cloud_age=0.166s committed_cloud_age=0.166s commit_age=0.157s in_progress=false
+[32m -- [Fsm] Get goal at [0m 0.025 50.025  1.525
+[32m -- [Fsm] Receive click goal at: [ 0.025 50.025  1.525]; goal yaw: 0.000 deg[0m
+Publish local map size: 64094
+[INFO] [1785921979.890582326] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[INFO] [1785921979.930053249] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=1 map=28 samples=308 range=[0.052,3.121]
+Publish local map size: 64358
+ -- [MARSIM] Running FPS: 96.7634
+Publish local map size: 64207
+Publish local map size: 64243
+Publish local map size: 64670
+[INFO] [1785921980.293033228] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=2 map=30 samples=282 range=[0.033,2.834]
+[38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [WAIT_GOAL] to [GENERATE_TRAJ].
+[0m -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=1 map=28 map_age=0.241s samples=306 range=[0.074,3.121] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[0m -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=1 map=29 map_age=0.000s samples=300 range=[0.134,3.121] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+ -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=1 map=30 map_age=0.000s samples=280 range=[0.338,3.121] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm] ReplanOnce succeed.[0m
+Publish local map size: 64843
+Publish local map size: 64778
+[INFO] [1785921980.508955888] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=3 map=32 samples=262 range=[0.050,2.654]
+ -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=2 map=30 map_age=0.099s samples=279 range=[0.057,2.834] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+ -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=2 map=31 map_age=0.000s samples=276 range=[0.089,2.834] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+ -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=2 map=32 map_age=0.000s samples=270 range=[0.151,2.834] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm] ReplanOnce succeed.[0m
+Publish local map size: 64952
+Publish local map size: 65030
+[INFO] [1785921980.690991589] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=4 map=32 samples=259 range=[0.032,2.608]
+ -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=3 map=32 map_age=0.122s samples=260 range=[0.073,2.654] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm] ReplanOnce succeed.[0m
+ -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=4 map=32 map_age=0.304s samples=257 range=[0.055,2.608] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm 17.095] Current state: FOLLOW_TRAJ[0m
+Publish local map size: 65244
+Publish local map size: 65348
+Publish local map size: 65184
+ -- [MARSIM] Running FPS: 99.1805
+Publish local map size: 65335
+[INFO] [1785921981.084137826] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=5 map=33 samples=268 range=[0.026,2.691]
+ -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=4 map=33 map_age=0.001s samples=226 range=[0.360,2.608] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm] ReplanOnce succeed.[0m
+Publish local map size: 66017
+Publish local map size: 67644
+[INFO] [1785921981.306075617] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=6 map=33 samples=266 range=[0.047,2.692]
+ -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=5 map=33 map_age=0.089s samples=266 range=[0.048,2.691] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm] ReplanOnce succeed.[0m
+Publish local map size: 68332
+Publish local map size: 68351
+[INFO] [1785921981.488293375] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=7 map=34 samples=220 range=[0.030,2.211]
+ -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=6 map=33 map_age=0.311s samples=264 range=[0.070,2.692] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+ -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=6 map=34 map_age=0.000s samples=255 range=[0.158,2.692] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm] ReplanOnce succeed.[0m
+Publish local map size: 68959
+Publish local map size: 69475
+[INFO] [1785921981.691604799] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=8 map=35 samples=194 range=[0.031,1.959]
+ -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=7 map=34 map_age=0.094s samples=217 range=[0.052,2.211] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+ -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=35 map_age=0.000s samples=207 range=[0.158,2.211] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm] ReplanOnce succeed.[0m
+ -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=8 map=35 map_age=0.098s samples=192 range=[0.055,1.959] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm 18.095] Current state: FOLLOW_TRAJ[0m
+Publish local map size: 70188
+Publish local map size: 70348
+[INFO] [1785921981.887122466] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=9 map=35 samples=144 range=[0.029,1.457]
+[32m -- [Fsm] ReplanOnce succeed.[0m
+Publish local map size: 70328
+Publish local map size: 70390
+[INFO] [1785921982.110027068] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=10 map=36 samples=158 range=[0.052,1.614]
+ -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=9 map=35 map_age=0.294s samples=142 range=[0.051,1.457] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+ -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=9 map=36 map_age=0.000s samples=132 range=[0.150,1.457] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm] ReplanOnce succeed.[0m
+Publish local map size: 69844
+ -- [MARSIM] Running FPS: 111.832
+Publish local map size: 69801
+[INFO] [1785921982.296754602] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=11 map=37 samples=175 range=[0.040,1.770]
+ -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=10 map=36 map_age=0.123s samples=156 range=[0.074,1.614] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+ -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=10 map=37 map_age=0.000s samples=147 range=[0.156,1.614] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm] ReplanOnce succeed.[0m
+Publish local map size: 69426
+Publish local map size: 69215
+[ERROR] [1785921982.491205331] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup status=OCCUPIED gen=12 map=37 from_tt=0.033 collision_tt=1.663 collision_p=[0.682,-43.634,2.403] samples=164
+Publish local map size: 68905
+Publish local map size: 68151
+ -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=11 map=37 map_age=0.105s samples=172 range=[0.060,1.770] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[32m -- [Fsm 19.095] Current state: FOLLOW_TRAJ[0m
+Publish local map size: 68156
+Publish local map size: 68285
+[ERROR] [1785921982.975320981] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=main_pre_uncertified duration=0.400s speed0=1.968 max_acc=7.435 max_jerk=77.543 dynamics_ok=true path_status=SAFE stop=[1.333,-45.408,2.144]
+Publish local map size: 69233
+Publish local map size: 71435
+ -- [MARSIM] Running FPS: 88.1834
+Publish local map size: 72176
+Publish local map size: 70297
+Publish local map size: 68268
+Publish local map size: 68183
+Publish local map size: 68205
+[INFO] [1785921983.659367426] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+Publish local map size: 68242
+[ERROR] [1785921983.693558946] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=40 from_tt=0.055 collision_tt=1.825 collision_p=[0.600,-43.239,1.812] samples=178
+ -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=11 map=37 map_age=0.754s samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[0m[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68254
+Publish local map size: 68104
+ -- [MARSIM] Running FPS: 76.794
+Publish local map size: 68215
+Publish local map size: 68121
+[32m -- [Fsm 20.465] Current state: GENERATE_TRAJ[0m
+[INFO] [1785921984.170450727] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+Publish local map size: 68219
+[ERROR] [1785921984.207275828] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=41 from_tt=0.059 collision_tt=1.859 collision_p=[0.591,-43.248,1.896] samples=181
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68184
+Publish local map size: 68163
+Publish local map size: 68137
+Publish local map size: 68206
+[INFO] [1785921984.665808792] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+Publish local map size: 68254
+[ERROR] [1785921984.703011802] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=41 from_tt=0.054 collision_tt=2.054 collision_p=[0.540,-43.094,1.790] samples=201
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68226
+Publish local map size: 68238
+ -- [MARSIM] Running FPS: 89.3307
+Publish local map size: 68241
+Publish local map size: 68147
+Publish local map size: 68156
+[32m -- [Fsm 21.533] Current state: GENERATE_TRAJ[0m
+[INFO] [1785921985.232406092] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+Publish local map size: 68191
+[ERROR] [1785921985.282004430] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=42 from_tt=0.065 collision_tt=1.905 collision_p=[0.560,-43.096,1.866] samples=185
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68168
+Publish local map size: 68155
+Publish local map size: 68185
+Publish local map size: 68150
+[INFO] [1785921985.736290822] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[ERROR] [1785921985.772009410] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=44 from_tt=0.054 collision_tt=1.924 collision_p=[0.530,-43.096,1.949] samples=188
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68174
+ -- [MARSIM] Running FPS: 80.2673
+Publish local map size: 68237
+Publish local map size: 68211
+Publish local map size: 68215
+Publish local map size: 68150
+[32m -- [Fsm 22.535] Current state: GENERATE_TRAJ[0m
+[INFO] [1785921986.232400327] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[ERROR] [1785921986.271091154] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=45 from_tt=0.053 collision_tt=1.993 collision_p=[0.530,-43.095,2.048] samples=195
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68117
+Publish local map size: 68200
+Publish local map size: 68247
+Publish local map size: 68232
+Publish local map size: 68206
+[INFO] [1785921986.740666639] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[ERROR] [1785921986.773415663] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=47 from_tt=0.055 collision_tt=1.935 collision_p=[0.547,-43.095,1.862] samples=189
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68241
+ -- [MARSIM] Running FPS: 92.9862
+Publish local map size: 68214
+Publish local map size: 68214
+Publish local map size: 68194
+Publish local map size: 68242
+[32m -- [Fsm 23.535] Current state: GENERATE_TRAJ[0m
+[INFO] [1785921987.233092211] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[ERROR] [1785921987.268298691] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=49 from_tt=0.049 collision_tt=1.839 collision_p=[0.599,-43.240,1.814] samples=180
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68205
+Publish local map size: 68214
+Publish local map size: 68215
+Publish local map size: 68121
+Publish local map size: 68222
+[INFO] [1785921987.748382177] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+Publish local map size: 68200
+[ERROR] [1785921987.788246663] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=51 from_tt=0.059 collision_tt=1.839 collision_p=[0.603,-43.216,1.798] samples=179
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+ -- [MARSIM] Running FPS: 89.2087
+Publish local map size: 68206
+Publish local map size: 68243
+Publish local map size: 68267
+Publish local map size: 68228
+[32m -- [Fsm 24.555] Current state: GENERATE_TRAJ[0m
+[INFO] [1785921988.250693260] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+Publish local map size: 68214
+[ERROR] [1785921988.283759903] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=53 from_tt=0.044 collision_tt=1.814 collision_p=[0.600,-43.276,1.890] samples=178
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68229
+Publish local map size: 68249
+Publish local map size: 68184
+Publish local map size: 68200
+[INFO] [1785921988.766613413] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+Publish local map size: 68121
+[ERROR] [1785921988.818150170] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=55 from_tt=0.068 collision_tt=1.698 collision_p=[0.623,-43.425,1.797] samples=164
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68147
+ -- [MARSIM] Running FPS: 106.214
+Publish local map size: 68151
+Publish local map size: 68235
+Publish local map size: 68211
+[32m -- [Fsm 25.575] Current state: GENERATE_TRAJ[0m
+Publish local map size: 68244
+[INFO] [1785921989.275922557] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[ERROR] [1785921989.311917144] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=57 from_tt=0.051 collision_tt=1.771 collision_p=[0.625,-43.296,1.794] samples=173
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68209
+Publish local map size: 68229
+Publish local map size: 68202
+Publish local map size: 68144
+Publish local map size: 68229
+[INFO] [1785921989.780901761] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[ERROR] [1785921989.814075652] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup status=OCCUPIED gen=12 map=58 from_tt=0.044 collision_tt=1.844 collision_p=[0.602,-43.207,1.798] samples=181
+[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+Publish local map size: 68268

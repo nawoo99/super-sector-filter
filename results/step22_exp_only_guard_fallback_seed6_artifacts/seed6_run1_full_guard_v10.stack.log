@@ -1,0 +1,995 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-08-14-14-49-36-533821-livox-3162303
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [waypoint_mission-1]: process started with pid [3162304]
+[INFO] [perfect_drone_node-2]: process started with pid [3162306]
+[INFO] [fsm_node-3]: process started with pid [3162308]
+[waypoint_mission-1] [WARN] [1786686576.586704435] [waypoint_mission]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mission_planner/config/waypoint.yaml
+[waypoint_mission-1] [WARN] [1786686576.586800202] [waypoint_mission]:  -- [MissionPlanner] Load data by file name: /root/super_ws/src/SUPER/mission_planner/data/loop24.txt
+[fsm_node-3]  -- [Bench] Use sim time is false, begin replay.
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param fsm/timer_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_goal_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_yaw_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/replan_rate success: [0;0m15
+[fsm_node-3] [0;32m Load param fsm/click_height success: [0;0m1.5
+[fsm_node-3] [0;32m Load param fsm/cmd_topic success: [0;0m/planning/pos_cmd
+[fsm_node-3] [0;32m Load param fsm/mpc_cmd_topic success: [0;0m/planning_cmd/poly_traj
+[fsm_node-3] [0;32m Load param fsm/click_goal_topic success: [0;0m/planning/click_goal
+[fsm_node-3] [0;33m Load param fsm/map_readiness/enable failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_accepted_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_committed_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_commit_lag_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_scan_span_s failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_cloud_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/max_map_age_s success: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_min_duration_s failed, use default value: [0;0m0.4
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_max_duration_s success: [0;0m3
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_max_acc_mps2 success: [0;0m20
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_max_jerk_mps3 success: [0;0m120
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param rog_map/esdf/resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/esdf/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/esdf/local_update_box success: [0;0m[5 5 3 ]
+[fsm_node-3] [0;32m Load param rog_map/load_pcd_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/threshold success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/fix_map_origin success: [0;0m[0 0 1.5 ]
+[fsm_node-3] [0;32m Load param rog_map/frontier_extraction_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/cloud_topic success: [0;0m/cloud_registered
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_topic success: [0;0m/lidar_slam/odom
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_timeout success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/use_dynamic_reconfigure success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/pub_unknown_map_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_id success: [0;0mworld
+[fsm_node-3] [0;32m Load param rog_map/visualization/time_rate success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_rate success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/range success: [0;0m[15 15 4 ]
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [0;32m Load param rog_map/inflation_resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_step success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/inflation_step success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/intensity_thresh success: [0;0m-10
+[fsm_node-3] [0;32m Load param rog_map/map_size success: [0;0m[70 70 6 ]
+[fsm_node-3] [0;32m Load param rog_map/point_filt_num success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/raycasting/batch_update_size success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/unk_thresh success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_hit success: [0;0m0.9
+[perfect_drone_node-2] [WARN] [1786686576.685935839] [perfect_tracking]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed6.yaml
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_miss success: [0;0m0.49
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_min success: [0;0m0.12
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_max success: [0;0m0.98
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_occ success: [0;0m0.85
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/ray_range success: [0;0m[0.5 100 ]
+[fsm_node-3] [0;32m Load param rog_map/raycasting/local_update_box success: [0;0m[100 100 5 ]
+[fsm_node-3] [0;32m Load param rog_map/virtual_ground_height success: [0;0m-0.1
+[fsm_node-3] [0;32m Load param rog_map/virtual_ceil_height success: [0;0m3.5
+[fsm_node-3] [32m -- [RM-Config] inflation_resolution: 0.1[0m
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: ORIGIN_AT_CORNER.
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: virtual_ceil_height: 3.1500000000000004, virtual_ground_height: 0.25.
+[fsm_node-3] [34m	[ROG] n_free: 1[0m
+[fsm_node-3] [34m	[ROG] n_occ: 1[0m
+[fsm_node-3] [34m	[ROG] l_hit: 2.19722[0m
+[fsm_node-3] [34m	[ROG] l_miss: -0.0400053[0m
+[fsm_node-3] [34m	[ROG] l_min: -1.99243[0m
+[fsm_node-3] [34m	[ROG] l_max: 3.89182[0m
+[fsm_node-3] [34m	[ROG] l_occ: 1.7346[0m
+[fsm_node-3] [34m	[ROG] l_free: -0.00399995[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [CounterMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 709 709  69[0m
+[fsm_node-3] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [InfMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 709 709  69[0m
+[fsm_node-3] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[fsm_node-3] [ProbMap] virtual_ceil_height: 3.15
+[fsm_node-3] [ProbMap] virtual_ground_height: 0.25
+[fsm_node-3] [33m -- [ProbMap] Map sliding disabled, set origin to [  0   0 1.5] -- [0m
+[perfect_drone_node-2] Failed to find match for field 'intensity'.
+[fsm_node-3] [33m -- [Prob-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [ProbMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.05[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 1401 1401  121[0m
+[fsm_node-3] [32m	local_map_size_d: 70.05 70.05  6.05[0m
+[fsm_node-3] [38;2;000;128;000m -- [ROGMap] Immutable planner snapshot enabled (fixed occupancy-only map).
+[fsm_node-3] [0mLoad config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/pos_constraint_type success: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/piece_num failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/uniform_time_en failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/block_energy_cost success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/opt_accuracy success: [0;0m5e-06
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/integral_reso success: [0;0m30
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_t success: [0;0m1e+07
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_ts failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_pos success: [0;0m5e+09
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_vel success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_acc success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_jerk success: [0;0m-5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_attract success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_thr success: [0;0m-1
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m24
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/print_log success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/detailed_log_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/backup_traj_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/goal_vel_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/goal_yaw_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/visual_process success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/use_fov_cut success: [0;0m0
+[fsm_node-3] [0;33m Load param super_planner/fov_horizontal_angle failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param super_planner/fov_center_heading failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/frontend_in_known_free success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/escape_max_duration_s success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/escape_entry_grace_s success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/safe_corridor_line_max_length success: [0;0m6
+[fsm_node-3] [0;32m Load param super_planner/sensing_horizon success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/obs_skip_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/replan_forward_dt success: [0;0m0.1
+[fsm_node-3] [0;32m Load param super_planner/corridor_bound_dis success: [0;0m0.8
+[fsm_node-3] [0;32m Load param super_planner/corridor_line_max_length success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/planning_horizon success: [0;0m7
+[fsm_node-3] [0;32m Load param super_planner/receding_dis success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/robot_r success: [0;0m0.2
+[fsm_node-3] [0;32m Load param super_planner/corridor_use_inflated_obstacles success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/corridor_use_inflated_seed_lines success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/corridor_guard_retry_inflated success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/corridor_min_margin success: [0;0m0.2
+[fsm_node-3] [0;32m Load param super_planner/corridor_pref_margin success: [0;0m0.3
+[fsm_node-3] [0;32m Load param super_planner/iris_iter_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/yaw_mode success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/mpc_horizon success: [0;0m15
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [INFO] [1786686578.077701740] [fsm_node]:  -- [TRAJ_GUARD] mode=enforce sample_dt=0.0050s shadow_min_interval=0.000s inflation_radius=0.300m robot_r=0.200m additional_clearance=0.000m hard_clearance=0.300m clearance_offsets=0
+[fsm_node-3] [38;2;050;205;050m -- [Viz] Set resolution_ to 0.05
+[fsm_node-3] [0m[38;2;050;205;050m -- [Viz] Set visualization_en_ to false
+[fsm_node-3] [0mLoad config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param astar/map_voxel_num success: [0;0m[500 500 100 ]
+[fsm_node-3] [0;32m Load param astar/allow_diag success: [0;0m1
+[fsm_node-3] [0;32m Load param astar/debug_visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param astar/heu_type success: [0;0m2
+[fsm_node-3] [0;32m Load param astar/visual_process success: [0;0m0
+[fsm_node-3] [32m -- [RM] Init Astar-map.[0m
+[fsm_node-3] [34m	map index size: 250 250  50[0m
+[fsm_node-3] [34m	map vox_num: 501 501 101[0m
+[fsm_node-3] [33m -- [Fsm] CLICKGOAL ENABLE.[0m
+[fsm_node-3] [INFO] [1786686580.110735109] [fsm_node]: [32m -- [Fsm-Test] Begin.[0m
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [INIT] to [WAIT_GOAL].
+[fsm_node-3] [0m[32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0 deg[0m
+[fsm_node-3] [INFO] [1786686580.711579780] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1786686580.896967657] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=1 map=9 samples=226 range=[0.266,1.391] escape=false escape_done_tt=-1.000
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [WAIT_GOAL] to [GENERATE_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=1 map=9 map_age=0.063s samples=226 range=[0.266,1.391] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 1.000] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786686581.187158839] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.218445483.
+[fsm_node-3] [WARN] [1786686581.306329459] [fsm_node]:  -- [SUPER] Replan over time(0.11873221397399902)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686581.306423248] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [WARN] [1786686581.472494158] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.165701749.
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=1 map=10 map_age=0.011s samples=174 range=[0.530,1.391] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=1 map=11 map_age=0.017s samples=154 range=[0.630,1.391] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686581.635531800] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.162658321.
+[fsm_node-3] [ERROR] [1786686582.000825087] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=main_pre_uncertified duration=0.400s speed0=0.029 max_acc=2.636 max_jerk=25.280 dynamics_ok=true path_status=SAFE stop=[3.533,4.968,1.100]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=1 map=11 map_age=0.757s samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 2.560] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786686582.758189580] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686582.780626959] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=2 map=13 from_tt=0.100 collision_tt=0.430 collision_p=[4.350,5.550,1.150] samples=124
+[fsm_node-3] [ERROR] [1786686582.780755287] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=2 map=13 from_tt=0.100 collision_tt=0.425 collision_p=[4.398,5.509,1.182] samples=280
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686583.265444913] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686583.285159106] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1786686583.318162574] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=2 map=14 samples=148 range=[0.067,0.798] escape=false escape_done_tt=-1.000
+[fsm_node-3] [INFO] [1786686583.318295929] [fsm_node]:  -- [TRAJ_GUARD_RECOVERED] trigger=main_pre_uncertified gen=2 map=14
+[fsm_node-3] [INFO] [1786686583.478670065] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=3 map=14 samples=124 range=[0.068,0.678] escape=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=2 map=14 map_age=0.083s samples=148 range=[0.067,0.798] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786686583.549922456] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=4 map=14 samples=105 range=[0.071,0.588] escape=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=3 map=14 map_age=0.243s samples=124 range=[0.068,0.678] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=4 map=14 map_age=0.314s samples=105 range=[0.071,0.588] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786686583.625747473] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=5 map=14 samples=121 range=[0.075,0.671] escape=false escape_done_tt=-1.000
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=5 map=14 map_age=0.390s samples=121 range=[0.076,0.671] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm 3.560] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786686583.946615481] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.139722714.
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=5 map=15 map_age=0.014s samples=94 range=[0.210,0.671] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=replan_post status=SAFE gen=5 map=16 map_age=0.006s samples=56 range=[0.396,0.671] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Traj finish.[0m
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [PubCmdCallback] change state from [FOLLOW_TRAJ] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[33m Yaw rate too large, 9.104684073850466[0m
+[fsm_node-3] [WARN] [1786686584.349283509] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.402237554.
+[fsm_node-3] [INFO] [1786686584.426591917] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686584.631292247] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=6 map=17 from_tt=0.282 collision_tt=1.317 collision_p=[9.395,11.847,1.300] samples=235
+[fsm_node-3] [INFO] [1786686584.631404499] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/exp_only_fallback gen=6 map=17 samples=229 range=[0.282,1.418] escape=false escape_done_tt=-1.000
+[fsm_node-3] [WARN] [1786686584.631410577] [fsm_node]:  -- [SUPER] Unsafe backup/stitch omitted; committed guard-certified zero-terminal-velocity EXP only.
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=6 map=17 map_age=0.389s samples=229 range=[0.282,1.418] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm 4.570] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786686585.078209277] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.215470991.
+[fsm_node-3] [WARN] [1786686585.291008881] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.212411161.
+[fsm_node-3] [ERROR] [1786686585.601007892] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=main_pre_uncertified duration=0.400s speed0=1.351 max_acc=16.681 max_jerk=116.312 dynamics_ok=true path_status=SAFE stop=[9.533,11.531,1.248]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=6 map=18 map_age=0.008s samples=185 range=[0.501,1.418] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=6 map=18 map_age=0.758s samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 6.580] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686586.805622621] [fsm_node]:  -- [SUPER] Replan over time(0.1047215461730957)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686586.805690289] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786686587.292507259] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686587.416172611] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=22 from_tt=0.205 collision_tt=0.715 collision_p=[11.650,13.650,1.150] samples=258
+[fsm_node-3] [ERROR] [1786686587.416300671] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=22 from_tt=0.205 collision_tt=0.715 collision_p=[11.650,13.650,1.150] samples=261
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 7.590] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686587.734639379] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686587.802554223] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686587.944483515] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=22 from_tt=0.234 collision_tt=0.714 collision_p=[11.720,13.883,1.358] samples=247
+[fsm_node-3] [ERROR] [1786686587.944609028] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=22 from_tt=0.234 collision_tt=0.714 collision_p=[11.721,13.885,1.357] samples=244
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 9.620] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686589.759274087] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686589.837996103] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686589.949807282] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=24 from_tt=0.209 collision_tt=0.719 collision_p=[11.689,13.905,1.454] samples=233
+[fsm_node-3] [ERROR] [1786686589.949916859] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=24 from_tt=0.209 collision_tt=0.719 collision_p=[11.691,13.907,1.454] samples=248
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686590.259008761] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686590.315849001] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686590.439167782] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=28 from_tt=0.198 collision_tt=0.718 collision_p=[11.703,13.868,1.362] samples=260
+[fsm_node-3] [ERROR] [1786686590.439300463] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=28 from_tt=0.198 collision_tt=0.718 collision_p=[11.704,13.870,1.362] samples=253
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 10.630] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686590.767623847] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686590.833153438] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686590.965780514] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=29 from_tt=0.215 collision_tt=0.820 collision_p=[11.650,13.950,1.350] samples=218
+[fsm_node-3] [ERROR] [1786686590.965994536] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=29 from_tt=0.215 collision_tt=0.805 collision_p=[11.674,13.924,1.441] samples=264
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686591.274552421] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686591.338659402] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686591.497256870] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=30 from_tt=0.246 collision_tt=0.716 collision_p=[11.750,13.850,1.350] samples=248
+[fsm_node-3] [ERROR] [1786686591.497472075] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=30 from_tt=0.247 collision_tt=0.717 collision_p=[11.750,13.850,1.350] samples=242
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 11.630] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686591.772158499] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686591.846560702] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686591.979575479] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=30 from_tt=0.228 collision_tt=0.718 collision_p=[11.725,13.899,1.354] samples=249
+[fsm_node-3] [ERROR] [1786686591.979716701] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=30 from_tt=0.229 collision_tt=0.719 collision_p=[11.750,13.850,1.350] samples=245
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 13.420] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686593.555422143] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686593.581294880] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686593.674415714] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=31 from_tt=0.133 collision_tt=0.713 collision_p=[11.712,13.878,1.360] samples=245
+[fsm_node-3] [ERROR] [1786686593.674527601] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=31 from_tt=0.134 collision_tt=0.714 collision_p=[11.715,13.884,1.360] samples=265
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686594.055453320] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686594.103831210] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686594.211433454] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=31 from_tt=0.170 collision_tt=0.715 collision_p=[11.721,13.888,1.354] samples=237
+[fsm_node-3] [ERROR] [1786686594.211565631] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=31 from_tt=0.171 collision_tt=0.716 collision_p=[11.724,13.895,1.353] samples=256
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 14.430] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786686594.576188703] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686594.653382947] [fsm_node]:  -- [SUPER] Replan over time(0.10247635841369629)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686594.653441454] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686595.079108666] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686595.103165053] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686595.221991118] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=32 from_tt=0.161 collision_tt=0.716 collision_p=[11.750,13.850,1.350] samples=274
+[fsm_node-3] [ERROR] [1786686595.222115854] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=32 from_tt=0.161 collision_tt=0.716 collision_p=[11.750,13.850,1.350] samples=260
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 16.110] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686596.244528520] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686596.284464739] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686596.437592681] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=33 from_tt=0.207 collision_tt=0.827 collision_p=[11.750,13.850,1.350] samples=273
+[fsm_node-3] [ERROR] [1786686596.437716527] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=33 from_tt=0.207 collision_tt=0.827 collision_p=[11.750,13.850,1.350] samples=270
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686596.745826023] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686596.799537083] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686596.899313718] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=33 from_tt=0.168 collision_tt=0.713 collision_p=[11.724,13.892,1.353] samples=235
+[fsm_node-3] [ERROR] [1786686596.899429358] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=33 from_tt=0.168 collision_tt=0.708 collision_p=[11.701,13.864,1.357] samples=256
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 19.920] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686600.054226310] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686600.095636711] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686600.186358304] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=34 from_tt=0.145 collision_tt=0.715 collision_p=[11.750,13.850,1.350] samples=248
+[fsm_node-3] [ERROR] [1786686600.186493035] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=34 from_tt=0.146 collision_tt=0.716 collision_p=[11.650,13.950,1.350] samples=262
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686600.563470153] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686600.601706595] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686600.698084498] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=34 from_tt=0.157 collision_tt=0.717 collision_p=[11.710,13.861,1.364] samples=244
+[fsm_node-3] [ERROR] [1786686600.698187195] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=34 from_tt=0.157 collision_tt=0.717 collision_p=[11.710,13.863,1.364] samples=261
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 20.920] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686601.058621932] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686601.105235806] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686601.206177915] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=35 from_tt=0.165 collision_tt=0.845 collision_p=[11.750,13.850,1.350] samples=288
+[fsm_node-3] [ERROR] [1786686601.206336844] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=35 from_tt=0.165 collision_tt=0.845 collision_p=[11.750,13.850,1.350] samples=284
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686601.570653383] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686601.615140784] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686601.713919890] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=36 from_tt=0.163 collision_tt=0.713 collision_p=[11.723,13.897,1.347] samples=241
+[fsm_node-3] [ERROR] [1786686601.714031006] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=36 from_tt=0.163 collision_tt=0.713 collision_p=[11.750,13.850,1.350] samples=257
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 21.940] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686602.076719810] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686602.124312417] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686602.238183454] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=40 from_tt=0.177 collision_tt=0.712 collision_p=[11.707,13.865,1.356] samples=260
+[fsm_node-3] [ERROR] [1786686602.238335714] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=40 from_tt=0.177 collision_tt=0.712 collision_p=[11.707,13.866,1.356] samples=255
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686602.579286920] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686602.615020552] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686602.739053050] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=40 from_tt=0.178 collision_tt=0.713 collision_p=[11.717,13.885,1.358] samples=258
+[fsm_node-3] [ERROR] [1786686602.739223779] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=40 from_tt=0.178 collision_tt=0.713 collision_p=[11.718,13.887,1.357] samples=255
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 22.950] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686603.092990772] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686603.159792298] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686603.264319909] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=41 from_tt=0.193 collision_tt=0.713 collision_p=[11.708,13.873,1.359] samples=240
+[fsm_node-3] [ERROR] [1786686603.264438789] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=41 from_tt=0.193 collision_tt=0.713 collision_p=[11.709,13.875,1.359] samples=252
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686603.589477228] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686603.634268352] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686603.749385156] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=41 from_tt=0.178 collision_tt=0.718 collision_p=[11.723,13.892,1.356] samples=246
+[fsm_node-3] [ERROR] [1786686603.749497937] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=41 from_tt=0.179 collision_tt=0.719 collision_p=[11.724,13.893,1.356] samples=256
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 27.820] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686607.960069325] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686607.996411406] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686608.099376820] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=42 from_tt=0.158 collision_tt=0.693 collision_p=[11.650,13.650,1.350] samples=237
+[fsm_node-3] [ERROR] [1786686608.099496343] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=42 from_tt=0.158 collision_tt=0.693 collision_p=[11.650,13.650,1.350] samples=259
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686608.465518640] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686608.488104367] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686608.586680702] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=42 from_tt=0.136 collision_tt=0.716 collision_p=[11.750,13.850,1.450] samples=268
+[fsm_node-3] [ERROR] [1786686608.586788137] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=42 from_tt=0.136 collision_tt=0.716 collision_p=[11.750,13.850,1.450] samples=264
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 30.620] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686610.758645669] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686610.801749294] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686610.918929199] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=43 from_tt=0.178 collision_tt=0.713 collision_p=[11.707,13.871,1.355] samples=259
+[fsm_node-3] [ERROR] [1786686610.919038977] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=43 from_tt=0.178 collision_tt=0.713 collision_p=[11.708,13.872,1.355] samples=256
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686611.257872269] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686611.288972178] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686611.403741892] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=43 from_tt=0.163 collision_tt=0.718 collision_p=[11.750,13.850,1.350] samples=274
+[fsm_node-3] [ERROR] [1786686611.403906098] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=43 from_tt=0.163 collision_tt=0.718 collision_p=[11.750,13.850,1.350] samples=259
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 31.920] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686612.057023432] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686612.125538570] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686612.220100180] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=44 from_tt=0.179 collision_tt=0.719 collision_p=[11.724,13.892,1.352] samples=236
+[fsm_node-3] [ERROR] [1786686612.220203750] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=44 from_tt=0.179 collision_tt=0.714 collision_p=[11.703,13.867,1.357] samples=254
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686612.569701119] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686612.622312087] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686612.739873998] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=44 from_tt=0.189 collision_tt=0.714 collision_p=[11.712,13.881,1.355] samples=253
+[fsm_node-3] [ERROR] [1786686612.740013235] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=44 from_tt=0.189 collision_tt=0.714 collision_p=[11.712,13.882,1.355] samples=254
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 33.620] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686613.755685357] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686613.786970622] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686613.919546956] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=45 from_tt=0.178 collision_tt=0.713 collision_p=[11.701,13.864,1.355] samples=249
+[fsm_node-3] [ERROR] [1786686613.919651069] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=45 from_tt=0.179 collision_tt=0.714 collision_p=[11.701,13.866,1.355] samples=256
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686614.267439985] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686614.375982104] [fsm_node]:  -- [SUPER] Replan over time(0.12503314018249512)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686614.376039667] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 34.630] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786686614.773106732] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686614.903685238] [fsm_node]:  -- [SUPER] Replan over time(0.15268707275390625)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686614.903738593] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 35.920] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686616.056691939] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686616.117257096] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686616.209041923] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=49 from_tt=0.168 collision_tt=0.713 collision_p=[11.700,13.867,1.356] samples=255
+[fsm_node-3] [ERROR] [1786686616.209141147] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=49 from_tt=0.168 collision_tt=0.713 collision_p=[11.701,13.868,1.356] samples=258
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686616.573251079] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686616.677635849] [fsm_node]:  -- [SUPER] Replan over time(0.12670278549194336)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686616.677686616] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 38.920] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686619.054890434] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686619.107681819] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686619.204239901] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=51 from_tt=0.163 collision_tt=0.708 collision_p=[11.709,13.877,1.356] samples=262
+[fsm_node-3] [ERROR] [1786686619.204350459] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=51 from_tt=0.163 collision_tt=0.708 collision_p=[11.710,13.878,1.356] samples=256
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686619.567834795] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686619.659684297] [fsm_node]:  -- [SUPER] Replan over time(0.10884261131286621)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686619.659728828] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 39.930] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686620.066362873] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686620.112953805] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686620.237402886] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=53 from_tt=0.186 collision_tt=0.701 collision_p=[11.650,13.650,1.350] samples=239
+[fsm_node-3] [ERROR] [1786686620.237502566] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=53 from_tt=0.187 collision_tt=0.702 collision_p=[11.650,13.650,1.350] samples=257
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686620.657580416] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686620.750298779] [fsm_node]:  -- [SUPER] Replan over time(0.10932040214538574)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686620.750348874] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 41.030] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686621.166052645] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686621.234401822] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686621.346883809] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=56 from_tt=0.196 collision_tt=0.811 collision_p=[11.707,13.885,1.346] samples=271
+[fsm_node-3] [ERROR] [1786686621.347009527] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=56 from_tt=0.196 collision_tt=0.811 collision_p=[11.708,13.886,1.346] samples=270
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686621.670979142] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686621.720309087] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686621.833234407] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=56 from_tt=0.182 collision_tt=0.712 collision_p=[11.708,13.871,1.347] samples=257
+[fsm_node-3] [ERROR] [1786686621.833349751] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=56 from_tt=0.182 collision_tt=0.712 collision_p=[11.709,13.872,1.347] samples=256
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 43.220] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686623.366840263] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686623.391968209] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686623.527570635] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=57 from_tt=0.187 collision_tt=0.717 collision_p=[11.685,13.908,1.398] samples=267
+[fsm_node-3] [ERROR] [1786686623.527711218] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=57 from_tt=0.187 collision_tt=0.717 collision_p=[11.686,13.909,1.398] samples=258
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686623.858256955] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686623.903735418] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686624.005080423] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=57 from_tt=0.164 collision_tt=0.719 collision_p=[11.713,13.879,1.357] samples=240
+[fsm_node-3] [ERROR] [1786686624.005259826] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=57 from_tt=0.164 collision_tt=0.719 collision_p=[11.715,13.883,1.357] samples=260
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 44.520] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786686624.660721770] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686624.689767395] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686624.813943818] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=58 from_tt=0.173 collision_tt=0.698 collision_p=[11.650,13.650,1.350] samples=261
+[fsm_node-3] [ERROR] [1786686624.814072287] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=58 from_tt=0.173 collision_tt=0.698 collision_p=[11.650,13.650,1.350] samples=257
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686625.165448865] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686625.219818458] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686625.362542735] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=62 from_tt=0.221 collision_tt=0.716 collision_p=[11.714,13.882,1.352] samples=266
+[fsm_node-3] [ERROR] [1786686625.362677496] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=62 from_tt=0.222 collision_tt=0.717 collision_p=[11.714,13.883,1.352] samples=247
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 45.530] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786686625.672535513] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686625.709539265] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686625.835795829] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=62 from_tt=0.185 collision_tt=0.695 collision_p=[11.601,13.699,1.381] samples=264
+[fsm_node-3] [ERROR] [1786686625.835913700] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=62 from_tt=0.185 collision_tt=0.695 collision_p=[11.602,13.700,1.380] samples=255
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 46.710] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686626.847341358] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686626.925205960] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686627.031510749] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=63 from_tt=0.201 collision_tt=0.716 collision_p=[11.700,13.860,1.358] samples=232
+[fsm_node-3] [ERROR] [1786686627.031636181] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=63 from_tt=0.201 collision_tt=0.716 collision_p=[11.702,13.865,1.358] samples=252
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686627.352843396] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686627.397810539] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686627.560744660] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=64 from_tt=0.230 collision_tt=0.715 collision_p=[11.711,13.888,1.351] samples=248
+[fsm_node-3] [ERROR] [1786686627.560895295] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=64 from_tt=0.230 collision_tt=0.715 collision_p=[11.712,13.889,1.351] samples=245
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 47.710] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686627.848825213] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686627.860831724] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686628.008908683] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=65 from_tt=0.178 collision_tt=0.718 collision_p=[11.650,13.950,1.350] samples=233
+[fsm_node-3] [ERROR] [1786686628.009043115] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=65 from_tt=0.178 collision_tt=0.718 collision_p=[11.650,13.950,1.350] samples=257
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686628.360934558] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686628.390764639] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686628.507544309] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=65 from_tt=0.166 collision_tt=0.711 collision_p=[11.685,13.910,1.398] samples=259
+[fsm_node-3] [ERROR] [1786686628.507661035] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=65 from_tt=0.167 collision_tt=0.712 collision_p=[11.686,13.911,1.398] samples=257
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 48.730] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686628.871076287] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686628.948098430] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686629.103375285] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=66 from_tt=0.252 collision_tt=0.712 collision_p=[11.725,13.889,1.360] samples=270
+[fsm_node-3] [ERROR] [1786686629.103492922] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=66 from_tt=0.252 collision_tt=0.712 collision_p=[11.725,13.890,1.359] samples=239
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686629.381394058] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686629.436898575] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686629.573710951] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=69 from_tt=0.213 collision_tt=0.808 collision_p=[11.750,13.850,1.350] samples=263
+[fsm_node-3] [ERROR] [1786686629.573841765] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=69 from_tt=0.213 collision_tt=0.808 collision_p=[11.750,13.850,1.350] samples=266
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 49.750] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686629.892839255] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686630.005276883] [fsm_node]:  -- [SUPER] Replan over time(0.13426709175109863)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686630.005328151] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686630.403729382] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686630.493052822] [fsm_node]:  -- [SUPER] Replan over time(0.11214041709899902)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686630.493087072] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 50.760] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686630.906557711] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686631.011208369] [fsm_node]:  -- [SUPER] Replan over time(0.13022756576538086)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686631.011272947] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686631.405565825] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686631.468247004] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686631.618798033] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=78 from_tt=0.238 collision_tt=0.723 collision_p=[11.750,13.850,1.350] samples=245
+[fsm_node-3] [ERROR] [1786686631.618911559] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=78 from_tt=0.238 collision_tt=0.723 collision_p=[11.750,13.850,1.350] samples=245
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 51.770] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686631.913206073] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686631.999299301] [fsm_node]:  -- [SUPER] Replan over time(0.10824394226074219)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686631.999331921] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686632.418076091] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686632.474555054] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686632.605003440] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=81 from_tt=0.204 collision_tt=0.719 collision_p=[11.727,13.899,1.353] samples=256
+[fsm_node-3] [ERROR] [1786686632.605128175] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=81 from_tt=0.204 collision_tt=0.714 collision_p=[11.701,13.861,1.356] samples=251
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 52.780] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686632.922930867] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686632.956802195] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686633.073245216] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=82 from_tt=0.172 collision_tt=0.687 collision_p=[11.601,13.700,1.364] samples=278
+[fsm_node-3] [ERROR] [1786686633.073408981] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=82 from_tt=0.172 collision_tt=0.702 collision_p=[11.705,13.867,1.353] samples=253
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686633.433282083] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686633.487691441] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686633.633252195] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=84 from_tt=0.222 collision_tt=0.787 collision_p=[11.714,13.897,1.345] samples=262
+[fsm_node-3] [ERROR] [1786686633.633388127] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=84 from_tt=0.222 collision_tt=0.787 collision_p=[11.714,13.899,1.345] samples=260
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 53.800] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686633.941707065] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686634.042660479] [fsm_node]:  -- [SUPER] Replan over time(0.12163996696472168)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686634.042709402] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686634.444992659] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686634.497638026] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686634.626910744] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=86 from_tt=0.206 collision_tt=0.721 collision_p=[11.750,13.850,1.350] samples=248
+[fsm_node-3] [ERROR] [1786686634.627030203] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=86 from_tt=0.206 collision_tt=0.721 collision_p=[11.750,13.850,1.350] samples=251
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 54.820] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686634.959924764] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686635.013691055] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686635.159446169] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=87 from_tt=0.218 collision_tt=0.718 collision_p=[11.723,13.878,1.364] samples=241
+[fsm_node-3] [ERROR] [1786686635.159565143] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=87 from_tt=0.218 collision_tt=0.718 collision_p=[11.724,13.879,1.364] samples=249
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686635.472637223] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686635.510562914] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686635.631369838] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=88 from_tt=0.180 collision_tt=0.710 collision_p=[11.704,13.880,1.343] samples=232
+[fsm_node-3] [ERROR] [1786686635.631535152] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=88 from_tt=0.181 collision_tt=0.711 collision_p=[11.709,13.888,1.343] samples=254
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 55.830] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686635.971939894] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686636.042845353] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686636.163069114] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=90 from_tt=0.212 collision_tt=0.717 collision_p=[11.706,13.876,1.353] samples=253
+[fsm_node-3] [ERROR] [1786686636.163184257] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=90 from_tt=0.212 collision_tt=0.717 collision_p=[11.706,13.878,1.353] samples=249
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686636.474916009] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686636.539503022] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686636.668919675] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=90 from_tt=0.218 collision_tt=0.718 collision_p=[11.719,13.876,1.357] samples=235
+[fsm_node-3] [ERROR] [1786686636.669031866] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=90 from_tt=0.218 collision_tt=0.718 collision_p=[11.720,13.877,1.357] samples=249
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 58.110] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686638.245473220] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686638.292600244] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686638.442020106] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=93 from_tt=0.211 collision_tt=0.716 collision_p=[11.710,13.879,1.353] samples=258
+[fsm_node-3] [ERROR] [1786686638.442132207] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=93 from_tt=0.211 collision_tt=0.716 collision_p=[11.710,13.880,1.353] samples=249
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686638.750383925] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686638.791410485] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686638.897620335] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=94 from_tt=0.166 collision_tt=0.711 collision_p=[11.701,13.850,1.364] samples=237
+[fsm_node-3] [ERROR] [1786686638.897749801] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=94 from_tt=0.167 collision_tt=0.712 collision_p=[11.704,13.858,1.365] samples=257
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 59.110] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686639.247584404] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686639.302561920] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686639.423005839] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=96 from_tt=0.192 collision_tt=0.712 collision_p=[11.714,13.882,1.354] samples=256
+[fsm_node-3] [ERROR] [1786686639.423121068] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=96 from_tt=0.192 collision_tt=0.712 collision_p=[11.715,13.884,1.354] samples=252
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686639.759525607] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686639.806306427] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686639.938045661] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=96 from_tt=0.197 collision_tt=0.697 collision_p=[11.650,13.650,1.350] samples=258
+[fsm_node-3] [ERROR] [1786686639.938161564] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=96 from_tt=0.197 collision_tt=0.697 collision_p=[11.650,13.650,1.350] samples=253
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 61.710] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686641.844494667] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686641.890420338] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686641.983429111] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=97 from_tt=0.152 collision_tt=0.712 collision_p=[11.712,13.880,1.359] samples=282
+[fsm_node-3] [ERROR] [1786686641.983532357] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=97 from_tt=0.153 collision_tt=0.713 collision_p=[11.713,13.881,1.359] samples=260
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686642.346673245] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686642.402989190] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686642.503678066] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=97 from_tt=0.173 collision_tt=0.698 collision_p=[11.650,13.650,1.350] samples=238
+[fsm_node-3] [ERROR] [1786686642.503775571] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=97 from_tt=0.173 collision_tt=0.698 collision_p=[11.650,13.650,1.350] samples=258
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 62.710] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786686642.850538206] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686642.895654772] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686643.008296905] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=98 from_tt=0.177 collision_tt=0.717 collision_p=[11.724,13.896,1.358] samples=260
+[fsm_node-3] [ERROR] [1786686643.008415430] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=98 from_tt=0.177 collision_tt=0.717 collision_p=[11.725,13.897,1.358] samples=255
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686643.561350916] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686643.610688222] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686643.715509619] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=99 from_tt=0.174 collision_tt=0.719 collision_p=[11.718,13.871,1.362] samples=240
+[fsm_node-3] [ERROR] [1786686643.715615091] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=99 from_tt=0.175 collision_tt=0.720 collision_p=[11.719,13.873,1.362] samples=258
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 63.920] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686644.056430819] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686644.106709222] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686644.254456163] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=100 from_tt=0.213 collision_tt=0.713 collision_p=[11.712,13.881,1.357] samples=250
+[fsm_node-3] [ERROR] [1786686644.254565957] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=100 from_tt=0.213 collision_tt=0.713 collision_p=[11.712,13.882,1.356] samples=248
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686644.563126384] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686644.630753567] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686644.745666356] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=100 from_tt=0.204 collision_tt=0.719 collision_p=[11.718,13.890,1.353] samples=234
+[fsm_node-3] [ERROR] [1786686644.745776971] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=100 from_tt=0.205 collision_tt=0.720 collision_p=[11.719,13.892,1.353] samples=251
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 66.110] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686646.253418062] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686646.265327192] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686646.391122624] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=102 from_tt=0.160 collision_tt=0.715 collision_p=[11.650,13.950,1.350] samples=264
+[fsm_node-3] [ERROR] [1786686646.391235864] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=102 from_tt=0.160 collision_tt=0.715 collision_p=[11.650,13.950,1.350] samples=259
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686646.748413366] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686646.801889139] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686646.924766860] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=103 from_tt=0.194 collision_tt=0.714 collision_p=[11.705,13.870,1.360] samples=255
+[fsm_node-3] [ERROR] [1786686646.924899444] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=103 from_tt=0.194 collision_tt=0.714 collision_p=[11.706,13.871,1.360] samples=252
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 67.120] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686647.257684583] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686647.309422439] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686647.426131511] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=103 from_tt=0.185 collision_tt=0.710 collision_p=[11.708,13.871,1.359] samples=240
+[fsm_node-3] [ERROR] [1786686647.426266438] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=103 from_tt=0.185 collision_tt=0.710 collision_p=[11.709,13.872,1.359] samples=253
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686647.951687607] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686648.054142316] [fsm_node]:  -- [SUPER] Replan over time(0.1231997013092041)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686648.054230400] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 68.310] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786686648.451334675] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686648.505698440] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686648.649769831] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=104 from_tt=0.218 collision_tt=0.718 collision_p=[11.709,13.872,1.355] samples=258
+[fsm_node-3] [ERROR] [1786686648.649891855] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=104 from_tt=0.219 collision_tt=0.719 collision_p=[11.710,13.873,1.355] samples=248
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686648.959910946] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686649.023004765] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686649.141362855] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=106 from_tt=0.200 collision_tt=0.715 collision_p=[11.724,13.892,1.358] samples=257
+[fsm_node-3] [ERROR] [1786686649.141489138] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=106 from_tt=0.200 collision_tt=0.715 collision_p=[11.725,13.893,1.358] samples=250
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 69.320] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786686649.458485616] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686649.508140187] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686649.662663322] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=106 from_tt=0.221 collision_tt=0.721 collision_p=[11.713,13.887,1.355] samples=253
+[fsm_node-3] [ERROR] [1786686649.662824830] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=106 from_tt=0.222 collision_tt=0.722 collision_p=[11.714,13.888,1.355] samples=249
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 70.520] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686650.659375578] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686650.702395172] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686650.812032783] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=107 from_tt=0.171 collision_tt=0.716 collision_p=[11.711,13.879,1.350] samples=249
+[fsm_node-3] [ERROR] [1786686650.812165995] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=107 from_tt=0.171 collision_tt=0.716 collision_p=[11.712,13.881,1.350] samples=257
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686651.158566317] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686651.192853819] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686651.298347064] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=107 from_tt=0.157 collision_tt=0.717 collision_p=[11.750,13.850,1.350] samples=239
+[fsm_node-3] [ERROR] [1786686651.298497209] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=107 from_tt=0.157 collision_tt=0.717 collision_p=[11.750,13.850,1.350] samples=260
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 71.530] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786686651.673516957] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686651.715279662] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686651.817707404] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=108 from_tt=0.167 collision_tt=0.712 collision_p=[11.709,13.878,1.355] samples=242
+[fsm_node-3] [ERROR] [1786686651.817859495] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=108 from_tt=0.167 collision_tt=0.712 collision_p=[11.710,13.883,1.354] samples=257
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686652.174113507] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686652.212361337] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686652.326853601] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=108 from_tt=0.175 collision_tt=0.710 collision_p=[11.702,13.857,1.358] samples=249
+[fsm_node-3] [ERROR] [1786686652.326985299] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=108 from_tt=0.176 collision_tt=0.711 collision_p=[11.703,13.859,1.358] samples=256
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 72.540] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786686652.681363915] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686652.729904064] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686652.825168752] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=110 from_tt=0.164 collision_tt=0.714 collision_p=[11.724,13.890,1.353] samples=243
+[fsm_node-3] [ERROR] [1786686652.825324509] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=110 from_tt=0.164 collision_tt=0.709 collision_p=[11.702,13.865,1.359] samples=257
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686653.183463034] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686653.236915353] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686653.346223723] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=113 from_tt=0.185 collision_tt=0.715 collision_p=[11.711,13.874,1.357] samples=266
+[fsm_node-3] [ERROR] [1786686653.346361323] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=113 from_tt=0.185 collision_tt=0.715 collision_p=[11.712,13.875,1.357] samples=255
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 73.550] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786686653.689669088] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686653.750890904] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686653.874820446] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=113 from_tt=0.204 collision_tt=0.719 collision_p=[11.710,13.887,1.343] samples=257
+[fsm_node-3] [ERROR] [1786686653.874956454] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=113 from_tt=0.204 collision_tt=0.719 collision_p=[11.711,13.888,1.343] samples=251
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686654.456938548] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686654.468776612] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686654.592179477] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=114 from_tt=0.151 collision_tt=0.726 collision_p=[11.650,13.950,1.350] samples=253
+[fsm_node-3] [ERROR] [1786686654.592309480] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=114 from_tt=0.151 collision_tt=0.726 collision_p=[11.650,13.950,1.350] samples=266
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 74.820] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786686654.963251962] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686655.005460445] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686655.124932389] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=114 from_tt=0.184 collision_tt=0.719 collision_p=[11.720,13.891,1.355] samples=234
+[fsm_node-3] [ERROR] [1786686655.125103573] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=114 from_tt=0.184 collision_tt=0.719 collision_p=[11.722,13.896,1.355] samples=255
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686655.557466866] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686655.600789370] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686655.769489206] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=115 from_tt=0.228 collision_tt=0.718 collision_p=[11.650,13.950,1.350] samples=254
+[fsm_node-3] [ERROR] [1786686655.769645095] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=115 from_tt=0.229 collision_tt=0.719 collision_p=[11.650,13.950,1.350] samples=248
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 75.930] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686656.079542947] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686656.134360585] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686656.257645354] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=116 from_tt=0.206 collision_tt=0.711 collision_p=[11.709,13.876,1.353] samples=232
+[fsm_node-3] [ERROR] [1786686656.257771847] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=116 from_tt=0.207 collision_tt=0.712 collision_p=[11.711,13.880,1.353] samples=249
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686656.583557390] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686656.678785429] [fsm_node]:  -- [SUPER] Replan over time(0.11781048774719238)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686656.678849799] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 76.940] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686657.079426206] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686657.129687723] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686657.247375187] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=117 from_tt=0.186 collision_tt=0.716 collision_p=[11.713,13.866,1.362] samples=232
+[fsm_node-3] [ERROR] [1786686657.247558334] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=117 from_tt=0.186 collision_tt=0.716 collision_p=[11.716,13.873,1.362] samples=254
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686657.578800258] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686657.600676769] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686657.714211928] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=118 from_tt=0.153 collision_tt=0.753 collision_p=[11.709,13.881,1.350] samples=246
+[fsm_node-3] [ERROR] [1786686657.714332192] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=118 from_tt=0.153 collision_tt=0.753 collision_p=[11.723,13.898,1.352] samples=266
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 77.950] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686658.090123304] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686658.118942327] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686658.254072006] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=121 from_tt=0.183 collision_tt=0.718 collision_p=[11.750,13.850,1.350] samples=248
+[fsm_node-3] [ERROR] [1786686658.254250641] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=121 from_tt=0.183 collision_tt=0.718 collision_p=[11.750,13.850,1.350] samples=256
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686658.590593343] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686658.654508199] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686658.796674207] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=123 from_tt=0.226 collision_tt=0.706 collision_p=[11.700,13.862,1.359] samples=237
+[fsm_node-3] [ERROR] [1786686658.796850518] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=123 from_tt=0.226 collision_tt=0.706 collision_p=[11.701,13.863,1.359] samples=244
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 78.950] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686659.093185284] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [WARN] [1786686659.222421298] [fsm_node]:  -- [SUPER] Replan over time(0.15115857124328613)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786686659.222488685] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 81.820] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686661.960582759] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686661.998324588] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686662.100276749] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=125 from_tt=0.159 collision_tt=0.714 collision_p=[11.711,13.877,1.357] samples=269
+[fsm_node-3] [ERROR] [1786686662.100390153] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=125 from_tt=0.159 collision_tt=0.714 collision_p=[11.711,13.878,1.357] samples=259
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686662.466849699] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686662.486736882] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686662.590283449] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=125 from_tt=0.139 collision_tt=0.719 collision_p=[11.650,13.950,1.350] samples=272
+[fsm_node-3] [ERROR] [1786686662.590404887] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=125 from_tt=0.139 collision_tt=0.719 collision_p=[11.650,13.950,1.350] samples=265
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 82.920] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686663.055350912] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686663.094992482] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686663.191014517] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=126 from_tt=0.150 collision_tt=0.715 collision_p=[11.709,13.874,1.357] samples=240
+[fsm_node-3] [ERROR] [1786686663.191120691] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=126 from_tt=0.150 collision_tt=0.715 collision_p=[11.713,13.881,1.357] samples=260
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686663.559307251] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686663.613661954] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686663.726421695] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=126 from_tt=0.185 collision_tt=0.715 collision_p=[11.709,13.875,1.363] samples=263
+[fsm_node-3] [ERROR] [1786686663.726571960] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=126 from_tt=0.185 collision_tt=0.715 collision_p=[11.710,13.876,1.362] samples=254
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 84.020] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686664.155715415] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686664.212951950] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686664.333908769] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=127 from_tt=0.193 collision_tt=0.728 collision_p=[11.664,13.902,1.415] samples=260
+[fsm_node-3] [ERROR] [1786686664.334026179] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=127 from_tt=0.193 collision_tt=0.728 collision_p=[11.665,13.903,1.415] samples=252
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786686664.657993127] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686664.708109081] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686664.810851968] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=7 map=127 from_tt=0.170 collision_tt=0.720 collision_p=[11.717,13.877,1.354] samples=235
+[fsm_node-3] [ERROR] [1786686664.810954660] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=127 from_tt=0.170 collision_tt=0.720 collision_p=[11.719,13.882,1.354] samples=258
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 85.420] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786686665.559605720] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1786686665.604398158] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786686665.704586009] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=CLEARANCE_MARGIN gen=7 map=129 from_tt=0.163 collision_tt=0.713 collision_p=[11.724,13.893,1.358] samples=260
+[fsm_node-3] [ERROR] [1786686665.704709732] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/exp_only_fallback segment=EXP status=CLEARANCE_MARGIN gen=7 map=129 from_tt=0.164 collision_tt=0.714 collision_p=[11.725,13.894,1.357] samples=257
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786686666.060826370] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.

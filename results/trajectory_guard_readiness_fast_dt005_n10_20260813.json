@@ -1,0 +1,66 @@
+{
+  "ready_for_enforcement": false,
+  "checks": [
+    {
+      "name": "map_snapshot_races_zero",
+      "passed": true,
+      "value": 0,
+      "requirement": "0"
+    },
+    {
+      "name": "rate_limited_ab_pairs",
+      "passed": true,
+      "value": 4,
+      "requirement": ">=4"
+    },
+    {
+      "name": "rate_limited_cpu_delta_median_pct_points",
+      "passed": true,
+      "value": 2.666636494286159,
+      "requirement": "<=5.0"
+    },
+    {
+      "name": "rate_limited_mission_overhead_pct",
+      "passed": true,
+      "value": 3.2849503437738776,
+      "requirement": "<=5.0"
+    },
+    {
+      "name": "dense_contact_events",
+      "passed": true,
+      "value": 37,
+      "requirement": ">=20"
+    },
+    {
+      "name": "dense_contact_recall",
+      "passed": false,
+      "value": 0.7567567567567568,
+      "requirement": ">=0.95"
+    },
+    {
+      "name": "dense_paired_ab_available",
+      "passed": true,
+      "value": 10,
+      "requirement": ">=10 pairs"
+    },
+    {
+      "name": "dense_cpu_delta_median_pct_points",
+      "passed": true,
+      "value": 1.8219767115488352,
+      "requirement": "<=10.0"
+    },
+    {
+      "name": "dense_shadow_all_complete",
+      "passed": true,
+      "value": "10/10",
+      "requirement": "all paired shadow runs complete"
+    },
+    {
+      "name": "dense_completion_parity",
+      "passed": true,
+      "value": "shadow=10,control=10",
+      "requirement": "shadow >= control"
+    }
+  ],
+  "decision": "keep_shadow_only"
+}

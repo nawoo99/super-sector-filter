@@ -304,8 +304,14 @@ namespace fsm {
         const double committed_cloud_age_s = health.committed_scan_count > 0
                 ? std::chrono::duration<double>(now - health.latest_committed_scan_rx_time).count()
                 : infinity;
+        const bool immutable_snapshot =
+                planner_ptr_->getMap()->immutablePlannerSnapshotEnabled();
+        const auto freshness_time = immutable_snapshot &&
+                                    health.processed_scan_count > 0
+                ? health.latest_scan_process_time
+                : health.latest_map_commit_time;
         const double map_age_s = health.map_version > 0
-                ? std::chrono::duration<double>(now - health.latest_map_commit_time).count()
+                ? std::chrono::duration<double>(now - freshness_time).count()
                 : infinity;
 
         const std::uint64_t commit_lag_scans =
@@ -336,7 +342,10 @@ namespace fsm {
         }
         if (map_age_s < 0.0 || map_age_s > cfg_.map_readiness_max_map_age_s) fail("map_age");
         if (commit_lag_scans > max_commit_lag_scans) fail("commit_lag");
-        if (health.update_in_progress) fail("update_in_progress");
+        if (health.update_in_progress &&
+            !planner_ptr_->getMap()->immutablePlannerSnapshotEnabled()) {
+            fail("update_in_progress");
+        }
 
         {
             std::lock_guard<std::mutex> lock(map_readiness_log_mutex_);

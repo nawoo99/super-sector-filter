@@ -1,0 +1,934 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-08-14-10-44-12-851510-livox-2996379
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [waypoint_mission-1]: process started with pid [2996380]
+[INFO] [perfect_drone_node-2]: process started with pid [2996382]
+[INFO] [fsm_node-3]: process started with pid [2996384]
+[waypoint_mission-1] [WARN] [1786671852.916555288] [waypoint_mission]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mission_planner/config/waypoint.yaml
+[waypoint_mission-1] [WARN] [1786671852.916667974] [waypoint_mission]:  -- [MissionPlanner] Load data by file name: /root/super_ws/src/SUPER/mission_planner/data/loop24.txt
+[fsm_node-3]  -- [Bench] Use sim time is false, begin replay.
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param fsm/timer_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_goal_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_yaw_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/replan_rate success: [0;0m15
+[fsm_node-3] [0;32m Load param fsm/click_height success: [0;0m1.5
+[fsm_node-3] [0;32m Load param fsm/cmd_topic success: [0;0m/planning/pos_cmd
+[fsm_node-3] [0;32m Load param fsm/mpc_cmd_topic success: [0;0m/planning_cmd/poly_traj
+[fsm_node-3] [0;32m Load param fsm/click_goal_topic success: [0;0m/planning/click_goal
+[fsm_node-3] [0;33m Load param fsm/map_readiness/enable failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_accepted_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_committed_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_commit_lag_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_scan_span_s failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_cloud_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0.1
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_min_duration_s failed, use default value: [0;0m0.4
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_duration_s failed, use default value: [0;0m2
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_acc_mps2 failed, use default value: [0;0m15
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_jerk_mps3 failed, use default value: [0;0m120
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param rog_map/esdf/resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/esdf/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/esdf/local_update_box success: [0;0m[5 5 3 ]
+[fsm_node-3] [0;32m Load param rog_map/load_pcd_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/threshold success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/fix_map_origin success: [0;0m[0 0 1.5 ]
+[fsm_node-3] [0;32m Load param rog_map/frontier_extraction_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/cloud_topic success: [0;0m/cloud_sector
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_topic success: [0;0m/lidar_slam/odom
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_timeout success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/use_dynamic_reconfigure success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/pub_unknown_map_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_id success: [0;0mworld
+[fsm_node-3] [0;32m Load param rog_map/visualization/time_rate success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_rate success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/range success: [0;0m[15 15 4 ]
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [0;32m Load param rog_map/inflation_resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_step success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/inflation_step success: [0;0m4
+[fsm_node-3] [0;32m Load param rog_map/intensity_thresh success: [0;0m-10
+[fsm_node-3] [0;32m Load param rog_map/map_size success: [0;0m[70 70 6 ]
+[fsm_node-3] [0;32m Load param rog_map/point_filt_num success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/raycasting/batch_update_size success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/unk_thresh success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_hit success: [0;0m0.9
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_miss success: [0;0m0.49
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_min success: [0;0m0.12
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_max success: [0;0m0.98
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_occ success: [0;0m0.85
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/ray_range success: [0;0m[0.5 100 ]
+[fsm_node-3] [0;32m Load param rog_map/raycasting/local_update_box success: [0;0m[100 100 5 ]
+[fsm_node-3] [0;32m Load param rog_map/virtual_ground_height success: [0;0m-0.1
+[fsm_node-3] [0;32m Load param rog_map/virtual_ceil_height success: [0;0m3.5
+[fsm_node-3] [32m -- [RM-Config] inflation_resolution: 0.1[0m
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: ORIGIN_AT_CORNER.
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: virtual_ceil_height: 3.0500000000000003, virtual_ground_height: 0.35000000000000003.
+[fsm_node-3] [34m	[ROG] n_free: 1[0m
+[fsm_node-3] [34m	[ROG] n_occ: 1[0m
+[fsm_node-3] [34m	[ROG] l_hit: 2.19722[0m
+[fsm_node-3] [34m	[ROG] l_miss: -0.0400053[0m
+[fsm_node-3] [34m	[ROG] l_min: -1.99243[0m
+[fsm_node-3] [34m	[ROG] l_max: 3.89182[0m
+[fsm_node-3] [34m	[ROG] l_occ: 1.7346[0m
+[fsm_node-3] [34m	[ROG] l_free: -0.00399995[0m
+[perfect_drone_node-2] [WARN] [1786671853.063160081] [perfect_tracking]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed6.yaml
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [CounterMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 711 711  71[0m
+[fsm_node-3] [32m	local_map_size_d: 71.1 71.1  7.1[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [InfMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 711 711  71[0m
+[fsm_node-3] [32m	local_map_size_d: 71.1 71.1  7.1[0m
+[fsm_node-3] [ProbMap] virtual_ceil_height: 3.05
+[fsm_node-3] [ProbMap] virtual_ground_height: 0.35
+[fsm_node-3] [33m -- [ProbMap] Map sliding disabled, set origin to [  0   0 1.5] -- [0m
+[perfect_drone_node-2] Failed to find match for field 'intensity'.
+[fsm_node-3] [33m -- [Prob-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [ProbMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.05[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 1401 1401  121[0m
+[fsm_node-3] [32m	local_map_size_d: 70.05 70.05  6.05[0m
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/pos_constraint_type success: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/piece_num failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/uniform_time_en failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/block_energy_cost success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/opt_accuracy success: [0;0m5e-06
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/integral_reso success: [0;0m15
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_t success: [0;0m1e+07
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_ts failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_pos success: [0;0m5e+09
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_vel success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_acc success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_jerk success: [0;0m-5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_attract success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_thr success: [0;0m-1
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m12
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/print_log success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/detailed_log_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/backup_traj_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/goal_vel_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/goal_yaw_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/visual_process success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/use_fov_cut success: [0;0m0
+[fsm_node-3] [0;33m Load param super_planner/fov_horizontal_angle failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param super_planner/fov_center_heading failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/frontend_in_known_free success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0.1
+[fsm_node-3] [0;32m Load param super_planner/safe_corridor_line_max_length success: [0;0m6
+[fsm_node-3] [0;32m Load param super_planner/sensing_horizon success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/obs_skip_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/replan_forward_dt success: [0;0m0.1
+[fsm_node-3] [0;32m Load param super_planner/corridor_bound_dis success: [0;0m0.8
+[fsm_node-3] [0;32m Load param super_planner/corridor_line_max_length success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/planning_horizon success: [0;0m7
+[fsm_node-3] [0;32m Load param super_planner/receding_dis success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/robot_r success: [0;0m0.4
+[fsm_node-3] [0;32m Load param super_planner/corridor_pref_margin success: [0;0m0.5
+[fsm_node-3] [0;32m Load param super_planner/iris_iter_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/yaw_mode success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/mpc_horizon success: [0;0m15
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [INFO] [1786671854.331810221] [fsm_node]:  -- [TRAJ_GUARD] mode=enforce sample_dt=0.0050s shadow_min_interval=0.000s inflation_radius=0.400m robot_r=0.400m additional_clearance=0.100m clearance_offsets=6
+[fsm_node-3] [38;2;050;205;050m -- [Viz] Set resolution_ to 0.05
+[fsm_node-3] [0m[38;2;050;205;050m -- [Viz] Set visualization_en_ to false
+[fsm_node-3] [0mLoad config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param astar/map_voxel_num success: [0;0m[500 500 100 ]
+[fsm_node-3] [0;32m Load param astar/allow_diag success: [0;0m1
+[fsm_node-3] [0;32m Load param astar/debug_visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param astar/heu_type success: [0;0m2
+[fsm_node-3] [0;32m Load param astar/visual_process success: [0;0m0
+[fsm_node-3] [32m -- [RM] Init Astar-map.[0m
+[fsm_node-3] [34m	map index size: 250 250  50[0m
+[fsm_node-3] [34m	map vox_num: 501 501 101[0m
+[fsm_node-3] [33m -- [Fsm] CLICKGOAL ENABLE.[0m
+[fsm_node-3] [INFO] [1786671855.964589135] [fsm_node]: [32m -- [Fsm-Test] Begin.[0m
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [INIT] to [WAIT_GOAL].
+[fsm_node-3] [0m[32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0 deg[0m
+[fsm_node-3] [INFO] [1786671856.997702235] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1786671857.174200970] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=1 map=13 samples=439 range=[0.219,2.408]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [WAIT_GOAL] to [GENERATE_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=1 map=13 map_age=0.023s samples=439 range=[0.220,2.408] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 1.200] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786671857.478234214] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.193623611.
+[fsm_node-3] [WARN] [1786671857.648682910] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.170165869.
+[fsm_node-3] [ERROR] [1786671857.904946568] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=main_pre_uncertified duration=2.000s speed0=7.279 max_acc=15.170 max_jerk=19.613 dynamics_ok=false path_status=OCCUPIED stop=[2.944,6.348,1.931]
+[fsm_node-3] [ERROR] [1786671857.905082782] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_PATH_UNSAFE] status=OCCUPIED collision_tt=0.315 p=[3.252,5.501,1.743]; executing shortest bounded stop
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=1 map=13 map_age=0.753s samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 4.380] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671860.363206924] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007795922498120368, force return.
+[fsm_node-3] [WARN] [1786671860.363265847] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671860.363273788] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671860.875449833] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007815060039985812, force return.
+[fsm_node-3] [WARN] [1786671860.875502840] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671860.875510277] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 5.390] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671861.378738868] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007920329394480286, force return.
+[fsm_node-3] [WARN] [1786671861.378807298] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671861.378816618] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671861.887323662] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007920329394480286, force return.
+[fsm_node-3] [WARN] [1786671861.887383106] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671861.887390996] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 6.410] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671862.393841753] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.0077666217198912755, force return.
+[fsm_node-3] [WARN] [1786671862.393920296] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671862.393928717] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786671862.953394466] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786671862.968923713] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=2 map=22 from_tt=0.074 collision_tt=0.074 collision_p=[2.923,6.327,1.925] samples=128
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 7.420] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671863.405041422] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007939560998138386, force return.
+[fsm_node-3] [WARN] [1786671863.405124650] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671863.405137995] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671864.155072818] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596254, force return.
+[fsm_node-3] [WARN] [1786671864.155159532] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671864.155169260] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 8.670] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671864.650561955] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.0077666217198906935, force return.
+[fsm_node-3] [WARN] [1786671864.650679260] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671864.650689578] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671865.363114753] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.0078089193105682865, force return.
+[fsm_node-3] [WARN] [1786671865.363170457] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671865.363177256] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 9.880] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671865.864468475] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007815060039985812, force return.
+[fsm_node-3] [WARN] [1786671865.864535378] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671865.864541942] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 12.980] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671868.963343842] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007881571530218377, force return.
+[fsm_node-3] [WARN] [1786671868.963397815] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671868.963405167] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671869.462607732] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00781740535456196, force return.
+[fsm_node-3] [WARN] [1786671869.462664429] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671869.462672208] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 13.980] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671869.963969290] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00779592249812074, force return.
+[fsm_node-3] [WARN] [1786671869.964028041] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671869.964034808] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671870.467478579] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007795922498120715, force return.
+[fsm_node-3] [WARN] [1786671870.467570848] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671870.467580014] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 15.680] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671871.661429099] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.0078815715302183, force return.
+[fsm_node-3] [WARN] [1786671871.661495054] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671871.661502351] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671872.172107283] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596525, force return.
+[fsm_node-3] [WARN] [1786671872.172185655] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671872.172193423] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 16.690] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671872.674913963] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007808919310568219, force return.
+[fsm_node-3] [WARN] [1786671872.674986776] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671872.675000749] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 19.670] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671875.651190587] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007915562515003857, force return.
+[fsm_node-3] [WARN] [1786671875.651256664] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671875.651264132] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671876.163933615] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007939560998137866, force return.
+[fsm_node-3] [WARN] [1786671876.164014835] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671876.164021053] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 20.980] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671876.960291720] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007935067084527557, force return.
+[fsm_node-3] [WARN] [1786671876.960333757] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671876.960339208] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671877.549325208] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786671877.561323801] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=2 map=35 from_tt=0.107 collision_tt=0.107 collision_p=[2.918,6.333,1.923] samples=113
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 21.980] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671877.963282842] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007795922498120692, force return.
+[fsm_node-3] [WARN] [1786671877.963328537] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671877.963335701] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671878.474235101] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007939560998138091, force return.
+[fsm_node-3] [WARN] [1786671878.474316049] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671878.474323074] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 22.990] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671878.976706637] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007808919310568011, force return.
+[fsm_node-3] [WARN] [1786671878.976773567] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671878.976786637] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671879.483682944] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007935067084527313, force return.
+[fsm_node-3] [WARN] [1786671879.483763862] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671879.483771105] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 24.000] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671879.983294318] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.0077666217198906935, force return.
+[fsm_node-3] [WARN] [1786671879.983347343] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671879.983354432] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671880.764996372] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007795922498120715, force return.
+[fsm_node-3] [WARN] [1786671880.765046885] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671880.765053775] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 25.290] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671881.272088771] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007932433410209584, force return.
+[fsm_node-3] [WARN] [1786671881.272154029] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671881.272160091] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671882.161097226] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596065, force return.
+[fsm_node-3] [WARN] [1786671882.161147224] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671882.161154321] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 26.680] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671882.722321134] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786671882.739025422] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=2 map=42 from_tt=0.084 collision_tt=0.084 collision_p=[2.922,6.329,1.925] samples=112
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786671883.361164600] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00793506708452729, force return.
+[fsm_node-3] [WARN] [1786671883.361228914] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671883.361235756] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 27.880] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671883.866260260] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007808919310568012, force return.
+[fsm_node-3] [WARN] [1786671883.866320597] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671883.866333693] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671884.377689421] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007915562515003857, force return.
+[fsm_node-3] [WARN] [1786671884.377755940] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671884.377764312] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 28.900] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671884.888155592] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00779592249812074, force return.
+[fsm_node-3] [WARN] [1786671884.888319634] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671884.888332565] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671885.392397478] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007881571530218633, force return.
+[fsm_node-3] [WARN] [1786671885.392461781] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671885.392469716] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 29.920] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671885.901863630] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00795744437885566, force return.
+[fsm_node-3] [WARN] [1786671885.901925005] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671885.901932336] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671886.407309835] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007795922498120885, force return.
+[fsm_node-3] [WARN] [1786671886.407388406] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671886.407396038] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 30.930] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671886.913440893] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596601, force return.
+[fsm_node-3] [WARN] [1786671886.913512665] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671886.913523471] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671887.749935249] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596478, force return.
+[fsm_node-3] [WARN] [1786671887.749993976] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671887.750001402] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 32.280] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671888.265558435] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007935067084526997, force return.
+[fsm_node-3] [WARN] [1786671888.265619759] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671888.265633979] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786671888.831474486] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786671888.840405414] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=2 map=53 from_tt=0.076 collision_tt=0.076 collision_p=[2.923,6.327,1.925] samples=121
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 33.300] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671889.282126683] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00793506708452729, force return.
+[fsm_node-3] [WARN] [1786671889.282181918] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671889.282188200] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 35.870] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671891.849644566] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007915562515004025, force return.
+[fsm_node-3] [WARN] [1786671891.849707704] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671891.849765319] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671892.352343583] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007915562515004037, force return.
+[fsm_node-3] [WARN] [1786671892.352405188] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671892.352411496] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 36.880] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671892.861302912] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007808919310568054, force return.
+[fsm_node-3] [WARN] [1786671892.861347577] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671892.861353795] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 37.970] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671893.953498268] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007920329394480286, force return.
+[fsm_node-3] [WARN] [1786671893.953579753] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671893.953589645] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671894.530756409] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786671894.540927319] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=2 map=60 from_tt=0.086 collision_tt=0.086 collision_p=[2.920,6.328,1.925] samples=142
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 39.170] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671895.150063362] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007915562515004122, force return.
+[fsm_node-3] [WARN] [1786671895.150127311] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671895.150133950] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671895.663236803] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596362, force return.
+[fsm_node-3] [WARN] [1786671895.663296161] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671895.663304507] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 40.190] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671896.176182829] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007808919310568683, force return.
+[fsm_node-3] [WARN] [1786671896.176262370] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671896.176277905] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671896.866039386] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007920329394480202, force return.
+[fsm_node-3] [WARN] [1786671896.866091691] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671896.866098754] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 41.380] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671897.366812586] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007808919310567917, force return.
+[fsm_node-3] [WARN] [1786671897.366877449] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671897.366885526] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 42.780] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671898.764111698] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596272, force return.
+[fsm_node-3] [WARN] [1786671898.764171903] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671898.764179267] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671899.277749734] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007921607515465216, force return.
+[fsm_node-3] [WARN] [1786671899.277819346] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671899.277827263] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 44.680] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671900.739202384] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786671900.745531270] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=2 map=66 from_tt=0.091 collision_tt=0.091 collision_p=[2.920,6.330,1.925] samples=112
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671901.163290823] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007915562515004429, force return.
+[fsm_node-3] [WARN] [1786671901.163360627] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671901.163368592] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 45.690] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671901.674130357] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00790389057586002, force return.
+[fsm_node-3] [WARN] [1786671901.674199675] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671901.674208314] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671902.174715505] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596525, force return.
+[fsm_node-3] [WARN] [1786671902.174796883] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671902.174807920] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 46.700] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671902.684179103] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007935067084527151, force return.
+[fsm_node-3] [WARN] [1786671902.684250457] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671902.684266502] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786671903.252295068] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786671903.267591544] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=2 map=71 from_tt=0.083 collision_tt=0.083 collision_p=[2.921,6.328,1.925] samples=149
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 47.710] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671903.693627331] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007935067084527491, force return.
+[fsm_node-3] [WARN] [1786671903.693676826] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671903.693684345] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671904.205825362] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007795922498120506, force return.
+[fsm_node-3] [WARN] [1786671904.205892648] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671904.205901570] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 48.720] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671904.707741219] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596525, force return.
+[fsm_node-3] [WARN] [1786671904.707814967] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671904.707823724] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671905.214601231] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007808919310567917, force return.
+[fsm_node-3] [WARN] [1786671905.214668206] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671905.214677414] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 49.740] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671905.723006179] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596601, force return.
+[fsm_node-3] [WARN] [1786671905.723073141] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671905.723081341] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671906.232720556] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596083, force return.
+[fsm_node-3] [WARN] [1786671906.232794209] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671906.232801579] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 50.760] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671906.743141303] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007957444378855847, force return.
+[fsm_node-3] [WARN] [1786671906.743193913] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671906.743206572] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671907.265647842] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007817405354562004, force return.
+[fsm_node-3] [WARN] [1786671907.265708047] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671907.265716032] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 51.790] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671907.774937310] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007915562515003954, force return.
+[fsm_node-3] [WARN] [1786671907.775001376] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671907.775008711] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671908.274917755] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00790389057585944, force return.
+[fsm_node-3] [WARN] [1786671908.274991548] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671908.274998536] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 52.800] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671908.785644109] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00780891931056819, force return.
+[fsm_node-3] [WARN] [1786671908.785698181] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671908.785705818] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671909.285158820] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00793955961265724, force return.
+[fsm_node-3] [WARN] [1786671909.285224473] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671909.285232310] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 54.280] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671910.262138111] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007932433410209976, force return.
+[fsm_node-3] [WARN] [1786671910.262183023] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671910.262189927] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671910.762447763] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007935067084527197, force return.
+[fsm_node-3] [WARN] [1786671910.762499074] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671910.762507492] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 55.290] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671911.274399591] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007915562515003752, force return.
+[fsm_node-3] [WARN] [1786671911.274480533] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671911.274489085] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671911.783350780] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007920329394480272, force return.
+[fsm_node-3] [WARN] [1786671911.783419930] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671911.783428263] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 56.300] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671912.282730005] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007766621719890957, force return.
+[fsm_node-3] [WARN] [1786671912.282801492] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671912.282807654] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671912.786579387] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00792032939448046, force return.
+[fsm_node-3] [WARN] [1786671912.786643558] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671912.786707568] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 57.300] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671913.284678571] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007808919310568428, force return.
+[fsm_node-3] [WARN] [1786671913.284735197] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671913.284741660] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671913.794296330] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007903890575859171, force return.
+[fsm_node-3] [WARN] [1786671913.794353024] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671913.794362036] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 58.580] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671914.563797775] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007795922498120575, force return.
+[fsm_node-3] [WARN] [1786671914.563860260] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671914.563867925] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671915.074268737] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596065, force return.
+[fsm_node-3] [WARN] [1786671915.074364285] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671915.074373969] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 62.480] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671918.460176318] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00780891931056819, force return.
+[fsm_node-3] [WARN] [1786671918.460227340] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671918.460234133] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671918.971819127] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007915562515004335, force return.
+[fsm_node-3] [WARN] [1786671918.971884183] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671918.971891221] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 63.500] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671919.484262477] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00793506708452729, force return.
+[fsm_node-3] [WARN] [1786671919.484343256] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671919.484357087] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671919.992497816] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007921607515465674, force return.
+[fsm_node-3] [WARN] [1786671919.992548524] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671919.992555797] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 64.520] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671920.502509597] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007808919310568011, force return.
+[fsm_node-3] [WARN] [1786671920.502585043] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671920.502592691] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671921.008039388] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00790389057585944, force return.
+[fsm_node-3] [WARN] [1786671921.008146856] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671921.008159589] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 65.580] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671921.561530173] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596431, force return.
+[fsm_node-3] [WARN] [1786671921.561582113] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671921.561591441] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786671922.133110464] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786671922.147741581] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=2 map=99 from_tt=0.093 collision_tt=0.093 collision_p=[2.919,6.330,1.924] samples=130
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 67.480] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671923.463963703] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007935067084527219, force return.
+[fsm_node-3] [WARN] [1786671923.464028337] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671923.464036447] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671923.975827201] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596272, force return.
+[fsm_node-3] [WARN] [1786671923.975880694] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671923.975889219] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 69.080] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671925.066377078] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007881571530218623, force return.
+[fsm_node-3] [WARN] [1786671925.066449962] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671925.066459228] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671925.575236734] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007881571530218423, force return.
+[fsm_node-3] [WARN] [1786671925.575290413] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671925.575296494] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 70.100] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671926.079493982] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007939560998138091, force return.
+[fsm_node-3] [WARN] [1786671926.079552864] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671926.079559345] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671926.585609940] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007920329394479711, force return.
+[fsm_node-3] [WARN] [1786671926.585668660] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671926.585677677] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 71.110] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671927.092563902] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007920329394479935, force return.
+[fsm_node-3] [WARN] [1786671927.092626520] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671927.092632891] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671927.604883862] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007915562515004037, force return.
+[fsm_node-3] [WARN] [1786671927.604931002] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671927.604941104] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 72.480] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671928.461499781] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007920329394479711, force return.
+[fsm_node-3] [WARN] [1786671928.461554616] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671928.461562070] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671928.960166568] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007921607515465924, force return.
+[fsm_node-3] [WARN] [1786671928.960218654] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671928.960226016] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 73.490] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671929.474825556] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007920329394479935, force return.
+[fsm_node-3] [WARN] [1786671929.474880946] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671929.474887494] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786671930.047923163] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786671930.075167001] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=2 map=111 from_tt=0.101 collision_tt=0.101 collision_p=[2.918,6.330,1.924] samples=135
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 74.510] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671930.489975587] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007915562515004122, force return.
+[fsm_node-3] [WARN] [1786671930.490028122] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671930.490038004] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 75.570] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671931.552060175] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596234, force return.
+[fsm_node-3] [WARN] [1786671931.552113565] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671931.552121094] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671932.059747543] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007903890575859612, force return.
+[fsm_node-3] [WARN] [1786671932.059804508] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671932.059811837] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 76.590] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671932.570518481] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007795922498121034, force return.
+[fsm_node-3] [WARN] [1786671932.570566425] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671932.570573284] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671933.072795642] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596211, force return.
+[fsm_node-3] [WARN] [1786671933.072884205] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671933.072891723] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 77.600] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671933.587386131] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596065, force return.
+[fsm_node-3] [WARN] [1786671933.587445611] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671933.587455997] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 79.480] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671935.524096003] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786671935.536956077] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=2 map=116 from_tt=0.082 collision_tt=0.082 collision_p=[2.922,6.328,1.925] samples=115
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671935.973384723] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596659, force return.
+[fsm_node-3] [WARN] [1786671935.973445570] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671935.973453424] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 81.080] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671937.063293000] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596083, force return.
+[fsm_node-3] [WARN] [1786671937.063408903] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671937.063433045] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671937.562799776] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007957444378856612, force return.
+[fsm_node-3] [WARN] [1786671937.562851479] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671937.562859986] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 82.080] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671938.065225449] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007959341837596601, force return.
+[fsm_node-3] [WARN] [1786671938.065299371] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671938.065309583] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671938.577417625] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00793956099813763, force return.
+[fsm_node-3] [WARN] [1786671938.577470751] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671938.577479224] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 83.100] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671939.085593383] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007921607515465345, force return.
+[fsm_node-3] [WARN] [1786671939.085652861] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671939.085659080] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671939.593856651] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00793956099813763, force return.
+[fsm_node-3] [WARN] [1786671939.593910683] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671939.593922802] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 84.110] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671940.095378395] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007903890575859435, force return.
+[fsm_node-3] [WARN] [1786671940.095445594] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671940.095459516] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671940.602354472] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.00793506708452729, force return.
+[fsm_node-3] [WARN] [1786671940.602407147] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671940.602413307] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 85.980] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671941.964677153] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.0078815715302183, force return.
+[fsm_node-3] [WARN] [1786671941.964742927] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671941.964756236] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [WARN] [1786671942.478520023] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007815060039986818, force return.
+[fsm_node-3] [WARN] [1786671942.478595276] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671942.478605716] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 87.000] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [WARN] [1786671942.984505523] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 0.007766621719891239, force return.
+[fsm_node-3] [WARN] [1786671942.984561316] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671942.984568432] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m

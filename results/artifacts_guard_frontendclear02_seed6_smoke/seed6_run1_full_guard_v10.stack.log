@@ -1,0 +1,925 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-08-13-22-33-55-315380-livox-2544483
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [waypoint_mission-1]: process started with pid [2544484]
+[INFO] [perfect_drone_node-2]: process started with pid [2544486]
+[INFO] [fsm_node-3]: process started with pid [2544488]
+[waypoint_mission-1] [WARN] [1786628035.369350303] [waypoint_mission]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mission_planner/config/waypoint.yaml
+[waypoint_mission-1] [WARN] [1786628035.369418753] [waypoint_mission]:  -- [MissionPlanner] Load data by file name: /root/super_ws/src/SUPER/mission_planner/data/loop24.txt
+[fsm_node-3]  -- [Bench] Use sim time is false, begin replay.
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param fsm/timer_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_goal_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_yaw_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/replan_rate success: [0;0m15
+[fsm_node-3] [0;32m Load param fsm/click_height success: [0;0m1.5
+[fsm_node-3] [0;32m Load param fsm/cmd_topic success: [0;0m/planning/pos_cmd
+[fsm_node-3] [0;32m Load param fsm/mpc_cmd_topic success: [0;0m/planning_cmd/poly_traj
+[fsm_node-3] [0;32m Load param fsm/click_goal_topic success: [0;0m/planning/click_goal
+[fsm_node-3] [0;33m Load param fsm/map_readiness/enable failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_accepted_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_committed_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_commit_lag_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_scan_span_s failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_cloud_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0.2
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_min_duration_s failed, use default value: [0;0m0.4
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_duration_s failed, use default value: [0;0m2
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_acc_mps2 failed, use default value: [0;0m15
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_jerk_mps3 failed, use default value: [0;0m120
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param rog_map/esdf/resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/esdf/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/esdf/local_update_box success: [0;0m[5 5 3 ]
+[fsm_node-3] [0;32m Load param rog_map/load_pcd_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/threshold success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/fix_map_origin success: [0;0m[0 0 1.5 ]
+[fsm_node-3] [0;32m Load param rog_map/frontier_extraction_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/cloud_topic success: [0;0m/cloud_sector
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_topic success: [0;0m/lidar_slam/odom
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_timeout success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/use_dynamic_reconfigure success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/pub_unknown_map_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_id success: [0;0mworld
+[fsm_node-3] [0;32m Load param rog_map/visualization/time_rate success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_rate success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/range success: [0;0m[15 15 4 ]
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [0;32m Load param rog_map/inflation_resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_step success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/inflation_step success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/intensity_thresh success: [0;0m-10
+[fsm_node-3] [0;32m Load param rog_map/map_size success: [0;0m[70 70 6 ]
+[fsm_node-3] [0;32m Load param rog_map/point_filt_num success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/raycasting/batch_update_size success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/unk_thresh success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_hit success: [0;0m0.9
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_miss success: [0;0m0.49
+[perfect_drone_node-2] [WARN] [1786628035.458890038] [perfect_tracking]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed6.yaml
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_min success: [0;0m0.12
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_max success: [0;0m0.98
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_occ success: [0;0m0.85
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/ray_range success: [0;0m[0.5 100 ]
+[fsm_node-3] [0;32m Load param rog_map/raycasting/local_update_box success: [0;0m[100 100 5 ]
+[fsm_node-3] [0;32m Load param rog_map/virtual_ground_height success: [0;0m-0.1
+[fsm_node-3] [0;32m Load param rog_map/virtual_ceil_height success: [0;0m3.5
+[fsm_node-3] [32m -- [RM-Config] inflation_resolution: 0.1[0m
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: ORIGIN_AT_CORNER.
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: virtual_ceil_height: 3.1500000000000004, virtual_ground_height: 0.25.
+[fsm_node-3] [34m	[ROG] n_free: 1[0m
+[fsm_node-3] [34m	[ROG] n_occ: 1[0m
+[fsm_node-3] [34m	[ROG] l_hit: 2.19722[0m
+[fsm_node-3] [34m	[ROG] l_miss: -0.0400053[0m
+[fsm_node-3] [34m	[ROG] l_min: -1.99243[0m
+[fsm_node-3] [34m	[ROG] l_max: 3.89182[0m
+[fsm_node-3] [34m	[ROG] l_occ: 1.7346[0m
+[fsm_node-3] [34m	[ROG] l_free: -0.00399995[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [CounterMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 709 709  69[0m
+[fsm_node-3] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [InfMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 709 709  69[0m
+[fsm_node-3] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[fsm_node-3] [ProbMap] virtual_ceil_height: 3.15
+[fsm_node-3] [ProbMap] virtual_ground_height: 0.25
+[fsm_node-3] [33m -- [ProbMap] Map sliding disabled, set origin to [  0   0 1.5] -- [0m
+[perfect_drone_node-2] Failed to find match for field 'intensity'.
+[fsm_node-3] [33m -- [Prob-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [ProbMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.05[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 1401 1401  121[0m
+[fsm_node-3] [32m	local_map_size_d: 70.05 70.05  6.05[0m
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/pos_constraint_type success: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/piece_num failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/uniform_time_en failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/block_energy_cost success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/opt_accuracy success: [0;0m5e-06
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/integral_reso success: [0;0m15
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_t success: [0;0m1e+07
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_ts failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_pos success: [0;0m5e+09
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_vel success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_acc success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_jerk success: [0;0m-5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_attract success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_thr success: [0;0m-1
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m12
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/print_log success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/detailed_log_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/backup_traj_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/goal_vel_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/goal_yaw_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/visual_process success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/use_fov_cut success: [0;0m0
+[fsm_node-3] [0;33m Load param super_planner/fov_horizontal_angle failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param super_planner/fov_center_heading failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/frontend_in_known_free success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0.2
+[fsm_node-3] [0;32m Load param super_planner/safe_corridor_line_max_length success: [0;0m6
+[fsm_node-3] [0;32m Load param super_planner/sensing_horizon success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/obs_skip_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/replan_forward_dt success: [0;0m0.1
+[fsm_node-3] [0;32m Load param super_planner/corridor_bound_dis success: [0;0m0.8
+[fsm_node-3] [0;32m Load param super_planner/corridor_line_max_length success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/planning_horizon success: [0;0m7
+[fsm_node-3] [0;32m Load param super_planner/receding_dis success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/robot_r success: [0;0m0.2
+[fsm_node-3] [0;32m Load param super_planner/corridor_pref_margin success: [0;0m0.5
+[fsm_node-3] [0;32m Load param super_planner/iris_iter_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/yaw_mode success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/mpc_horizon success: [0;0m15
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [INFO] [1786628036.714238954] [fsm_node]:  -- [TRAJ_GUARD] mode=enforce sample_dt=0.0050s shadow_min_interval=0.000s inflation_radius=0.300m robot_r=0.200m additional_clearance=0.200m clearance_offsets=32
+[fsm_node-3] [38;2;050;205;050m -- [Viz] Set resolution_ to 0.05
+[fsm_node-3] [0m[38;2;050;205;050m -- [Viz] Set visualization_en_ to false
+[fsm_node-3] [0mLoad config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param astar/map_voxel_num success: [0;0m[500 500 100 ]
+[fsm_node-3] [0;32m Load param astar/allow_diag success: [0;0m1
+[fsm_node-3] [0;32m Load param astar/debug_visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param astar/heu_type success: [0;0m2
+[fsm_node-3] [0;32m Load param astar/visual_process success: [0;0m0
+[fsm_node-3] [32m -- [RM] Init Astar-map.[0m
+[fsm_node-3] [34m	map index size: 250 250  50[0m
+[fsm_node-3] [34m	map vox_num: 501 501 101[0m
+[fsm_node-3] [33m -- [Fsm] CLICKGOAL ENABLE.[0m
+[fsm_node-3] [INFO] [1786628038.277676409] [fsm_node]: [32m -- [Fsm-Test] Begin.[0m
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [INIT] to [WAIT_GOAL].
+[fsm_node-3] [0m[32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0 deg[0m
+[fsm_node-3] [INFO] [1786628038.438036446] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628038.467114785] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=2 from_tt=0.059 collision_tt=0.974 collision_p=[3.050,3.650,1.650] samples=275
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [WAIT_GOAL] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [ERROR] [1786628038.467568112] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=candidate_rejected_without_safe_follow duration=0.400s speed0=0.000 max_acc=0.000 max_jerk=0.000 dynamics_ok=true path_status=SAFE stop=[0.000,0.000,1.500]
+[fsm_node-3] [INFO] [1786628039.160879764] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628039.198418390] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=10 from_tt=0.060 collision_tt=0.950 collision_p=[3.050,3.650,1.650] samples=267
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [GENERATE_TRAJ] to [EMER_STOP].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 1.359] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628039.673095850] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628039.708179687] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=15 from_tt=0.060 collision_tt=0.970 collision_p=[3.016,3.640,0.862] samples=270
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628040.177723666] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628040.208425787] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=20 from_tt=0.060 collision_tt=0.990 collision_p=[3.011,3.766,1.316] samples=428
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 2.359] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628040.669412173] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628040.697072360] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=25 from_tt=0.049 collision_tt=0.939 collision_p=[3.008,3.521,0.856] samples=269
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628041.181899618] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628041.239287570] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=30 from_tt=0.081 collision_tt=0.946 collision_p=[3.008,3.488,1.313] samples=271
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 3.379] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628041.692891969] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628041.736366915] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=35 from_tt=0.068 collision_tt=1.003 collision_p=[3.150,3.950,0.950] samples=265
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628042.195951878] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628042.224733017] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=40 from_tt=0.057 collision_tt=0.937 collision_p=[3.001,3.704,1.216] samples=265
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 4.379] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628042.692839163] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628042.740923809] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=45 from_tt=0.073 collision_tt=0.943 collision_p=[3.050,3.650,1.250] samples=260
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628043.194049059] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628043.232782413] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=50 from_tt=0.065 collision_tt=0.955 collision_p=[3.006,3.678,0.866] samples=264
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 5.379] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628043.694903450] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628043.723309729] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=55 from_tt=0.055 collision_tt=0.955 collision_p=[3.010,3.520,0.844] samples=443
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628044.195261174] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628044.228328864] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=60 from_tt=0.060 collision_tt=0.970 collision_p=[3.050,3.650,0.850] samples=275
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 6.389] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628044.714127222] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628044.741606967] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=65 from_tt=0.064 collision_tt=0.949 collision_p=[3.050,3.750,1.250] samples=264
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628045.215158740] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628045.259520076] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=70 from_tt=0.072 collision_tt=0.937 collision_p=[3.013,3.682,1.252] samples=261
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 7.399] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628045.720347676] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628045.759300218] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=75 from_tt=0.071 collision_tt=0.966 collision_p=[3.016,3.640,0.939] samples=268
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628046.213351865] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628046.247618471] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=80 from_tt=0.060 collision_tt=0.945 collision_p=[3.050,3.450,1.350] samples=275
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 8.399] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628046.714142279] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628046.738288533] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=85 from_tt=0.050 collision_tt=0.940 collision_p=[3.001,3.696,1.221] samples=266
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628047.215108844] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628047.264190417] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=90 from_tt=0.076 collision_tt=0.946 collision_p=[3.050,3.650,1.250] samples=259
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 9.409] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628047.723679683] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628047.764521422] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=95 from_tt=0.066 collision_tt=0.936 collision_p=[3.000,3.672,1.265] samples=261
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628048.226359036] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628048.256565691] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=100 from_tt=0.059 collision_tt=0.924 collision_p=[3.003,3.537,1.226] samples=272
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 10.409] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628048.726858681] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628048.753742251] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=105 from_tt=0.056 collision_tt=0.936 collision_p=[3.001,3.494,0.861] samples=268
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628049.223875933] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628049.276453142] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=110 from_tt=0.078 collision_tt=1.003 collision_p=[3.050,3.750,1.250] samples=278
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 11.419] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628049.729736859] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628049.770023288] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=115 from_tt=0.062 collision_tt=0.942 collision_p=[3.003,3.679,1.252] samples=264
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628050.231769099] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628050.265601295] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=120 from_tt=0.058 collision_tt=0.968 collision_p=[3.050,3.550,0.950] samples=271
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 12.429] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628050.741192519] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628050.802701563] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=126 from_tt=0.085 collision_tt=0.970 collision_p=[3.016,3.698,0.914] samples=269
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628051.245371295] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628051.272606441] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=131 from_tt=0.053 collision_tt=0.938 collision_p=[3.011,3.524,0.850] samples=268
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 13.439] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628051.755759105] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628051.789023512] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=136 from_tt=0.061 collision_tt=0.936 collision_p=[3.003,3.500,0.869] samples=267
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628052.250423367] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628052.286799386] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=141 from_tt=0.059 collision_tt=0.974 collision_p=[3.013,3.670,0.862] samples=530
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 14.449] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628052.762899381] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628052.791984780] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=146 from_tt=0.054 collision_tt=0.939 collision_p=[3.050,3.650,1.250] samples=267
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628053.262789491] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628053.294094401] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=151 from_tt=0.056 collision_tt=0.936 collision_p=[3.050,3.650,1.250] samples=266
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 15.449] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628053.766798360] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628053.801313795] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=156 from_tt=0.063 collision_tt=0.963 collision_p=[3.007,3.682,0.888] samples=273
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628054.275483445] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628054.312531830] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=161 from_tt=0.064 collision_tt=0.934 collision_p=[3.050,3.450,1.250] samples=267
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 16.469] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628054.793150725] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628054.825667957] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=166 from_tt=0.067 collision_tt=0.922 collision_p=[3.050,3.450,1.250] samples=269
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628055.285058385] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628055.330784108] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=171 from_tt=0.073 collision_tt=0.918 collision_p=[3.050,3.450,1.250] samples=281
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 17.479] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628055.800370145] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628055.829176229] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=176 from_tt=0.061 collision_tt=0.961 collision_p=[3.004,3.690,0.882] samples=269
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628056.291561917] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628056.324120147] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=181 from_tt=0.056 collision_tt=0.941 collision_p=[3.050,3.450,0.850] samples=268
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 18.489] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628056.806701729] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628056.846069407] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=186 from_tt=0.068 collision_tt=0.938 collision_p=[3.007,3.666,1.244] samples=262
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628057.314535287] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628057.351204042] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=191 from_tt=0.063 collision_tt=0.938 collision_p=[3.007,3.712,1.246] samples=265
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 19.499] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628057.815213333] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628057.857644400] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=196 from_tt=0.069 collision_tt=0.919 collision_p=[3.050,3.450,1.250] samples=264
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628058.312396904] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628058.379703998] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=201 from_tt=0.091 collision_tt=0.971 collision_p=[3.016,3.548,1.241] samples=272
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 20.509] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628058.830508844] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628058.866006419] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=206 from_tt=0.068 collision_tt=0.968 collision_p=[3.008,3.673,0.880] samples=268
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628059.323401473] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628059.353324087] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=211 from_tt=0.055 collision_tt=0.935 collision_p=[3.050,3.450,0.850] samples=267
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 21.509] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628059.826725116] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628059.856684354] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=216 from_tt=0.058 collision_tt=0.953 collision_p=[3.017,3.693,0.907] samples=269
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628060.332506703] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628060.362687679] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=221 from_tt=0.054 collision_tt=0.944 collision_p=[3.013,3.528,1.265] samples=269
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 22.519] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628060.831065184] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628060.869163786] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=226 from_tt=0.061 collision_tt=0.946 collision_p=[3.050,3.450,1.250] samples=269
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628061.336903692] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628061.391385545] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=231 from_tt=0.083 collision_tt=0.928 collision_p=[3.050,3.450,1.250] samples=275
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 23.529] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628061.840911467] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628061.879290563] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=237 from_tt=0.061 collision_tt=0.956 collision_p=[3.003,3.688,0.885] samples=267
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628062.345227211] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628062.375468212] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=241 from_tt=0.057 collision_tt=0.932 collision_p=[3.004,3.469,1.284] samples=268
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 24.539] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628062.852817483] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628062.890678452] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=247 from_tt=0.062 collision_tt=0.967 collision_p=[3.002,3.722,1.279] samples=550
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628063.359823617] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628063.398720667] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=252 from_tt=0.070 collision_tt=1.030 collision_p=[3.105,3.929,0.860] samples=474
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 25.539] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628063.858913157] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628063.900313840] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=257 from_tt=0.072 collision_tt=0.942 collision_p=[3.019,3.695,1.260] samples=261
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628064.364004444] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628064.396144995] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=262 from_tt=0.068 collision_tt=0.943 collision_p=[3.050,3.450,1.250] samples=266
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 26.549] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628064.866498459] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628064.894733232] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=267 from_tt=0.056 collision_tt=0.916 collision_p=[3.013,3.498,1.233] samples=265
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628065.363232477] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628065.412659735] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=272 from_tt=0.074 collision_tt=0.939 collision_p=[3.004,3.677,1.252] samples=260
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 27.559] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628065.874090152] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628065.909072669] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=277 from_tt=0.061 collision_tt=0.941 collision_p=[3.009,3.641,1.267] samples=267
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628066.379904173] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628066.463430252] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=282 from_tt=0.115 collision_tt=0.935 collision_p=[3.001,3.520,0.855] samples=273
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 28.559] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628066.874389670] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628066.901257581] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=287 from_tt=0.053 collision_tt=0.943 collision_p=[3.020,3.728,1.205] samples=265
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628067.385739104] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628067.412252177] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=292 from_tt=0.054 collision_tt=0.944 collision_p=[3.050,3.650,1.150] samples=267
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 29.579] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628067.893282875] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628067.919128525] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=297 from_tt=0.051 collision_tt=0.936 collision_p=[3.050,3.450,0.850] samples=271
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628068.411721064] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628068.441093500] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=302 from_tt=0.063 collision_tt=0.958 collision_p=[3.004,3.699,0.832] samples=267
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 30.589] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628068.904417800] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628068.957107504] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=307 from_tt=0.079 collision_tt=0.964 collision_p=[3.003,3.644,0.960] samples=331
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628069.408866871] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628069.443056770] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=312 from_tt=0.065 collision_tt=0.965 collision_p=[3.050,3.650,0.850] samples=267
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 31.589] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628069.905053930] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628069.931457995] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=317 from_tt=0.053 collision_tt=0.963 collision_p=[3.018,3.680,0.867] samples=269
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628070.411786006] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628070.445754674] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=322 from_tt=0.067 collision_tt=0.937 collision_p=[3.050,3.450,0.850] samples=264
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 32.599] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628070.914468783] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628070.947969824] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=1 map=327 from_tt=0.060 collision_tt=0.955 collision_p=[3.001,3.687,0.878] samples=265
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628071.413251113] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1786628071.476701297] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=1 map=332 samples=290 range=[0.088,1.529]
+[fsm_node-3] [INFO] [1786628071.477089952] [fsm_node]:  -- [TRAJ_GUARD_RECOVERED] trigger=candidate_rejected_without_safe_follow gen=1 map=332
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=1 map=332 map_age=0.154s samples=290 range=[0.089,1.529] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=1 map=333 map_age=0.000s samples=289 range=[0.090,1.529] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=1 map=334 map_age=0.000s samples=281 range=[0.130,1.529] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786628071.656881949] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=2 map=334 samples=223 range=[0.048,1.156]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [ERROR] [1786628071.727178572] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=3 map=334 from_tt=0.053 collision_tt=0.623 collision_p=[3.021,3.733,1.039] samples=211
+[fsm_node-3] [INFO] [1786628071.828941986] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=3 map=335 samples=199 range=[0.088,1.078]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=2 map=334 map_age=0.139s samples=223 range=[0.049,1.156] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=2 map=335 map_age=0.000s samples=190 range=[0.212,1.156] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=3 map=335 map_age=0.009s samples=199 range=[0.089,1.078] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm 33.599] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786628071.952148956] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.122608407.
+[fsm_node-3] [ERROR] [1786628072.013282640] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=335 from_tt=0.060 collision_tt=0.875 collision_p=[4.965,5.904,0.860] samples=195
+[fsm_node-3] [ERROR] [1786628072.080383490] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=335 from_tt=0.067 collision_tt=0.607 collision_p=[4.650,5.650,1.150] samples=193
+[fsm_node-3] [ERROR] [1786628072.143998474] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=335 from_tt=0.063 collision_tt=0.493 collision_p=[4.298,5.320,1.126] samples=198
+[fsm_node-3] [WARN] [1786628072.257762109] [fsm_node]:  -- [SUPER] Replan over time(0.1135396957397461)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786628072.257812819] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [ERROR] [1786628072.579425964] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=main_pre_uncertified duration=2.000s speed0=2.942 max_acc=20.066 max_jerk=35.723 dynamics_ok=false path_status=SAFE stop=[0.975,2.646,1.793]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=3 map=335 map_age=0.758s samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 36.549] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628074.920842003] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [WARN] [1786628074.943125875] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786628074.945895211] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786628074.945905589] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786628074.945953290] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [OPT_FAILED], force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628075.422952794] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628075.442451243] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=355 from_tt=0.094 collision_tt=0.959 collision_p=[4.486,5.410,1.684] samples=240
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 37.559] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628075.893908789] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628075.925758206] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=360 from_tt=0.077 collision_tt=0.957 collision_p=[4.496,5.403,1.707] samples=248
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628076.432332066] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628076.460879923] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=365 from_tt=0.112 collision_tt=0.922 collision_p=[4.370,5.312,1.717] samples=246
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 38.559] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628076.895341860] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628076.932249172] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=370 from_tt=0.084 collision_tt=0.934 collision_p=[4.347,5.320,1.646] samples=246
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786628077.479637296] [fsm_node]:  -- [SUPER] Replan over time(0.12137770652770996)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786628077.479705366] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with FAILED.
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 39.579] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628077.907947161] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628077.933551623] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=380 from_tt=0.065 collision_tt=0.905 collision_p=[4.350,5.350,1.750] samples=253
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628078.453011082] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628078.471449186] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=385 from_tt=0.093 collision_tt=1.158 collision_p=[4.747,5.706,1.629] samples=250
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 40.589] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628078.924011879] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628078.944267494] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=390 from_tt=0.066 collision_tt=1.156 collision_p=[4.686,5.602,1.505] samples=266
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628079.452799304] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628079.473036427] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=395 from_tt=0.094 collision_tt=1.069 collision_p=[4.676,5.603,1.553] samples=246
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 41.599] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628079.960707382] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628079.983407020] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=400 from_tt=0.095 collision_tt=1.185 collision_p=[4.791,5.705,1.654] samples=254
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628080.492918989] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628080.518578286] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=405 from_tt=0.120 collision_tt=1.065 collision_p=[4.750,5.750,1.650] samples=239
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 42.619] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628080.980701454] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [WARN] [1786628081.007049167] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786628081.011402426] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786628081.011430368] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786628081.011486764] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [OPT_FAILED], force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628081.467441553] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628081.504234777] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=414 from_tt=0.096 collision_tt=0.986 collision_p=[4.155,5.213,1.458] samples=253
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 43.629] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628081.958499053] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628081.984465745] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=420 from_tt=0.066 collision_tt=1.136 collision_p=[4.483,5.407,1.643] samples=278
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628082.501967015] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628082.521707761] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=425 from_tt=0.093 collision_tt=1.003 collision_p=[4.499,5.405,1.709] samples=255
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 44.639] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628082.993461725] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628083.011458193] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=430 from_tt=0.083 collision_tt=0.938 collision_p=[4.387,5.310,1.577] samples=247
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628083.505899470] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628083.528510747] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=435 from_tt=0.090 collision_tt=1.125 collision_p=[4.750,5.750,1.550] samples=246
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 45.649] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628083.976509623] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628083.997456960] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=440 from_tt=0.059 collision_tt=0.904 collision_p=[4.199,5.201,1.860] samples=252
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628084.482391671] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628084.501796664] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=4 map=445 from_tt=0.063 collision_tt=0.928 collision_p=[4.398,5.319,1.652] samples=247
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 46.659] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628085.046946887] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1786628085.068164833] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=4 map=450 samples=242 range=[0.119,1.324]
+[fsm_node-3] [INFO] [1786628085.068605946] [fsm_node]:  -- [TRAJ_GUARD_RECOVERED] trigger=main_pre_uncertified gen=4 map=450
+[fsm_node-3] [WARN] [1786628085.160516856] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786628085.160597805] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786628085.160605715] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=4 map=450 map_age=0.149s samples=242 range=[0.120,1.324] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=4 map=451 map_age=0.000s samples=242 range=[0.122,1.324] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=4 map=452 map_age=0.001s samples=232 range=[0.170,1.324] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [ERROR] [1786628085.252361540] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=5 map=452 from_tt=0.048 collision_tt=1.078 collision_p=[4.740,5.708,1.336] samples=234
+[fsm_node-3] [33m Yaw rate too large, 6.575330169408465[0m
+[fsm_node-3] [ERROR] [1786628085.343606296] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=5 map=452 from_tt=0.073 collision_tt=1.003 collision_p=[4.796,5.704,1.685] samples=217
+[fsm_node-3] [INFO] [1786628085.394743860] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=5 map=452 samples=191 range=[0.051,0.998]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [ERROR] [1786628085.468084089] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=6 map=453 from_tt=0.066 collision_tt=0.471 collision_p=[4.373,5.305,1.865] samples=161
+[fsm_node-3] [ERROR] [1786628085.522254429] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=6 map=453 from_tt=0.054 collision_tt=0.509 collision_p=[4.692,5.611,1.662] samples=152
+[fsm_node-3] [ERROR] [1786628085.563899089] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=6 map=453 from_tt=0.029 collision_tt=0.614 collision_p=[5.004,5.977,1.697] samples=154
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=5 map=452 map_age=0.278s samples=191 range=[0.051,0.998] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=5 map=453 map_age=0.000s samples=186 range=[0.077,0.998] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=5 map=454 map_age=0.001s samples=146 range=[0.274,0.998] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [ERROR] [1786628085.634239451] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=6 map=454 from_tt=0.034 collision_tt=0.569 collision_p=[5.038,5.806,1.615] samples=152
+[fsm_node-3] [ERROR] [1786628085.741138496] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=6 map=455 from_tt=0.075 collision_tt=0.585 collision_p=[4.984,6.007,2.146] samples=133
+[fsm_node-3] [WARN] [1786628085.752474682] [fsm_node]:  -- [SUPER] Cannot find continuous corridor on path, overlap only 1.6104628578275836e-15, force return.
+[fsm_node-3] [WARN] [1786628085.752539998] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786628085.752552555] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [WARN] [1786628085.907524370] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.109064337.
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=5 map=455 map_age=0.000s samples=126 range=[0.375,0.998] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm 47.659] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [ERROR] [1786628085.986012526] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=6 map=455 from_tt=0.078 collision_tt=0.273 collision_p=[4.917,6.014,1.652] samples=152
+[fsm_node-3] [31m -- [EXPTrajOpt] Ill corridor! Forced return.[0m
+[fsm_node-3] [33m -- [TrajOpt] Cannot simplify sfcs.[0m
+[fsm_node-3] [WARN] [1786628086.003425849] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786628086.003499602] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [ERROR] [1786628086.035924323] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=6 map=455 from_tt=0.032 collision_tt=0.212 collision_p=[4.878,5.906,1.646] samples=162
+[fsm_node-3] [ERROR] [1786628086.114155294] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=6 map=455 from_tt=0.052 collision_tt=0.227 collision_p=[4.955,6.007,1.644] samples=142
+[fsm_node-3] [32m -- [Fsm] Traj finish.[0m
+[fsm_node-3] [INFO] [1786628086.422850715] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628086.430495644] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=455 from_tt=0.072 collision_tt=0.132 collision_p=[4.922,6.001,1.625] samples=174
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [PubCmdCallback] change state from [FOLLOW_TRAJ] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [ERROR] [1786628086.430666879] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=candidate_rejected_without_safe_follow duration=0.400s speed0=0.000 max_acc=0.000 max_jerk=0.000 dynamics_ok=true path_status=SAFE stop=[4.935,5.964,1.640]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [GENERATE_TRAJ] to [EMER_STOP].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 49.589] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628087.933677213] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628087.947816007] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=457 from_tt=0.069 collision_tt=0.139 collision_p=[4.917,6.001,1.621] samples=185
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628088.411985722] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628088.439664943] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=457 from_tt=0.061 collision_tt=0.126 collision_p=[4.926,6.002,1.626] samples=154
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 51.339] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628089.666047991] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628089.678962436] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=458 from_tt=0.050 collision_tt=0.135 collision_p=[4.919,6.001,1.630] samples=179
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786628090.159013309] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628090.197396184] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=459 from_tt=0.069 collision_tt=0.129 collision_p=[4.924,6.001,1.626] samples=164
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 52.339] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786628090.692119947] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628090.713723146] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=459 from_tt=0.085 collision_tt=0.135 collision_p=[4.917,6.001,1.621] samples=237
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786628091.658606991] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628091.678025054] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=460 from_tt=0.058 collision_tt=0.138 collision_p=[4.919,6.002,1.629] samples=228
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 53.839] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628092.175221996] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628092.187583981] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=460 from_tt=0.059 collision_tt=0.134 collision_p=[4.920,6.000,1.628] samples=190
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628092.688181135] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628092.716954931] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=461 from_tt=0.088 collision_tt=0.138 collision_p=[4.916,6.003,1.620] samples=188
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 54.839] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628093.170235265] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628093.207949963] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=461 from_tt=0.079 collision_tt=0.124 collision_p=[4.925,6.002,1.628] samples=169
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 58.039] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628096.408460094] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628096.455806015] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=462 from_tt=0.127 collision_tt=0.127 collision_p=[4.923,6.005,1.623] samples=149
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786628096.900030187] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628096.941401593] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=463 from_tt=0.103 collision_tt=0.138 collision_p=[4.916,6.002,1.621] samples=232
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 59.059] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786628097.412145246] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628097.422940269] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=463 from_tt=0.074 collision_tt=0.134 collision_p=[4.918,6.002,1.621] samples=171
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 60.129] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628098.499168173] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628098.541579823] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=464 from_tt=0.123 collision_tt=0.133 collision_p=[4.919,6.000,1.622] samples=222
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786628099.002034972] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628099.050279822] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=465 from_tt=0.122 collision_tt=0.122 collision_p=[4.923,6.000,1.625] samples=171
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 61.139] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786628099.458462663] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628099.477243644] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=466 from_tt=0.049 collision_tt=0.139 collision_p=[4.919,6.001,1.630] samples=235
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786628099.993823084] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628100.029299396] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=466 from_tt=0.101 collision_tt=0.136 collision_p=[4.917,6.002,1.622] samples=250
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 62.339] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786628100.667237485] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628100.775082444] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=467 from_tt=0.146 collision_tt=0.146 collision_p=[4.923,6.020,1.625] samples=179
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786628101.206449899] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628101.241323887] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=468 from_tt=0.113 collision_tt=0.143 collision_p=[4.917,6.003,1.619] samples=258
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 63.531] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628101.876893005] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628101.885503644] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=469 from_tt=0.065 collision_tt=0.135 collision_p=[4.918,6.001,1.627] samples=193
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628102.405202983] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628102.425028043] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=470 from_tt=0.096 collision_tt=0.141 collision_p=[4.916,6.000,1.621] samples=186
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 64.731] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628103.088261357] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628103.101939873] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=471 from_tt=0.081 collision_tt=0.141 collision_p=[4.917,6.003,1.622] samples=183
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628103.591320905] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628103.636802512] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=472 from_tt=0.108 collision_tt=0.133 collision_p=[4.920,6.002,1.628] samples=182
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 66.331] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628104.716690879] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628104.729935195] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=473 from_tt=0.109 collision_tt=0.139 collision_p=[4.917,6.002,1.621] samples=166
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786628105.221804658] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628105.238634575] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=474 from_tt=0.110 collision_tt=0.145 collision_p=[4.915,6.002,1.620] samples=180
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 67.340] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786628105.704117305] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628105.725888005] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=475 from_tt=0.097 collision_tt=0.142 collision_p=[4.916,6.003,1.621] samples=176
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786628106.208475167] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628106.245390304] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=476 from_tt=0.107 collision_tt=0.137 collision_p=[4.921,6.003,1.625] samples=200
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 68.350] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786628106.715974008] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628106.730403725] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=476 from_tt=0.092 collision_tt=0.132 collision_p=[4.922,6.003,1.627] samples=166
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 69.740] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628108.117698724] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628108.154820319] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=477 from_tt=0.126 collision_tt=0.126 collision_p=[4.923,6.003,1.625] samples=148
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628108.602528231] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628108.655300632] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=477 from_tt=0.117 collision_tt=0.142 collision_p=[4.918,6.003,1.629] samples=222
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 71.640] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628110.007233505] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628110.019111419] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=478 from_tt=0.090 collision_tt=0.140 collision_p=[4.916,6.001,1.627] samples=174
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628110.473518201] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628110.514671215] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=478 from_tt=0.086 collision_tt=0.131 collision_p=[4.920,6.002,1.629] samples=168
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 72.650] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628111.018642722] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628111.042815151] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=479 from_tt=0.104 collision_tt=0.144 collision_p=[4.915,6.003,1.619] samples=192
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 74.430] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628112.748944333] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628112.763560134] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=480 from_tt=0.045 collision_tt=0.130 collision_p=[4.922,6.003,1.627] samples=184
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786628113.283370143] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628113.319313416] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=481 from_tt=0.090 collision_tt=0.135 collision_p=[4.922,6.003,1.628] samples=189
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 75.450] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786628113.793463571] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628113.827098942] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=482 from_tt=0.088 collision_tt=0.123 collision_p=[4.924,6.001,1.626] samples=151
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 77.630] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628115.991877218] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628116.019201605] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=483 from_tt=0.100 collision_tt=0.145 collision_p=[4.915,6.002,1.619] samples=196
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628116.472281537] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628116.515994632] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=484 from_tt=0.097 collision_tt=0.137 collision_p=[4.917,6.001,1.622] samples=239
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 80.231] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628118.585364840] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628118.603404293] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=485 from_tt=0.083 collision_tt=0.138 collision_p=[4.917,6.001,1.622] samples=185
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786628119.084085153] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628119.092349261] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=485 from_tt=0.063 collision_tt=0.128 collision_p=[4.923,6.002,1.626] samples=172
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 81.530] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628119.895843948] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628119.940639966] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=486 from_tt=0.122 collision_tt=0.127 collision_p=[4.923,6.003,1.624] samples=146
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628120.365420597] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628120.377720438] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=486 from_tt=0.059 collision_tt=0.124 collision_p=[4.925,6.002,1.627] samples=176
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 82.540] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628120.894497438] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628120.933319209] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=487 from_tt=0.104 collision_tt=0.139 collision_p=[4.916,6.002,1.622] samples=175
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [INFO] [1786628121.424374645] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628121.439006693] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=487 from_tt=0.110 collision_tt=0.140 collision_p=[4.916,6.002,1.620] samples=195
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 86.330] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786628124.648953866] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [ERROR] [1786628124.661266311] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=PlanFromRest/with_backup segment=EXP status=OCCUPIED gen=6 map=488 from_tt=0.042 collision_tt=0.127 collision_p=[4.922,6.000,1.628] samples=187
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m

@@ -1,0 +1,1345 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-08-14-10-40-29-086552-livox-2993682
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [waypoint_mission-1]: process started with pid [2993683]
+[INFO] [perfect_drone_node-2]: process started with pid [2993685]
+[INFO] [fsm_node-3]: process started with pid [2993687]
+[waypoint_mission-1] [WARN] [1786671629.148895541] [waypoint_mission]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mission_planner/config/waypoint.yaml
+[waypoint_mission-1] [WARN] [1786671629.149012878] [waypoint_mission]:  -- [MissionPlanner] Load data by file name: /root/super_ws/src/SUPER/mission_planner/data/loop24.txt
+[fsm_node-3]  -- [Bench] Use sim time is false, begin replay.
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param fsm/timer_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_goal_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_yaw_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/replan_rate success: [0;0m15
+[fsm_node-3] [0;32m Load param fsm/click_height success: [0;0m1.5
+[fsm_node-3] [0;32m Load param fsm/cmd_topic success: [0;0m/planning/pos_cmd
+[fsm_node-3] [0;32m Load param fsm/mpc_cmd_topic success: [0;0m/planning_cmd/poly_traj
+[fsm_node-3] [0;32m Load param fsm/click_goal_topic success: [0;0m/planning/click_goal
+[fsm_node-3] [0;33m Load param fsm/map_readiness/enable failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_accepted_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_committed_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_commit_lag_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_scan_span_s failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_cloud_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0.1
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_min_duration_s failed, use default value: [0;0m0.4
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_duration_s failed, use default value: [0;0m2
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_acc_mps2 failed, use default value: [0;0m15
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_jerk_mps3 failed, use default value: [0;0m120
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param rog_map/esdf/resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/esdf/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/esdf/local_update_box success: [0;0m[5 5 3 ]
+[fsm_node-3] [0;32m Load param rog_map/load_pcd_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/threshold success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/fix_map_origin success: [0;0m[0 0 1.5 ]
+[fsm_node-3] [0;32m Load param rog_map/frontier_extraction_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/cloud_topic success: [0;0m/cloud_sector
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_topic success: [0;0m/lidar_slam/odom
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_timeout success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/use_dynamic_reconfigure success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/pub_unknown_map_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_id success: [0;0mworld
+[fsm_node-3] [0;32m Load param rog_map/visualization/time_rate success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_rate success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/range success: [0;0m[15 15 4 ]
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [0;32m Load param rog_map/inflation_resolution success: [0;0m0.1
+[perfect_drone_node-2] [WARN] [1786671629.230071313] [perfect_tracking]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed6.yaml
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_step success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/inflation_step success: [0;0m4
+[fsm_node-3] [0;32m Load param rog_map/intensity_thresh success: [0;0m-10
+[fsm_node-3] [0;32m Load param rog_map/map_size success: [0;0m[70 70 6 ]
+[fsm_node-3] [0;32m Load param rog_map/point_filt_num success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/raycasting/batch_update_size success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/unk_thresh success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_hit success: [0;0m0.9
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_miss success: [0;0m0.49
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_min success: [0;0m0.12
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_max success: [0;0m0.98
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_occ success: [0;0m0.85
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/ray_range success: [0;0m[0.5 100 ]
+[fsm_node-3] [0;32m Load param rog_map/raycasting/local_update_box success: [0;0m[100 100 5 ]
+[fsm_node-3] [0;32m Load param rog_map/virtual_ground_height success: [0;0m-0.1
+[fsm_node-3] [0;32m Load param rog_map/virtual_ceil_height success: [0;0m3.5
+[fsm_node-3] [32m -- [RM-Config] inflation_resolution: 0.1[0m
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: ORIGIN_AT_CORNER.
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: virtual_ceil_height: 3.0500000000000003, virtual_ground_height: 0.35000000000000003.
+[fsm_node-3] [34m	[ROG] n_free: 1[0m
+[fsm_node-3] [34m	[ROG] n_occ: 1[0m
+[fsm_node-3] [34m	[ROG] l_hit: 2.19722[0m
+[fsm_node-3] [34m	[ROG] l_miss: -0.0400053[0m
+[fsm_node-3] [34m	[ROG] l_min: -1.99243[0m
+[fsm_node-3] [34m	[ROG] l_max: 3.89182[0m
+[fsm_node-3] [34m	[ROG] l_occ: 1.7346[0m
+[fsm_node-3] [34m	[ROG] l_free: -0.00399995[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [CounterMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 711 711  71[0m
+[fsm_node-3] [32m	local_map_size_d: 71.1 71.1  7.1[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [InfMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 711 711  71[0m
+[fsm_node-3] [32m	local_map_size_d: 71.1 71.1  7.1[0m
+[fsm_node-3] [ProbMap] virtual_ceil_height: 3.05
+[fsm_node-3] [ProbMap] virtual_ground_height: 0.35
+[fsm_node-3] [33m -- [ProbMap] Map sliding disabled, set origin to [  0   0 1.5] -- [0m
+[perfect_drone_node-2] Failed to find match for field 'intensity'.
+[fsm_node-3] [33m -- [Prob-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [ProbMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.05[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 1401 1401  121[0m
+[fsm_node-3] [32m	local_map_size_d: 70.05 70.05  6.05[0m
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/pos_constraint_type success: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/piece_num failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/uniform_time_en failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/block_energy_cost success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/opt_accuracy success: [0;0m5e-06
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/integral_reso success: [0;0m15
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_t success: [0;0m1e+07
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_ts failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_pos success: [0;0m5e+09
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_vel success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_acc success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_jerk success: [0;0m-5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_attract success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_thr success: [0;0m-1
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m12
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/print_log success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/detailed_log_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/backup_traj_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/goal_vel_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/goal_yaw_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/visual_process success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/use_fov_cut success: [0;0m0
+[fsm_node-3] [0;33m Load param super_planner/fov_horizontal_angle failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param super_planner/fov_center_heading failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/frontend_in_known_free success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0.1
+[fsm_node-3] [0;32m Load param super_planner/safe_corridor_line_max_length success: [0;0m6
+[fsm_node-3] [0;32m Load param super_planner/sensing_horizon success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/obs_skip_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/replan_forward_dt success: [0;0m0.1
+[fsm_node-3] [0;32m Load param super_planner/corridor_bound_dis success: [0;0m0.8
+[fsm_node-3] [0;32m Load param super_planner/corridor_line_max_length success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/planning_horizon success: [0;0m7
+[fsm_node-3] [0;32m Load param super_planner/receding_dis success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/robot_r success: [0;0m0.4
+[fsm_node-3] [0;32m Load param super_planner/corridor_pref_margin success: [0;0m0.5
+[fsm_node-3] [0;32m Load param super_planner/iris_iter_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/yaw_mode success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/mpc_horizon success: [0;0m15
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [INFO] [1786671630.665512408] [fsm_node]:  -- [TRAJ_GUARD] mode=enforce sample_dt=0.0050s shadow_min_interval=0.000s inflation_radius=0.400m robot_r=0.400m additional_clearance=0.100m clearance_offsets=6
+[fsm_node-3] [38;2;050;205;050m -- [Viz] Set resolution_ to 0.05
+[fsm_node-3] [0m[38;2;050;205;050m -- [Viz] Set visualization_en_ to false
+[fsm_node-3] [0mLoad config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_v10.yaml
+[fsm_node-3] [0;32m Load param astar/map_voxel_num success: [0;0m[500 500 100 ]
+[fsm_node-3] [0;32m Load param astar/allow_diag success: [0;0m1
+[fsm_node-3] [0;32m Load param astar/debug_visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param astar/heu_type success: [0;0m2
+[fsm_node-3] [0;32m Load param astar/visual_process success: [0;0m0
+[fsm_node-3] [32m -- [RM] Init Astar-map.[0m
+[fsm_node-3] [34m	map index size: 250 250  50[0m
+[fsm_node-3] [34m	map vox_num: 501 501 101[0m
+[fsm_node-3] [33m -- [Fsm] CLICKGOAL ENABLE.[0m
+[fsm_node-3] [INFO] [1786671632.320374928] [fsm_node]: [32m -- [Fsm-Test] Begin.[0m
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [INIT] to [WAIT_GOAL].
+[fsm_node-3] [0m[32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0 deg[0m
+[fsm_node-3] [INFO] [1786671633.253125057] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1786671633.436293521] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=1 map=12 samples=227 range=[0.236,1.363]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [WAIT_GOAL] to [GENERATE_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=1 map=12 map_age=0.023s samples=227 range=[0.236,1.363] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 1.106] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786671633.714254665] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.205904656.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.383242742918897[0m
+[fsm_node-3] [33m	 box_min = 4.150000000000000 5.550000000000001 1.350000000000000[0m
+[fsm_node-3] [33m	 box_max =5.850000000000001 7.250000000000000 2.150000000000000[0m
+[fsm_node-3] [33m	 seed line =4.950000000000000 6.350000000000001 1.750000000000000 --> 5.050000000000001 6.450000000000000 1.750000000000000[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671633.744643669] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671633.744692075] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.383242742918897[0m
+[fsm_node-3] [33m	 box_min = 4.150000000000000 5.550000000000001 1.350000000000000[0m
+[fsm_node-3] [33m	 box_max =5.850000000000001 7.250000000000000 2.150000000000000[0m
+[fsm_node-3] [33m	 seed line =4.950000000000000 6.350000000000001 1.750000000000000 --> 5.050000000000001 6.450000000000000 1.750000000000000[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786671633.802731048] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786671633.802786455] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [WARN] [1786671633.938991688] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=1 map=13 map_age=0.010s samples=150 range=[0.620,1.363] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=1 map=14 map_age=0.000s samples=134 range=[0.700,1.363] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786671633.972199569] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786671633.972222033] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.133875911.
+[fsm_node-3] [INFO] [1786671634.059582749] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=2 map=15 samples=105 range=[0.087,0.607]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_post status=SAFE gen=1 map=15 map_age=0.101s samples=114 range=[0.800,1.363] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786671634.168483560] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.108529843.
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=2 map=15 map_age=0.052s samples=105 range=[0.087,0.607] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671634.253014839] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=3 map=15 samples=213 range=[0.084,1.141]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786671634.306064613] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=4 map=15 samples=135 range=[0.053,0.721]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=3 map=15 map_age=0.246s samples=213 range=[0.084,1.141] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786671634.389005602] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=5 map=15 samples=135 range=[0.083,0.748]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=4 map=15 map_age=0.299s samples=135 range=[0.053,0.721] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=5 map=15 map_age=0.382s samples=135 range=[0.083,0.748] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm 2.110] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [ERROR] [1786671634.760580616] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=main_pre_uncertified duration=2.000s speed0=2.874 max_acc=16.575 max_jerk=34.402 dynamics_ok=false path_status=OCCUPIED stop=[4.541,11.671,1.292]
+[fsm_node-3] [ERROR] [1786671634.760685336] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_PATH_UNSAFE] status=OCCUPIED collision_tt=0.350 p=[4.865,6.206,1.675]; executing shortest bounded stop
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=5 map=15 map_age=0.753s samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm 6.840] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671639.207736525] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320474820245551[0m
+[fsm_node-3] [33m	 box_min =  3.725249884229147 10.875197656433897  0.874935091663766[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525249884229147 11.675197656433898  1.274935091663766[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671639.208132319] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671639.208144238] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 10.580] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671642.955475713] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320693330181552[0m
+[fsm_node-3] [33m	 box_min =  3.725462539881445 10.875281531457780  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675190515082196[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525462539881445 11.675281531457781  1.275190515082196[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671642.955928768] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671642.955939614] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671643.473696462] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321301864917952[0m
+[fsm_node-3] [33m	 box_min =  3.725863067733069 10.875755065642881  0.874884821745623[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525863067733069 11.675755065642882  1.274884821745623[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671643.474078924] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671643.474085939] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 11.600] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671643.990522559] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321944573891342[0m
+[fsm_node-3] [33m	 box_min =  3.726448030390288 10.876052618990647  0.874797347773995[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526448030390288 11.676052618990648  1.274797347773995[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671643.990905795] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671643.990914685] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671644.480237280] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320987692374460[0m
+[fsm_node-3] [33m	 box_min =  3.725743552825212 10.875401479980487  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675127256048763[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525743552825212 11.675401479980488  1.275127256048763[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671644.480714353] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671644.480727573] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 12.610] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671645.005286713] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.322599256793317[0m
+[fsm_node-3] [33m	 box_min =  3.726873135648810 10.876569017454347  0.874632271124321[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526873135648810 11.676569017454348  1.274632271124321[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671645.005702196] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671645.005712886] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671645.485937962] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320752371700471[0m
+[fsm_node-3] [33m	 box_min =  3.725537514433816 10.875282354692619  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675127324716877[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525537514433815 11.675282354692619  1.275127324716877[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671645.486368298] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671645.486380338] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 13.620] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671646.005770603] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321448702710347[0m
+[fsm_node-3] [33m	 box_min =  3.726153068144017 10.875627482926223  0.874866094435258[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526153068144017 11.675627482926224  1.274866094435258[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671646.006140764] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671646.006150515] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 16.380] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671648.758836895] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320979988663369[0m
+[fsm_node-3] [33m	 box_min =  3.725632701442139 10.875527778826658  0.874890414419976[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525632701442139 11.675527778826659  1.274890414419976[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671648.759215517] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671648.759225284] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671649.263553172] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320711820761130[0m
+[fsm_node-3] [33m	 box_min =  3.725426241332793 10.875356582856867  0.874903388564554[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525426241332792 11.675356582856868  1.274903388564554[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671649.264031307] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671649.264039924] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 17.390] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671649.775763523] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321427756525809[0m
+[fsm_node-3] [33m	 box_min =  3.725985026406280 10.875804153115443  0.874893808456123[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525985026406280 11.675804153115443  1.274893808456123[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671649.776134245] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671649.776144350] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671650.272472220] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320306030461990[0m
+[fsm_node-3] [33m	 box_min =  3.724959955885873 10.875289704921384  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675087785850218[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.524959955885873 11.675289704921385  1.275087785850218[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671650.272851607] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671650.272860698] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 19.590] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671651.971294941] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321028049427563[0m
+[fsm_node-3] [33m	 box_min =  3.725791359109195 10.875406273899751  0.874832378261270[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525791359109195 11.675406273899751  1.274832378261270[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671651.971725747] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671651.971735895] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671652.479626374] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.322514607230102[0m
+[fsm_node-3] [33m	 box_min =  3.726817059153744 10.876503902616960  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675133514351055[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526817059153744 11.676503902616961  1.275133514351055[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671652.480037570] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671652.480047190] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 20.600] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671652.987222404] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321648341956397[0m
+[fsm_node-3] [33m	 box_min =  3.726327570825307 10.875728798631801  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675239637610353[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526327570825306 11.675728798631802  1.275239637610353[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671652.987620765] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671652.987629912] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 21.880] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671654.243719403] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320357317504202[0m
+[fsm_node-3] [33m	 box_min =  3.725050019099580 10.875259316242094  0.874928690550953[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525050019099580 11.675259316242094  1.274928690550953[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671654.244129532] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671654.244140939] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671654.762962269] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320556540622374[0m
+[fsm_node-3] [33m	 box_min =  3.725366603750946 10.875182533428816  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675113013370873[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525366603750946 11.675182533428817  1.275113013370873[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671654.763434582] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671654.763446112] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 24.480] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671656.862071577] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321324170956784[0m
+[fsm_node-3] [33m	 box_min =  3.725862447379282 10.875791562682210  0.874939241639811[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525862447379282 11.675791562682210  1.274939241639811[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671656.862504282] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671656.862515160] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671657.374960673] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321378928593400[0m
+[fsm_node-3] [33m	 box_min =  3.726056330828127 10.875636763017582  0.874845660158318[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526056330828127 11.675636763017582  1.274845660158318[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671657.375349582] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671657.375359402] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 25.780] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671658.152124668] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320604929666899[0m
+[fsm_node-3] [33m	 box_min =  3.725390627878387 10.875229990148654  0.874926227001604[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525390627878386 11.675229990148654  1.274926227001604[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671658.152537700] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671658.152549171] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671658.659757949] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320965394189951[0m
+[fsm_node-3] [33m	 box_min =  3.725736793134576 10.875374224629068  0.874877769071521[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525736793134576 11.675374224629069  1.274877769071521[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671658.660174089] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671658.660184793] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 29.280] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671661.660038394] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320984716996474[0m
+[fsm_node-3] [33m	 box_min =  3.725609603146645 10.875564177055633  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675161981434280[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525609603146645 11.675564177055634  1.275161981434280[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671661.660428882] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671661.660438477] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671662.158885576] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320462379490383[0m
+[fsm_node-3] [33m	 box_min =  3.725225754006104 10.875207901221891  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675070633145660[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525225754006104 11.675207901221892  1.275070633145660[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671662.159275776] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671662.159285016] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 30.290] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671662.668626829] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320885772364708[0m
+[fsm_node-3] [33m	 box_min =  3.725649238607166 10.875356207316749  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675168170722000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525649238607166 11.675356207316749  1.275168170722000[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671662.668985418] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671662.668993587] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671663.170565988] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321040365130115[0m
+[fsm_node-3] [33m	 box_min =  3.725655059641278 10.875596436214071  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675164004022443[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525655059641278 11.675596436214072  1.275164004022443[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671663.170943888] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671663.170953555] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 31.300] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671663.671706639] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320353189989717[0m
+[fsm_node-3] [33m	 box_min =  3.724991154481167 10.875326201279464  0.874954188415332[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.524991154481167 11.675326201279464  1.274954188415332[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671663.672091615] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671663.672103682] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671664.178261863] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320366310892960[0m
+[fsm_node-3] [33m	 box_min =  3.725031308460053 10.875297044884828  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675108421972288[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525031308460053 11.675297044884829  1.275108421972288[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671664.178627528] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671664.178636560] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 32.320] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671664.704969359] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321434155489669[0m
+[fsm_node-3] [33m	 box_min =  3.726076019940536 10.875700634048499  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675063393272509[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526076019940536 11.675700634048500  1.275063393272509[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671664.705394851] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671664.705404452] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671665.194877065] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320812677236861[0m
+[fsm_node-3] [33m	 box_min =  3.725513973683433 10.875408379236010  0.874933688503179[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525513973683433 11.675408379236011  1.274933688503179[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671665.195314862] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671665.195328836] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 33.320] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671665.696358577] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320454775406647[0m
+[fsm_node-3] [33m	 box_min =  3.725237167994203 10.875181129790088  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675371633058722[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525237167994203 11.675181129790088  1.275371633058721[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671665.696852906] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671665.696872845] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671666.241996284] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.326766427008859[0m
+[fsm_node-3] [33m	 box_min =  3.729979470092770 10.879355463052521  0.874217458028916[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.529979470092770 11.679355463052522  1.274217458028917[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671666.242406043] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671666.242416933] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 34.480] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671666.859883433] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321041711978404[0m
+[fsm_node-3] [33m	 box_min =  3.725790324703594 10.875429495163422  0.874893540491441[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525790324703594 11.675429495163423  1.274893540491441[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671666.860315069] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671666.860323826] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671667.369443534] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321679828595502[0m
+[fsm_node-3] [33m	 box_min =  3.726339690697677 10.875763946304314  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675331465755255[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526339690697677 11.675763946304315  1.275331465755255[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671667.369843928] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671667.369852752] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 35.480] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671667.851182764] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320382762673081[0m
+[fsm_node-3] [33m	 box_min =  3.725174773359890 10.875144187962531  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675037645488987[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525174773359890 11.675144187962532  1.275037645488987[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671667.851603685] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671667.851609691] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671668.362381287] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320671634480338[0m
+[fsm_node-3] [33m	 box_min =  3.725413724214129 10.875307911485670  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675066945883056[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525413724214129 11.675307911485671  1.275066945883056[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671668.362782076] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671668.362789854] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 36.790] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671669.173512933] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321241637381931[0m
+[fsm_node-3] [33m	 box_min =  3.725921166667766 10.875586023994718  0.874931560957517[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525921166667766 11.675586023994718  1.274931560957517[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671669.173867469] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671669.173875403] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671669.665541947] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320741169095585[0m
+[fsm_node-3] [33m	 box_min =  3.725523695977192 10.875281695845221  0.874867274368971[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525523695977192 11.675281695845221  1.274867274368971[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671669.665965012] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671669.665973548] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 37.790] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671670.166029820] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320786783447191[0m
+[fsm_node-3] [33m	 box_min =  3.725478143912616 10.875411699666079  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675102437492281[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525478143912616 11.675411699666080  1.275102437492281[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671670.166457457] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671670.166466471] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671670.694244856] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.322242087758769[0m
+[fsm_node-3] [33m	 box_min =  3.726929956418309 10.875925585502953  0.874588572612538[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526929956418309 11.675925585502954  1.274588572612538[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671670.694644464] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671670.694655023] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 38.810] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671671.196399108] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321707503215470[0m
+[fsm_node-3] [33m	 box_min =  3.726194571455635 10.875989966590062  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675195515927844[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526194571455635 11.675989966590063  1.275195515927844[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671671.196805726] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671671.196816933] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671671.949870239] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320302489377253[0m
+[fsm_node-3] [33m	 box_min =  3.725023492540290 10.875204693996766  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675135576114674[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525023492540289 11.675204693996767  1.275135576114674[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671671.950313987] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671671.950326822] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 40.080] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671672.459577133] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320931373811845[0m
+[fsm_node-3] [33m	 box_min =  3.725560141931865 10.875540606336404  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675164869856897[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525560141931865 11.675540606336405  1.275164869856897[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671672.459948978] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671672.459958553] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671672.969396721] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320946437065237[0m
+[fsm_node-3] [33m	 box_min =  3.725594791892766 10.875521384891915  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675199855249845[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525594791892765 11.675521384891915  1.275199855249845[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671672.969815816] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671672.969827194] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 41.100] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671673.480805622] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321065771083044[0m
+[fsm_node-3] [33m	 box_min =  3.725804160725247 10.875450720311997  0.874894878851783[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525804160725247 11.675450720311998  1.274894878851783[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671673.481192564] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671673.481205240] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671673.969500833] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320318117733465[0m
+[fsm_node-3] [33m	 box_min =  3.724987973374104 10.875274062511865  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675097987816700[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.524987973374103 11.675274062511866  1.275097987816700[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671673.969899148] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671673.969908793] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 42.110] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671674.498244199] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321645904996376[0m
+[fsm_node-3] [33m	 box_min =  3.726333137002108 10.875717935131298  0.874769864722580[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526333137002108 11.675717935131299  1.274769864722580[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671674.498684415] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671674.498693306] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 43.480] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671675.892080532] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.325967351391348[0m
+[fsm_node-3] [33m	 box_min =  3.729380240915916 10.878825161570923  0.874156960713080[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.529380240915915 11.678825161570924  1.274156960713080[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671675.892530603] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671675.892542653] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671676.366502491] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321560135639151[0m
+[fsm_node-3] [33m	 box_min =  3.726039944911435 10.875947338343741  0.874815328129455[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526039944911435 11.675947338343741  1.274815328129455[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671676.366937528] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671676.366946464] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 44.480] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671676.859807928] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320986680253314[0m
+[fsm_node-3] [33m	 box_min =  3.725621797433941 10.875552117242751  0.874891277994049[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525621797433940 11.675552117242752  1.274891277994049[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671676.860196193] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671676.860210347] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671677.369829453] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320973751880026[0m
+[fsm_node-3] [33m	 box_min =  3.725718664167280 10.875410282413352  0.874860224765729[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525718664167280 11.675410282413353  1.274860224765729[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671677.370223560] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671677.370236319] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 45.490] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671677.877420830] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321504250081170[0m
+[fsm_node-3] [33m	 box_min =  3.726220660036441 10.875631745311694  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675256055256860[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526220660036441 11.675631745311694  1.275256055256860[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671677.877775858] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671677.877784351] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671678.373026449] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320624296241245[0m
+[fsm_node-3] [33m	 box_min =  3.725426392614033 10.875216260980228  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675100307596267[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525426392614033 11.675216260980228  1.275100307596266[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671678.373428120] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671678.373437598] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 46.500] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671678.884171297] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321335244286958[0m
+[fsm_node-3] [33m	 box_min =  3.725922927069184 10.875733660868960  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675145897697386[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525922927069184 11.675733660868961  1.275145897697386[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671678.884570972] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671678.884581943] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671679.372691133] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320610766936586[0m
+[fsm_node-3] [33m	 box_min =  3.725377024436027 10.875256329474734  0.874890384608537[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525377024436027 11.675256329474735  1.274890384608537[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671679.373059368] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671679.373068281] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 47.510] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671679.879178374] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320397719933459[0m
+[fsm_node-3] [33m	 box_min =  3.725016714931839 10.875365495969971  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675096010200588[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525016714931839 11.675365495969972  1.275096010200588[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671679.879540406] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671679.879582345] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 50.280] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671682.661693545] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321246965103231[0m
+[fsm_node-3] [33m	 box_min =  3.725840328297282 10.875695613040568  0.874885134775010[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525840328297281 11.675695613040569  1.274885134775010[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671682.662051789] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671682.662059600] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671683.156379453] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320781347954747[0m
+[fsm_node-3] [33m	 box_min =  3.725569762494040 10.875288434735653  0.874898854129437[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525569762494040 11.675288434735654  1.274898854129437[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671683.156747890] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671683.156757304] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 51.290] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671683.688083934] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.322866840086864[0m
+[fsm_node-3] [33m	 box_min =  3.727052001058077 10.876773651266255  0.874577099325971[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.527052001058077 11.676773651266256  1.274577099325971[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671683.688510682] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671683.688520629] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671684.180898919] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321098690157804[0m
+[fsm_node-3] [33m	 box_min =  3.725789099746169 10.875522217349978  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675191359901148[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525789099746169 11.675522217349979  1.275191359901148[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671684.181300782] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671684.181309828] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 52.680] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671685.048188330] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320455692881066[0m
+[fsm_node-3] [33m	 box_min =  3.725224524175381 10.875198739951523  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675055883013929[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525224524175381 11.675198739951524  1.275055883013929[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671685.048566484] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671685.048575149] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671685.556174197] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320778757683078[0m
+[fsm_node-3] [33m	 box_min =  3.725548400654780 10.875310987036038  0.874862950084870[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525548400654780 11.675310987036038  1.274862950084870[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671685.556542083] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671685.556551049] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 53.680] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671686.062375634] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321141708865994[0m
+[fsm_node-3] [33m	 box_min =  3.725880403913950 10.875476860280557  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675220448167471[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525880403913950 11.675476860280558  1.275220448167471[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671686.062734270] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671686.062744179] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671687.047303513] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320272954894735[0m
+[fsm_node-3] [33m	 box_min =  3.724973354031460 10.875220084982184  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675074033743738[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.524973354031459 11.675220084982184  1.275074033743738[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671687.047700062] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671687.047709363] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 55.180] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671687.584908046] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.324201786150524[0m
+[fsm_node-3] [33m	 box_min =  3.727819638419212 10.877949527580402  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675719602432930[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.527819638419212 11.677949527580402  1.275719602432930[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671687.585347124] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671687.585357456] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671688.264720237] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321465237566905[0m
+[fsm_node-3] [33m	 box_min =  3.725983887908552 10.875865538784311  0.874850657630416[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525983887908552 11.675865538784311  1.274850657630416[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671688.265189105] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671688.265200663] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 56.390] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671688.777733136] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321636577278146[0m
+[fsm_node-3] [33m	 box_min =  3.726289198892095 10.875758058721003  0.874832006116378[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526289198892095 11.675758058721003  1.274832006116378[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671688.778108851] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671688.778119084] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671689.276787547] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320766477065236[0m
+[fsm_node-3] [33m	 box_min =  3.725438474310642 10.875428758198197  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675127596746627[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525438474310642 11.675428758198198  1.275127596746628[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671689.277183572] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671689.277192883] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 57.400] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671689.783139279] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321168491780455[0m
+[fsm_node-3] [33m	 box_min =  3.725914812487532 10.875476732206149  0.874808086417272[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525914812487532 11.675476732206150  1.274808086417272[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671689.783531257] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671689.783540364] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 58.780] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671691.164485043] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321316753112698[0m
+[fsm_node-3] [33m	 box_min =  3.726009848124886 10.875595254938400  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675235947890481[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526009848124886 11.675595254938401  1.275235947890481[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671691.164871503] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671691.164879757] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671691.663136763] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321326374595144[0m
+[fsm_node-3] [33m	 box_min =  3.726038121811490 10.875575300518683  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675221877576644[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526038121811490 11.675575300518684  1.275221877576644[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671691.663562664] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671691.663578587] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 60.080] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671692.453920958] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320673118492002[0m
+[fsm_node-3] [33m	 box_min =  3.725383093449269 10.875348560278622  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675099158682578[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525383093449268 11.675348560278623  1.275099158682578[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671692.454313869] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671692.454322090] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671692.952995402] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320911004340904[0m
+[fsm_node-3] [33m	 box_min =  3.725288730486950 10.875846738167368  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675108930472895[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525288730486950 11.675846738167369  1.275108930472895[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671692.953370591] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671692.953378376] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 61.480] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671693.858841985] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320928895149365[0m
+[fsm_node-3] [33m	 box_min =  3.725665713434262 10.875404723418995  0.874948215437382[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525665713434262 11.675404723418996  1.274948215437382[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671693.859272009] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671693.859280741] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671694.347462980] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320286064275771[0m
+[fsm_node-3] [33m	 box_min =  3.724978787995213 10.875234282156278  0.874972231887047[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.524978787995213 11.675234282156278  1.274972231887047[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671694.347840090] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671694.347850040] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 63.880] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671696.252765342] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320588410199559[0m
+[fsm_node-3] [33m	 box_min =  3.725325616795375 10.875284807997925  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675100077622810[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525325616795375 11.675284807997926  1.275100077622810[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671696.253225221] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671696.253234704] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671696.758558315] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321488793115540[0m
+[fsm_node-3] [33m	 box_min =  3.725983031714319 10.875904234549706  0.874775432920171[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525983031714318 11.675904234549707  1.274775432920171[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671696.758940812] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671696.758949746] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 64.890] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671697.281202213] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321845864276363[0m
+[fsm_node-3] [33m	 box_min =  3.726487226451959 10.875845450835499  0.874799595444141[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526487226451959 11.675845450835499  1.274799595444141[0m
+[fsm_node-3] [WARN] [1786671697.281741892] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671697.281761266] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671697.773524660] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320661373613505[0m
+[fsm_node-3] [33m	 box_min =  3.725373285012719 10.875342019894562  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675098712750172[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525373285012718 11.675342019894563  1.275098712750172[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671697.773914924] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671697.773923681] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 65.900] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671698.293271110] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.322341181546666[0m
+[fsm_node-3] [33m	 box_min =  3.726708080248753 10.876362514612209  0.874868214430163[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526708080248753 11.676362514612210  1.274868214430164[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671698.293713800] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671698.293723296] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671698.783611749] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320548726423052[0m
+[fsm_node-3] [33m	 box_min =  3.725268913016582 10.875292149426651  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675109849860016[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525268913016582 11.675292149426651  1.275109849860015[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671698.783991457] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671698.784055420] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 66.980] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671699.364868830] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321348572196078[0m
+[fsm_node-3] [33m	 box_min =  3.726050550735330 10.875595400686747  0.874894874979787[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526050550735330 11.675595400686747  1.274894874979787[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671699.365240169] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671699.365249390] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671699.855062500] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320255405360417[0m
+[fsm_node-3] [33m	 box_min =  3.724989766252899 10.875171520942564  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675060290358933[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.524989766252899 11.675171520942564  1.275060290358933[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671699.855475660] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671699.855485166] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 67.990] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671700.385980426] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.323501706976344[0m
+[fsm_node-3] [33m	 box_min =  3.728107483614048 10.876468826207230  0.874482098605680[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.528107483614048 11.676468826207230  1.274482098605680[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671700.386347932] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671700.386358313] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671700.864238985] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320353435161764[0m
+[fsm_node-3] [33m	 box_min =  3.725023133742154 10.875286668436807  0.874919624751453[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525023133742153 11.675286668436808  1.274919624751453[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671700.864665038] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671700.864680639] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 68.990] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671701.372266704] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321163485403290[0m
+[fsm_node-3] [33m	 box_min =  3.725737100380533 10.875690924461610  0.874790983501832[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525737100380533 11.675690924461611  1.274790983501832[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671701.372689289] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671701.372698936] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671701.875865043] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320671786528023[0m
+[fsm_node-3] [33m	 box_min =  3.725473273815435 10.875233670680183  0.874895572070545[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525473273815435 11.675233670680184  1.274895572070545[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671701.876287826] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671701.876297087] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 70.000] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671702.393853690] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.322193816780853[0m
+[fsm_node-3] [33m	 box_min =  3.726536375674811 10.876340723625942  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675469354851779[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526536375674810 11.676340723625943  1.275469354851779[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671702.394256752] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671702.394268386] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 72.080] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671704.465363994] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321484831054733[0m
+[fsm_node-3] [33m	 box_min =  3.726007953551921 10.875866675165188  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675287506609152[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526007953551921 11.675866675165189  1.275287506609152[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671704.465753882] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671704.465763260] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671704.970554889] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321968919879418[0m
+[fsm_node-3] [33m	 box_min =  3.726561860876762 10.875948938167570  0.874626141916381[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526561860876762 11.675948938167570  1.274626141916381[0m
+[fsm_node-3] [WARN] [1786671704.971046527] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671704.971059154] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [32m -- [Fsm 73.980] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671706.357066491] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320795208955197[0m
+[fsm_node-3] [33m	 box_min =  3.725546421621595 10.875339809329972  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675132283230588[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525546421621595 11.675339809329973  1.275132283230588[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671706.357444156] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671706.357452474] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671706.867529003] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320711834823416[0m
+[fsm_node-3] [33m	 box_min =  3.725534373793578 10.875221329890604  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675166133982980[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525534373793578 11.675221329890604  1.275166133982980[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671706.867901106] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671706.867910546] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 74.990] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671707.377413309] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321588493673037[0m
+[fsm_node-3] [33m	 box_min =  3.726065995449106 10.875960182484773  0.874826081255660[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526065995449105 11.675960182484774  1.274826081255660[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671707.377788479] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671707.377798911] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671707.883737405] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321336668071509[0m
+[fsm_node-3] [33m	 box_min =  3.726034423628056 10.875596487434313  0.874852928437488[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526034423628056 11.675596487434314  1.274852928437488[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671707.884153717] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671707.884162444] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 76.010] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671708.386157615] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320647972022988[0m
+[fsm_node-3] [33m	 box_min =  3.725373804486060 10.875319941072918  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675034614645925[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525373804486060 11.675319941072919  1.275034614645925[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671708.386567231] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671708.386576097] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671708.895855336] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320808542494140[0m
+[fsm_node-3] [33m	 box_min =  3.725574404565688 10.875326186345236  0.874911806236312[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525574404565688 11.675326186345236  1.274911806236313[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671708.896252533] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671708.896262448] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 77.020] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671709.389742258] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320321078015958[0m
+[fsm_node-3] [33m	 box_min =  3.725001658608974 10.875261737544584  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675013772872653[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525001658608974 11.675261737544584  1.275013772872653[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671709.390118202] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671709.390127156] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671709.902258648] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321148437971064[0m
+[fsm_node-3] [33m	 box_min =  3.725895277073443 10.875468978019427  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675260778338715[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525895277073443 11.675468978019428  1.275260778338715[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671709.902639274] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671709.902648975] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 78.980] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671711.356364769] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320785872571348[0m
+[fsm_node-3] [33m	 box_min =  3.725474684214916 10.875414576695219  0.874922174064673[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525474684214916 11.675414576695220  1.274922174064673[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671711.356728933] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671711.356738648] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671711.862943156] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320641778830824[0m
+[fsm_node-3] [33m	 box_min =  3.725418316901727 10.875254360594468  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675089189699711[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525418316901726 11.675254360594469  1.275089189699711[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671711.863369835] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671711.863378102] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 80.000] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671712.386724419] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321603747510391[0m
+[fsm_node-3] [33m	 box_min =  3.726154864845696 10.875873510474902  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675192526771153[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526154864845696 11.675873510474903  1.275192526771153[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671712.387129677] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671712.387139520] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671712.895189778] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.322676045574411[0m
+[fsm_node-3] [33m	 box_min =  3.727190481042884 10.876294862314415  0.874587610960944[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.527190481042884 11.676294862314416  1.274587610960944[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671712.895605547] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671712.895617387] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 81.010] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671713.375611561] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320413595832507[0m
+[fsm_node-3] [33m	 box_min =  3.725154781657210 10.875218520960269  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675038377513715[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525154781657210 11.675218520960270  1.275038377513715[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671713.376001571] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671713.376011821] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 82.080] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671714.467913767] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321758481063121[0m
+[fsm_node-3] [33m	 box_min =  3.726431285065773 10.875775461669248  0.874792592860134[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526431285065773 11.675775461669248  1.274792592860134[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671714.468351677] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671714.468362412] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786671714.952716849] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320684394462076[0m
+[fsm_node-3] [33m	 box_min =  3.725413696353916 10.875328384226739  0.874998273379250[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525413696353916 11.675328384226740  1.274998273379250[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671714.953108494] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671714.953115861] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 83.080] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [INFO] [1786671715.474081888] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.322334397689091[0m
+[fsm_node-3] [33m	 box_min =  3.726860051462331 10.876161103866663  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675434398581275[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.526860051462331 11.676161103866663  1.275434398581275[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671715.474544173] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671715.474555693] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 84.680] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671717.056944694] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320767403346115[0m
+[fsm_node-3] [33m	 box_min =  3.725560567625045 10.875277593615147  0.874879598375567[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525560567625045 11.675277593615148  1.274879598375567[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671717.057348878] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671717.057358460] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671717.553400377] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320544316891336[0m
+[fsm_node-3] [33m	 box_min =  3.725333474319934 10.875204381104938  0.875000000000000[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675128501492215[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525333474319933 11.675204381104939  1.275128501492215[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671717.553754734] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671717.553762999] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [32m -- [Fsm 85.690] Current state: GENERATE_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1786671718.065952433] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.320807588008309[0m
+[fsm_node-3] [33m	 box_min =  3.725545580251357 10.875360700490814  0.874897828326140[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525545580251356 11.675360700490815  1.274897828326141[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671718.066342429] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671718.066351514] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return
+[fsm_node-3] [INFO] [1786671718.660541496] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.321164087927156[0m
+[fsm_node-3] [33m	 box_min =  3.725925079584159 10.875456852132578  0.874838003507056[0m
+[fsm_node-3] [33m	 box_max = 5.425000000000000 12.525000000000002  1.675000000000000[0m
+[fsm_node-3] [33m	 seed line = 4.625000000000000 11.725000000000001  1.275000000000000 -->  4.525925079584159 11.675456852132578  1.274838003507056[0m
+[fsm_node-3] [33m -- [Fsm] PlanFromRest failed, try replan.[0m
+[fsm_node-3] [WARN] [1786671718.660914747] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786671718.660923447] [fsm_node]:  -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [FAILED], force return

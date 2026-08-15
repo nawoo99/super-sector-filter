@@ -37,6 +37,8 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "mars_quadrotor_msgs/msg/position_command.hpp"
 #include "mars_quadrotor_msgs/msg/polynomial_trajectory.hpp"
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl_conversions/pcl_conversions.h>
 #include <utils/optimization/polynomial_interpolation.h>
 #include <algorithm>
 #include <atomic>
@@ -56,9 +58,12 @@ namespace fsm {
         rclcpp::Publisher<mars_quadrotor_msgs::msg::PolynomialTrajectory>::SharedPtr mpc_cmd_pub_;
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub_;
+        rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
+                guard_cloud_sub_;
 
         rclcpp::TimerBase::SharedPtr execution_timer_, replan_timer_, cmd_timer_;
-        rclcpp::CallbackGroup::SharedPtr exec_cbk_group_, replan_cbk_group_, cmd_cbk_group_, goal_cbk_group_;
+        rclcpp::CallbackGroup::SharedPtr exec_cbk_group_, map_cbk_group_, replan_cbk_group_, cmd_cbk_group_, goal_cbk_group_;
+        rclcpp::CallbackGroup::SharedPtr guard_cloud_cbk_group_;
 
         mars_quadrotor_msgs::msg::PositionCommand pid_cmd_;
         rog_map::ROGMapROS::Ptr map_ptr_;
@@ -73,6 +78,7 @@ namespace fsm {
         std::atomic_bool safety_brake_active_{false};
         std::atomic_bool safety_brake_finished_{false};
         std::atomic_bool safety_revalidation_requested_{false};
+        std::uint64_t shadow_last_enqueued_map_version_{0};
         Trajectory brake_pos_traj_{};
         Trajectory brake_yaw_traj_{};
         double brake_start_wt_{0.0};
@@ -86,9 +92,187 @@ namespace fsm {
         double brake_recovery_last_attempt_wt_{-
                 std::numeric_limits<double>::infinity()};
 
+        enum class RawCloudSafetyStatus {
+            DISABLED,
+            STALE,
+            EMPTY_TRAJECTORY,
+            SAFE,
+            OCCUPIED
+        };
+
+        struct RawCloudSnapshot {
+            std::shared_ptr<pcl::KdTreeFLANN<rog_map::PointType>> tree;
+            rog_map::MapHealthClock::time_point receive_time{};
+            std::uint64_t sequence{0};
+        };
+
+        mutable std::mutex raw_cloud_mutex_;
+        RawCloudSnapshot raw_cloud_snapshot_{};
+        std::uint64_t raw_cache_cloud_sequence_{0};
+        std::uint64_t raw_cache_trajectory_generation_{0};
+        RawCloudSafetyStatus raw_cache_status_{RawCloudSafetyStatus::STALE};
+        Vec3f raw_cache_collision_position_{Vec3f::Zero()};
+
         mutable std::mutex latest_cmd_mutex_;
         mars_quadrotor_msgs::msg::PositionCommand last_published_cmd_{};
         bool last_published_cmd_valid_{false};
+
+        static const char *rawCloudSafetyStatusName(
+                const RawCloudSafetyStatus status) {
+            switch (status) {
+                case RawCloudSafetyStatus::DISABLED: return "DISABLED";
+                case RawCloudSafetyStatus::STALE: return "STALE";
+                case RawCloudSafetyStatus::EMPTY_TRAJECTORY:
+                    return "EMPTY_TRAJECTORY";
+                case RawCloudSafetyStatus::SAFE: return "SAFE";
+                case RawCloudSafetyStatus::OCCUPIED: return "OCCUPIED";
+            }
+            return "UNKNOWN";
+        }
+
+        void guardCloudCallback(
+                const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
+            auto cloud = std::make_shared<pcl::PointCloud<rog_map::PointType>>();
+            pcl::fromROSMsg(*cloud_msg, *cloud);
+            if (cloud->empty() || !cloud->is_dense) {
+                return;
+            }
+            auto tree =
+                    std::make_shared<pcl::KdTreeFLANN<rog_map::PointType>>();
+            tree->setInputCloud(cloud);
+            std::lock_guard<std::mutex> lock(raw_cloud_mutex_);
+            raw_cloud_snapshot_.tree = std::move(tree);
+            raw_cloud_snapshot_.receive_time = rog_map::MapHealthClock::now();
+            ++raw_cloud_snapshot_.sequence;
+        }
+
+        RawCloudSafetyStatus validateTrajectoryAgainstRawCloud(
+                const Trajectory &trajectory,
+                double checked_from_tt,
+                Vec3f &collision_position,
+                double &cloud_age_s,
+                std::uint64_t &cloud_sequence) const {
+            if (!cfg_.trajectory_guard_raw_cloud_en) {
+                cloud_age_s = 0.0;
+                cloud_sequence = 0;
+                return RawCloudSafetyStatus::DISABLED;
+            }
+
+            RawCloudSnapshot snapshot;
+            {
+                std::lock_guard<std::mutex> lock(raw_cloud_mutex_);
+                snapshot = raw_cloud_snapshot_;
+            }
+            cloud_sequence = snapshot.sequence;
+            if (!snapshot.tree || snapshot.sequence == 0) {
+                cloud_age_s = std::numeric_limits<double>::infinity();
+                return RawCloudSafetyStatus::STALE;
+            }
+            cloud_age_s = std::chrono::duration<double>(
+                    rog_map::MapHealthClock::now() -
+                    snapshot.receive_time).count();
+            if (!std::isfinite(cloud_age_s) || cloud_age_s < 0.0 ||
+                cloud_age_s > cfg_.trajectory_guard_raw_cloud_max_age_s) {
+                return RawCloudSafetyStatus::STALE;
+            }
+            if (trajectory.empty()) {
+                return RawCloudSafetyStatus::EMPTY_TRAJECTORY;
+            }
+
+            const double total_duration = trajectory.getTotalDuration();
+            checked_from_tt = std::clamp(checked_from_tt, 0.0,
+                                         total_duration);
+            const double sample_dt = std::max(
+                    0.005,
+                    std::min(cfg_.trajectory_guard_validation_sample_dt_s,
+                             0.05 / std::max(1.0, 7.0)));
+            std::vector<int> indices(1);
+            std::vector<float> squared_distances(1);
+            for (double tt = checked_from_tt;;
+                 tt = std::min(total_duration, tt + sample_dt)) {
+                const Vec3f position = trajectory.getPos(tt);
+                if (!position.array().isFinite().all()) {
+                    collision_position = position;
+                    return RawCloudSafetyStatus::OCCUPIED;
+                }
+                rog_map::PointType query;
+                query.x = static_cast<float>(position.x());
+                query.y = static_cast<float>(position.y());
+                query.z = static_cast<float>(position.z());
+                query.intensity = 0.0F;
+                if (snapshot.tree->radiusSearch(
+                            query,
+                            cfg_.trajectory_guard_raw_cloud_clearance_m,
+                            indices, squared_distances, 1) > 0) {
+                    collision_position = position;
+                    return RawCloudSafetyStatus::OCCUPIED;
+                }
+                if (tt >= total_duration) {
+                    break;
+                }
+            }
+            return RawCloudSafetyStatus::SAFE;
+        }
+
+        bool rawCloudCommittedTrajectorySafe() {
+            if (!cfg_.trajectory_guard_raw_cloud_en) {
+                return true;
+            }
+            const auto trajectory = planner_ptr_->getCommittedTrajectorySnapshot();
+            RawCloudSnapshot raw_snapshot;
+            {
+                std::lock_guard<std::mutex> lock(raw_cloud_mutex_);
+                raw_snapshot = raw_cloud_snapshot_;
+                const double cached_cloud_age_s = raw_snapshot.sequence == 0
+                        ? std::numeric_limits<double>::infinity()
+                        : std::chrono::duration<double>(
+                                rog_map::MapHealthClock::now() -
+                                raw_snapshot.receive_time).count();
+                if (raw_cache_cloud_sequence_ == raw_snapshot.sequence &&
+                    raw_cache_trajectory_generation_ == trajectory.generation &&
+                    cached_cloud_age_s <=
+                            cfg_.trajectory_guard_raw_cloud_max_age_s) {
+                    return raw_cache_status_ !=
+                                   RawCloudSafetyStatus::OCCUPIED &&
+                           raw_cache_status_ !=
+                                   RawCloudSafetyStatus::EMPTY_TRAJECTORY;
+                }
+            }
+
+            Vec3f collision_position = Vec3f::Zero();
+            double cloud_age_s = std::numeric_limits<double>::infinity();
+            std::uint64_t cloud_sequence = raw_snapshot.sequence;
+            const auto status = trajectory.empty
+                    ? RawCloudSafetyStatus::EMPTY_TRAJECTORY
+                    : validateTrajectoryAgainstRawCloud(
+                            trajectory.pos_traj,
+                            ros_ptr_->getSimTime() - trajectory.start_wt,
+                            collision_position, cloud_age_s, cloud_sequence);
+            bool changed;
+            {
+                std::lock_guard<std::mutex> lock(raw_cloud_mutex_);
+                changed = raw_cache_status_ != status ||
+                          raw_cache_cloud_sequence_ != cloud_sequence;
+                raw_cache_cloud_sequence_ = cloud_sequence;
+                raw_cache_trajectory_generation_ = trajectory.generation;
+                raw_cache_status_ = status;
+                raw_cache_collision_position_ = collision_position;
+            }
+            if (changed && status != RawCloudSafetyStatus::SAFE) {
+                ros_ptr_->warn(
+                        " -- [TRAJ_GUARD_RAW] status={} cloud={} age={:.3f}s "
+                        "gen={} p=[{:.3f},{:.3f},{:.3f}]",
+                        rawCloudSafetyStatusName(status), cloud_sequence,
+                        cloud_age_s, trajectory.generation,
+                        collision_position.x(), collision_position.y(),
+                        collision_position.z());
+            }
+            // Cloud production is best-effort and may be slower than the map
+            // certificate cadence.  STALE is therefore diagnostic only; a
+            // fresh geometric intersection remains a hard stop trigger.
+            return status != RawCloudSafetyStatus::OCCUPIED &&
+                   status != RawCloudSafetyStatus::EMPTY_TRAJECTORY;
+        }
 
         void resetVisualizedPath() override {
             path.poses.clear();
@@ -274,12 +458,26 @@ namespace fsm {
                 map_age_s = std::numeric_limits<double>::infinity();
                 return false;
             }
+            const auto freshness_time =
+                    map_ptr_->immutablePlannerSnapshotEnabled() &&
+                    health.processed_scan_count > 0
+                    ? health.latest_scan_process_time
+                    : health.latest_map_commit_time;
             map_age_s = std::chrono::duration<double>(
-                    rog_map::MapHealthClock::now() -
-                    health.latest_map_commit_time).count();
-            return !health.update_in_progress &&
-                   std::isfinite(map_age_s) && map_age_s >= 0.0 &&
+                    rog_map::MapHealthClock::now() - freshness_time).count();
+            // An in-progress writer does not invalidate the previous committed
+            // map. Validation takes the map's shared transaction and will wait
+            // for that writer before querying, then records the new version.
+            return std::isfinite(map_age_s) && map_age_s >= 0.0 &&
                    map_age_s <= cfg_.trajectory_guard_max_map_age_s;
+        }
+
+        bool mapFreshEnoughForMotion(
+                const rog_map::MapHealthSnapshot &health,
+                double &map_age_s) const {
+            return mapFreshForGuard(health, map_age_s) &&
+                   map_age_s <=
+                           cfg_.trajectory_guard_brake_trigger_map_age_s;
         }
 
         bool refreshSafetyCertificate(const char *trigger) {
@@ -289,7 +487,10 @@ namespace fsm {
             const auto health = map_ptr_->getMapHealthSnapshot();
             const auto generation = planner_ptr_->getCommittedTrajectoryGeneration();
             double map_age_s;
-            const bool map_fresh = mapFreshForGuard(health, map_age_s);
+            // Do not wait until the map is already too old to certify a stop.
+            // The lower motion threshold reserves time for constructing and
+            // atomically certifying the brake against a still-valid snapshot.
+            const bool map_fresh = mapFreshEnoughForMotion(health, map_age_s);
 
             {
                 std::lock_guard<std::mutex> lock(safety_mutex_);
@@ -387,10 +588,10 @@ namespace fsm {
                    max_jerk <= cfg_.brake_max_jerk_mps3 * 1.001;
         }
 
-        void activateEmergencyBrake(const std::string &reason) {
+        bool activateEmergencyBrake(const std::string &reason) {
             if (!cfg_.trajectory_guard_en ||
                 safety_brake_active_.load(std::memory_order_acquire)) {
-                return;
+                return false;
             }
 
             mars_quadrotor_msgs::msg::PositionCommand start_command;
@@ -437,7 +638,7 @@ namespace fsm {
             if (!initial.array().isFinite().all()) {
                 ros_ptr_->error(" -- [TRAJ_GUARD_BRAKE] invalid initial state; "
                                 "normal publication remains suppressed");
-                return;
+                return false;
             }
             if (!std::isfinite(initial_yaw)) initial_yaw = 0.0;
 
@@ -459,14 +660,82 @@ namespace fsm {
             double max_acc = 0.0;
             double max_jerk = 0.0;
             bool dynamics_ok = false;
+            TrajectorySafetyResult brake_safety;
+            bool certified_brake_found = false;
+            double certified_map_age_s =
+                    std::numeric_limits<double>::infinity();
+            RawCloudSafetyStatus raw_brake_status =
+                    RawCloudSafetyStatus::DISABLED;
+            double raw_cloud_age_s =
+                    std::numeric_limits<double>::infinity();
+            std::uint64_t raw_cloud_sequence = 0;
+            Vec3f raw_collision_position = Vec3f::Zero();
             for (int attempt = 0; attempt < 30; ++attempt) {
-                brake_trajectory = buildBrakeTrajectory(initial, duration, start_wt);
-                dynamics_ok = brakeDynamicsWithinLimits(brake_trajectory,
+                auto candidate = buildBrakeTrajectory(initial, duration, start_wt);
+                dynamics_ok = brakeDynamicsWithinLimits(candidate,
                                                         max_acc, max_jerk);
-                if (dynamics_ok || duration >= max_duration - 1.0e-9) {
+                if (dynamics_ok) {
+                    const auto health_before = map_ptr_->getMapHealthSnapshot();
+                    double map_age_before_s;
+                    if (!mapFreshForGuard(health_before, map_age_before_s)) {
+                        brake_safety.status = TrajectorySafetyStatus::MAP_STALE;
+                        brake_safety.map_version = health_before.map_version;
+                        certified_map_age_s = map_age_before_s;
+                        break;
+                    }
+                    brake_safety = planner_ptr_->validatePositionTrajectory(
+                            candidate, 0.0, 0);
+                    const auto health_after = map_ptr_->getMapHealthSnapshot();
+                    double map_age_after_s;
+                    const bool map_is_fresh =
+                            mapFreshForGuard(health_after, map_age_after_s);
+                    certified_map_age_s = map_age_after_s;
+                    const bool certificate_is_current =
+                            brake_safety.safe() &&
+                            map_is_fresh &&
+                            brake_safety.map_version == health_after.map_version;
+                    raw_brake_status = validateTrajectoryAgainstRawCloud(
+                            candidate, 0.0, raw_collision_position,
+                            raw_cloud_age_s, raw_cloud_sequence);
+                    // A stale supplemental cloud triggers an early map-only
+                    // stop.  A fresh cloud that intersects the candidate is a
+                    // hard rejection and causes the duration search to
+                    // continue.
+                    const bool raw_certificate_allows_brake =
+                            raw_brake_status !=
+                                    RawCloudSafetyStatus::OCCUPIED &&
+                            raw_brake_status !=
+                                    RawCloudSafetyStatus::EMPTY_TRAJECTORY;
+                    if (certificate_is_current &&
+                        raw_certificate_allows_brake) {
+                        brake_trajectory = std::move(candidate);
+                        certified_map_age_s = map_age_after_s;
+                        certified_brake_found = true;
+                        break;
+                    }
+                }
+                if (duration >= max_duration - 1.0e-9) {
                     break;
                 }
                 duration = std::min(max_duration, duration * 1.15);
+            }
+
+            if (!certified_brake_found) {
+                ros_ptr_->error(
+                        " -- [TRAJ_GUARD_BRAKE_REJECTED] trigger={} "
+                        "searched=[{:.3f},{:.3f}]s speed0={:.3f} "
+                        "last_dynamics_ok={} max_acc={:.3f} max_jerk={:.3f} "
+                            "last_path_status={} last_map={} map_age={:.3f}s "
+                            "raw_status={} raw_cloud={} raw_age={:.3f}s; "
+                            "no brake command published",
+                        reason, min_duration, max_duration,
+                        initial.col(1).norm(), dynamics_ok, max_acc, max_jerk,
+                        trajectorySafetyStatusName(brake_safety.status),
+                        brake_safety.map_version, certified_map_age_s,
+                        rawCloudSafetyStatusName(raw_brake_status),
+                        raw_cloud_sequence, raw_cloud_age_s);
+                ChangeState("TrajectoryGuardFailClosed", EMER_STOP);
+                return false;
             }
 
             Eigen::Matrix<double, 3, 1> yaw_coeff;
@@ -476,12 +745,10 @@ namespace fsm {
             yaw_trajectory.emplace_back(duration, yaw_coeff);
             yaw_trajectory.start_WT = start_wt;
 
-            const auto brake_safety = planner_ptr_->validatePositionTrajectory(
-                    brake_trajectory, 0.0, 0);
             {
                 std::lock_guard<std::mutex> lock(safety_mutex_);
                 if (safety_brake_active_.load(std::memory_order_relaxed)) {
-                    return;
+                    return false;
                 }
                 brake_pos_traj_ = brake_trajectory;
                 brake_yaw_traj_ = yaw_trajectory;
@@ -500,25 +767,21 @@ namespace fsm {
             const Vec3f stop_position = brake_trajectory.getPos(duration);
             ros_ptr_->error(" -- [TRAJ_GUARD_BRAKE] trigger={} duration={:.3f}s "
                             "speed0={:.3f} max_acc={:.3f} max_jerk={:.3f} "
-                            "dynamics_ok={} path_status={} stop=[{:.3f},{:.3f},{:.3f}]",
+                            "dynamics_ok={} path_status={} map={} map_age={:.3f}s "
+                            "raw_status={} raw_cloud={} raw_age={:.3f}s "
+                            "stop=[{:.3f},{:.3f},{:.3f}]",
                             reason, duration, initial.col(1).norm(), max_acc, max_jerk,
                             dynamics_ok, trajectorySafetyStatusName(brake_safety.status),
+                            brake_safety.map_version, certified_map_age_s,
+                            rawCloudSafetyStatusName(raw_brake_status),
+                            raw_cloud_sequence, raw_cloud_age_s,
                             stop_position.x(), stop_position.y(), stop_position.z());
-            if (!brake_safety.safe()) {
-                ros_ptr_->error(" -- [TRAJ_GUARD_BRAKE_PATH_UNSAFE] status={} "
-                                "collision_tt={:.3f} p=[{:.3f},{:.3f},{:.3f}]; "
-                                "executing shortest bounded stop",
-                                trajectorySafetyStatusName(brake_safety.status),
-                                brake_safety.first_collision_tt,
-                                brake_safety.first_collision_pos.x(),
-                                brake_safety.first_collision_pos.y(),
-                                brake_safety.first_collision_pos.z());
-            }
             mars_quadrotor_msgs::msg::PolynomialTrajectory brake_message;
             fillPolynomialTrajectory(brake_trajectory, yaw_trajectory,
                                      brake_message, true);
             mpc_cmd_pub_->publish(brake_message);
             ChangeState("TrajectoryGuard", EMER_STOP);
+            return true;
         }
 
         bool getBrakeSample(CmdTraj::Sample &sample) {
@@ -557,7 +820,8 @@ namespace fsm {
 
             const auto health = map_ptr_->getMapHealthSnapshot();
             double map_age_s;
-            if (health.update_in_progress ||
+            if ((health.update_in_progress &&
+                 !map_ptr_->immutablePlannerSnapshotEnabled()) ||
                 !mapFreshForGuard(health, map_age_s)) {
                 return false;
             }
@@ -765,16 +1029,36 @@ namespace fsm {
             // 初始化参数读取
             nh_ = nh;
             cfg_ = Config(cfg_path);
-            // Map commits and all planner/map queries share one mutually
-            // exclusive group. Odom/cloud callbacks only stage snapshots and
-            // remain independent, so long map writes cannot race planning.
+            // Keep map commits schedulable while planner optimization is
+            // running. Planner map-reading frontends take an explicit shared
+            // map transaction; the writer takes the matching exclusive lock.
             exec_cbk_group_ = nh_->create_callback_group(
                     rclcpp::CallbackGroupType::MutuallyExclusive);
+            map_cbk_group_ = nh_->create_callback_group(
+                    rclcpp::CallbackGroupType::MutuallyExclusive);
             map_ptr_ = std::make_shared<rog_map::ROGMapROS>(
-                    nh_, cfg_path, exec_cbk_group_);
+                    nh_, cfg_path, map_cbk_group_);
             // 初始化Planner
             ros_ptr_ = std::make_shared<ros_interface::Ros2Interface>(nh_);
             planner_ptr_ = std::make_shared<SuperPlanner>(cfg_path, ros_ptr_, map_ptr_);
+            if (cfg_.trajectory_guard_raw_cloud_en) {
+                guard_cloud_cbk_group_ = nh_->create_callback_group(
+                        rclcpp::CallbackGroupType::MutuallyExclusive);
+                rclcpp::SubscriptionOptions guard_cloud_options;
+                guard_cloud_options.callback_group = guard_cloud_cbk_group_;
+                guard_cloud_sub_ = nh_->create_subscription<
+                        sensor_msgs::msg::PointCloud2>(
+                        map_ptr_->getMapConfig().cloud_topic, qos,
+                        std::bind(&FsmRos2::guardCloudCallback, this,
+                                  std::placeholders::_1),
+                        guard_cloud_options);
+                ros_ptr_->info(
+                        " -- [TRAJ_GUARD_RAW] enabled topic={} max_age={:.3f}s "
+                        "clearance={:.3f}m",
+                        map_ptr_->getMapConfig().cloud_topic,
+                        cfg_.trajectory_guard_raw_cloud_max_age_s,
+                        cfg_.trajectory_guard_raw_cloud_clearance_m);
+            }
             cmd_pub_ = nh_->create_publisher<mars_quadrotor_msgs::msg::PositionCommand>(cfg_.cmd_topic, qos);
             mpc_cmd_pub_ = nh_->create_publisher<mars_quadrotor_msgs::msg::PolynomialTrajectory>(cfg_.mpc_cmd_topic,
                                                                                                  qos);
@@ -889,7 +1173,8 @@ namespace fsm {
                     return;
                 }
                 const auto health_after = map_ptr_->getMapHealthSnapshot();
-                if (health_after.update_in_progress ||
+                if ((health_after.update_in_progress &&
+                     !map_ptr_->immutablePlannerSnapshotEnabled()) ||
                     health_after.map_version != certificate.map_version) {
                     safety_revalidation_requested_.store(true,
                                                          std::memory_order_release);
@@ -948,6 +1233,23 @@ namespace fsm {
         void mainFsmTimerCallback() {
             if (safety_brake_active_.load(std::memory_order_acquire)) {
                 tryRecoverFromEmergencyBrake();
+                return;
+            }
+            if (cfg_.trajectory_guard_shadow_en &&
+                !cfg_.trajectory_guard_en && machine_state_ == FOLLOW_TRAJ) {
+                const auto health = map_ptr_->getMapHealthSnapshot();
+                if ((!health.update_in_progress ||
+                     map_ptr_->immutablePlannerSnapshotEnabled()) &&
+                    health.map_version != 0 &&
+                    health.map_version != shadow_last_enqueued_map_version_ &&
+                    planner_ptr_->enqueueCommittedTrajectoryShadowValidation(
+                            "MAP_COMMIT")) {
+                    shadow_last_enqueued_map_version_ = health.map_version;
+                }
+            }
+            if (cfg_.trajectory_guard_en && machine_state_ == FOLLOW_TRAJ &&
+                !rawCloudCommittedTrajectorySafe()) {
+                activateEmergencyBrake("main_pre_raw_cloud");
                 return;
             }
             if (cfg_.trajectory_guard_en && machine_state_ == FOLLOW_TRAJ &&

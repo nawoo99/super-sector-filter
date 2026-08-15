@@ -1,0 +1,1222 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-08-13-22-22-45-518564-livox-2535588
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [waypoint_mission-1]: process started with pid [2535589]
+[INFO] [perfect_drone_node-2]: process started with pid [2535591]
+[INFO] [fsm_node-3]: process started with pid [2535593]
+[waypoint_mission-1] [WARN] [1786627365.572865890] [waypoint_mission]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mission_planner/config/waypoint.yaml
+[waypoint_mission-1] [WARN] [1786627365.572942198] [waypoint_mission]:  -- [MissionPlanner] Load data by file name: /root/super_ws/src/SUPER/mission_planner/data/loop24.txt
+[fsm_node-3]  -- [Bench] Use sim time is false, begin replay.
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_shadow_v10.yaml
+[fsm_node-3] [0;32m Load param fsm/timer_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_goal_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_yaw_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/replan_rate success: [0;0m15
+[fsm_node-3] [0;32m Load param fsm/click_height success: [0;0m1.5
+[fsm_node-3] [0;32m Load param fsm/cmd_topic success: [0;0m/planning/pos_cmd
+[fsm_node-3] [0;32m Load param fsm/mpc_cmd_topic success: [0;0m/planning_cmd/poly_traj
+[fsm_node-3] [0;32m Load param fsm/click_goal_topic success: [0;0m/planning/click_goal
+[fsm_node-3] [0;33m Load param fsm/map_readiness/enable failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_accepted_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_committed_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_commit_lag_scans failed, use default value: [0;0m5
+[fsm_node-3] [0;33m Load param fsm/map_readiness/min_scan_span_s failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_cloud_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;33m Load param fsm/map_readiness/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m1
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/max_map_age_s failed, use default value: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0.2
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_min_duration_s failed, use default value: [0;0m0.4
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_duration_s failed, use default value: [0;0m2
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_acc_mps2 failed, use default value: [0;0m15
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_max_jerk_mps3 failed, use default value: [0;0m120
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_shadow_v10.yaml
+[fsm_node-3] [0;32m Load param rog_map/esdf/resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/esdf/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/esdf/local_update_box success: [0;0m[5 5 3 ]
+[fsm_node-3] [0;32m Load param rog_map/load_pcd_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/threshold success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/fix_map_origin success: [0;0m[0 0 1.5 ]
+[fsm_node-3] [0;32m Load param rog_map/frontier_extraction_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/cloud_topic success: [0;0m/cloud_sector
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_topic success: [0;0m/lidar_slam/odom
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_timeout success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/use_dynamic_reconfigure success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/pub_unknown_map_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_id success: [0;0mworld
+[fsm_node-3] [0;32m Load param rog_map/visualization/time_rate success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_rate success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/range success: [0;0m[15 15 4 ]
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [0;32m Load param rog_map/inflation_resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_step success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/inflation_step success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/intensity_thresh success: [0;0m-10
+[fsm_node-3] [0;32m Load param rog_map/map_size success: [0;0m[70 70 6 ]
+[fsm_node-3] [0;32m Load param rog_map/point_filt_num success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/raycasting/batch_update_size success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/unk_thresh success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_hit success: [0;0m0.9
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_miss success: [0;0m0.49
+[perfect_drone_node-2] [WARN] [1786627365.676133120] [perfect_tracking]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed8.yaml
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_min success: [0;0m0.12
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_max success: [0;0m0.98
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_occ success: [0;0m0.85
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/ray_range success: [0;0m[0.5 100 ]
+[fsm_node-3] [0;32m Load param rog_map/raycasting/local_update_box success: [0;0m[100 100 5 ]
+[fsm_node-3] [0;32m Load param rog_map/virtual_ground_height success: [0;0m-0.1
+[fsm_node-3] [0;32m Load param rog_map/virtual_ceil_height success: [0;0m3.5
+[fsm_node-3] [32m -- [RM-Config] inflation_resolution: 0.1[0m
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: ORIGIN_AT_CORNER.
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: virtual_ceil_height: 3.1500000000000004, virtual_ground_height: 0.25.
+[fsm_node-3] [34m	[ROG] n_free: 1[0m
+[fsm_node-3] [34m	[ROG] n_occ: 1[0m
+[fsm_node-3] [34m	[ROG] l_hit: 2.19722[0m
+[fsm_node-3] [34m	[ROG] l_miss: -0.0400053[0m
+[fsm_node-3] [34m	[ROG] l_min: -1.99243[0m
+[fsm_node-3] [34m	[ROG] l_max: 3.89182[0m
+[fsm_node-3] [34m	[ROG] l_occ: 1.7346[0m
+[fsm_node-3] [34m	[ROG] l_free: -0.00399995[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [CounterMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 709 709  69[0m
+[fsm_node-3] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [InfMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 709 709  69[0m
+[fsm_node-3] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[fsm_node-3] [ProbMap] virtual_ceil_height: 3.15
+[fsm_node-3] [ProbMap] virtual_ground_height: 0.25
+[fsm_node-3] [33m -- [ProbMap] Map sliding disabled, set origin to [  0   0 1.5] -- [0m
+[perfect_drone_node-2] Failed to find match for field 'intensity'.
+[fsm_node-3] [33m -- [Prob-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [ProbMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.05[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 1401 1401  121[0m
+[fsm_node-3] [32m	local_map_size_d: 70.05 70.05  6.05[0m
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_shadow_v10.yaml
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_shadow_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/pos_constraint_type success: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/piece_num failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/uniform_time_en failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/block_energy_cost success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/opt_accuracy success: [0;0m5e-06
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/integral_reso success: [0;0m15
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_t success: [0;0m1e+07
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_ts failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_pos success: [0;0m5e+09
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_vel success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_acc success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_jerk success: [0;0m-5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_attract success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_thr success: [0;0m-1
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_shadow_v10.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m12
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m10
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_clr failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/clearance_margin failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/print_log success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/detailed_log_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/backup_traj_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/goal_vel_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/goal_yaw_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/visual_process success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/use_fov_cut success: [0;0m0
+[fsm_node-3] [0;33m Load param super_planner/fov_horizontal_angle failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param super_planner/fov_center_heading failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/frontend_in_known_free success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0.2
+[fsm_node-3] [0;32m Load param super_planner/safe_corridor_line_max_length success: [0;0m6
+[fsm_node-3] [0;32m Load param super_planner/sensing_horizon success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/obs_skip_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/replan_forward_dt success: [0;0m0.1
+[fsm_node-3] [0;32m Load param super_planner/corridor_bound_dis success: [0;0m0.8
+[fsm_node-3] [0;32m Load param super_planner/corridor_line_max_length success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/planning_horizon success: [0;0m7
+[fsm_node-3] [0;32m Load param super_planner/receding_dis success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/robot_r success: [0;0m0.2
+[fsm_node-3] [0;33m Load param super_planner/corridor_pref_margin failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/iris_iter_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/yaw_mode success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/mpc_horizon success: [0;0m15
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [INFO] [1786627367.116056498] [fsm_node]:  -- [TRAJ_GUARD] mode=shadow sample_dt=0.0050s shadow_min_interval=0.000s inflation_radius=0.300m robot_r=0.200m additional_clearance=0.200m clearance_offsets=32
+[fsm_node-3] [38;2;050;205;050m -- [Viz] Set resolution_ to 0.05
+[fsm_node-3] [0m[38;2;050;205;050m -- [Viz] Set visualization_en_ to false
+[fsm_node-3] [0mLoad config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_shadow_v10.yaml
+[fsm_node-3] [0;32m Load param astar/map_voxel_num success: [0;0m[500 500 100 ]
+[fsm_node-3] [0;32m Load param astar/allow_diag success: [0;0m1
+[fsm_node-3] [0;32m Load param astar/debug_visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param astar/heu_type success: [0;0m2
+[fsm_node-3] [0;32m Load param astar/visual_process success: [0;0m0
+[fsm_node-3] [32m -- [RM] Init Astar-map.[0m
+[fsm_node-3] [34m	map index size: 250 250  50[0m
+[fsm_node-3] [34m	map vox_num: 501 501 101[0m
+[fsm_node-3] [33m -- [Fsm] CLICKGOAL ENABLE.[0m
+[fsm_node-3] [INFO] [1786627369.313270318] [fsm_node]: [32m -- [Fsm-Test] Begin.[0m
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [INIT] to [WAIT_GOAL].
+[fsm_node-3] [0m[32m -- [Fsm] Get goal at [0m24.025 24.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025 24.025  1.525]; goal yaw: 0 deg[0m
+[fsm_node-3] [INFO] [1786627369.657683350] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1786627369.727161964] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=PlanFromRest/with_backup gen=1 map=5 samples=270 range=[0.107,1.451] validation_ms=6.919 map_wait_ms=5.957 map_query_ms=0.796 traj_eval_ms=0.019 voxelize_ms=0.056 action=async_after_commit
+[fsm_node-3] [INFO] [1786627369.729156203] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=1 map=5 samples=269 range=[0.114,1.451] validation_ms=1.870 map_wait_ms=0.000 map_query_ms=1.773 traj_eval_ms=0.019 voxelize_ms=0.045 action=async_after_commit
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [WAIT_GOAL] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m[32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627369.911122721] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=2 map=5 samples=233 range=[0.069,1.226] validation_ms=0.879 map_wait_ms=0.000 map_query_ms=0.789 traj_eval_ms=0.018 voxelize_ms=0.039 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627369.973566981] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=3 map=5 samples=219 range=[0.062,1.148] validation_ms=0.831 map_wait_ms=0.000 map_query_ms=0.749 traj_eval_ms=0.017 voxelize_ms=0.034 action=async_after_commit
+[fsm_node-3] [WARN] [1786627370.123670071] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.150333939.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627370.190736809] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=4 map=5 samples=200 range=[0.066,1.061] validation_ms=0.536 map_wait_ms=0.000 map_query_ms=0.449 traj_eval_ms=0.016 voxelize_ms=0.042 action=async_after_commit
+[fsm_node-3] [INFO] [1786627370.207397024] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=4 map=6 samples=197 range=[0.083,1.061] validation_ms=0.763 map_wait_ms=0.000 map_query_ms=0.689 traj_eval_ms=0.016 voxelize_ms=0.032 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627370.271998608] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=5 map=6 samples=196 range=[0.081,1.055] validation_ms=0.757 map_wait_ms=0.000 map_query_ms=0.681 traj_eval_ms=0.016 voxelize_ms=0.033 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 1.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627370.343414040] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=6 map=6 samples=200 range=[0.071,1.062] validation_ms=0.512 map_wait_ms=0.000 map_query_ms=0.430 traj_eval_ms=0.016 voxelize_ms=0.034 action=async_after_commit
+[fsm_node-3] [INFO] [1786627370.406684435] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=6 map=7 samples=187 range=[0.135,1.062] validation_ms=0.418 map_wait_ms=0.000 map_query_ms=0.366 traj_eval_ms=0.010 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [WARN] [1786627370.444545838] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.1015949.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627370.514936440] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=7 map=7 samples=199 range=[0.070,1.057] validation_ms=0.451 map_wait_ms=0.000 map_query_ms=0.396 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627370.579988962] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=8 map=7 samples=200 range=[0.065,1.055] validation_ms=0.433 map_wait_ms=0.000 map_query_ms=0.383 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627370.640617827] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=9 map=7 samples=182 range=[0.060,0.961] validation_ms=0.663 map_wait_ms=0.000 map_query_ms=0.595 traj_eval_ms=0.015 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627370.722447356] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=10 map=7 samples=181 range=[0.082,0.980] validation_ms=0.783 map_wait_ms=0.001 map_query_ms=0.714 traj_eval_ms=0.014 voxelize_ms=0.029 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627370.785661374] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=11 map=7 samples=200 range=[0.063,1.056] validation_ms=0.545 map_wait_ms=0.001 map_query_ms=0.472 traj_eval_ms=0.015 voxelize_ms=0.032 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627370.854174576] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=12 map=7 samples=194 range=[0.068,1.033] validation_ms=0.463 map_wait_ms=0.000 map_query_ms=0.403 traj_eval_ms=0.013 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627370.924316521] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=13 map=7 samples=200 range=[0.070,1.064] validation_ms=0.448 map_wait_ms=0.000 map_query_ms=0.397 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [WARN] [1786627371.021113128] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.09713838.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.084518331] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=14 map=7 samples=196 range=[0.063,1.035] validation_ms=0.449 map_wait_ms=0.000 map_query_ms=0.396 traj_eval_ms=0.010 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.144602185] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=15 map=7 samples=194 range=[0.060,1.021] validation_ms=0.441 map_wait_ms=0.000 map_query_ms=0.385 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.224170771] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=16 map=7 samples=194 range=[0.079,1.040] validation_ms=0.481 map_wait_ms=0.000 map_query_ms=0.430 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.284028302] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=17 map=7 samples=203 range=[0.060,1.066] validation_ms=0.453 map_wait_ms=0.000 map_query_ms=0.401 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 2.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.373371214] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=18 map=7 samples=202 range=[0.089,1.092] validation_ms=0.462 map_wait_ms=0.000 map_query_ms=0.402 traj_eval_ms=0.010 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.451292031] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=19 map=7 samples=200 range=[0.077,1.068] validation_ms=0.725 map_wait_ms=0.001 map_query_ms=0.654 traj_eval_ms=0.014 voxelize_ms=0.030 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.511892022] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=20 map=7 samples=199 range=[0.061,1.050] validation_ms=0.428 map_wait_ms=0.000 map_query_ms=0.378 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.592016095] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=21 map=7 samples=197 range=[0.080,1.059] validation_ms=0.419 map_wait_ms=0.000 map_query_ms=0.368 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.648272099] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=22 map=7 samples=200 range=[0.056,1.048] validation_ms=0.444 map_wait_ms=0.000 map_query_ms=0.384 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.703389315] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=23 map=7 samples=204 range=[0.055,1.069] validation_ms=0.436 map_wait_ms=0.000 map_query_ms=0.386 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.755425621] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=24 map=7 samples=196 range=[0.052,1.026] validation_ms=0.413 map_wait_ms=0.000 map_query_ms=0.365 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627371.808284961] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=25 map=7 samples=183 range=[0.053,0.959] validation_ms=0.396 map_wait_ms=0.000 map_query_ms=0.342 traj_eval_ms=0.009 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [WARN] [1786627371.837358936] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=25 map=8 from_tt=0.082 collision_tt=0.187 collision_p=[13.517,12.894,1.462] samples=177 validation_ms=0.093 map_wait_ms=0.000 map_query_ms=0.049 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [WARN] [1786627371.842103813] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786627371.842399084] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786627371.842409786] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786627371.842417835] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786627371.887342199] [fsm_node]:  -- [SUPER] The start point in obstacle, this should not happen since the start point should be shift before pathsearch.
+[fsm_node-3] [WARN] [1786627371.887420846] [fsm_node]:  -- [SUPER] PathSearch for new path failed
+[fsm_node-3] [WARN] [1786627371.887434491] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.179185427504973[0m
+[fsm_node-3] [33m	 box_min = 12.824999999999999 12.175000000000001  0.853721699892312[0m
+[fsm_node-3] [33m	 box_max =14.526714153724042 13.878595699371562  2.075000000000000[0m
+[fsm_node-3] [33m	 seed line =13.625000000000000 12.975000000000001  1.475000000000000 --> 13.726714153724041 13.078595699371562  1.453721699892312[0m
+[fsm_node-3] [WARN] [1786627371.970821145] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786627371.970880099] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return FAILED, replan Failed return
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627372.068761584] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=26 map=8 samples=232 range=[0.049,1.203] validation_ms=0.504 map_wait_ms=0.000 map_query_ms=0.425 traj_eval_ms=0.016 voxelize_ms=0.037 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627372.141269143] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=27 map=8 samples=202 range=[0.056,1.059] validation_ms=0.402 map_wait_ms=0.000 map_query_ms=0.354 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627372.204142280] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=28 map=8 samples=220 range=[0.052,1.145] validation_ms=0.436 map_wait_ms=0.000 map_query_ms=0.383 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627372.271977759] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=29 map=8 samples=215 range=[0.054,1.122] validation_ms=0.426 map_wait_ms=0.000 map_query_ms=0.375 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [WARN] [1786627372.312351983] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=29 map=9 from_tt=0.095 collision_tt=0.280 collision_p=[17.150,15.850,1.450] samples=207 validation_ms=0.200 map_wait_ms=0.000 map_query_ms=0.122 traj_eval_ms=0.015 voxelize_ms=0.030 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 3.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627372.342993497] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=30 map=9 from_tt=0.059 collision_tt=0.214 collision_p=[17.150,15.850,1.450] samples=207 validation_ms=0.147 map_wait_ms=0.000 map_query_ms=0.061 traj_eval_ms=0.013 voxelize_ms=0.047 action=async_after_commit
+[fsm_node-3] [WARN] [1786627372.447536152] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.098223233.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627372.537095933] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=31 map=9 from_tt=0.089 collision_tt=0.089 collision_p=[17.369,16.162,1.501] samples=172 validation_ms=0.047 map_wait_ms=0.000 map_query_ms=0.004 traj_eval_ms=0.008 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.025000000000002 24.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.025000000000002 24.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786627372.634125017] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.096969648.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627372.699310912] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=32 map=9 from_tt=0.065 collision_tt=0.415 collision_p=[19.908,20.138,1.990] samples=181 validation_ms=0.204 map_wait_ms=0.000 map_query_ms=0.154 traj_eval_ms=0.010 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627372.781625937] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=33 map=9 from_tt=0.082 collision_tt=0.357 collision_p=[19.950,20.150,1.950] samples=173 validation_ms=0.160 map_wait_ms=0.000 map_query_ms=0.115 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627372.864540083] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=34 map=9 from_tt=0.083 collision_tt=0.268 collision_p=[19.906,20.170,1.960] samples=158 validation_ms=0.121 map_wait_ms=0.000 map_query_ms=0.080 traj_eval_ms=0.008 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627372.918909469] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=35 map=9 from_tt=0.054 collision_tt=0.184 collision_p=[19.902,20.165,1.963] samples=146 validation_ms=0.097 map_wait_ms=0.000 map_query_ms=0.059 traj_eval_ms=0.007 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627372.979883264] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=36 map=9 from_tt=0.061 collision_tt=0.131 collision_p=[19.905,20.173,1.963] samples=136 validation_ms=0.079 map_wait_ms=0.001 map_query_ms=0.042 traj_eval_ms=0.007 voxelize_ms=0.014 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627373.021796879] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=37 map=9 from_tt=0.042 collision_tt=0.072 collision_p=[19.912,20.189,1.962] samples=155 validation_ms=0.077 map_wait_ms=0.000 map_query_ms=0.026 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627373.053593699] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=38 map=9 from_tt=0.032 collision_tt=0.057 collision_p=[20.050,20.350,1.950] samples=158 validation_ms=0.060 map_wait_ms=0.001 map_query_ms=0.016 traj_eval_ms=0.009 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [WARN] [1786627373.111181360] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=38 map=10 from_tt=0.089 collision_tt=0.089 collision_p=[20.119,20.665,1.953] samples=147 validation_ms=0.055 map_wait_ms=0.000 map_query_ms=0.003 traj_eval_ms=0.011 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627373.116654552] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786627373.165906922] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786627373.165974046] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090645785.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627373.198859030] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=39 map=10 samples=185 range=[0.032,0.948] validation_ms=0.612 map_wait_ms=0.000 map_query_ms=0.547 traj_eval_ms=0.013 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627373.234951822] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=40 map=10 samples=178 range=[0.027,0.910] validation_ms=0.529 map_wait_ms=0.000 map_query_ms=0.467 traj_eval_ms=0.013 voxelize_ms=0.025 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627373.297789533] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=41 map=10 samples=164 range=[0.024,0.839] validation_ms=0.453 map_wait_ms=0.000 map_query_ms=0.407 traj_eval_ms=0.009 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 4.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627373.356829363] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=42 map=10 samples=154 range=[0.017,0.778] validation_ms=0.288 map_wait_ms=0.000 map_query_ms=0.250 traj_eval_ms=0.007 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627373.415916413] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=43 map=10 samples=142 range=[0.076,0.778] validation_ms=0.305 map_wait_ms=0.000 map_query_ms=0.260 traj_eval_ms=0.008 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627373.478872622] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=44 map=10 samples=129 range=[0.139,0.778] validation_ms=0.230 map_wait_ms=0.000 map_query_ms=0.197 traj_eval_ms=0.006 voxelize_ms=0.014 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627373.544571814] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=45 map=10 samples=116 range=[0.205,0.778] validation_ms=0.224 map_wait_ms=0.000 map_query_ms=0.193 traj_eval_ms=0.006 voxelize_ms=0.013 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627373.606770509] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=46 map=10 samples=104 range=[0.267,0.778] validation_ms=0.169 map_wait_ms=0.000 map_query_ms=0.143 traj_eval_ms=0.005 voxelize_ms=0.010 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627373.716180947] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/no_backup segment=EXP status=OCCUPIED gen=47 map=10 from_tt=0.047 collision_tt=0.817 collision_p=[21.565,23.848,1.877] samples=322 validation_ms=0.291 map_wait_ms=0.000 map_query_ms=0.226 traj_eval_ms=0.014 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627373.823288155] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=48 map=10 from_tt=0.088 collision_tt=0.748 collision_p=[21.459,23.737,1.432] samples=271 validation_ms=0.298 map_wait_ms=0.000 map_query_ms=0.228 traj_eval_ms=0.012 voxelize_ms=0.036 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627373.881237790] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=49 map=10 from_tt=0.058 collision_tt=0.723 collision_p=[20.977,23.593,1.410] samples=279 validation_ms=0.317 map_wait_ms=0.000 map_query_ms=0.259 traj_eval_ms=0.012 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627373.937590770] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=50 map=10 from_tt=0.056 collision_tt=0.661 collision_p=[20.957,23.545,1.511] samples=269 validation_ms=0.243 map_wait_ms=0.000 map_query_ms=0.184 traj_eval_ms=0.015 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627373.988652821] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=51 map=10 from_tt=0.051 collision_tt=0.711 collision_p=[19.898,23.446,1.342] samples=255 validation_ms=0.281 map_wait_ms=0.000 map_query_ms=0.224 traj_eval_ms=0.012 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627374.052256243] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=52 map=10 from_tt=0.053 collision_tt=0.643 collision_p=[19.992,23.393,1.407] samples=239 validation_ms=0.272 map_wait_ms=0.000 map_query_ms=0.219 traj_eval_ms=0.011 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627374.108558946] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=52 map=11 from_tt=0.109 collision_tt=0.564 collision_p=[20.759,23.415,1.409] samples=228 validation_ms=0.208 map_wait_ms=0.000 map_query_ms=0.156 traj_eval_ms=0.011 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627374.118456076] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=53 map=11 from_tt=0.053 collision_tt=0.538 collision_p=[20.786,23.454,1.370] samples=177 validation_ms=0.211 map_wait_ms=0.000 map_query_ms=0.167 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627374.196770983] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=54 map=11 from_tt=0.065 collision_tt=0.690 collision_p=[19.996,23.428,1.298] samples=163 validation_ms=0.363 map_wait_ms=0.000 map_query_ms=0.320 traj_eval_ms=0.009 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [WARN] [1786627374.307747226] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=54 map=12 from_tt=0.176 collision_tt=0.691 collision_p=[19.993,23.429,1.298] samples=141 validation_ms=0.200 map_wait_ms=0.000 map_query_ms=0.167 traj_eval_ms=0.007 voxelize_ms=0.012 action=async_after_commit
+[fsm_node-3] [WARN] [1786627374.324136908] [fsm_node]:  -- [SUPER] Replan over time(0.1267538070678711)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786627374.324202845] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [32m -- [Fsm 5.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627374.374996010] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=55 map=12 from_tt=0.050 collision_tt=0.285 collision_p=[20.850,23.450,1.250] samples=129 validation_ms=0.132 map_wait_ms=0.000 map_query_ms=0.084 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627374.433104685] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=56 map=12 from_tt=0.058 collision_tt=0.223 collision_p=[20.843,23.442,1.300] samples=129 validation_ms=0.110 map_wait_ms=0.000 map_query_ms=0.065 traj_eval_ms=0.007 voxelize_ms=0.012 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627374.509608583] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=57 map=12 from_tt=0.076 collision_tt=0.171 collision_p=[20.802,23.447,1.299] samples=157 validation_ms=0.115 map_wait_ms=0.000 map_query_ms=0.052 traj_eval_ms=0.015 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [WARN] [1786627374.600889520] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090979133.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627374.635294719] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=58 map=12 from_tt=0.034 collision_tt=0.054 collision_p=[20.503,23.503,1.289] samples=121 validation_ms=0.053 map_wait_ms=0.001 map_query_ms=0.017 traj_eval_ms=0.007 voxelize_ms=0.014 action=async_after_commit
+[fsm_node-3] [33m Yaw rate too large, 5.349276664755775[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627374.707373487] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=59 map=12 from_tt=0.048 collision_tt=0.163 collision_p=[19.692,23.857,1.282] samples=186 validation_ms=0.115 map_wait_ms=0.000 map_query_ms=0.066 traj_eval_ms=0.011 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627374.762252518] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=60 map=12 from_tt=0.037 collision_tt=0.097 collision_p=[19.693,23.857,1.282] samples=144 validation_ms=0.068 map_wait_ms=0.000 map_query_ms=0.024 traj_eval_ms=0.007 voxelize_ms=0.014 action=async_after_commit
+[fsm_node-3] [33m Yaw rate too large, 6.000656708269873[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627374.836480379] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=61 map=12 from_tt=0.045 collision_tt=0.045 collision_p=[19.630,23.889,1.282] samples=133 validation_ms=0.035 map_wait_ms=0.000 map_query_ms=0.002 traj_eval_ms=0.006 voxelize_ms=0.012 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627374.912908839] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=62 map=12 from_tt=0.055 collision_tt=0.055 collision_p=[19.312,24.051,1.278] samples=255 validation_ms=0.058 map_wait_ms=0.000 map_query_ms=0.004 traj_eval_ms=0.012 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627374.985587353] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=63 map=12 samples=262 range=[0.062,1.364] validation_ms=0.496 map_wait_ms=0.000 map_query_ms=0.432 traj_eval_ms=0.013 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627375.052001106] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=64 map=12 samples=259 range=[0.062,1.348] validation_ms=0.509 map_wait_ms=0.000 map_query_ms=0.450 traj_eval_ms=0.012 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627375.111373551] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=65 map=12 samples=252 range=[0.055,1.306] validation_ms=0.623 map_wait_ms=0.000 map_query_ms=0.568 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627375.169380220] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=66 map=12 samples=202 range=[0.048,1.051] validation_ms=0.375 map_wait_ms=0.000 map_query_ms=0.319 traj_eval_ms=0.010 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627375.271847120] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=67 map=12 from_tt=0.084 collision_tt=0.859 collision_p=[13.427,21.678,1.001] samples=228 validation_ms=0.347 map_wait_ms=0.000 map_query_ms=0.279 traj_eval_ms=0.014 voxelize_ms=0.031 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 6.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627375.334560942] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=68 map=12 samples=211 range=[0.062,1.108] validation_ms=0.412 map_wait_ms=0.000 map_query_ms=0.359 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627375.388243771] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=69 map=12 from_tt=0.054 collision_tt=0.649 collision_p=[13.450,22.050,0.650] samples=213 validation_ms=0.296 map_wait_ms=0.000 map_query_ms=0.244 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627375.444147565] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=70 map=12 samples=216 range=[0.056,1.129] validation_ms=0.427 map_wait_ms=0.000 map_query_ms=0.373 traj_eval_ms=0.010 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.185239937387077[0m
+[fsm_node-3] [33m	 box_min = 12.010497983090570 21.248871772408503  0.476781510258658[0m
+[fsm_node-3] [33m	 box_max =18.325000000000003 23.975000000000001  1.775000000000000[0m
+[fsm_node-3] [33m	 seed line =17.525000000000002 23.175000000000001  1.175000000000000 --> 12.810497983090571 22.048871772408503  1.076781510258658[0m
+[fsm_node-3] [WARN] [1786627375.505508516] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786627375.505567688] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return FAILED, replan Failed return
+[fsm_node-3] [WARN] [1786627375.510996827] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=70 map=13 from_tt=0.123 collision_tt=0.578 collision_p=[13.665,22.058,1.003] samples=203 validation_ms=0.239 map_wait_ms=0.000 map_query_ms=0.178 traj_eval_ms=0.010 voxelize_ms=0.033 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627375.588232267] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=71 map=13 from_tt=0.071 collision_tt=0.481 collision_p=[13.450,22.250,0.950] samples=220 validation_ms=0.209 map_wait_ms=0.000 map_query_ms=0.157 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627375.635547741] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=72 map=13 from_tt=0.047 collision_tt=0.402 collision_p=[13.499,22.241,1.065] samples=315 validation_ms=0.243 map_wait_ms=0.000 map_query_ms=0.164 traj_eval_ms=0.019 voxelize_ms=0.033 action=async_after_commit
+[fsm_node-3] [WARN] [1786627375.706383066] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=72 map=14 from_tt=0.118 collision_tt=0.403 collision_p=[13.492,22.242,1.066] samples=301 validation_ms=0.184 map_wait_ms=0.000 map_query_ms=0.113 traj_eval_ms=0.021 voxelize_ms=0.025 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627375.712296445] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=73 map=14 from_tt=0.063 collision_tt=0.353 collision_p=[13.376,22.363,0.982] samples=225 validation_ms=0.180 map_wait_ms=0.000 map_query_ms=0.122 traj_eval_ms=0.013 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [WARN] [1786627375.804798813] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=73 map=15 from_tt=0.155 collision_tt=0.350 collision_p=[13.397,22.356,0.982] samples=207 validation_ms=0.130 map_wait_ms=0.000 map_query_ms=0.079 traj_eval_ms=0.011 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627375.814523045] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.099110434.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627375.898008120] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=74 map=15 from_tt=0.083 collision_tt=0.188 collision_p=[13.367,22.363,0.982] samples=181 validation_ms=0.089 map_wait_ms=0.000 map_query_ms=0.045 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627375.962296291] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=75 map=15 from_tt=0.064 collision_tt=0.104 collision_p=[13.373,22.361,0.982] samples=166 validation_ms=0.066 map_wait_ms=0.000 map_query_ms=0.022 traj_eval_ms=0.008 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [WARN] [1786627376.006336134] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=75 map=16 from_tt=0.108 collision_tt=0.108 collision_p=[13.339,22.372,0.982] samples=158 validation_ms=0.044 map_wait_ms=0.001 map_query_ms=0.002 traj_eval_ms=0.009 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627376.040234108] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=76 map=16 from_tt=0.078 collision_tt=0.078 collision_p=[13.054,22.463,0.993] samples=208 validation_ms=0.073 map_wait_ms=0.000 map_query_ms=0.004 traj_eval_ms=0.010 voxelize_ms=0.038 action=async_after_commit
+[fsm_node-3] [INFO] [1786627376.108095034] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=76 map=17 samples=194 range=[0.145,1.108] validation_ms=0.610 map_wait_ms=0.000 map_query_ms=0.546 traj_eval_ms=0.013 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [WARN] [1786627376.177479667] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.13716355.
+[fsm_node-3] [WARN] [1786627376.272320838] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.094484487.
+[fsm_node-3] [32m -- [Fsm 7.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627376.366248471] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.093495562.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627376.413769593] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=77 map=18 from_tt=0.045 collision_tt=0.340 collision_p=[8.083,21.711,1.983] samples=151 validation_ms=2.395 map_wait_ms=2.133 map_query_ms=0.208 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [WARN] [1786627376.414087736] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=77 map=18 from_tt=0.047 collision_tt=0.337 collision_p=[8.099,21.714,1.981] samples=150 validation_ms=0.237 map_wait_ms=0.000 map_query_ms=0.189 traj_eval_ms=0.011 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627376.493709894] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=78 map=18 samples=189 range=[0.081,1.021] validation_ms=0.615 map_wait_ms=0.000 map_query_ms=0.550 traj_eval_ms=0.014 voxelize_ms=0.025 action=async_after_commit
+[fsm_node-3] [WARN] [1786627376.586920079] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.093660693.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786627376.710875718] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.123551774.
+[fsm_node-3] [INFO] [1786627376.809691547] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=78 map=19 samples=126 range=[0.398,1.021] validation_ms=0.383 map_wait_ms=0.000 map_query_ms=0.339 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [WARN] [1786627376.820004813] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.108894794.
+[fsm_node-3] [WARN] [1786627376.945308099] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.125071529.
+[fsm_node-3] [INFO] [1786627377.009783863] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=78 map=20 samples=86 range=[0.598,1.021] validation_ms=0.245 map_wait_ms=0.000 map_query_ms=0.214 traj_eval_ms=0.006 voxelize_ms=0.012 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627377.018467694] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=79 map=20 from_tt=0.072 collision_tt=0.707 collision_p=[2.500,22.246,1.664] samples=289 validation_ms=0.488 map_wait_ms=0.000 map_query_ms=0.397 traj_eval_ms=0.020 voxelize_ms=0.037 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627377.070488203] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=80 map=20 from_tt=0.052 collision_tt=0.637 collision_p=[2.199,22.394,1.875] samples=252 validation_ms=0.449 map_wait_ms=0.000 map_query_ms=0.362 traj_eval_ms=0.018 voxelize_ms=0.034 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627377.152672947] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=81 map=20 from_tt=0.082 collision_tt=1.052 collision_p=[0.490,23.586,1.163] samples=334 validation_ms=0.689 map_wait_ms=0.000 map_query_ms=0.561 traj_eval_ms=0.023 voxelize_ms=0.065 action=async_after_commit
+[fsm_node-3] [WARN] [1786627377.266655707] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.114536677.
+[fsm_node-3] [WARN] [1786627377.304774363] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=81 map=21 from_tt=0.234 collision_tt=1.009 collision_p=[0.593,23.591,1.187] samples=303 validation_ms=0.350 map_wait_ms=0.000 map_query_ms=0.283 traj_eval_ms=0.015 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 8.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627377.339508490] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=82 map=21 samples=214 range=[0.072,1.132] validation_ms=0.556 map_wait_ms=0.000 map_query_ms=0.490 traj_eval_ms=0.014 voxelize_ms=0.030 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627377.423629908] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=83 map=21 samples=200 range=[0.084,1.078] validation_ms=0.654 map_wait_ms=0.000 map_query_ms=0.583 traj_eval_ms=0.014 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627377.510982848] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=84 map=21 from_tt=0.087 collision_tt=0.777 collision_p=[-1.250,22.550,0.650] samples=185 validation_ms=0.316 map_wait_ms=0.000 map_query_ms=0.267 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627377.572434531] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=85 map=21 samples=203 range=[0.061,1.070] validation_ms=0.450 map_wait_ms=0.000 map_query_ms=0.386 traj_eval_ms=0.010 voxelize_ms=0.033 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627377.641522769] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=86 map=21 samples=199 range=[0.069,1.057] validation_ms=0.409 map_wait_ms=0.000 map_query_ms=0.356 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627377.725772256] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=87 map=21 samples=198 range=[0.084,1.069] validation_ms=0.410 map_wait_ms=0.000 map_query_ms=0.360 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627377.806749690] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=88 map=21 samples=208 range=[0.081,1.115] validation_ms=0.398 map_wait_ms=0.000 map_query_ms=0.348 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627377.861742616] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=89 map=21 samples=201 range=[0.055,1.053] validation_ms=0.410 map_wait_ms=0.000 map_query_ms=0.361 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627377.932379897] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=90 map=21 from_tt=0.070 collision_tt=0.825 collision_p=[-6.412,22.793,1.470] samples=203 validation_ms=0.337 map_wait_ms=0.000 map_query_ms=0.287 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627377.988910287] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=91 map=21 samples=201 range=[0.056,1.055] validation_ms=0.409 map_wait_ms=0.000 map_query_ms=0.350 traj_eval_ms=0.012 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [INFO] [1786627378.015430775] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=91 map=22 samples=196 range=[0.083,1.055] validation_ms=0.394 map_wait_ms=0.000 map_query_ms=0.344 traj_eval_ms=0.011 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627378.052545616] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=92 map=22 from_tt=0.063 collision_tt=0.683 collision_p=[-6.850,22.550,1.850] samples=199 validation_ms=0.299 map_wait_ms=0.000 map_query_ms=0.249 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [WARN] [1786627378.112668098] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=92 map=23 from_tt=0.124 collision_tt=0.684 collision_p=[-6.850,22.550,1.850] samples=187 validation_ms=0.271 map_wait_ms=0.000 map_query_ms=0.222 traj_eval_ms=0.012 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627378.118090864] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=93 map=23 from_tt=0.065 collision_tt=0.570 collision_p=[-6.702,22.600,1.809] samples=193 validation_ms=0.266 map_wait_ms=0.000 map_query_ms=0.204 traj_eval_ms=0.010 voxelize_ms=0.034 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627378.202951116] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=94 map=23 from_tt=0.084 collision_tt=0.499 collision_p=[-6.924,22.600,1.707] samples=198 validation_ms=0.351 map_wait_ms=0.000 map_query_ms=0.289 traj_eval_ms=0.012 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627378.256939262] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=95 map=23 samples=198 range=[0.054,1.034] validation_ms=0.644 map_wait_ms=0.000 map_query_ms=0.574 traj_eval_ms=0.013 voxelize_ms=0.036 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 9.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627378.367855295] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.11146916.
+[fsm_node-3] [INFO] [1786627378.411230843] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=95 map=24 samples=167 range=[0.208,1.034] validation_ms=0.332 map_wait_ms=0.000 map_query_ms=0.290 traj_eval_ms=0.008 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627378.444678971] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=96 map=24 from_tt=0.076 collision_tt=0.551 collision_p=[-8.808,23.176,1.821] samples=160 validation_ms=0.339 map_wait_ms=0.000 map_query_ms=0.290 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [WARN] [1786627378.535202128] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090670741.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627378.607518434] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=97 map=24 from_tt=0.072 collision_tt=0.377 collision_p=[-9.007,23.050,1.725] samples=215 validation_ms=0.244 map_wait_ms=0.000 map_query_ms=0.184 traj_eval_ms=0.013 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627378.655548975] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=98 map=24 from_tt=0.048 collision_tt=0.308 collision_p=[-9.030,23.063,1.700] samples=190 validation_ms=0.208 map_wait_ms=0.000 map_query_ms=0.160 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627378.729912253] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP_TO_BACKUP_STITCH status=OCCUPIED gen=99 map=24 from_tt=0.074 collision_tt=0.259 collision_p=[-9.028,23.060,1.716] samples=155 validation_ms=0.159 map_wait_ms=0.000 map_query_ms=0.113 traj_eval_ms=0.009 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627378.805833530] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=100 map=24 from_tt=0.076 collision_tt=0.186 collision_p=[-9.031,23.065,1.713] samples=155 validation_ms=0.116 map_wait_ms=0.000 map_query_ms=0.072 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627378.874110030] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=101 map=24 from_tt=0.068 collision_tt=0.108 collision_p=[-9.020,23.061,1.715] samples=152 validation_ms=0.071 map_wait_ms=0.000 map_query_ms=0.030 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627378.928643703] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP_TO_BACKUP_STITCH status=OCCUPIED gen=102 map=24 from_tt=0.054 collision_tt=0.054 collision_p=[-9.116,23.094,1.700] samples=126 validation_ms=0.036 map_wait_ms=0.000 map_query_ms=0.004 traj_eval_ms=0.006 voxelize_ms=0.013 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627379.017558748] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=103 map=24 from_tt=0.089 collision_tt=0.164 collision_p=[-10.223,23.552,1.624] samples=105 validation_ms=0.063 map_wait_ms=0.000 map_query_ms=0.033 traj_eval_ms=0.005 voxelize_ms=0.012 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627379.065876353] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=CARRY_BACKUP status=OCCUPIED gen=104 map=24 from_tt=0.048 collision_tt=0.073 collision_p=[-10.213,23.547,1.624] samples=138 validation_ms=0.066 map_wait_ms=0.000 map_query_ms=0.022 traj_eval_ms=0.010 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [WARN] [1786627379.172449288] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090922615.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627379.233692464] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=105 map=24 from_tt=0.061 collision_tt=0.131 collision_p=[-11.213,23.891,1.616] samples=233 validation_ms=0.099 map_wait_ms=0.000 map_query_ms=0.025 traj_eval_ms=0.013 voxelize_ms=0.039 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627379.319020989] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=106 map=24 from_tt=0.085 collision_tt=0.085 collision_p=[-11.273,23.900,1.613] samples=216 validation_ms=0.064 map_wait_ms=0.000 map_query_ms=0.003 traj_eval_ms=0.013 voxelize_ms=0.025 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 10.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627379.383371107] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786627379.385208456] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786627379.385223078] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786627379.385231705] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786627379.418071891] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=106 map=25 from_tt=0.184 collision_tt=0.184 collision_p=[-11.709,23.883,1.590] samples=196 validation_ms=0.076 map_wait_ms=0.000 map_query_ms=0.003 traj_eval_ms=0.015 voxelize_ms=0.033 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627379.445015757] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=107 map=25 from_tt=0.060 collision_tt=0.060 collision_p=[-11.850,23.859,1.587] samples=180 validation_ms=0.057 map_wait_ms=0.000 map_query_ms=0.005 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [INFO] [1786627379.506311494] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=107 map=26 samples=168 range=[0.121,0.954] validation_ms=0.342 map_wait_ms=0.000 map_query_ms=0.298 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627379.535293739] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=108 map=26 from_tt=0.090 collision_tt=0.385 collision_p=[-15.030,23.485,1.938] samples=205 validation_ms=0.221 map_wait_ms=0.000 map_query_ms=0.136 traj_eval_ms=0.011 voxelize_ms=0.054 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627379.606074664] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=109 map=26 samples=200 range=[0.070,1.065] validation_ms=0.449 map_wait_ms=0.001 map_query_ms=0.395 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627379.667620597] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=110 map=26 samples=205 range=[0.061,1.079] validation_ms=0.483 map_wait_ms=0.000 map_query_ms=0.431 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [WARN] [1786627379.759104474] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.091903058.
+[fsm_node-3] [WARN] [1786627379.855365709] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.096012317.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627379.937229536] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=111 map=26 samples=214 range=[0.081,1.144] validation_ms=0.445 map_wait_ms=0.000 map_query_ms=0.394 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627380.015579797] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=112 map=26 from_tt=0.078 collision_tt=0.513 collision_p=[-20.246,24.803,1.703] samples=212 validation_ms=0.239 map_wait_ms=0.000 map_query_ms=0.184 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627380.079477737] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=113 map=26 samples=201 range=[0.063,1.061] validation_ms=0.411 map_wait_ms=0.001 map_query_ms=0.360 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [33m Yaw rate too large, 5.298184683225833[0m
+[fsm_node-3] [WARN] [1786627380.212158318] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.132914916.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627380.280761446] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=114 map=26 samples=180 range=[0.068,0.963] validation_ms=0.349 map_wait_ms=0.000 map_query_ms=0.307 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [INFO] [1786627380.313508545] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=114 map=27 samples=174 range=[0.101,0.963] validation_ms=0.417 map_wait_ms=0.000 map_query_ms=0.363 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 11.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627380.346700095] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=115 map=27 samples=175 range=[0.065,0.935] validation_ms=0.412 map_wait_ms=0.000 map_query_ms=0.368 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627380.382812506] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=116 map=27 samples=163 range=[0.036,0.843] validation_ms=0.311 map_wait_ms=0.000 map_query_ms=0.270 traj_eval_ms=0.008 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627380.425474493] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=117 map=27 samples=156 range=[0.024,0.796] validation_ms=0.301 map_wait_ms=0.000 map_query_ms=0.254 traj_eval_ms=0.007 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627380.482747795] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=118 map=27 samples=143 range=[0.015,0.721] validation_ms=0.271 map_wait_ms=0.000 map_query_ms=0.233 traj_eval_ms=0.007 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627380.543841007] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=119 map=27 samples=131 range=[0.010,0.656] validation_ms=0.313 map_wait_ms=0.000 map_query_ms=0.276 traj_eval_ms=0.009 voxelize_ms=0.014 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627380.611322459] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=120 map=27 samples=117 range=[0.012,0.590] validation_ms=0.206 map_wait_ms=0.000 map_query_ms=0.174 traj_eval_ms=0.007 voxelize_ms=0.012 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001  24.025000000000002   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001  24.025000000000002   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627380.673522627] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=121 map=27 samples=140 range=[0.008,0.700] validation_ms=0.211 map_wait_ms=0.000 map_query_ms=0.179 traj_eval_ms=0.006 voxelize_ms=0.013 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786627380.709862764] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=121 map=28 samples=133 range=[0.044,0.700] validation_ms=0.202 map_wait_ms=0.000 map_query_ms=0.169 traj_eval_ms=0.006 voxelize_ms=0.013 action=async_after_commit
+[fsm_node-3] [INFO] [1786627380.805299972] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=121 map=29 samples=114 range=[0.140,0.700] validation_ms=0.172 map_wait_ms=0.000 map_query_ms=0.146 traj_eval_ms=0.005 voxelize_ms=0.010 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627380.813309838] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=122 map=29 from_tt=0.081 collision_tt=0.771 collision_p=[-23.698,21.286,1.628] samples=282 validation_ms=0.284 map_wait_ms=0.000 map_query_ms=0.210 traj_eval_ms=0.013 voxelize_ms=0.039 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627380.858088958] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=123 map=29 from_tt=0.045 collision_tt=0.710 collision_p=[-23.741,20.995,1.634] samples=273 validation_ms=0.256 map_wait_ms=0.000 map_query_ms=0.194 traj_eval_ms=0.018 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627380.916820465] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=124 map=29 samples=262 range=[0.053,1.356] validation_ms=0.428 map_wait_ms=0.000 map_query_ms=0.373 traj_eval_ms=0.012 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627380.978157415] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=125 map=29 samples=251 range=[0.048,1.298] validation_ms=0.428 map_wait_ms=0.000 map_query_ms=0.373 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [INFO] [1786627381.005996372] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=125 map=30 samples=246 range=[0.076,1.298] validation_ms=0.426 map_wait_ms=0.000 map_query_ms=0.356 traj_eval_ms=0.011 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627381.058516949] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=126 map=30 samples=240 range=[0.062,1.253] validation_ms=0.438 map_wait_ms=0.000 map_query_ms=0.380 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627381.117612950] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=127 map=30 samples=233 range=[0.056,1.215] validation_ms=0.452 map_wait_ms=0.000 map_query_ms=0.387 traj_eval_ms=0.011 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627381.180330449] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=128 map=30 samples=226 range=[0.052,1.175] validation_ms=0.420 map_wait_ms=0.000 map_query_ms=0.368 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627381.252471186] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=129 map=30 samples=214 range=[0.058,1.121] validation_ms=0.443 map_wait_ms=0.000 map_query_ms=0.383 traj_eval_ms=0.014 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627381.320826970] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=130 map=30 from_tt=0.061 collision_tt=0.576 collision_p=[-24.450,18.250,2.750] samples=207 validation_ms=0.375 map_wait_ms=0.001 map_query_ms=0.312 traj_eval_ms=0.013 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 12.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627381.405045242] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=131 map=30 samples=202 range=[0.079,1.079] validation_ms=0.570 map_wait_ms=0.000 map_query_ms=0.509 traj_eval_ms=0.013 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [WARN] [1786627381.518645546] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.11398986.
+[fsm_node-3] [WARN] [1786627381.604579048] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627381.605709365] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=132 map=30 samples=339 range=[0.086,1.772] validation_ms=0.885 map_wait_ms=0.000 map_query_ms=0.781 traj_eval_ms=0.020 voxelize_ms=0.050 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627381.694914264] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=133 map=30 samples=203 range=[0.089,1.098] validation_ms=0.618 map_wait_ms=0.000 map_query_ms=0.553 traj_eval_ms=0.013 voxelize_ms=0.029 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786627381.788751446] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.094198918.
+[fsm_node-3] [INFO] [1786627381.803510259] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=133 map=31 samples=182 range=[0.198,1.098] validation_ms=0.435 map_wait_ms=0.000 map_query_ms=0.373 traj_eval_ms=0.013 voxelize_ms=0.025 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627381.843016067] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=134 map=31 from_tt=0.054 collision_tt=0.669 collision_p=[-24.930,13.593,2.165] samples=182 validation_ms=0.266 map_wait_ms=0.000 map_query_ms=0.223 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627381.941254527] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=135 map=31 from_tt=0.087 collision_tt=0.637 collision_p=[-25.071,13.394,2.192] samples=172 validation_ms=0.246 map_wait_ms=0.000 map_query_ms=0.207 traj_eval_ms=0.008 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [WARN] [1786627382.003945598] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=135 map=32 from_tt=0.150 collision_tt=0.640 collision_p=[-25.066,13.383,2.192] samples=160 validation_ms=0.202 map_wait_ms=0.000 map_query_ms=0.164 traj_eval_ms=0.008 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [WARN] [1786627382.033291672] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.092008814.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627382.100481010] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=136 map=32 from_tt=0.067 collision_tt=0.417 collision_p=[-25.061,13.396,2.215] samples=149 validation_ms=0.168 map_wait_ms=0.000 map_query_ms=0.130 traj_eval_ms=0.007 voxelize_ms=0.014 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627382.172765928] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=137 map=32 from_tt=0.072 collision_tt=0.342 collision_p=[-25.067,13.396,2.253] samples=141 validation_ms=0.154 map_wait_ms=0.000 map_query_ms=0.103 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627382.222033882] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=138 map=32 from_tt=0.049 collision_tt=0.259 collision_p=[-25.058,13.365,2.243] samples=204 validation_ms=0.131 map_wait_ms=0.000 map_query_ms=0.083 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627382.299455806] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=139 map=32 from_tt=0.077 collision_tt=0.207 collision_p=[-25.070,13.386,2.237] samples=183 validation_ms=0.111 map_wait_ms=0.000 map_query_ms=0.057 traj_eval_ms=0.010 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 13.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627382.405683149] [fsm_node]:  -- [SUPER] Replan over time(0.10613083839416504)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786627382.405747037] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [WARN] [1786627382.450499028] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627382.450767427] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP_TO_BACKUP_STITCH status=OCCUPIED gen=140 map=32 from_tt=0.045 collision_tt=0.045 collision_p=[-25.004,13.206,2.251] samples=141 validation_ms=0.040 map_wait_ms=0.000 map_query_ms=0.005 traj_eval_ms=0.007 voxelize_ms=0.014 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627382.506410303] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=141 map=32 from_tt=0.055 collision_tt=0.055 collision_p=[-24.824,12.723,2.280] samples=215 validation_ms=0.053 map_wait_ms=0.000 map_query_ms=0.002 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627382.570264350] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=142 map=32 from_tt=0.056 collision_tt=0.056 collision_p=[-24.628,12.161,2.300] samples=210 validation_ms=0.065 map_wait_ms=0.000 map_query_ms=0.003 traj_eval_ms=0.012 voxelize_ms=0.025 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627382.656422377] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=143 map=32 samples=210 range=[0.076,1.120] validation_ms=0.428 map_wait_ms=0.000 map_query_ms=0.378 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627382.708161825] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=143 map=33 from_tt=0.128 collision_tt=0.498 collision_p=[-22.950,8.050,2.650] samples=200 validation_ms=0.197 map_wait_ms=0.000 map_query_ms=0.149 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627382.711498902] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP_TO_BACKUP_STITCH status=OCCUPIED gen=144 map=33 from_tt=0.055 collision_tt=0.450 collision_p=[-22.562,7.961,2.636] samples=211 validation_ms=0.388 map_wait_ms=0.000 map_query_ms=0.327 traj_eval_ms=0.014 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627382.793178901] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=145 map=33 samples=193 range=[0.081,1.040] validation_ms=0.596 map_wait_ms=0.000 map_query_ms=0.532 traj_eval_ms=0.013 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627382.869929396] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=146 map=33 from_tt=0.077 collision_tt=0.337 collision_p=[-22.502,7.977,2.506] samples=157 validation_ms=0.231 map_wait_ms=0.000 map_query_ms=0.179 traj_eval_ms=0.011 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627382.909372418] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP_TO_BACKUP_STITCH status=OCCUPIED gen=147 map=33 from_tt=0.039 collision_tt=0.269 collision_p=[-22.406,7.897,2.518] samples=178 validation_ms=0.221 map_wait_ms=0.000 map_query_ms=0.165 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627382.959617974] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=148 map=33 from_tt=0.050 collision_tt=0.230 collision_p=[-22.415,7.888,2.511] samples=163 validation_ms=0.171 map_wait_ms=0.000 map_query_ms=0.122 traj_eval_ms=0.011 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627383.046985412] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP_TO_BACKUP_STITCH status=OCCUPIED gen=149 map=33 from_tt=0.071 collision_tt=0.166 collision_p=[-22.405,7.871,2.509] samples=149 validation_ms=0.119 map_wait_ms=0.000 map_query_ms=0.070 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627383.110414517] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=150 map=33 from_tt=0.063 collision_tt=0.093 collision_p=[-22.412,7.882,2.511] samples=181 validation_ms=0.083 map_wait_ms=0.000 map_query_ms=0.023 traj_eval_ms=0.012 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627383.185620631] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=151 map=33 from_tt=0.075 collision_tt=0.075 collision_p=[-22.210,7.543,2.471] samples=202 validation_ms=0.068 map_wait_ms=0.000 map_query_ms=0.003 traj_eval_ms=0.014 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [WARN] [1786627383.219414625] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=151 map=34 from_tt=0.108 collision_tt=0.733 collision_p=[-20.999,2.006,2.597] samples=196 validation_ms=0.461 map_wait_ms=0.001 map_query_ms=0.398 traj_eval_ms=0.013 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627383.244335485] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=152 map=34 from_tt=0.058 collision_tt=0.628 collision_p=[-20.991,2.090,2.452] samples=193 validation_ms=0.462 map_wait_ms=0.000 map_query_ms=0.395 traj_eval_ms=0.014 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627383.300867041] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=153 map=34 from_tt=0.056 collision_tt=0.606 collision_p=[-21.191,1.674,2.362] samples=198 validation_ms=0.415 map_wait_ms=0.000 map_query_ms=0.350 traj_eval_ms=0.014 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 14.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627383.397471561] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.091799716.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627383.457651840] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=154 map=34 from_tt=0.059 collision_tt=0.514 collision_p=[-21.156,1.599,2.220] samples=397 validation_ms=0.380 map_wait_ms=0.000 map_query_ms=0.269 traj_eval_ms=0.025 voxelize_ms=0.043 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627383.523134522] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=155 map=34 from_tt=0.065 collision_tt=0.795 collision_p=[-20.757,-0.303,2.218] samples=216 validation_ms=0.497 map_wait_ms=0.000 map_query_ms=0.427 traj_eval_ms=0.015 voxelize_ms=0.029 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627383.581216597] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=156 map=34 from_tt=0.058 collision_tt=0.338 collision_p=[-21.196,1.549,2.116] samples=208 validation_ms=0.250 map_wait_ms=0.000 map_query_ms=0.182 traj_eval_ms=0.014 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [WARN] [1786627383.696289283] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.115131512.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627383.780933160] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=157 map=34 from_tt=0.084 collision_tt=0.164 collision_p=[-21.196,1.550,2.116] samples=184 validation_ms=0.131 map_wait_ms=0.000 map_query_ms=0.059 traj_eval_ms=0.014 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [WARN] [1786627383.871306734] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090248801.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627383.904561862] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=158 map=34 samples=165 range=[0.032,0.849] validation_ms=0.504 map_wait_ms=0.000 map_query_ms=0.450 traj_eval_ms=0.012 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627383.949625345] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=159 map=34 from_tt=0.045 collision_tt=0.670 collision_p=[-20.960,-3.104,2.630] samples=177 validation_ms=0.351 map_wait_ms=0.000 map_query_ms=0.287 traj_eval_ms=0.012 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627384.037432741] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=160 map=34 from_tt=0.072 collision_tt=0.522 collision_p=[-21.278,-3.302,2.305] samples=217 validation_ms=0.255 map_wait_ms=0.000 map_query_ms=0.189 traj_eval_ms=0.012 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627384.115545411] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=161 map=34 samples=214 range=[0.078,1.140] validation_ms=0.427 map_wait_ms=0.000 map_query_ms=0.366 traj_eval_ms=0.011 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627384.197179268] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=162 map=34 samples=220 range=[0.081,1.175] validation_ms=0.468 map_wait_ms=0.000 map_query_ms=0.414 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.147901994577490[0m
+[fsm_node-3] [33m	 box_min = -24.550000000000001  -7.750000000000000   1.950000000000000[0m
+[fsm_node-3] [33m	 box_max =-22.949999999999999  -6.050000000000001   2.950000000000000[0m
+[fsm_node-3] [33m	 seed line =-23.750000000000000  -6.850000000000001   2.550000000000000 --> -23.750000000000000  -6.950000000000000   2.550000000000000[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786627384.207283714] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786627384.207322502] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [WARN] [1786627384.214830947] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=162 map=35 from_tt=0.099 collision_tt=0.344 collision_p=[-21.252,-3.028,2.435] samples=217 validation_ms=0.142 map_wait_ms=0.000 map_query_ms=0.092 traj_eval_ms=0.011 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627384.319908949] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.0902507.
+[fsm_node-3] [32m -- [Fsm 15.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627384.393141104] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786627384.393650540] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786627384.393672162] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786627384.393684835] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786627384.508378229] [fsm_node]:  -- [ExpOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786627384.508472766] [fsm_node]:  -- [SUPER] OptimizationExpTrajInPolytopes for new path failed
+[fsm_node-3] [WARN] [1786627384.508489104] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco exp_traj opt failed.[0m
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.182138803228575[0m
+[fsm_node-3] [33m	 box_min = -22.419027821988514  -4.354983404535812   1.875000000000000[0m
+[fsm_node-3] [33m	 box_max =-20.725000000000001  -2.625000000000000   2.950000000000000[0m
+[fsm_node-3] [33m	 seed line =-21.525000000000002  -3.425000000000000   2.475000000000000 --> -21.619027821988514  -3.554983404535812   2.509936692382700[0m
+[fsm_node-3] [WARN] [1786627384.532984960] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786627384.533030537] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return FAILED, replan Failed return
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.158113883008421[0m
+[fsm_node-3] [33m	 box_min = -22.707936695779846  -4.750933886947696   1.962116672134644[0m
+[fsm_node-3] [33m	 box_max =-21.025000000000002  -3.075000000000000   2.950000000000000[0m
+[fsm_node-3] [33m	 seed line =-21.825000000000003  -3.875000000000000   2.575000000000000 --> -21.907936695779846  -3.950933886947697   2.562116672134644[0m
+[fsm_node-3] [WARN] [1786627384.586853160] [fsm_node]:  -- [SUPER] GeneratePolytopeFromLine failed, force return
+[fsm_node-3] [WARN] [1786627384.586908746] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return FAILED, replan Failed return
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627384.707177415] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=163 map=36 from_tt=0.081 collision_tt=0.436 collision_p=[-23.226,-7.213,2.621] samples=202 validation_ms=0.655 map_wait_ms=0.410 map_query_ms=0.168 traj_eval_ms=0.014 voxelize_ms=0.030 action=async_after_commit
+[fsm_node-3] [WARN] [1786627384.707385694] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=163 map=36 from_tt=0.082 collision_tt=0.437 collision_p=[-23.226,-7.218,2.620] samples=202 validation_ms=0.156 map_wait_ms=0.000 map_query_ms=0.118 traj_eval_ms=0.009 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627384.759541395] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP_TO_BACKUP_STITCH status=OCCUPIED gen=164 map=36 from_tt=0.052 collision_tt=0.357 collision_p=[-23.225,-7.217,2.584] samples=190 validation_ms=0.193 map_wait_ms=0.000 map_query_ms=0.142 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627384.831472043] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=165 map=36 from_tt=0.072 collision_tt=0.312 collision_p=[-23.208,-7.204,2.568] samples=240 validation_ms=0.203 map_wait_ms=0.000 map_query_ms=0.140 traj_eval_ms=0.016 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627384.898965042] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=166 map=36 from_tt=0.067 collision_tt=0.242 collision_p=[-23.205,-7.225,2.572] samples=226 validation_ms=0.112 map_wait_ms=0.000 map_query_ms=0.060 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627384.958118637] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=167 map=36 from_tt=0.059 collision_tt=0.174 collision_p=[-23.207,-7.220,2.573] samples=227 validation_ms=0.090 map_wait_ms=0.000 map_query_ms=0.040 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627385.005598397] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=167 map=37 from_tt=0.106 collision_tt=0.171 collision_p=[-23.210,-7.204,2.574] samples=217 validation_ms=0.074 map_wait_ms=0.000 map_query_ms=0.025 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627385.009722302] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=168 map=37 from_tt=0.051 collision_tt=0.116 collision_p=[-23.204,-7.230,2.571] samples=217 validation_ms=0.071 map_wait_ms=0.000 map_query_ms=0.022 traj_eval_ms=0.011 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627385.074052518] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=169 map=37 from_tt=0.052 collision_tt=0.052 collision_p=[-23.205,-7.226,2.572] samples=209 validation_ms=0.051 map_wait_ms=0.000 map_query_ms=0.002 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627385.148014222] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=170 map=37 from_tt=0.060 collision_tt=0.570 collision_p=[-21.350,-12.050,2.750] samples=205 validation_ms=0.257 map_wait_ms=0.000 map_query_ms=0.207 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [WARN] [1786627385.251141781] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.097328709.
+[fsm_node-3] [32m -- [Fsm 16.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627385.355687067] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.104304347.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627385.429452008] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=171 map=37 from_tt=0.073 collision_tt=0.778 collision_p=[-21.492,-14.701,2.404] samples=168 validation_ms=0.450 map_wait_ms=0.000 map_query_ms=0.400 traj_eval_ms=0.011 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627385.505010834] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=172 map=37 from_tt=0.075 collision_tt=0.745 collision_p=[-21.343,-14.702,2.226] samples=370 validation_ms=0.313 map_wait_ms=0.000 map_query_ms=0.222 traj_eval_ms=0.020 voxelize_ms=0.037 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627385.589267395] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=173 map=37 from_tt=0.084 collision_tt=0.474 collision_p=[-21.350,-14.250,2.750] samples=144 validation_ms=0.185 map_wait_ms=0.000 map_query_ms=0.140 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [WARN] [1786627385.683276040] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.093921657.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627385.767891377] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=174 map=37 from_tt=0.084 collision_tt=0.364 collision_p=[-21.450,-14.550,2.750] samples=257 validation_ms=0.178 map_wait_ms=0.000 map_query_ms=0.097 traj_eval_ms=0.018 voxelize_ms=0.034 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627385.857477016] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=175 map=37 from_tt=0.089 collision_tt=0.229 collision_p=[-21.350,-14.350,2.750] samples=230 validation_ms=0.098 map_wait_ms=0.000 map_query_ms=0.047 traj_eval_ms=0.011 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627385.974203556] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.116802737.
+[fsm_node-3] [WARN] [1786627386.011223398] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=175 map=38 from_tt=0.243 collision_tt=0.253 collision_p=[-21.450,-14.450,2.750] samples=199 validation_ms=0.060 map_wait_ms=0.000 map_query_ms=0.004 traj_eval_ms=0.011 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [WARN] [1786627386.050182964] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786627386.050895797] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786627386.050956204] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786627386.050966831] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786627386.151923489] [fsm_node]:  -- [SUPER] Replan over time(0.10082197189331055)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786627386.151985593] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [WARN] [1786627386.213861149] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=175 map=39 from_tt=0.446 collision_tt=0.446 collision_p=[-22.145,-15.650,2.866] samples=159 validation_ms=0.052 map_wait_ms=0.000 map_query_ms=0.001 traj_eval_ms=0.011 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627386.299795779] [fsm_node]:  -- [SUPER] Replan over time(0.14757680892944336)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786627386.299867818] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [32m -- [Fsm 17.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627386.396096407] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.095862182.
+[fsm_node-3] [WARN] [1786627386.412697230] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP_TO_BACKUP_STITCH status=OCCUPIED gen=175 map=40 from_tt=0.645 collision_tt=0.645 collision_p=[-22.813,-17.307,2.763] samples=119 validation_ms=0.042 map_wait_ms=0.000 map_query_ms=0.001 traj_eval_ms=0.009 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.179[0m
+[fsm_node-3] [33m	 box_min = -24.050 -20.850   1.950[0m
+[fsm_node-3] [33m	 box_max =-22.450 -19.150   2.950[0m
+[fsm_node-3] [33m	 seed line =-23.250 -19.950   2.550 --> -23.250 -20.050   2.550[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786627386.415359919] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786627386.415395262] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627386.502368665] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=176 map=40 from_tt=0.087 collision_tt=0.412 collision_p=[-23.011,-19.702,2.502] samples=254 validation_ms=0.291 map_wait_ms=0.000 map_query_ms=0.203 traj_eval_ms=0.018 voxelize_ms=0.036 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627386.537490664] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=177 map=40 from_tt=0.035 collision_tt=0.315 collision_p=[-23.041,-19.721,2.511] samples=234 validation_ms=0.233 map_wait_ms=0.000 map_query_ms=0.158 traj_eval_ms=0.016 voxelize_ms=0.032 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627386.579502882] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=178 map=40 from_tt=0.040 collision_tt=0.285 collision_p=[-23.024,-19.714,2.520] samples=226 validation_ms=0.209 map_wait_ms=0.000 map_query_ms=0.136 traj_eval_ms=0.015 voxelize_ms=0.031 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627386.639215508] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=179 map=40 from_tt=0.033 collision_tt=0.213 collision_p=[-23.048,-19.706,2.533] samples=180 validation_ms=0.158 map_wait_ms=0.000 map_query_ms=0.100 traj_eval_ms=0.012 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627386.706720971] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=180 map=40 from_tt=0.035 collision_tt=0.150 collision_p=[-23.044,-19.718,2.532] samples=146 validation_ms=0.116 map_wait_ms=0.000 map_query_ms=0.066 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m-23.975000000000001 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [-23.975000000000001 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627386.798903714] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=181 map=40 from_tt=0.061 collision_tt=0.081 collision_p=[-23.048,-19.704,2.533] samples=178 validation_ms=0.094 map_wait_ms=0.000 map_query_ms=0.015 traj_eval_ms=0.017 voxelize_ms=0.033 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627386.853362088] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=182 map=40 from_tt=0.049 collision_tt=0.049 collision_p=[-23.005,-19.873,2.518] samples=186 validation_ms=0.068 map_wait_ms=0.000 map_query_ms=0.004 traj_eval_ms=0.018 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627386.903221904] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/no_backup segment=EXP status=OCCUPIED gen=183 map=40 from_tt=0.033 collision_tt=0.033 collision_p=[-22.955,-20.146,2.511] samples=182 validation_ms=0.066 map_wait_ms=0.000 map_query_ms=0.010 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627386.958137812] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/no_backup segment=EXP status=OCCUPIED gen=184 map=40 from_tt=0.022 collision_tt=0.022 collision_p=[-22.929,-20.491,2.519] samples=171 validation_ms=0.056 map_wait_ms=0.000 map_query_ms=0.002 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627387.018534803] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=185 map=40 samples=160 range=[0.016,0.807] validation_ms=0.485 map_wait_ms=0.001 map_query_ms=0.431 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627387.083537114] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=186 map=40 samples=144 range=[0.015,0.728] validation_ms=0.410 map_wait_ms=0.000 map_query_ms=0.364 traj_eval_ms=0.009 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627387.150381006] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=187 map=40 samples=130 range=[0.016,0.659] validation_ms=0.365 map_wait_ms=0.001 map_query_ms=0.324 traj_eval_ms=0.008 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627387.208733113] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=188 map=40 samples=118 range=[0.009,0.593] validation_ms=0.322 map_wait_ms=0.000 map_query_ms=0.283 traj_eval_ms=0.007 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627387.273753722] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=189 map=40 samples=106 range=[0.008,0.529] validation_ms=0.360 map_wait_ms=0.000 map_query_ms=0.315 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm 18.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627387.429294196] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.097504374.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627387.493845638] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=190 map=40 samples=293 range=[0.063,1.521] validation_ms=0.793 map_wait_ms=0.000 map_query_ms=0.692 traj_eval_ms=0.022 voxelize_ms=0.042 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627387.539272085] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=191 map=40 samples=290 range=[0.045,1.487] validation_ms=0.767 map_wait_ms=0.001 map_query_ms=0.685 traj_eval_ms=0.017 voxelize_ms=0.031 action=async_after_commit
+[fsm_node-3] [WARN] [1786627387.606180034] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=191 map=41 from_tt=0.112 collision_tt=0.852 collision_p=[-19.975,-23.219,1.989] samples=276 validation_ms=0.429 map_wait_ms=0.000 map_query_ms=0.354 traj_eval_ms=0.017 voxelize_ms=0.030 action=async_after_commit
+[fsm_node-3] [33m Yaw rate too large, 5.336232279912129[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627387.614856571] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=192 map=41 from_tt=0.076 collision_tt=0.866 collision_p=[-19.374,-23.531,1.922] samples=260 validation_ms=0.455 map_wait_ms=0.000 map_query_ms=0.371 traj_eval_ms=0.015 voxelize_ms=0.044 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627387.669628800] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=193 map=41 from_tt=0.055 collision_tt=0.865 collision_p=[-19.895,-23.361,1.794] samples=645 validation_ms=0.607 map_wait_ms=0.000 map_query_ms=0.416 traj_eval_ms=0.037 voxelize_ms=0.089 action=async_after_commit
+[fsm_node-3] [WARN] [1786627387.701713785] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=193 map=42 from_tt=0.087 collision_tt=0.867 collision_p=[-19.883,-23.361,1.794] samples=639 validation_ms=0.580 map_wait_ms=0.000 map_query_ms=0.390 traj_eval_ms=0.037 voxelize_ms=0.079 action=async_after_commit
+[fsm_node-3] [33m Yaw rate too large, 5.850369539804209[0m
+[fsm_node-3] [WARN] [1786627387.761127101] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.091884532.
+[fsm_node-3] [WARN] [1786627387.800330686] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=193 map=43 from_tt=0.185 collision_tt=0.865 collision_p=[-19.891,-23.361,1.794] samples=619 validation_ms=0.512 map_wait_ms=0.000 map_query_ms=0.356 traj_eval_ms=0.036 voxelize_ms=0.062 action=async_after_commit
+[fsm_node-3] [WARN] [1786627387.858469720] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.097081101.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627387.909829382] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=194 map=43 samples=240 range=[0.051,1.241] validation_ms=0.429 map_wait_ms=0.000 map_query_ms=0.359 traj_eval_ms=0.015 voxelize_ms=0.029 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627387.961047102] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=195 map=43 samples=214 range=[0.051,1.115] validation_ms=0.380 map_wait_ms=0.000 map_query_ms=0.332 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627388.031392855] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=196 map=43 samples=212 range=[0.070,1.120] validation_ms=0.392 map_wait_ms=0.000 map_query_ms=0.343 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627388.091398259] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=197 map=43 samples=209 range=[0.060,1.096] validation_ms=0.437 map_wait_ms=0.000 map_query_ms=0.346 traj_eval_ms=0.019 voxelize_ms=0.041 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627388.170152053] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=198 map=43 samples=205 range=[0.079,1.095] validation_ms=0.383 map_wait_ms=0.000 map_query_ms=0.335 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627388.245716801] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=199 map=43 from_tt=0.076 collision_tt=0.521 collision_p=[-17.150,-23.450,2.750] samples=201 validation_ms=0.232 map_wait_ms=0.000 map_query_ms=0.185 traj_eval_ms=0.009 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627388.309331579] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=199 map=44 from_tt=0.139 collision_tt=0.519 collision_p=[-17.150,-23.450,2.750] samples=188 validation_ms=0.209 map_wait_ms=0.000 map_query_ms=0.165 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627388.330237197] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=200 map=44 samples=201 range=[0.084,1.083] validation_ms=0.389 map_wait_ms=0.000 map_query_ms=0.339 traj_eval_ms=0.009 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 19.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627388.405837415] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=201 map=45 samples=203 range=[0.070,1.076] validation_ms=6.033 map_wait_ms=5.639 map_query_ms=0.345 traj_eval_ms=0.009 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [INFO] [1786627388.406271402] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=201 map=45 samples=201 range=[0.076,1.076] validation_ms=0.369 map_wait_ms=0.000 map_query_ms=0.325 traj_eval_ms=0.010 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627388.465053913] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=202 map=45 samples=204 range=[0.064,1.075] validation_ms=0.517 map_wait_ms=0.000 map_query_ms=0.459 traj_eval_ms=0.013 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627388.513347103] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=203 map=45 from_tt=0.048 collision_tt=0.363 collision_p=[-15.750,-23.850,2.750] samples=203 validation_ms=0.192 map_wait_ms=0.000 map_query_ms=0.143 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627388.566961573] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=204 map=45 from_tt=0.047 collision_tt=0.542 collision_p=[-13.699,-23.964,2.471] samples=185 validation_ms=0.229 map_wait_ms=0.000 map_query_ms=0.186 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [WARN] [1786627388.604084797] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=204 map=46 from_tt=0.084 collision_tt=0.544 collision_p=[-13.686,-23.965,2.470] samples=178 validation_ms=0.285 map_wait_ms=0.000 map_query_ms=0.235 traj_eval_ms=0.012 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627388.668835611] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=205 map=46 from_tt=0.083 collision_tt=0.488 collision_p=[-13.321,-24.164,2.499] samples=197 validation_ms=0.224 map_wait_ms=0.000 map_query_ms=0.171 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627388.780151947] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.111333612.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627388.859931155] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=206 map=46 samples=186 range=[0.079,1.000] validation_ms=0.348 map_wait_ms=0.000 map_query_ms=0.303 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627388.924903283] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=207 map=46 from_tt=0.065 collision_tt=0.215 collision_p=[-13.291,-24.197,2.506] samples=182 validation_ms=0.117 map_wait_ms=0.000 map_query_ms=0.063 traj_eval_ms=0.010 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627388.999439185] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=208 map=46 from_tt=0.074 collision_tt=0.149 collision_p=[-13.295,-24.197,2.506] samples=221 validation_ms=0.089 map_wait_ms=0.000 map_query_ms=0.035 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627389.059047915] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=209 map=46 from_tt=0.060 collision_tt=0.075 collision_p=[-13.299,-24.196,2.506] samples=219 validation_ms=0.062 map_wait_ms=0.000 map_query_ms=0.011 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [WARN] [1786627389.151149162] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.092012763.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627389.240057751] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=210 map=46 samples=193 range=[0.088,1.045] validation_ms=0.383 map_wait_ms=0.001 map_query_ms=0.335 traj_eval_ms=0.009 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm 20.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627389.336221310] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.096419525.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627389.410639848] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=211 map=47 from_tt=0.058 collision_tt=0.423 collision_p=[-7.092,-22.303,2.569] samples=204 validation_ms=15.755 map_wait_ms=15.532 map_query_ms=0.156 traj_eval_ms=0.012 voxelize_ms=0.025 action=async_after_commit
+[fsm_node-3] [WARN] [1786627389.410897187] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=211 map=47 from_tt=0.074 collision_tt=0.424 collision_p=[-7.084,-22.302,2.569] samples=201 validation_ms=0.181 map_wait_ms=0.000 map_query_ms=0.137 traj_eval_ms=0.010 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [WARN] [1786627389.487772256] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.092610146.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627389.564765715] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=212 map=47 from_tt=0.076 collision_tt=0.271 collision_p=[-7.085,-22.307,2.517] samples=202 validation_ms=0.140 map_wait_ms=0.000 map_query_ms=0.083 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627389.676890271] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.112047135.
+[fsm_node-3] [WARN] [1786627389.787748553] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.110511474.
+[fsm_node-3] [WARN] [1786627389.809081998] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=212 map=48 from_tt=0.321 collision_tt=0.321 collision_p=[-6.597,-22.272,2.467] samples=153 validation_ms=0.040 map_wait_ms=0.000 map_query_ms=0.001 traj_eval_ms=0.008 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [WARN] [1786627389.885186424] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.097017443.
+[fsm_node-3] [WARN] [1786627389.939177794] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786627389.941485557] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [WARN] [1786627389.941498432] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786627389.941508997] [fsm_node]:  -- [SUPER] in [ReplanOnce]: generateBackupTrajectory return OPT_FAILED, replan Failed return
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627390.013099860] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=213 map=48 from_tt=0.071 collision_tt=0.276 collision_p=[-3.290,-22.845,2.278] samples=240 validation_ms=0.148 map_wait_ms=0.000 map_query_ms=0.087 traj_eval_ms=0.011 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627390.113456912] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=214 map=49 from_tt=0.087 collision_tt=0.207 collision_p=[-3.290,-22.855,2.280] samples=186 validation_ms=13.650 map_wait_ms=13.521 map_query_ms=0.081 traj_eval_ms=0.010 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [WARN] [1786627390.113654299] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=214 map=49 from_tt=0.100 collision_tt=0.205 collision_p=[-3.296,-22.853,2.281] samples=184 validation_ms=0.079 map_wait_ms=0.000 map_query_ms=0.038 traj_eval_ms=0.010 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627390.151088792] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=215 map=49 from_tt=0.051 collision_tt=0.121 collision_p=[-3.284,-22.856,2.280] samples=167 validation_ms=0.088 map_wait_ms=0.000 map_query_ms=0.034 traj_eval_ms=0.009 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627390.220725165] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=216 map=49 from_tt=0.069 collision_tt=0.069 collision_p=[-3.285,-22.856,2.280] samples=168 validation_ms=0.044 map_wait_ms=0.001 map_query_ms=0.003 traj_eval_ms=0.009 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627390.265692555] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=217 map=49 from_tt=0.045 collision_tt=0.045 collision_p=[-3.066,-22.899,2.252] samples=248 validation_ms=0.063 map_wait_ms=0.000 map_query_ms=0.004 traj_eval_ms=0.012 voxelize_ms=0.025 action=async_after_commit
+[fsm_node-3] [WARN] [1786627390.315162072] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=217 map=50 from_tt=0.094 collision_tt=0.094 collision_p=[-2.850,-22.947,2.215] samples=238 validation_ms=0.061 map_wait_ms=0.001 map_query_ms=0.002 traj_eval_ms=0.014 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627390.329461333] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=218 map=50 from_tt=0.063 collision_tt=0.063 collision_p=[-2.791,-22.963,2.205] samples=253 validation_ms=0.067 map_wait_ms=0.000 map_query_ms=0.002 traj_eval_ms=0.014 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 21.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627390.452228624] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.122760162.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627390.500798653] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=219 map=50 from_tt=0.048 collision_tt=0.048 collision_p=[-2.106,-23.221,2.136] samples=231 validation_ms=0.055 map_wait_ms=0.000 map_query_ms=0.002 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627390.575343224] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=220 map=50 samples=211 range=[0.073,1.121] validation_ms=0.423 map_wait_ms=0.000 map_query_ms=0.370 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627390.640870325] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=221 map=50 from_tt=0.065 collision_tt=0.605 collision_p=[3.050,-23.050,2.750] samples=215 validation_ms=0.280 map_wait_ms=0.000 map_query_ms=0.217 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [WARN] [1786627390.731774879] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090981736.
+[fsm_node-3] [WARN] [1786627390.819915996] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=221 map=51 from_tt=0.245 collision_tt=0.605 collision_p=[3.050,-23.050,2.750] samples=179 validation_ms=0.194 map_wait_ms=0.000 map_query_ms=0.150 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [WARN] [1786627390.842495811] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.110475576.
+[fsm_node-3] [WARN] [1786627390.963607672] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.12087532.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627391.038968772] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=222 map=51 samples=211 range=[0.074,1.124] validation_ms=0.448 map_wait_ms=0.000 map_query_ms=0.368 traj_eval_ms=0.017 voxelize_ms=0.036 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627391.110636018] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=223 map=51 from_tt=0.071 collision_tt=0.791 collision_p=[7.450,-24.550,2.750] samples=227 validation_ms=0.329 map_wait_ms=0.000 map_query_ms=0.273 traj_eval_ms=0.011 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [WARN] [1786627391.215493806] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.105043551.
+[fsm_node-3] [WARN] [1786627391.311570951] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.095736471.
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm 22.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627391.412630910] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=223 map=52 from_tt=0.374 collision_tt=0.794 collision_p=[7.450,-24.550,2.750] samples=167 validation_ms=0.216 map_wait_ms=0.000 map_query_ms=0.172 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [WARN] [1786627391.443856773] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.131957903.
+[fsm_node-3] [WARN] [1786627391.610722376] [fsm_node]:  -- [SUPER] Replan over time(0.16661524772644043)!!!! Return FAILED
+[fsm_node-3] [WARN] [1786627391.610786757] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627391.653502547] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=224 map=52 from_tt=0.042 collision_tt=0.217 collision_p=[7.450,-24.550,2.750] samples=198 validation_ms=0.143 map_wait_ms=0.000 map_query_ms=0.086 traj_eval_ms=0.013 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627391.719814829] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=225 map=52 from_tt=0.066 collision_tt=0.176 collision_p=[7.450,-24.550,2.750] samples=158 validation_ms=0.081 map_wait_ms=0.000 map_query_ms=0.042 traj_eval_ms=0.008 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627391.767979240] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=226 map=52 from_tt=0.048 collision_tt=0.108 collision_p=[7.450,-24.550,2.750] samples=155 validation_ms=0.064 map_wait_ms=0.000 map_query_ms=0.025 traj_eval_ms=0.008 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627391.816724923] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=227 map=52 from_tt=0.048 collision_tt=0.063 collision_p=[7.450,-24.550,2.750] samples=163 validation_ms=0.058 map_wait_ms=0.000 map_query_ms=0.008 traj_eval_ms=0.009 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627391.856189372] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=228 map=52 from_tt=0.036 collision_tt=0.051 collision_p=[7.650,-24.650,2.750] samples=160 validation_ms=0.045 map_wait_ms=0.000 map_query_ms=0.007 traj_eval_ms=0.008 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627391.944273949] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=229 map=52 from_tt=0.058 collision_tt=0.063 collision_p=[8.150,-24.850,2.750] samples=145 validation_ms=0.047 map_wait_ms=0.000 map_query_ms=0.008 traj_eval_ms=0.008 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627392.008235329] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=230 map=52 from_tt=0.056 collision_tt=0.116 collision_p=[8.909,-25.083,2.610] samples=173 validation_ms=0.077 map_wait_ms=0.000 map_query_ms=0.035 traj_eval_ms=0.009 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627392.086142083] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=231 map=52 from_tt=0.068 collision_tt=0.093 collision_p=[9.237,-25.134,2.560] samples=215 validation_ms=0.064 map_wait_ms=0.000 map_query_ms=0.014 traj_eval_ms=0.011 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627392.145122577] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=232 map=52 samples=202 range=[0.058,1.062] validation_ms=0.409 map_wait_ms=0.001 map_query_ms=0.352 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627392.217880229] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=233 map=52 samples=209 range=[0.067,1.105] validation_ms=0.421 map_wait_ms=0.000 map_query_ms=0.362 traj_eval_ms=0.011 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627392.287407843] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=234 map=52 samples=235 range=[0.069,1.236] validation_ms=0.440 map_wait_ms=0.000 map_query_ms=0.387 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [WARN] [1786627392.312308871] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=234 map=53 from_tt=0.095 collision_tt=0.265 collision_p=[12.479,-24.695,2.240] samples=230 validation_ms=0.182 map_wait_ms=0.000 map_query_ms=0.118 traj_eval_ms=0.013 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm 23.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627392.349135446] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=235 map=53 from_tt=0.062 collision_tt=0.187 collision_p=[12.388,-24.693,2.235] samples=137 validation_ms=0.091 map_wait_ms=0.000 map_query_ms=0.053 traj_eval_ms=0.007 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [WARN] [1786627392.409846061] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=235 map=54 from_tt=0.123 collision_tt=0.188 collision_p=[12.394,-24.692,2.235] samples=125 validation_ms=0.079 map_wait_ms=0.000 map_query_ms=0.027 traj_eval_ms=0.008 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627392.431357702] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=236 map=54 from_tt=0.082 collision_tt=0.122 collision_p=[12.365,-24.698,2.235] samples=165 validation_ms=0.064 map_wait_ms=0.000 map_query_ms=0.020 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627392.507732752] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=237 map=54 from_tt=0.076 collision_tt=0.241 collision_p=[13.909,-24.465,2.283] samples=213 validation_ms=0.136 map_wait_ms=0.000 map_query_ms=0.066 traj_eval_ms=0.014 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627392.580047303] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=238 map=54 from_tt=0.072 collision_tt=0.167 collision_p=[13.927,-24.461,2.283] samples=201 validation_ms=0.097 map_wait_ms=0.000 map_query_ms=0.040 traj_eval_ms=0.012 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627392.661786540] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=239 map=54 from_tt=0.081 collision_tt=0.091 collision_p=[13.903,-24.464,2.281] samples=206 validation_ms=0.068 map_wait_ms=0.000 map_query_ms=0.012 traj_eval_ms=0.012 voxelize_ms=0.025 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627392.730646389] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=240 map=54 samples=205 range=[0.068,1.086] validation_ms=0.392 map_wait_ms=0.000 map_query_ms=0.344 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627392.803062429] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=241 map=54 samples=199 range=[0.072,1.060] validation_ms=0.388 map_wait_ms=0.000 map_query_ms=0.341 traj_eval_ms=0.010 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627392.850674111] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=242 map=54 samples=170 range=[0.047,0.891] validation_ms=0.326 map_wait_ms=0.000 map_query_ms=0.284 traj_eval_ms=0.008 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [WARN] [1786627392.909293944] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=242 map=55 from_tt=0.106 collision_tt=0.346 collision_p=[18.150,-24.450,2.450] samples=158 validation_ms=0.141 map_wait_ms=0.000 map_query_ms=0.103 traj_eval_ms=0.008 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627392.932272326] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=243 map=55 from_tt=0.081 collision_tt=0.291 collision_p=[18.050,-24.450,2.450] samples=196 validation_ms=0.170 map_wait_ms=0.000 map_query_ms=0.121 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627393.002674154] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=243 map=56 from_tt=0.152 collision_tt=0.292 collision_p=[18.050,-24.450,2.450] samples=182 validation_ms=0.139 map_wait_ms=0.000 map_query_ms=0.084 traj_eval_ms=0.012 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [WARN] [1786627393.002851834] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=244 map=56 from_tt=0.070 collision_tt=0.225 collision_p=[18.252,-24.402,2.497] samples=227 validation_ms=0.103 map_wait_ms=0.000 map_query_ms=0.057 traj_eval_ms=0.012 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627393.075821051] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=245 map=56 from_tt=0.073 collision_tt=0.153 collision_p=[18.234,-24.400,2.496] samples=342 validation_ms=0.111 map_wait_ms=0.000 map_query_ms=0.037 traj_eval_ms=0.016 voxelize_ms=0.030 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627393.146605279] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=246 map=56 from_tt=0.071 collision_tt=0.081 collision_p=[18.241,-24.401,2.496] samples=234 validation_ms=0.081 map_wait_ms=0.000 map_query_ms=0.013 traj_eval_ms=0.015 voxelize_ms=0.031 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.188534782] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=247 map=56 samples=245 range=[0.041,1.257] validation_ms=0.483 map_wait_ms=0.000 map_query_ms=0.426 traj_eval_ms=0.012 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.262127843] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=248 map=56 samples=222 range=[0.056,1.156] validation_ms=0.437 map_wait_ms=0.000 map_query_ms=0.385 traj_eval_ms=0.010 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.319782853] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=249 map=56 samples=213 range=[0.047,1.103] validation_ms=0.416 map_wait_ms=0.000 map_query_ms=0.363 traj_eval_ms=0.010 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m 24.025000000000002 -23.975000000000001   1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [ 24.025000000000002 -23.975000000000001   1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm 24.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.400604923] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=250 map=56 samples=203 range=[0.062,1.068] validation_ms=0.384 map_wait_ms=0.000 map_query_ms=0.336 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.441945959] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=251 map=56 samples=191 range=[0.037,0.983] validation_ms=0.365 map_wait_ms=0.000 map_query_ms=0.316 traj_eval_ms=0.009 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.496489286] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=252 map=56 samples=180 range=[0.026,0.920] validation_ms=0.486 map_wait_ms=0.000 map_query_ms=0.436 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.555096020] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=253 map=56 samples=169 range=[0.019,0.855] validation_ms=0.302 map_wait_ms=0.000 map_query_ms=0.264 traj_eval_ms=0.007 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [INFO] [1786627393.611109062] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=253 map=57 samples=158 range=[0.075,0.855] validation_ms=0.473 map_wait_ms=0.000 map_query_ms=0.427 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.619063100] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=254 map=57 samples=156 range=[0.017,0.789] validation_ms=0.456 map_wait_ms=0.000 map_query_ms=0.406 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.681684786] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=255 map=57 samples=143 range=[0.013,0.723] validation_ms=0.397 map_wait_ms=0.000 map_query_ms=0.350 traj_eval_ms=0.009 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.746482728] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=256 map=57 samples=130 range=[0.078,0.723] validation_ms=0.562 map_wait_ms=0.000 map_query_ms=0.500 traj_eval_ms=0.012 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.806409033] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=257 map=57 samples=118 range=[0.138,0.723] validation_ms=0.366 map_wait_ms=0.001 map_query_ms=0.328 traj_eval_ms=0.007 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627393.873146449] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=258 map=57 samples=105 range=[0.205,0.723] validation_ms=0.248 map_wait_ms=0.000 map_query_ms=0.210 traj_eval_ms=0.007 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m0.025000000000000 0.025000000000000 1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [0.025000000000000 0.025000000000000 1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1786627394.005722334] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=258 map=58 samples=79 range=[0.338,0.723] validation_ms=0.115 map_wait_ms=0.000 map_query_ms=0.094 traj_eval_ms=0.004 voxelize_ms=0.008 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.008604135] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=259 map=58 samples=308 range=[0.076,1.609] validation_ms=0.494 map_wait_ms=0.000 map_query_ms=0.435 traj_eval_ms=0.013 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.071545488] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=260 map=58 samples=291 range=[0.063,1.509] validation_ms=0.511 map_wait_ms=0.000 map_query_ms=0.450 traj_eval_ms=0.013 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [INFO] [1786627394.104552977] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=260 map=59 samples=284 range=[0.096,1.509] validation_ms=0.487 map_wait_ms=0.000 map_query_ms=0.430 traj_eval_ms=0.013 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.121844351] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=261 map=59 samples=439 range=[0.050,2.236] validation_ms=0.669 map_wait_ms=0.000 map_query_ms=0.572 traj_eval_ms=0.017 voxelize_ms=0.045 action=async_after_commit
+[fsm_node-3] [INFO] [1786627394.206071316] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=261 map=60 samples=422 range=[0.134,2.236] validation_ms=0.628 map_wait_ms=0.000 map_query_ms=0.548 traj_eval_ms=0.017 voxelize_ms=0.034 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.207876014] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=262 map=60 samples=263 range=[0.077,1.386] validation_ms=0.451 map_wait_ms=0.000 map_query_ms=0.400 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.291683814] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=263 map=60 samples=241 range=[0.084,1.281] validation_ms=0.451 map_wait_ms=0.000 map_query_ms=0.397 traj_eval_ms=0.011 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 25.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.359627580] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=264 map=60 samples=232 range=[0.068,1.222] validation_ms=0.447 map_wait_ms=0.000 map_query_ms=0.386 traj_eval_ms=0.016 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [INFO] [1786627394.400548562] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=264 map=61 samples=224 range=[0.109,1.222] validation_ms=0.431 map_wait_ms=0.000 map_query_ms=0.379 traj_eval_ms=0.011 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.429882502] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=265 map=61 samples=224 range=[0.070,1.184] validation_ms=0.605 map_wait_ms=0.000 map_query_ms=0.545 traj_eval_ms=0.012 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.493042765] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=266 map=61 samples=218 range=[0.063,1.144] validation_ms=0.409 map_wait_ms=0.000 map_query_ms=0.360 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.554899513] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=267 map=61 samples=215 range=[0.062,1.130] validation_ms=0.659 map_wait_ms=0.000 map_query_ms=0.594 traj_eval_ms=0.013 voxelize_ms=0.029 action=async_after_commit
+[fsm_node-3] [INFO] [1786627394.601075079] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=267 map=62 samples=206 range=[0.108,1.130] validation_ms=0.629 map_wait_ms=0.000 map_query_ms=0.566 traj_eval_ms=0.012 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.611127079] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=268 map=62 samples=208 range=[0.056,1.090] validation_ms=0.664 map_wait_ms=0.000 map_query_ms=0.599 traj_eval_ms=0.013 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.665886500] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=269 map=62 samples=205 range=[0.055,1.071] validation_ms=0.649 map_wait_ms=0.000 map_query_ms=0.585 traj_eval_ms=0.013 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627394.723361253] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=270 map=62 from_tt=0.057 collision_tt=0.602 collision_p=[18.550,-18.650,2.750] samples=202 validation_ms=0.373 map_wait_ms=0.000 map_query_ms=0.307 traj_eval_ms=0.013 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627394.792529044] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=271 map=62 from_tt=0.068 collision_tt=0.543 collision_p=[18.450,-18.750,2.750] samples=199 validation_ms=0.241 map_wait_ms=0.000 map_query_ms=0.193 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627394.844902776] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=272 map=62 samples=197 range=[0.052,1.027] validation_ms=0.418 map_wait_ms=0.000 map_query_ms=0.371 traj_eval_ms=0.009 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m0.025000000000000 0.025000000000000 1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [0.025000000000000 0.025000000000000 1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627394.918297152] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=273 map=62 from_tt=0.062 collision_tt=0.902 collision_p=[16.999,-15.917,2.538] samples=199 validation_ms=0.358 map_wait_ms=0.000 map_query_ms=0.310 traj_eval_ms=0.009 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627394.996968255] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP_TO_BACKUP_STITCH status=OCCUPIED gen=274 map=62 from_tt=0.075 collision_tt=0.345 collision_p=[18.450,-18.450,2.750] samples=196 validation_ms=0.165 map_wait_ms=0.000 map_query_ms=0.117 traj_eval_ms=0.009 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627395.069051673] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=275 map=62 samples=199 range=[0.071,1.058] validation_ms=0.672 map_wait_ms=0.000 map_query_ms=0.615 traj_eval_ms=0.012 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [INFO] [1786627395.104993223] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=275 map=63 samples=192 range=[0.108,1.058] validation_ms=0.385 map_wait_ms=0.000 map_query_ms=0.329 traj_eval_ms=0.010 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627395.130230395] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=276 map=63 samples=198 range=[0.061,1.045] validation_ms=0.619 map_wait_ms=0.000 map_query_ms=0.561 traj_eval_ms=0.012 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627395.194565956] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=277 map=63 samples=196 range=[0.064,1.038] validation_ms=0.403 map_wait_ms=0.000 map_query_ms=0.353 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627395.258490890] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=278 map=63 from_tt=0.064 collision_tt=0.919 collision_p=[15.204,-13.096,1.996] samples=201 validation_ms=0.397 map_wait_ms=0.000 map_query_ms=0.325 traj_eval_ms=0.014 voxelize_ms=0.033 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 26.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627395.343545318] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=279 map=63 samples=184 range=[0.085,0.998] validation_ms=0.370 map_wait_ms=0.000 map_query_ms=0.317 traj_eval_ms=0.009 voxelize_ms=0.026 action=async_after_commit
+[fsm_node-3] [WARN] [1786627395.471412309] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.128047582.
+[fsm_node-3] [WARN] [1786627395.574664780] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.102946585.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627395.656524091] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=280 map=63 from_tt=0.081 collision_tt=0.536 collision_p=[14.309,-13.300,1.457] samples=226 validation_ms=0.230 map_wait_ms=0.000 map_query_ms=0.176 traj_eval_ms=0.011 voxelize_ms=0.024 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627395.730955647] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=281 map=63 from_tt=0.074 collision_tt=0.394 collision_p=[14.669,-13.387,1.646] samples=202 validation_ms=0.178 map_wait_ms=0.000 map_query_ms=0.126 traj_eval_ms=0.010 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627395.793818870] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=282 map=63 samples=194 range=[0.062,1.022] validation_ms=0.603 map_wait_ms=0.000 map_query_ms=0.542 traj_eval_ms=0.012 voxelize_ms=0.025 action=async_after_commit
+[fsm_node-3] [33m -- [CIRI] WARNING! The problem is not feasible, the min dis to obstacle is only: 0.147901994577491[0m
+[fsm_node-3] [33m	 box_min =  11.050000000000001 -11.450000000000001   0.650000000000000[0m
+[fsm_node-3] [33m	 box_max =12.750000000000002 -9.750000000000000  1.850000000000000[0m
+[fsm_node-3] [33m	 seed line = 11.950000000000001 -10.650000000000000   1.250000000000000 -->  11.850000000000001 -10.550000000000001   1.250000000000000[0m
+[fsm_node-3] [33m -- [SUPER] GeneratePolytopeFromLine failed.[0m
+[fsm_node-3] [WARN] [1786627395.805165697] [fsm_node]:  -- [SUPER] SearchPolytopeOnPath for new path failed
+[fsm_node-3] [WARN] [1786627395.805210254] [fsm_node]:  -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return
+[fsm_node-3] [INFO] [1786627395.809579737] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=282 map=64 samples=190 range=[0.078,1.022] validation_ms=0.359 map_wait_ms=0.000 map_query_ms=0.314 traj_eval_ms=0.010 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627395.907762023] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=283 map=65 from_tt=0.052 collision_tt=0.222 collision_p=[14.550,-13.350,1.650] samples=162 validation_ms=9.626 map_wait_ms=9.507 map_query_ms=0.071 traj_eval_ms=0.009 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [WARN] [1786627395.907923792] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=283 map=65 from_tt=0.062 collision_tt=0.222 collision_p=[14.550,-13.350,1.650] samples=160 validation_ms=0.095 map_wait_ms=0.000 map_query_ms=0.059 traj_eval_ms=0.008 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m0.025000000000000 0.025000000000000 1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [0.025000000000000 0.025000000000000 1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [WARN] [1786627396.002760568] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090731246.
+[fsm_node-3] [WARN] [1786627396.004380724] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=283 map=66 from_tt=0.158 collision_tt=0.223 collision_p=[14.550,-13.350,1.650] samples=141 validation_ms=0.065 map_wait_ms=0.000 map_query_ms=0.029 traj_eval_ms=0.007 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627396.087649501] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=284 map=66 from_tt=0.084 collision_tt=0.519 collision_p=[11.359,-11.694,1.232] samples=182 validation_ms=0.221 map_wait_ms=0.000 map_query_ms=0.175 traj_eval_ms=0.009 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627396.155846736] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=285 map=66 from_tt=0.068 collision_tt=0.458 collision_p=[11.087,-11.703,1.296] samples=180 validation_ms=0.201 map_wait_ms=0.000 map_query_ms=0.158 traj_eval_ms=0.009 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627396.236532128] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=286 map=66 samples=203 range=[0.080,1.089] validation_ms=0.386 map_wait_ms=0.000 map_query_ms=0.337 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627396.283672253] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=287 map=66 samples=222 range=[0.047,1.148] validation_ms=0.426 map_wait_ms=0.000 map_query_ms=0.373 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 27.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627396.350799633] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=288 map=66 samples=213 range=[0.067,1.123] validation_ms=0.423 map_wait_ms=0.000 map_query_ms=0.369 traj_eval_ms=0.010 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [WARN] [1786627396.443626117] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.093115393.
+[fsm_node-3] [INFO] [1786627396.506838063] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=288 map=67 samples=181 range=[0.223,1.123] validation_ms=0.352 map_wait_ms=0.000 map_query_ms=0.307 traj_eval_ms=0.010 voxelize_ms=0.018 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627396.529521484] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=289 map=67 from_tt=0.085 collision_tt=0.640 collision_p=[7.650,-9.750,2.750] samples=216 validation_ms=0.403 map_wait_ms=0.000 map_query_ms=0.342 traj_eval_ms=0.013 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627396.604947955] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=290 map=67 samples=214 range=[0.075,1.139] validation_ms=0.444 map_wait_ms=0.000 map_query_ms=0.382 traj_eval_ms=0.013 voxelize_ms=0.028 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627396.665796904] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=291 map=67 samples=208 range=[0.061,1.095] validation_ms=0.418 map_wait_ms=0.000 map_query_ms=0.368 traj_eval_ms=0.011 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627396.723859677] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=292 map=67 from_tt=0.058 collision_tt=0.878 collision_p=[4.699,-7.843,1.502] samples=474 validation_ms=0.416 map_wait_ms=0.000 map_query_ms=0.319 traj_eval_ms=0.022 voxelize_ms=0.040 action=async_after_commit
+[fsm_node-3] [WARN] [1786627396.827890404] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.1043208.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627396.903739289] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=293 map=67 from_tt=0.075 collision_tt=0.480 collision_p=[5.850,-8.250,1.850] samples=175 validation_ms=0.239 map_wait_ms=0.000 map_query_ms=0.173 traj_eval_ms=0.013 voxelize_ms=0.030 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m0.025000000000000 0.025000000000000 1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [0.025000000000000 0.025000000000000 1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627396.948250245] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=OCCUPIED gen=294 map=67 from_tt=0.044 collision_tt=0.449 collision_p=[5.732,-8.194,1.740] samples=159 validation_ms=0.217 map_wait_ms=0.000 map_query_ms=0.177 traj_eval_ms=0.008 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [WARN] [1786627397.014482461] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=APPENDED_BACKUP status=OCCUPIED gen=294 map=68 from_tt=0.110 collision_tt=0.385 collision_p=[5.969,-8.480,1.825] samples=146 validation_ms=0.249 map_wait_ms=0.000 map_query_ms=0.197 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627397.042516496] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=295 map=68 from_tt=0.074 collision_tt=0.334 collision_p=[5.950,-8.450,1.850] samples=150 validation_ms=0.228 map_wait_ms=0.000 map_query_ms=0.176 traj_eval_ms=0.010 voxelize_ms=0.022 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627397.104841727] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=296 map=69 from_tt=0.059 collision_tt=0.254 collision_p=[5.907,-8.498,1.790] samples=148 validation_ms=3.115 map_wait_ms=2.971 map_query_ms=0.085 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [WARN] [1786627397.105011216] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=296 map=69 from_tt=0.062 collision_tt=0.257 collision_p=[5.950,-8.450,1.750] samples=148 validation_ms=0.106 map_wait_ms=0.000 map_query_ms=0.073 traj_eval_ms=0.007 voxelize_ms=0.014 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627397.143085642] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=297 map=69 from_tt=0.041 collision_tt=0.196 collision_p=[5.906,-8.491,1.792] samples=124 validation_ms=0.099 map_wait_ms=0.000 map_query_ms=0.066 traj_eval_ms=0.007 voxelize_ms=0.013 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627397.208489202] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=298 map=69 from_tt=0.042 collision_tt=0.132 collision_p=[5.904,-8.489,1.792] samples=123 validation_ms=0.074 map_wait_ms=0.000 map_query_ms=0.041 traj_eval_ms=0.006 voxelize_ms=0.013 action=async_after_commit
+[fsm_node-3] [WARN] [1786627397.308799326] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=298 map=70 from_tt=0.143 collision_tt=0.153 collision_p=[5.823,-8.395,1.761] samples=103 validation_ms=0.049 map_wait_ms=0.000 map_query_ms=0.010 traj_eval_ms=0.008 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 28.002] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [WARN] [1786627397.350861142] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.118795422.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627397.423970892] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=CARRY_BACKUP status=OCCUPIED gen=299 map=70 from_tt=0.073 collision_tt=0.073 collision_p=[5.527,-7.885,1.614] samples=239 validation_ms=0.082 map_wait_ms=0.000 map_query_ms=0.006 traj_eval_ms=0.016 voxelize_ms=0.031 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627397.484580805] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=300 map=70 from_tt=0.060 collision_tt=0.060 collision_p=[5.416,-7.588,1.545] samples=249 validation_ms=0.118 map_wait_ms=0.000 map_query_ms=0.007 traj_eval_ms=0.017 voxelize_ms=0.063 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627397.541121374] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=301 map=70 from_tt=0.056 collision_tt=0.176 collision_p=[5.095,-6.984,1.419] samples=296 validation_ms=0.158 map_wait_ms=0.000 map_query_ms=0.068 traj_eval_ms=0.019 voxelize_ms=0.038 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627397.612112627] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=302 map=70 from_tt=0.071 collision_tt=0.121 collision_p=[5.094,-6.980,1.419] samples=237 validation_ms=0.115 map_wait_ms=0.000 map_query_ms=0.034 traj_eval_ms=0.017 voxelize_ms=0.034 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627397.704552265] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=303 map=71 from_tt=0.087 collision_tt=0.087 collision_p=[5.030,-6.845,1.412] samples=225 validation_ms=5.362 map_wait_ms=5.274 map_query_ms=0.003 traj_eval_ms=0.020 voxelize_ms=0.034 action=async_after_commit
+[fsm_node-3] [WARN] [1786627397.704797534] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=303 map=71 from_tt=0.092 collision_tt=0.092 collision_p=[5.020,-6.823,1.411] samples=224 validation_ms=0.073 map_wait_ms=0.000 map_query_ms=0.001 traj_eval_ms=0.016 voxelize_ms=0.032 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627397.768029091] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=304 map=71 from_tt=0.068 collision_tt=0.068 collision_p=[4.904,-6.535,1.420] samples=217 validation_ms=0.081 map_wait_ms=0.001 map_query_ms=0.004 traj_eval_ms=0.016 voxelize_ms=0.034 action=async_after_commit
+[fsm_node-3] [INFO] [1786627397.804850417] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=304 map=72 samples=210 range=[0.105,1.148] validation_ms=0.738 map_wait_ms=0.001 map_query_ms=0.656 traj_eval_ms=0.016 voxelize_ms=0.032 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627397.843687049] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=305 map=72 samples=211 range=[0.075,1.120] validation_ms=0.749 map_wait_ms=0.000 map_query_ms=0.676 traj_eval_ms=0.015 voxelize_ms=0.032 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m0.025000000000000 0.025000000000000 1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [0.025000000000000 0.025000000000000 1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627397.921936973] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/with_backup gen=306 map=72 samples=205 range=[0.078,1.094] validation_ms=0.731 map_wait_ms=0.000 map_query_ms=0.647 traj_eval_ms=0.015 voxelize_ms=0.042 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [WARN] [1786627397.991840607] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=ReplanOnce/with_backup segment=EXP status=OCCUPIED gen=307 map=72 from_tt=0.070 collision_tt=0.555 collision_p=[1.650,-1.850,2.750] samples=219 validation_ms=0.434 map_wait_ms=0.000 map_query_ms=0.355 traj_eval_ms=0.016 voxelize_ms=0.034 action=async_after_commit
+[fsm_node-3] [WARN] [1786627398.009119626] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_UNSAFE] phase=MAP_COMMIT segment=EXP status=OCCUPIED gen=307 map=73 from_tt=0.087 collision_tt=0.552 collision_p=[1.650,-1.850,2.750] samples=216 validation_ms=0.410 map_wait_ms=0.000 map_query_ms=0.336 traj_eval_ms=0.016 voxelize_ms=0.032 action=async_after_commit
+[fsm_node-3] [WARN] [1786627398.050537533] [fsm_node]:  -- [BackOpt] Opt failed, Omg or thr or Pos violation.
+[fsm_node-3] [33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[fsm_node-3] [33m -- [SUPER] Minco backup_traj opt failed.[0m
+[fsm_node-3] [WARN] [1786627398.130563004] [fsm_node]:  -- [SUPER] OptimizationBakTrajInPolytopes failed, force return
+[fsm_node-3] [WARN] [1786627398.130628021] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.138840594.
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.178485674] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=308 map=73 samples=198 range=[0.047,1.028] validation_ms=0.693 map_wait_ms=0.000 map_query_ms=0.620 traj_eval_ms=0.014 voxelize_ms=0.032 action=async_after_commit
+[fsm_node-3] [INFO] [1786627398.208483594] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=308 map=74 samples=192 range=[0.077,1.028] validation_ms=0.694 map_wait_ms=0.000 map_query_ms=0.628 traj_eval_ms=0.013 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.226814946] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=309 map=74 samples=193 range=[0.048,1.004] validation_ms=0.386 map_wait_ms=0.000 map_query_ms=0.340 traj_eval_ms=0.010 voxelize_ms=0.020 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.271700111] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=310 map=74 samples=290 range=[0.044,1.486] validation_ms=0.520 map_wait_ms=0.000 map_query_ms=0.447 traj_eval_ms=0.021 voxelize_ms=0.027 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.314963846] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=311 map=74 samples=187 range=[0.026,0.956] validation_ms=0.572 map_wait_ms=0.000 map_query_ms=0.512 traj_eval_ms=0.013 voxelize_ms=0.025 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm 29.003] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.383159827] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=312 map=74 samples=168 range=[0.028,0.863] validation_ms=0.516 map_wait_ms=0.000 map_query_ms=0.458 traj_eval_ms=0.012 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.438279831] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=313 map=74 samples=154 range=[0.018,0.780] validation_ms=0.326 map_wait_ms=0.000 map_query_ms=0.288 traj_eval_ms=0.007 voxelize_ms=0.016 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.503795174] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=314 map=75 samples=142 range=[0.077,0.780] validation_ms=6.925 map_wait_ms=6.495 map_query_ms=0.378 traj_eval_ms=0.010 voxelize_ms=0.021 action=async_after_commit
+[fsm_node-3] [INFO] [1786627398.504531557] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=MAP_COMMIT gen=314 map=75 samples=141 range=[0.084,0.780] validation_ms=0.415 map_wait_ms=0.001 map_query_ms=0.369 traj_eval_ms=0.010 voxelize_ms=0.019 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.561159793] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=315 map=75 samples=129 range=[0.141,0.780] validation_ms=0.481 map_wait_ms=0.000 map_query_ms=0.425 traj_eval_ms=0.010 voxelize_ms=0.023 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.629832459] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=316 map=75 samples=116 range=[0.209,0.780] validation_ms=0.329 map_wait_ms=0.000 map_query_ms=0.287 traj_eval_ms=0.007 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.689835212] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=317 map=75 samples=104 range=[0.269,0.780] validation_ms=0.277 map_wait_ms=0.000 map_query_ms=0.243 traj_eval_ms=0.006 voxelize_ms=0.012 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.756771250] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=318 map=75 samples=90 range=[0.336,0.780] validation_ms=0.357 map_wait_ms=0.000 map_query_ms=0.312 traj_eval_ms=0.008 voxelize_ms=0.017 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.818405087] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=319 map=75 samples=78 range=[0.398,0.780] validation_ms=0.216 map_wait_ms=0.000 map_query_ms=0.173 traj_eval_ms=0.015 voxelize_ms=0.012 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.884616517] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=320 map=75 samples=65 range=[0.464,0.780] validation_ms=0.302 map_wait_ms=0.001 map_query_ms=0.261 traj_eval_ms=0.007 voxelize_ms=0.015 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627398.949780455] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=321 map=75 samples=52 range=[0.530,0.780] validation_ms=0.160 map_wait_ms=0.001 map_query_ms=0.134 traj_eval_ms=0.004 voxelize_ms=0.009 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627399.014958948] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=322 map=75 samples=39 range=[0.595,0.780] validation_ms=0.065 map_wait_ms=0.000 map_query_ms=0.042 traj_eval_ms=0.003 voxelize_ms=0.004 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627399.080558673] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=323 map=75 samples=25 range=[0.660,0.780] validation_ms=0.040 map_wait_ms=0.000 map_query_ms=0.029 traj_eval_ms=0.001 voxelize_ms=0.004 action=async_after_commit
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1786627399.146741623] [fsm_node]:  -- [TRAJ_GUARD_SHADOW_SAFE] phase=ReplanOnce/no_backup gen=324 map=75 samples=12 range=[0.727,0.780] validation_ms=0.048 map_wait_ms=0.000 map_query_ms=0.034 traj_eval_ms=0.001 voxelize_ms=0.004 action=async_after_commit

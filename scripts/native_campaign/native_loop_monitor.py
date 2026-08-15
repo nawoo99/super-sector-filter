@@ -291,6 +291,7 @@ class LoopMonitor(Node):
         self.contact_events.append(
             {
                 "kind": kind,
+                "epoch_s": round(time.time(), 6),
                 "elapsed_s": round(time.time() - self.start_time, 4),
                 "distance_m": round(float(distance), 5),
                 "position": np.round(position, 5).tolist(),

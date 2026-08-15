@@ -11,6 +11,8 @@ so a hung run can be killed as a tree.
 """
 import argparse, csv, fcntl, os, re, shutil, signal, subprocess, sys, time, json, statistics as st
 
+from correlate_shadow_contacts import correlate as correlate_shadow_contacts
+
 ROS_ENV = "source /opt/ros/humble/setup.bash && source /root/super_ws/install/setup.bash"
 PERF_LOG = "/root/super_ws/src/SUPER/rog_map/log/rm_performance_log.csv"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -44,6 +46,64 @@ def proc_ticks(pid):
         return int(rest[11]) + int(rest[12])
     except (OSError, IndexError, ValueError):
         return None
+
+
+def parse_shadow_guard_log(path):
+    """Summarize shadow validation without treating map races as geometry."""
+    safe_count = 0
+    skipped_count = 0
+    unsafe_records = []
+    validation_ms = []
+    with open(path, errors="replace") as stream:
+        for line in stream:
+            if "TRAJ_GUARD_SHADOW_SAFE" in line:
+                safe_count += 1
+            elif "TRAJ_GUARD_SHADOW_UNSAFE" in line:
+                segment_match = re.search(r"segment=([^ ]+)", line)
+                status_match = re.search(r"status=([^ ]+)", line)
+                unsafe_records.append((
+                    status_match.group(1) if status_match else "UNKNOWN",
+                    segment_match.group(1) if segment_match else "UNKNOWN",
+                ))
+            elif "TRAJ_GUARD_SHADOW_SKIPPED" in line:
+                skipped_count += 1
+            if "TRAJ_GUARD_SHADOW_" in line:
+                match = re.search(r"validation_ms=([0-9.]+)", line)
+                if match:
+                    validation_ms.append(float(match.group(1)))
+
+    geometric_statuses = {"OCCUPIED", "OUT_OF_MAP"}
+    map_race_statuses = {"MAP_UPDATING", "VERSION_CHANGED"}
+    geometric_segments = [
+        segment for status, segment in unsafe_records
+        if status in geometric_statuses
+    ]
+    return {
+        "shadow_safe_candidates": safe_count,
+        "shadow_unsafe_candidates": len(unsafe_records),
+        "shadow_skipped_candidates": skipped_count,
+        "shadow_validated_candidates": safe_count + len(unsafe_records),
+        "shadow_geometric_unsafe": len(geometric_segments),
+        "shadow_map_race": sum(
+            status in map_race_statuses for status, _ in unsafe_records
+        ),
+        "shadow_other_indeterminate": sum(
+            status not in geometric_statuses | map_race_statuses
+            for status, _ in unsafe_records
+        ),
+        "shadow_unsafe_exp": geometric_segments.count("EXP"),
+        "shadow_unsafe_appended_backup": geometric_segments.count(
+            "APPENDED_BACKUP"
+        ),
+        "shadow_unsafe_carry_backup": geometric_segments.count("CARRY_BACKUP"),
+        "shadow_unsafe_stitch": sum(
+            segment.endswith("STITCH") for segment in geometric_segments
+        ),
+        "shadow_validation_ms_mean": (
+            st.mean(validation_ms) if validation_ms else None
+        ),
+        "shadow_validation_ms_max": max(validation_ms) if validation_ms else None,
+    }
 
 
 class CpuMeter:
@@ -149,6 +209,9 @@ VALID_MODES = (
     "raw_oneway_guarded_v2_aligned",
     "raw_oneway_guarded_scheduled",
     "raw_oneway_guarded_margin",
+    "full_control_v10", "full_shadow_v10",
+    "full_guard_v4", "full_guard_v7", "full_guard_v10",
+    "full_guard_reroute_v7",
     "full", "sector", "velocity", "adaptive", "trigger",
     # Paper-matched speed sweep for the seed1..10 filter ablation itself
     # (max_acc=20 m/s^2, max_vel in the paper's swept set) -- distinct from
@@ -247,6 +310,19 @@ FIELDS = ["map", "run", "mode", "experiment_profile", "success", "run_valid",
           "position_command_messages", "trajectory_flag2_messages",
           "trajectory_flag3_messages",
           "guard_stop_detected", "guard_stop_time_s",
+          "shadow_safe_candidates", "shadow_unsafe_candidates",
+          "shadow_skipped_candidates", "shadow_validated_candidates",
+          "shadow_geometric_unsafe", "shadow_map_race",
+          "shadow_other_indeterminate",
+          "shadow_unsafe_exp", "shadow_unsafe_appended_backup",
+          "shadow_unsafe_carry_backup", "shadow_unsafe_stitch",
+          "shadow_validation_ms_mean", "shadow_validation_ms_max",
+          "shadow_contact_events_with_epoch",
+          "shadow_contacts_with_prior_unsafe",
+          "shadow_contacts_without_prior_unsafe",
+          "shadow_geometric_unsafe_followed_by_contact",
+          "shadow_geometric_unsafe_not_followed_by_contact",
+          "shadow_nearest_prediction_error_s", "shadow_correlated_segments",
           "first_position_command_s", "first_trajectory_flag2_s",
           "first_trajectory_flag3_s",
           "max_position_command_gap_s", "first_motion_s",
@@ -426,9 +502,28 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
     # "sector_v10" -> filter mode "sector" run under static_seedmaps_paper_v10.yaml
     # (max_acc=20 m/s^2, max_vel=10) instead of the default static_seedmaps.yaml
     # (max_acc=15, max_vel=3) used by the plain full/sector/adaptive modes.
+    is_seedmap_shadow = mode == "full_shadow_v10"
+    guard_sweep_match = re.match(
+        r"^full_guard(?:_reroute)?_v(4|7|10)$", mode
+    )
+    is_seedmap_guard = guard_sweep_match is not None
+    is_seedmap_guard_reroute = mode.startswith("full_guard_reroute_")
+    is_seedmap_observed_control = mode == "full_control_v10"
+    is_seedmap_observed = (
+        is_seedmap_shadow or is_seedmap_guard or is_seedmap_observed_control
+    )
     seedmap_sweep_match = re.match(r"^(full|sector|adaptive)_v(\d+)$", mode)
-    base_mode = seedmap_sweep_match.group(1) if seedmap_sweep_match else mode
-    sweep_vel = float(seedmap_sweep_match.group(2)) if seedmap_sweep_match else None
+    base_mode = (
+        "full" if is_seedmap_observed
+        else seedmap_sweep_match.group(1) if seedmap_sweep_match
+        else mode
+    )
+    sweep_vel = (
+        float(guard_sweep_match.group(1)) if is_seedmap_guard
+        else 10.0 if is_seedmap_observed
+        else float(seedmap_sweep_match.group(2)) if seedmap_sweep_match
+        else None
+    )
     matched_prefix = (
         is_dynamic
         and os.environ.get(f"{map_name.upper()}_MATCHED_PREFIX", "0").lower()
@@ -462,6 +557,12 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
             # timeout so low sweep speeds (e.g. 1 m/s -> ~250s cruise)
             # don't time out and high speeds don't wait needlessly.
             timeout = max(60.0, 250.0 / sweep_vel + 60.0)
+        if is_seedmap_guard_reroute:
+            # Certified stop-and-reroute deliberately trades time for safety.
+            # Keep the ordinary v7 cohort's 95.71 s budget unchanged, while
+            # giving this explicitly named recovery experiment enough time to
+            # distinguish eventual recovery from a true geometric deadlock.
+            timeout = max(timeout, 120.0)
     tag = f"{map_name}_run{run}_{mode}"
     out_json = os.path.join(TMPDIR, f"{tag}.json")
     filt_log = os.path.join(TMPDIR, f"{tag}.filt.log")
@@ -556,7 +657,13 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
                 preexec_fn=os.setsid,
             )
 
-        raw_direct = (is_ref or is_map0) and mode in RAW_DIRECT_REF_MODES
+        # The guarded full profile subscribes directly to /cloud_registered.
+        # Starting native_sector in passthrough mode would deserialize and
+        # republish the same large cloud for no consumer, wasting CPU needed
+        # by the simulator renderer and safety callbacks.
+        raw_direct = ((is_ref or is_map0) and mode in RAW_DIRECT_REF_MODES) or (
+            is_seedmap_guard
+        )
         filter_options = f" --stats-json {filt_stats_json}"
         if is_dynamic:
             filter_options += (
@@ -631,15 +738,29 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
                 "-p config_name:=static_recovery.yaml & wait; }"
             )
         else:
-            seedmap_super_config = (
-                f"static_seedmaps_paper_v{int(sweep_vel)}.yaml"
-                if sweep_vel is not None else "static_seedmaps.yaml"
-            )
+            if is_seedmap_shadow:
+                seedmap_super_config = "static_seedmaps_shadow_v10.yaml"
+            elif is_seedmap_guard:
+                profile_suffix = (
+                    f"reroute_v{int(sweep_vel)}"
+                    if is_seedmap_guard_reroute
+                    else f"v{int(sweep_vel)}"
+                )
+                seedmap_super_config = f"static_seedmaps_guard_{profile_suffix}.yaml"
+            elif is_seedmap_observed_control:
+                seedmap_super_config = "static_seedmaps_paper_v10.yaml"
+            else:
+                seedmap_super_config = (
+                    f"static_seedmaps_paper_v{int(sweep_vel)}.yaml"
+                    if sweep_vel is not None else "static_seedmaps.yaml"
+                )
             launch_cmd = (
                 "ros2 launch mission_planner benchmark_seedmap.launch.py "
                 f"waypoint_data:=loop24.txt drone_config:={map_name}.yaml "
                 f"super_config:={seedmap_super_config}"
             )
+            if is_seedmap_observed:
+                launch_cmd += f" > {reference_stack_log} 2>&1"
         launch_proc = subprocess.Popen(
             ["bash", "-c", f"{ROS_ENV} && {launch_cmd}"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
@@ -740,6 +861,12 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
                 monitor_options += f" --static-pcd {REF_PCD}"
             elif is_map0:
                 monitor_options += f" --static-pcd {MAP0_PCD}"
+            elif is_seedmap_observed:
+                monitor_options += (
+                    " --static-pcd /root/super_ws/src/SUPER/"
+                    "mars_uav_sim/perfect_drone_sim/pcd/seed_maps/"
+                    f"{map_name}.pcd"
+                )
             mon_cmd = (
                 # "--" guards waypoint strings that start with "-" (e.g.
                 # map0's negative-x goal) from being misread as an option.
@@ -829,6 +956,11 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
                                 source,
                                 os.path.join(artifacts_dir, f"{tag}.{suffix}"),
                             )
+                elif is_seedmap_observed and os.path.exists(reference_stack_log):
+                    shutil.copyfile(
+                        reference_stack_log,
+                        os.path.join(artifacts_dir, f"{tag}.stack.log"),
+                    )
             rec.update(slice_perf(row_start, row_end))
         else:
             rec["success"] = False
@@ -849,6 +981,27 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
             if filter_stats.get("kept_pct") is not None:
                 rec["kept_pct"] = filter_stats["kept_pct"]
                 kept_pct = filter_stats["kept_pct"]
+        if is_seedmap_shadow and os.path.exists(reference_stack_log):
+            rec.update(parse_shadow_guard_log(reference_stack_log))
+            if os.path.exists(out_json):
+                correlation = correlate_shadow_contacts(
+                    reference_stack_log, out_json
+                )
+                rec.update({
+                    key: (
+                        ";".join(value)
+                        if key == "shadow_correlated_segments" else value
+                    )
+                    for key, value in correlation.items()
+                    if key != "shadow_contact_matches"
+                })
+                if artifacts_dir:
+                    correlation_path = os.path.join(
+                        artifacts_dir, f"{tag}.shadow_contact_correlation.json"
+                    )
+                    with open(correlation_path, "w") as stream:
+                        json.dump(correlation, stream, indent=2)
+                        stream.write("\n")
         if is_recovery:
             base_recovery_success = bool(
                 rec.get("success")
