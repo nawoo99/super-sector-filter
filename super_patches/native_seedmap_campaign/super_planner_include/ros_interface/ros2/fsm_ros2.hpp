@@ -642,6 +642,18 @@ namespace fsm {
             }
             if (!std::isfinite(initial_yaw)) initial_yaw = 0.0;
 
+            // 2026-08-18: tried a CIRI-corridor-based known-free guarantee
+            // here (buildEmergencyStopPolytope, matching the SUPER paper's
+            // actual backup-trajectory mechanism), first sourced from the
+            // committed map, then from an accumulated raw-scan window.
+            // Every variant regressed, each in a different and worse way
+            // (an actual collision; then a near-total liveness collapse
+            // that still didn't prevent a collision; then a full pipeline
+            // freeze -- map commits stuck for 8+ seconds, the new raw
+            // cloud subscription never receiving a single message despite
+            // reusing the map's own topic/QoS pattern, cause not yet
+            // found). Reverted; see docs for what was tried. Back to the
+            // raw-grid unknown_as_occupied check below.
             const double min_duration = std::max(0.05, cfg_.brake_min_duration_s);
             const double max_duration = std::max(min_duration,
                                                  cfg_.brake_max_duration_s);
@@ -684,7 +696,8 @@ namespace fsm {
                         break;
                     }
                     brake_safety = planner_ptr_->validatePositionTrajectory(
-                            candidate, 0.0, 0);
+                            candidate, 0.0, 0, false,
+                            cfg_.trajectory_guard_unknown_as_occupied);
                     const auto health_after = map_ptr_->getMapHealthSnapshot();
                     double map_age_after_s;
                     const bool map_is_fresh =
@@ -734,6 +747,19 @@ namespace fsm {
                         brake_safety.map_version, certified_map_age_s,
                         rawCloudSafetyStatusName(raw_brake_status),
                         raw_cloud_sequence, raw_cloud_age_s);
+                // 2026-08-18: tried arming a topology-avoidance zone here
+                // too (same mechanism a rejected PlanFromRest candidate
+                // uses) so a persistently-blocked brake would push the next
+                // replan toward a different direction instead of retrying
+                // identically. Measured net negative on the seed1-10 sweep
+                // (34/50 vs the 41-42/50 baseline, with two previously
+                // reliable seeds dropping to 1-2/5) -- a brake candidate's
+                // collision point reflects wherever the vehicle currently
+                // is while moving, not a stable obstacle location the way
+                // a stopped candidate's rejection point does, so this
+                // ended up walling off the vehicle's own flight path.
+                // Reverted; see docs for the corridor-containment approach
+                // (buildEmergencyStopPolytope) that replaced it instead.
                 ChangeState("TrajectoryGuardFailClosed", EMER_STOP);
                 return false;
             }

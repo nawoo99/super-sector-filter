@@ -739,6 +739,31 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
                 // record cache box size;
                 raycast_data_.cache_box_min = raycast_data_.cache_box_min.cwiseMin(p);
                 raycast_data_.cache_box_max = raycast_data_.cache_box_max.cwiseMax(p);
+
+                // Mark the near-field approach to this hit as observed-free.
+                // Without this, no cell is ever recorded as confirmed-clear
+                // in this mode (only hit surfaces are ever touched), so
+                // isUnknown() can't distinguish "swept and clear" from
+                // "never looked at" -- unsafe for a guard check that treats
+                // unknown space as occupied. Bounded by
+                // observed_mark_range_max (not the full sensor range) so
+                // per-scan cost doesn't scale with raycast_range_max.
+                const double dist = std::sqrt(sqrdis);
+                const Vec3f dir = (p - cur_odom) / dist;
+                const double march_start_dist = std::max(
+                        cfg_.raycast_range_min,
+                        dist - cfg_.observed_mark_range_max);
+                const Vec3f raycast_start = cur_odom + dir * march_start_dist;
+                raycast_data_.raycaster.setInput(raycast_start, p);
+                Vec3f ray_pt;
+                while (raycast_data_.raycaster.step(ray_pt)) {
+                    Vec3i cur_ray_id_g;
+                    posToGlobalIndex(ray_pt, cur_ray_id_g);
+                    if (!insideLocalMap(cur_ray_id_g)) {
+                        break;
+                    }
+                    insertUpdateCandidate(cur_ray_id_g, false);
+                }
             }
             continue;
         }

@@ -185,12 +185,57 @@ runs:
    config — consistent with, though somewhat better than, the ~1.8 Hz Codex
    measured on 2026-08-14. The `map_age` distribution is bursty, not
    uniformly slow: median 0.018 s (very fresh most of the time) but p90
-   0.558 s and max 3.067 s — a long tail of multi-second stalls, consistent
-   with Codex's prior finding that map commits and planning share a
-   mutually-exclusive callback group, so expensive planning work can starve
-   map updates for seconds at a time. This is the same issue
-   `docs/loop_guard_snapshot_recovery_steps_6_to_22_2026-08-14.md` already
-   flagged and did not resolve; it is not something today's fixes touched.
+   0.558 s and max 3.067 s — a long tail of multi-second stalls. This is the
+   same issue `docs/loop_guard_snapshot_recovery_steps_6_to_22_2026-08-14.md`
+   already flagged and did not resolve; it is not something today's fixes
+   touched.
+
+   **2026-08-15 correction:** the "map commits and planning share a
+   callback group" explanation above (and in §7's conclusion) is **wrong
+   for the current code** and should not be cited further. Verified two
+   independent mechanisms that already rule this out:
+   - `fsm_ros2.hpp` constructs distinct `MutuallyExclusive` callback groups
+     for the FSM timer, replan timer, command publisher, goal callback, and
+     the map (`map_cbk_group_` is passed into `ROGMapROS` separately from
+     `exec_cbk_group_`/`replan_cbk_group_`/`cmd_cbk_group_`), and
+     `Apps/fsm_node_ros2.cpp:97` runs an 8-thread `MultiThreadedExecutor` —
+     Codex's 2026-08-14 Step 1 work, already merged, already in the commit
+     history at the point today's guard code was built on.
+   - For every rog_map config used in today's tests (`map_sliding.enable:
+     false`, `raycasting.enable: false`, `unk_inflation_en: false`),
+     `rog_map.cpp:32-34` evaluates `immutable_snapshot_enabled_ = true`.
+     Under that flag `acquireMapReadTransaction()`
+     (`rog_map.h:213-231`) returns an *empty* transaction — planner reads
+     take **no lock at all** and can never block on, or be blocked by, a
+     map commit. This is a stronger guarantee than callback-group
+     separation and is already active.
+
+   Moreover `fsm.cpp:307-312` defines `map_age_s` (the value that trips
+   `MAP_STALE`) as `now - health.latest_scan_process_time` whenever the
+   immutable snapshot is active — i.e. time since a scan was last
+   *processed*, not time spent waiting on any lock. A 3 s `map_age` burst
+   therefore means no scan was processed for 3 s, which is upstream of
+   ROG-map's locking/scheduling entirely.
+
+   Traced one call further upstream: `perfect_drone_sim`'s `publishPC()`
+   (`ros2_perfect_drone_model.hpp:163-173`, the sim's own wall-timer
+   callback) calls `renderOnceInWorld` → `render_pointcloud`
+   (`marsim_render.cpp`), a synchronous OpenGL depth-render per frame
+   (`glClear` → draw → `glfwSwapBuffers` → `glReadPixels` readback) on a
+   single thread, with no batching or double-buffering across calls. A
+   real NVIDIA GPU is present in this environment (confirmed via
+   `nvidia-smi`/`glxinfo`, RTX 3050 Ti Laptop, not software/llvmpipe
+   rendering), so this is plausible as the source of frame-to-frame
+   burstiness rather than a GPU-availability problem. This is also
+   consistent with §7's already-rejected `sensing_rate: 3` experiment:
+   lowering the requested rate made throughput worse, which fits a
+   per-call-cost-dominated bottleneck (each call still pays the same
+   synchronous render+readback cost, just less often) rather than a
+   starvation/contention bottleneck (which a lower requested rate would
+   have relieved). Not yet instrumented with per-call timing to confirm
+   directly — this is the next concrete step if cause 1 is pursued
+   further, and it points at `mars_uav_sim` (the simulator), not at
+   `super_planner`/`rog_map`.
 2. **The NaN/Inf CIRI degeneracy (§5).** Found and fixed today.
 3. **Occasional topology-reroute-zone insufficiency.** One seed6 run and one
    seed8 run showed the exact-collision-point-recurring deadlock pattern
@@ -230,33 +275,298 @@ than reducing total work. `seed8_slowsense.yaml` is kept only as a record of
 this negative result; `seed8.yaml` itself was never modified and the
 `sensing_rate: 10` default remains in use everywhere else.
 
-This means cause 1 is not fixable by simply retuning the publish rate. It
-most likely needs the scheduling/architecture change Codex's prior docs
-already pointed at (decouple the map-write and planning callback groups so
-expensive planning cannot starve map commits), which has not been attempted.
+This means cause 1 is not fixable by simply retuning the publish rate.
+**2026-08-15 correction:** it is also not a callback-group/scheduling
+problem — see the correction note under §6 item 1. The map-write/planning
+separation this paragraph used to point at was already implemented by
+2026-08-14 and verified still in place; the render/readback cost inside
+`perfect_drone_sim`'s own publish timer is the current leading suspect and
+has not yet been fixed or even directly timed.
 
-## Current status — not flight-ready
+## 8. 2026-08-17/18: executor threading fix, unknown-space tracking, and the real completion bottleneck
 
-- Best formal result: seed6 5-run gate 4/5 (waypoints 1,5,5,5,5), 0/5 contact.
-  The required gate (5/5 completion, 0 contact) has **not** been passed.
-- Contact has been 0 across every run today (5-run gates, 10-seed sweep, and
-  all follow-up diagnostic runs combined, ~40+ runs) after the CIRI
-  avoidance-zone fix. This is the strongest evidence so far in the whole
-  guard investigation, but it is still far short of a formal 50-run
-  campaign.
-- Completion is still highly variable run-to-run on an identical
-  configuration and map (seed6 alone ranged 1/5 to 5/5 across five runs, and
-  seed8 ranged 1/5 to 5/5 across two otherwise-identical re-runs). §6
-  attributes this to a combination of chronic map-staleness braking (dominant,
-  unresolved) and residual topology-reroute-zone insufficiency (rare,
-  probably inherent to the single-sphere strategy).
-- FSM CPU usage has not been measured for any of today's runs.
+Picked back up from §6 item 1's "render/readback cost inside
+`perfect_drone_sim`'s own publish timer" lead.
+
+### 8.1 Root cause of cause 1: perfect_drone_sim's own executor, not rendering cost
+
+`ros2_perfect_drone_node.cpp`'s `main()` called `rclcpp::spin(node)` --
+the default **single-threaded** executor. The node splits cmd/odom/
+global_pc/local_pc into separate `MutuallyExclusive` callback groups (as
+if for a multi-threaded executor), but a single-threaded spin serializes
+all of them onto one thread anyway. `odom_pub_timer_` fires at 100 Hz and
+`global_pc_pub_timer_` at **1000 Hz** (mostly a no-op body, but still a
+scheduler turn every time); both were starving `local_pc_pub_timer_`
+(`publishPC()`, the actual LiDAR render+publish), which is why the
+achieved point-cloud rate never matched the declared `sensing_rate` and
+why lowering it (§7) made things worse, not better -- the bottleneck was
+executor contention, not per-call render cost.
+
+Fix: split the node across two executors instead of one. cmd/odom/
+global_pc run on a 3-thread `MultiThreadedExecutor` on a side thread;
+`local_pc_pub_cbk_group_` (the renderer) keeps the main thread to itself
+via a dedicated `SingleThreadedExecutor`, spun after starting the side
+thread. This was necessary, not just a nice-to-have: the renderer's
+GLFW/OpenGL context is only valid on the thread that created it, so it
+can't simply move to the shared pool -- the first attempt (give
+`local_pc_pub_cbk_group_` to the shared `MultiThreadedExecutor` too)
+produced `"OpenGL context is not current."` on essentially every render
+call and froze the mission entirely (0 progress for the full timeout).
+`marsim_render.cpp`'s `render_pointcloud()` also gained a defensive
+`glfwMakeContextCurrent(window)` at its top, documenting the invariant
+even though the dedicated-thread fix is what actually makes it hold.
+
+Single-run result on this fix alone (seed6, before any of the changes
+below): 5/5 waypoints, 0 contact, `map_age` p90 0.558s -> 0.198s, max
+3.067s -> 1.979s, 0 OpenGL errors (vs. 13123 with the broken variant).
+
+### 8.2 rog_map has no way to represent "confirmed empty" in this profile
+
+Separately, re-examined the seed9 sweep's one real contact (not from
+today's fixes -- inherited from before): a certified emergency brake made
+contact mid-execution (`trajectory_flag=3`), `min_clearance_m` down to
+0.003-0.2 m, `path_status=SAFE` at certification time. Root cause: this
+profile's `raycasting.enable: false` (a **pre-existing, deliberate**
+choice already present in the base `static_seedmaps.yaml`, predating this
+whole guard investigation -- see that file's own comment: "if disable,
+the map will only maintain occupied information, and all other grid will
+be considered as unknown"). With raycasting off, `rog_map`'s immutable
+snapshot only ever tracks *occupied* cells; `isUnknownInflate()` was
+hardcoded to always return `false` and `isKnownFree()` to always return
+`false` too. There is no way to distinguish "swept and confirmed clear"
+from "never looked at" -- both read as "not occupied" -- so the guard
+could certify a stop through space nobody had actually observed.
+
+Fix, scoped narrowly: added a `known_pages` bit to the raw-resolution
+snapshot grid (`rog_map.h`'s `SnapshotGrid`), populated in
+`publishCommittedSnapshot` from whether each dirty cell's probability has
+left the unknown band. A single LiDAR return only marks a thin ray-line
+of cells, so `prob_map.cpp`'s `raycastProcess()` (`!raycasting_en`
+branch) now also does a short backward ray-march from each accepted hit
+point (bounded by the new `observed_mark_range_max`, default 10 m, kept
+separate from `raycast_range_max` so this doesn't scale with full sensor
+range) marking traversed cells as observed-free via the existing
+`missPointUpdate` pipeline -- no new probabilistic machinery, just
+feeding it more geometry. `ROGMap::isUnknown()` reads `known_pages` with
+a small (3-cell, 0.15 m) neighbor tolerance to bridge gaps between
+individual sparse ray lines at raw (0.05 m) resolution.
+
+A new `TrajectorySafetyStatus::UNOBSERVED` (distinct from
+`CLEARANCE_MARGIN`, which stays reserved for a real nearby obstacle) is
+produced when `validatePositionTrajectory`'s new `unknown_as_occupied`
+parameter is true and a sampled point is unknown; it's a hard rejection
+with no escape allowed (unlike `CLEARANCE_MARGIN`, which does get an
+escape window). Wired to **`true` only for the brake candidate** in
+`activateEmergencyBrake` (`fsm_ros2.hpp`) via
+`fsm/trajectory_guard/unknown_as_occupied` (default `false`); normal
+EXP/backup candidates keep `false`, since they must be allowed to plan
+into never-yet-observed space -- that's inherent to exploring with a live
+sensor. First tried applying it everywhere: caused total liveness loss,
+since the area around the spawn point is almost entirely unobserved at
+t=0.
+
+**Causally verified, not just correlated:** re-ran seed9 five times with
+`unknown_as_occupied` forced back to `false` (executor fix from 8.1 kept
+active) -- run 2 reproduced a contact (`min_clearance_m=0.199`,
+`trajectory_flag=3`, `path_status=SAFE`, all four brake conditions
+including path_status showed `SAFE` for every one of that run's brakes).
+With the flag on, 0 contact across that same isolation test and every
+other run today. The executor fix alone was necessary but not
+sufficient; `UNOBSERVED` is the specific mechanism that closes this gap.
+
+### 8.3 Two plausible-sounding follow-on ideas, both net negative -- reverted
+
+1. **Widen the neighbor tolerance further** (radius 3 -> 6 cells, both at
+   read time in `isUnknown()` and, in a second attempt, moved to write
+   time as a splat in `publishCommittedSnapshot` from each newly-free
+   dirty cell). Both regressed the seed1-10 sweep (radius-6 read: far
+   more brake attempts/rejections and worse `map_age` for the same
+   21/25 gate result; write-side splat radius 6 and then 3: 41-37/50 vs
+   the working config's 41-42/50, with 3-5x more brake churn). The
+   per-check neighbor search competes with scan-processing thread time;
+   the write-side splat scatters writes across many 32 KB snapshot pages
+   that get copy-on-write'd in full, and the vehicle keeps generating
+   newly-free dirty cells throughout a mission, not just at start, so
+   the cost never amortizes down. Reverted to the plain 3-cell read-time
+   search, which remains the best of the variants tried.
+2. **Arm a topology-avoidance zone from a brake's `UNOBSERVED` failure
+   point too** (mirroring the existing mechanism that arms one from a
+   rejected, stopped `PlanFromRest` candidate). Refactored the existing
+   logic into `SuperPlanner::armTopologyAvoidanceZone()` and called it
+   from `activateEmergencyBrake`'s failure path, speed-gated the same way
+   the original call site is. Net negative on the seed1-10 sweep (34/50
+   vs. baseline 41-42/50; two previously-reliable seeds dropped to 1-2/5).
+   Reason: a rejected *stopped* candidate's collision point is a stable,
+   meaningful obstacle location, but a *moving* vehicle's failed-brake
+   collision point is just wherever it happened to be, projected forward
+   along its current heading -- arming zones from it walls off the
+   vehicle's own flight path, not a real obstacle. Reverted the call
+   site; kept the harmless refactor (the original candidate-rejection
+   call site behaves identically through the extracted method).
+
+### 8.4 Tried to match the SUPER paper's actual backup-trajectory mechanism, three times, all reverted
+
+Traced through `misc/scirobotics.ado6187.pdf` (the actual SUPER paper) to
+see how it establishes the backup trajectory's known-free guarantee
+without raycasting: not a raw occupancy grid at all, but Theorem 1
+(Supplementary Methods) -- a convex polytope built by CIRI, seeded on a
+line from the current position to the furthest point visible along the
+exploratory trajectory, that excludes every point in a "sufficiently
+dense" input point cloud is known-free by construction. To make single
+scans dense enough, the paper explicitly accumulates 1-2 s of recent
+LIDAR scans as CIRI's input, rather than reading from a committed map.
+
+Three attempts to actually build this for `activateEmergencyBrake`, each
+worse than the last:
+
+1. Reused the existing map-backed `CorridorGenerator::GeneratePolytopeFromLine`
+   (a shortcut -- read from `map_ptr_->boxSearch`, not from accumulated
+   raw scans, despite the paper specifically calling out map-commit
+   staleness as the problem raycasting-free methods have to solve).
+   Result: **an actual collision** on seed9 (`min_clearance_m=0.112`,
+   inside a brake certified `path_status=SAFE` by *both* the grid check
+   and this new corridor check) -- the map source has the same
+   commit-lag gap as the original raw-grid approach, so this added a
+   second, differently-shaped way to hit the identical bug it was
+   supposed to fix.
+2. Built a proper ~1-2 s raw-scan accumulator (`fsm_ros2.hpp`'s
+   `raw_cloud_window_`/`getAccumulatedRawCloud()`, reusing the existing
+   but previously-disabled `guard_cloud_sub_` raw-cloud subscription) and
+   a new `CorridorGenerator::GeneratePolytopeFromLineAndCloud()` that
+   takes an external point cloud instead of querying the map. First
+   version treated an empty point cloud within the search box as
+   *failure* (reasoning: a sparse point list, unlike a map, can't
+   distinguish "confirmed empty" from "never observed"). Result: **17/50
+   waypoints** (near-total liveness collapse) and a collision *still* got
+   through elsewhere in the same sweep -- wrong, because LiDAR only
+   returns points where a beam hits a surface, so genuinely open air is
+   *also* empty of points in any small box. There's no "this space is
+   empty" observation a raw point list can record, unlike an occupancy
+   grid; treating sparse-by-geometry the same as unswept broke normal
+   flight almost everywhere.
+3. Reverted just the empty-cloud handling back to "empty = open box"
+   (matching the map-backed version's semantics), keeping the raw-scan
+   accumulator. Result: **12/50 waypoints**, worse still, and the new
+   `guard_cloud_sub_` subscription's sequence counter stayed at 0 for the
+   entire mission in the logs checked -- it never received a single
+   message despite reusing the map's own topic and QoS pattern -- while
+   separately the map's own commits also froze for 8+ seconds during
+   dense replan-retry activity. Root cause of either symptom not found.
+
+All of 8.4 was reverted in full: `SuperPlanner::buildEmergencyStopPolytope()`,
+`SuperPlanner::cg_brake_ptr_`, `CorridorGenerator::GeneratePolytopeFromLineAndCloud()`,
+and `fsm_ros2.hpp`'s raw-scan accumulator are gone; `activateEmergencyBrake`
+is back to the 8.2 `unknown_as_occupied` grid check;
+`fsm/trajectory_guard/raw_cloud/enable` is back to `false`. Revert verified
+against a fresh seed1-10 sweep (38/50, 0 contact -- consistent with the
+8.2 baseline's known run-to-run range).
+
+**This direction is not closed, just not worth re-attempting live without
+more isolation.** If revisited: instrument *why* `guard_cloud_sub_` saw
+zero messages before touching anything else, and consider testing the
+raw-scan accumulator completely independently of the CIRI corridor change
+(e.g. just log accumulated-cloud size over time) before wiring it into
+anything safety-critical.
+
+### 8.5 The actual dominant completion bottleneck: EMER_STOP unconditionally discards the goal
+
+Asked to explain *why* seed9 stayed stuck instead of assuming an
+unverified "occlusion" theory from collision-point coordinates alone
+(they turned out to be a red herring -- see below). Properly re-examined
+by cross-referencing `TRAJ_GUARD_REJECT`/`TRAJ_GUARD_COMMIT` line-by-line
+instead of grepping rejections in isolation, and by counting brake
+outcomes and FSM state samples directly:
+
+- The seed9 `CLEARANCE_MARGIN` rejections that looked clustered at one
+  coordinate (misread earlier as "same wall, occlusion, needs a new
+  vantage point") in fact each resolved within 1-2 retries via the
+  existing topology-reroute mechanism working as designed -- only 17
+  `TRAJ_GUARD_REJECT`s and 13 `TRAJ_GUARD_REROUTE_ARM`s in the whole 120 s
+  run, with long normal-flight stretches (8+ consecutive successful
+  commits, 8+ seconds) in between. Not the bottleneck.
+- The real number: **98 `TRAJ_GUARD_BRAKE_REJECTED`** in that same run
+  (61 `MAP_STALE`, 37 `UNOBSERVED`), each entering `EMER_STOP`. Sampling
+  `Fsm::callMainFsmOnce()`'s periodic state print (105 one-second
+  samples) gave `WAIT_GOAL` 63 (60%), `GENERATE_TRAJ` 16 (15%),
+  `FOLLOW_TRAJ` 20 (19%), `EMER_STOP` 6 (6%) -- the vehicle spent most of
+  the mission simply idle, not flying.
+- `Fsm::callMainFsmOnce()`'s `EMER_STOP` case (`fsm.cpp`) was
+  unconditional: `ChangeState("MainFsmCallback", WAIT_GOAL); break;` --
+  discarding `gi_.goal_p`/`gi_.goal_yaw` (still valid; nothing had
+  cleared them) and falling back to `WAIT_GOAL`, which only resumes once
+  `mission_planner` re-enqueues a goal. `mission_planner`'s
+  `GoalPubTimerCallback()` only republishes the *unchanged* current
+  waypoint once per `waypoint.yaml`'s `publish_dt` (1.0 s) unless the
+  waypoint itself switches. So every one of those 98 failures paid up to
+  ~1 s waiting on an external 1 Hz timer for information the FSM already
+  had, instead of retrying at its own ~15 Hz replan rate.
+
+Fix: `case EMER_STOP` now checks `started_`; if true, sets
+`gi_.new_goal = true` and transitions straight to `GENERATE_TRAJ` with
+the already-known goal, instead of bouncing through `WAIT_GOAL`. If the
+goal was already reached, `GENERATE_TRAJ`'s existing `closeToGoal(0.1)`
+check sends it back to `WAIT_GOAL` immediately anyway, so no separate
+case is needed for that.
+
+Result on seed9 (single run): `WAIT_GOAL` samples 63 -> **0**;
+`FOLLOW_TRAJ` 20 -> 45 (19% -> 53% of ticks); completion 1/5 -> 3/5, 0
+contact. **Seed1-10 sweep (n=1 each): 48/50 waypoints, 0/10 contact** --
+9 of 10 seeds at a clean 5/5. Only seed7 (3/5) fell short; not yet
+investigated separately. This is a large jump from every other
+configuration tried today or in the preceding two days (best prior:
+seed6 5-run gate 4/5; various seed1-10 n=1 sweeps in the 33-42/50 range).
+
+### 8.6 Correction: the seed9 "occlusion" theory was wrong, twice over
+
+Worth recording precisely, since it was asserted fairly confidently
+before being checked:
+
+- First claim: "the vehicle sits at a fixed vantage point and a rotation
+  would reveal more of the scene." Checked `seed9.yaml`/`marsim_render`
+  config: `is_360lidar: true`, `vertical_fov: 178`, `lidar_type: 2`
+  (`GENERAL_360`) -- this sensor already samples the full horizontal
+  360° every single scan call, so rotation cannot reveal anything new.
+  The claim was made without checking the sensor's actual FOV config
+  first.
+- Second, revised claim (after being pushed on the first): "genuine
+  line-of-sight occlusion, unresolvable without translating to a new
+  position, since 26 map commits passed without the collision-point
+  coordinates changing." This was still wrong, for a more basic reason:
+  the recurring collision-point coordinates were `TRAJ_GUARD_REJECT`
+  (candidate) rejections, which -- as 8.5 shows -- were resolving
+  normally within 1-2 retries the whole time; `TRAJ_GUARD_COMMIT` lines
+  interspersed between them were never checked. The actual dominant
+  failure (`TRAJ_GUARD_BRAKE_REJECTED`, 98 occurrences) was a completely
+  different log line that had already been found and quantified in an
+  earlier pass of this same session, then not connected to the
+  `WAIT_GOAL` question when re-investigating.
+
+## Current status — not flight-ready, but no longer failing for the original reason
+
+- **Executor threading (8.1), unknown-space tracking scoped to the brake
+  (8.2), and the EMER_STOP fix (8.5) are all still in place and are the
+  current best-known-good configuration.** 8.3 and 8.4's variants are
+  fully reverted; do not re-apply the write-side splat, the brake-triggered
+  topology-zone arming, or any of the CIRI-corridor/raw-scan-accumulation
+  code without new instrumentation first (see 8.4's closing note).
+- Latest seed1-10 sweep (n=1 per seed, **not a gate**): 48/50 waypoints,
+  **0/10 contact**, 9 of 10 seeds at a clean 5/5. This is the strongest
+  completion result in the whole guard investigation to date, on top of
+  what was already the strongest safety result (0 contact has now held
+  across every run since the CIRI avoidance-zone fix and the `UNOBSERVED`
+  fix, well over 60 combined runs across both days).
+- **Still not a passed gate.** The required bar (5/5 completion, 0
+  contact, on 5 consecutive runs of one seed) has not been attempted
+  since this fix landed. Do not describe this configuration as
+  flight-ready or run a 50-run campaign before that gate passes.
+- seed7 (3/5 in the latest sweep) has not been separately diagnosed.
+  Given 8.5's finding, check its `TRAJ_GUARD_BRAKE_REJECTED` count and
+  `last_path_status` distribution first, the same way seed9 was diagnosed,
+  rather than assuming a new cause.
+- FSM CPU usage has not been measured for any run across either day.
 - The `VIABILITY_DEBUG` and `AVOIDANCE_DEBUG` diagnostic logging left in
-  `super_planner.cpp`/`corridor_generator.cpp` is harmless when the env vars
-  are unset but has not been cleaned up.
-- None of today's or the prior two days' guard/viability code was committed
-  before this note; see the accompanying commit for what is now mirrored
-  into `super_patches/`.
+  `super_planner.cpp`/`corridor_generator.cpp` is harmless when the env
+  vars are unset but has not been cleaned up.
 
 Do not describe `static_seedmaps_guard_viability_v7.yaml` or any of its
 `_wide`/`_tight`/`_tight_h08` variants as flight-ready. Do not run a 50-run

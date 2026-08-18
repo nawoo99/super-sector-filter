@@ -159,6 +159,27 @@ namespace perfect_drone {
             return cfg_.sensing_rate;
         }
 
+        // The renderer's GLFW window/GL context and glfwPollEvents() are
+        // only valid on the thread that created them (GLFW requires event
+        // functions to run on the creating/main thread). Callers must keep
+        // this group on its own single-threaded executor on that thread
+        // rather than folding it into a general multi-threaded pool.
+        rclcpp::CallbackGroup::SharedPtr localPcCbkGroup() const {
+            return local_pc_pub_cbk_group;
+        }
+
+        rclcpp::CallbackGroup::SharedPtr cmdSubCbkGroup() const {
+            return cmd_sub_cbk_group;
+        }
+
+        rclcpp::CallbackGroup::SharedPtr odomTimerCbkGroup() const {
+            return odom_timer_cbk_group;
+        }
+
+        rclcpp::CallbackGroup::SharedPtr globalPcPubCbkGroup() const {
+            return global_pc_pub_cbk_group;
+        }
+
 
         void publishPC() {
             pcl::PointCloud<marsim::PointType>::Ptr local_map(new pcl::PointCloud<marsim::PointType>);

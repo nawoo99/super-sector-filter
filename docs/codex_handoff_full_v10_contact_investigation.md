@@ -1,6 +1,19 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-17/18 최신 결과 (가장 먼저 확인할 것):** 이 문서와 아래 배너들이
+> 다루는 seed6 gate 미통과 문제의 실제 지배적 원인은 executor 스레딩 버그
+> (`perfect_drone_sim`이 단일 스레드로 돌아서 렌더 콜백이 굶주림)와, 더
+> 결정적으로 `Fsm::callMainFsmOnce()`의 `EMER_STOP` 케이스가 살아있는 목표를
+> 버리고 무조건 `WAIT_GOAL`로 떨어져 `mission_planner`의 1 Hz 재전송 타이머를
+> 기다리던 버그였다 — seed9 한 런에서 미션 시간의 60%가 그냥 대기 상태였다.
+> 두 버그 모두 수정 후 seed1-10 스윕(n=1)에서 48/50 완주, 접촉 0/10 (10개 중
+> 9개 시드가 5/5). 아직 공식 5-run gate는 미통과. 전체 경위와 실패한 시도들
+> (CIRI corridor 3회 시도, topology zone 확장 2회, raw-cloud 누적)은
+> `docs/viability_guard_ciri_avoidance_2026-08-15.md` §8을 볼 것 — 아래의
+> "occlusion" 계열 설명이나 콜백 그룹 경합 이론은 전부 낡은 것이다.
+
+> [!IMPORTANT]
 > **2026-08-14 v7 topology / certified-stop 후속 결과:** 임시 avoidance
 > sphere를 A*에 주입하는 topology reroute와 선제 stop 인증을 구현했지만, seed6
 > gate는 통과하지 못했다. `0.55 s` 선제 stop n=5는 완주 1/5, 접촉 run

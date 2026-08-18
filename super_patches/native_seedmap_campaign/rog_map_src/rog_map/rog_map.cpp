@@ -176,6 +176,7 @@ void ROGMap::publishCommittedSnapshot(const std::uint64_t version) {
                 (raw_words + SNAPSHOT_PAGE_WORDS - 1U) / SNAPSHOT_PAGE_WORDS;
         const auto zero_page = std::make_shared<const SnapshotBitPage>();
         next->probability.occupied_pages.assign(raw_pages, zero_page);
+        next->probability.known_pages.assign(raw_pages, zero_page);
 
         next->inflation.resolution = cfg_.inflation_resolution;
         next->inflation.resolution_inv = 1.0 / cfg_.inflation_resolution;
@@ -197,10 +198,28 @@ void ROGMap::publishCommittedSnapshot(const std::uint64_t version) {
     next->inflation.bound_max_d = local_map_bound_max_d_;
 
     std::unordered_map<std::size_t, std::shared_ptr<SnapshotBitPage>> raw_mutable_pages;
+    std::unordered_map<std::size_t, std::shared_ptr<SnapshotBitPage>> raw_known_mutable_pages;
     std::unordered_map<std::size_t, std::shared_ptr<SnapshotBitPage>> inf_mutable_pages;
+    // 2026-08-18: tried widening "known" into a neighbor splat here at
+    // write time (once per dirty cell per scan, radius 3 and 6 both
+    // tried), to move the coverage-density fix off the read path (see
+    // isUnknown()'s own history below). Both were worse than the plain
+    // read-side radius-3 neighbor search on the seed1-10 sweep (37-41/50
+    // vs 42/50 waypoints, with brake attempts/rejections 3-5x higher) --
+    // the vehicle keeps generating newly-free dirty cells throughout a
+    // mission (not just at start), and splatting from each one scatters
+    // writes across many distinct 32 KB snapshot pages, which
+    // setSnapshotBit copy-on-write's in full on first touch each commit.
+    // Reverted to no splat; isUnknown() does the neighbor search on read.
     for (const int hash_id : raw_dirty) {
+        const double prob = static_cast<double>(occupancy_buffer_[hash_id]);
         setSnapshotBit(next->probability.occupied_pages, raw_mutable_pages, hash_id,
-                       ProbMap::isOccupied(static_cast<double>(occupancy_buffer_[hash_id])));
+                       ProbMap::isOccupied(prob));
+        // Resolved means the cell has left the unknown probability band --
+        // it may still flip between occupied and confirmed-free later, but
+        // it is no longer "never observed".
+        setSnapshotBit(next->probability.known_pages, raw_known_mutable_pages, hash_id,
+                       !ProbMap::isUnknown(prob));
     }
     for (const int hash_id : inf_dirty) {
         setSnapshotBit(next->inflation.occupied_pages, inf_mutable_pages, hash_id,
@@ -267,23 +286,59 @@ bool ROGMap::isUnknown(const Vec3f& pos) const {
     if (!immutable_snapshot_enabled_) {
         return ProbMap::isUnknown(pos);
     }
-    if (!insideLocalMap(pos)) {
+    const auto snapshot = loadPublishedSnapshot();
+    Vec3i id_g;
+    snapshotPosToGlobalIndex(pos, snapshot->probability.resolution, id_g);
+    if (!snapshotInside(snapshot->probability, id_g)) {
         return true;
     }
     if (pos.z() > cfg_.virtual_ceil_height || pos.z() < cfg_.virtual_ground_height) {
         return false;
     }
-    return !isOccupied(pos);
+    // A single LiDAR return only marks a thin ray-line of raw cells as
+    // observed (see raycastProcess's !raycasting_en branch), so at raw
+    // resolution the cells immediately beside that line stay technically
+    // unmarked even in well-swept open space. Treat the point as known if
+    // any cell in a small neighborhood is, rather than requiring an exact
+    // hit -- this is a coverage-density fix, not a safety-margin relaxation
+    // (isOccupiedInflate's own inflation margin still applies separately).
+    //
+    // 2026-08-18: tried moving this widening to *write* time instead (a
+    // splat in publishCommittedSnapshot, radius 3 and 6 both tried), to
+    // avoid paying neighbor-search cost on every guard-validation sample.
+    // Both write-side variants did WORSE on the seed1-10 sweep than this
+    // plain read-side radius-3 search (37-41/50 waypoints vs 42/50, with
+    // 3-5x more brake attempts/rejections) -- the vehicle keeps generating
+    // newly-free dirty cells throughout a mission, not just at start, and
+    // splatting from each one scatters writes across many distinct 32 KB
+    // snapshot pages that get copy-on-write'd in full. This read-side
+    // radius-3 search remains the best-performing configuration found so
+    // far; a radius-6 read-side variant was also tried and was worse for
+    // the same reason as the write-side one (more cost per guard-check
+    // sample this time, not more touched pages).
+    constexpr int kNeighborRadiusCells = 3;
+    for (int dx = -kNeighborRadiusCells; dx <= kNeighborRadiusCells; ++dx) {
+        for (int dy = -kNeighborRadiusCells; dy <= kNeighborRadiusCells; ++dy) {
+            for (int dz = -kNeighborRadiusCells; dz <= kNeighborRadiusCells; ++dz) {
+                const Vec3i neighbor_id_g = id_g + Vec3i(dx, dy, dz);
+                if (!snapshotInside(snapshot->probability, neighbor_id_g)) {
+                    continue;
+                }
+                if (snapshotBit(snapshot->probability.known_pages,
+                                snapshotHash(snapshot->probability, neighbor_id_g))) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
 }
 
 bool ROGMap::isKnownFree(const Vec3f& pos) const {
     if (!immutable_snapshot_enabled_) {
         return ProbMap::isKnownFree(pos);
     }
-    // Raycasting is disabled in snapshot mode, so non-occupied raw cells
-    // remain UNKNOWN rather than KNOWN_FREE.
-    (void) pos;
-    return false;
+    return !isOccupied(pos) && !isUnknown(pos);
 }
 
 bool ROGMap::isOccupiedInflate(const Vec3f& pos) const {
@@ -307,6 +362,11 @@ bool ROGMap::isUnknownInflate(const Vec3f& pos) const {
     if (!immutable_snapshot_enabled_) {
         return ProbMap::isUnknownInflate(pos);
     }
+    // Unlike the raw-resolution grid (see isUnknown()), the inflation grid's
+    // snapshot only carries an occupied bit, not a known/unknown one, so
+    // this still can't distinguish "confirmed free" from "never observed"
+    // at inflated resolution. Callers that need that distinction should use
+    // isUnknown() on the raw grid instead.
     (void) pos;
     return false;
 }

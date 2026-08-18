@@ -73,6 +73,11 @@ namespace super_planner {
         MAP_STALE,
         OCCUPIED,
         CLEARANCE_MARGIN,
+        // Distinct from CLEARANCE_MARGIN: the point isn't near a detected
+        // obstacle at all, it has simply never been swept by the sensor.
+        // Only produced when a caller opts in via
+        // validatePositionTrajectory's unknown_as_occupied parameter.
+        UNOBSERVED,
         OUT_OF_MAP,
         VERSION_CHANGED
     };
@@ -220,11 +225,40 @@ namespace super_planner {
                     false, std::memory_order_acq_rel);
         }
 
+        // Merges collision_pos into an existing nearby avoidance zone or
+        // creates a new one (same mechanics commitTrajectoryCandidate uses
+        // for a rejected PlanFromRest candidate), so the next A* search
+        // routes around it. Exposed so fsm_ros2.hpp's activateEmergencyBrake
+        // can arm a zone too when a brake candidate fails as UNOBSERVED --
+        // without this, a brake that can never find confirmed-known space
+        // near the same spot just retries the identical failed plan
+        // forever instead of trying a different direction.
+        //
+        // current_speed_mps gates this the same way the original
+        // candidate-rejection call site always has: below
+        // guard_topology_reroute_max_stop_speed_mps only. A brake built
+        // from a fast-moving vehicle projects its collision point forward
+        // along wherever the vehicle is already heading, not a stable
+        // obstacle location -- arming zones from that while still moving
+        // fast walls off the vehicle's own flight path instead of routing
+        // around a real obstacle (found the hard way: seed9 went from
+        // partial completion to never moving at all).
+        void armTopologyAvoidanceZone(const Vec3f &collision_pos,
+                                      double current_speed_mps);
+
+        // unknown_as_occupied is a per-call override, not the general
+        // cfg_.trajectory_guard_unknown_as_occupied: normal EXP/backup
+        // candidates must be allowed to extend into never-yet-observed
+        // space (that's inherent to exploring with a live sensor), so only
+        // the emergency-brake candidate in fsm_ros2.hpp's
+        // activateEmergencyBrake() passes true here. A brake target should
+        // never rely on space nobody has actually looked at yet.
         TrajectorySafetyResult validatePositionTrajectory(
                 const Trajectory &trajectory,
                 double checked_from_tt,
                 std::uint64_t trajectory_generation = 0,
-                bool allow_initial_clearance_escape = false) const;
+                bool allow_initial_clearance_escape = false,
+                bool unknown_as_occupied = false) const;
 
         TrajectorySafetyResult validateCommittedTrajectory(double now_wt) const;
 

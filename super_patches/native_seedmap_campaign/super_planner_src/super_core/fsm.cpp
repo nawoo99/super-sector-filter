@@ -185,7 +185,29 @@ namespace fsm {
                 break;
             }
             case EMER_STOP: {
-                ChangeState("MainFsmCallback", WAIT_GOAL);
+                // 2026-08-18: used to always fall back to WAIT_GOAL here,
+                // discarding gi_.goal_p/goal_yaw even though they're still
+                // valid -- WAIT_GOAL then sits idle until
+                // mission_planner's own goal-republish timer fires
+                // (waypoint.yaml's publish_dt, 1 Hz), since the goal itself
+                // never changed so nothing else re-enqueues it sooner.
+                // Measured on seed9: 98 EMER_STOP entries in one 120 s
+                // run, each paying up to ~1 s here for no reason, adding
+                // up to the FSM spending 60% of 1 s sampled ticks in
+                // WAIT_GOAL and only 19% actually in FOLLOW_TRAJ. Retrying
+                // GENERATE_TRAJ directly with the already-known goal
+                // instead lets recovery run at the FSM's own replan rate
+                // (15 Hz) rather than mission_planner's unrelated 1 Hz
+                // polling interval. If the goal was already reached,
+                // GENERATE_TRAJ's own closeToGoal() check immediately
+                // sends it back to WAIT_GOAL anyway, so this doesn't need
+                // its own separate check for that case.
+                if (started_) {
+                    gi_.new_goal = true;
+                    ChangeState("MainFsmCallback", GENERATE_TRAJ);
+                } else {
+                    ChangeState("MainFsmCallback", WAIT_GOAL);
+                }
                 break;
             }
             default:

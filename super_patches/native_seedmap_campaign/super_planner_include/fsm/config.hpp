@@ -85,6 +85,10 @@ namespace fsm {
         double brake_max_duration_s{2.0};
         double brake_max_acc_mps2{15.0};
         double brake_max_jerk_mps3{120.0};
+        // See super_planner::Config::trajectory_guard_unknown_as_occupied
+        // for the rationale; only the emergency-brake candidate check reads
+        // this flag.
+        bool trajectory_guard_unknown_as_occupied{false};
 
         Config() = default;
 
@@ -141,6 +145,8 @@ namespace fsm {
                              brake_max_acc_mps2, 15.0);
             loader.LoadParam("fsm/trajectory_guard/brake_max_jerk_mps3",
                              brake_max_jerk_mps3, 120.0);
+            loader.LoadParam("fsm/trajectory_guard/unknown_as_occupied",
+                             trajectory_guard_unknown_as_occupied, false);
 
 
             loader.LoadParam("super_planner/yaw_dot_max", yaw_dot_max, 1.0, true);

@@ -123,6 +123,17 @@ namespace super_planner {
         double trajectory_guard_additional_clearance_m{0.0};
         double trajectory_guard_escape_max_duration_s{1.0};
         double trajectory_guard_escape_entry_grace_s{0.0};
+        // Reject an emergency-brake candidate (only -- NOT normal EXP/backup
+        // candidates, which must be free to extend into never-yet-observed
+        // space or the vehicle could never explore) that falls in
+        // never-observed raw-grid space, not just confirmed-occupied space.
+        // A stale-but-fresh-enough map can still have real, unswept gaps
+        // right along the flight path; isOccupiedInflate() alone treats
+        // those identically to confirmed-free space. First tried applied to
+        // every guard check (EXP/backup too): caused total liveness loss at
+        // mission start, since the area right around the spawn point is
+        // still almost entirely unobserved at t=0.
+        bool trajectory_guard_unknown_as_occupied{false};
         int iris_iter_num;
 
         int mpc_horizon{};
@@ -160,6 +171,8 @@ namespace super_planner {
                              trajectory_guard_additional_clearance_m, 0.0);
             loader.LoadParam("fsm/trajectory_guard/escape_max_duration_s",
                              trajectory_guard_escape_max_duration_s, 1.0);
+            loader.LoadParam("fsm/trajectory_guard/unknown_as_occupied",
+                             trajectory_guard_unknown_as_occupied, false);
             loader.LoadParam("fsm/trajectory_guard/escape_entry_grace_s",
                              trajectory_guard_escape_entry_grace_s, 0.0);
             loader.LoadParam("super_planner/safe_corridor_line_max_length", safe_corridor_line_max_length, 3.0);

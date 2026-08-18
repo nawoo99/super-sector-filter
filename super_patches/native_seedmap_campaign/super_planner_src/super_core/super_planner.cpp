@@ -45,6 +45,7 @@ namespace super_planner {
             case TrajectorySafetyStatus::MAP_STALE: return "MAP_STALE";
             case TrajectorySafetyStatus::OCCUPIED: return "OCCUPIED";
             case TrajectorySafetyStatus::CLEARANCE_MARGIN: return "CLEARANCE_MARGIN";
+            case TrajectorySafetyStatus::UNOBSERVED: return "UNOBSERVED";
             case TrajectorySafetyStatus::OUT_OF_MAP: return "OUT_OF_MAP";
             case TrajectorySafetyStatus::VERSION_CHANGED: return "VERSION_CHANGED";
             default: return "UNKNOWN";
@@ -199,7 +200,8 @@ namespace super_planner {
             const Trajectory &trajectory,
             double checked_from_tt,
             const std::uint64_t trajectory_generation,
-            const bool allow_initial_clearance_escape) const {
+            const bool allow_initial_clearance_escape,
+            const bool unknown_as_occupied) const {
         TrajectorySafetyResult result;
         result.trajectory_generation = trajectory_generation;
         if (!trajectoryValidationEnabled()) {
@@ -350,6 +352,35 @@ namespace super_planner {
             if (!map_ptr_->insideLocalMap(point)) {
                 result.status = TrajectorySafetyStatus::OUT_OF_MAP;
             } else {
+                // Unobserved space is not near any detected obstacle, so it
+                // doesn't fit the OCCUPIED/CLEARANCE_MARGIN physical-escape
+                // logic below (that logic assumes the violation is a margin
+                // around a real hit). Treat it as a separate, harder
+                // rejection with no escape allowed -- ambiguity about
+                // whether space is safe should never be waved through the
+                // way a soft inflation-margin graze can be.
+                bool guard_unobserved = unknown_as_occupied &&
+                                        map_ptr_->isUnknown(point);
+                if (!guard_unobserved) {
+                    for (const auto &offset : trajectory_guard_clearance_offsets_) {
+                        const Vec3f clearance_point = point + offset;
+                        if (map_ptr_->insideLocalMap(clearance_point) &&
+                            unknown_as_occupied &&
+                            map_ptr_->isUnknown(clearance_point)) {
+                            guard_unobserved = true;
+                            break;
+                        }
+                    }
+                }
+                if (guard_unobserved) {
+                    result.status = TrajectorySafetyStatus::UNOBSERVED;
+                    result.first_collision_tt = query.tt;
+                    result.first_collision_pos = point;
+                    result.map_query_ms = std::chrono::duration<double, std::milli>(
+                            std::chrono::steady_clock::now() - query_start).count();
+                    return result;
+                }
+
                 bool guard_occupied = point.z() <= guard_ground_height ||
                                       point.z() >= guard_ceil_height ||
                                       map_ptr_->isOccupiedInflate(point);
@@ -582,6 +613,55 @@ namespace super_planner {
         }
     }
 
+    void SuperPlanner::armTopologyAvoidanceZone(const Vec3f &collision_pos,
+                                                const double current_speed_mps) {
+        if (!cfg_.guard_topology_reroute_en ||
+            !collision_pos.array().isFinite().all() ||
+            current_speed_mps > cfg_.guard_topology_reroute_max_stop_speed_mps) {
+            return;
+        }
+        std::size_t matched = guard_topology_avoidance_centers_.size();
+        double nearest_distance = std::numeric_limits<double>::infinity();
+        for (std::size_t i = 0; i < guard_topology_avoidance_centers_.size(); ++i) {
+            const double distance =
+                    (collision_pos - guard_topology_avoidance_centers_[i]).norm();
+            if (distance < nearest_distance) {
+                nearest_distance = distance;
+                matched = i;
+            }
+        }
+        const double merge_distance = 0.5 * cfg_.guard_topology_reroute_radius_m;
+        if (matched < guard_topology_avoidance_centers_.size() &&
+            nearest_distance <= merge_distance) {
+            guard_topology_avoidance_radii_[matched] = std::min(
+                    cfg_.guard_topology_reroute_max_radius_m,
+                    guard_topology_avoidance_radii_[matched] +
+                            cfg_.guard_topology_reroute_growth_m);
+        } else if (guard_topology_avoidance_centers_.size() <
+                   static_cast<std::size_t>(cfg_.guard_topology_reroute_max_zones)) {
+            guard_topology_avoidance_centers_.push_back(collision_pos);
+            guard_topology_avoidance_radii_.push_back(
+                    cfg_.guard_topology_reroute_radius_m);
+            matched = guard_topology_avoidance_centers_.size() - 1;
+        } else if (matched < guard_topology_avoidance_centers_.size()) {
+            guard_topology_avoidance_radii_[matched] = std::min(
+                    cfg_.guard_topology_reroute_max_radius_m,
+                    guard_topology_avoidance_radii_[matched] +
+                            cfg_.guard_topology_reroute_growth_m);
+        }
+        if (matched < guard_topology_avoidance_centers_.size()) {
+            ros_ptr_->warn(
+                    " -- [TRAJ_GUARD_REROUTE_ARM] zone={} zones={} "
+                    "center=[{:.3f},{:.3f},{:.3f}] radius={:.3f}",
+                    matched,
+                    guard_topology_avoidance_centers_.size(),
+                    guard_topology_avoidance_centers_[matched].x(),
+                    guard_topology_avoidance_centers_[matched].y(),
+                    guard_topology_avoidance_centers_[matched].z(),
+                    guard_topology_avoidance_radii_[matched]);
+        }
+    }
+
     bool SuperPlanner::commitTrajectoryCandidate(CmdTraj::Candidate candidate,
                                                   const char *phase) {
         const bool has_appended_backup = candidate.has_appended_backup;
@@ -672,57 +752,10 @@ namespace super_planner {
                 guard_corridor_retry_pending_.store(true,
                                                     std::memory_order_release);
             }
-            if (cfg_.guard_topology_reroute_en && plan_from_rest &&
-                stopped_for_reroute &&
-                plan_from_rest_geometric_rejection &&
-                safety.first_collision_pos.array().isFinite().all()) {
-                std::size_t matched = guard_topology_avoidance_centers_.size();
-                double nearest_distance = std::numeric_limits<double>::infinity();
-                for (std::size_t i = 0;
-                     i < guard_topology_avoidance_centers_.size(); ++i) {
-                    const double distance =
-                            (safety.first_collision_pos -
-                             guard_topology_avoidance_centers_[i]).norm();
-                    if (distance < nearest_distance) {
-                        nearest_distance = distance;
-                        matched = i;
-                    }
-                }
-                const double merge_distance = 0.5 *
-                        cfg_.guard_topology_reroute_radius_m;
-                if (matched < guard_topology_avoidance_centers_.size() &&
-                    nearest_distance <= merge_distance) {
-                    guard_topology_avoidance_radii_[matched] = std::min(
-                            cfg_.guard_topology_reroute_max_radius_m,
-                            guard_topology_avoidance_radii_[matched] +
-                                    cfg_.guard_topology_reroute_growth_m);
-                } else if (guard_topology_avoidance_centers_.size() <
-                           static_cast<std::size_t>(
-                                   cfg_.guard_topology_reroute_max_zones)) {
-                    guard_topology_avoidance_centers_.push_back(
-                            safety.first_collision_pos);
-                    guard_topology_avoidance_radii_.push_back(
-                            cfg_.guard_topology_reroute_radius_m);
-                    matched = guard_topology_avoidance_centers_.size() - 1;
-                } else if (matched < guard_topology_avoidance_centers_.size()) {
-                    guard_topology_avoidance_radii_[matched] = std::min(
-                            cfg_.guard_topology_reroute_max_radius_m,
-                            guard_topology_avoidance_radii_[matched] +
-                                    cfg_.guard_topology_reroute_growth_m);
-                }
-                if (matched < guard_topology_avoidance_centers_.size()) {
-                    ros_ptr_->warn(
-                            " -- [TRAJ_GUARD_REROUTE_ARM] zone={} zones={} "
-                            "center=[{:.3f},{:.3f},{:.3f}] radius={:.3f} "
-                            "speed={:.3f}",
-                            matched,
-                            guard_topology_avoidance_centers_.size(),
-                            guard_topology_avoidance_centers_[matched].x(),
-                            guard_topology_avoidance_centers_[matched].y(),
-                            guard_topology_avoidance_centers_[matched].z(),
-                            guard_topology_avoidance_radii_[matched],
-                            plan_from_rest_speed);
-                }
+            if (plan_from_rest && stopped_for_reroute &&
+                plan_from_rest_geometric_rejection) {
+                armTopologyAvoidanceZone(safety.first_collision_pos,
+                                         plan_from_rest_speed);
             }
             ros_ptr_->error(" -- [TRAJ_GUARD_REJECT] phase={} segment={} status={} "
                             "gen={} map={} from_tt={:.3f} collision_tt={:.3f} "

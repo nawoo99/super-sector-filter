@@ -289,6 +289,12 @@ namespace rog_map {
             Vec3f bound_min_d{Vec3f::Zero()};
             Vec3f bound_max_d{Vec3f::Zero()};
             std::vector<std::shared_ptr<const SnapshotBitPage>> occupied_pages;
+            // Set once a cell's probability has left the unknown band (i.e. it
+            // is either occupied or confirmed free). Unset means the cell has
+            // never been resolved either way -- distinct from confirmed-free.
+            // Only populated for `probability` (raw-resolution); `inflation`
+            // does not carry this bit.
+            std::vector<std::shared_ptr<const SnapshotBitPage>> known_pages;
         };
 
         struct PublishedMapSnapshot {

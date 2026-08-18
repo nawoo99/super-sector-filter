@@ -1,3 +1,10 @@
+# DIAGNOSTIC VARIANT (2026-08-18): identical to
+# static_seedmaps_guard_viability_tight_v7.yaml except
+# unknown_as_occupied=false. Used to isolate whether the 2026-08-17
+# executor-threading fix alone already stopped the seed9 brake-contact
+# failure, or whether the UNOBSERVED brake check is actually load-bearing.
+# Not for general use.
+#
 # EXPERIMENTAL ONLY, UNTESTED: pre-commit viability guard (horizon_s=2.0)
 # plus a shrunk topology-reroute avoidance zone (max_radius_m 1.8->1.0,
 # growth_m 0.25->0.2; widening to 3.5 m was tried first and made things
@@ -40,13 +47,6 @@ fsm:
     max_map_age_s: 0.75
     brake_trigger_map_age_s: 0.55
     raw_cloud:
-      # 2026-08-18: briefly turned this on to feed a raw-scan-accumulation
-      # window into a CIRI-based brake corridor (see docs/
-      # viability_guard_ciri_avoidance_2026-08-15.md for the full attempt
-      # and why it was reverted -- correlated with map commits freezing
-      # for 8+ seconds and the raw cloud subscription itself never
-      # receiving a message, cause not found). Back to disabled, matching
-      # the last validated-good state.
       enable: false
       max_age_s: 0.75
       clearance_m: 0.30
@@ -65,7 +65,7 @@ fsm:
     # isOccupiedInflate alone can't tell "confirmed empty" from "LiDAR never
     # swept this", and a seed9 sweep run made contact during an already-
     # certified brake for exactly that reason.
-    unknown_as_occupied: true
+    unknown_as_occupied: false
 
 super_planner:
   backup_traj_en: true
