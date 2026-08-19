@@ -1,6 +1,26 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-19 최신 결과 (이 배너를 가장 먼저 확인할 것):** 완주율 튜닝
+> (guard-corridor retry alternation) 및 논문 원 메커니즘(theorem 1, raw-scan
+> 누적 CIRI) 4번째 재구현 시도까지 진행됨. 후자는 이번엔 **shadow-only**로
+> 안전하게 만들어서 (판정이 실제 브레이크 수락/거부에 전혀 관여 안 함, 코드
+> 구조상 불가능) 논문 방법이 실제로 작동하는 것까지 확인했고 진짜 성능 버그
+> 2개를 찾아 고쳤지만, 여전히 완주율이 심각하게 낮다(seed5-10 0-2/5). 근본
+> 원인은 이 shadow 계산이 `mainFsmTimerCallback`(10ms/100Hz 타이머, 
+> `MutuallyExclusive` 콜백그룹) 안에서 동기적으로 도는 구조 자체 — 몇 ms짜리
+> 추가 작업도 그 예산을 자주 넘겨서 브레이크가 몰리는 순간(=가장 타이밍이
+> 중요한 순간)마다 틱이 밀린다. 올바른 해법은 비동기 latest-only 워커로
+> 옮기는 것(이 프로젝트가 2026-08-13경 비슷한 문제에 이미 썼던 패턴,
+> `docs/연구일지.md`의 "Shadow 후속" 절 참고) — **아직 구현 안 함, 다음
+> 세션의 최우선 작업.** 전체 경위와 정확한 수치는
+> `docs/viability_guard_ciri_avoidance_2026-08-15.md` §8.9-8.10을 볼 것.
+> `trajectory_guard_raw_cloud_ciri_shadow_en`은 기본값 `false`이고
+> 실사용 프로파일(`static_seedmaps_guard_viability_tight_v7.yaml`)엔 안
+> 켜져 있어서 현재 baseline엔 영향 없음 — 켜져 있는 건 전용 테스트
+> 프로파일(`_cirishadow.yaml`)뿐.
+
+> [!IMPORTANT]
 > **2026-08-17/18 최신 결과 (가장 먼저 확인할 것):** 이 문서와 아래 배너들이
 > 다루는 seed6 gate 미통과 문제의 실제 지배적 원인은 executor 스레딩 버그
 > (`perfect_drone_sim`이 단일 스레드로 돌아서 렌더 콜백이 굶주림)와, 더
