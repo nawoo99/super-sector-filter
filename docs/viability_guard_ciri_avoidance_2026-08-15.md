@@ -594,6 +594,76 @@ This is a pure liveness/completion failure, not a safety regression:
   one for a certified *stop* -- rather than retrying the identical corridor
   indefinitely. Not attempted yet; flagging for a future session.
 
+### 8.8 2026-08-19: seed1-10 x n=10 (100 runs) -- the n=1 headline was optimistic, but 0 contact holds at scale
+
+Ran the full seed1-10 sweep at n=10 per seed (100 runs total, same
+`static_seedmaps_guard_viability_tight_v7.yaml`, `loop24.txt`,
+`switch_dist=1.5`, `timeout=120.0s` as every prior sweep) to get a real
+distribution instead of one sample per seed. Raw JSON/logs are in
+`sweep_emerfix_n10/` (not committed -- see note below).
+
+| seed | 5/5 runs | waypoints | contact | worst min_clearance_m |
+|-----:|:--------:|:---------:|:-------:|:----------------------:|
+| 1  | 10/10 | 50/50 | 0 | 0.365 |
+| 2  | 10/10 | 50/50 | 0 | 0.409 |
+| 3  |  9/10 | 49/50 | 0 | 0.369 |
+| 4  | 10/10 | 50/50 | 0 | 0.357 |
+| 5  |  9/10 | 47/50 | 0 | 0.348 |
+| 6  |  8/10 | 48/50 | 0 | 0.372 |
+| 7  |  4/10 | 43/50 | 0 | 0.326 |
+| 8  |  8/10 | 43/50 | 0 | 0.323 |
+| 9  |  3/10 | 40/50 | 0 | 0.306 |
+| 10 |  3/10 | 37/50 | 0 | 0.327 |
+| **total** | **74/100** | **457/500 (91.4%)** | **0/100** | 0.306 |
+
+Two things this settles:
+
+- **Safety holds up at scale.** 0/100 contact, worst-case clearance
+  0.306 m (still a healthy margin, no near-miss tighter than that across
+  100 independent runs). The 8.2/8.5 fixes are not fragile to sample size.
+- **The n=1 headline (48/50, 9/10 seeds clean) was an optimistic single
+  draw, not the true rate.** At n=10 the true full-completion rate is
+  74/100 runs, and it is very uneven across seeds: 1-4 are solid (9-10/10),
+  but 7/9/10 fail more often than they succeed (3-4/10). Do not cite the
+  48/50 number as representative going forward -- use this table.
+
+To check whether 8.7's diagnosis (a `PlanFromRest` same-generation retry
+deadlock) generalizes beyond seed7's one run, every failed run's log was
+scanned for the longest run of consecutive identical-`gen`
+`CLEARANCE_MARGIN` rejects under `phase=PlanFromRest`:
+
+| | max same-gen streak (consecutive rejects) | total `PlanFromRest` rejects |
+|---|:---:|:---:|
+| successful runs (n=74) | median 2, mean 4.8, max 116 | median 14, mean 22.0, max 138 |
+| failed runs (n=26) | median 4, mean 25.5, max 273 | median 59, mean 73.4, max 296 |
+
+Failed runs have ~4x the median `PlanFromRest`-reject volume of successful
+ones and a much heavier tail on worst-case streak length, but the
+distributions overlap substantially (one successful run survived a
+116-long streak and 138 total rejects and still finished before the
+timeout). This confirms 8.7's framing rather than replacing it: **the same
+retry-deadlock mechanism drives essentially all of these failures, not
+just seed7's**, and whether a given run finishes in time is a race between
+that mechanism eventually re-finding a passable corridor (usually via a
+map update shifting the local geometry, per 8.7) and the 120 s timeout --
+not something the current recovery guarantees. seed7/9/10's higher failure
+rate most likely reflects those seeds' specific obstacle layouts putting
+more near-design-floor (1.0 m) pinches on the direct loop route, not a
+seed-specific bug.
+
+This raises the priority of 8.7's proposed next step (detect a stalled
+generation and escalate -- e.g. accept a `CLEARANCE_MARGIN` *moving*
+`PlanFromRest` candidate after N consecutive same-gen rejects, mirroring
+what `certifiedStopExistsFrom()` already does for a certified *stop*)
+from "flag for later" to "the next thing worth trying," since this is now
+confirmed as a frequent (26/100), not rare, failure mode. Still not
+attempted as of this writing.
+
+Note: `sweep_emerfix_n10/`'s ~100 launch logs (tens of MB) were not copied
+into this repo -- the aggregate numbers and the streak/reject-count
+analysis above are the durable record. Reproduce with a 10x loop over the
+existing `run_sweep_emerfix.sh` pattern if the raw logs are needed again.
+
 ## Current status — not flight-ready, but no longer failing for the original reason
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
@@ -602,21 +672,32 @@ This is a pure liveness/completion failure, not a safety regression:
   fully reverted; do not re-apply the write-side splat, the brake-triggered
   topology-zone arming, or any of the CIRI-corridor/raw-scan-accumulation
   code without new instrumentation first (see 8.4's closing note).
-- Latest seed1-10 sweep (n=1 per seed, **not a gate**): 48/50 waypoints,
-  **0/10 contact**, 9 of 10 seeds at a clean 5/5. This is the strongest
-  completion result in the whole guard investigation to date, on top of
-  what was already the strongest safety result (0 contact has now held
-  across every run since the CIRI avoidance-zone fix and the `UNOBSERVED`
-  fix, well over 60 combined runs across both days).
+- **Use the 8.8 n=10 table (100 runs), not the earlier n=1 sweep, as the
+  current completion baseline.** The n=1 sweep (48/50, 9/10 seeds clean)
+  was cited as the headline for one day; it turned out to be an optimistic
+  single draw. At n=10 the true rate is 74/100 full-completion runs
+  (457/500 waypoints, 91.4%), uneven across seeds (1-4 solid at 9-10/10;
+  7/9/10 fail more often than they succeed at 3-4/10). Do not re-cite
+  48/50 as representative.
+- **Safety does hold up at scale: 0/100 contact across the n=10 sweep**,
+  worst-case clearance 0.306 m. This is now well past 160 combined runs
+  across both days with zero contact since the CIRI avoidance-zone and
+  `UNOBSERVED` fixes -- the strongest and best-sampled part of this
+  investigation's results.
 - **Still not a passed gate.** The required bar (5/5 completion, 0
-  contact, on 5 consecutive runs of one seed) has not been attempted
-  since this fix landed. Do not describe this configuration as
-  flight-ready or run a 50-run campaign before that gate passes.
-- seed7 (3/5 in the latest sweep) is now diagnosed (8.7): a same-generation
-  `PlanFromRest` retry deadlock at the map's single tightest (1.004 m,
-  design-floor) obstacle gap, which happened not to resolve before the
-  120 s timeout. Not a contact/safety issue, and not the same mechanism as
-  8.5's `EMER_STOP`/`WAIT_GOAL` bug. Not yet fixed.
+  contact, on 5 consecutive runs of one seed) has still not been formally
+  attempted. Given 8.8, expect it to pass easily on seed1-4 and fail more
+  often than not on seed7/9/10 -- pick the seed deliberately rather than
+  assuming any seed represents the others.
+- seed7's individual 3/5 (8.7) and the general pattern across all n=10
+  failures (8.8) are now diagnosed as the same mechanism: a
+  same-generation `PlanFromRest` `CLEARANCE_MARGIN` retry deadlock at a
+  near-design-floor (1.0 m) obstacle gap, racing the 120 s timeout with no
+  guaranteed escape. Not a contact/safety issue, and not the same
+  mechanism as 8.5's `EMER_STOP`/`WAIT_GOAL` bug. Confirmed as a frequent
+  (26/100 runs), not rare, failure mode -- not yet fixed. See 8.8's closing
+  note for the proposed next step (stalled-generation detection +
+  escalation).
 - FSM CPU usage has not been measured for any run across either day.
 - The `VIABILITY_DEBUG` and `AVOIDANCE_DEBUG` diagnostic logging left in
   `super_planner.cpp`/`corridor_generator.cpp` is harmless when the env
