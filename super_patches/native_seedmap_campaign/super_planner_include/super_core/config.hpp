@@ -84,6 +84,14 @@ namespace super_planner {
         // After a raw-corridor EXP candidate is rejected by the operational
         // guard, retry the next plan with an inflated-map corridor.
         bool corridor_guard_retry_inflated;
+        // Once guard-corridor retry mode is entered it stays on until a
+        // candidate finally commits, so a persistently rejected point is
+        // permanently retried with the same tight-margin corridor generator.
+        // Every Nth consecutive retry-mode attempt, fall back to the normal
+        // (raw-obstacle, wider-margin) generator instead, so the search
+        // isn't locked into one geometry the whole time. <=0 disables
+        // alternation (always use the retry generator, prior behavior).
+        int guard_corridor_retry_alternate_every{4};
         // While stopped under the certified guard hold, force subsequent A*
         // searches away from geometric rejection points instead of retrying
         // the same shortest-path topology.
@@ -191,6 +199,8 @@ namespace super_planner {
                              corridor_use_inflated_obstacles);
             loader.LoadParam("super_planner/corridor_guard_retry_inflated",
                              corridor_guard_retry_inflated, false);
+            loader.LoadParam("super_planner/guard_corridor_retry_alternate_every",
+                             guard_corridor_retry_alternate_every, 4);
             loader.LoadParam("super_planner/guard_topology_reroute/enable",
                              guard_topology_reroute_en, false);
             loader.LoadParam("super_planner/guard_topology_reroute/radius_m",

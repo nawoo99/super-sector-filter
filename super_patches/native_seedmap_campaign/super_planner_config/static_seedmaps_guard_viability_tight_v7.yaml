@@ -94,6 +94,13 @@ super_planner:
   # line visibility while keeping the option available for isolated studies.
   corridor_use_inflated_seed_lines: false
   corridor_guard_retry_inflated: true
+  # 2026-08-19: once guard-corridor retry mode is entered it previously
+  # stayed on until a candidate committed, so a persistent CLEARANCE_MARGIN
+  # rejection retried the same tight-margin generator forever (seed7/9/10
+  # stall analysis). Every 4th consecutive retry-mode attempt now falls
+  # back to the normal generator instead. See super_planner.cpp's
+  # GenerateExpTrajectory corridor-selection comment.
+  guard_corridor_retry_alternate_every: 4
   # Certified-stop recovery: each rejected EXP point becomes a temporary
   # A* exclusion sphere. Repeated hits grow that sphere, forcing a different
   # guide-path topology instead of resubmitting the same local corridor.

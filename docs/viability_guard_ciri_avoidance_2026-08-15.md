@@ -664,26 +664,121 @@ into this repo -- the aggregate numbers and the streak/reject-count
 analysis above are the durable record. Reproduce with a 10x loop over the
 existing `run_sweep_emerfix.sh` pattern if the raw logs are needed again.
 
+### 8.9 2026-08-19: guard-corridor retry de-stickying -- one wrong attempt, one that helped
+
+Went after 8.8's proposed next step by reading `commitTrajectoryCandidate`
+and `GenerateExpTrajectory` closely instead of guessing. Two corrections to
+8.8's own framing came out of that reading, worth recording plainly since
+they contradict what was said at the time:
+
+- **The 1.004 m seed7 gap is not actually tight.** Re-deriving the guard's
+  clearance math from `super_planner.cpp:67-92` (not from the earlier,
+  wrong, from-memory `robot_r+hard_clearance=0.5m` claim in 8.7): with
+  `additional_clearance_m=0`, `trajectory_guard_clearance_offsets_` is
+  *empty*, so `CLEARANCE_MARGIN` is triggered by `isOccupiedInflate` alone
+  -- a flat 0.3 m band from the raw surface, not 0.5 m. A clean pass through
+  a two-obstacle pinch needs only a 0.6 m total gap, not 1.0 m. seed7's
+  1.004 m gap has ~0.2 m of lateral slack on each side that was never being
+  used -- this was a placement/strategy problem, not a genuine geometric
+  squeeze. 8.7's diagnosis of *what* was happening (a stuck same-generation
+  retry loop) stands; its explanation of *why the gap itself was hard*
+  does not, and should not be re-cited.
+- **The real mechanism: once `guard_corridor_retry_pending_` is set (on
+  the first `CLEARANCE_MARGIN` reject), it stays set until a candidate
+  finally commits, and every corridor search in between permanently uses
+  `cg_guard_retry_ptr_` (inflated obstacles, ~0.005 m CIRI margin) instead
+  of the normal `cg_ptr_` (raw obstacles, 0.2/0.3 m margin). The guide path
+  feeding both is identical (a single upstream A* search), so once locked
+  into retry mode the system reproduces nearly the same corridor every
+  attempt -- explaining why 65-second, 98-attempt streaks (8.7) converged
+  on the same collision point instead of exploring anything different.
+
+**First attempt (reverted): also widen the retry corridor's own margin**
+from `0.1x resolution` (0.005 m, smaller than one voxel at this map's
+0.05 m resolution) to `2x resolution` (0.10 m), reasoning that 0.005 m left
+no slack over CIRI's known margin non-uniformity (documented back in the
+2026-08-13 audit, `docs/연구일지.md`). Wrong: `cg_guard_retry_ptr_` exists
+specifically to find *some* corridor in a spot already too tight for the
+normal generator, and demanding a bigger margin from it just makes it more
+often find none. Confirmed directly: `SearchPolytopeOnPath for new path
+failed` went from 11,033 occurrences across the 8.8 100-run baseline to
+139,478 across just 45 runs of a seed1-10 x n=5 sweep with this change
+(~28x more per run) -- and completion cratered to 14/45 (31%) before the
+sweep was stopped early. Reverted the margin back to 0.005 m; kept the
+second change below, which does not touch this margin at all.
+
+**Kept: de-stickying the retry-mode lock.** Added
+`guard_corridor_retry_attempts_` (reset whenever
+`guard_corridor_retry_pending_` clears on a successful commit) and a new
+`guard_corridor_retry_alternate_every` config (default 4): every Nth
+consecutive retry-mode corridor search now falls back to the normal
+generator instead, so a stall is no longer permanently locked into one
+corridor-generation strategy for its whole duration. This never changes
+what the guard accepts -- `validatePositionTrajectory` checks whichever
+candidate comes out exactly the same way either way, so the change is
+safety-neutral by construction. `guard_corridor_retry_alternate_every: 4`
+set in `static_seedmaps_guard_viability_tight_v7.yaml`.
+
+Reran the same seed1-10 sweep at n=5 (50 runs) after reverting the margin:
+
+| | 8.8 baseline (n=10, 100 runs) | 8.9 with alternation (n=5, 50 runs) |
+|---|:---:|:---:|
+| full completion | 74/100 (74.0%) | 41/50 (82.0%) |
+| waypoints | 457/500 (91.4%) | 227/250 (90.8%) |
+| contact | 0/100 | 0/50 |
+| worst clearance | 0.306 m | 0.304 m |
+
+Per-seed, the three worst seeds from 8.8 each moved in the right direction
+(seed7 4/10->3/5, seed9 3/10->3/5, seed10 3/10->2/5 -- i.e. 40%/30%/30% ->
+60%/60%/40%), though at n=5-10 per seed none of these individual deltas are
+individually conclusive. **The aggregate 74%->82% run-level improvement is
+not statistically significant at this sample size** (two-sided Fisher exact
+on 74/100 vs 41/50: p=0.31) -- do not cite it as a proven fix, only as a
+promising, directionally-consistent result.
+
+What *is* solid evidence the mechanism is working as intended: the
+catastrophic single-stall deadlocks are gone. The longest same-generation
+`PlanFromRest` reject streak among all 50 new runs (success and failure
+combined) was 112; the 8.8 baseline had streaks of 116, 138, 273 and six
+separate failed runs with a streak >=20. Failed-run median
+`PlanFromRest`-reject volume also dropped (59 -> 40). The multi-hundred-
+attempt, single-location deadlocks that motivated this whole line of
+investigation (seed7's original 98-attempt/65 s stall, 8.8's worst case at
+273) did not recur in this sweep. Contact remains 0 across every run of
+this fix, on top of the already-clean 8.2/8.5/8.8 record.
+
+**Conclusion: keep the alternation change (safety-neutral, mechanistically
+validated, plausibly helping), do not claim the completion-rate improvement
+is proven, and do not re-attempt widening `cg_guard_retry_ptr_`'s own
+margin** without first checking `SearchPolytopeOnPath` failure counts the
+way this attempt should have from the start. A larger sweep (n=20-30 per
+seed) would be needed to actually confirm or reject the 74%->82% delta.
+
 ## Current status — not flight-ready, but no longer failing for the original reason
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
-  (8.2), and the EMER_STOP fix (8.5) are all still in place and are the
-  current best-known-good configuration.** 8.3 and 8.4's variants are
-  fully reverted; do not re-apply the write-side splat, the brake-triggered
-  topology-zone arming, or any of the CIRI-corridor/raw-scan-accumulation
-  code without new instrumentation first (see 8.4's closing note).
-- **Use the 8.8 n=10 table (100 runs), not the earlier n=1 sweep, as the
-  current completion baseline.** The n=1 sweep (48/50, 9/10 seeds clean)
-  was cited as the headline for one day; it turned out to be an optimistic
-  single draw. At n=10 the true rate is 74/100 full-completion runs
-  (457/500 waypoints, 91.4%), uneven across seeds (1-4 solid at 9-10/10;
-  7/9/10 fail more often than they succeed at 3-4/10). Do not re-cite
-  48/50 as representative.
-- **Safety does hold up at scale: 0/100 contact across the n=10 sweep**,
-  worst-case clearance 0.306 m. This is now well past 160 combined runs
-  across both days with zero contact since the CIRI avoidance-zone and
-  `UNOBSERVED` fixes -- the strongest and best-sampled part of this
-  investigation's results.
+  (8.2), the EMER_STOP fix (8.5), and the guard-corridor retry alternation
+  (8.9, `guard_corridor_retry_alternate_every`) are all still in place and
+  are the current best-known-good configuration.** 8.3 and 8.4's variants
+  are fully reverted; do not re-apply the write-side splat, the
+  brake-triggered topology-zone arming, or any of the CIRI-corridor/
+  raw-scan-accumulation code without new instrumentation first (see 8.4's
+  closing note). 8.9's own first attempt (widening `cg_guard_retry_ptr_`'s
+  CIRI margin) is also reverted -- it made completion much worse (14/45)
+  by starving the retry corridor generator of any feasible solution; don't
+  re-try it without checking `SearchPolytopeOnPath` failure counts first.
+- **The 8.8 n=10 table (100 runs, 74/100) measures the pre-8.9
+  configuration** -- it does not have the guard-corridor retry alternation.
+  8.9's n=5 sweep (50 runs, on top of the 8.9 config) got 41/50 (82.0%),
+  directionally better but *not* statistically distinguishable from 8.8's
+  74/100 at this sample size (p=0.31) -- see 8.9 before citing either
+  number as "the" completion rate. Do not re-cite the earlier 48/50 n=1
+  headline as representative either way.
+- **Safety holds up at scale across both sweeps: 0/150 contact** (100 runs
+  in 8.8, 50 in 8.9), worst-case clearance 0.304 m. This is now well past
+  200 combined runs across both days with zero contact since the CIRI
+  avoidance-zone and `UNOBSERVED` fixes -- the strongest and best-sampled
+  part of this investigation's results.
 - **Still not a passed gate.** The required bar (5/5 completion, 0
   contact, on 5 consecutive runs of one seed) has still not been formally
   attempted. Given 8.8, expect it to pass easily on seed1-4 and fail more

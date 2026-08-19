@@ -149,6 +149,18 @@ namespace super_planner {
             // Inflated occupancy already contains the operational radius. A
             // small positive CIRI radius handles voxel-boundary numerics
             // without adding the physical radius a second time.
+            //
+            // 2026-08-19: tried raising this to 2x resolution (0.10m) on the
+            // theory that 0.005m left no slack over CIRI's own margin
+            // non-uniformity. That was wrong -- it made SearchPolytopeOnPath
+            // fail outright far more often (~28x more failures per run across
+            // a seed1-10 x n=5 sweep, 14/45 completions vs the 74/100
+            // baseline), because this retry generator's whole point is
+            // finding *some* corridor in a spot already too tight for the
+            // normal generator; a bigger required margin just makes it more
+            // often find none. Reverted to the original value. See the
+            // guard_corridor_retry_alternate_every mechanism below for the
+            // (validated-neutral) part of that day's change that stayed.
             const double retry_margin = std::max(0.005, 0.1 * cfg_.resolution);
             cg_guard_retry_ptr_ = std::make_shared<CorridorGenerator>(
                     ros_ptr_, map_ptr_, cfg_.corridor_bound_dis,
@@ -828,6 +840,7 @@ namespace super_planner {
         trajectory_guard_rejection_pending_.store(false,
                                                   std::memory_order_release);
         guard_corridor_retry_pending_.store(false, std::memory_order_release);
+        guard_corridor_retry_attempts_.store(0, std::memory_order_release);
         guard_topology_avoidance_centers_.clear();
         guard_topology_avoidance_radii_.clear();
         guard_topology_goal_valid_ = false;
@@ -1645,12 +1658,32 @@ namespace super_planner {
             time_consuming_[VISUALIZATION] += t_viz.stop();
         }
         shifted_sfc_start_pt_ = Vec3f(9999,9999,9999);
-        const bool use_guard_retry_corridor =
-                cg_guard_retry_ptr_ &&
-                guard_corridor_retry_pending_.load(std::memory_order_acquire);
+        bool use_guard_retry_corridor = false;
+        bool guard_retry_alternated_to_normal = false;
+        if (cg_guard_retry_ptr_ &&
+            guard_corridor_retry_pending_.load(std::memory_order_acquire)) {
+            const int attempt = guard_corridor_retry_attempts_.fetch_add(
+                    1, std::memory_order_acq_rel) + 1;
+            // Retry mode stays on until a candidate finally commits, so a
+            // persistently rejected point would otherwise retry the exact
+            // same tight-margin corridor generator indefinitely. Every Nth
+            // consecutive attempt, fall back to the normal (raw-obstacle,
+            // wider-margin) generator instead, so a stall isn't permanently
+            // locked into one corridor-generation strategy. This never
+            // loosens what the guard accepts -- validatePositionTrajectory
+            // checks whatever candidate comes out the same way either way.
+            const bool alternate_this_attempt =
+                    cfg_.guard_corridor_retry_alternate_every > 0 &&
+                    attempt % cfg_.guard_corridor_retry_alternate_every == 0;
+            use_guard_retry_corridor = !alternate_this_attempt;
+            guard_retry_alternated_to_normal = alternate_this_attempt;
+        }
         auto &active_cg = use_guard_retry_corridor ? cg_guard_retry_ptr_ : cg_ptr_;
         if (use_guard_retry_corridor) {
             ros_ptr_->warn(" -- [SUPER] Retrying EXP with inflated guard corridor.");
+        } else if (guard_retry_alternated_to_normal) {
+            ros_ptr_->warn(" -- [SUPER] Guard corridor retry: alternating back "
+                           "to normal corridor generator this attempt.");
         }
         bool bool_ret_code = active_cg->SearchPolytopeOnPath(
                 guide_path, sfc, shifted_sfc_start_pt_, cfg_.use_fov_cut,

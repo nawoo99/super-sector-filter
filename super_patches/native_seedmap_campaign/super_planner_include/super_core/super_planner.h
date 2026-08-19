@@ -148,6 +148,11 @@ namespace super_planner {
         ExpTraj last_exp_traj_info_;
         std::atomic_bool trajectory_guard_rejection_pending_{false};
         std::atomic_bool guard_corridor_retry_pending_{false};
+        // Consecutive corridor searches done in retry mode since the last
+        // successful commit. Used to periodically alternate back to the
+        // normal corridor generator instead of staying locked into the
+        // tight-margin retry generator for the whole stall.
+        std::atomic_int guard_corridor_retry_attempts_{0};
         vec_E<Vec3f> guard_topology_avoidance_centers_;
         std::vector<double> guard_topology_avoidance_radii_;
         Vec3f guard_topology_goal_{Vec3f::Zero()};
