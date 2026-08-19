@@ -899,7 +899,93 @@ attempted -- flagged as the clear next step rather than guessed at.
 every run of every sweep in this section; the regression is completion-
 rate only, confined to that one test profile, and does not affect the
 project's actual current baseline. Safe to leave in place as-is (inert by
-default) while deciding whether to invest in the async-worker rework.
+default). The async-worker rework proposed here was subsequently implemented
+and measured in §8.11.
+
+### 8.11 2026-08-19: async latest-only CIRI shadow worker restores completion throughput
+
+Implemented the async rework identified at the end of 8.10. The final
+architecture has three relevant boundaries:
+
+1. `activateEmergencyBrake()` does only cheap work for this diagnostic. It
+   retains one representative dynamically-valid brake candidate, overwrites
+   the single pending job (latest-only), and reads the latest *completed*
+   cached result. No result is reported as current before one completes
+   (`STALE`), old completed results age to `STALE`, and the result remains
+   structurally absent from every brake accept/reject branch.
+2. A dedicated `ciriShadowWorkerLoop()` owns the expensive path: accumulated
+   scan snapshot, PointCloud2-to-PCL conversion, voxel downsampling, CIRI
+   decomposition, candidate containment check, and result publication. The
+   worker is stopped and joined before `FsmRos2` destruction.
+3. Shadow-only mode no longer creates a second DDS subscription to the large
+   `/cloud_registered` message. `ROGMapROS` now exposes an optional in-process
+   observer for the exact scan its existing subscription accepted. The
+   observer stores only the shared message pointer and receive time; conversion
+   stays in the worker. The observer is guarded by an atomic fast path and is
+   inert when unset. The live raw-cloud guard, if explicitly enabled, retains
+   its independent subscription/KD-tree path.
+
+That third boundary was required, not incidental. The first async build still
+got only 2/5 waypoints in a seed5 smoke while a same-session shadow-off control
+completed 5/5 in 67.9 s. Inspection found that `guardCloudCallback()` built a
+KD-tree for every scan even though `_cirishadow.yaml` has
+`raw_cloud/enable: false`; avoiding that and moving PCL conversion into the
+worker improved a second seed5 smoke only to 3/5. The remaining duplicated DDS
+delivery was removed with the map observer above. The next seed5 run then
+completed 5/5 in 69.9 s. In other words, moving only the explicit CIRI call was
+not enough: shadow-only scan capture also had to leave the extra
+subscription/callback path.
+
+The final seed5-10 smoke used the campaign-derived 95.714 s timeout. It reached
+28/30 waypoints with 4/6 full completions and zero contacts; seed7 and seed9
+both stopped at 4/5. Those two are timeout artifacts relative to the earlier
+120 s baseline protocol (seed7 subsequently completed at 98.24 s), so the
+formal comparison below reran every seed under the same 120 s condition used
+in 8.8/8.9.
+
+Final seed1-10 x n=2 result (`loop24.txt`, switch distance 1.5 m, timeout
+120 s, `static_seedmaps_guard_viability_tight_v7_cirishadow.yaml`):
+
+| seed | 5/5 runs | waypoints | contact |
+|-----:|:--------:|:---------:|:-------:|
+| 1 | 2/2 | 10/10 | 0 |
+| 2 | 2/2 | 10/10 | 0 |
+| 3 | 2/2 | 10/10 | 0 |
+| 4 | 2/2 | 10/10 | 0 |
+| 5 | 2/2 | 10/10 | 0 |
+| 6 | 2/2 | 10/10 | 0 |
+| 7 | 2/2 | 10/10 | 0 |
+| 8 | 2/2 | 10/10 | 0 |
+| 9 | 2/2 | 10/10 | 0 |
+| 10 | 1/2 | 7/10 | 0 |
+| **total** | **19/20 (95%)** | **97/100 (97%)** | **0/20** |
+
+The one failure was seed10 run1 (2/5 at 120 s). This is consistent with the
+large established liveness variance on seed10 (8.9's shadow-off profile was
+2/5 full completions), not evidence that the shadow diagnostic improves
+planning. Conversely, n=2 is far too small to claim 95% as a new completion
+rate. The defensible conclusion is narrower: 8.10's catastrophic
+shadow-specific 0-2/5 waypoint regression is gone and the result is back in
+the shadow-off distribution. The small committed aggregate is
+`results/ciri_shadow_async_n2_20260819.csv`; raw JSON/stack logs remain in
+`/tmp/ciri_async_n2_seed1_10/` and are not committed.
+
+Across those 20 runs the worker completed 812 jobs: SAFE 211, UNSAFE 238, and
+INSUFFICIENT_DATA 363. There were zero old synchronous CIRI log paths and all
+20 startup logs reported `source=map_observer`. Worker total time was mean
+5.138 ms, median 3.925 ms, p95 13.628 ms, p99 18.108 ms, max 22.706 ms;
+enqueue-to-worker-start queue delay was mean 0.096 ms and p95 0.141 ms. No latest-only
+replacement occurred in this cohort because each worker job completed before
+the next brake request, but the single-slot overwrite path remains bounded if
+that ordering reverses on a slower machine. Main-FSM brake logs observed the
+latest cached result as SAFE/UNSAFE/INSUFFICIENT_DATA when fresh and STALE
+otherwise, without waiting for any of the 0-22.7 ms work above.
+
+Scope remains unchanged: this is still a **shadow-only theorem-1 diagnostic**,
+not a brake policy. `trajectory_guard_raw_cloud_ciri_shadow_en` still defaults
+to `false`; `static_seedmaps_guard_viability_tight_v7.yaml` still does not set
+it; only `_cirishadow.yaml` enables it. No result is connected to live flight
+decisions, and the Fig. 8C(iii) FOV cut noted in 8.10 remains unimplemented.
 
 ## Current status — not flight-ready, but no longer failing for the original reason
 
@@ -940,19 +1026,18 @@ default) while deciding whether to invest in the async-worker rework.
   (26/100 runs), not rare, failure mode -- not yet fixed. See 8.8's closing
   note for the proposed next step (stalled-generation detection +
   escalation).
-- **4th paper-reproduction attempt (8.10) built and works, shadow-only,
-  contact-safe, but not usable for a broad sweep yet.**
+- **4th paper-reproduction attempt (8.10), with the async completion in
+  8.11, now works without the earlier shadow-specific throughput collapse.**
   `trajectory_guard_raw_cloud_ciri_shadow_en` (off by default, only on in
   `_cirishadow.yaml`) computes and logs what the paper's actual theorem-1
   mechanism would conclude, with zero ability to affect flight behavior.
-  Two real performance bugs were found and fixed (uncontrolled cloud size;
-  30x redundant work per brake activation), but completion on that test
-  profile is still badly regressed (seed5-10 at 0-2/5 vs. established
-  baselines) because the computation runs synchronously inside a 10ms/100Hz
-  callback (`mainFsmTimerCallback`) that cannot absorb even single-digit-ms
-  extra work without cascading delays during exactly the highest-stress
-  moments. The fix is an async latest-only worker (precedented in this
-  same project, see 8.10's closing paragraph) -- not yet implemented.
+  The accumulated-cloud fetch, conversion/downsampling, CIRI decomposition,
+  and containment check now run on a latest-only worker, and shadow-only scan
+  capture reuses ROG-Map's already-accepted message instead of adding a second
+  DDS subscription. The 120 s seed1-10 n=2 verification completed 19/20 runs,
+  97/100 waypoints, with 0/20 contacts. This establishes removal of the 8.10
+  performance regression, not a new population completion rate and not
+  permission to connect the diagnostic to the brake decision.
 - FSM CPU usage has not been measured for any run across either day.
 - The `VIABILITY_DEBUG` and `AVOIDANCE_DEBUG` diagnostic logging left in
   `super_planner.cpp`/`corridor_generator.cpp` is harmless when the env

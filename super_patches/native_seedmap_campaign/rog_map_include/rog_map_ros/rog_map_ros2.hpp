@@ -38,7 +38,9 @@
 #ifndef ROG_MAP_ROS_HPP
 #define ROG_MAP_ROS_HPP
 
+#include <atomic>
 #include <cstdint>
+#include <functional>
 #include <mutex>
 #include <utility>
 
@@ -56,8 +58,17 @@ namespace rog_map {
 
 
     class ROGMapROS : public ROGMap {
+    public:
+        using AcceptedCloudObserver = std::function<void(
+                const sensor_msgs::msg::PointCloud2::SharedPtr &,
+                MapHealthClock::time_point)>;
+
+    private:
         rclcpp::Node::SharedPtr nh_;
         std::shared_ptr<tf2_ros::TransformBroadcaster> br_map_ego_;
+        mutable std::mutex accepted_cloud_observer_mutex_;
+        AcceptedCloudObserver accepted_cloud_observer_;
+        std::atomic_bool accepted_cloud_observer_enabled_{false};
 
 
         const double getSystemWalltimeNow() override {
@@ -138,6 +149,23 @@ namespace rog_map {
                 static_cast<std::int64_t>(cloud_msg->header.stamp.sec) * 1000000000LL +
                 static_cast<std::int64_t>(cloud_msg->header.stamp.nanosec);
             const std::uint64_t scan_seq = recordAcceptedScan(rx_time, source_stamp_ns);
+
+            // Optional in-process tap for diagnostics that need the same raw
+            // scan ROG-Map accepted. This avoids a second DDS subscription
+            // (and its duplicate large-message delivery) while keeping the
+            // default path at one cheap atomic load when no observer exists.
+            if (accepted_cloud_observer_enabled_.load(
+                        std::memory_order_acquire)) {
+                AcceptedCloudObserver observer;
+                {
+                    std::lock_guard<std::mutex> lock(
+                            accepted_cloud_observer_mutex_);
+                    observer = accepted_cloud_observer_;
+                }
+                if (observer) {
+                    observer(cloud_msg, rx_time);
+                }
+            }
 
             bool overwrote_pending_frame = false;
             {
@@ -349,6 +377,15 @@ namespace rog_map {
 
     public:
         typedef shared_ptr<ROGMapROS> Ptr;
+
+        void setAcceptedCloudObserver(AcceptedCloudObserver observer) {
+            std::lock_guard<std::mutex> lock(
+                    accepted_cloud_observer_mutex_);
+            accepted_cloud_observer_ = std::move(observer);
+            accepted_cloud_observer_enabled_.store(
+                    static_cast<bool>(accepted_cloud_observer_),
+                    std::memory_order_release);
+        }
 
         ROGMapROS(
             const rclcpp::Node::SharedPtr nh,
