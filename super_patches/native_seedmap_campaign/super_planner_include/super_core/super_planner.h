@@ -112,6 +112,12 @@ namespace super_planner {
         rog_map::ROGMapROS::Ptr map_ptr_;
         CorridorGenerator::Ptr cg_ptr_;
         CorridorGenerator::Ptr cg_guard_retry_ptr_;
+        // Paper-faithful (theorem 1) CIRI instance: raw points, no map
+        // inflation, margin matching cg_ptr_'s own (not the tight retry
+        // generator's near-zero margin). Used only by
+        // checkKnownFreeViaCloud, currently called shadow-only from
+        // activateEmergencyBrake.
+        CorridorGenerator::Ptr cg_brake_ptr_;
         path_search::Astar::Ptr astar_ptr_;
         ros_interface::RosInterface::Ptr ros_ptr_;
         Vec3f shifted_sfc_start_pt_;
@@ -250,6 +256,24 @@ namespace super_planner {
         // partial completion to never moving at all).
         void armTopologyAvoidanceZone(const Vec3f &collision_pos,
                                       double current_speed_mps);
+
+        // Paper-faithful (theorem 1) known-free check: builds a CIRI
+        // polytope from the caller-supplied accumulated raw cloud, seeded
+        // on the line from the current position to seed_far_pt, and
+        // reports whether every sample of candidate (from checked_from_tt
+        // onward) lies inside every one of the polytope's half-spaces. The
+        // caller (fsm_ros2.hpp) is responsible for the accumulator-health
+        // check (recency, point count) before calling this -- an empty
+        // local cloud is treated as open space here (matching
+        // GeneratePolytopeFromLine's convention), which is only a sound
+        // reading of theorem 1 if the input truly was "sufficiently
+        // dense" per the paper's own precondition.
+        bool checkKnownFreeViaCloud(const Vec3f &seed_near_pt,
+                                    const Vec3f &seed_far_pt,
+                                    const vec_E<Vec3f> &accumulated_cloud,
+                                    const Trajectory &candidate,
+                                    double checked_from_tt,
+                                    Vec3f &first_violation_pos);
 
         // unknown_as_occupied is a per-call override, not the general
         // cfg_.trajectory_guard_unknown_as_occupied: normal EXP/backup

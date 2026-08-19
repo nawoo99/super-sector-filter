@@ -89,6 +89,31 @@ namespace fsm {
         // for the rationale; only the emergency-brake candidate check reads
         // this flag.
         bool trajectory_guard_unknown_as_occupied{false};
+        // 2026-08-19: paper-faithful (theorem 1) accumulated-raw-cloud CIRI
+        // check, shadow-only -- computed and logged alongside the live
+        // brake decision in activateEmergencyBrake, never used to accept or
+        // reject a candidate. See docs/
+        // viability_guard_ciri_avoidance_2026-08-15.md 8.10 before ever
+        // promoting this to enforce; three earlier live-wired attempts at
+        // this same mechanism each regressed differently (a real collision;
+        // a near-total liveness collapse; an unexplained subscription/
+        // freeze bug), so this stays shadow-only until it has its own
+        // multi-run track record.
+        bool trajectory_guard_raw_cloud_ciri_shadow_en{false};
+        double trajectory_guard_raw_cloud_accum_window_s{1.5};
+        // Below this many points in the pruned accumulation window, the
+        // shadow check reports INSUFFICIENT_DATA instead of treating a
+        // sparse/empty local box as confirmed-open space -- theorem 1's
+        // known-free guarantee is conditioned on the input depth image
+        // being "sufficiently dense" (see the paper's Materials and
+        // Methods), which this cannot verify per-box the way it can verify
+        // accumulator-wide.
+        int trajectory_guard_raw_cloud_ciri_min_points{200};
+        // 2026-08-19: voxel-downsample the accumulated cloud to at most one
+        // point per cell of this size before it reaches CIRI. Measured
+        // necessary -- an undownsampled 1.5s window held 30k-80k points and
+        // caused 15-40ms decomposition spikes on a shared executor thread.
+        double trajectory_guard_raw_cloud_ciri_voxel_m{0.1};
 
         Config() = default;
 
@@ -147,6 +172,14 @@ namespace fsm {
                              brake_max_jerk_mps3, 120.0);
             loader.LoadParam("fsm/trajectory_guard/unknown_as_occupied",
                              trajectory_guard_unknown_as_occupied, false);
+            loader.LoadParam("fsm/trajectory_guard/raw_cloud/ciri_shadow_en",
+                             trajectory_guard_raw_cloud_ciri_shadow_en, false);
+            loader.LoadParam("fsm/trajectory_guard/raw_cloud/accum_window_s",
+                             trajectory_guard_raw_cloud_accum_window_s, 1.5);
+            loader.LoadParam("fsm/trajectory_guard/raw_cloud/ciri_min_points",
+                             trajectory_guard_raw_cloud_ciri_min_points, 200);
+            loader.LoadParam("fsm/trajectory_guard/raw_cloud/ciri_voxel_m",
+                             trajectory_guard_raw_cloud_ciri_voxel_m, 0.1);
 
 
             loader.LoadParam("super_planner/yaw_dot_max", yaw_dot_max, 1.0, true);

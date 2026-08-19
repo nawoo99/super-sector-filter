@@ -172,6 +172,20 @@ namespace super_planner {
             cg_guard_retry_ptr_->SetLineNeighborList(cfg_.seed_line_neighbour);
         }
 
+        // Separate instance (not a reuse of cg_ptr_) specifically so this
+        // can be called safely from activateEmergencyBrake's callback
+        // group without sharing mutable CIRI/CorridorGenerator state with
+        // whatever thread is running the normal replan pipeline. Margins
+        // match cg_ptr_ (raw points, paper-aligned preference margin), not
+        // cg_guard_retry_ptr_'s near-zero tight-retry margin.
+        cg_brake_ptr_ = std::make_shared<CorridorGenerator>(
+                ros_ptr_, map_ptr_, cfg_.corridor_bound_dis,
+                cfg_.corridor_line_max_length, cfg_.resolution,
+                rog_map_cfg.virtual_ground_height,
+                rog_map_cfg.virtual_ceil_height, cfg_.corridor_min_margin,
+                cfg_.obs_skip_num, cfg_.iris_iter_num,
+                cfg_.corridor_pref_margin, false, false);
+        cg_brake_ptr_->SetLineNeighborList(cfg_.seed_line_neighbour);
 
         time_consuming_.resize(8);
 
@@ -672,6 +686,39 @@ namespace super_planner {
                     guard_topology_avoidance_centers_[matched].z(),
                     guard_topology_avoidance_radii_[matched]);
         }
+    }
+
+    bool SuperPlanner::checkKnownFreeViaCloud(const Vec3f &seed_near_pt,
+                                              const Vec3f &seed_far_pt,
+                                              const vec_E<Vec3f> &accumulated_cloud,
+                                              const Trajectory &candidate,
+                                              const double checked_from_tt,
+                                              Vec3f &first_violation_pos) {
+        if (!cg_brake_ptr_ || candidate.empty()) {
+            return false;
+        }
+        Line seed{seed_near_pt, seed_far_pt};
+        Polytope polytope;
+        if (!cg_brake_ptr_->GeneratePolytopeFromLineAndCloud(
+                    seed, accumulated_cloud, polytope)) {
+            return false;
+        }
+        const double total_duration = candidate.getTotalDuration();
+        const double sample_dt = std::max(0.005,
+                cfg_.trajectory_guard_sample_dt_s);
+        for (double tt = std::clamp(checked_from_tt, 0.0, total_duration);;
+             tt = std::min(total_duration, tt + sample_dt)) {
+            const Vec3f p = candidate.getPos(tt);
+            if (!p.array().isFinite().all() ||
+                !polytope.PointIsInside(p)) {
+                first_violation_pos = p;
+                return false;
+            }
+            if (tt >= total_duration) {
+                break;
+            }
+        }
+        return true;
     }
 
     bool SuperPlanner::commitTrajectoryCandidate(CmdTraj::Candidate candidate,

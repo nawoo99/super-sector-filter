@@ -138,6 +138,14 @@ namespace super_planner {
                                       const vec_Vec3f &avoidance_centers = vec_Vec3f(),
                                       const std::vector<double> &avoidance_radii = std::vector<double>());
 
+        // Paper-faithful (theorem 1) variant: builds the polytope from an
+        // externally-supplied point cloud (an accumulated raw LIDAR window)
+        // instead of querying the committed map. See the .cpp for caveats
+        // about accumulator health / "sufficiently dense" preconditions.
+        bool GeneratePolytopeFromLineAndCloud(Line &line,
+                                              const vec_Vec3f &external_pc,
+                                              Polytope &polytope);
+
         double getCiriComputationTime() {
             if (ciri_cnt == 0) {
                 return -1;

@@ -754,6 +754,153 @@ margin** without first checking `SearchPolytopeOnPath` failure counts the
 way this attempt should have from the start. A larger sweep (n=20-30 per
 seed) would be needed to actually confirm or reject the 74%->82% delta.
 
+### 8.10 2026-08-19: a 4th paper-reproduction attempt, shadow-only this time -- real progress, real remaining blocker
+
+User directly instructed a 4th attempt at the paper's actual backup-
+trajectory mechanism (theorem 1, accumulated raw-scan CIRI) after the three
+in 8.4 all regressed live behavior. This time it was built and tested
+**shadow-only**: the accumulated-cloud CIRI check is computed and logged
+(`ciri_shadow=SAFE|UNSAFE|INSUFFICIENT_DATA|DISABLED` in the
+`TRAJ_GUARD_BRAKE`/`TRAJ_GUARD_BRAKE_REJECTED` lines) but its result is
+never read by any accept/reject branch, so it cannot change flight
+behavior by construction -- the goal was to actually get comparison data
+against the live grid-based check without repeating 8.4's pattern of
+finding out live that something was wrong.
+
+**Before writing any code**, re-read `misc/scirobotics.ado6187.pdf`
+directly (not from memory) to re-verify the mechanism. Two corrections to
+earlier (this session's own, and 8.4's) understanding came out of that:
+
+- The exact quote (Materials and Methods, "Backup corridor generation"):
+  theorem 1 states a CIRI-extracted polyhedron is known-free "if the input
+  point cloud makes a **sufficiently dense** depth image," and "we
+  accumulate recent LIDAR scans (**for example, 1 to 2 s**) and input them
+  to CIRI." The "1-2s" figure cited throughout this project is accurate,
+  not a misremembering.
+- A previously-unimplemented detail: Fig. 8C(iii) shows the backup
+  corridor is *also* cut by the current LIDAR FOV, not just bounded by the
+  accumulated cloud. None of the four attempts (8.4's three, or this one)
+  implement this FOV cut. Flagging as a known fidelity gap, not attempted.
+
+**New code, all shadow-scoped:**
+- `corridor_generator.{h,cpp}`: `GeneratePolytopeFromLineAndCloud(Line&,
+  const vec_Vec3f&, Polytope&)` -- mirrors `GeneratePolytopeFromLine`
+  exactly except the point cloud comes from an external cloud instead of
+  `map_ptr_->boxSearch`. An empty local box is treated as open space
+  (matching the map-backed convention), which is only a sound reading of
+  theorem 1 if the caller already verified "sufficiently dense" upstream.
+- `super_planner.{h,cpp}`: new `cg_brake_ptr_` (separate `CorridorGenerator`
+  instance -- deliberately not a reuse of `cg_ptr_`, to avoid sharing
+  mutable CIRI state between the emergency-brake callback group and
+  whatever thread runs normal replanning) and
+  `checkKnownFreeViaCloud(seed_near, seed_far, cloud, candidate,
+  checked_from_tt, &violation_pos)`, which builds the polytope and checks
+  every sample of `candidate` against `Polytope::PointIsInside`.
+- `fsm_ros2.hpp`: `raw_cloud_window_` (a pruned `deque` of timestamped
+  point-cloud batches, populated alongside the existing single-snapshot
+  `raw_cloud_snapshot_` in `guardCloudCallback` -- purely additive, the
+  existing `trajectory_guard_raw_cloud_en` path is untouched),
+  `getAccumulatedCloudForShadow` (voxel-downsampled read of the window,
+  see below), `fetchCiriShadowCloudSnapshot` /
+  `checkBrakeCandidateAgainstCiriShadow` (the shadow check itself, wired
+  into `activateEmergencyBrake`'s existing candidate loop, log-only). New
+  config: `fsm/trajectory_guard/raw_cloud/{ciri_shadow_en,
+  accum_window_s, ciri_min_points, ciri_voxel_m}`, all under the
+  already-existing (previously dead) `raw_cloud` block. New test-only
+  profile `static_seedmaps_guard_viability_tight_v7_cirishadow.yaml`.
+- Also added, independent of the CIRI work: `TRAJ_GUARD_RAW_DEBUG`
+  periodic logging of `raw_cloud_snapshot_.sequence`/age in
+  `mainFsmTimerCallback`, gated only on the subscription existing (not on
+  any feature flag) -- kept in permanently as cheap, always-available
+  diagnostics; see the reception-gap finding below.
+
+**Finding 1 (positive): the mechanism works end to end.** First seed9
+smoke test produced real, distinct verdicts (`SAFE` x3, `UNSAFE` x16,
+`INSUFFICIENT_DATA` x17 in one run) with zero crashes and contact still at
+0. The `INSUFFICIENT_DATA` health gate (checks recency against
+`raw_cloud_max_age_s` and point count against `ciri_min_points` *before*
+trusting an empty/sparse local box as "confirmed open") is doing real work,
+not just a formality: cross-referencing timestamps against the
+`TRAJ_GUARD_RAW_DEBUG` log showed essentially every `INSUFFICIENT_DATA`
+event lines up with a raw-cloud reception gap -- one as long as **17s**
+during a high-load retry burst (worse than the ~14s gap found in 8.1-era
+step-1 instrumentation of the older single-snapshot path). The subscription
+itself does receive messages now (unlike 8.4 attempt 3's "zero forever"
+finding) -- fsm_node's `MultiThreadedExecutor` uses 8 threads across all of
+its node's callback groups via a single `add_node()`, so `guard_cloud_sub_`
+is not structurally starved the way the old perfect_drone_sim bug (8.1) was
+-- but reception is bursty under load, and the health gate correctly
+declines to certify during those gaps rather than guessing.
+
+**Finding 2 (negative, root-caused and fixed twice, still not fully
+resolved): synchronous CIRI shadow work does not fit in this codebase's
+timing budget.** A seed1-10 x n=2 sweep (20 runs) with shadow enabled
+showed seed1-2 fine (5/5 both) but seed3-6 catastrophically worse than
+their established baselines (seed3 9-10/10 baseline -> 3/5 both shadow
+runs; seed4 8-10/10 -> 0/5, 1/5; seed5 9-10/10 -> 1/5 both; seed6 8/10 ->
+1/5 both) -- despite the shadow result being provably unable to affect any
+accept/reject decision. Two real, sequential causes were found and fixed,
+but completion still did not recover:
+
+1. **Uncontrolled cloud size.** `getAccumulatedCloudForShadow` originally
+   concatenated every raw point in the 1.5s window with no downsampling.
+   Measured directly: 30,000-80,000 points per call (vs. the map path's
+   resolution-gridded few hundred), with CIRI decomposition cost spiking
+   to 15-40ms on some calls. Fixed with a voxel-grid hash-set downsample
+   (`ciri_voxel_m`, default 0.1m) in `getAccumulatedCloudForShadow` itself
+   -- cut typical counts to 8,000-30,000 and decomposition cost to
+   consistently <1.2ms. Re-verified directly (not assumed) before moving
+   on.
+2. **30x redundant work per brake activation.** The shadow check was
+   called inside `activateEmergencyBrake`'s existing 30-attempt
+   duration-retry loop, so the *entire* fetch-plus-voxelize pipeline (not
+   just the CIRI call) reran up to 30 times per single brake activation,
+   measured at ~0.8-1ms/call even after fix 1 -- up to ~24-30ms added per
+   activation, repeated every time the vehicle braked. Fixed by hoisting
+   the fetch to once per `activateEmergencyBrake` call
+   (`fetchCiriShadowCloudSnapshot`, called once; `CiriShadowCloudSnapshot`
+   passed into the per-attempt `checkBrakeCandidateAgainstCiriShadow`).
+   Verified the call-count ratio directly: exactly 1 accumulation per
+   `TRAJ_GUARD_BRAKE`/`TRAJ_GUARD_BRAKE_REJECTED` line (793 and 793 in one
+   seed9 run) after the fix, vs. up to 30:1 before.
+
+**Both fixes were real and independently verified, but a re-run of the
+seed5-10 x n=1 verification after fix 2 still showed 0-2/5 across the
+board** (seed5 2/5, seed6 0/5, seed7 1/5, seed8 0/5, seed9 0/5, seed10
+0/5) -- essentially unchanged from before fix 2. Root cause of *this*:
+`activateEmergencyBrake` is called from `mainFsmTimerCallback`, which runs
+on a **10ms (100Hz)** `wall_timer` (`execution_timer_`, `exec_cbk_group_`,
+`MutuallyExclusive`). Even the single, downsampled shadow computation
+(~0.8-15ms measured) is large relative to a 10ms budget, and a
+`MutuallyExclusive` group cannot start the next tick until the current one
+returns -- so on ticks where a brake is active (i.e. exactly the
+highest-stress, most-timing-sensitive moments), the shadow overhead can
+by itself exceed the entire budget for that tick, and does so repeatedly
+during a stall. This is a materially different problem than either of the
+two fixes above and was not resolved this session.
+
+**The correct fix (not implemented): move the shadow computation off the
+100Hz synchronous path entirely**, e.g. an async, latest-only background
+worker that computes at its own pace and lets `activateEmergencyBrake`
+read whatever the most recent finished result is (or `DISABLED`/stale if
+none is ready yet). This project already used exactly this pattern once
+before for an analogous problem -- see `docs/연구일지.md`'s "Shadow 후속"
+section (2026-08-13 era): a synchronous shadow trajectory validator was
+found to add real cost to the planning loop, and was fixed by moving it to
+"비동기 latest-only worker로 commit 지연을 제거" (an async latest-only
+worker). Re-implementing that same pattern for the CIRI shadow check is a
+substantially larger change than anything else in this section and was not
+attempted -- flagged as the clear next step rather than guessed at.
+
+**Current state:** `trajectory_guard_raw_cloud_ciri_shadow_en` defaults to
+`false` and is not set in `static_seedmaps_guard_viability_tight_v7.yaml`
+(the actual best-known-good profile) -- only the dedicated
+`_cirishadow.yaml` test profile turns it on. Contact stayed at 0 across
+every run of every sweep in this section; the regression is completion-
+rate only, confined to that one test profile, and does not affect the
+project's actual current baseline. Safe to leave in place as-is (inert by
+default) while deciding whether to invest in the async-worker rework.
+
 ## Current status — not flight-ready, but no longer failing for the original reason
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
@@ -793,6 +940,19 @@ seed) would be needed to actually confirm or reject the 74%->82% delta.
   (26/100 runs), not rare, failure mode -- not yet fixed. See 8.8's closing
   note for the proposed next step (stalled-generation detection +
   escalation).
+- **4th paper-reproduction attempt (8.10) built and works, shadow-only,
+  contact-safe, but not usable for a broad sweep yet.**
+  `trajectory_guard_raw_cloud_ciri_shadow_en` (off by default, only on in
+  `_cirishadow.yaml`) computes and logs what the paper's actual theorem-1
+  mechanism would conclude, with zero ability to affect flight behavior.
+  Two real performance bugs were found and fixed (uncontrolled cloud size;
+  30x redundant work per brake activation), but completion on that test
+  profile is still badly regressed (seed5-10 at 0-2/5 vs. established
+  baselines) because the computation runs synchronously inside a 10ms/100Hz
+  callback (`mainFsmTimerCallback`) that cannot absorb even single-digit-ms
+  extra work without cascading delays during exactly the highest-stress
+  moments. The fix is an async latest-only worker (precedented in this
+  same project, see 8.10's closing paragraph) -- not yet implemented.
 - FSM CPU usage has not been measured for any run across either day.
 - The `VIABILITY_DEBUG` and `AVOIDANCE_DEBUG` diagnostic logging left in
   `super_planner.cpp`/`corridor_generator.cpp` is harmless when the env

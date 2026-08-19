@@ -44,10 +44,13 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
+#include <deque>
 #include <limits>
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 
 
 namespace fsm {
@@ -106,8 +109,188 @@ namespace fsm {
             std::uint64_t sequence{0};
         };
 
+        // 2026-08-19: paper-faithful (theorem 1) shadow check only -- see
+        // docs/viability_guard_ciri_avoidance_2026-08-15.md 8.10. Reports
+        // what an accumulated-raw-cloud CIRI known-free check would have
+        // concluded, logged alongside the live (grid-based UNOBSERVED)
+        // brake decision, without being able to affect it.
+        enum class CiriShadowStatus {
+            DISABLED,
+            INSUFFICIENT_DATA,
+            SAFE,
+            UNSAFE
+        };
+
+        static const char *ciriShadowStatusName(const CiriShadowStatus status) {
+            switch (status) {
+                case CiriShadowStatus::DISABLED: return "DISABLED";
+                case CiriShadowStatus::INSUFFICIENT_DATA:
+                    return "INSUFFICIENT_DATA";
+                case CiriShadowStatus::SAFE: return "SAFE";
+                case CiriShadowStatus::UNSAFE: return "UNSAFE";
+            }
+            return "UNKNOWN";
+        }
+
+        struct RawCloudWindowBatch {
+            std::shared_ptr<pcl::PointCloud<rog_map::PointType>> cloud;
+            rog_map::MapHealthClock::time_point receive_time{};
+        };
+
+        mutable std::mutex raw_cloud_window_mutex_;
+        std::deque<RawCloudWindowBatch> raw_cloud_window_;
+        std::uint64_t raw_cloud_window_messages_total_{0};
+
+        // Pulls the current window (pruned to accumulation_window_s) plus
+        // health info the caller must check before trusting an empty
+        // result as "open space" (theorem 1's own "sufficiently dense"
+        // precondition -- see corridor_generator.cpp's
+        // GeneratePolytopeFromLineAndCloud).
+        void getAccumulatedCloudForShadow(
+                double accumulation_window_s, vec_E<Vec3f> &out_cloud,
+                double &time_since_last_msg_s, std::size_t &batch_count) const {
+            out_cloud.clear();
+            std::deque<RawCloudWindowBatch> window_copy;
+            {
+                std::lock_guard<std::mutex> lock(raw_cloud_window_mutex_);
+                window_copy = raw_cloud_window_;
+            }
+            const auto now = rog_map::MapHealthClock::now();
+            time_since_last_msg_s = window_copy.empty()
+                    ? std::numeric_limits<double>::infinity()
+                    : std::chrono::duration<double>(
+                            now - window_copy.back().receive_time).count();
+            batch_count = 0;
+            // 2026-08-19: voxel-downsample while accumulating instead of
+            // keeping every raw point. Measured need directly: an
+            // undownsampled 1.5s window held 30,000-80,000 points (the
+            // map-derived path's boxSearch returns a resolution-gridded
+            // handful of hundreds by comparison), and CIRI decomposition
+            // cost on that spiked to 15-40ms on a shared executor thread --
+            // shadow-only means it can't affect the safety decision, but it
+            // was still stealing real time from replanning and measurably
+            // hurt completion in a seed1-10 sweep. A hash-set keyed by
+            // voxel index keeps at most one point per
+            // trajectory_guard_raw_cloud_ciri_voxel_m cell.
+            const double voxel = std::max(0.01,
+                    cfg_.trajectory_guard_raw_cloud_ciri_voxel_m);
+            std::unordered_set<std::int64_t> seen_voxels;
+            const auto voxel_key = [voxel](const Vec3f &p) -> std::int64_t {
+                auto q = [voxel](double v) -> std::int64_t {
+                    return static_cast<std::int64_t>(
+                            std::floor(v / voxel));
+                };
+                // 21 bits/axis (+/-1,048,575 voxels, i.e. +/-10km at
+                // voxel=0.01m) is ample for a local accumulation window and
+                // keeps the combined key inside 63 bits.
+                constexpr std::int64_t kBits = 21;
+                constexpr std::int64_t kMask = (std::int64_t(1) << kBits) - 1;
+                constexpr std::int64_t kOffset = std::int64_t(1) << (kBits - 1);
+                const std::int64_t ix = (q(p.x()) + kOffset) & kMask;
+                const std::int64_t iy = (q(p.y()) + kOffset) & kMask;
+                const std::int64_t iz = (q(p.z()) + kOffset) & kMask;
+                return (ix << (2 * kBits)) | (iy << kBits) | iz;
+            };
+            for (const auto &batch : window_copy) {
+                const double age_s = std::chrono::duration<double>(
+                        now - batch.receive_time).count();
+                if (age_s < 0.0 || age_s > accumulation_window_s ||
+                    !batch.cloud) {
+                    continue;
+                }
+                ++batch_count;
+                for (const auto &pt : *batch.cloud) {
+                    const Vec3f p(pt.x, pt.y, pt.z);
+                    if (seen_voxels.insert(voxel_key(p)).second) {
+                        out_cloud.push_back(p);
+                    }
+                }
+            }
+        }
+
+        // Shadow-only (see the CiriShadowStatus/config comments above):
+        // reports what the paper's actual theorem-1 mechanism would have
+        // concluded about this brake candidate. Never read by any accept/
+        // reject decision -- activateEmergencyBrake only logs the result.
+        // 2026-08-19: fetched ONCE per activateEmergencyBrake call (not once
+        // per duration-retry attempt -- up to 30x). The accumulator cannot
+        // meaningfully change across the sub-second span of that retry
+        // loop, so re-fetching and re-voxelizing per attempt was pure
+        // waste: measured at ~0.8-1ms/call regardless of the earlier CIRI-
+        // side downsample fix, adding up to ~24-30ms per brake activation
+        // and directly explaining why completion stayed just as bad
+        // (seed5-10 all 0-1/5) even after that fix measurably worked.
+        struct CiriShadowCloudSnapshot {
+            bool enabled{false};
+            bool sufficient{false};
+            vec_E<Vec3f> cloud;
+        };
+
+        CiriShadowCloudSnapshot fetchCiriShadowCloudSnapshot() {
+            CiriShadowCloudSnapshot out;
+            if (!cfg_.trajectory_guard_raw_cloud_ciri_shadow_en) {
+                return out;
+            }
+            out.enabled = true;
+            double time_since_last_msg_s;
+            std::size_t batch_count;
+            const auto t0 = rog_map::MapHealthClock::now();
+            getAccumulatedCloudForShadow(
+                    cfg_.trajectory_guard_raw_cloud_accum_window_s, out.cloud,
+                    time_since_last_msg_s, batch_count);
+            const double accum_ms = std::chrono::duration<double, std::milli>(
+                    rog_map::MapHealthClock::now() - t0).count();
+            // Accumulator health gate: theorem 1's known-free guarantee is
+            // conditioned on a "sufficiently dense" input depth image. A
+            // stale or sparse accumulator cannot honestly claim that, so
+            // this reports insufficient rather than letting
+            // GeneratePolytopeFromLineAndCloud's empty-box-is-open
+            // convention silently stand in for "we don't actually know."
+            out.sufficient = std::isfinite(time_since_last_msg_s) &&
+                    time_since_last_msg_s <=
+                            cfg_.trajectory_guard_raw_cloud_max_age_s &&
+                    static_cast<int>(out.cloud.size()) >=
+                            cfg_.trajectory_guard_raw_cloud_ciri_min_points;
+            ros_ptr_->warn(" -- [TRAJ_GUARD_RAW_CIRI_COST] cloud_pts={} "
+                           "accum_ms={:.3f} sufficient={}",
+                           out.cloud.size(), accum_ms, out.sufficient);
+            return out;
+        }
+
+        CiriShadowStatus checkBrakeCandidateAgainstCiriShadow(
+                const CiriShadowCloudSnapshot &snapshot,
+                const Vec3f &current_pos, const Trajectory &candidate,
+                Vec3f &violation_pos) {
+            if (!snapshot.enabled || candidate.empty()) {
+                return CiriShadowStatus::DISABLED;
+            }
+            if (!snapshot.sufficient) {
+                return CiriShadowStatus::INSUFFICIENT_DATA;
+            }
+            const Vec3f seed_far_pt = candidate.getPos(
+                    candidate.getTotalDuration());
+            const auto ciri_t0 = rog_map::MapHealthClock::now();
+            const bool known_free = planner_ptr_->checkKnownFreeViaCloud(
+                    current_pos, seed_far_pt, snapshot.cloud, candidate, 0.0,
+                    violation_pos);
+            const double ciri_ms = std::chrono::duration<double, std::milli>(
+                    rog_map::MapHealthClock::now() - ciri_t0).count();
+            if (ciri_ms > 1.0) {
+                ros_ptr_->warn(" -- [TRAJ_GUARD_RAW_CIRI_COST] ciri_ms={:.3f} "
+                               "(per-attempt, cloud reused)", ciri_ms);
+            }
+            return known_free ? CiriShadowStatus::SAFE
+                               : CiriShadowStatus::UNSAFE;
+        }
+
         mutable std::mutex raw_cloud_mutex_;
         RawCloudSnapshot raw_cloud_snapshot_{};
+        // 2026-08-19: isolated diagnostic only (see mainFsmTimerCallback).
+        // Confirms whether guard_cloud_sub_ is actually receiving messages
+        // before any accumulation/CIRI logic is built on top of it -- 8.4's
+        // third attempt found this subscription's sequence stuck at 0 for
+        // an entire mission and never diagnosed why.
+        rog_map::MapHealthClock::time_point raw_cloud_debug_last_log_{};
         std::uint64_t raw_cache_cloud_sequence_{0};
         std::uint64_t raw_cache_trajectory_generation_{0};
         RawCloudSafetyStatus raw_cache_status_{RawCloudSafetyStatus::STALE};
@@ -130,6 +313,11 @@ namespace fsm {
             return "UNKNOWN";
         }
 
+        // Upper bound the window deque prunes to, independent of whatever
+        // window duration a given read requests -- keeps enough history for
+        // any reasonable accumulation_window_s without growing unbounded.
+        static constexpr double kRawCloudWindowMaxRetainS = 3.0;
+
         void guardCloudCallback(
                 const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
             auto cloud = std::make_shared<pcl::PointCloud<rog_map::PointType>>();
@@ -137,13 +325,27 @@ namespace fsm {
             if (cloud->empty() || !cloud->is_dense) {
                 return;
             }
-            auto tree =
-                    std::make_shared<pcl::KdTreeFLANN<rog_map::PointType>>();
-            tree->setInputCloud(cloud);
-            std::lock_guard<std::mutex> lock(raw_cloud_mutex_);
-            raw_cloud_snapshot_.tree = std::move(tree);
-            raw_cloud_snapshot_.receive_time = rog_map::MapHealthClock::now();
-            ++raw_cloud_snapshot_.sequence;
+            const auto now = rog_map::MapHealthClock::now();
+            {
+                auto tree =
+                        std::make_shared<pcl::KdTreeFLANN<rog_map::PointType>>();
+                tree->setInputCloud(cloud);
+                std::lock_guard<std::mutex> lock(raw_cloud_mutex_);
+                raw_cloud_snapshot_.tree = std::move(tree);
+                raw_cloud_snapshot_.receive_time = now;
+                ++raw_cloud_snapshot_.sequence;
+            }
+            {
+                std::lock_guard<std::mutex> lock(raw_cloud_window_mutex_);
+                raw_cloud_window_.push_back({cloud, now});
+                ++raw_cloud_window_messages_total_;
+                while (!raw_cloud_window_.empty() &&
+                       std::chrono::duration<double>(
+                               now - raw_cloud_window_.front().receive_time)
+                                       .count() > kRawCloudWindowMaxRetainS) {
+                    raw_cloud_window_.pop_front();
+                }
+            }
         }
 
         RawCloudSafetyStatus validateTrajectoryAgainstRawCloud(
@@ -682,6 +884,11 @@ namespace fsm {
                     std::numeric_limits<double>::infinity();
             std::uint64_t raw_cloud_sequence = 0;
             Vec3f raw_collision_position = Vec3f::Zero();
+            CiriShadowStatus ciri_shadow_status = CiriShadowStatus::DISABLED;
+            Vec3f ciri_shadow_violation_pos = Vec3f::Zero();
+            // Fetched once for the whole call, not once per attempt below.
+            const CiriShadowCloudSnapshot ciri_shadow_snapshot =
+                    fetchCiriShadowCloudSnapshot();
             for (int attempt = 0; attempt < 30; ++attempt) {
                 auto candidate = buildBrakeTrajectory(initial, duration, start_wt);
                 dynamics_ok = brakeDynamicsWithinLimits(candidate,
@@ -710,6 +917,10 @@ namespace fsm {
                     raw_brake_status = validateTrajectoryAgainstRawCloud(
                             candidate, 0.0, raw_collision_position,
                             raw_cloud_age_s, raw_cloud_sequence);
+                    // Shadow-only: computed and logged, never read below.
+                    ciri_shadow_status = checkBrakeCandidateAgainstCiriShadow(
+                            ciri_shadow_snapshot, initial.col(0), candidate,
+                            ciri_shadow_violation_pos);
                     // A stale supplemental cloud triggers an early map-only
                     // stop.  A fresh cloud that intersects the candidate is a
                     // hard rejection and causes the duration search to
@@ -739,14 +950,16 @@ namespace fsm {
                         "searched=[{:.3f},{:.3f}]s speed0={:.3f} "
                         "last_dynamics_ok={} max_acc={:.3f} max_jerk={:.3f} "
                             "last_path_status={} last_map={} map_age={:.3f}s "
-                            "raw_status={} raw_cloud={} raw_age={:.3f}s; "
+                            "raw_status={} raw_cloud={} raw_age={:.3f}s "
+                            "ciri_shadow={}; "
                             "no brake command published",
                         reason, min_duration, max_duration,
                         initial.col(1).norm(), dynamics_ok, max_acc, max_jerk,
                         trajectorySafetyStatusName(brake_safety.status),
                         brake_safety.map_version, certified_map_age_s,
                         rawCloudSafetyStatusName(raw_brake_status),
-                        raw_cloud_sequence, raw_cloud_age_s);
+                        raw_cloud_sequence, raw_cloud_age_s,
+                        ciriShadowStatusName(ciri_shadow_status));
                 // 2026-08-18: tried arming a topology-avoidance zone here
                 // too (same mechanism a rejected PlanFromRest candidate
                 // uses) so a persistently-blocked brake would push the next
@@ -795,12 +1008,14 @@ namespace fsm {
                             "speed0={:.3f} max_acc={:.3f} max_jerk={:.3f} "
                             "dynamics_ok={} path_status={} map={} map_age={:.3f}s "
                             "raw_status={} raw_cloud={} raw_age={:.3f}s "
+                            "ciri_shadow={} "
                             "stop=[{:.3f},{:.3f},{:.3f}]",
                             reason, duration, initial.col(1).norm(), max_acc, max_jerk,
                             dynamics_ok, trajectorySafetyStatusName(brake_safety.status),
                             brake_safety.map_version, certified_map_age_s,
                             rawCloudSafetyStatusName(raw_brake_status),
                             raw_cloud_sequence, raw_cloud_age_s,
+                            ciriShadowStatusName(ciri_shadow_status),
                             stop_position.x(), stop_position.y(), stop_position.z());
             mars_quadrotor_msgs::msg::PolynomialTrajectory brake_message;
             fillPolynomialTrajectory(brake_trajectory, yaw_trajectory,
@@ -1067,7 +1282,8 @@ namespace fsm {
             // 初始化Planner
             ros_ptr_ = std::make_shared<ros_interface::Ros2Interface>(nh_);
             planner_ptr_ = std::make_shared<SuperPlanner>(cfg_path, ros_ptr_, map_ptr_);
-            if (cfg_.trajectory_guard_raw_cloud_en) {
+            if (cfg_.trajectory_guard_raw_cloud_en ||
+                cfg_.trajectory_guard_raw_cloud_ciri_shadow_en) {
                 guard_cloud_cbk_group_ = nh_->create_callback_group(
                         rclcpp::CallbackGroupType::MutuallyExclusive);
                 rclcpp::SubscriptionOptions guard_cloud_options;
@@ -1080,10 +1296,12 @@ namespace fsm {
                         guard_cloud_options);
                 ros_ptr_->info(
                         " -- [TRAJ_GUARD_RAW] enabled topic={} max_age={:.3f}s "
-                        "clearance={:.3f}m",
+                        "clearance={:.3f}m ciri_shadow={} accum_window={:.3f}s",
                         map_ptr_->getMapConfig().cloud_topic,
                         cfg_.trajectory_guard_raw_cloud_max_age_s,
-                        cfg_.trajectory_guard_raw_cloud_clearance_m);
+                        cfg_.trajectory_guard_raw_cloud_clearance_m,
+                        cfg_.trajectory_guard_raw_cloud_ciri_shadow_en,
+                        cfg_.trajectory_guard_raw_cloud_accum_window_s);
             }
             cmd_pub_ = nh_->create_publisher<mars_quadrotor_msgs::msg::PositionCommand>(cfg_.cmd_topic, qos);
             mpc_cmd_pub_ = nh_->create_publisher<mars_quadrotor_msgs::msg::PolynomialTrajectory>(cfg_.mpc_cmd_topic,
@@ -1257,6 +1475,34 @@ namespace fsm {
         }
 
         void mainFsmTimerCallback() {
+            // 2026-08-19: isolated diagnostic, gated only on the subscription
+            // existing (not on trajectory_guard_raw_cloud_en, which this
+            // does not read or affect). Purely observational -- see the
+            // raw_cloud_debug_last_log_ comment above.
+            if (guard_cloud_sub_) {
+                const double since_log_s = std::chrono::duration<double>(
+                        rog_map::MapHealthClock::now() -
+                        raw_cloud_debug_last_log_).count();
+                if (since_log_s >= 1.0) {
+                    raw_cloud_debug_last_log_ = rog_map::MapHealthClock::now();
+                    std::uint64_t seq;
+                    double age_s;
+                    {
+                        std::lock_guard<std::mutex> lock(raw_cloud_mutex_);
+                        seq = raw_cloud_snapshot_.sequence;
+                        age_s = raw_cloud_snapshot_.sequence == 0
+                                ? -1.0
+                                : std::chrono::duration<double>(
+                                        rog_map::MapHealthClock::now() -
+                                        raw_cloud_snapshot_.receive_time)
+                                          .count();
+                    }
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_RAW_DEBUG] sequence={} "
+                            "latest_age_s={:.3f}",
+                            seq, age_s);
+                }
+            }
             if (safety_brake_active_.load(std::memory_order_acquire)) {
                 tryRecoverFromEmergencyBrake();
                 return;

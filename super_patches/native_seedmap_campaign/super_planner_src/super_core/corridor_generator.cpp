@@ -474,4 +474,83 @@ namespace super_planner {
 
     }
 
+    // 2026-08-19: matches the SUPER paper's actual backup-corridor
+    // construction (theorem 1, Materials and Methods / "Backup corridor
+    // generation") -- CIRI decomposition sourced directly from an
+    // externally-supplied point cloud (an accumulated 1-2s raw LIDAR
+    // window) instead of the committed occupancy map, so the known-free
+    // guarantee does not depend on map-commit latency. Mirrors
+    // GeneratePolytopeFromLine exactly except for where pc comes from.
+    // Third attempt at this in this investigation (see docs/
+    // viability_guard_ciri_avoidance_2026-08-15.md 8.4/8.10); the first
+    // two were reverted for reasons unrelated to this function itself
+    // (map-sourced shortcut; LiDAR-emptiness-vs-occupancy confusion;
+    // an unexplained subscription/freeze bug). Used shadow-only for now.
+    bool CorridorGenerator::GeneratePolytopeFromLineAndCloud(
+            Line &line, const vec_Vec3f &external_pc, Polytope &polytope) {
+        Eigen::Vector3d box_max, box_min;
+        getSeedBBox(line.first, line.second, box_min, box_max);
+        map_ptr_->boundBoxByLocalMap(box_min, box_max);
+        vec_E<Vec3f> pc;
+        pc.reserve(external_pc.size());
+        for (const auto &pt : external_pc) {
+            if ((pt.array() >= box_min.array()).all() &&
+                (pt.array() <= box_max.array()).all()) {
+                pc.push_back(pt);
+            }
+        }
+        box_min.z() += robot_r_;
+        box_max.z() -= robot_r_;
+        MatD4f planes;
+        Eigen::Vector3d a = line.first, b = line.second;
+        Eigen::Matrix<double, 6, 4> bd = Eigen::Matrix<double, 6, 4>::Zero();
+        bd(0, 0) = 1.0;
+        bd(1, 0) = -1.0;
+        bd(2, 1) = 1.0;
+        bd(3, 1) = -1.0;
+        bd(4, 2) = 1.0;
+        bd(5, 2) = -1.0;
+        bd(0, 3) = -box_max.x();
+        bd(1, 3) = box_min.x();
+        bd(2, 3) = -box_max.y();
+        bd(3, 3) = box_min.y();
+        bd(4, 3) = -box_max.z();
+        bd(5, 3) = box_min.z();
+        if (pc.empty()) {
+            // No accumulated points fell inside the local box. Per the
+            // paper's theorem 1, this is only a valid known-free
+            // conclusion if the input cloud was "sufficiently dense" to
+            // begin with -- an empty local box from a healthy, dense
+            // accumulator legitimately means open space (mirrors
+            // GeneratePolytopeFromLine's identical convention for an
+            // empty map query). The caller is responsible for checking
+            // accumulator health (recency, total point count) BEFORE
+            // calling this function; this function cannot tell the
+            // difference between "healthy accumulator, genuinely open"
+            // and "starved accumulator, unknown" on its own.
+            planes.resize(6, 4);
+            planes.row(0) << 1, 0, 0, -box_max.x();
+            planes.row(1) << 0, 1, 0, -box_max.y();
+            planes.row(2) << 0, 0, 1, -box_max.z();
+            planes.row(3) << -1, 0, 0, box_min.x();
+            planes.row(4) << 0, -1, 0, box_min.y();
+            planes.row(5) << 0, 0, -1, box_min.z();
+            polytope.SetPlanes(planes);
+            polytope.SetSeedLine(line);
+            return true;
+        }
+        Eigen::Map<const Eigen::Matrix<double, 3, -1, Eigen::ColMajor>> pp(
+                pc[0].data(), 3, pc.size());
+        rog_map::TimeConsuming tc("emvp_cloud", false);
+        RET_CODE success = ciri_->comvexDecomposition(bd, pp, a, b);
+        tc.stop();
+        if (success == SUCCESS) {
+            ciri_->getPolytope(polytope);
+            polytope.SetSeedLine(line);
+            return true;
+        }
+        polytope.Reset();
+        return false;
+    }
+
 }
