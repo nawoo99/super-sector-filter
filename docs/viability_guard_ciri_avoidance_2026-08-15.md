@@ -541,6 +541,59 @@ before being checked:
   earlier pass of this same session, then not connected to the
   `WAIT_GOAL` question when re-investigating.
 
+### 8.7 2026-08-19: seed7's 3/5 diagnosed -- a razor-thin corridor pinch, not a new bug class
+
+Diagnosed by cross-referencing `sweep_emerfix/seed7.launch.log` against
+`scripts/native_campaign/seed7_static.csv` (the seed's raw obstacle list).
+This is a pure liveness/completion failure, not a safety regression:
+`min_clearance_m=0.441` for the whole run, 0 contact.
+
+- seed7 reached wp1/wp2/wp3 normally (`waypoints_reached` in the monitor
+  JSON only increments when odom actually comes within `switch_dist` of a
+  waypoint, so this is not in doubt). En route from wp3(-24,-24) to
+  wp4(24,-24), at t~58s it braked to `CLEARANCE_MARGIN` at
+  `(-16.434, -22.203)` and never moved again: `final_x/final_y` in
+  `seed7.json` match this point exactly, and the log's last
+  `TRAJ_GUARD_REJECT` line at t=120.0s still shows the same replan
+  generation, `gen=252`, that first appeared at t~58s -- 65 seconds, ~98
+  `PlanFromRest` attempts, and it never advanced to `gen=253`.
+- The geometric cause is directly confirmable from `seed7_static.csv`: the
+  stop point sits almost exactly between two obstacles at
+  `(-15.642,-21.552) r=0.525` and `(-17.013,-23.082) r=0.525`, whose
+  surface-to-surface gap is **1.004 m** -- essentially the v6 map design's
+  guaranteed *minimum* gap (1.00 m) everywhere on the field, i.e. the
+  single tightest passage seed7 has. The guard needs
+  `robot_r(0.2) + hard_clearance(0.3) = 0.5 m` clearance on each side, so a
+  1.004 m gap leaves ~4 mm of slack -- in practice zero, since each
+  `PlanFromRest` retry's candidate corridor jitters sub-centimeter
+  (confirmed from the `collision_p` values across the 98 rejects) and
+  essentially never lands dead-center.
+- **This exact failure mode is not unique to seed7.** seed3's log shows an
+  even longer run of identical-generation `CLEARANCE_MARGIN` rejects at a
+  single point (110 straight rejects, ~10.4 s) at a different pinch, and
+  seed3 still finished 5/5 -- it broke free once a fresh map update shifted
+  the local occupancy enough to let one retry through (the very next
+  `TRAJ_GUARD_CERT` after that streak reports `MAP_STALE`, i.e. new data
+  had just arrived). The topology-reroute zone (`armTopologyAvoidanceZone`,
+  radius capped at `max_radius_m=1.0`) re-armed the same zone every retry
+  in both cases but did not by itself change the outcome -- it is too small
+  to enclose *both* flanking obstacles of a two-obstacle pinch (recall
+  8-14's finding that widening it to 3.5 m was net-negative elsewhere), so
+  A* keeps re-deriving the same razor-thin topology as "shortest."
+- **Conclusion: whether a same-generation retry deadlock resolves before
+  the mission timeout is effectively stochastic**, not something the
+  current recovery mechanism guarantees. seed7 landed on the field's single
+  tightest gap on its direct route and the loop didn't break in time;
+  seed3 hit a similar deadlock elsewhere and got lucky. This is a real,
+  distinct gap in the topology-reroute design (separate from 8.5's
+  EMER_STOP fix and 8.2's UNOBSERVED fix) -- not yet fixed. A natural next
+  step would be detecting a stalled generation (same `gen` across N
+  consecutive `PlanFromRest` rejects, or elapsed stall time past a
+  threshold) and escalating -- e.g. temporarily accepting a `CLEARANCE_MARGIN`
+  *moving* candidate the way `certifiedStopExistsFrom()` already accepts
+  one for a certified *stop* -- rather than retrying the identical corridor
+  indefinitely. Not attempted yet; flagging for a future session.
+
 ## Current status — not flight-ready, but no longer failing for the original reason
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
@@ -559,10 +612,11 @@ before being checked:
   contact, on 5 consecutive runs of one seed) has not been attempted
   since this fix landed. Do not describe this configuration as
   flight-ready or run a 50-run campaign before that gate passes.
-- seed7 (3/5 in the latest sweep) has not been separately diagnosed.
-  Given 8.5's finding, check its `TRAJ_GUARD_BRAKE_REJECTED` count and
-  `last_path_status` distribution first, the same way seed9 was diagnosed,
-  rather than assuming a new cause.
+- seed7 (3/5 in the latest sweep) is now diagnosed (8.7): a same-generation
+  `PlanFromRest` retry deadlock at the map's single tightest (1.004 m,
+  design-floor) obstacle gap, which happened not to resolve before the
+  120 s timeout. Not a contact/safety issue, and not the same mechanism as
+  8.5's `EMER_STOP`/`WAIT_GOAL` bug. Not yet fixed.
 - FSM CPU usage has not been measured for any run across either day.
 - The `VIABILITY_DEBUG` and `AVOIDANCE_DEBUG` diagnostic logging left in
   `super_planner.cpp`/`corridor_generator.cpp` is harmless when the env
