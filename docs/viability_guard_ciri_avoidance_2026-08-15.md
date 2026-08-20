@@ -1148,6 +1148,53 @@ Full tables, failure rows, protocol, and caveats are in
 `results/guarded_v7_full_sector_adaptive_seed1_10_n5_20260820.csv` and
 `results/guarded_v7_full_sector_adaptive_seed1_10_n5_summary_20260820.csv`.
 
+### 8.14 Seed9/10 full failure mechanism and static-PCD repair (2026-08-20)
+
+The two full failures in 8.13 were inspected against the four successful runs
+of the same seed. They are a new unreachable-recovery case, not a return of the
+map-freeze bug. Seed9 run4 held generation 177 for 314 rejects/30.614 s; seed10
+run2 held generation 71 for 314 rejects/98.871 s. Every rejection was a
+`PlanFromRest/with_backup` EXP `CLEARANCE_MARGIN`. Map versions still advanced
+317->401 and 44->465, respectively.
+
+Both final loops attempted 314 emergency brakes, accepted zero, and therefore
+never reached a certified stable hold. More importantly, every retry reused
+one cached brake speed: 2.813 m/s for seed9 and 0.741 m/s for seed10.
+`fsm_ros2.hpp` stores `last_published_cmd_` behind a boolean validity flag but
+does not timestamp it. Once guard suppression stops command publication, that
+cached state remains valid forever and `activateEmergencyBrake()` continues
+to prefer it over a fresh trajectory sample or odometry.
+
+This interacts with the deliberately strict topology gate. A rejected
+PlanFromRest route may arm a blocker only when odometry speed is <=0.2 m/s or
+the FSM has supplied a certified-stop flag. `activateEmergencyBrake()` clears
+that flag before each new attempt, while a rejected brake never becomes active
+and can never finish the stable-hold checks. Both failed runs consequently had
+zero `TRAJ_GUARD_REROUTE_ARM` and zero `TRAJ_GUARD_REROUTE_SEARCH` events. By
+contrast, the four successful seed9 runs recorded 79/126 arm/search events and
+the four successful seed10 runs recorded 82/144.
+
+Seed10 also had 475 EXP/frontend failures after the stall began, including 460
+0.1 s replan-budget overruns and 14 FIRI NaN/Inf failures. Those failures slow
+the retry loop but are secondary: the same guard/brake deadlock began before
+them and seed9 reproduces the primary mechanism without FIRI warnings.
+
+The static-PCD campaign runner defect described in 8.13 is fixed. Monitor
+options now precede argparse's `--`; `static_pcd_enabled` and
+`static_pcd_point_count` are emitted; and a requested seedmap static-PCD run is
+invalid/retried unless the index is provably active. The native-campaign unit
+suite passes 12/12, and a separate seed1 full-stack smoke loaded 241,490 points
+and completed 5/5. This does not retroactively repair 8.13's missing static-PCD
+measurements.
+
+The next implementation should timestamp and consistency-check the cached
+command, acquire a fresh actual recovery state, and add a bounded fail-closed
+state for repeated brake/candidate rejection. Topology blockers must remain
+gated on a certified actual stop; the previously reverted moving-brake
+collision arming should not be restored. Full evidence is in
+`docs/guarded_v7_full_seed9_seed10_failure_analysis_20260820.md` and
+`results/guarded_v7_full_seed9_seed10_log_analysis_20260820.csv`.
+
 ## Current status — not flight-ready, but no longer failing for the original reason
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
@@ -1182,11 +1229,13 @@ Full tables, failure rows, protocol, and caveats are in
   interleaved campaign, seed10 full was 4/5 and total full was 48/50. The
   specific same-generation deadlock is fixed, but population liveness is not.
 - The frequent same-generation `PlanFromRest` deadlock diagnosed in 8.7/8.8
-  now has an implemented recovery rather than only a proposed escalation.
-  The reproduced seed10 failure held one generation for 75.404 s; section
-  8.12's seed1-10 n=2 maximum was 1.467 s, and the seed10 five-run maximum was
-  1.755 s. The new state transition changes XY topology after a certified
-  stop; it does not accept a guard-rejected moving candidate.
+  has an implemented recovery after a certified stop, but 8.14 proves that
+  this recovery is unreachable when every brake attempt itself is rejected.
+  The old reproduced seed10 failure held one generation for 75.404 s; section
+  8.12's seed1-10 n=2 maximum was 1.467 s, while 8.14 found new 30.614 s and
+  98.871 s stalls with zero topology-arm events. The new state transition
+  changes XY topology after a certified stop; it does not solve acquisition of
+  that stop from a stale cached command.
 - **4th paper-reproduction attempt (8.10), with the async completion in
   8.11, now works without the earlier shadow-specific throughput collapse.**
   `trajectory_guard_raw_cloud_ciri_shadow_en` (off by default, only on in

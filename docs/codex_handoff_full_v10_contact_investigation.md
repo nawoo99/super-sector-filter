@@ -1,6 +1,31 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-20 seed9/10 full 실패 원인 정정:** 150회 캠페인의 full 실패
+> 2건은 map freeze나 단순 timeout이 아니라 certified recovery에 들어가지 못한
+> 교착이다. seed9 run4는 gen177을 314회/30.614초, seed10 run2는 gen71을
+> 314회/98.871초 거절했다. 둘 다 EXP `CLEARANCE_MARGIN`; 같은 구간에서 brake도
+> 314회 전부 거절되어 accepted brake, recovered hold, topology arm/search가 모두
+> 0이었다. 지도는 각각 317->401, 44->465로 계속 갱신됐다.
+>
+> 직접 원인은 `fsm_ros2.hpp`의 `last_published_cmd_`가 timestamp 없이 boolean
+> valid로 영구 캐시되는 구조다. guard가 정상 command publication을 막은 뒤에도
+> `activateEmergencyBrake()`가 이 stale command를 계속 우선 사용했다. 실제로
+> final loop 314회 내내 brake initial speed가 seed9 2.813 m/s, seed10 0.741
+> m/s로 고정됐다. brake가 인증되지 않으니 certified-stop flag가 생기지 않고,
+> odom speed <=0.2 또는 certified stop을 요구하는 reroute gate도 한 번도 열리지
+> 않았다. 성공한 동일 seed 런은 topology arm/search가 정상적으로 발생했다.
+> seed10의 460회 replan overtime과 14회 FIRI NaN/Inf는 악화 요인이지만 seed9에
+> 없이도 교착이 재현되므로 1차 원인이 아니다.
+>
+> 다음 수정 우선순위는 cached command timestamp/odom consistency 검사 -> fresh
+> actual recovery state로 brake 구성 -> 반복 reject의 bounded fail-closed state다.
+> moving brake collision로 blocker를 놓는 과거 실패안은 되살리지 말 것. 상세는
+> `docs/guarded_v7_full_seed9_seed10_failure_analysis_20260820.md`와 §8.14.
+> static-PCD runner는 옵션 순서와 active-index validity 검사를 고쳤고 seed1 smoke로
+> 실제 로드를 확인했지만, 기존 150회의 미계측값은 여전히 무효다.
+
+> [!IMPORTANT]
 > **2026-08-20 guarded v7 full/sector/adaptive n=5 최신 결과:** seed1-10의
 > 세 모드를 각 5회, 총 150회 실행했다. 완주는 full **48/50 (96%)**,
 > sector **46/50 (92%)**, adaptive **47/50 (94%)**였고 exact paired

@@ -157,6 +157,17 @@ points and spent at least 93.1% of frames full-open. Full also failed once on
 seed9 and once on seed10. The current guarded planner remains stochastically
 unstable near the 120 s boundary; seed9 is the clearest stress case.
 
+Post-campaign stack-log analysis found that the two full failures were not
+ordinary slow completions. Each held one uncommitted generation for exactly
+314 guard rejections while all 314 corresponding brake attempts were rejected;
+neither run reached a topology arm/search. A timestamp-free cached
+`last_published_cmd_` supplied the same stale brake speed on every retry, so no
+certified stop was acquired and the stop-gated reroute remained unreachable.
+Seed10 additionally suffered 460 replan-budget overruns and 14 FIRI NaN/Inf
+failures. The full analysis and per-run log counts are in
+`docs/guarded_v7_full_seed9_seed10_failure_analysis_20260820.md` and
+`results/guarded_v7_full_seed9_seed10_log_analysis_20260820.csv`.
+
 ## Interpretation and next experiment
 
 1. The present safety valve is too eager for an efficiency experiment. About
