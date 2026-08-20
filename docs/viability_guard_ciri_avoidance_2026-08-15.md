@@ -987,19 +987,128 @@ to `false`; `static_seedmaps_guard_viability_tight_v7.yaml` still does not set
 it; only `_cirishadow.yaml` enables it. No result is connected to live flight
 decisions, and the Fig. 8C(iii) FOV cut noted in 8.10 remains unimplemented.
 
+### 8.12 2026-08-20: certified stop-and-reroute removes the seed10 same-topology deadlock
+
+The one failure in 8.11 was not random CIRI-shadow worker overhead. Its raw
+stack log showed a single `PlanFromRest/with_backup` generation repeatedly
+rejected **110 times over 75.404 s**, while the first collision stayed near
+`[5.115, 23.098, 2.671]` and the map continued advancing from version 109 to
+478. In other words, neither a stale map nor the shadow diagnostic was holding
+the planner: a stopped vehicle kept generating the same unsafe topology until
+the 120 s mission timeout. The successful second seed10 run (5/5 in 77.17 s)
+did not "improve" the first run; it was an independent run that happened not
+to enter that long-lived generation.
+
+The existing topology-zone implementation did not guarantee an escape. It
+centred a 3-D sphere on the first collision, and in the reproduced seed10
+stall that centre was only about 6.2 cm from the stopped start. A* could start
+inside it, change altitude, or return to the same horizontal passage. A second
+layer mismatch made this worse: A* tested a solid 3-D sphere, while CIRI saw
+only 16 points on one horizontal ring plus two poles. Even when the discrete
+A* guide path moved around the zone, the continuous optimized trajectory could
+pass above, below, or between those sparse CIRI samples.
+
+The recovery was therefore changed from "retry another candidate" to a
+bounded, certified **stop-and-reroute** transition:
+
+1. `FsmRos2::tryRecoverFromEmergencyBrake()` now tells `SuperPlanner` when
+   the existing emergency brake has finished, the map is fresh, odometry is
+   current, and the terminal pose has remained stable for 0.25 s. A new brake
+   clears that certificate. This removes the former disagreement in which the
+   FSM had a valid zero-speed terminal certificate but the planner's separately
+   sampled scalar speed gate declined to arm recovery.
+2. `PlanFromRest` geometric rejects are grouped by candidate generation and
+   XY collision cluster (`collision_merge_m: 0.5`). The first reject of a new
+   generation and then every third matching reject place another blocker, up
+   to six. The first cylinder starts one radius plus 0.05 m ahead of the
+   stopped pose, and later
+   cylinders extend the rejected route in 1.0 m steps. EXP collisions supply
+   the preferred route direction; initial EXP displacement/velocity and goal
+   direction are bounded fallbacks. A successful commit or a new goal clears
+   the entire recovery state.
+3. A* and CIRI now use the same vertical-XY-cylinder intent across the flyable
+   height range. A* uses an exact XY-distance test and permits
+   only monotonically outward grid steps if quantization puts the start inside
+   a new cylinder. CIRI encodes its boundary with 16-point rings at no more
+   than 0.25 m vertical spacing throughout each local search box. The
+   deterministic radius jitter
+   retained from section 6 prevents the old symmetric-sample NaN/Inf failure.
+   Thus changing altitude is no longer misclassified as a topology change.
+
+The generic `growth_m`/`max_radius_m` parameters remain functional for other
+profiles: later cylinders may grow with escalation. The validated tight-v7
+profiles explicitly use `growth_m: 0.0`, `max_radius_m: 0.8`, because this
+campaign tested a chain of equal 0.8 m cylinders. This avoids leaving the old
+growth parameters as silent no-ops while keeping the recorded configuration
+identical to the measured one.
+
+Seed10 was first run five consecutive times with
+`static_seedmaps_guard_viability_tight_v7_cirishadow.yaml`, `loop24.txt`, and
+the same 120 s timeout. All five completed with zero contact:
+
+| run | waypoints | mission time (s) | static PCD min distance (m) | contact |
+|----:|:---------:|-----------------:|----------------------------:|:-------:|
+| 1 | 5/5 | 78.09 | 0.372 | 0 |
+| 2 | 5/5 | 90.97 | 0.449 | 0 |
+| 3 | 5/5 | 94.85 | 0.442 | 0 |
+| 4 | 5/5 | 96.15 | 0.480 | 0 |
+| 5 | 5/5 | 90.78 | 0.434 | 0 |
+| **total/mean** | **25/25** | **90.17 mean** | **0.372 worst** | **0/5** |
+
+The longest same-generation `PlanFromRest` reject span in these five runs was
+1.755 s, versus the reproduced 75.404 s failure. The result is not merely a
+timeout improvement: run path lengths varied from 232.225 to 252.254 m, which
+is consistent with genuinely different detours rather than resubmission of one
+candidate. After making the legacy growth parameters explicit without changing
+this profile's 0.8 m radius, a final seed10 smoke also completed 5/5 in 89.37 s
+with zero contact and 0.428 m static-PCD minimum distance.
+
+The broader seed1-10 x n=2 regression used the same CIRI-shadow test profile
+and protocol. Seed10 rows below are runs 1-2 of the five-run gate above:
+
+| seed | 5/5 runs | times (s) | contact | worst static PCD distance (m) | longest same-gen reject span (s) |
+|-----:|:--------:|:---------:|:-------:|:-----------------------------:|:--------------------------------:|
+| 1 | 2/2 | 58.89 / 63.24 | 0 | 0.384 | 0.000 |
+| 2 | 2/2 | 59.12 / 64.70 | 0 | >=0.500 | 0.000 |
+| 3 | 2/2 | 64.06 / 75.31 | 0 | 0.429 | 0.000 |
+| 4 | 2/2 | 68.11 / 80.32 | 0 | 0.420 | 0.296 |
+| 5 | 2/2 | 73.96 / 61.99 | 0 | 0.378 | 0.809 |
+| 6 | 2/2 | 78.80 / 77.19 | 0 | 0.443 | 1.377 |
+| 7 | 2/2 | 82.90 / 71.60 | 0 | 0.462 | 0.193 |
+| 8 | 2/2 | 77.65 / 86.18 | 0 | 0.463 | 0.000 |
+| 9 | 2/2 | 92.57 / 81.37 | 0 | 0.387 | 1.467 |
+| 10 | 2/2 | 78.09 / 90.97 | 0 | 0.372 | 0.782 |
+| **total** | **20/20** | **74.35 mean** | **0/20** | **0.372 worst** | **1.467 max** |
+
+Seed2's raw JSON contains `null` rather than an exact static-PCD distance. Its
+PCD loaded correctly (241,490 points); the monitor intentionally searches only
+the 0.5 m neighborhood and records no exact value when no point ever enters
+that neighborhood. The defensible value is therefore `>=0.500 m`, not missing
+safety data. The committed per-run aggregate is
+`results/topology_cylinder_reroute_cirishadow_n2_20260820.csv`; raw logs remain
+in `/tmp/cylinder_route_block_seeds1_9_n2/`,
+`/tmp/cylinder_route_block_seed10_smoke/`, and
+`/tmp/cylinder_route_block_seed10_final_smoke/`.
+
+This is strong evidence that the specific same-generation seed10 deadlock was
+removed, and it passes a five-consecutive-run local gate. It is still only n=2
+per seed for the broader population and does not establish a 100% population
+completion rate or flight readiness. The CIRI raw-cloud result remains strictly
+shadow-only and off by default; this section changes the live topology-recovery
+path after an independently certified stop, not the shadow result's authority.
+
 ## Current status — not flight-ready, but no longer failing for the original reason
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
-  (8.2), the EMER_STOP fix (8.5), and the guard-corridor retry alternation
-  (8.9, `guard_corridor_retry_alternate_every`) are all still in place and
-  are the current best-known-good configuration.** 8.3 and 8.4's variants
-  are fully reverted; do not re-apply the write-side splat, the
-  brake-triggered topology-zone arming, or any of the CIRI-corridor/
-  raw-scan-accumulation code without new instrumentation first (see 8.4's
-  closing note). 8.9's own first attempt (widening `cg_guard_retry_ptr_`'s
-  CIRI margin) is also reverted -- it made completion much worse (14/45)
-  by starving the retry corridor generator of any feasible solution; don't
-  re-try it without checking `SearchPolytopeOnPath` failure counts first.
+  (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),
+  async CIRI shadow capture (8.11), and certified stop-and-reroute (8.12)
+  are all in place in the current configuration.** 8.3 and 8.4's variants
+  are fully reverted; do not re-apply the write-side splat, the old
+  collision-centred/brake-triggered sphere arming, or an authoritative
+  raw-CIRI brake policy. Section 8.12's live recovery is materially different:
+  it arms only after the existing brake, fresh-map, odometry, and stable-hold
+  checks certify a stopped recovery boundary. 8.9's rejected attempt to widen
+  `cg_guard_retry_ptr_`'s CIRI margin also remains reverted.
 - **The 8.8 n=10 table (100 runs, 74/100) measures the pre-8.9
   configuration** -- it does not have the guard-corridor retry alternation.
   8.9's n=5 sweep (50 runs, on top of the 8.9 config) got 41/50 (82.0%),
@@ -1007,25 +1116,21 @@ decisions, and the Fig. 8C(iii) FOV cut noted in 8.10 remains unimplemented.
   74/100 at this sample size (p=0.31) -- see 8.9 before citing either
   number as "the" completion rate. Do not re-cite the earlier 48/50 n=1
   headline as representative either way.
-- **Safety holds up at scale across both sweeps: 0/150 contact** (100 runs
-  in 8.8, 50 in 8.9), worst-case clearance 0.304 m. This is now well past
-  200 combined runs across both days with zero contact since the CIRI
-  avoidance-zone and `UNOBSERVED` fixes -- the strongest and best-sampled
-  part of this investigation's results.
-- **Still not a passed gate.** The required bar (5/5 completion, 0
-  contact, on 5 consecutive runs of one seed) has still not been formally
-  attempted. Given 8.8, expect it to pass easily on seed1-4 and fail more
-  often than not on seed7/9/10 -- pick the seed deliberately rather than
-  assuming any seed represents the others.
-- seed7's individual 3/5 (8.7) and the general pattern across all n=10
-  failures (8.8) are now diagnosed as the same mechanism: a
-  same-generation `PlanFromRest` `CLEARANCE_MARGIN` retry deadlock at a
-  near-design-floor (1.0 m) obstacle gap, racing the 120 s timeout with no
-  guaranteed escape. Not a contact/safety issue, and not the same
-  mechanism as 8.5's `EMER_STOP`/`WAIT_GOAL` bug. Confirmed as a frequent
-  (26/100 runs), not rare, failure mode -- not yet fixed. See 8.8's closing
-  note for the proposed next step (stalled-generation detection +
-  escalation).
+- **Safety remains the strongest result: 0/170 contact across the three
+  committed aggregate cohorts** (100 runs in 8.8, 50 in 8.9, and 20 in
+  8.12). Section 8.12's worst static-PCD centre distance was 0.372 m. These
+  are different configurations and should not be pooled for a completion
+  estimate, but none traded the liveness work for measured contact.
+- **The requested local gate now passes on the formerly unstable seed10:**
+  5/5 consecutive full completions, 25/25 waypoints, contact 0/5. The broader
+  seed1-10 n=2 check was 20/20, but n=2 is not a population-rate estimate and
+  does not by itself make the planner flight-ready.
+- The frequent same-generation `PlanFromRest` deadlock diagnosed in 8.7/8.8
+  now has an implemented recovery rather than only a proposed escalation.
+  The reproduced seed10 failure held one generation for 75.404 s; section
+  8.12's seed1-10 n=2 maximum was 1.467 s, and the seed10 five-run maximum was
+  1.755 s. The new state transition changes XY topology after a certified
+  stop; it does not accept a guard-rejected moving candidate.
 - **4th paper-reproduction attempt (8.10), with the async completion in
   8.11, now works without the earlier shadow-specific throughput collapse.**
   `trajectory_guard_raw_cloud_ciri_shadow_en` (off by default, only on in
@@ -1034,16 +1139,18 @@ decisions, and the Fig. 8C(iii) FOV cut noted in 8.10 remains unimplemented.
   The accumulated-cloud fetch, conversion/downsampling, CIRI decomposition,
   and containment check now run on a latest-only worker, and shadow-only scan
   capture reuses ROG-Map's already-accepted message instead of adding a second
-  DDS subscription. The 120 s seed1-10 n=2 verification completed 19/20 runs,
-  97/100 waypoints, with 0/20 contacts. This establishes removal of the 8.10
-  performance regression, not a new population completion rate and not
-  permission to connect the diagnostic to the brake decision.
+  DDS subscription. Section 8.11's 19/20 result establishes removal of the
+  8.10 performance regression. Section 8.12 then fixes that cohort's one
+  remaining seed10 liveness failure in the live topology-recovery layer; it
+  still does not grant the shadow result any authority over brake decisions.
 - FSM CPU usage has not been measured for any run across either day.
 - The `VIABILITY_DEBUG` and `AVOIDANCE_DEBUG` diagnostic logging left in
   `super_planner.cpp`/`corridor_generator.cpp` is harmless when the env
   vars are unset but has not been cleaned up.
 
 Do not describe `static_seedmaps_guard_viability_v7.yaml` or any of its
-`_wide`/`_tight`/`_tight_h08` variants as flight-ready. Do not run a 50-run
-campaign on this configuration before a full 5/5, zero-contact gate is
-recorded on at least one seed.
+`_wide`/`_tight`/`_tight_h08` variants as flight-ready. The former prerequisite
+for a larger campaign (one 5/5, zero-contact gate) is now satisfied on seed10;
+the next defensible step is a larger paired topology-recovery ablation under
+the normal shadow-off `tight_v7` profile, not connecting CIRI shadow to the
+brake decision.

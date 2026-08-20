@@ -163,6 +163,10 @@ namespace super_planner {
         std::vector<double> guard_topology_avoidance_radii_;
         Vec3f guard_topology_goal_{Vec3f::Zero()};
         bool guard_topology_goal_valid_{false};
+        std::uint64_t guard_topology_stall_generation_{0};
+        Vec3f guard_topology_stall_collision_{Vec3f::Zero()};
+        int guard_topology_stall_rejects_{0};
+        std::atomic_bool guard_certified_stop_for_reroute_{false};
 
         struct ShadowValidationJob {
             CmdTraj::SharedSnapshot trajectory;
@@ -236,26 +240,14 @@ namespace super_planner {
                     false, std::memory_order_acq_rel);
         }
 
-        // Merges collision_pos into an existing nearby avoidance zone or
-        // creates a new one (same mechanics commitTrajectoryCandidate uses
-        // for a rejected PlanFromRest candidate), so the next A* search
-        // routes around it. Exposed so fsm_ros2.hpp's activateEmergencyBrake
-        // can arm a zone too when a brake candidate fails as UNOBSERVED --
-        // without this, a brake that can never find confirmed-known space
-        // near the same spot just retries the identical failed plan
-        // forever instead of trying a different direction.
-        //
-        // current_speed_mps gates this the same way the original
-        // candidate-rejection call site always has: below
-        // guard_topology_reroute_max_stop_speed_mps only. A brake built
-        // from a fast-moving vehicle projects its collision point forward
-        // along wherever the vehicle is already heading, not a stable
-        // obstacle location -- arming zones from that while still moving
-        // fast walls off the vehicle's own flight path instead of routing
-        // around a real obstacle (found the hard way: seed9 went from
-        // partial completion to never moving at all).
-        void armTopologyAvoidanceZone(const Vec3f &collision_pos,
-                                      double current_speed_mps);
+        // The FSM owns the emergency-brake certificate and is the only layer
+        // that knows the brake has finished at a fresh-map-certified terminal
+        // hold. Expose that fact to PlanFromRest recovery instead of inferring
+        // it from a separately sampled odometry speed.
+        void setCertifiedStopForReroute(const bool active) {
+            guard_certified_stop_for_reroute_.store(
+                    active, std::memory_order_release);
+        }
 
         // Paper-faithful (theorem 1) known-free check: builds a CIRI
         // polytope from the caller-supplied accumulated raw cloud, seeded
@@ -315,6 +307,22 @@ namespace super_planner {
 
         bool commitTrajectoryCandidate(CmdTraj::Candidate candidate,
                                        const char *phase);
+
+        // Record a stopped PlanFromRest geometric rejection and, on bounded
+        // same-generation/same-location intervals, extend an exclusion
+        // cylinder chain along the rejected route. The first blocker is placed far
+        // enough ahead that the current pose remains outside it; this lets A*
+        // and CIRI represent an actual detour instead of starting inside an
+        // artificial obstacle centred on the collision point.
+        void armTopologyRouteBlock(const CmdTraj::Candidate &candidate,
+                                   const TrajectorySafetyResult &safety,
+                                   std::uint64_t candidate_generation,
+                                   const Vec3f &start_pos,
+                                   double current_speed_mps,
+                                   bool certified_stop,
+                                   bool collision_on_exp);
+
+        void resetTopologyRecoveryState();
 
         // Returns a new trajectory tracing the exact same spatial path but
         // slowed down by factor k>1 (duration *= k). Used by the viability

@@ -1,6 +1,36 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-20 최신 결과 (이 배너를 가장 먼저 확인할 것):** §8.11의 유일한
+> seed10 실패(2/5)는 CIRI shadow overhead가 아니라 한
+> `PlanFromRest/with_backup` generation이 같은 충돌점에서 **110회/75.404초**
+> 반복 거부된 same-topology deadlock이었다. 기존 회피 구는 정지점에서 약
+> 6.2cm밖에 떨어지지 않았고, A*의 3-D 구와 CIRI의 희소 ring+pole 표본도 서로
+> 달라 고도만 바꾸거나 표본 사이로 같은 XY 통로를 재사용할 수 있었다.
+>
+> 이를 **certified stop-and-reroute**로 교체했다. 기존 emergency brake가 끝나고
+> fresh map/current odom/0.25초 stable hold가 확인된 뒤에만 FSM이 planner에 정지
+> certificate를 전달한다. 새 generation의 첫 reject와 동일 XY collision
+> cluster의 매 3번째 reject에서 정지점 앞쪽에 최대 6개의 blocker를 1m 간격으로
+> 놓으며, A*는 이를 수직 XY cylinder로 검사하고 CIRI는 같은 경계를 비행 높이
+> 전체의 ring들로 인코딩한다. CIRI에는 0.25m
+> 이하 높이 간격의 jittered ring을 넣어 optimizer가 blocker 사이/위/아래로 새지
+> 않게 했다. 같은 후보를 재수락하거나 guard 기준을 완화한 것이 아니라, 인증된
+> 정지 상태에서 guide-path topology 자체를 바꾸는 복구다.
+>
+> 결과: seed10 연속 n=5는 **5/5 완주, 25/25 waypoint, 접촉 0/5**(평균
+> 90.17초), 기존 75.404초 정체는 최장 1.755초로 줄었다. 같은 CIRI-shadow
+> test profile의 seed1-10 x n=2는 **20/20 완주, 100/100 waypoint, 접촉
+> 0/20**, 평균 74.35초, 최장 same-generation reject span 1.467초였다. 파라미터
+> no-op을 피하려고 generic `growth_m/max_radius_m`도 실제 escalation 반경에
+> 연결했고, 검증된 tight-v7은 고정 0.8m chain(`growth_m: 0`)을 명시한다.
+> 상세는 `docs/viability_guard_ciri_avoidance_2026-08-15.md` §8.12와
+> `results/topology_cylinder_reroute_cirishadow_n2_20260820.csv`를 볼 것.
+> n=2를 100% population 성공률이나 flight-ready 근거로 확대해석하지 말 것.
+> raw-cloud CIRI 결과는 여전히 shadow-only/default false이고 브레이크 판정에는
+> 연결되지 않았다.
+
+> [!IMPORTANT]
 > **2026-08-19 최신 결과 (이 배너를 가장 먼저 확인할 것):** §8.10에서
 > 미완이던 raw-scan 누적 CIRI shadow 계산의 **비동기 latest-only 워커 전환을
 > 완료하고 검증했다.** `activateEmergencyBrake()`는 대표 후보 하나를

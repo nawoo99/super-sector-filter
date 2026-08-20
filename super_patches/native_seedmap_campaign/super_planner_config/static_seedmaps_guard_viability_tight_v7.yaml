@@ -101,16 +101,28 @@ super_planner:
   # back to the normal generator instead. See super_planner.cpp's
   # GenerateExpTrajectory corridor-selection comment.
   guard_corridor_retry_alternate_every: 4
-  # Certified-stop recovery: each rejected EXP point becomes a temporary
-  # A* exclusion sphere. Repeated hits grow that sphere, forcing a different
-  # guide-path topology instead of resubmitting the same local corridor.
+  # Certified-stop recovery: repeated rejection after a certified stop lays
+  # vertical XY cylinders along the rejected route. A* and CIRI see the same
+  # barrier, forcing a horizontal topology change instead of an altitude-only
+  # variation or another submission of the same local corridor.
   guard_topology_reroute:
     enable: true
     radius_m: 0.8
-    growth_m: 0.2
-    max_radius_m: 1.0
+    # The validated v7 profile uses a chain of equal 0.8 m cylinders. The
+    # generic implementation can grow later cylinders when growth_m > 0.
+    growth_m: 0.0
+    max_radius_m: 0.8
     max_zones: 6
     max_stop_speed_mps: 0.2
+    # Start-aware route blocking: never centre the virtual obstacle on the
+    # stopped pose. Extend the cylinder chain every three identical
+    # same-generation rejects so A* must abandon the rejected passage.
+    escalate_every_rejects: 3
+    # Topology is classified in XY. Vertical optimizer jitter at the same
+    # forest passage must not reset the stalled-route counter.
+    collision_merge_m: 0.5
+    start_clearance_m: 0.05
+    block_spacing_m: 1.0
   # Pre-commit viability guard (new, untested): mirrors the runtime brake's
   # dynamics limits so the prediction matches what activateEmergencyBrake()
   # could actually certify.

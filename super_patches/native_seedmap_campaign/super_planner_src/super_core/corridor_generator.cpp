@@ -70,16 +70,21 @@ namespace super_planner {
                 !center.array().isFinite().all()) {
                 continue;
             }
-            // AABB-vs-sphere overlap test: does this zone reach into the box
-            // CIRI is about to search, expanded by the zone radius?
-            bool overlaps = true;
-            for (int axis = 0; axis < 3; ++axis) {
-                if (center(axis) + radius < box_min(axis) ||
-                    center(axis) - radius > box_max(axis)) {
-                    overlaps = false;
-                    break;
-                }
-            }
+            // These recovery zones are vertical XY cylinders, not spheres:
+            // climbing over the rejected route would keep the same horizontal
+            // homotopy.  Test circle-vs-box overlap only in XY and span the
+            // flyable portion of the current CIRI search box in Z.
+            const double nearest_x = std::max(
+                    static_cast<double>(box_min.x()),
+                    std::min(static_cast<double>(center.x()),
+                             static_cast<double>(box_max.x())));
+            const double nearest_y = std::max(
+                    static_cast<double>(box_min.y()),
+                    std::min(static_cast<double>(center.y()),
+                             static_cast<double>(box_max.y())));
+            const double dx = static_cast<double>(center.x()) - nearest_x;
+            const double dy = static_cast<double>(center.y()) - nearest_y;
+            const bool overlaps = dx * dx + dy * dy <= radius * radius;
             if (!overlaps) {
                 if (std::getenv("AVOIDANCE_DEBUG") != nullptr) {
                     fmt::print(" -- [AVOIDANCE_DEBUG] zone {} center=[{:.3f},{:.3f},{:.3f}] "
@@ -100,25 +105,41 @@ namespace super_planner {
                            box_max.x(), box_max.y(), box_max.z(), pc.size());
             }
             const double sample_r = radius - robot_r_;
-            constexpr int kRingPoints = 16;
-            for (int k = 0; k < kRingPoints; ++k) {
-                const double theta = 2.0 * M_PI * static_cast<double>(k) / kRingPoints;
-                // A perfectly symmetric ring was observed to drive CIRI's
-                // ellipsoid fit into a degenerate (NaN/Inf) case for some
-                // seed-line geometries, causing SearchPolytopeOnPath to fail
-                // every attempt with no escape (an 84s stall in one run).
-                // A small deterministic per-point radius jitter breaks the
-                // exact symmetry without materially changing the intended
-                // exclusion radius.
-                const double jitter = 0.03 * sample_r *
-                        std::sin(7.0 * static_cast<double>(k) + 1.0);
-                const double r_k = sample_r + jitter;
-                pc.emplace_back(center.x() + r_k * std::cos(theta),
-                                center.y() + r_k * std::sin(theta),
-                                center.z());
+            const double z_min = std::max(
+                    static_cast<double>(box_min.z()), virtual_groud_height_);
+            const double z_max = std::min(
+                    static_cast<double>(box_max.z()), virtual_ceil_height_);
+            if (z_min > z_max) {
+                continue;
             }
-            pc.emplace_back(center.x(), center.y(), center.z() + sample_r);
-            pc.emplace_back(center.x(), center.y(), center.z() - sample_r);
+
+            // Repeated rings form the same vertical cylinder that A* sees.
+            // Keep adjacent rings close enough that CIRI cannot leak between
+            // sparse samples while optimizing a smooth trajectory.  Including
+            // both ends also closes gaps at local-box boundaries.
+            constexpr double kMaxRingSpacing = 0.25;
+            const int ring_intervals = std::max(
+                    1, static_cast<int>(std::ceil((z_max - z_min) /
+                                                  kMaxRingSpacing)));
+            constexpr int kRingPoints = 16;
+            for (int level = 0; level <= ring_intervals; ++level) {
+                const double alpha = static_cast<double>(level) / ring_intervals;
+                const double z = z_min + alpha * (z_max - z_min);
+                for (int k = 0; k < kRingPoints; ++k) {
+                    const double theta = 2.0 * M_PI * static_cast<double>(k) /
+                                         kRingPoints;
+                    // Perfectly symmetric samples can drive CIRI's ellipsoid
+                    // fit into a degenerate NaN/Inf case.  A deterministic,
+                    // level-dependent radius jitter breaks that symmetry
+                    // without materially changing the exclusion radius.
+                    const double jitter = 0.03 * sample_r * std::sin(
+                            7.0 * static_cast<double>(k) +
+                            3.0 * static_cast<double>(level) + 1.0);
+                    const double r_k = sample_r + jitter;
+                    pc.emplace_back(center.x() + r_k * std::cos(theta),
+                                    center.y() + r_k * std::sin(theta), z);
+                }
+            }
         }
     }
 

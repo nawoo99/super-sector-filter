@@ -455,11 +455,13 @@ namespace path_search {
                         // A guard-rejected trajectory proves that the normal
                         // shortest-path topology is not operationally safe
                         // after optimization.  During certified stop recovery,
-                        // treat small spheres around those rejection points as
-                        // temporary obstacles.  If the vehicle stopped inside
-                        // a newly-created sphere, permit only steps that move
-                        // monotonically outward until it exits; re-entry is
-                        // always forbidden.
+                        // treat vertical XY cylinders around those rejection
+                        // routes as temporary obstacles.  The cylinder spans
+                        // the flyable height range: changing altitude is not a
+                        // topology change for this recovery.  If the vehicle
+                        // stopped inside a newly-created cylinder, permit only
+                        // steps that move monotonically outward until it exits;
+                        // re-entry is always forbidden.
                         bool topology_excluded = false;
                         const std::size_t avoidance_count = std::min(
                                 avoidance_centers.size(),
@@ -471,9 +473,9 @@ namespace path_search {
                                 continue;
                             }
                             const double current_distance =
-                                    (current_pos - avoidance_centers[i]).norm();
+                                    (current_pos - avoidance_centers[i]).head<2>().norm();
                             const double neighbor_distance =
-                                    (neighborPos - avoidance_centers[i]).norm();
+                                    (neighborPos - avoidance_centers[i]).head<2>().norm();
                             if (neighbor_distance < radius &&
                                 (current_distance >= radius ||
                                  neighbor_distance <= current_distance +

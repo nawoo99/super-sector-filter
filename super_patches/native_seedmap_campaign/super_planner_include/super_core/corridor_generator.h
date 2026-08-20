@@ -71,11 +71,11 @@ namespace super_planner {
         double ciri_t{0};
         int ciri_cnt{0};
 
-        // Appends synthetic surface-sample points for any avoidance sphere
-        // that could plausibly intersect [box_min, box_max], onto pc. Points
-        // sit at (radius - robot_r_) from each center so that CIRI's usual
-        // robot_r_-based tangent-plane placement ends up ~radius away from
-        // the center, matching what Astar's exclusion already enforces.
+        // Appends synthetic surface-sample points for any vertical XY
+        // avoidance cylinder that intersects [box_min, box_max], onto pc.
+        // Points sit at (radius - robot_r_) from each center axis so CIRI's
+        // usual robot_r_-based tangent-plane placement ends up ~radius away,
+        // matching what Astar's exclusion already enforces.
         void appendAvoidanceZonePoints(const Vec3f &box_min, const Vec3f &box_max,
                                        const vec_Vec3f &avoidance_centers,
                                        const std::vector<double> &avoidance_radii,
@@ -108,15 +108,17 @@ namespace super_planner {
         typedef std::shared_ptr<CorridorGenerator> Ptr;
 
         // avoidance_centers/avoidance_radii mirror the same temporary
-        // exclusion spheres passed to Astar::pointToPointPathSearch (guard
+        // exclusion cylinders passed to Astar::pointToPointPathSearch (guard
         // topology reroute). A* alone cannot keep the corridor away from
         // them: the guide path it returns only avoids the zone at the grid
         // level, but CIRI builds the corridor from raw obstacle points, so a
         // smooth trajectory optimized inside that corridor can still curve
-        // back through the zone A* detoured around. Passing the same spheres
+        // back through the zone A* detoured around. Passing the same cylinders
         // in here as synthetic obstacle-point samples makes CIRI place
         // separating planes against them too, so the corridor itself also
-        // respects the exclusion, not just the discrete A* path.
+        // respects the exclusion, not just the discrete A* path.  The zones
+        // span the flyable height range so altitude-only changes cannot reuse
+        // the guard-rejected horizontal topology.
         bool SearchPolytopeOnPath(const vec_Vec3f &path, PolytopeVec &sfcs,
                                   Vec3f & shifted_start_pt,
                                   bool cut_first_poly = false,

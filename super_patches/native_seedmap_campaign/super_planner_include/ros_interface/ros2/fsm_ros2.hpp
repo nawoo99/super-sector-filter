@@ -981,6 +981,10 @@ namespace fsm {
                 safety_brake_active_.load(std::memory_order_acquire)) {
                 return false;
             }
+            // A new brake is not a terminal hold until its trajectory has
+            // finished and the stability checks in tryRecoverFromEmergencyBrake
+            // pass. Never carry a previous recovery certificate into it.
+            planner_ptr_->setCertifiedStopForReroute(false);
 
             mars_quadrotor_msgs::msg::PositionCommand start_command;
             bool have_start_command;
@@ -1295,6 +1299,13 @@ namespace fsm {
                 return false;
             }
             brake_recovery_last_attempt_wt_ = now_wt;
+            // All checks above are part of the certified-stop boundary: the
+            // map is fresh, the brake finished, odometry is current and the
+            // vehicle has held the certified terminal position for 0.25 s.
+            // PlanFromRest may now arm start-aware topology blockers even if
+            // its separately sampled odometry speed is slightly above the
+            // legacy scalar threshold.
+            planner_ptr_->setCertifiedStopForReroute(true);
             const auto generation_before =
                     planner_ptr_->getCommittedTrajectoryGeneration();
             if (machine_state_ != GENERATE_TRAJ) {

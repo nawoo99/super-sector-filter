@@ -639,53 +639,190 @@ namespace super_planner {
         }
     }
 
-    void SuperPlanner::armTopologyAvoidanceZone(const Vec3f &collision_pos,
-                                                const double current_speed_mps) {
+    void SuperPlanner::resetTopologyRecoveryState() {
+        guard_topology_avoidance_centers_.clear();
+        guard_topology_avoidance_radii_.clear();
+        guard_topology_stall_generation_ = 0;
+        guard_topology_stall_collision_.setZero();
+        guard_topology_stall_rejects_ = 0;
+        guard_certified_stop_for_reroute_.store(false,
+                                                std::memory_order_release);
+    }
+
+    void SuperPlanner::armTopologyRouteBlock(
+            const CmdTraj::Candidate &candidate,
+            const TrajectorySafetyResult &safety,
+            const std::uint64_t candidate_generation,
+            const Vec3f &start_pos,
+            const double current_speed_mps,
+            const bool certified_stop,
+            const bool collision_on_exp) {
         if (!cfg_.guard_topology_reroute_en ||
-            !collision_pos.array().isFinite().all() ||
-            current_speed_mps > cfg_.guard_topology_reroute_max_stop_speed_mps) {
+            !safety.first_collision_pos.array().isFinite().all() ||
+            !start_pos.array().isFinite().all() ||
+            (current_speed_mps >
+                     cfg_.guard_topology_reroute_max_stop_speed_mps &&
+             !certified_stop)) {
             return;
         }
-        std::size_t matched = guard_topology_avoidance_centers_.size();
-        double nearest_distance = std::numeric_limits<double>::infinity();
-        for (std::size_t i = 0; i < guard_topology_avoidance_centers_.size(); ++i) {
-            const double distance =
-                    (collision_pos - guard_topology_avoidance_centers_[i]).norm();
-            if (distance < nearest_distance) {
-                nearest_distance = distance;
-                matched = i;
-            }
-        }
-        const double merge_distance = 0.5 * cfg_.guard_topology_reroute_radius_m;
-        if (matched < guard_topology_avoidance_centers_.size() &&
-            nearest_distance <= merge_distance) {
-            guard_topology_avoidance_radii_[matched] = std::min(
-                    cfg_.guard_topology_reroute_max_radius_m,
-                    guard_topology_avoidance_radii_[matched] +
-                            cfg_.guard_topology_reroute_growth_m);
-        } else if (guard_topology_avoidance_centers_.size() <
-                   static_cast<std::size_t>(cfg_.guard_topology_reroute_max_zones)) {
-            guard_topology_avoidance_centers_.push_back(collision_pos);
-            guard_topology_avoidance_radii_.push_back(
-                    cfg_.guard_topology_reroute_radius_m);
-            matched = guard_topology_avoidance_centers_.size() - 1;
-        } else if (matched < guard_topology_avoidance_centers_.size()) {
-            guard_topology_avoidance_radii_[matched] = std::min(
-                    cfg_.guard_topology_reroute_max_radius_m,
-                    guard_topology_avoidance_radii_[matched] +
-                            cfg_.guard_topology_reroute_growth_m);
-        }
-        if (matched < guard_topology_avoidance_centers_.size()) {
+
+        const bool same_generation =
+                candidate_generation == guard_topology_stall_generation_ &&
+                guard_topology_stall_rejects_ > 0;
+        const bool same_collision_cluster =
+                same_generation &&
+                (safety.first_collision_pos.head<2>() -
+                 guard_topology_stall_collision_.head<2>()).norm() <=
+                        cfg_.guard_topology_reroute_collision_merge_m;
+        bool arm_now = false;
+        if (same_collision_cluster) {
+            ++guard_topology_stall_rejects_;
+            const double n = static_cast<double>(guard_topology_stall_rejects_);
+            guard_topology_stall_collision_ +=
+                    (safety.first_collision_pos - guard_topology_stall_collision_) / n;
+            arm_now = guard_topology_stall_rejects_ %
+                    cfg_.guard_topology_reroute_escalate_every_rejects == 0;
+        } else if (!same_generation) {
+            guard_topology_stall_generation_ = candidate_generation;
+            guard_topology_stall_collision_ = safety.first_collision_pos;
+            guard_topology_stall_rejects_ = 1;
+            arm_now = true;
+        } else {
+            guard_topology_stall_collision_ = safety.first_collision_pos;
+            guard_topology_stall_rejects_ = 1;
             ros_ptr_->warn(
-                    " -- [TRAJ_GUARD_REROUTE_ARM] zone={} zones={} "
-                    "center=[{:.3f},{:.3f},{:.3f}] radius={:.3f}",
-                    matched,
-                    guard_topology_avoidance_centers_.size(),
-                    guard_topology_avoidance_centers_[matched].x(),
-                    guard_topology_avoidance_centers_[matched].y(),
-                    guard_topology_avoidance_centers_[matched].z(),
-                    guard_topology_avoidance_radii_[matched]);
+                    " -- [TRAJ_GUARD_REROUTE_STALL] gen={} rejects=1 "
+                    "collision=[{:.3f},{:.3f},{:.3f}] zones={} "
+                    "action=changed_collision_hold",
+                    candidate_generation,
+                    guard_topology_stall_collision_.x(),
+                    guard_topology_stall_collision_.y(),
+                    guard_topology_stall_collision_.z(),
+                    guard_topology_avoidance_centers_.size());
+            return;
         }
+
+        const int every = cfg_.guard_topology_reroute_escalate_every_rejects;
+        if (!arm_now) {
+            ros_ptr_->warn(
+                    " -- [TRAJ_GUARD_REROUTE_STALL] gen={} rejects={} "
+                    "collision=[{:.3f},{:.3f},{:.3f}] zones={} action=hold",
+                    candidate_generation, guard_topology_stall_rejects_,
+                    guard_topology_stall_collision_.x(),
+                    guard_topology_stall_collision_.y(),
+                    guard_topology_stall_collision_.z(),
+                    guard_topology_avoidance_centers_.size());
+            return;
+        }
+
+        if (guard_topology_avoidance_centers_.size() >=
+            static_cast<std::size_t>(cfg_.guard_topology_reroute_max_zones)) {
+            ros_ptr_->warn(
+                    " -- [TRAJ_GUARD_REROUTE_STALL] gen={} rejects={} zones={} "
+                    "action=saturated",
+                    candidate_generation, guard_topology_stall_rejects_,
+                    guard_topology_avoidance_centers_.size());
+            return;
+        }
+
+        const double total_duration = candidate.pos_traj.getTotalDuration();
+        const double collision_tt = std::clamp(
+                safety.first_collision_tt, 0.0, total_duration);
+        // The rejected segment can be APPENDED_BACKUP. A blocker must still
+        // obstruct the outgoing EXP route from the stopped pose, not point
+        // along a later backup manoeuvre. Sample just ahead of the guard's
+        // checked-from time; only fall back to collision-time velocity when
+        // the early EXP displacement is numerically degenerate.
+        const double route_sample_tt = std::min(
+                total_duration,
+                std::clamp(safety.checked_from_tt, 0.0, total_duration) +
+                        std::max(0.10,
+                                 5.0 * cfg_.trajectory_guard_sample_dt_s));
+        Vec3f collision_direction = safety.first_collision_pos - start_pos;
+        collision_direction.z() = 0.0;
+        const bool use_collision_direction = collision_on_exp &&
+                collision_direction.array().isFinite().all() &&
+                collision_direction.norm() >= cfg_.resolution;
+        Vec3f route_direction = use_collision_direction
+                ? collision_direction
+                : candidate.pos_traj.getPos(route_sample_tt) - start_pos;
+        const char *direction_source = use_collision_direction
+                ? "exp_collision"
+                : "exp_initial";
+        if (!route_direction.array().isFinite().all() ||
+            route_direction.norm() < 1.0e-3) {
+            route_direction = candidate.pos_traj.getVel(route_sample_tt);
+            direction_source = "exp_velocity";
+        }
+        if (!route_direction.array().isFinite().all() ||
+            route_direction.norm() < 1.0e-3) {
+            route_direction = candidate.pos_traj.getVel(collision_tt);
+            direction_source = "collision_velocity";
+        }
+        if (!route_direction.array().isFinite().all() ||
+            route_direction.norm() < 1.0e-3) {
+            route_direction = safety.first_collision_pos - start_pos;
+            direction_source = "collision_fallback";
+        }
+        if (!route_direction.array().isFinite().all() ||
+            route_direction.norm() < 1.0e-3) {
+            route_direction = gi_.goal_p - start_pos;
+            direction_source = "goal_fallback";
+        }
+        // These route blockers encode a different horizontal homotopy for
+        // the loop/forest mission. Using the polynomial's transient vertical
+        // component previously placed several blockers below the floor or
+        // above the useful flight band. Keep their axes at the certified stop
+        // height; A* and CIRI both interpret each zone as a vertical cylinder,
+        // so an altitude-only change cannot reuse the rejected passage.
+        if (route_direction.array().isFinite().all()) {
+            route_direction.z() = 0.0;
+        }
+        if (route_direction.norm() < 1.0e-3) {
+            route_direction = gi_.goal_p - start_pos;
+            route_direction.z() = 0.0;
+            direction_source = "goal_xy_fallback";
+        }
+        if (!route_direction.array().isFinite().all() ||
+            route_direction.norm() < 1.0e-3) {
+            ros_ptr_->warn(
+                    " -- [TRAJ_GUARD_REROUTE_STALL] gen={} rejects={} "
+                    "action=no_route_direction",
+                    candidate_generation, guard_topology_stall_rejects_);
+            return;
+        }
+        route_direction.normalize();
+
+        const int escalation = guard_topology_stall_rejects_ / every;
+        const double radius = std::min(
+                cfg_.guard_topology_reroute_max_radius_m,
+                cfg_.guard_topology_reroute_radius_m +
+                        static_cast<double>(escalation) *
+                                cfg_.guard_topology_reroute_growth_m);
+        const double forward_distance =
+                radius + cfg_.guard_topology_reroute_start_clearance_m +
+                static_cast<double>(escalation) *
+                        cfg_.guard_topology_reroute_block_spacing_m;
+        const Vec3f center = start_pos + forward_distance * route_direction;
+
+        guard_topology_avoidance_centers_.push_back(center);
+        guard_topology_avoidance_radii_.push_back(radius);
+        const std::size_t zone = guard_topology_avoidance_centers_.size() - 1;
+        ros_ptr_->warn(
+                " -- [TRAJ_GUARD_REROUTE_ARM] zone={} zones={} gen={} rejects={} "
+                "center=[{:.3f},{:.3f},{:.3f}] radius={:.3f} "
+                "start_distance={:.3f} collision=[{:.3f},{:.3f},{:.3f}] "
+                "stop_source={} direction_source={} odom_speed={:.3f} "
+                "action=block_rejected_route",
+                zone, guard_topology_avoidance_centers_.size(),
+                candidate_generation, guard_topology_stall_rejects_,
+                center.x(), center.y(), center.z(), radius,
+                (center - start_pos).norm(),
+                safety.first_collision_pos.x(), safety.first_collision_pos.y(),
+                safety.first_collision_pos.z(),
+                certified_stop ? "certified_brake" : "odom",
+                direction_source,
+                current_speed_mps);
     }
 
     bool SuperPlanner::checkKnownFreeViaCloud(const Vec3f &seed_near_pt,
@@ -780,13 +917,17 @@ namespace super_planner {
         const bool plan_from_rest = phase &&
                 std::string(phase).rfind("PlanFromRest/", 0) == 0;
         bool stopped_for_reroute = false;
+        const bool certified_stop_for_reroute = plan_from_rest &&
+                guard_certified_stop_for_reroute_.load(
+                        std::memory_order_acquire);
         double plan_from_rest_speed = std::numeric_limits<double>::infinity();
         if (plan_from_rest) {
             std::lock_guard<std::mutex> state_lock(drone_state_mutex_);
             plan_from_rest_speed = robot_state_.v.norm();
             allow_clearance_escape = plan_from_rest_speed <= 0.2;
             stopped_for_reroute = plan_from_rest_speed <=
-                    cfg_.guard_topology_reroute_max_stop_speed_mps;
+                    cfg_.guard_topology_reroute_max_stop_speed_mps ||
+                    certified_stop_for_reroute;
         }
         const auto safety = validatePositionTrajectory(candidate.pos_traj,
                                                        checked_from_tt,
@@ -813,8 +954,16 @@ namespace super_planner {
             }
             if (plan_from_rest && stopped_for_reroute &&
                 plan_from_rest_geometric_rejection) {
-                armTopologyAvoidanceZone(safety.first_collision_pos,
-                                         plan_from_rest_speed);
+                Vec3f plan_from_rest_start = Vec3f::Zero();
+                {
+                    std::lock_guard<std::mutex> state_lock(drone_state_mutex_);
+                    plan_from_rest_start = robot_state_.p;
+                }
+                armTopologyRouteBlock(candidate, safety, candidate_generation,
+                                      plan_from_rest_start,
+                                      plan_from_rest_speed,
+                                      certified_stop_for_reroute,
+                                      rejected_segment == "EXP");
             }
             ros_ptr_->error(" -- [TRAJ_GUARD_REJECT] phase={} segment={} status={} "
                             "gen={} map={} from_tt={:.3f} collision_tt={:.3f} "
@@ -888,8 +1037,7 @@ namespace super_planner {
                                                   std::memory_order_release);
         guard_corridor_retry_pending_.store(false, std::memory_order_release);
         guard_corridor_retry_attempts_.store(0, std::memory_order_release);
-        guard_topology_avoidance_centers_.clear();
-        guard_topology_avoidance_radii_.clear();
+        resetTopologyRecoveryState();
         guard_topology_goal_valid_ = false;
         if (cfg_.trajectory_guard_en) {
             ros_ptr_->info(" -- [TRAJ_GUARD_COMMIT] phase={} gen={} map={} samples={} "
@@ -1057,8 +1205,7 @@ namespace super_planner {
         if (cfg_.guard_topology_reroute_en &&
             (!guard_topology_goal_valid_ ||
              (guard_topology_goal_ - goal_p).norm() > cfg_.resolution)) {
-            guard_topology_avoidance_centers_.clear();
-            guard_topology_avoidance_radii_.clear();
+            resetTopologyRecoveryState();
             guard_topology_goal_ = goal_p;
             guard_topology_goal_valid_ = true;
         }

@@ -101,6 +101,14 @@ namespace super_planner {
         double guard_topology_reroute_max_radius_m{1.8};
         int guard_topology_reroute_max_zones{4};
         double guard_topology_reroute_max_stop_speed_mps{0.2};
+        // A single collision-centred exclusion zone can contain the stopped
+        // vehicle and still leave A* on the same route. Place vertical XY
+        // cylinders ahead of the stopped pose instead, then extend that
+        // blocked route after each bounded cluster of identical rejects.
+        int guard_topology_reroute_escalate_every_rejects{3};
+        double guard_topology_reroute_collision_merge_m{0.5};
+        double guard_topology_reroute_start_clearance_m{0.05};
+        double guard_topology_reroute_block_spacing_m{1.0};
         // Before committing a candidate, require that a certified emergency
         // stop (built the same way the runtime guard brake is built) exists
         // from several sampled states along the candidate. If not, the
@@ -213,6 +221,15 @@ namespace super_planner {
                              guard_topology_reroute_max_zones, 4);
             loader.LoadParam("super_planner/guard_topology_reroute/max_stop_speed_mps",
                              guard_topology_reroute_max_stop_speed_mps, 0.2);
+            loader.LoadParam(
+                    "super_planner/guard_topology_reroute/escalate_every_rejects",
+                    guard_topology_reroute_escalate_every_rejects, 3);
+            loader.LoadParam("super_planner/guard_topology_reroute/collision_merge_m",
+                             guard_topology_reroute_collision_merge_m, 0.5);
+            loader.LoadParam("super_planner/guard_topology_reroute/start_clearance_m",
+                             guard_topology_reroute_start_clearance_m, 0.05);
+            loader.LoadParam("super_planner/guard_topology_reroute/block_spacing_m",
+                             guard_topology_reroute_block_spacing_m, 1.0);
             loader.LoadParam("super_planner/guard_viability/enable",
                              guard_viability_en, false);
             loader.LoadParam("super_planner/guard_viability/horizon_s",
@@ -261,6 +278,14 @@ namespace super_planner {
                     1, guard_topology_reroute_max_zones);
             guard_topology_reroute_max_stop_speed_mps = std::max(
                     0.0, guard_topology_reroute_max_stop_speed_mps);
+            guard_topology_reroute_escalate_every_rejects = std::max(
+                    1, guard_topology_reroute_escalate_every_rejects);
+            guard_topology_reroute_collision_merge_m = std::max(
+                    resolution, guard_topology_reroute_collision_merge_m);
+            guard_topology_reroute_start_clearance_m = std::max(
+                    resolution, guard_topology_reroute_start_clearance_m);
+            guard_topology_reroute_block_spacing_m = std::max(
+                    resolution, guard_topology_reroute_block_spacing_m);
 
             guard_viability_horizon_s = std::max(0.0, guard_viability_horizon_s);
             guard_viability_sample_dt_s = std::max(0.01, guard_viability_sample_dt_s);
