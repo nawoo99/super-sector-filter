@@ -1097,6 +1097,57 @@ completion rate or flight readiness. The CIRI raw-cloud result remains strictly
 shadow-only and off by default; this section changes the live topology-recovery
 path after an independently certified stop, not the shadow result's authority.
 
+### 8.13 Guarded v7 full/sector/adaptive seed1-10 × n=5 (2026-08-20)
+
+A 150-run comparison used the normal shadow-off tight-v7 guard with a common
+filtered input profile, v=7, `loop24.txt`, and a 120 s timeout. Mode order was
+rotated by run. The planner and guard were identical across modes: full was a
+passthrough, sector used body-yaw ±60 degrees, and adaptive used velocity-yaw
+±60 degrees plus stall opening. Both filtered modes retained the existing
+replan-failure safety valve (five failures open, 15 successes close).
+
+| mode | completion | waypoint | mean time | weighted point reduction | replan-open duty | mapping total reduction |
+|:---|---:|---:|---:|---:|---:|---:|
+| full | 48/50 (96%) | 245/250 | 77.43 s | 0% | 0% | 0% |
+| sector | 46/50 (92%) | 236/250 | 80.59 s | 2.72% | 91.48% | 6.44% |
+| adaptive | 47/50 (94%) | 243/250 | 80.56 s | 2.54% | 91.54% | 6.36% |
+
+The completion differences are descriptive, not statistically established:
+paired exact McNemar was `p=0.6875` for full-sector and `p=1.0` for
+full-adaptive. Mean mission time increased 4.07%/4.04% versus full even though
+ROG mapping total time fell about 6.4%. The efficiency result is dominated by
+the safety valve: approximately 68% of replan status messages were failures,
+so sector/adaptive were full-open for roughly 91.5% of frames. This is the
+honest result for the current canonical modes, not a strict closed-sector
+ablation.
+
+Completion was 5/5 for every mode on seed1-3 and seed5-8. Seed4 sector was
+4/5. Seed9 was full 4/5, sector 3/5, adaptive 2/5. Seed10 was full 4/5, sector
+4/5, adaptive 5/5. Thus 8.12's seed10 full 5/5 local gate did not reproduce as
+a deterministic guarantee in this longer, interleaved campaign. The new
+topology recovery removed the specific 75.404 s same-generation deadlock, but
+the guarded planner still has stochastic liveness failures.
+
+One measurement defect was found only after the run. `native_campaign.py`
+placed the requested `--static-pcd` option after argparse's `--` positional
+delimiter, so the loop monitor ignored it. All `static_pcd_*` zero/null fields
+in this cohort are invalid, and this cohort must not be added to the earlier
+0/170 static-PCD contact total. The option order is now fixed, and the monitor
+emits `static_pcd_enabled`/`static_pcd_point_count`; a requested static-PCD run
+is invalid and retried unless both prove the index is active. The measured,
+mode-dependent live clouds produced one contact marker in sector and one in
+adaptive on seed9. Because the common static reference was absent, neither a
+zero-contact claim nor a physical-contact comparison is defensible. The
+0.20 m marker radius also equals `robot_r` and certifies no positive margin.
+A separate post-fix seed1 full smoke verified the repaired full launch path:
+5/5 waypoints in 57.42 s, `run_valid=true`, 241,490 static points loaded, and
+zero static marker. That smoke is not part of the n=5 table.
+
+Full tables, failure rows, protocol, and caveats are in
+`docs/guarded_v7_full_sector_adaptive_n5_20260820.md`. Raw and derived data are
+`results/guarded_v7_full_sector_adaptive_seed1_10_n5_20260820.csv` and
+`results/guarded_v7_full_sector_adaptive_seed1_10_n5_summary_20260820.csv`.
+
 ## Current status — not flight-ready, but no longer failing for the original reason
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
@@ -1116,15 +1167,20 @@ path after an independently certified stop, not the shadow result's authority.
   74/100 at this sample size (p=0.31) -- see 8.9 before citing either
   number as "the" completion rate. Do not re-cite the earlier 48/50 n=1
   headline as representative either way.
-- **Safety remains the strongest result: 0/170 contact across the three
+- **Safety remains the strongest result in the earlier validated cohorts:
+  0/170 contact across the three
   committed aggregate cohorts** (100 runs in 8.8, 50 in 8.9, and 20 in
   8.12). Section 8.12's worst static-PCD centre distance was 0.372 m. These
   are different configurations and should not be pooled for a completion
   estimate, but none traded the liveness work for measured contact.
-- **The requested local gate now passes on the formerly unstable seed10:**
-  5/5 consecutive full completions, 25/25 waypoints, contact 0/5. The broader
-  seed1-10 n=2 check was 20/20, but n=2 is not a population-rate estimate and
-  does not by itself make the planner flight-ready.
+  **Do not add 8.13's 150 runs to this safety total:** its requested static-PCD
+  option was inactive due to a command-line delimiter bug, and two
+  mode-dependent live-cloud contact markers were observed.
+- **The requested local gate passed once but did not reproduce as a
+  deterministic guarantee:** 8.12 had 5/5 consecutive seed10 full
+  completions and the broader seed1-10 n=2 check was 20/20. In 8.13's longer
+  interleaved campaign, seed10 full was 4/5 and total full was 48/50. The
+  specific same-generation deadlock is fixed, but population liveness is not.
 - The frequent same-generation `PlanFromRest` deadlock diagnosed in 8.7/8.8
   now has an implemented recovery rather than only a proposed escalation.
   The reproduced seed10 failure held one generation for 75.404 s; section
@@ -1143,7 +1199,9 @@ path after an independently certified stop, not the shadow result's authority.
   8.10 performance regression. Section 8.12 then fixes that cohort's one
   remaining seed10 liveness failure in the live topology-recovery layer; it
   still does not grant the shadow result any authority over brake decisions.
-- FSM CPU usage has not been measured for any run across either day.
+- FSM CPU was measured in 8.13: the 50-run means were 144.88% full, 140.23%
+  sector, and 137.67% adaptive. Earlier cohorts still lack comparable CPU
+  measurements.
 - The `VIABILITY_DEBUG` and `AVOIDANCE_DEBUG` diagnostic logging left in
   `super_planner.cpp`/`corridor_generator.cpp` is harmless when the env
   vars are unset but has not been cleaned up.

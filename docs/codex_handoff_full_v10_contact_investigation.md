@@ -1,6 +1,29 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-20 guarded v7 full/sector/adaptive n=5 최신 결과:** seed1-10의
+> 세 모드를 각 5회, 총 150회 실행했다. 완주는 full **48/50 (96%)**,
+> sector **46/50 (92%)**, adaptive **47/50 (94%)**였고 exact paired
+> McNemar는 각각 `p=0.6875`, `p=1.0`이라 완주율 차이를 통계적으로
+> 확정할 수 없다. weighted point 감소도 sector **2.72%**, adaptive
+> **2.54%**뿐이었다. replan-failure safety valve가 두 모드를 평균
+> **91.5% full-open**으로 만들었기 때문이다. mapping total time은 약
+> 6.4% 줄었지만 평균 mission time은 약 4.1% 늘었다. seed9는
+> full/sector/adaptive가 4/5, 3/5, 2/5였고 seed10은 4/5, 4/5, 5/5였다.
+> 따라서 아래 §8.12의 seed10 full 5/5는 specific deadlock 제거의 local
+> gate이지 결정적 안정성 보장이 아니다.
+>
+> **안전 계측 정정:** 이 150회 명령의 `--static-pcd`가 argparse의 `--`
+> 뒤에 놓여 monitor에서 무시됐다. raw CSV의 모든 `static_pcd_*` 0/null은
+> 미계측값이며 기존 0/170에 합치거나 “접촉 0”으로 인용하면 안 된다.
+> mode-dependent live cloud는 seed9 sector/adaptive에서 각각 marker 1회를
+> 냈다. 실행기는 옵션 순서를 고쳤고, 앞으로
+> `static_pcd_enabled=true`와 양수 point count가 아니면 run을 invalid/retry
+> 처리한다. 상세 표와 원시는
+> `docs/guarded_v7_full_sector_adaptive_n5_20260820.md`,
+> `results/guarded_v7_full_sector_adaptive_seed1_10_n5_20260820.csv`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-20 최신 결과 (이 배너를 가장 먼저 확인할 것):** §8.11의 유일한
 > seed10 실패(2/5)는 CIRI shadow overhead가 아니라 한
 > `PlanFromRest/with_backup` generation이 같은 충돌점에서 **110회/75.404초**

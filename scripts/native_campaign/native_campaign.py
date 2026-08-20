@@ -329,6 +329,7 @@ FIELDS = ["map", "run", "mode", "experiment_profile", "success", "run_valid",
           "start_pose_error_m", "start_pose_valid", "odom_gap_limit_s",
           "max_odom_gap_s", "odom_gap_valid", "mission_time_s", "waypoints_reached",
           "n_waypoints", "collisions", "min_clearance_m",
+          "static_pcd_enabled", "static_pcd_point_count",
           "static_pcd_collisions", "static_pcd_min_distance_m",
           "static_pcd_clearance_m", "static_pcd_contact_r015",
           "static_pcd_contact_r020", "static_pcd_contact_r025",
@@ -389,7 +390,15 @@ FIELDS = ["map", "run", "mode", "experiment_profile", "success", "run_valid",
           "filter_first_open_delay_s", "filter_first_close_time_s",
           "filter_first_open_duration_s", "filter_stall_candidate_count",
           "filter_max_stall_candidate_duration_s",
-          "filter_min_armed_closed_speed_mps", "recovery_triggered",
+          "filter_min_armed_closed_speed_mps",
+          "filter_replan_guard_en", "filter_replan_fail_streak_open",
+          "filter_replan_ok_streak_close", "filter_replan_guard_open",
+          "filter_replan_guard_open_transitions",
+          "filter_replan_guard_close_transitions",
+          "filter_replan_guard_open_duty_pct",
+          "filter_replan_status_count", "filter_replan_fail_count",
+          "filter_max_replan_fail_streak",
+          "filter_first_replan_guard_open_time_s", "recovery_triggered",
           "recovery_reclosed", "recovery_spawn_after_arm",
           "recovery_open_after_spawn", "recovery_open_during_hold",
           "recovery_success",
@@ -491,7 +500,18 @@ def slice_perf(start, end):
     }
 
 
-def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
+def build_loop_monitor_command(wps, switch, timeout, out_json, monitor_options=""):
+    """Build a monitor command with options before the positional delimiter."""
+    return (
+        f"python3 {LOOP_MON}{monitor_options} -- "
+        f"'{wps}' {switch} {timeout} {out_json}"
+    )
+
+
+def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
+            seedmap_super_config_override=None,
+            seedmap_static_pcd=False,
+            loop_timeout_override=None):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
     is_seed12 = (map_name == "seed12")
@@ -552,6 +572,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
         )
     else:
         wps, switch, timeout = LOOP_WPS, LOOP_SWITCH, LOOP_TIMEOUT
+        if loop_timeout_override is not None:
+            timeout = loop_timeout_override
         if sweep_vel is not None:
             # loop24's four-corner path is ~220-250 m total; scale the
             # timeout so low sweep speeds (e.g. 1 m/s -> ~250s cruise)
@@ -754,12 +776,14 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
                     f"static_seedmaps_paper_v{int(sweep_vel)}.yaml"
                     if sweep_vel is not None else "static_seedmaps.yaml"
                 )
+            if seedmap_super_config_override:
+                seedmap_super_config = seedmap_super_config_override
             launch_cmd = (
                 "ros2 launch mission_planner benchmark_seedmap.launch.py "
                 f"waypoint_data:=loop24.txt drone_config:={map_name}.yaml "
                 f"super_config:={seedmap_super_config}"
             )
-            if is_seedmap_observed:
+            if is_seedmap_observed or seedmap_super_config_override:
                 launch_cmd += f" > {reference_stack_log} 2>&1"
         launch_proc = subprocess.Popen(
             ["bash", "-c", f"{ROS_ENV} && {launch_cmd}"],
@@ -861,17 +885,17 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
                 monitor_options += f" --static-pcd {REF_PCD}"
             elif is_map0:
                 monitor_options += f" --static-pcd {MAP0_PCD}"
-            elif is_seedmap_observed:
+            elif is_seedmap_observed or seedmap_static_pcd:
                 monitor_options += (
                     " --static-pcd /root/super_ws/src/SUPER/"
                     "mars_uav_sim/perfect_drone_sim/pcd/seed_maps/"
                     f"{map_name}.pcd"
                 )
-            mon_cmd = (
-                # "--" guards waypoint strings that start with "-" (e.g.
-                # map0's negative-x goal) from being misread as an option.
-                f"python3 {LOOP_MON} -- '{wps}' {switch} {timeout} {out_json}"
-                f"{monitor_options}"
+            # Options must precede "--". Everything after it is positional,
+            # protecting waypoint strings that start with "-" (for example
+            # map0's negative-x goal).
+            mon_cmd = build_loop_monitor_command(
+                wps, switch, timeout, out_json, monitor_options
             )
             mon_proc = subprocess.Popen(
                 ["bash", "-c", f"{ROS_ENV} && {mon_cmd}"],
@@ -923,6 +947,11 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
         if os.path.exists(out_json):
             monitor_result = json.load(open(out_json))
             rec.update(monitor_result)
+            if seedmap_static_pcd:
+                rec["run_valid"] = bool(
+                    monitor_result.get("static_pcd_enabled") is True
+                    and (monitor_result.get("static_pcd_point_count") or 0) > 0
+                )
             events = monitor_result.get("contact_events") or []
             if events:
                 first_event = events[0]
@@ -956,7 +985,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
                                 source,
                                 os.path.join(artifacts_dir, f"{tag}.{suffix}"),
                             )
-                elif is_seedmap_observed and os.path.exists(reference_stack_log):
+                elif (
+                    (is_seedmap_observed or seedmap_super_config_override)
+                    and os.path.exists(reference_stack_log)
+                ):
                     shutil.copyfile(
                         reference_stack_log,
                         os.path.join(artifacts_dir, f"{tag}.stack.log"),
@@ -1083,6 +1115,16 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
             )
             continue
         if (
+            seedmap_static_pcd
+            and rec.get("run_valid") is not True
+            and attempt < attempt_max
+        ):
+            log(
+                f"  {tag} attempt {attempt}/{attempt_max}: "
+                "static PCD monitor was not active -> retry"
+            )
+            continue
+        if (
             is_recovery
             and rec.get("valid_spawn") is False
             and attempt < attempt_max
@@ -1093,15 +1135,14 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None):
             )
             continue
 
+        use_static_contact = is_reference_ablation or seedmap_static_pcd
         contact_count = (
             rec.get("static_pcd_collisions")
-            if is_reference_ablation
-            else rec.get("collisions")
+            if use_static_contact else rec.get("collisions")
         )
         clearance = (
             rec.get("static_pcd_clearance_m")
-            if is_reference_ablation
-            else rec.get("min_clearance_m")
+            if use_static_contact else rec.get("min_clearance_m")
         )
         log(f"  {tag}: success={rec.get('success')} time={rec.get('mission_time_s')}s "
             f"coll={contact_count} minclr={clearance} "
@@ -1132,11 +1173,41 @@ def main():
         help="rotate requested mode order each run to balance order effects",
     )
     ap.add_argument(
+        "--seedmap-super-config",
+        help=(
+            "override the SUPER config for seed1..10 modes; intended for a "
+            "common guarded full/sector/adaptive comparison"
+        ),
+    )
+    ap.add_argument(
+        "--seedmap-static-pcd",
+        action="store_true",
+        help="measure every seedmap mode against the same unfiltered static PCD",
+    )
+    ap.add_argument(
+        "--loop-timeout",
+        type=float,
+        help="override the seedmap loop timeout in seconds",
+    )
+    ap.add_argument(
         "--artifacts-dir",
         help="copy each run's monitor JSON, including contact context, here",
     )
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "native_campaign.csv"))
     args = ap.parse_args()
+
+    if args.loop_timeout is not None and args.loop_timeout <= 0.0:
+        ap.error("--loop-timeout must be positive")
+    if args.seedmap_super_config or args.seedmap_static_pcd:
+        invalid_maps = [
+            map_name for map_name in args.maps
+            if not re.fullmatch(r"seed(?:[1-9]|10)", map_name)
+        ]
+        if invalid_maps:
+            ap.error(
+                "seedmap config/static-PCD overrides support only seed1..10; "
+                f"unsupported maps: {', '.join(invalid_maps)}"
+            )
 
     if any(mode in RAW_DIRECT_REF_MODES for mode in args.modes):
         invalid_maps = [
@@ -1182,6 +1253,9 @@ def main():
                             if args.artifacts_dir
                             else None
                         ),
+                        seedmap_super_config_override=args.seedmap_super_config,
+                        seedmap_static_pcd=args.seedmap_static_pcd,
+                        loop_timeout_override=args.loop_timeout,
                     )
                     w.writerow(rec); f.flush()
                     done += 1

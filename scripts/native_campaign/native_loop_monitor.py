@@ -408,6 +408,10 @@ result = {
         if node.min_distance != float("inf")
         else None
     ),
+    "static_pcd_enabled": node.static_pcd is not None,
+    "static_pcd_point_count": (
+        len(node.static_pcd.points) if node.static_pcd is not None else 0
+    ),
     "static_pcd_collisions": node.static_pcd_collisions,
     "static_pcd_min_distance_m": (
         round(node.static_pcd_min_distance, 3)
