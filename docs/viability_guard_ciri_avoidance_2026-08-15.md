@@ -1286,7 +1286,62 @@ rate or flight readiness. Seed10's worst positive body clearance was only
 events. The paper-faithful accumulated raw-cloud CIRI result remains
 shadow-only/default false and has no authority over live brake decisions.
 
-## Current status — not flight-ready; seed9/10 local gate now passes
+### 8.16 Full/sector/adaptive paired n=5 after recovery changes (2026-08-21)
+
+The larger paired regression requested at the end of 8.15 is now complete.
+Seeds 1-10 were run five times in each of full, sector, and adaptive mode with
+rotated mode ordering, v=7, `loop24.txt`, the same rebuilt binary,
+`static_seedmaps_guard_viability_tight_v7_filtered.yaml`, and a 140 s timeout.
+All 150 rows were valid and all 150 loaded the independently monitored static
+PCD.
+
+| mode | completion | all-run mean | success-only mean | map commit | cloud callback | point reduction | mapping/update | static contact | worst body clearance |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| full | 46/50 (92%) | 81.38 s | 76.28 s | 3.94 Hz | 6.51 Hz | 0% | 131.65 ms | 0/50 | 0.129 m |
+| sector | 49/50 (98%) | 76.12 s | 74.81 s | 4.13 Hz | 6.82 Hz | 2.97% | 124.97 ms | 0/50 | 0.109 m |
+| adaptive | 50/50 (100%) | 75.57 s | 75.57 s | 4.04 Hz | 6.63 Hz | 3.01% | 125.29 ms | 0/50 | 0.079 m |
+
+The LiDAR target (10 Hz), replan target (15 Hz), main FSM timer (100 Hz), and
+command timer (100 Hz) were identical in all modes. Only achieved cadence
+changed. Sector/adaptive were full-open about 91% of wall time and removed only
+about 3% of points, yet mapping cost per update fell about 5% and aggregate map
+commit cadence rose 4.93%/2.47%. The effect varied strongly by seed and is not
+a frequency guarantee. The apparent 6-7% all-run mission-time improvement is
+mostly the four full timeouts; success-only improvement is only 1.93%/0.94%.
+
+Exact paired McNemar tests do not establish a completion difference at this
+sample size: full/sector `p=0.375`, full/adaptive `p=0.125`, and
+sector/adaptive `p=1.0`. Adaptive's 50/50 must therefore not be presented as a
+population guarantee, especially because its worst positive static clearance
+was only 0.079 m.
+
+The failures were full seed3 run4, seed6 run5, seed7 run4, and seed9 run3,
+plus sector seed9 run1. Three full failures were dominated by thousands of
+MINCO/EXP failures; seed7 was dominated by thousands of corridor/polytope
+failures; and the sector seed9 failure churned through 38 topology arms,
+27 `NO_PATH` results, and nine epoch resets near waypoint 5. No direct-goal
+fallback commit or rejection marker appeared in any of the 150 runs, so the
+8.15 bounded branch did not cover these residual failures.
+
+Static-PCD collision was 0/150. One live-cloud-only marker occurred in seed5
+run2 sector, but static PCD independently measured 0.309 m centre distance,
++0.109 m body clearance, and zero contact. Full tables, definitions, caveats,
+failure marker counts, and statistics are in
+`docs/guarded_v7_3mode_recovery_n5_20260821.md`; machine-readable results are
+`results/guarded_v7_3mode_recovery_n5_raw_20260821.csv` and
+`results/guarded_v7_3mode_recovery_n5_summary_20260821.csv`.
+
+This broad result supersedes the 8.15 local seed9/10 10/10 headline as the
+current liveness estimate. It confirms that the recovered build is materially
+better than the stale-command deadlock state, but it is still not flight-ready
+and does not have a universal completion guarantee.
+
+## Current status — not flight-ready; broad n=5 still has residual liveness failures
+
+- **Section 8.16 is the current same-code paired result:** full 46/50, sector
+  49/50, and adaptive 50/50, with static-PCD collision 0/150. The completion
+  differences are not significant by exact paired McNemar at this sample size,
+  and adaptive's worst positive body clearance is only 0.079 m.
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),
@@ -1317,8 +1372,10 @@ shadow-only/default false and has no authority over live brake decisions.
 - **The requested local gate passed once but did not reproduce as a
   deterministic guarantee:** 8.12 had 5/5 consecutive seed10 full
   completions and the broader seed1-10 n=2 check was 20/20. In 8.13's longer
-  interleaved campaign, seed10 full was 4/5 and total full was 48/50. The
-  specific same-generation deadlock is fixed, but population liveness is not.
+  interleaved campaign, seed10 full was 4/5 and total full was 48/50. Section
+  8.15 then passed seed9/10 at 10/10, but the same-code 8.16 regression found
+  full failures on seeds 3, 6, 7, and 9 and one sector failure on seed9. The
+  specific stale-command deadlock is fixed, but population liveness is not.
 - The frequent same-generation `PlanFromRest` deadlock diagnosed in 8.7/8.8
   has an implemented recovery after a certified stop, but 8.14 proves that
   this recovery is unreachable when every brake attempt itself is rejected.
@@ -1339,13 +1396,15 @@ shadow-only/default false and has no authority over live brake decisions.
   8.10 performance regression. Section 8.12 then fixes that cohort's one
   remaining seed10 liveness failure in the live topology-recovery layer; it
   still does not grant the shadow result any authority over brake decisions.
-- **Section 8.15 supersedes 8.14's unresolved seed9/10 status.** The stale
+- **Section 8.15 supersedes 8.14's unresolved stale-command status, while
+  section 8.16 supersedes its local completion headline.** The stale
   command is freshness/consistency gated, recovery uses a brake-local
   position-derived motion estimate, blockers are branch-aware and epoch
   bounded, backup-only rejections do not corrupt EXP topology, and stale-map
   replanning is readiness-gated. The final same-code local gate completed
-  seed9 and seed10 5/5 each with 0/10 measured static-PCD contact. This does
-  not retroactively repair 8.13's missing static-PCD data and must not be
+  seed9 and seed10 5/5 each with 0/10 measured static-PCD contact. The broader
+  same-code result is now 46/50 full, 49/50 sector, and 50/50 adaptive. This
+  does not retroactively repair 8.13's missing static-PCD data and must not be
   presented as population or hardware proof.
 - FSM CPU was measured in 8.13: the 50-run means were 144.88% full, 140.23%
   sector, and 137.67% adaptive. Earlier cohorts still lack comparable CPU
@@ -1355,8 +1414,8 @@ shadow-only/default false and has no authority over live brake decisions.
   vars are unset but has not been cleaned up.
 
 Do not describe `static_seedmaps_guard_viability_v7.yaml` or any of its
-`_wide`/`_tight`/`_tight_h08` variants as flight-ready. The former prerequisite
-for a larger campaign (one 5/5, zero-contact gate) is now satisfied locally on
-both seed9 and seed10; the next defensible step is a larger paired regression
-under the normal shadow-off `tight_v7` profile, not connecting CIRI shadow to
-the brake decision.
+`_wide`/`_tight`/`_tight_h08` variants as flight-ready. The larger paired
+shadow-off regression has now been run and found residual optimizer/polytope
+stalls in full plus topology churn in sector. The next liveness work should
+target those observed failure classes, while retaining the static-PCD gate and
+without connecting CIRI shadow to the brake decision.

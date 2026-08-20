@@ -1,6 +1,38 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-21 동일 코드 full/sector/adaptive seed1-10 각 n=5 결과 — 아래
+> 2026-08-20 seed9/10 local 10/10 배너의 완주 결론을 대체한다.** 총 150회는
+> 모두 valid였고 static PCD가 실제 로드됐다. 완주는 full **46/50 (92%)**,
+> sector **49/50 (98%)**, adaptive **50/50 (100%)**였다. exact paired
+> McNemar는 full/sector `p=0.375`, full/adaptive `p=0.125`,
+> sector/adaptive `p=1.0`으로 현재 표본에서 유의한 차이는 아니다.
+>
+> 모든 모드의 설정 주파수는 LiDAR 10 Hz, replan 15 Hz, main FSM 100 Hz,
+> command 100 Hz로 동일했다. 실제 cloud callback은 6.51/6.82/6.63 Hz,
+> map commit은 3.94/4.13/4.04 Hz였다. sector/adaptive는 약 91% wall-time
+> full-open이라 점을 2.97%/3.01%만 줄였지만 mapping/update는
+> 131.65 ms에서 124.97/125.29 ms로 약 5% 감소했다. 전체-run 평균 시간의
+> 6-7% 개선은 full의 timeout 4건 영향이 크며 성공-run끼리는 1.93%/0.94%
+> 차이뿐이다.
+>
+> static-PCD contact는 **0/150**, 최악 body clearance는
+> full/sector/adaptive **0.129/0.109/0.079 m**였다. seed5 run2 sector의
+> live-cloud marker 1회는 static PCD상 centre 0.309 m, body +0.109 m,
+> contact 0인 live-only marker다. adaptive 50/50을 안전 여유까지 가장 좋거나
+> population 100%라는 뜻으로 쓰면 안 된다.
+>
+> 실패는 full seed3/6/7/9 각 1건과 sector seed9 1건이다. 세 full 실패는
+> 수천 회 MINCO/EXP 반복, seed7은 수천 회 polytope 생성 실패, sector seed9는
+> 38회 reroute arm/27회 `NO_PATH`/9회 epoch reset의 topology churn이었다.
+> 150회 전체에서 direct-goal fallback commit/reject marker는 모두 0이라 §8.15
+> branch가 이 실패들을 커버했다고 볼 수 없다. 상세 표와 원시는
+> `docs/guarded_v7_3mode_recovery_n5_20260821.md`,
+> `results/guarded_v7_3mode_recovery_n5_raw_20260821.csv`,
+> `results/guarded_v7_3mode_recovery_n5_summary_20260821.csv` 및 §8.16을 볼 것.
+> raw-cloud CIRI는 계속 shadow-only/default false다.
+
+> [!IMPORTANT]
 > **2026-08-20 seed9/10 복구 완료 — 이 배너가 아래의 “미해결” 배너들을
 > 대체한다.** §8.14의 stale command 진단은 맞았지만 “실제 odom speed를 쓰면
 > 된다”는 설명은 틀렸다. ROS2 ROG odom callback은 `RobotState.v/a/j`를 채운 적이
