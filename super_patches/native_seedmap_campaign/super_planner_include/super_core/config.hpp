@@ -109,6 +109,24 @@ namespace super_planner {
         double guard_topology_reroute_collision_merge_m{0.5};
         double guard_topology_reroute_start_clearance_m{0.05};
         double guard_topology_reroute_block_spacing_m{1.0};
+        // Rejected routes that differ by more than this XY angle start a new
+        // blocker branch at the stopped pose.  Without branch tracking, a
+        // newly-selected detour inherited the old branch's forward index and
+        // its first blocker could be several metres away, leaving the same
+        // start-adjacent guard violation completely unblocked.
+        double guard_topology_reroute_direction_merge_angle_deg{30.0};
+        // A set of virtual blockers can itself make the certified-stop start
+        // disconnected. After this many consecutive A* NO_PATH results,
+        // discard that finite search epoch and rebuild topology from fresh
+        // guarded candidates.
+        int guard_topology_reroute_no_path_reset_attempts{3};
+        // If the corridor/MINCO stack repeatedly cannot optimize the final
+        // short connection from an already-certified stop, try one direct
+        // rest-to-rest polynomial. It is still committed only through the
+        // normal geometric guard and sampled stop-viability checks.
+        bool guard_direct_goal_fallback_en{false};
+        double guard_direct_goal_fallback_max_distance_m{3.0};
+        double guard_direct_goal_fallback_min_duration_s{1.0};
         // Before committing a candidate, require that a certified emergency
         // stop (built the same way the runtime guard brake is built) exists
         // from several sampled states along the candidate. If not, the
@@ -230,6 +248,21 @@ namespace super_planner {
                              guard_topology_reroute_start_clearance_m, 0.05);
             loader.LoadParam("super_planner/guard_topology_reroute/block_spacing_m",
                              guard_topology_reroute_block_spacing_m, 1.0);
+            loader.LoadParam(
+                    "super_planner/guard_topology_reroute/direction_merge_angle_deg",
+                    guard_topology_reroute_direction_merge_angle_deg, 30.0);
+            loader.LoadParam(
+                    "super_planner/guard_topology_reroute/no_path_reset_attempts",
+                    guard_topology_reroute_no_path_reset_attempts, 3);
+            loader.LoadParam(
+                    "super_planner/guard_direct_goal_fallback/enable",
+                    guard_direct_goal_fallback_en, false);
+            loader.LoadParam(
+                    "super_planner/guard_direct_goal_fallback/max_distance_m",
+                    guard_direct_goal_fallback_max_distance_m, 3.0);
+            loader.LoadParam(
+                    "super_planner/guard_direct_goal_fallback/min_duration_s",
+                    guard_direct_goal_fallback_min_duration_s, 1.0);
             loader.LoadParam("super_planner/guard_viability/enable",
                              guard_viability_en, false);
             loader.LoadParam("super_planner/guard_viability/horizon_s",
@@ -286,6 +319,15 @@ namespace super_planner {
                     resolution, guard_topology_reroute_start_clearance_m);
             guard_topology_reroute_block_spacing_m = std::max(
                     resolution, guard_topology_reroute_block_spacing_m);
+            guard_topology_reroute_direction_merge_angle_deg = std::clamp(
+                    guard_topology_reroute_direction_merge_angle_deg,
+                    1.0, 89.0);
+            guard_topology_reroute_no_path_reset_attempts = std::max(
+                    1, guard_topology_reroute_no_path_reset_attempts);
+            guard_direct_goal_fallback_max_distance_m = std::max(
+                    resolution, guard_direct_goal_fallback_max_distance_m);
+            guard_direct_goal_fallback_min_duration_s = std::max(
+                    0.1, guard_direct_goal_fallback_min_duration_s);
 
             guard_viability_horizon_s = std::max(0.0, guard_viability_horizon_s);
             guard_viability_sample_dt_s = std::max(0.01, guard_viability_sample_dt_s);

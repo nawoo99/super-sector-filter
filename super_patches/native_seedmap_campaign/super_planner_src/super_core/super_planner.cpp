@@ -642,6 +642,10 @@ namespace super_planner {
     void SuperPlanner::resetTopologyRecoveryState() {
         guard_topology_avoidance_centers_.clear();
         guard_topology_avoidance_radii_.clear();
+        guard_topology_branch_directions_.clear();
+        guard_topology_branch_depths_.clear();
+        guard_topology_no_path_failures_ = 0;
+        guard_topology_epoch_ = 0;
         guard_topology_stall_generation_ = 0;
         guard_topology_stall_collision_.setZero();
         guard_topology_stall_rejects_ = 0;
@@ -702,7 +706,6 @@ namespace super_planner {
             return;
         }
 
-        const int every = cfg_.guard_topology_reroute_escalate_every_rejects;
         if (!arm_now) {
             ros_ptr_->warn(
                     " -- [TRAJ_GUARD_REROUTE_STALL] gen={} rejects={} "
@@ -793,7 +796,43 @@ namespace super_planner {
         }
         route_direction.normalize();
 
-        const int escalation = guard_topology_stall_rejects_ / every;
+        // The old global escalation index assumed every rejected candidate
+        // remained on one route.  Seed9 exposed the opposite: the first
+        // blocker pushed A* onto a new outgoing direction, but that direction
+        // inherited a 1.85 m (then 2.85 m, ...) blocker distance.  Its unsafe
+        // first few centimetres therefore stayed open forever.  Classify the
+        // direction into stable branches.  A new branch starts at depth zero;
+        // only another rejection along the same branch extends that chain.
+        const double merge_angle_rad =
+                cfg_.guard_topology_reroute_direction_merge_angle_deg *
+                M_PI / 180.0;
+        const double merge_cos = std::cos(merge_angle_rad);
+        std::size_t branch = guard_topology_branch_directions_.size();
+        double best_direction_dot = -1.0;
+        for (std::size_t i = 0;
+             i < guard_topology_branch_directions_.size(); ++i) {
+            const double direction_dot =
+                    route_direction.dot(guard_topology_branch_directions_[i]);
+            if (direction_dot > best_direction_dot) {
+                best_direction_dot = direction_dot;
+                branch = i;
+            }
+        }
+        int branch_depth = 0;
+        if (branch < guard_topology_branch_directions_.size() &&
+            best_direction_dot >= merge_cos) {
+            branch_depth = ++guard_topology_branch_depths_[branch];
+            // Keep an established chain collinear.  Candidate optimizer
+            // jitter must not turn its cylinders into a fan with gaps.
+            route_direction = guard_topology_branch_directions_[branch];
+        } else {
+            branch = guard_topology_branch_directions_.size();
+            guard_topology_branch_directions_.push_back(route_direction);
+            guard_topology_branch_depths_.push_back(0);
+            best_direction_dot = 1.0;
+        }
+
+        const int escalation = branch_depth;
         const double radius = std::min(
                 cfg_.guard_topology_reroute_max_radius_m,
                 cfg_.guard_topology_reroute_radius_m +
@@ -812,7 +851,8 @@ namespace super_planner {
                 " -- [TRAJ_GUARD_REROUTE_ARM] zone={} zones={} gen={} rejects={} "
                 "center=[{:.3f},{:.3f},{:.3f}] radius={:.3f} "
                 "start_distance={:.3f} collision=[{:.3f},{:.3f},{:.3f}] "
-                "stop_source={} direction_source={} odom_speed={:.3f} "
+                "stop_source={} direction_source={} branch={} depth={} "
+                "direction_dot={:.3f} odom_speed={:.3f} "
                 "action=block_rejected_route",
                 zone, guard_topology_avoidance_centers_.size(),
                 candidate_generation, guard_topology_stall_rejects_,
@@ -821,7 +861,7 @@ namespace super_planner {
                 safety.first_collision_pos.x(), safety.first_collision_pos.y(),
                 safety.first_collision_pos.z(),
                 certified_stop ? "certified_brake" : "odom",
-                direction_source,
+                direction_source, branch, branch_depth, best_direction_dot,
                 current_speed_mps);
     }
 
@@ -858,8 +898,12 @@ namespace super_planner {
         return true;
     }
 
-    bool SuperPlanner::commitTrajectoryCandidate(CmdTraj::Candidate candidate,
-                                                  const char *phase) {
+    bool SuperPlanner::commitTrajectoryCandidate(
+            CmdTraj::Candidate candidate, const char *phase,
+            std::string *rejected_segment_out) {
+        if (rejected_segment_out) {
+            rejected_segment_out->clear();
+        }
         const bool has_appended_backup = candidate.has_appended_backup;
         const bool has_carry_backup = candidate.has_carry_backup;
         const double backup_start_tt = candidate.backup_traj_start_tt;
@@ -938,17 +982,16 @@ namespace super_planner {
                                                       std::memory_order_release);
             const std::string rejected_segment =
                     segment_name(safety.first_collision_tt);
+            if (rejected_segment_out) {
+                *rejected_segment_out = rejected_segment;
+            }
             const bool plan_from_rest_geometric_rejection =
                     plan_from_rest &&
                     safety.status == TrajectorySafetyStatus::CLEARANCE_MARGIN &&
-                    (rejected_segment == "EXP" ||
-                     rejected_segment == "APPENDED_BACKUP" ||
-                     rejected_segment == "EXP_TO_BACKUP_STITCH");
+                    rejected_segment == "EXP";
             if (cfg_.corridor_guard_retry_inflated &&
                 safety.status == TrajectorySafetyStatus::CLEARANCE_MARGIN &&
-                (rejected_segment == "EXP" ||
-                 (cfg_.guard_topology_reroute_en &&
-                  plan_from_rest_geometric_rejection))) {
+                rejected_segment == "EXP") {
                 guard_corridor_retry_pending_.store(true,
                                                     std::memory_order_release);
             }
@@ -1197,6 +1240,103 @@ namespace super_planner {
         return true;
     }
 
+    bool SuperPlanner::tryCommitCertifiedDirectGoalFallback(
+            const Vec3f &start_p, const Vec3f &goal_p) {
+        const double distance = (goal_p - start_p).norm();
+        Vec3f odom_position = Vec3f::Zero();
+        double odom_yaw = 0.0;
+        {
+            std::lock_guard<std::mutex> state_lock(drone_state_mutex_);
+            odom_position = robot_state_.p;
+            odom_yaw = robot_state_.yaw;
+        }
+        const double start_shift = (start_p - odom_position).norm();
+        if (!cfg_.guard_direct_goal_fallback_en ||
+            !cfg_.guard_viability_en ||
+            !guard_certified_stop_for_reroute_.load(
+                    std::memory_order_acquire) ||
+            !start_p.array().isFinite().all() ||
+            !goal_p.array().isFinite().all() ||
+            !std::isfinite(distance) || distance <= 1.0e-3 ||
+            !std::isfinite(start_shift) || start_shift > 0.15 ||
+            distance > cfg_.guard_direct_goal_fallback_max_distance_m) {
+            return false;
+        }
+
+        // Exact extrema for a one-piece, zero-PVA endpoint minimum-jerk
+        // polynomial are 1.875*d/T, ~5.774*d/T^2, and 60*d/T^3. Allocate
+        // duration from the normal EXP limits with a 20% reserve; the normal
+        // commit path below still performs geometric and stop-viability
+        // validation and may time-scale it further.
+        const double velocity_limit = std::max(
+                1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_vel);
+        const double acceleration_limit = std::max(
+                1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_acc);
+        const double jerk_limit = std::max(
+                1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_jerk);
+        const double duration = std::max({
+                cfg_.guard_direct_goal_fallback_min_duration_s,
+                1.875 * distance / velocity_limit,
+                std::sqrt(5.774 * distance / acceleration_limit),
+                std::cbrt(60.0 * distance / jerk_limit)});
+
+        Eigen::Matrix<double, 3, 3> initial_pva;
+        Eigen::Matrix<double, 3, 3> goal_pva;
+        initial_pva.setZero();
+        goal_pva.setZero();
+        initial_pva.col(0) = start_p;
+        goal_pva.col(0) = goal_p;
+        Eigen::Matrix<double, 3, Eigen::Dynamic> position_waypoints(3, 0);
+        VecDf durations(1);
+        durations << duration;
+        Trajectory position_trajectory =
+                poly_interpo::minimumJerkInterpolation<3>(
+                        initial_pva, goal_pva, position_waypoints, durations);
+
+        Eigen::Matrix<double, 1, 3> initial_yaw;
+        Eigen::Matrix<double, 1, 3> goal_yaw;
+        initial_yaw.setZero();
+        goal_yaw.setZero();
+        initial_yaw(0, 0) = odom_yaw;
+        goal_yaw(0, 0) = odom_yaw;
+        Eigen::Matrix<double, 1, Eigen::Dynamic> yaw_waypoints(1, 0);
+        Trajectory yaw_trajectory =
+                poly_interpo::minimumJerkInterpolation<1>(
+                        initial_yaw, goal_yaw, yaw_waypoints, durations);
+
+        const double start_wt = ros_ptr_->getSimTime();
+        position_trajectory.start_WT = start_wt;
+        yaw_trajectory.start_WT = start_wt;
+        ExpTraj fallback_exp;
+        fallback_exp.setTrajectory(start_wt, position_trajectory,
+                                   yaw_trajectory);
+        fallback_exp.setGoalConnectedFlag(true);
+
+        CmdTraj::Candidate candidate;
+        if (!CmdTraj::buildCandidate(fallback_exp, candidate) ||
+            !commitTrajectoryCandidate(
+                    std::move(candidate),
+                    "PlanFromRest/certified_direct_goal_fallback")) {
+            ros_ptr_->warn(
+                    " -- [TRAJ_GUARD_DIRECT_GOAL_FALLBACK_REJECTED] "
+                    "distance={:.3f}m duration={:.3f}s",
+                    distance, duration);
+            return false;
+        }
+
+        last_exp_traj_info_ = fallback_exp;
+        robot_on_backup_traj_ = false;
+        gi_.new_goal = false;
+        ros_ptr_->vizCommittedTraj(cmd_traj_info_.posTraj(), -1);
+        latest_replan.setRetCode(
+                SUPER_RET_CODE::SUPER_SUCCESS_NO_BACKUP);
+        ros_ptr_->warn(
+                " -- [TRAJ_GUARD_DIRECT_GOAL_FALLBACK] action=commit "
+                "distance={:.3f}m duration={:.3f}s",
+                distance, duration);
+        return true;
+    }
+
     RET_CODE
     SuperPlanner::PlanFromRest(const Vec3f &goal_p,
                                const double &goal_yaw,
@@ -1250,6 +1390,9 @@ namespace super_planner {
         RET_CODE exp_ret_code = generateExpTraj(last_exp_traj_info_, exp_traj_info);
         //GenerateRestToRestExpTraj(local_star_pt, exp_traj_info);
         if (exp_ret_code == FAILED) {
+            if (tryCommitCertifiedDirectGoalFallback(local_star_pt, goal_p)) {
+                return SUCCESS;
+            }
             ros_ptr_->warn(" -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with {}.",
                            RET_CODE_STR[exp_ret_code].c_str());
             return FAILED;
@@ -1266,8 +1409,39 @@ namespace super_planner {
             }
 
             CmdTraj::Candidate candidate;
-            if (!CmdTraj::buildCandidate(exp_traj_info, back_traj_info, candidate) ||
-                !commitTrajectoryCandidate(std::move(candidate), "PlanFromRest/with_backup")) {
+            std::string rejected_segment;
+            bool committed = CmdTraj::buildCandidate(
+                    exp_traj_info, back_traj_info, candidate) &&
+                    commitTrajectoryCandidate(
+                            std::move(candidate), "PlanFromRest/with_backup",
+                            &rejected_segment);
+            bool used_certified_stop_fallback = false;
+            // BackupTrajOpt is independent from the EXP corridor optimizer.
+            // A guard failure confined to its appended portion does not prove
+            // the outgoing EXP topology is bad, so never turn that failure
+            // into an A* route blocker. When the viability guard is enabled,
+            // retry the already-generated EXP by itself: commit still requires
+            // the full geometric guard and a certified stop from every sampled
+            // state in the configured horizon. This is a bounded certified-
+            // stop fallback, not an unchecked no-backup commit.
+            if (!committed && cfg_.guard_viability_en &&
+                (rejected_segment == "APPENDED_BACKUP" ||
+                 rejected_segment == "EXP_TO_BACKUP_STITCH")) {
+                CmdTraj::Candidate exp_only_candidate;
+                if (CmdTraj::buildCandidate(exp_traj_info,
+                                             exp_only_candidate) &&
+                    commitTrajectoryCandidate(
+                            std::move(exp_only_candidate),
+                            "PlanFromRest/certified_stop_fallback")) {
+                    committed = true;
+                    used_certified_stop_fallback = true;
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_BACKUP_FALLBACK] rejected_segment={} "
+                            "action=commit_guarded_exp_with_viable_stops",
+                            rejected_segment);
+                }
+            }
+            if (!committed) {
                 return FAILED;
             }
             last_exp_traj_info_ = exp_traj_info;
@@ -1277,9 +1451,16 @@ namespace super_planner {
             // For visualization
             {
                 TimeConsuming t_viz("viz goal VisualizeCommitTrajectory", false);
-                ros_ptr_->vizCommittedTraj(cmd_traj_info_.posTraj(), cmd_traj_info_.getBackupTrajStartTT());
+                ros_ptr_->vizCommittedTraj(
+                        cmd_traj_info_.posTraj(),
+                        used_certified_stop_fallback
+                                ? -1
+                                : cmd_traj_info_.getBackupTrajStartTT());
                 time_consuming_[VISUALIZATION] += t_viz.stop();
-                latest_replan.setRetCode(SUPER_RET_CODE::SUPER_SUCCESS_WITH_BACKUP);
+                latest_replan.setRetCode(
+                        used_certified_stop_fallback
+                                ? SUPER_RET_CODE::SUPER_SUCCESS_NO_BACKUP
+                                : SUPER_RET_CODE::SUPER_SUCCESS_WITH_BACKUP);
             }
 
             return SUCCESS;
@@ -2352,6 +2533,34 @@ namespace super_planner {
                 temp_start_point, goal, flag, temp_plannning_horizon, path,
                 guard_topology_avoidance_centers_,
                 guard_topology_avoidance_radii_);
+
+        if (ret_code == NO_PATH &&
+            !guard_topology_avoidance_centers_.empty()) {
+            ++guard_topology_no_path_failures_;
+            if (guard_topology_no_path_failures_ >=
+                cfg_.guard_topology_reroute_no_path_reset_attempts) {
+                const std::size_t cleared_zones =
+                        guard_topology_avoidance_centers_.size();
+                guard_topology_avoidance_centers_.clear();
+                guard_topology_avoidance_radii_.clear();
+                guard_topology_branch_directions_.clear();
+                guard_topology_branch_depths_.clear();
+                guard_topology_stall_generation_ = 0;
+                guard_topology_stall_collision_.setZero();
+                guard_topology_stall_rejects_ = 0;
+                guard_topology_no_path_failures_ = 0;
+                ++guard_topology_epoch_;
+                guard_corridor_retry_pending_.store(
+                        true, std::memory_order_release);
+                ros_ptr_->warn(
+                        " -- [TRAJ_GUARD_REROUTE_EPOCH_RESET] epoch={} "
+                        "cleared_zones={} reason=astar_no_path "
+                        "action=certified_stop_reseed",
+                        guard_topology_epoch_, cleared_zones);
+            }
+        } else if (ret_code == REACH_HORIZON || ret_code == REACH_GOAL) {
+            guard_topology_no_path_failures_ = 0;
+        }
 
         if(ret_code == INIT_ERROR){
             gi_.goal_valid = false;

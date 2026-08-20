@@ -463,6 +463,19 @@ namespace fsm {
         mutable std::mutex latest_cmd_mutex_;
         mars_quadrotor_msgs::msg::PositionCommand last_published_cmd_{};
         bool last_published_cmd_valid_{false};
+        double last_published_cmd_wt_{-
+                std::numeric_limits<double>::infinity()};
+        // Serializes brake selection/certification across the main and replan
+        // callback groups and supplies a position-derived motion estimate.
+        // ROG-Map's legacy RobotState intentionally carries pose only; using
+        // finite differences here avoids treating its unset velocity as a
+        // real stopped certificate.
+        mutable std::mutex brake_activation_mutex_;
+        Vec3f recovery_motion_last_position_{Vec3f::Zero()};
+        double recovery_motion_last_wt_{-
+                std::numeric_limits<double>::infinity()};
+        Vec3f recovery_motion_velocity_{Vec3f::Zero()};
+        bool recovery_motion_velocity_valid_{false};
 
         static const char *rawCloudSafetyStatusName(
                 const RawCloudSafetyStatus status) {
@@ -977,8 +990,12 @@ namespace fsm {
         }
 
         bool activateEmergencyBrake(const std::string &reason) {
-            if (!cfg_.trajectory_guard_en ||
-                safety_brake_active_.load(std::memory_order_acquire)) {
+            if (!cfg_.trajectory_guard_en) {
+                return false;
+            }
+            std::lock_guard<std::mutex> activation_lock(
+                    brake_activation_mutex_);
+            if (safety_brake_active_.load(std::memory_order_acquire)) {
                 return false;
             }
             // A new brake is not a terminal hold until its trajectory has
@@ -986,20 +1003,97 @@ namespace fsm {
             // pass. Never carry a previous recovery certificate into it.
             planner_ptr_->setCertifiedStopForReroute(false);
 
+            // Refresh odometry before selecting a brake initial state. A
+            // PositionCommand is command-continuous only while it is recent
+            // and still agrees with the tracked vehicle. Guard suppression
+            // deliberately stops normal command publication, so a boolean
+            // "was ever published" flag alone is not a validity condition.
+            planner_ptr_->getRobotState(robot_state_);
+            const double selection_wt = ros_ptr_->getSimTime();
+            const bool odom_position_ready = robot_state_.rcv &&
+                    std::isfinite(robot_state_.rcv_time) &&
+                    selection_wt - robot_state_.rcv_time >= 0.0 &&
+                    selection_wt - robot_state_.rcv_time <= 0.1 &&
+                    robot_state_.p.array().isFinite().all();
+            double recovery_motion_dt_s =
+                    std::numeric_limits<double>::infinity();
+            if (odom_position_ready) {
+                recovery_motion_dt_s =
+                        selection_wt - recovery_motion_last_wt_;
+                if (std::isfinite(recovery_motion_last_wt_) &&
+                    recovery_motion_dt_s >= 0.005 &&
+                    recovery_motion_dt_s <= 0.5) {
+                    const Vec3f measured_velocity =
+                            (robot_state_.p - recovery_motion_last_position_) /
+                            recovery_motion_dt_s;
+                    recovery_motion_velocity_valid_ =
+                            measured_velocity.array().isFinite().all() &&
+                            measured_velocity.norm() <= 50.0;
+                    if (recovery_motion_velocity_valid_) {
+                        recovery_motion_velocity_ = measured_velocity;
+                    }
+                } else if (!std::isfinite(recovery_motion_last_wt_) ||
+                           recovery_motion_dt_s > 0.5 ||
+                           recovery_motion_dt_s < 0.0) {
+                    recovery_motion_velocity_valid_ = false;
+                }
+                if (!std::isfinite(recovery_motion_last_wt_) ||
+                    recovery_motion_dt_s >= 0.005 ||
+                    recovery_motion_dt_s < 0.0) {
+                    recovery_motion_last_position_ = robot_state_.p;
+                    recovery_motion_last_wt_ = selection_wt;
+                }
+            } else {
+                recovery_motion_velocity_valid_ = false;
+            }
+
             mars_quadrotor_msgs::msg::PositionCommand start_command;
-            bool have_start_command;
+            bool cached_command_valid;
+            double cached_command_wt;
             {
                 std::lock_guard<std::mutex> lock(latest_cmd_mutex_);
-                have_start_command = last_published_cmd_valid_;
-                if (have_start_command) {
+                cached_command_valid = last_published_cmd_valid_;
+                cached_command_wt = last_published_cmd_wt_;
+                if (cached_command_valid) {
                     start_command = last_published_cmd_;
                 }
             }
 
+            const Vec3f cached_position(start_command.position.x,
+                                        start_command.position.y,
+                                        start_command.position.z);
+            const Vec3f cached_velocity(start_command.velocity.x,
+                                        start_command.velocity.y,
+                                        start_command.velocity.z);
+            const double cached_command_age_s = cached_command_valid
+                    ? selection_wt - cached_command_wt
+                    : std::numeric_limits<double>::infinity();
+            const double cached_position_error_m =
+                    cached_command_valid && odom_position_ready &&
+                            cached_position.array().isFinite().all()
+                    ? (cached_position - robot_state_.p).norm()
+                    : std::numeric_limits<double>::infinity();
+            const double cached_velocity_error_mps =
+                    cached_command_valid && recovery_motion_velocity_valid_ &&
+                            cached_velocity.array().isFinite().all()
+                    ? (cached_velocity - recovery_motion_velocity_).norm()
+                    : std::numeric_limits<double>::infinity();
+            const bool use_cached_command = cached_command_valid &&
+                    odom_position_ready &&
+                    std::isfinite(cached_command_age_s) &&
+                    cached_command_age_s >= 0.0 &&
+                    cached_command_age_s <= cfg_.brake_command_max_age_s &&
+                    cached_position_error_m <=
+                            cfg_.brake_command_max_position_error_m &&
+                    (!recovery_motion_velocity_valid_ ||
+                     cached_velocity_error_mps <=
+                             cfg_.brake_command_max_velocity_error_mps);
+
             StatePVAJ initial;
             initial.setZero();
             double initial_yaw = 0.0;
-            if (have_start_command) {
+            const char *initial_source = "none";
+            if (use_cached_command) {
                 initial.col(0) = Vec3f(start_command.position.x,
                                        start_command.position.y,
                                        start_command.position.z);
@@ -1013,17 +1107,29 @@ namespace fsm {
                                        start_command.jerk.y,
                                        start_command.jerk.z);
                 initial_yaw = start_command.yaw;
+                initial_source = "fresh_command";
+            } else if (odom_position_ready &&
+                       recovery_motion_velocity_valid_) {
+                initial.col(0) = robot_state_.p;
+                initial.col(1) = recovery_motion_velocity_;
+                // Position-derived odometry has no reliable acceleration or
+                // jerk at this callback rate. Keep the higher derivatives at
+                // the zero value established above.
+                initial_yaw = robot_state_.yaw;
+                initial_source = "odom_motion";
             } else {
                 CmdTraj::Sample current_sample;
                 if (!planner_ptr_->getOneCommandSample(current_sample)) {
-                    initial.col(0) = robot_state_.p;
-                    initial.col(1) = robot_state_.v;
-                    initial.col(2).setZero();
-                    initial.col(3).setZero();
-                    initial_yaw = robot_state_.yaw;
+                    ros_ptr_->error(
+                            " -- [TRAJ_GUARD_BRAKE] no fresh odometry, "
+                            "cached command is unusable, and no current "
+                            "trajectory sample exists; normal publication "
+                            "remains suppressed");
+                    return false;
                 } else {
                     initial = current_sample.pvaj;
                     initial_yaw = current_sample.yaw;
+                    initial_source = "trajectory_fallback";
                 }
             }
 
@@ -1144,6 +1250,9 @@ namespace fsm {
                 ros_ptr_->error(
                         " -- [TRAJ_GUARD_BRAKE_REJECTED] trigger={} "
                         "searched=[{:.3f},{:.3f}]s speed0={:.3f} "
+                        "initial_source={} cmd_age={:.3f}s "
+                        "cmd_pos_err={:.3f} cmd_vel_err={:.3f} "
+                        "motion_speed={:.3f} motion_dt={:.3f}s "
                         "last_dynamics_ok={} max_acc={:.3f} max_jerk={:.3f} "
                             "last_path_status={} last_map={} map_age={:.3f}s "
                             "raw_status={} raw_cloud={} raw_age={:.3f}s "
@@ -1151,7 +1260,14 @@ namespace fsm {
                             "ciri_shadow_queued={} ciri_shadow_age={:.3f}s; "
                             "no brake command published",
                         reason, min_duration, max_duration,
-                        initial.col(1).norm(), dynamics_ok, max_acc, max_jerk,
+                        initial.col(1).norm(), initial_source,
+                        cached_command_age_s, cached_position_error_m,
+                        cached_velocity_error_mps,
+                        recovery_motion_velocity_valid_
+                                ? recovery_motion_velocity_.norm()
+                                : std::numeric_limits<double>::infinity(),
+                        recovery_motion_dt_s,
+                        dynamics_ok, max_acc, max_jerk,
                         trajectorySafetyStatusName(brake_safety.status),
                         brake_safety.map_version, certified_map_age_s,
                         rawCloudSafetyStatusName(raw_brake_status),
@@ -1205,13 +1321,23 @@ namespace fsm {
 
             const Vec3f stop_position = brake_trajectory.getPos(duration);
             ros_ptr_->error(" -- [TRAJ_GUARD_BRAKE] trigger={} duration={:.3f}s "
-                            "speed0={:.3f} max_acc={:.3f} max_jerk={:.3f} "
+                            "speed0={:.3f} initial_source={} cmd_age={:.3f}s "
+                            "cmd_pos_err={:.3f} cmd_vel_err={:.3f} "
+                            "motion_speed={:.3f} motion_dt={:.3f}s "
+                            "max_acc={:.3f} max_jerk={:.3f} "
                             "dynamics_ok={} path_status={} map={} map_age={:.3f}s "
                             "raw_status={} raw_cloud={} raw_age={:.3f}s "
                             "ciri_shadow={} ciri_shadow_result={} "
                             "ciri_shadow_queued={} ciri_shadow_age={:.3f}s "
                             "stop=[{:.3f},{:.3f},{:.3f}]",
-                            reason, duration, initial.col(1).norm(), max_acc, max_jerk,
+                            reason, duration, initial.col(1).norm(),
+                            initial_source, cached_command_age_s,
+                            cached_position_error_m,
+                            cached_velocity_error_mps,
+                            recovery_motion_velocity_valid_
+                                    ? recovery_motion_velocity_.norm()
+                                    : std::numeric_limits<double>::infinity(),
+                            recovery_motion_dt_s, max_acc, max_jerk,
                             dynamics_ok, trajectorySafetyStatusName(brake_safety.status),
                             brake_safety.map_version, certified_map_age_s,
                             rawCloudSafetyStatusName(raw_brake_status),
@@ -1364,6 +1490,7 @@ namespace fsm {
                 const mars_quadrotor_msgs::msg::PositionCommand &command) {
             std::lock_guard<std::mutex> lock(latest_cmd_mutex_);
             last_published_cmd_ = command;
+            last_published_cmd_wt_ = ros_ptr_->getSimTime();
             last_published_cmd_valid_ = true;
         }
 

@@ -1,6 +1,42 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-20 seed9/10 복구 완료 — 이 배너가 아래의 “미해결” 배너들을
+> 대체한다.** §8.14의 stale command 진단은 맞았지만 “실제 odom speed를 쓰면
+> 된다”는 설명은 틀렸다. ROS2 ROG odom callback은 `RobotState.v/a/j`를 채운 적이
+> 없었고 해당 필드는 초기화조차 안 돼 있었다. simulator twist를 전역 전달한
+> 실험은 seed10 실제 접촉을 냈고 전량 되돌렸다. 최종 코드는 legacy state를 0으로
+> 명시 초기화하고, brake 선택 안에서만 연속 fresh odom 위치로 motion을 추정한다.
+>
+> retained fix는 (1) cached command 0.10 s timestamp+position/velocity consistency
+> gate, (2) brake selection 직렬화와 fresh position-motion/trajectory fallback,
+> (3) 방향별 topology blocker chain + 3회 `NO_PATH` epoch reset, (4) backup/stitch
+> reject를 EXP blocker로 오염시키지 않는 guarded EXP-only fallback, (5) stale
+> `PlanFromRest`를 막는 map-readiness gate, (6) 센서 해상도/FoV/128-ring을 유지한
+> GENERAL_360 렌더 중복계산 제거다. 마지막 waypoint 근처의 반복 MINCO 실패에는
+> certified stop+3 m 이내에서만 만들고 기존 geometric guard와 sampled
+> stop-viability를 전부 통과해야 하는 direct-goal fallback도 추가했다. fallback의
+> local start는 mutex로 복사한 odometry에서 0.15 m 이내여야 한다. 이 branch는 최종
+> 무작위 gate에서 발동하지 않았으므로 별도 실증 완료로 주장하지 말 것.
+>
+> 최종 동일 코드/설정(`v=7`, full, filtered tight-v7, `loop24.txt`, timeout 140 s,
+> static PCD 1,042,220점)은 seed9 **5/5**, seed10 **5/5**, 총 **50/50 waypoint**,
+> static/live contact **0/10**이었다. 평균 시간은 93.95/99.09 s, 최악 body
+> clearance는 0.220/0.132 m였다. 이는 local regression gate이며 population 100%
+> 또는 flight-ready 근거가 아니다.
+> 위 0.15 m 조건을 넣고 재빌드한 뒤 별도로 돌린 seed10 smoke도 83.92 s에 5/5,
+> contact 0, static-PCD body clearance 0.262 m로 통과했다. 이 1회는 n=5 표에
+> 합치지 않았다.
+>
+> 중요한 반증: freshness를 1.50/1.25 s로 늘린 첫 반복은 완주는 빨라졌지만
+> static-PCD 접촉 2회(centre 0.142 m, body clearance -0.058 m)를 냈다. 따라서
+> 최종 프로파일은 안전 기준 0.75/0.55 s를 그대로 유지한다. global twist 전달,
+> KD-tree 렌더 culling, replan 10 Hz도 모두 되돌렸다. 상세와 행별 결과는
+> `docs/viability_guard_ciri_avoidance_2026-08-15.md` §8.15 및
+> `results/guarded_v7_full_seed9_seed10_recovery_n5_20260820.csv`를 볼 것.
+> raw-cloud CIRI는 계속 shadow-only/default false다.
+
+> [!IMPORTANT]
 > **2026-08-20 seed9/10 full 실패 원인 정정:** 150회 캠페인의 full 실패
 > 2건은 map freeze나 단순 timeout이 아니라 certified recovery에 들어가지 못한
 > 교착이다. seed9 run4는 gen177을 314회/30.614초, seed10 run2는 gen71을

@@ -38,6 +38,9 @@ void ROGMap::init() {
 
 
     robot_state_.p = cfg_.fix_map_origin;
+    robot_state_.v.setZero();
+    robot_state_.a.setZero();
+    robot_state_.j.setZero();
 
     if (cfg_.map_sliding_en) {
         mapSliding(Vec3f(0, 0, 0));

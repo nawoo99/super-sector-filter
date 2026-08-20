@@ -30,6 +30,19 @@ fsm:
   cmd_topic: "/planning/pos_cmd"
   mpc_cmd_topic: "/planning_cmd/poly_traj"
   timer_en: true
+  # The guard can enter GENERATE_TRAJ after a freshness-triggered stop. Do
+  # not run the expensive PlanFromRest loop against that same stale snapshot:
+  # it can starve the cloud callback and repeatedly commit trajectories that
+  # are rejected immediately as MAP_STALE. Hold the certified stop until a
+  # fresh processed scan is visible, then reroute once.
+  map_readiness:
+    enable: true
+    min_accepted_scans: 5
+    min_committed_scans: 5
+    max_commit_lag_scans: 5
+    min_scan_span_s: 1.0
+    max_cloud_age_s: 0.75
+    max_map_age_s: 0.55
   trajectory_guard:
     enable: true
     shadow: false
@@ -64,6 +77,12 @@ fsm:
     brake_max_duration_s: 3.0
     brake_max_acc_mps2: 20.0
     brake_max_jerk_mps3: 120.0
+    # A cached command is a brake start state only while it is recent and
+    # agrees with measured odometry. This prevents fail-closed publication
+    # suppression from freezing one brake candidate indefinitely.
+    brake_command_max_age_s: 0.10
+    brake_command_max_position_error_m: 0.50
+    brake_command_max_velocity_error_mps: 2.0
     escape_max_duration_s: 1.0
     # Only active for a stopped PlanFromRest attempt after a raw EXP guard
     # rejection, while using the inflated recovery corridor.
@@ -131,6 +150,11 @@ super_planner:
     collision_merge_m: 0.5
     start_clearance_m: 0.05
     block_spacing_m: 1.0
+    # Different outgoing directions are separate route branches. Each new
+    # branch receives a near-start blocker before its own chain is extended.
+    direction_merge_angle_deg: 30.0
+    # Never let temporary route blockers create a permanent A* deadlock.
+    no_path_reset_attempts: 3
   # Pre-commit viability guard (new, untested): mirrors the runtime brake's
   # dynamics limits so the prediction matches what activateEmergencyBrake()
   # could actually certify.
@@ -146,6 +170,10 @@ super_planner:
     speed_scale_step: 1.25
     speed_scale_max: 3.0
     max_retries: 4
+  guard_direct_goal_fallback:
+    enable: true
+    max_distance_m: 3.0
+    min_duration_s: 1.0
   corridor_min_margin: 0.2
   corridor_pref_margin: 0.3
   yaw_dot_max: 3.0

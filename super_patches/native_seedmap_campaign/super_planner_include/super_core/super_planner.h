@@ -161,6 +161,13 @@ namespace super_planner {
         std::atomic_int guard_corridor_retry_attempts_{0};
         vec_E<Vec3f> guard_topology_avoidance_centers_;
         std::vector<double> guard_topology_avoidance_radii_;
+        // One fixed XY direction and current chain depth per rejected-route
+        // branch.  A genuinely new outgoing direction gets its own blocker
+        // next to the stopped pose instead of extending an unrelated chain.
+        vec_E<Vec3f> guard_topology_branch_directions_;
+        std::vector<int> guard_topology_branch_depths_;
+        int guard_topology_no_path_failures_{0};
+        std::uint64_t guard_topology_epoch_{0};
         Vec3f guard_topology_goal_{Vec3f::Zero()};
         bool guard_topology_goal_valid_{false};
         std::uint64_t guard_topology_stall_generation_{0};
@@ -305,8 +312,9 @@ namespace super_planner {
             return cfg_.trajectory_guard_en || cfg_.trajectory_guard_shadow_en;
         }
 
-        bool commitTrajectoryCandidate(CmdTraj::Candidate candidate,
-                                       const char *phase);
+        bool commitTrajectoryCandidate(
+                CmdTraj::Candidate candidate, const char *phase,
+                std::string *rejected_segment_out = nullptr);
 
         // Record a stopped PlanFromRest geometric rejection and, on bounded
         // same-generation/same-location intervals, extend an exclusion
@@ -323,6 +331,9 @@ namespace super_planner {
                                    bool collision_on_exp);
 
         void resetTopologyRecoveryState();
+
+        bool tryCommitCertifiedDirectGoalFallback(const Vec3f &start_p,
+                                                  const Vec3f &goal_p);
 
         // Returns a new trajectory tracing the exact same spatial path but
         // slowed down by factor k>1 (duration *= k). Used by the viability

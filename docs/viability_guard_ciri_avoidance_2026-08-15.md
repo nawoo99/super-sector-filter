@@ -1195,7 +1195,98 @@ collision arming should not be restored. Full evidence is in
 `docs/guarded_v7_full_seed9_seed10_failure_analysis_20260820.md` and
 `results/guarded_v7_full_seed9_seed10_log_analysis_20260820.csv`.
 
-## Current status — not flight-ready, but no longer failing for the original reason
+### 8.15 Seed9/10 recovery completion, map-cadence repair, and local n=5 gate (2026-08-20)
+
+Section 8.14 correctly identified the stale `last_published_cmd_` lifetime,
+but one important detail in its proposed remedy was wrong: the ROS2 ROG odom
+callback had never populated `RobotState.v/a/j`. Those fields were also not
+initialized. Treating `robot_state_.v` as measured odometry therefore produced
+invalid diagnostics, and an attempted direct propagation of simulator twist
+caused an actual seed10 static/live contact. That attempt was fully reverted.
+The retained fix explicitly zero-initializes the legacy fields and estimates
+motion from consecutive fresh odometry positions only inside serialized brake
+selection.
+
+The final recovery changes are:
+
+1. Cached position commands now carry a wall-time stamp and are usable as a
+   brake initial state only for 0.10 s while position and, when available,
+   velocity consistency checks pass. Otherwise brake selection uses the fresh
+   position-derived motion estimate, then the live trajectory state. Brake
+   selection is mutex-serialized across main/replan callback groups.
+2. Topology blockers are tracked per outgoing XY branch. A new direction gets
+   a blocker next to the certified stop instead of inheriting an unrelated
+   branch's forward chain index. Three consecutive A* `NO_PATH` results reset
+   the finite blocker epoch while the vehicle remains on its certified hold.
+3. An appended backup or EXP-to-backup stitch rejection no longer poisons EXP
+   topology. If only that segment fails, an EXP-only candidate may commit only
+   after the normal full geometric guard and sampled stop-viability checks.
+4. `fsm.map_readiness` is enabled in the three tight-v7 profiles so
+   `PlanFromRest` does not spin on a stale map and starve the callback needed to
+   refresh it.
+5. The simulator declared a 10 Hz GENERAL_360 LiDAR but the full-stack logs
+   often committed only about 1 scan/s. The renderer now precomputes angular
+   ray terms, iterates only the 128 active rings, vectorizes depth conversion,
+   skips disabled depth-image construction and an unused duplicate point
+   vector, and disables hidden-window vsync. Angular resolution, FoV, 128-ring
+   selection, sensing horizon, and published point representation are
+   unchanged; this is not sensor downsampling.
+6. A final short-connection failure mode was observed after the vehicle had
+   reached a certified stop about 1.8 m from the last waypoint: MINCO failed
+   more than 60 consecutive times, with no A* `NO_PATH` or guard rejection for
+   the topology logic to consume. A default-off
+   `guard_direct_goal_fallback` now allows one rest-to-rest minimum-jerk
+   candidate only from an FSM-certified stop and only within 3 m. It goes
+   through `commitTrajectoryCandidate`, including the full geometric guard and
+   every sampled stop-viability check; rejection leaves the certified hold in
+   place. The local candidate start must also remain within 0.15 m of a fresh
+   mutex-protected odometry snapshot. The final random gate did not exercise
+   this branch, so it is bounded hardening based on the reproduced stall, not a
+   separately demonstrated success mechanism.
+
+Several tempting alternatives were explicitly rejected:
+
+- Increasing map freshness to 1.50 s with a 1.25 s early-brake threshold made
+  the first repeated seed9 run complete faster but caused two static-PCD
+  contacts (minimum centre distance 0.142 m, body clearance -0.058 m). The
+  tested profiles remain at 0.75/0.55 s.
+- Feeding simulator twist globally into ROG state caused a seed10 contact and
+  was reverted.
+- Per-frame KD-tree culling made scan cadence worse, and lowering only the
+  optimizer from 15 to 10 Hz increased completion time without reducing stale
+  events. Both were reverted.
+
+The final gate used v=7, full mode, `loop24.txt`,
+`static_seedmaps_guard_viability_tight_v7_filtered.yaml`, a 140 s timeout, and
+the repaired static-PCD monitor. Each run loaded exactly 1,042,220 reference
+points.
+
+| seed | completion | waypoint | mean time | time range | worst centre distance | worst body clearance | contact |
+|:---:|---:|---:|---:|---:|---:|---:|---:|
+| 9 | 5/5 | 25/25 | 93.95 s | 84.66-117.59 s | 0.420 m | 0.220 m | 0/5 |
+| 10 | 5/5 | 25/25 | 99.09 s | 89.94-109.12 s | 0.332 m | 0.132 m | 0/5 |
+| **total** | **10/10** | **50/50** | **96.52 s** | **84.66-117.59 s** | **0.332 m** | **0.132 m** | **0/10** |
+
+The committed row-level result is
+`results/guarded_v7_full_seed9_seed10_recovery_n5_20260820.csv`. Raw logs were
+kept under `/tmp/full_recovery_directgoal_smoke_artifacts/`,
+`/tmp/full_recovery_directgoal_repeat_artifacts/`, and
+`/tmp/full_recovery_directgoal_seed10_final_artifacts/` during the session.
+After adding the final 0.15 m start-consistency condition, a separate seed10
+smoke on the rebuilt binary completed 5/5 waypoints in 83.92 s with zero
+contacts and 0.262 m static-PCD body clearance. Its raw row and artifact are
+`/tmp/full_recovery_post_tighten_seed10.csv` and
+`/tmp/full_recovery_post_tighten_seed10_artifacts/`; the concise retained row is
+`results/guarded_v7_full_seed10_post_tighten_smoke_20260820.csv`. It is
+intentionally not folded into the predeclared n=5 aggregate above.
+
+This is a local regression gate, not proof of a 100% population completion
+rate or flight readiness. Seed10's worst positive body clearance was only
+0.132 m, and the final cohort still contained many fail-closed stale-map
+events. The paper-faithful accumulated raw-cloud CIRI result remains
+shadow-only/default false and has no authority over live brake decisions.
+
+## Current status — not flight-ready; seed9/10 local gate now passes
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),
@@ -1248,6 +1339,14 @@ collision arming should not be restored. Full evidence is in
   8.10 performance regression. Section 8.12 then fixes that cohort's one
   remaining seed10 liveness failure in the live topology-recovery layer; it
   still does not grant the shadow result any authority over brake decisions.
+- **Section 8.15 supersedes 8.14's unresolved seed9/10 status.** The stale
+  command is freshness/consistency gated, recovery uses a brake-local
+  position-derived motion estimate, blockers are branch-aware and epoch
+  bounded, backup-only rejections do not corrupt EXP topology, and stale-map
+  replanning is readiness-gated. The final same-code local gate completed
+  seed9 and seed10 5/5 each with 0/10 measured static-PCD contact. This does
+  not retroactively repair 8.13's missing static-PCD data and must not be
+  presented as population or hardware proof.
 - FSM CPU was measured in 8.13: the 50-run means were 144.88% full, 140.23%
   sector, and 137.67% adaptive. Earlier cohorts still lack comparable CPU
   measurements.
@@ -1257,7 +1356,7 @@ collision arming should not be restored. Full evidence is in
 
 Do not describe `static_seedmaps_guard_viability_v7.yaml` or any of its
 `_wide`/`_tight`/`_tight_h08` variants as flight-ready. The former prerequisite
-for a larger campaign (one 5/5, zero-contact gate) is now satisfied on seed10;
-the next defensible step is a larger paired topology-recovery ablation under
-the normal shadow-off `tight_v7` profile, not connecting CIRI shadow to the
-brake decision.
+for a larger campaign (one 5/5, zero-contact gate) is now satisfied locally on
+both seed9 and seed10; the next defensible step is a larger paired regression
+under the normal shadow-off `tight_v7` profile, not connecting CIRI shadow to
+the brake decision.

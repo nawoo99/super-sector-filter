@@ -85,6 +85,13 @@ namespace fsm {
         double brake_max_duration_s{2.0};
         double brake_max_acc_mps2{15.0};
         double brake_max_jerk_mps3{120.0};
+        // A cached PositionCommand is useful for command-continuous braking,
+        // but only while it still represents the state the vehicle is
+        // tracking.  Once guard suppression stops command publication, an
+        // unbounded cache becomes a permanently stale brake initial state.
+        double brake_command_max_age_s{0.1};
+        double brake_command_max_position_error_m{0.5};
+        double brake_command_max_velocity_error_mps{2.0};
         // See super_planner::Config::trajectory_guard_unknown_as_occupied
         // for the rationale; only the emergency-brake candidate check reads
         // this flag.
@@ -170,6 +177,20 @@ namespace fsm {
                              brake_max_acc_mps2, 15.0);
             loader.LoadParam("fsm/trajectory_guard/brake_max_jerk_mps3",
                              brake_max_jerk_mps3, 120.0);
+            loader.LoadParam("fsm/trajectory_guard/brake_command_max_age_s",
+                             brake_command_max_age_s, 0.1);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/brake_command_max_position_error_m",
+                    brake_command_max_position_error_m, 0.5);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/brake_command_max_velocity_error_mps",
+                    brake_command_max_velocity_error_mps, 2.0);
+            brake_command_max_age_s = std::max(0.0,
+                                                brake_command_max_age_s);
+            brake_command_max_position_error_m = std::max(
+                    0.0, brake_command_max_position_error_m);
+            brake_command_max_velocity_error_mps = std::max(
+                    0.0, brake_command_max_velocity_error_mps);
             loader.LoadParam("fsm/trajectory_guard/unknown_as_occupied",
                              trajectory_guard_unknown_as_occupied, false);
             loader.LoadParam("fsm/trajectory_guard/raw_cloud/ciri_shadow_en",

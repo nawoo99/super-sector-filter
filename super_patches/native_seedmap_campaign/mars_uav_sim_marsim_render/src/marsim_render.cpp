@@ -42,6 +42,10 @@ namespace marsim {
         }
 
         glfwMakeContextCurrent(window);
+        // The hidden sensor framebuffer is timer-driven; synchronizing every
+        // scan to the display refresh only adds latency and cannot improve the
+        // generated depth values.
+        glfwSwapInterval(0);
         // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
         // glfwSetCursorPosCallback(window, mouse_callback);
         // glfwSetScrollCallback(window, scroll_callback);
@@ -223,16 +227,23 @@ namespace marsim {
                 }
             }
             else if (cfg_.lidar_type == GENERAL_360) {
-                pattern_matrix.setConstant(0);
+                active_image_rows_.clear();
                 double step = static_cast<double>(cfg_.height) / 128.0;
                 double random_offset = step * uniform_01(eng);
                 for (size_t i = 0; i < 128; i++) {
                     int y = round(i * step + random_offset);
                     y = CLAMP(y, 0, cfg_.height-1);
-                    for (int j = 0; j < cfg_.width; j++) {
-                        pattern_matrix(j, y) = 2;
+                    const int image_row = cfg_.height - 1 - y;
+                    if (std::find(active_image_rows_.begin(),
+                                  active_image_rows_.end(), image_row) ==
+                        active_image_rows_.end()) {
+                        // The renderer's pattern elevation is unflipped;
+                        // read_depth flips the image before conversion.
+                        active_image_rows_.push_back(image_row);
                     }
                 }
+                std::sort(active_image_rows_.begin(),
+                          active_image_rows_.end());
             }
             else if (cfg_.lidar_type == MID_360) {
                 pattern_matrix.setConstant(0);
@@ -302,10 +313,6 @@ namespace marsim {
         glfwMakeContextCurrent(window);
         if (!glfwGetCurrentContext()) {
             std::cerr << "OpenGL context is not current." << std::endl;
-            return;
-        }
-        if (!glfwInit()) {
-            std::cerr << "Failed to initialize GLFW." << std::endl;
             return;
         }
         GLenum err;
@@ -504,28 +511,36 @@ namespace marsim {
                                            vec_E<Vec3f>& depth_ptcloud_vec) {
         origin_cloud->points.clear();
         depth_ptcloud_vec.clear();
-        const auto u0 = cfg_.width * 0.5;
-        const auto v0 = cfg_.height * 0.5;
+        const std::size_t expected_points = cfg_.lidar_type == GENERAL_360
+                ? static_cast<std::size_t>(cfg_.width) *
+                        active_image_rows_.size()
+                : static_cast<std::size_t>(cfg_.width) * cfg_.height;
+        origin_cloud->points.reserve(expected_points);
 
-        cv::Mat pattern_image = cv::Mat::zeros(cfg_.height, cfg_.width, CV_32F);
+        // pattern_image is visualization-only. Allocating and initializing a
+        // full frame when depth_image_en=false changed no published points.
+        cv::Mat pattern_image;
+        if (cfg_.depth_image_en) {
+            pattern_image = cv::Mat::zeros(
+                    cfg_.height, cfg_.width, CV_32F);
+            pattern_image.setTo(30.0f);
+        }
 
-        const auto polar_resolution_rad = cfg_.polar_resolution / 180.0 * M_PI;
-        for (int v = 0; v < cfg_.height; v++) {
+        const auto convert_row = [&](const int v,
+                                     const bool full_general_360_row) {
+            const decimal_t sin_elevation = ray_sin_elevation_[v];
+            const decimal_t cos_elevation = ray_cos_elevation_[v];
             for (int u = 0; u < cfg_.width; u++) {
-                pattern_image.at<float>(v, u) = 30;
-                if (pattern_matrix(u, (cfg_.height - 1 - v)) > 0) {
+                if (full_general_360_row ||
+                    pattern_matrix(u, (cfg_.height - 1 - v)) > 0) {
                     float depth = depth_image.at<float>(v, u);
-                    // if(v == v0 && u == (int)(u0))
-                    // {
-                    //     std::cout << "depth = " << depth << std::endl;
-                    // }
                     if (depth > cfg_.sensing_blind && depth < (cfg_.sensing_horizon - 0.1)) {
                         Eigen::Vector3f temp_point, temp_point_world;
-                        temp_point(0) = depth * cos(polar_resolution_rad * (v - v0)) * sin(
-                            polar_resolution_rad * (u - u0));
-                        temp_point(1) = -depth * sin(polar_resolution_rad * (v - v0));
-                        temp_point(2) = -depth * cos(polar_resolution_rad * (v - v0)) * cos(
-                            polar_resolution_rad * (u - u0));
+                        temp_point(0) = depth * cos_elevation *
+                                ray_sin_azimuth_[u];
+                        temp_point(1) = -depth * sin_elevation;
+                        temp_point(2) = -depth * cos_elevation *
+                                ray_cos_azimuth_[u];
 
                         temp_point_world = camera2world * (temp_point) + camera;
 
@@ -535,18 +550,16 @@ namespace marsim {
                         temp_pclpt.z = temp_point_world(2);
                         temp_pclpt.intensity = density_matrix(v, u);
                         origin_cloud->points.push_back(temp_pclpt);
-                        depth_ptcloud_vec.push_back(temp_point_world);
 
-                        pattern_image.at<float>(v, u) = depth;
+                        if (cfg_.depth_image_en) {
+                            pattern_image.at<float>(v, u) = depth;
+                        }
                     }
                     else if (depth >= (cfg_.sensing_horizon - 0.1)) {
                         Eigen::Vector3f temp_point, temp_point_world;
-
-                        temp_point(0) = depth * cos(polar_resolution_rad * (v - v0)) * sin(
-                            polar_resolution_rad * (u - u0));
-                        temp_point(1) = -depth * sin(polar_resolution_rad * (v - v0));
-                        temp_point(2) = -depth * cos(polar_resolution_rad * (v - v0)) * cos(
-                            polar_resolution_rad * (u - u0));
+                        temp_point(0) = cos_elevation * ray_sin_azimuth_[u];
+                        temp_point(1) = -sin_elevation;
+                        temp_point(2) = -cos_elevation * ray_cos_azimuth_[u];
 
                         temp_point.normalize();
                         temp_point = 2 * cfg_.sensing_horizon * temp_point;
@@ -561,10 +574,23 @@ namespace marsim {
                             temp_pclpt.z = temp_point_world(2);
                             temp_pclpt.intensity = density_matrix(v, u);
                             origin_cloud->points.push_back(temp_pclpt);
-                            depth_ptcloud_vec.push_back(temp_point_world);
                         }
                     }
                 }
+            }
+        };
+
+        if (cfg_.lidar_type == GENERAL_360 &&
+            !active_image_rows_.empty()) {
+            // GENERAL_360 emits complete horizontal rings. Iterate only its
+            // 128 active image rows instead of scanning all ~445 rows to ask
+            // pattern_matrix whether each pixel is inactive.
+            for (const int v : active_image_rows_) {
+                convert_row(v, true);
+            }
+        } else {
+            for (int v = 0; v < cfg_.height; ++v) {
+                convert_row(v, false);
             }
         }
 
@@ -586,13 +612,13 @@ namespace marsim {
         cv::Mat adjMap;
         double min;
         double max;
-        for (int i = 0; i < depth_mat.rows; ++i) {
-            for (int j = 0; j < depth_mat.cols; ++j) {
-                float depth = depth_mat.at<float>(i, j);
-                // depth_mat.at<float>(i, j) = Licfg_.sensing_blindizeDepth(depth,cfg_.sensing_blind,cfg_.sensing_horizon);
-                // depth_mat.at<float>(i, j) = regainrealdepth(depth,cfg_.sensing_blind,cfg_.sensing_horizon);
-                depth_mat.at<float>(i, j) = 2 * (depth - 0.5) * cfg_.sensing_horizon; //
-            }
+        // OpenCV performs the same affine depth conversion with vectorized
+        // kernels. The 8-bit colormap below is only needed by the optional
+        // UI; the LiDAR point conversion consumes depth_mat itself.
+        depth_mat -= 0.5f;
+        depth_mat *= static_cast<float>(2.0 * cfg_.sensing_horizon);
+        if (!cfg_.depth_image_en) {
+            return cm_img0;
         }
         minMaxLoc(depth_mat, &min, &max, 0, 0);
         depth_mat.convertTo(adjMap, CV_8UC1, 255.0 / (max - min), -min);
