@@ -1,5 +1,13 @@
 # Strict v7 Full/Sector/Adaptive seed1-10 × n=5
 
+> **2026-08-23 native 후속:** strict Adaptive를 별도 C++ ROS2 node로 옮긴
+> seed1-10 n=1 두 cohort는 모두 raw/static-safe 10/10이었다. 정확한 CPU cohort의
+> filter/전체 CPU-work는 2.522/54.559 CPU-s/mission으로 Python Adaptive보다
+> 76.17%/14.88% 낮고 Full보다 전체가 2.44% 낮게 관측됐다. 다만 seed10 live-only
+> 경계 event 1회(static contact 0)가 있었고 n=1-per-seed라 아래 n=50 결과를
+> 대체하지 않는다. 상세는 `docs/adaptive_cpp_v7_n1_20260823.md`와 viability
+> §8.19를 볼 것.
+
 > **후속 결과:** 이 문서 아래의 `Adaptive liveness 복구와 발행률 제한` 절이
 > 최초 Adaptive 49/50 행을 대체한다. 최종 별도 Adaptive cohort는 50/50
 > raw/safe completion과 접촉 0을 관측했고, Full 대비 mapping throughput은

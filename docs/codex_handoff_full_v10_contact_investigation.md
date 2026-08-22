@@ -1,6 +1,37 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-23 native C++ Adaptive 후속 — Python CPU 병목은 n=1-per-seed
+> smoke에서 해소됐다.** strict Adaptive 정책은 바꾸지 않고 별도 ROS2 C++ node
+> `native_sector_cpp`로 옮겼다. 캠페인은 `--filter-backend cpp`로 선택하며 기본은
+> 계속 Python이다. seed12-15 trap-event 계측은 아직 C++ 미지원이라 runner가 해당
+> 조합을 명시적으로 거절한다.
+>
+> 첫 실제-cloud pilot은 MARSIM raw point stride 32 bytes를 그대로 복사해 Python
+> `create_cloud()`의 packed 20-byte 출력과 달랐다. seed4에서 `fsm_node`가 약
+> 9.1 GiB RSS 후 OOM-kill됐다. 선언된 field만 20 bytes로 재포장한 뒤 seed4 smoke와
+> seed1-10 n=1 두 cohort에서 OOM은 재현되지 않았다. 합성 Python/C++ 출력 점·dense
+> flag·통계도 일치했다. 러너는 이제 임무 중 FSM/filter 종료를 infrastructure
+> retry하며 C++ CPU는 wrapper가 아닌 실제 argv0 PID를 잰다.
+>
+> 두 C++ cohort 모두 raw/static-safe **10/10**이었다. 첫 기능 cohort는 live/static
+> 접촉 0이었다. 정확한 CPU cohort는 static 접촉 0이지만 seed10 이륙 초기에
+> live-only 0.1995 m threshold event 1회가 있었고, 같은 run의 static PCD는 centre
+> 0.321 m/body +0.121 m/contact 0이었다. 따라서 모든 detector 0이라고 합치지 말 것.
+>
+> 정확한 CPU cohort의 C++ filter는 2.522 CPU-s/mission, FSM+filter는
+> 54.559 CPU-s/mission이었다. 이전 Python Adaptive n=50 대비 filter/전체 work는
+> 76.17%/14.88% 감소했고, Full direct n=50보다 전체가 2.44% 낮게 관측됐다.
+> mapping points/throughput/time/work도 Full 대비 26.44%/25.92%/28.67%/44.21%
+> 감소했다. 그러나 C++은 seed당 1회이고 비교 cohort는 서로 unpaired다. §8.18의
+> n=50 결과를 대체하거나 population/end-to-end CPU 확정으로 쓰지 말고 native n=5
+> gate를 다음 단계로 수행할 것. raw-cloud CIRI는 계속 default false다.
+>
+> 상세는 `docs/adaptive_cpp_v7_n1_20260823.md`, viability §8.19,
+> `results/adaptive_cpp_strict_v7_n1_cpu_raw_20260823.csv`,
+> `results/adaptive_cpp_strict_v7_n1_summary_20260823.csv`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-22 Adaptive liveness 후속 — 바로 아래 strict v7 배너의 Adaptive
 > 49/50을 대체한다.** Full/Sector 코드는 바꾸지 않고 Adaptive filter의 replan
 > recovery를 bounded one-shot으로 만들었다. 0.25 s burst/1.75 s cooldown broad

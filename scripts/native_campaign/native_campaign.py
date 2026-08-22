@@ -20,6 +20,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 LOOP_MON = os.path.join(SCRIPT_DIR, "native_loop_monitor.py")
 REFERENCE_MON = os.path.join(SCRIPT_DIR, "native_reference_monitor.py")
 SECTOR = os.path.join(SCRIPT_DIR, "native_sector.py")
+SECTOR_CPP_EXECUTABLE = "native_sector_cpp"
 SEED12_SCENARIO = os.path.join(SCRIPT_DIR, "native_seed12_scenario.py")
 RECOVERY_SCENARIO = os.path.join(SCRIPT_DIR, "native_recovery_scenario.py")
 RECOVERY_MISSION = os.path.join(SCRIPT_DIR, "native_recovery_mission.py")
@@ -130,6 +131,24 @@ class CpuMeter:
         self.ticks0 = proc_ticks(pid)
         self.t_last = self.t0
         self.ticks_last = self.ticks0
+
+    def start_executable(self, executable_name):
+        """Select the real executable, not a `ros2 run`/shell wrapper."""
+        candidates = []
+        for pid in pgrep(self.pattern):
+            try:
+                argv0 = open(f"/proc/{pid}/cmdline", "rb").read().split(b"\0", 1)[0]
+                argv0 = os.path.basename(os.fsdecode(argv0))
+            except OSError:
+                continue
+            if argv0 == executable_name:
+                candidates.append(pid)
+        if not candidates:
+            self.start()
+            return
+        # There should be one campaign-owned process. If teardown lag leaves
+        # another match, prefer the newest PID instead of wrapper CPU history.
+        self.start_pid(max(candidates))
 
     def sample(self):
         if self.pid is None:
@@ -305,6 +324,7 @@ RAW_DIRECT_REF_MODES = frozenset(
 )
 
 FIELDS = ["map", "run", "mode", "experiment_profile", "filter_profile",
+          "filter_backend",
           "success", "run_valid",
           "monitor_type", "monitor_flight_cpu_pct", "live_cloud_enabled", "preflight_ready",
           "preflight_cloud_messages", "preflight_odom_messages", "goal_messages",
@@ -439,6 +459,7 @@ def log(msg):
 
 def kill_all():
     for n in ("perfect_drone_node", "fsm_node", "waypoint_mission", "native_sector.py",
+              "native_sector_cpp",
               "native_loop_monitor.py", "native_reference_monitor.py",
               "native_seed12_scenario.py",
               "native_recovery_scenario.py", "native_recovery_mission.py"):
@@ -522,7 +543,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             seedmap_super_config_override=None,
             seedmap_static_pcd=False,
             loop_timeout_override=None,
-            filter_profile="legacy"):
+            filter_profile="legacy",
+            filter_backend="python"):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
     is_seed12 = (map_name == "seed12")
@@ -729,11 +751,16 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             filter_options += " --input-topic /cloud_recovery"
         filt_proc = None
         if not raw_direct:
+            filter_command = (
+                f"python3 {SECTOR}"
+                if filter_backend == "python"
+                else f"ros2 run mission_planner {SECTOR_CPP_EXECUTABLE}"
+            )
             filt_proc = subprocess.Popen(
                 [
                     "bash",
                     "-c",
-                    f"{ROS_ENV} && python3 {SECTOR} {base_mode}{filter_options} "
+                    f"{ROS_ENV} && {filter_command} {base_mode}{filter_options} "
                     f"> {filt_log} 2>&1",
                 ],
                 preexec_fn=os.setsid,
@@ -885,10 +912,16 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
 
         row_start = perf_row_count()
         fsm_cpu = CpuMeter("fsm_node")
-        filt_cpu = CpuMeter("native_sector.py")
+        filt_cpu = CpuMeter(
+            "native_sector.py"
+            if filter_backend == "python" else SECTOR_CPP_EXECUTABLE
+        )
         fsm_cpu.start()
         if filt_proc is not None:
-            filt_cpu.start()
+            if filter_backend == "cpp":
+                filt_cpu.start_executable(SECTOR_CPP_EXECUTABLE)
+            else:
+                filt_cpu.start()
 
         if is_reference_ablation:
             waypoint_config = REFERENCE_ABLATION_PROFILES[mode]["waypoint_config"]
@@ -939,9 +972,26 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         # reports 0%. Resolve the actual monitor process by command pattern.
         monitor_cpu.start()
         monitor_deadline = time.monotonic() + timeout + 30
+        runtime_process_failure = None
         while mon_proc.poll() is None and time.monotonic() < monitor_deadline:
             time.sleep(1.0)
             monitor_cpu.sample()
+            if not pgrep("/fsm_node"):
+                runtime_process_failure = "fsm_node exited during mission"
+                break
+            if filt_proc is not None and filt_proc.poll() is not None:
+                runtime_process_failure = "filter exited during mission"
+                break
+        if runtime_process_failure is not None:
+            log(
+                f"  {tag} attempt {attempt}/{attempt_max}: "
+                f"{runtime_process_failure} -> retry"
+            )
+            kill_group(mon_proc)
+            kill_group(filt_proc)
+            kill_group(launch_proc)
+            kill_all()
+            continue
         if mon_proc.poll() is None:
             log(f"  {tag}: monitor HUNG -> kill")
             kill_group(mon_proc)
@@ -972,6 +1022,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         rec = {"map": map_name, "run": run, "mode": mode,
                "experiment_profile": mode if is_reference_ablation else None,
                "filter_profile": filter_profile,
+               "filter_backend": filter_backend if filt_proc is not None else "direct",
                "perf_row_start": row_start, "perf_row_end": row_end, "kept_pct": kept_pct,
                "fsm_cpu_pct": fsm_cpu_pct, "filter_cpu_pct": filter_cpu_pct,
                "monitor_cpu_pct": monitor_cpu_pct,
@@ -1183,7 +1234,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
 
     return {"map": map_name, "run": run, "mode": mode,
             "experiment_profile": mode if mode in REFERENCE_ABLATION_PROFILES else None,
-            "filter_profile": filter_profile,
+            "filter_profile": filter_profile, "filter_backend": filter_backend,
             "success": False, "run_valid": False}
 
 
@@ -1233,6 +1284,15 @@ def main():
         ),
     )
     ap.add_argument(
+        "--filter-backend",
+        choices=("python", "cpp"),
+        default="python",
+        help=(
+            "implementation of /cloud_registered -> /cloud_sector; the C++ "
+            "backend currently supports static seed1..10 campaigns"
+        ),
+    )
+    ap.add_argument(
         "--artifacts-dir",
         help="copy each run's monitor JSON, including contact context, here",
     )
@@ -1250,6 +1310,18 @@ def main():
             ap.error(
                 "seedmap config/static-PCD overrides support only seed1..10; "
                 f"unsupported maps: {', '.join(invalid_maps)}"
+            )
+
+    if args.filter_backend == "cpp":
+        unsupported_maps = [
+            map_name for map_name in args.maps
+            if map_name in ("seed12", "seed13", "seed14", "seed15")
+        ]
+        if unsupported_maps:
+            ap.error(
+                "the C++ backend does not yet implement dynamic trap-event "
+                "instrumentation; use --filter-backend python for: "
+                + ", ".join(unsupported_maps)
             )
 
     if any(mode in RAW_DIRECT_REF_MODES for mode in args.modes):
@@ -1300,6 +1372,7 @@ def main():
                         seedmap_static_pcd=args.seedmap_static_pcd,
                         loop_timeout_override=args.loop_timeout,
                         filter_profile=args.filter_profile,
+                        filter_backend=args.filter_backend,
                     )
                     w.writerow(rec); f.flush()
                     done += 1

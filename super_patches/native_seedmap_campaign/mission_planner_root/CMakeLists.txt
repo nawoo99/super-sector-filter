@@ -65,8 +65,18 @@ add_executable(waypoint_mission
         Apps/ros2_waypoint_mission.cpp
 )
 
+add_executable(native_sector_cpp
+        Apps/native_sector_cpp.cpp
+)
+
 ament_target_dependencies(waypoint_mission PUBLIC
         ${dependencies}
+)
+ament_target_dependencies(native_sector_cpp PUBLIC
+        rclcpp
+        sensor_msgs
+        nav_msgs
+        std_msgs
 )
 target_link_libraries(waypoint_mission PUBLIC
         ${THIRD_PARTY}
@@ -88,7 +98,7 @@ install(
 
 # 注册 导出库文件
 install(
-        TARGETS waypoint_mission # 告诉ros2有这么个目标（可执行文件或者库）
+        TARGETS waypoint_mission native_sector_cpp # 告诉ros2有这么个目标（可执行文件或者库）
         EXPORT waypoint_mission
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib

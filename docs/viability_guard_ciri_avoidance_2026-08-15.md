@@ -1448,9 +1448,72 @@ Full details and caveats are in the follow-up section of
 `results/adaptive_replan060_cap5_strict_v7_n5_raw_20260822.csv`, and
 `results/strict_v7_adaptive_recovery_n5_summary_20260822.csv`.
 
-## Current status — Adaptive liveness recovered in the latest observed cohort
+### 8.19 Native C++ Adaptive filter smoke and CPU gate (2026-08-23)
 
-- **Section 8.18 is the current Adaptive result; 8.17 remains the Full/Sector
+The Python strict-Adaptive cloud path was ported without changing its policy
+parameters to a standalone ROS2 C++ node, `native_sector_cpp`. It implements
+the velocity-aligned sector, speed halo, adaptive arm/stall/resume state,
+bounded one-shot replan guard, accumulated-deadline 5 Hz cap, state topics,
+and compatible stats JSON. The campaign defaults to Python and selects the
+new node only with `--filter-backend cpp`. Dynamic seed12-15 trap-event
+instrumentation is not yet ported; the runner rejects that combination rather
+than silently omitting it.
+
+Synthetic PointCloud2 comparison matched Python/C++ retained points, dense
+flag, and frame/point counters. The first real-cloud pilot nevertheless found
+an important representation mismatch: MARSIM input has a 32-byte point stride
+while its declared x/y/z/intensity fields end at byte 20. Python
+`create_cloud()` repacks that record to 20 bytes, while the first C++ version
+copied all 32 bytes. That pilot completed seeds 1-3 but seed4's `fsm_node`
+reached about 9.1 GiB RSS and was OOM-killed. The C++ output now uses the same
+20-byte packed field layout. A seed4 smoke and two subsequent seed1-10
+cohorts did not reproduce the OOM. This before/after is strong diagnostic
+evidence, but one failed pilot is not enough to attribute every RSS change
+universally to point stride alone. The runner also now retries if the FSM or
+filter exits during a mission.
+
+Two independent seed1-10 x n=1 C++ cohorts both observed 10/10 raw completion
+and 10/10 static-PCD-contact-free completion. The first functional cohort had
+zero live and static contact. Its C++ CPU values were not used because the
+meter selected a `ros2 run` wrapper for seeds 7 and 8. The corrected meter
+matches `/proc/<pid>/cmdline` argv0 to the actual executable. The second CPU
+cohort recorded a nonzero 2.32-3.16% filter CPU for every seed and again had
+zero static contact. It had one live-only seed10 event: centre distance
+0.1995 m at 2.7325 s and 0.627 m/s, while the fixed static PCD reported a
+minimum centre distance of 0.321 m, positive 0.121 m body clearance, and zero
+contact. It is not classified as physical static-map penetration, but the CPU
+cohort must not be described as zero on every detector.
+
+Time/update-weighted results for the corrected n=10 cohort were: input,
+publication, and map rates 5.577/3.725/2.998 Hz; 19,978 points/update;
+59.900 kpts/s; 16.385 ms mapping/update; and 4.488 s mapping work/mission.
+FSM/filter/combined CPU-work was 52.037/2.522/54.559 CPU-s/mission. Against
+the unchanged 8.17 Full n=50 baseline, processed points, throughput, mapping
+time/update, and mapping work/mission fell 26.44%, 25.92%, 28.67%, and 44.21%;
+combined CPU-work was 2.44% lower. Against the 8.18 Python Adaptive n=50
+cohort, filter and total CPU-work fell 76.17% and 14.88%.
+
+These are unpaired, different-sized, different-session cohorts. The native
+result is an n=1-per-seed architecture/CPU smoke, not an n=50 replacement or
+population claim. It supports proceeding to a seed1-10 x n=5 native gate;
+until that passes, section 8.18 remains the broader Adaptive safety/liveness
+result and section 8.19 only removes the immediate Python-CPU objection at
+smoke scale. Full details are in `docs/adaptive_cpp_v7_n1_20260823.md`; raw
+and summary files are `results/adaptive_cpp_strict_v7_*_20260823.csv` and
+`results/adaptive_cpp_strict_v7_n1_summary_20260823.csv`. Raw-cloud CIRI
+remains shadow-only/default false.
+
+## Current status — native Adaptive passed n=1-per-seed; n=5 still pending
+
+- **Section 8.18 remains the broad Adaptive result; 8.19 is the native CPU
+  smoke; 8.17 remains the Full/Sector baseline:** The native C++ filter passed
+  two seed1-10 x n=1 cohorts with 10/10 raw and static-safe completion in both.
+  The corrected CPU cohort measured 54.56 combined CPU-s/mission, 2.44% below
+  Full and 14.88% below Python Adaptive, but also had one live-only 0.1995 m
+  boundary event on seed10 while static PCD clearance stayed +0.121 m. Repeat
+  n=5 before promoting the end-to-end CPU result or claiming every detector
+  remained contact-free.
+- **Section 8.18 is the current n=50 Adaptive result; 8.17 remains the Full/Sector
   baseline:** Full direct observed 50/50 raw and
   safe completion with zero contact; fixed Sector observed 50/50 raw but
   46/50 safe completion with four independently confirmed contact runs;
@@ -1541,7 +1604,8 @@ Do not describe `static_seedmaps_guard_viability_v7.yaml` or any of its
 `_wide`/`_tight`/`_tight_h08` variants as flight-ready. The current strict
 baseline and follow-up establish the intended descriptive safety/mapping-work
 pattern and observed 50/50 Adaptive liveness, but not population completion or
-end-to-end CPU reduction. Follow-up should move the Python filter into a native
-implementation and repeat the CPU/safety/liveness gate while retaining the
+end-to-end CPU reduction at n=50. Section 8.19 has moved the filter into a
+native implementation and passed an n=1-per-seed CPU/safety/liveness smoke;
+follow-up should repeat that native gate at n=5 while retaining the
 static-PCD monitor, fixed-Sector control, and CIRI shadow's non-authoritative
 default-off status.
