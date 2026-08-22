@@ -381,7 +381,9 @@ FIELDS = ["map", "run", "mode", "experiment_profile", "filter_profile",
           "matched_prefix",
           "filter_half_angle_deg", "filter_stall_v", "filter_stall_t",
           "filter_resume_v", "filter_resume_t", "filter_velocity_yaw_update_v",
-          "filter_frames", "filter_input_points", "filter_kept_points",
+          "filter_frames", "filter_published_frames",
+          "filter_rate_limited_frames", "filter_max_publish_hz",
+          "filter_publish_duty_pct", "filter_input_points", "filter_kept_points",
           "filter_kept_pct", "filter_armed", "filter_armed_duty_pct",
           "filter_open", "filter_open_duty_pct", "filter_open_point_duty_pct",
           "filter_recovery_active", "filter_open_burst_s",
@@ -397,7 +399,9 @@ FIELDS = ["map", "run", "mode", "experiment_profile", "filter_profile",
           "filter_first_open_duration_s", "filter_stall_candidate_count",
           "filter_max_stall_candidate_duration_s",
           "filter_min_armed_closed_speed_mps",
-          "filter_replan_guard_en", "filter_replan_fail_streak_open",
+          "filter_replan_guard_en", "filter_replan_guard_bounded",
+          "filter_replan_guard_active", "filter_replan_guard_burst_s",
+          "filter_replan_guard_cooldown_s", "filter_replan_fail_streak_open",
           "filter_replan_ok_streak_close", "filter_replan_guard_open",
           "filter_replan_guard_open_transitions",
           "filter_replan_guard_close_transitions",
@@ -702,13 +706,18 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             # keeps velocity alignment and stall recovery, but recovery uses
             # bounded full-cloud bursts instead of the legacy nearly
             # continuous replan-failure opening.
-            filter_options += " --no-replan-guard"
             if base_mode == "adaptive":
                 filter_options += (
                     " --open-burst-s 0.6 --open-cooldown-s 1.4"
+                    " --bounded-replan-guard --replan-fail-streak-open 3"
+                    " --replan-open-burst-s 0.6"
+                    " --replan-open-cooldown-s 1.4"
+                    " --max-publish-hz 5.0"
                     " --near-field-speed-gain-s 0.2"
                     " --near-field-max-radius-m 3.0"
                 )
+            else:
+                filter_options += " --no-replan-guard"
         if is_dynamic:
             filter_options += (
                 f" --input-topic /cloud_seed12 --track-trap "

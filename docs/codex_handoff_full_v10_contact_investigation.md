@@ -1,6 +1,35 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-22 Adaptive liveness 후속 — 바로 아래 strict v7 배너의 Adaptive
+> 49/50을 대체한다.** Full/Sector 코드는 바꾸지 않고 Adaptive filter의 replan
+> recovery를 bounded one-shot으로 만들었다. 0.25 s burst/1.75 s cooldown broad
+> 결과는 seed9 run5가 waypoint 3/5에서 240 s timeout되어 49/50이었으므로
+> 불채택했다. 정지점 `(18.633, -24.281, 1.332)`은 static body clearance
+> +0.091 m로 접촉은 아니었지만 CIRI 시작점이 infeasible해져 같은 fallback을
+> 반복 거절한 liveness 실패였다.
+>
+> 최종 Adaptive는 replan failure 3연속마다 **0.6 s full-cloud one-shot,
+> 1.4 s cooldown**을 사용하고 filtered cloud publication만 최대 5 Hz로 제한한다.
+> input callback과 recovery 상태 갱신은 생략하지 않는다. 실제 관측값은 input
+> 6.509 Hz, publish 4.188 Hz, map commit 3.132 Hz다. v=7, `loop24.txt`, timeout
+> 240 s, static PCD, seed1-10 각 n=5의 별도 후속 cohort에서 Adaptive는 raw/safe
+> **50/50**, live/static 접촉 **0/50**, 최악 body clearance **+0.100 m**를
+> 관측했다. seed9은 targeted 5/5와 broad 5/5에서 각각 통과했다.
+>
+> 8.17의 변경 없는 Full 기준 대비 Adaptive 처리점/update **29.22% 감소**,
+> 처리량 **25.55% 감소**, mapping/update **32.40% 감소**, 임무당 mapping work
+> **46.29% 감소**다. 단 Python filter까지 합친 FSM+filter CPU-work는 Full보다
+> **14.61% 높다**. 따라서 mapping-work 감소만 주장할 수 있고 end-to-end CPU
+> 감소는 아직 아니다. Full/Sector와 새 Adaptive는 서로 다른 캠페인이어서 paired
+> McNemar 대상도 아니다. 관측 50/50은 population/flight-ready 보장이 아니며
+> raw-cloud CIRI는 계속 shadow-only/default false다.
+>
+> 상세/원시는 `docs/strict_v7_3mode_n5_20260822.md` 후속 절, viability 문서
+> §8.18, `results/adaptive_replan060_cap5_strict_v7_n5_raw_20260822.csv`,
+> `results/strict_v7_adaptive_recovery_n5_summary_20260822.csv`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-22 strict v7 결과 — 아래 2026-08-21 배너의 설정과 결론을
 > 대체한다.** 이전 sector/adaptive는 wall-time의 약 91% 동안 full-open이라 입력점을
 > 약 3%밖에 줄이지 못해 사용자가 의도한 ablation이 아니었다. 새 `strict-burst`는

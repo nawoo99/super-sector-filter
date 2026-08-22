@@ -44,6 +44,13 @@ def parse_args():
     parser.add_argument("half_angle_deg", nargs="?", type=float, default=60.0)
     parser.add_argument("--input-topic", default="/cloud_registered")
     parser.add_argument("--output-topic", default="/cloud_sector")
+    parser.add_argument(
+        "--max-publish-hz", type=float, default=0.0,
+        help=(
+            "maximum filtered-cloud publish rate; zero disables rate "
+            "limiting (input callbacks and recovery state still update)"
+        ),
+    )
     parser.add_argument("--track-trap", action="store_true")
     parser.add_argument(
         "--sector-until-trap",
@@ -68,6 +75,27 @@ def parse_args():
     parser.add_argument(
         "--no-replan-guard", action="store_true",
         help="disable the replan-failure-triggered full-open safety valve",
+    )
+    parser.add_argument(
+        "--bounded-replan-guard", action="store_true",
+        help=(
+            "route replan-failure recovery through bounded full-cloud bursts "
+            "instead of holding the filter continuously open"
+        ),
+    )
+    parser.add_argument(
+        "--replan-open-burst-s", type=float,
+        help=(
+            "duration of each bounded replan-triggered full-cloud burst; "
+            "defaults to open-burst-s"
+        ),
+    )
+    parser.add_argument(
+        "--replan-open-cooldown-s", type=float,
+        help=(
+            "cooldown after each bounded replan burst; defaults to "
+            "open-cooldown-s"
+        ),
     )
     parser.add_argument(
         "--near-field-radius-m", type=float, default=1.5,
@@ -119,6 +147,10 @@ class SectorFilter(Node):
         self.kept = 0
         self.total = 0
         self.frames = 0
+        self.published_frames = 0
+        self.rate_limited_frames = 0
+        self.max_publish_hz = args.max_publish_hz
+        self.next_publish_time_s = None
         self.open = False
         self.effective_recovery_open = False
         self.open_burst_s = args.open_burst_s
@@ -163,7 +195,21 @@ class SectorFilter(Node):
         self.replan_guard_en = not args.no_replan_guard
         self.replan_fail_streak_open = args.replan_fail_streak_open
         self.replan_ok_streak_close = args.replan_ok_streak_close
+        self.replan_guard_bounded = args.bounded_replan_guard
+        self.replan_guard_burst_s = (
+            args.replan_open_burst_s
+            if args.replan_open_burst_s is not None
+            else self.open_burst_s
+        )
+        self.replan_guard_cooldown_s = (
+            args.replan_open_cooldown_s
+            if args.replan_open_cooldown_s is not None
+            else self.open_cooldown_s
+        )
+        self.replan_guard_active = False
         self.replan_guard_open = False
+        self.replan_guard_burst_until_s = None
+        self.replan_guard_next_burst_s = None
         self.replan_fail_streak = 0
         self.replan_ok_streak = 0
         self.replan_guard_open_frames = 0
@@ -179,6 +225,8 @@ class SectorFilter(Node):
         self.resume_t = self.RESUME_T if args.resume_t is None else args.resume_t
         if min(self.stall_v, self.stall_t, self.resume_v, self.resume_t) < 0.0:
             raise ValueError("adaptive thresholds must be non-negative")
+        if self.max_publish_hz < 0.0:
+            raise ValueError("max-publish-hz must be non-negative")
         if min(self.open_burst_s, self.open_cooldown_s) < 0.0:
             raise ValueError("adaptive burst durations must be non-negative")
         if min(
@@ -190,6 +238,15 @@ class SectorFilter(Node):
         if self.near_field_max_radius_m < self.near_field_radius_m:
             raise ValueError(
                 "near-field-max-radius-m must be at least near-field-radius-m"
+            )
+        if min(
+            self.replan_guard_burst_s,
+            self.replan_guard_cooldown_s,
+        ) < 0.0:
+            raise ValueError("replan burst durations must be non-negative")
+        if self.replan_guard_bounded and self.replan_guard_burst_s <= 0.0:
+            raise ValueError(
+                "bounded-replan-guard requires a positive replan burst"
             )
         if self.resume_v <= self.stall_v:
             raise ValueError("resume-v must be greater than stall-v")
@@ -215,8 +272,13 @@ class SectorFilter(Node):
         self.create_timer(1.0, self.publish_periodic_state)
         self.create_timer(5.0, self.report)
         self.get_logger().info(
-            "%s mode, half-angle %.1f deg, input %s"
-            % (self.mode, args.half_angle_deg, args.input_topic)
+            "%s mode, half-angle %.1f deg, input %s, publish cap %.2f Hz"
+            % (
+                self.mode,
+                args.half_angle_deg,
+                args.input_topic,
+                self.max_publish_hz,
+            )
         )
         if self.mode in self.STATEFUL_MODES:
             self.get_logger().info(
@@ -237,6 +299,26 @@ class SectorFilter(Node):
 
     def now(self):
         return self.get_clock().now().nanoseconds * 1e-9
+
+    def should_publish_cloud(self, now):
+        """Apply a deadline-based publication cap without delaying input state."""
+        if self.max_publish_hz <= 0.0:
+            return True
+        publish_period_s = 1.0 / self.max_publish_hz
+        if self.next_publish_time_s is None:
+            self.next_publish_time_s = now + publish_period_s
+            return True
+        if now < self.next_publish_time_s:
+            self.rate_limited_frames += 1
+            return False
+
+        # Advance the ideal deadline, rather than resetting it to the current
+        # input timestamp.  Resetting on every publication quantizes a 5--7 Hz
+        # input down to every second frame (~3 Hz) even when the cap is 4 Hz.
+        elapsed_s = now - self.next_publish_time_s
+        periods = math.floor(elapsed_s / publish_period_s) + 1
+        self.next_publish_time_s += periods * publish_period_s
+        return True
 
     def start_recovery_burst(self, now):
         """Start a bounded full-cloud burst, or legacy sustained opening."""
@@ -275,6 +357,55 @@ class SectorFilter(Node):
         self.effective_recovery_open = False
         self.open_burst_until_s = None
         self.next_open_burst_s = None
+
+    def start_replan_guard_burst(self, now):
+        """Open the replan valve once, respecting the configured bound."""
+        was_open = self.replan_guard_open
+        self.replan_guard_open = True
+        if self.replan_guard_bounded:
+            self.replan_guard_burst_until_s = now + self.replan_guard_burst_s
+            self.replan_guard_next_burst_s = (
+                self.replan_guard_burst_until_s
+                + self.replan_guard_cooldown_s
+            )
+        else:
+            self.replan_guard_burst_until_s = None
+            self.replan_guard_next_burst_s = None
+        if not was_open:
+            self.replan_guard_open_transitions += 1
+            if self.first_replan_guard_open_time_s is None:
+                self.first_replan_guard_open_time_s = round(now, 6)
+
+    def update_replan_guard_burst(self, now):
+        """Expire a bounded one-shot replan burst on cloud arrival."""
+        was_open = self.replan_guard_open
+        if not self.replan_guard_active:
+            self.replan_guard_open = False
+        elif not self.replan_guard_bounded:
+            self.replan_guard_open = True
+        else:
+            self.replan_guard_open = (
+                self.replan_guard_burst_until_s is not None
+                and now < self.replan_guard_burst_until_s
+            )
+            if not self.replan_guard_open:
+                # Bounded mode is deliberately one-shot.  A later burst must
+                # earn a new failure streak after the cooldown; it does not
+                # repeat forever merely because the old recovery episode did
+                # not collect an unlikely long streak of successful replans.
+                self.replan_guard_active = False
+                self.replan_guard_burst_until_s = None
+        if was_open and not self.replan_guard_open:
+            self.replan_guard_close_transitions += 1
+        return was_open != self.replan_guard_open
+
+    def stop_replan_guard(self):
+        self.replan_guard_active = False
+        if self.replan_guard_open:
+            self.replan_guard_close_transitions += 1
+        self.replan_guard_open = False
+        self.replan_guard_burst_until_s = None
+        self.replan_guard_next_burst_s = None
 
     def odom_callback(self, msg):
         p = msg.pose.pose.position
@@ -397,24 +528,41 @@ class SectorFilter(Node):
                 self.max_replan_fail_streak, self.replan_fail_streak
             )
 
-        if not self.replan_guard_open:
-            if self.replan_fail_streak >= self.replan_fail_streak_open:
-                self.replan_guard_open = True
-                self.replan_guard_open_transitions += 1
-                if self.first_replan_guard_open_time_s is None:
-                    self.first_replan_guard_open_time_s = round(now, 6)
+        if not self.replan_guard_active:
+            cooldown_ready = (
+                self.replan_guard_next_burst_s is None
+                or now >= self.replan_guard_next_burst_s
+            )
+            if (
+                cooldown_ready
+                and self.replan_fail_streak >= self.replan_fail_streak_open
+            ):
+                trigger_fail_streak = self.replan_fail_streak
+                self.replan_guard_active = True
+                self.start_replan_guard_burst(now)
+                # A later one-shot must be justified by fresh failures rather
+                # than inheriting the streak that opened this burst.
+                if self.replan_guard_bounded:
+                    self.replan_fail_streak = 0
                 self.get_logger().warning(
-                    "%s replan-guard OPEN: %d consecutive replan failures"
-                    % (self.mode, self.replan_fail_streak)
+                    "%s replan-guard ACTIVE: %d consecutive replan failures, "
+                    "bounded=%d"
+                    % (
+                        self.mode,
+                        trigger_fail_streak,
+                        int(self.replan_guard_bounded),
+                    )
                 )
                 self.publish_state()
                 self.write_stats()
         else:
-            if self.replan_ok_streak >= self.replan_ok_streak_close:
-                self.replan_guard_open = False
-                self.replan_guard_close_transitions += 1
+            if (
+                not self.replan_guard_bounded
+                and self.replan_ok_streak >= self.replan_ok_streak_close
+            ):
+                self.stop_replan_guard()
                 self.get_logger().info(
-                    "%s replan-guard CLOSE: %d consecutive replans succeeded"
+                    "%s replan-guard INACTIVE: %d consecutive replans succeeded"
                     % (self.mode, self.replan_ok_streak)
                 )
                 self.publish_state()
@@ -438,8 +586,10 @@ class SectorFilter(Node):
         self.write_stats()
 
     def cloud_callback(self, msg):
-        burst_state_changed = self.update_recovery_burst(self.now())
-        if burst_state_changed:
+        now = self.now()
+        burst_state_changed = self.update_recovery_burst(now)
+        replan_burst_state_changed = self.update_replan_guard_burst(now)
+        if burst_state_changed or replan_burst_state_changed:
             self.publish_state()
         self.frames += 1
         input_points = int(msg.width) * int(msg.height)
@@ -457,6 +607,9 @@ class SectorFilter(Node):
             self.open_input_points += input_points
         if self.replan_guard_open:
             self.replan_guard_open_frames += 1
+        if not self.should_publish_cloud(now):
+            return
+        self.published_frames += 1
         passthrough = (
             self.mode == "full"
             or self.drone is None
@@ -650,6 +803,12 @@ class SectorFilter(Node):
                 else 0.2
             ),
             "frames": self.frames,
+            "published_frames": self.published_frames,
+            "rate_limited_frames": self.rate_limited_frames,
+            "max_publish_hz": self.max_publish_hz,
+            "publish_duty_pct": round(
+                100.0 * self.published_frames / frame_denominator, 3
+            ),
             "input_points": self.input_points,
             "kept_points": self.kept,
             "kept_pct": round(100.0 * self.kept / point_denominator, 3),
@@ -695,6 +854,16 @@ class SectorFilter(Node):
                 else None
             ),
             "replan_guard_en": self.replan_guard_en,
+            "replan_guard_bounded": self.replan_guard_bounded,
+            "replan_guard_active": self.replan_guard_active,
+            "replan_guard_burst_s": (
+                self.replan_guard_burst_s
+                if self.replan_guard_bounded else 0.0
+            ),
+            "replan_guard_cooldown_s": (
+                self.replan_guard_cooldown_s
+                if self.replan_guard_bounded else 0.0
+            ),
             "replan_fail_streak_open": self.replan_fail_streak_open,
             "replan_ok_streak_close": self.replan_ok_streak_close,
             "replan_guard_open": self.replan_guard_open,
@@ -738,8 +907,10 @@ class SectorFilter(Node):
             )
         if self.replan_guard_en and self.mode != "full":
             extension += (
-                " guard_open=%d guard_duty=%.0f%% fail_streak=%d/%d max_fail_streak=%d"
+                " guard_active=%d guard_open=%d guard_duty=%.0f%% "
+                "fail_streak=%d/%d max_fail_streak=%d"
                 % (
+                    int(self.replan_guard_active),
                     int(self.replan_guard_open),
                     100.0 * self.replan_guard_open_frames / max(1, self.frames),
                     self.replan_fail_streak,
@@ -748,10 +919,12 @@ class SectorFilter(Node):
                 )
             )
         print(
-            "[native_sector %s] frames=%d kept %.0f%% (%d/%d pts/frame)%s"
+            "[native_sector %s] frames=%d published=%d kept %.0f%% "
+            "(%d/%d pts/input-frame)%s"
             % (
                 self.mode,
                 self.frames,
+                self.published_frames,
                 kept_pct,
                 self.kept // max(1, self.frames),
                 self.total // max(1, self.frames),

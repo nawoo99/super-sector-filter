@@ -1396,16 +1396,70 @@ The full table, failure forensics, metric definitions, and caveats are in
 `results/strict_v7_*_20260822.csv`. This section supersedes 8.16 as the current
 configuration result. Raw-cloud CIRI remains shadow-only/default false.
 
-## Current status — strict ablation now shows the intended safety/compute pattern
+### 8.18 Adaptive one-shot replan recovery and publication cap (2026-08-22)
 
-- **Section 8.17 is the current result:** Full direct observed 50/50 raw and
+Section 8.17 left one Adaptive seed9 liveness failure. A 0.25 s one-shot
+full-cloud burst after three consecutive failed replans removed the old
+nearly-continuous replan guard, but a new seed1-10 x n=5 run still finished
+49/50. Its seed9 run5 stopped at waypoint 3/5 at
+`(18.633, -24.281, 1.332)` with positive 0.091 m static body clearance.
+Repeated `PlanFromRest` CIRI construction then reported an approximately
+0.182 m nearest obstacle and rejected every EXP/backup fallback immediately;
+the certified stop was safe by the independent contact metric but no longer
+had a feasible local corridor. This is a terminal stop placement/liveness
+failure, not a collision or frozen map.
+
+A 0.6 s one-shot burst with 1.4 s cooldown had already observed 50/50, but
+without a rate cap its 94.25 kpts/s processed throughput exceeded Full by
+16.56%. Adaptive now keeps that bounded recovery width and limits only
+filtered-cloud publication to 5 Hz. Input callbacks and recovery-state updates
+remain latest-only and unthrottled. The limiter advances an ideal accumulated
+deadline, avoiding the first implementation's phase-quantization bug that
+turned a requested 4 Hz into only 2.65 Hz publication. The 4 Hz candidate was
+also rejected because map commit fell to 1.97 Hz on its first seed9 run.
+
+The accepted 5 Hz candidate passed seed9 targeted n=5 and then a separate
+seed1-10 x n=5 gate. The final broad cohort observed **50/50 raw completion,
+50/50 static-contact-free completion, zero live contact, and zero static-PCD
+contact**. Every seed was 5/5. Mean/max mission time was 88.845/133.50 s,
+worst positive static body clearance was 0.100 m, and maximum speed was
+7.102 m/s (one run above 7.1 m/s). The accepted seed9 observations were 10/10
+when the targeted and broad cohorts are reported separately; they are not a
+population guarantee.
+
+Observed filter input callback, filtered publication, and map commit rates
+were 6.509, 4.188, and 3.132 Hz. Against the unchanged 8.17 Full baseline,
+processed points/update fell 29.22%, processed throughput fell 25.55%,
+mapping time/update fell 32.40%, and cumulative mapping work/mission fell
+46.29%. The final mapping position is therefore between Full and fixed
+Sector as intended. However, measured FSM plus Python-filter CPU-work was
+64.09 CPU-s/mission versus Full's 55.92 CPU-s/mission, 14.61% higher. This
+prototype establishes a mapping-work reduction, not an end-to-end CPU-work
+reduction. A native filter implementation and a new CPU gate are required
+before making the latter claim.
+
+The new Adaptive gate was a separate campaign from the 8.17 Full/Sector
+cohorts, so same-numbered seed/run rows are not paired statistical trials and
+no McNemar claim is made. The observed 50/50 is neither a universal completion
+proof nor flight readiness. Raw-cloud CIRI remains shadow-only/default false.
+Full details and caveats are in the follow-up section of
+`docs/strict_v7_3mode_n5_20260822.md`; raw/summary files are
+`results/adaptive_replan025_strict_v7_n5_raw_20260822.csv`,
+`results/adaptive_replan060_cap5_strict_v7_n5_raw_20260822.csv`, and
+`results/strict_v7_adaptive_recovery_n5_summary_20260822.csv`.
+
+## Current status — Adaptive liveness recovered in the latest observed cohort
+
+- **Section 8.18 is the current Adaptive result; 8.17 remains the Full/Sector
+  baseline:** Full direct observed 50/50 raw and
   safe completion with zero contact; fixed Sector observed 50/50 raw but
   46/50 safe completion with four independently confirmed contact runs;
-  Adaptive observed 49/50 raw/safe completion with zero contact. Adaptive
-  recovered Sector's safety-qualified completion while using 40.54% fewer
-  processed points and 47.19% less mapping time per update than Full. Its one
-  seed9 timeout means liveness recovery is still incomplete. None of these
-  n=50 observations is a population guarantee.
+  the follow-up Adaptive observed 50/50 raw/safe completion with zero contact.
+  Adaptive used 29.22% fewer processed points, 25.55% less processed
+  throughput, and 32.40% less mapping time per update than Full. Its Python
+  filter means end-to-end FSM+filter CPU-work is still 14.61% above Full, so
+  only mapping-work reduction is established. None of these n=50 observations
+  is a population guarantee.
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),
@@ -1461,15 +1515,18 @@ configuration result. Raw-cloud CIRI remains shadow-only/default false.
   remaining seed10 liveness failure in the live topology-recovery layer; it
   still does not grant the shadow result any authority over brake decisions.
 - **Section 8.15 supersedes 8.14's unresolved stale-command status; section
-  8.17 now supersedes both its local completion headline and 8.16's broad
-  but non-strict ablation.** The stale
+  8.17 supersedes both its local completion headline and 8.16's broad but
+  non-strict ablation, while section 8.18 supersedes only 8.17's Adaptive
+  liveness result.** The stale
   command is freshness/consistency gated, recovery uses a brake-local
   position-derived motion estimate, blockers are branch-aware and epoch
   bounded, backup-only rejections do not corrupt EXP topology, and stale-map
   replanning is readiness-gated. The final same-code local gate completed
   seed9 and seed10 5/5 each with 0/10 measured static-PCD contact. The broader
-  strict result is now 50/50 Full, 50/50 fixed Sector, and 49/50 Adaptive in
-  raw completion, or 50/50, 46/50, and 49/50 in safety-qualified completion.
+  strict baseline plus follow-up result is now 50/50 Full, 50/50 fixed Sector,
+  and 50/50 Adaptive in raw completion, or 50/50, 46/50, and 50/50 in
+  safety-qualified completion. Adaptive is a separate follow-up campaign,
+  not a paired third arm of the original cohort.
   This does not retroactively repair 8.13's missing static-PCD data and must
   not be presented as population or hardware proof.
 - Section 8.17's time-weighted FSM CPU was 47.55% Full, 47.11% Sector, and
@@ -1482,8 +1539,9 @@ configuration result. Raw-cloud CIRI remains shadow-only/default false.
 
 Do not describe `static_seedmaps_guard_viability_v7.yaml` or any of its
 `_wide`/`_tight`/`_tight_h08` variants as flight-ready. The current strict
-regression establishes the intended descriptive safety/compute pattern but
-leaves one Adaptive seed9 liveness failure. Follow-up should target that
-cumulative stop/recovery/topology churn while retaining the static-PCD gate,
-the fixed-Sector control, and CIRI shadow's non-authoritative default-off
-status.
+baseline and follow-up establish the intended descriptive safety/mapping-work
+pattern and observed 50/50 Adaptive liveness, but not population completion or
+end-to-end CPU reduction. Follow-up should move the Python filter into a native
+implementation and repeat the CPU/safety/liveness gate while retaining the
+static-PCD monitor, fixed-Sector control, and CIRI shadow's non-authoritative
+default-off status.

@@ -1,5 +1,11 @@
 # Strict v7 Full/Sector/Adaptive seed1-10 × n=5
 
+> **후속 결과:** 이 문서 아래의 `Adaptive liveness 복구와 발행률 제한` 절이
+> 최초 Adaptive 49/50 행을 대체한다. 최종 별도 Adaptive cohort는 50/50
+> raw/safe completion과 접촉 0을 관측했고, Full 대비 mapping throughput은
+> 25.55% 감소했다. 다만 Python filter를 포함한 end-to-end CPU-work는 Full보다
+> 14.61% 높아 전체 CPU 감소까지 달성한 것은 아니다.
+
 실험일은 2026-08-22이며 속도는 `v=7`, 경로는 `loop24.txt`, timeout은
 240 s다. 각 모드는 seed1-10에서 5회씩 실행했다. Full 50회와
 Sector/Adaptive 100회는 서로 다른 캠페인으로 실행했으므로 Full과 다른 두 모드
@@ -93,3 +99,85 @@ Sector만 4, Adaptive만 0으로 `p=0.125`, raw 완주는 Sector만 1, Adaptive�
 원시는 `results/strict_v7_full_n5_raw_20260822.csv`와
 `results/strict_v7_sector_adaptive_n5_raw_20260822.csv`, 요약은
 `results/strict_v7_3mode_n5_summary_20260822.csv`에 보존했다.
+
+## 후속: Adaptive liveness 복구와 발행률 제한
+
+위 Adaptive의 seed9 timeout을 재분석하고 같은 날 후속 실험을 수행했다. 실패
+run은 마지막 목표로 가는 단순 지연이 아니라, 세 번째 목표 구간에서 약 5 m/s로
+비행하던 중 map-stale stop/recovery가 누적된 뒤 `(18.633, -24.281, 1.332)`에
+정지한 사례였다. static-PCD body clearance는 아직 +0.091 m였지만 CIRI가 보는
+가까운 장애물 거리는 약 0.182 m여서 시작점 corridor 자체가 infeasible했다.
+그 뒤에는 같은 EXP/backup fallback이 즉시 `OCCUPIED`로 거절되어 240 s까지
+certified hold에서 탈출하지 못했다.
+
+replan failure 세 번마다 full cloud를 여는 기존 nearly-continuous guard를 그대로
+복원하지 않고, 매 trigger가 반드시 끝나는 one-shot worker를 추가했다. 첫 후보는
+0.25 s burst/1.75 s cooldown이었다. 이것은 seed9 targeted 5/5를 통과했지만 broad
+seed1-10 x n=5에서 다시 seed9 run5가 waypoint 3/5, 240 s timeout되어 **49/50**에
+그쳤다. 접촉은 0이었지만 liveness 목표 때문에 불채택했다.
+
+0.6 s one-shot/1.4 s cooldown은 별도 broad test에서 50/50을 만들었으나 rate cap이
+없을 때 map commit이 빨라져 처리량이 Full보다 16.56% 높아졌다. 그 cohort에는
+static clearance +0.015 m와 7.808 m/s 과속도 각각 한 건 있었다. 따라서 burst는
+0.6 s로 유지하되 Adaptive가 ROG-Map으로 발행하는 filtered cloud에 5 Hz 상한을
+추가했다. limiter는 최신 input callback과 recovery 상태 갱신은 모두 수행하고,
+이상적인 누적 deadline을 기준으로 publication만 생략한다. 현재 입력 시각으로
+deadline을 매번 재설정해 실제 2.65 Hz밖에 내지 못한 첫 구현과 4 Hz 후보는
+불채택했다. 최종 5 Hz 설정의 실제 발행률은 4.188 Hz였다.
+
+최종 후속 cohort는 v=7, `loop24.txt`, timeout 240 s, seed1-10 x n=5,
+`static_seedmaps_guard_viability_tight_v7_filtered.yaml`, static-PCD monitor라는 동일
+조건에서 Adaptive만 다시 실행했다.
+
+| mode/cohort | raw 완주 | 안전 완주 | live 접촉 | static 접촉 | 최악 clearance | 평균/최대 시간 | 최고속도 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 기존 Full direct | **50/50** | **50/50** | 0/50 | 0/50 | +0.110 m | 117.61 / 198.25 s | 7.054 m/s |
+| 기존 fixed Sector | **50/50** | **46/50** | 4/50 | 4/50 | -0.184 m | 111.78 / 192.76 s | 7.108 m/s |
+| **Adaptive recovered** | **50/50** | **50/50** | **0/50** | **0/50** | +0.100 m | **88.84 / 133.50 s** | 7.102 m/s |
+
+안전 완주는 여전히 waypoint 5/5와 static-PCD contact 0을 모두 요구한다. 최종
+Adaptive는 180 s 기준도 50/50이었다. 속도 7.1 m/s 초과는 seed6 run2의
+7.102 m/s 한 건으로, 과거 7.808 m/s는 재현되지 않았지만 Full의 최대 7.054 m/s
+보다는 높다.
+
+| seed | raw/safe | 평균 시간 | 최악 static clearance | 최고속도 | raw input 전달률 |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 5/5 · 5/5 | 65.69 s | +0.220 m | 7.000 | 39.62% |
+| 2 | 5/5 · 5/5 | 60.47 s | +0.291 m | 7.001 | 38.55% |
+| 3 | 5/5 · 5/5 | 75.19 s | +0.224 m | 7.000 | 43.43% |
+| 4 | 5/5 · 5/5 | 84.80 s | +0.222 m | 7.000 | 45.31% |
+| 5 | 5/5 · 5/5 | 76.45 s | +0.100 m | 7.001 | 43.86% |
+| 6 | 5/5 · 5/5 | 92.68 s | +0.126 m | 7.102 | 47.19% |
+| 7 | 5/5 · 5/5 | 103.67 s | +0.212 m | 7.004 | 50.82% |
+| 8 | 5/5 · 5/5 | 92.37 s | +0.182 m | 7.001 | 49.56% |
+| 9 | 5/5 · 5/5 | 118.16 s | +0.211 m | 7.000 | 52.21% |
+| 10 | 5/5 · 5/5 | 118.97 s | +0.202 m | 7.001 | 50.59% |
+
+최종 연산 지표는 다음과 같다. `raw input 전달률`은 각도 절단뿐 아니라 5 Hz
+publication cap으로 생략한 frame까지 포함하므로 순수 angular-kept 비율이 아니다.
+입력 callback 6.509 Hz에서 상태 판정은 계속 실행됐고 실제 발행은 4.188 Hz였다.
+
+| mode | map commit | 처리점/update | 처리량 | mapping/update | 임무당 mapping work | FSM CPU | filter CPU |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Full | 2.977 Hz | 27,158.8 | 80.858 kpts/s | 22.972 ms | 8.044 s | 47.55% | - |
+| Sector | 3.216 Hz | 12,928.7 | 41.579 kpts/s | 9.869 ms | 3.548 s | 47.11% | 11.00% |
+| **Adaptive recovered** | 3.132 Hz | 19,223.0 | 60.197 kpts/s | 15.528 ms | 4.320 s | 60.23% | 11.91% |
+
+Adaptive recovered의 Full 대비 변화는 처리점/update **-29.22%**, 처리량
+**-25.55%**, mapping/update **-32.40%**, 임무당 누적 mapping work
+**-46.29%**다. 따라서 지도 처리 기준에서는 Full과 Sector 사이의 의도한
+trade-off가 유지된다. 단, Python filter까지 합친 관측 CPU-work는 임무당
+64.09 CPU-s로 Full의 55.92 CPU-s보다 **14.61% 높다**. 이는 프로토타입 필터
+오버헤드가 남아 있다는 뜻이며, 전체 시스템 CPU까지 감소했다고 주장하면 안 된다.
+그 주장을 하려면 C++/in-map filter 구현 또는 동등한 end-to-end CPU 최적화 후 별도
+재측정이 필요하다.
+
+Full/Sector와 새 Adaptive는 같은 seed/run 번호를 썼지만 서로 다른 캠페인에서
+실행됐으므로 paired McNemar 검정을 적용하지 않는다. 관측 50/50은 이번 cohort의
+결과이지 population 100%나 flight-ready 증명이 아니다. raw-cloud CIRI shadow는
+계속 default false이고 live brake 결정에 연결되지 않았다.
+
+불채택 0.25 s 원시는
+`results/adaptive_replan025_strict_v7_n5_raw_20260822.csv`, 최종 원시는
+`results/adaptive_replan060_cap5_strict_v7_n5_raw_20260822.csv`, 새 요약은
+`results/strict_v7_adaptive_recovery_n5_summary_20260822.csv`에 보존했다.
