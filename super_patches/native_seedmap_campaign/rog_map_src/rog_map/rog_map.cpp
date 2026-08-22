@@ -319,10 +319,9 @@ bool ROGMap::isUnknown(const Vec3f& pos) const {
     // far; a radius-6 read-side variant was also tried and was worse for
     // the same reason as the write-side one (more cost per guard-check
     // sample this time, not more touched pages).
-    constexpr int kNeighborRadiusCells = 3;
-    for (int dx = -kNeighborRadiusCells; dx <= kNeighborRadiusCells; ++dx) {
-        for (int dy = -kNeighborRadiusCells; dy <= kNeighborRadiusCells; ++dy) {
-            for (int dz = -kNeighborRadiusCells; dz <= kNeighborRadiusCells; ++dz) {
+    for (int dx = -kObservedNeighborRadiusCells; dx <= kObservedNeighborRadiusCells; ++dx) {
+        for (int dy = -kObservedNeighborRadiusCells; dy <= kObservedNeighborRadiusCells; ++dy) {
+            for (int dz = -kObservedNeighborRadiusCells; dz <= kObservedNeighborRadiusCells; ++dz) {
                 const Vec3i neighbor_id_g = id_g + Vec3i(dx, dy, dz);
                 if (!snapshotInside(snapshot->probability, neighbor_id_g)) {
                     continue;

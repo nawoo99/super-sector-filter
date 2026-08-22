@@ -106,6 +106,12 @@ namespace rog_map {
         ProbMapUpdateResult updateProbMap(const PointCloud &cloud, const Pose &pose);
 
     protected:
+        // Immutable snapshots treat a query as observed when any raw-grid
+        // cell in this Chebyshev neighborhood is known.  The occupancy-only
+        // writer may therefore emit free-space ray markers at the matching
+        // spacing without changing the query-level observed-space envelope.
+        static constexpr int kObservedNeighborRadiusCells = 3;
+
         rog_map::Config cfg_;
         InfMap::Ptr inf_map_;
         FreeCntMap::Ptr fcnt_map_;
@@ -117,6 +123,7 @@ namespace rog_map {
         bool map_empty_{true};
         struct RaycastData {
             raycaster::RayCaster raycaster;
+            raycaster::RayCaster observed_raycaster;
             std::queue<Vec3i> update_cache_id_g;
             std::vector<uint16_t> operation_cnt;
             std::vector<uint16_t> hit_cnt;

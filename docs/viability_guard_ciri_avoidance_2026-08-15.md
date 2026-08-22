@@ -1336,12 +1336,76 @@ current liveness estimate. It confirms that the recovered build is materially
 better than the stale-command deadlock state, but it is still not flight-ready
 and does not have a universal completion guarantee.
 
-## Current status — not flight-ready; broad n=5 still has residual liveness failures
+### 8.17 Strict filter semantics and direct-Full n=5 gate (2026-08-22)
 
-- **Section 8.16 is the current same-code paired result:** full 46/50, sector
-  49/50, and adaptive 50/50, with static-PCD collision 0/150. The completion
-  differences are not significant by exact paired McNemar at this sample size,
-  and adaptive's worst positive body clearance is only 0.079 m.
+Section 8.16 did not test the intended ablation: sector/adaptive were full-open
+for about 91% of wall time, so they removed only about 3% of input points. A
+new `strict-burst` profile now keeps fixed Sector closed, gives Adaptive only
+bounded 0.6 s full-cloud bursts with a 1.4 s cooldown, and adds a
+speed-dependent omnidirectional near-field halo. The filter cloud subscription
+and publication are best-effort/depth 1 so an expensive filtered frame cannot
+create a stale backlog. The campaign runner now records the profile and obeys
+an explicit timeout override after applying mode defaults. Full bypasses the
+Python filter entirely and uses the direct `/cloud_registered` path.
+
+The static-PCD monitor was also repaired. Its old fixed 0.5 m nearest search
+serialized a clear run as a missing value whenever no point was inside that
+radius. The first query now performs an exact expanding-cell search and later
+queries use the current run minimum as a safe bound. This preserves exact
+minimum-distance and body-contact episode tracking without a global nearest
+query at every odometry sample.
+
+The planner-side retained changes for this gate include a command-velocity
+freshness fallback usable through the configured brake-trigger map-age window,
+`brake_trigger_high_speed_map_age_s: 0.50`, coalesced same-voxel scan hits, and
+sparse observed-free rays matched to the three-cell observed-neighbor query.
+A bounded one-attempt vertical recovery was added for horizontal topology
+saturation, but its marker count was zero in the final 150 valid runs. It is
+therefore unvalidated and cannot explain the result.
+
+At v=7 on `loop24.txt`, timeout 240 s, seed1-10 x n=5 per mode, the final
+result was:
+
+| mode | raw complete | safe complete | live contact run/episode | static contact run/episode | processed points/update | mapping/update |
+|---|---:|---:|---:|---:|---:|---:|
+| Full direct | **50/50** | **50/50** | **0/50, 0** | **0/50, 0** | 27,158.8 | 22.972 ms |
+| fixed Sector | **50/50** | **46/50** | **4/50, 6** | **4/50, 4** | 12,928.7 (-52.40%) | 9.869 ms (-57.04%) |
+| Adaptive | **49/50** | **49/50** | **0/50, 0** | **0/50, 0** | 16,149.3 (-40.54%) | 12.132 ms (-47.19%) |
+
+Safe completion means 5/5 waypoints and zero static-PCD contact. All four
+Sector contact runs were independently confirmed by both live-cloud and
+static-PCD monitors (seed7 run2/run4, seed8 run3, seed10 run5). Adaptive
+removed all four contacts, recovering safe completion from 92% to 98%, while
+retaining a large compute reduction. It did not improve raw completion:
+Adaptive seed9 run1 timed out at waypoint 4/5 with positive 0.173 m body
+clearance. Its map and planner kept progressing, so this was cumulative
+stop/recovery/topology churn rather than the old single-generation freeze.
+
+The configured rates were identical in every mode (LiDAR 10 Hz, replan 15 Hz,
+FSM 100 Hz, command 100 Hz). Observed map commit was 2.977/3.216/2.816 Hz for
+Full/Sector/Adaptive. Filter-observed cloud callback was 4.070/3.982 Hz for
+Sector/Adaptive; Full direct deliberately had no observer, so its callback
+rate is unmeasured rather than 10 Hz.
+
+Sector/Adaptive paired exact McNemar tests remain underpowered: safe
+completion `p=0.375`, static contact `p=0.125`, raw completion `p=1.0`.
+Full was a separate campaign and is not part of those paired tests. This is an
+observed 50-run-per-mode cohort, not a universal safety or completion proof.
+The full table, failure forensics, metric definitions, and caveats are in
+`docs/strict_v7_3mode_n5_20260822.md`; raw and summary CSVs are under
+`results/strict_v7_*_20260822.csv`. This section supersedes 8.16 as the current
+configuration result. Raw-cloud CIRI remains shadow-only/default false.
+
+## Current status — strict ablation now shows the intended safety/compute pattern
+
+- **Section 8.17 is the current result:** Full direct observed 50/50 raw and
+  safe completion with zero contact; fixed Sector observed 50/50 raw but
+  46/50 safe completion with four independently confirmed contact runs;
+  Adaptive observed 49/50 raw/safe completion with zero contact. Adaptive
+  recovered Sector's safety-qualified completion while using 40.54% fewer
+  processed points and 47.19% less mapping time per update than Full. Its one
+  seed9 timeout means liveness recovery is still incomplete. None of these
+  n=50 observations is a population guarantee.
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),
@@ -1396,26 +1460,30 @@ and does not have a universal completion guarantee.
   8.10 performance regression. Section 8.12 then fixes that cohort's one
   remaining seed10 liveness failure in the live topology-recovery layer; it
   still does not grant the shadow result any authority over brake decisions.
-- **Section 8.15 supersedes 8.14's unresolved stale-command status, while
-  section 8.16 supersedes its local completion headline.** The stale
+- **Section 8.15 supersedes 8.14's unresolved stale-command status; section
+  8.17 now supersedes both its local completion headline and 8.16's broad
+  but non-strict ablation.** The stale
   command is freshness/consistency gated, recovery uses a brake-local
   position-derived motion estimate, blockers are branch-aware and epoch
   bounded, backup-only rejections do not corrupt EXP topology, and stale-map
   replanning is readiness-gated. The final same-code local gate completed
   seed9 and seed10 5/5 each with 0/10 measured static-PCD contact. The broader
-  same-code result is now 46/50 full, 49/50 sector, and 50/50 adaptive. This
-  does not retroactively repair 8.13's missing static-PCD data and must not be
-  presented as population or hardware proof.
-- FSM CPU was measured in 8.13: the 50-run means were 144.88% full, 140.23%
-  sector, and 137.67% adaptive. Earlier cohorts still lack comparable CPU
-  measurements.
+  strict result is now 50/50 Full, 50/50 fixed Sector, and 49/50 Adaptive in
+  raw completion, or 50/50, 46/50, and 49/50 in safety-qualified completion.
+  This does not retroactively repair 8.13's missing static-PCD data and must
+  not be presented as population or hardware proof.
+- Section 8.17's time-weighted FSM CPU was 47.55% Full, 47.11% Sector, and
+  42.06% Adaptive on the current machine. The filter added 11.00%/11.36% for
+  Sector/Adaptive. These figures are cohort- and machine-specific, not a
+  guaranteed scheduler budget.
 - The `VIABILITY_DEBUG` and `AVOIDANCE_DEBUG` diagnostic logging left in
   `super_planner.cpp`/`corridor_generator.cpp` is harmless when the env
   vars are unset but has not been cleaned up.
 
 Do not describe `static_seedmaps_guard_viability_v7.yaml` or any of its
-`_wide`/`_tight`/`_tight_h08` variants as flight-ready. The larger paired
-shadow-off regression has now been run and found residual optimizer/polytope
-stalls in full plus topology churn in sector. The next liveness work should
-target those observed failure classes, while retaining the static-PCD gate and
-without connecting CIRI shadow to the brake decision.
+`_wide`/`_tight`/`_tight_h08` variants as flight-ready. The current strict
+regression establishes the intended descriptive safety/compute pattern but
+leaves one Adaptive seed9 liveness failure. Follow-up should target that
+cumulative stop/recovery/topology churn while retaining the static-PCD gate,
+the fixed-Sector control, and CIRI shadow's non-authoritative default-off
+status.

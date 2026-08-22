@@ -57,12 +57,30 @@ fsm:
   trajectory_guard:
     enable: true
     shadow: false
-    # Reserve 0.20 s of freshness budget for constructing and atomically
-    # certifying the stop.  The optional raw-cloud supplement remains disabled:
+    # At v=7, a fixed 0.55 s trigger allowed one seed8 scan-to-map commit gap
+    # to carry the vehicle into a live-cloud contact before fail-closed
+    # engaged.  A fixed 0.35 s trigger removed contact in 5/5 seed8 runs but
+    # caused 96 brakes and a timeout in seed9. Preserve the original deadline
+    # at low speed, use 0.45 s at >=3.5 m/s, and interpolate only across the
+    # 2.5-3.5 m/s band. A later seed10 physical-contact replay showed that the
+    # independent command/FSM timers could temporarily age the command cache
+    # past 0.1 s and silently select the 0.55 s low-speed budget while moving.
+    # The runtime now retains the last published velocity for the bounded
+    # freshness window and then falls back to the committed polynomial. Keep
+    # a 0.50 s high-speed deadline. The 0.35 s diagnostic was contact-free
+    # but produced 72 brakes; 0.45 s still produced 78 brakes and timed out at
+    # waypoint 4/5 because the map cadence itself is approximately 0.5 s.
+    # The 0.50 s boundary starts braking about 0.05 s earlier than the prior
+    # physical-contact run without forcing a stop on every nominal scan gap.
+    # The low-speed deadline remains 0.55 s for stopped recovery liveness.
+    # The optional raw-cloud supplement remains disabled:
     # step34 proved that a fresh hazard can still have an empty certified-brake
     # set at v=7, so it must not be presented as a completed recovery policy.
     max_map_age_s: 0.75
     brake_trigger_map_age_s: 0.55
+    brake_trigger_high_speed_map_age_s: 0.50
+    brake_trigger_low_speed_mps: 2.5
+    brake_trigger_high_speed_mps: 3.5
     raw_cloud:
       # 2026-08-18: briefly turned this on to feed a raw-scan-accumulation
       # window into a CIRI-based brake corridor (see docs/
@@ -86,6 +104,10 @@ fsm:
     brake_command_max_age_s: 0.10
     brake_command_max_position_error_m: 0.50
     brake_command_max_velocity_error_mps: 2.0
+    # A rejected certification remains fail-closed in EMER_STOP. Retry only
+    # after map/odom callbacks have had time to advance; never enter
+    # PlanFromRest merely because the first brake attempt saw a stale map.
+    brake_retry_interval_s: 0.10
     escape_max_duration_s: 1.0
     # Only active for a stopped PlanFromRest attempt after a raw EXP guard
     # rejection, while using the inflated recovery corridor.
@@ -151,13 +173,28 @@ super_planner:
     # Topology is classified in XY. Vertical optimizer jitter at the same
     # forest passage must not reset the stalled-route counter.
     collision_merge_m: 0.5
-    start_clearance_m: 0.05
+    # A 0.05 m gap made the first rerouted CIRI corridor nearly tangent to
+    # the 0.8 m blocker (measured overlap 0.009 m on seed10), so the same
+    # certified-stop attempt failed forever before optimization.  Keep one
+    # full guard-margin of space around the stopped pose while the cylinder
+    # still covers the measured rejection 1.8 m ahead.
+    start_clearance_m: 0.30
     block_spacing_m: 1.0
     # Different outgoing directions are separate route branches. Each new
     # branch receives a near-start blocker before its own chain is extended.
     direction_merge_angle_deg: 30.0
     # Never let temporary route blockers create a permanent A* deadlock.
     no_path_reset_attempts: 3
+    # A saturated horizontal blocker set cannot repair a floor-margin
+    # rejection immediately below a certified stop, nor a boundary-state
+    # optimizer failure shared by every bounded XY route. In either case,
+    # commit one guard+viability-certified 0.6 m lift and then rebuild the
+    # horizontal route from the higher stopped pose.
+    vertical_recovery_enable: true
+    vertical_recovery_lift_m: 0.60
+    vertical_recovery_trigger_distance_m: 0.75
+    saturation_vertical_attempts: 1
+    base_no_path_vertical_attempts: 1
   # Pre-commit viability guard (new, untested): mirrors the runtime brake's
   # dynamics limits so the prediction matches what activateEmergencyBrake()
   # could actually certify.

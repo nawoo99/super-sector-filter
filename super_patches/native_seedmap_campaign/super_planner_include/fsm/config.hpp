@@ -72,6 +72,13 @@ namespace fsm {
         // Start a certified stop before the map reaches max_map_age_s.  A
         // negative/zero value inherits max_map_age_s for legacy profiles.
         double trajectory_guard_brake_trigger_map_age_s{0.75};
+        // Optional speed-adaptive freshness deadline.  Legacy profiles leave
+        // the high-speed deadline equal to brake_trigger_map_age_s, which
+        // preserves the fixed-threshold behaviour.  When it is smaller, the
+        // effective deadline is linearly interpolated across the speed ramp.
+        double trajectory_guard_brake_trigger_high_speed_map_age_s{0.75};
+        double trajectory_guard_brake_trigger_low_speed_mps{0.0};
+        double trajectory_guard_brake_trigger_high_speed_mps{0.0};
         // Optional low-latency supplement to the committed occupancy map.
         // It checks the registered sensor cloud without waiting for a full
         // ROG-map update and is disabled for legacy profiles.
@@ -92,6 +99,12 @@ namespace fsm {
         double brake_command_max_age_s{0.1};
         double brake_command_max_position_error_m{0.5};
         double brake_command_max_velocity_error_mps{2.0};
+        // If brake certification is temporarily impossible (most commonly
+        // because the map crossed the freshness boundary), stay in
+        // EMER_STOP and retry at this bounded cadence.  Planning from rest is
+        // not valid until an actual brake has completed and its terminal hold
+        // has been certified.
+        double brake_retry_interval_s{0.1};
         // See super_planner::Config::trajectory_guard_unknown_as_occupied
         // for the rationale; only the emergency-brake candidate check reads
         // this flag.
@@ -157,6 +170,29 @@ namespace fsm {
             trajectory_guard_brake_trigger_map_age_s = std::min(
                     trajectory_guard_brake_trigger_map_age_s,
                     trajectory_guard_max_map_age_s);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/brake_trigger_high_speed_map_age_s",
+                    trajectory_guard_brake_trigger_high_speed_map_age_s, -1.0);
+            if (!std::isfinite(
+                        trajectory_guard_brake_trigger_high_speed_map_age_s) ||
+                trajectory_guard_brake_trigger_high_speed_map_age_s <= 0.0) {
+                trajectory_guard_brake_trigger_high_speed_map_age_s =
+                        trajectory_guard_brake_trigger_map_age_s;
+            }
+            trajectory_guard_brake_trigger_high_speed_map_age_s = std::min(
+                    trajectory_guard_brake_trigger_high_speed_map_age_s,
+                    trajectory_guard_brake_trigger_map_age_s);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/brake_trigger_low_speed_mps",
+                    trajectory_guard_brake_trigger_low_speed_mps, 0.0);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/brake_trigger_high_speed_mps",
+                    trajectory_guard_brake_trigger_high_speed_mps, 0.0);
+            trajectory_guard_brake_trigger_low_speed_mps = std::max(
+                    0.0, trajectory_guard_brake_trigger_low_speed_mps);
+            trajectory_guard_brake_trigger_high_speed_mps = std::max(
+                    trajectory_guard_brake_trigger_low_speed_mps,
+                    trajectory_guard_brake_trigger_high_speed_mps);
             loader.LoadParam("fsm/trajectory_guard/raw_cloud/enable",
                              trajectory_guard_raw_cloud_en, false);
             loader.LoadParam("fsm/trajectory_guard/raw_cloud/max_age_s",
@@ -185,12 +221,16 @@ namespace fsm {
             loader.LoadParam(
                     "fsm/trajectory_guard/brake_command_max_velocity_error_mps",
                     brake_command_max_velocity_error_mps, 2.0);
+            loader.LoadParam("fsm/trajectory_guard/brake_retry_interval_s",
+                             brake_retry_interval_s, 0.1);
             brake_command_max_age_s = std::max(0.0,
                                                 brake_command_max_age_s);
             brake_command_max_position_error_m = std::max(
                     0.0, brake_command_max_position_error_m);
             brake_command_max_velocity_error_mps = std::max(
                     0.0, brake_command_max_velocity_error_mps);
+            brake_retry_interval_s = std::max(0.01,
+                                              brake_retry_interval_s);
             loader.LoadParam("fsm/trajectory_guard/unknown_as_occupied",
                              trajectory_guard_unknown_as_occupied, false);
             loader.LoadParam("fsm/trajectory_guard/raw_cloud/ciri_shadow_en",

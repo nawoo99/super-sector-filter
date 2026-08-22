@@ -29,6 +29,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <string>
 #include <thread>
@@ -167,6 +168,14 @@ namespace super_planner {
         vec_E<Vec3f> guard_topology_branch_directions_;
         std::vector<int> guard_topology_branch_depths_;
         int guard_topology_no_path_failures_{0};
+        int guard_topology_base_no_path_recoveries_{0};
+        int guard_topology_saturation_recoveries_{0};
+        int guard_topology_corridor_failures_{0};
+        // Consecutive failures after A* and CIRI have both succeeded.  A
+        // virtual blocker can leave a geometrically valid corridor whose
+        // MINCO boundary-value problem is infeasible from a later certified
+        // stop; that failure needs the same bounded epoch reseed as NO_PATH.
+        int guard_topology_post_corridor_failures_{0};
         std::uint64_t guard_topology_epoch_{0};
         Vec3f guard_topology_goal_{Vec3f::Zero()};
         bool guard_topology_goal_valid_{false};
@@ -174,6 +183,13 @@ namespace super_planner {
         Vec3f guard_topology_stall_collision_{Vec3f::Zero()};
         int guard_topology_stall_rejects_{0};
         std::atomic_bool guard_certified_stop_for_reroute_{false};
+        std::atomic_bool guard_vertical_recovery_pending_{false};
+        // Suppress the periodic moving-state replanner until a short
+        // rest-to-rest recovery (vertical lift or direct final connection)
+        // completes; otherwise it can replace the recovery on the next 15 Hz
+        // tick and can splice incompatible polynomial orders.
+        double guard_rest_to_rest_hold_until_wt_{-
+                std::numeric_limits<double>::infinity()};
 
         struct ShadowValidationJob {
             CmdTraj::SharedSnapshot trajectory;
@@ -330,10 +346,17 @@ namespace super_planner {
                                    bool certified_stop,
                                    bool collision_on_exp);
 
+        bool armTopologyRouteBlockFromGuidePath(
+                const vec_Vec3f &guide_path,
+                const Vec3f &start_pos,
+                const char *reason);
+
         void resetTopologyRecoveryState();
 
         bool tryCommitCertifiedDirectGoalFallback(const Vec3f &start_p,
                                                   const Vec3f &goal_p);
+
+        bool tryCommitCertifiedVerticalRecovery(const Vec3f &start_p);
 
         // Returns a new trajectory tracing the exact same spatial path but
         // slowed down by factor k>1 (duration *= k). Used by the viability
@@ -368,7 +391,8 @@ namespace super_planner {
 
         bool PathSearch(const Vec3f &start_pt, const Vec3f &goal,
                         const double &searching_horizon,
-                        vec_Vec3f &path);
+                        vec_Vec3f &path,
+                        bool planning_from_rest);
 
 
     public:

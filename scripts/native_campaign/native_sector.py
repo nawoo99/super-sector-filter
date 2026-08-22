@@ -9,10 +9,28 @@ import rclpy
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.executors import ExternalShutdownException
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+    qos_profile_sensor_data,
+)
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs_py import point_cloud2 as pc2
 from std_msgs.msg import Bool
+
+
+# Filtering is deliberately latest-only.  A depth-five sensor queue can hold
+# roughly half a second of 10 Hz clouds while NumPy rebuilds a filtered frame;
+# processing that backlog makes the planner map old precisely when it needs a
+# fresh scan.  ROG-Map's own cloud subscription is already best-effort/depth 1.
+LATEST_CLOUD_QOS = QoSProfile(
+    history=QoSHistoryPolicy.KEEP_LAST,
+    depth=1,
+    reliability=QoSReliabilityPolicy.BEST_EFFORT,
+    durability=QoSDurabilityPolicy.VOLATILE,
+)
 
 
 def parse_args():
@@ -56,6 +74,28 @@ def parse_args():
         help="always keep points within this 3D radius of the drone, "
              "regardless of sector angle (never blind the near-field)",
     )
+    parser.add_argument(
+        "--near-field-speed-gain-s", type=float, default=0.0,
+        help=(
+            "add speed * this many seconds to the omnidirectional near-field "
+            "radius (adaptive reaction-distance halo)"
+        ),
+    )
+    parser.add_argument(
+        "--near-field-max-radius-m", type=float,
+        help="upper bound for the speed-adaptive near-field radius",
+    )
+    parser.add_argument(
+        "--open-burst-s", type=float, default=0.0,
+        help=(
+            "when adaptive stall recovery is active, pass full clouds for "
+            "this many seconds per burst; zero preserves legacy sustained-open"
+        ),
+    )
+    parser.add_argument(
+        "--open-cooldown-s", type=float, default=0.0,
+        help="sector-only cooldown between adaptive full-cloud bursts",
+    )
     args, ros_args = parser.parse_known_args()
     return args, ros_args
 
@@ -75,10 +115,16 @@ class SectorFilter(Node):
         self.drone = None
         self.yaw = 0.0
         self.velocity_yaw = None
+        self.latest_speed_mps = 0.0
         self.kept = 0
         self.total = 0
         self.frames = 0
         self.open = False
+        self.effective_recovery_open = False
+        self.open_burst_s = args.open_burst_s
+        self.open_cooldown_s = args.open_cooldown_s
+        self.open_burst_until_s = None
+        self.next_open_burst_s = None
         # Adaptive and trigger first prove sustained cruise, so launch idle
         # cannot open the filter.  legacy-trigger preserves the old ablation.
         self.armed = self.mode == "legacy-trigger"
@@ -107,6 +153,13 @@ class SectorFilter(Node):
         self.trap_event = {}
         self.trap_seen = False
         self.near_field_radius_m = args.near_field_radius_m
+        self.near_field_speed_gain_s = args.near_field_speed_gain_s
+        self.near_field_max_radius_m = (
+            args.near_field_max_radius_m
+            if args.near_field_max_radius_m is not None
+            else args.near_field_radius_m
+        )
+        self.max_effective_near_field_radius_m = self.near_field_radius_m
         self.replan_guard_en = not args.no_replan_guard
         self.replan_fail_streak_open = args.replan_fail_streak_open
         self.replan_ok_streak_close = args.replan_ok_streak_close
@@ -126,11 +179,23 @@ class SectorFilter(Node):
         self.resume_t = self.RESUME_T if args.resume_t is None else args.resume_t
         if min(self.stall_v, self.stall_t, self.resume_v, self.resume_t) < 0.0:
             raise ValueError("adaptive thresholds must be non-negative")
+        if min(self.open_burst_s, self.open_cooldown_s) < 0.0:
+            raise ValueError("adaptive burst durations must be non-negative")
+        if min(
+            self.near_field_radius_m,
+            self.near_field_speed_gain_s,
+            self.near_field_max_radius_m,
+        ) < 0.0:
+            raise ValueError("near-field radius settings must be non-negative")
+        if self.near_field_max_radius_m < self.near_field_radius_m:
+            raise ValueError(
+                "near-field-max-radius-m must be at least near-field-radius-m"
+            )
         if self.resume_v <= self.stall_v:
             raise ValueError("resume-v must be greater than stall-v")
 
         self.create_subscription(
-            PointCloud2, args.input_topic, self.cloud_callback, qos_profile_sensor_data
+            PointCloud2, args.input_topic, self.cloud_callback, LATEST_CLOUD_QOS
         )
         self.create_subscription(
             Odometry, "/lidar_slam/odom", self.odom_callback, qos_profile_sensor_data
@@ -141,7 +206,7 @@ class SectorFilter(Node):
                 qos_profile_sensor_data,
             )
         self.pub = self.create_publisher(
-            PointCloud2, args.output_topic, qos_profile_sensor_data
+            PointCloud2, args.output_topic, LATEST_CLOUD_QOS
         )
         self.full_open_pub = self.create_publisher(Bool, "/sector/full_open", 1)
         self.trigger_armed_pub = self.create_publisher(
@@ -155,13 +220,16 @@ class SectorFilter(Node):
         )
         if self.mode in self.STATEFUL_MODES:
             self.get_logger().info(
-                "%s thresholds: stall <%.2f m/s for %.2fs, resume >%.2f m/s for %.2fs"
+                "%s thresholds: stall <%.2f m/s for %.2fs, resume >%.2f m/s for %.2fs, "
+                "full burst %.2fs / cooldown %.2fs"
                 % (
                     self.mode,
                     self.stall_v,
                     self.stall_t,
                     self.resume_v,
                     self.resume_t,
+                    self.open_burst_s,
+                    self.open_cooldown_s,
                 )
             )
         self.publish_state()
@@ -169,6 +237,44 @@ class SectorFilter(Node):
 
     def now(self):
         return self.get_clock().now().nanoseconds * 1e-9
+
+    def start_recovery_burst(self, now):
+        """Start a bounded full-cloud burst, or legacy sustained opening."""
+        if self.open_burst_s <= 0.0:
+            self.effective_recovery_open = self.open
+            self.open_burst_until_s = None
+            self.next_open_burst_s = None
+            return
+        self.effective_recovery_open = True
+        self.open_burst_until_s = now + self.open_burst_s
+        self.next_open_burst_s = (
+            self.open_burst_until_s + self.open_cooldown_s
+        )
+
+    def update_recovery_burst(self, now):
+        """Advance the burst scheduler on a cloud arrival; return state change."""
+        previous = self.effective_recovery_open
+        if not self.open:
+            self.effective_recovery_open = False
+        elif self.open_burst_s <= 0.0:
+            self.effective_recovery_open = True
+        elif (
+            self.next_open_burst_s is not None
+            and now >= self.next_open_burst_s
+        ):
+            self.start_recovery_burst(now)
+        else:
+            self.effective_recovery_open = (
+                self.open_burst_until_s is not None
+                and now < self.open_burst_until_s
+            )
+        return previous != self.effective_recovery_open
+
+    def stop_recovery_open(self):
+        self.open = False
+        self.effective_recovery_open = False
+        self.open_burst_until_s = None
+        self.next_open_burst_s = None
 
     def odom_callback(self, msg):
         p = msg.pose.pose.position
@@ -180,6 +286,7 @@ class SectorFilter(Node):
         )
         v = msg.twist.twist.linear
         speed = math.hypot(v.x, v.y)
+        self.latest_speed_mps = speed
         velocity_update_v = (
             self.resume_v if self.mode in ("velocity", "adaptive") else 0.2
         )
@@ -233,6 +340,7 @@ class SectorFilter(Node):
                     self.open = True
                     self.slow_since = None
                     self.fast_since = None
+                    self.start_recovery_burst(now)
                     self.record_transition("open", now)
                     self.get_logger().info(
                         "%s full-open: stalled at %.2f m/s" % (self.mode, speed)
@@ -250,7 +358,7 @@ class SectorFilter(Node):
             if self.fast_since is None:
                 self.fast_since = now
             elif now - self.fast_since > self.resume_t:
-                self.open = False
+                self.stop_recovery_open()
                 self.slow_since = None
                 self.fast_since = None
                 self.record_transition("close", now)
@@ -315,7 +423,8 @@ class SectorFilter(Node):
     def publish_state(self):
         full_open = Bool()
         full_open.data = self.mode == "full" or (
-            self.mode in self.STATEFUL_MODES and self.open
+            self.mode in self.STATEFUL_MODES
+            and self.effective_recovery_open
         ) or self.replan_guard_open
         trigger_armed = Bool()
         trigger_armed.data = (
@@ -329,6 +438,9 @@ class SectorFilter(Node):
         self.write_stats()
 
     def cloud_callback(self, msg):
+        burst_state_changed = self.update_recovery_burst(self.now())
+        if burst_state_changed:
+            self.publish_state()
         self.frames += 1
         input_points = int(msg.width) * int(msg.height)
         self.input_points += input_points
@@ -337,7 +449,8 @@ class SectorFilter(Node):
             if self.armed:
                 self.armed_frames += 1
         effective_open = self.mode == "full" or (
-            self.mode in self.STATEFUL_MODES and self.open
+            self.mode in self.STATEFUL_MODES
+            and self.effective_recovery_open
         ) or self.replan_guard_open
         if effective_open:
             self.open_frames += 1
@@ -347,7 +460,10 @@ class SectorFilter(Node):
         passthrough = (
             self.mode == "full"
             or self.drone is None
-            or (self.mode in self.STATEFUL_MODES and self.open)
+            or (
+                self.mode in self.STATEFUL_MODES
+                and self.effective_recovery_open
+            )
             or self.replan_guard_open
         )
         if passthrough and not self.args.track_trap:
@@ -398,9 +514,18 @@ class SectorFilter(Node):
             relative = (relative + np.pi) % (2.0 * np.pi) - np.pi
             keep = np.abs(relative) <= self.half_angle
             if self.near_field_radius_m > 0.0:
+                effective_near_field_radius_m = min(
+                    self.near_field_max_radius_m,
+                    self.near_field_radius_m
+                    + self.near_field_speed_gain_s * self.latest_speed_mps,
+                )
+                self.max_effective_near_field_radius_m = max(
+                    self.max_effective_near_field_radius_m,
+                    effective_near_field_radius_m,
+                )
                 near = (
                     np.linalg.norm(points[:, :3] - self.drone, axis=1)
-                    <= self.near_field_radius_m
+                    <= effective_near_field_radius_m
                 )
                 keep = keep | near
             output = points[keep]
@@ -532,7 +657,18 @@ class SectorFilter(Node):
             "armed_duty_pct": round(
                 100.0 * self.armed_frames / frame_denominator, 3
             ),
-            "open": self.mode == "full" or self.open,
+            "open": self.mode == "full"
+                    or self.effective_recovery_open
+                    or self.replan_guard_open,
+            "recovery_active": self.open,
+            "open_burst_s": self.open_burst_s,
+            "open_cooldown_s": self.open_cooldown_s,
+            "near_field_radius_m": self.near_field_radius_m,
+            "near_field_speed_gain_s": self.near_field_speed_gain_s,
+            "near_field_max_radius_m": self.near_field_max_radius_m,
+            "max_effective_near_field_radius_m": round(
+                self.max_effective_near_field_radius_m, 6
+            ),
             "open_duty_pct": round(open_duty_pct, 3),
             "open_point_duty_pct": round(open_point_duty_pct, 3),
             "arm_transitions": self.arm_transitions,
@@ -590,10 +726,14 @@ class SectorFilter(Node):
         kept_pct = snapshot["kept_pct"]
         extension = ""
         if self.mode in self.STATEFUL_MODES:
-            extension = " armed=%d armed_duty=%.0f%% open=%d open_duty=%.0f%%" % (
+            extension = (
+                " armed=%d armed_duty=%.0f%% recovery=%d full_open=%d "
+                "open_duty=%.0f%%"
+            ) % (
                 int(self.armed),
                 100.0 * self.armed_frames / max(1, self.frames),
                 int(self.open),
+                int(self.effective_recovery_open),
                 100.0 * self.open_frames / max(1, self.frames),
             )
         if self.replan_guard_en and self.mode != "full":

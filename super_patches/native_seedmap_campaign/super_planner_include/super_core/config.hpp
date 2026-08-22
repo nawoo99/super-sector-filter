@@ -120,6 +120,23 @@ namespace super_planner {
         // discard that finite search epoch and rebuild topology from fresh
         // guarded candidates.
         int guard_topology_reroute_no_path_reset_attempts{3};
+        // A saturated set of horizontal route blockers cannot resolve a
+        // rejection caused by the floor immediately below a certified stop.
+        // In that narrowly-detected case, allow one guarded rest-to-rest
+        // vertical lift before rebuilding horizontal topology.
+        bool guard_topology_vertical_recovery_en{false};
+        double guard_topology_vertical_recovery_lift_m{0.6};
+        double guard_topology_vertical_recovery_trigger_distance_m{0.75};
+        // Once every configured horizontal blocker slot has been consumed,
+        // allow a bounded number of guarded vertical topology changes per
+        // mission goal.  The lift is still committed only if the unchanged
+        // geometric and stop-viability guards certify it.
+        int guard_topology_saturation_vertical_attempts{1};
+        // A stopped search can return NO_PATH before any rejected trajectory
+        // exists, so there is no collision point from which to build a
+        // horizontal blocker. Allow a small, explicitly bounded number of
+        // guarded lifts for that base-NO_PATH case per mission goal.
+        int guard_topology_base_no_path_vertical_attempts{1};
         // If the corridor/MINCO stack repeatedly cannot optimize the final
         // short connection from an already-certified stop, try one direct
         // rest-to-rest polynomial. It is still committed only through the
@@ -255,6 +272,21 @@ namespace super_planner {
                     "super_planner/guard_topology_reroute/no_path_reset_attempts",
                     guard_topology_reroute_no_path_reset_attempts, 3);
             loader.LoadParam(
+                    "super_planner/guard_topology_reroute/vertical_recovery_enable",
+                    guard_topology_vertical_recovery_en, false);
+            loader.LoadParam(
+                    "super_planner/guard_topology_reroute/vertical_recovery_lift_m",
+                    guard_topology_vertical_recovery_lift_m, 0.6);
+            loader.LoadParam(
+                    "super_planner/guard_topology_reroute/vertical_recovery_trigger_distance_m",
+                    guard_topology_vertical_recovery_trigger_distance_m, 0.75);
+            loader.LoadParam(
+                    "super_planner/guard_topology_reroute/saturation_vertical_attempts",
+                    guard_topology_saturation_vertical_attempts, 1);
+            loader.LoadParam(
+                    "super_planner/guard_topology_reroute/base_no_path_vertical_attempts",
+                    guard_topology_base_no_path_vertical_attempts, 1);
+            loader.LoadParam(
                     "super_planner/guard_direct_goal_fallback/enable",
                     guard_direct_goal_fallback_en, false);
             loader.LoadParam(
@@ -324,6 +356,15 @@ namespace super_planner {
                     1.0, 89.0);
             guard_topology_reroute_no_path_reset_attempts = std::max(
                     1, guard_topology_reroute_no_path_reset_attempts);
+            guard_topology_vertical_recovery_lift_m = std::max(
+                    resolution, guard_topology_vertical_recovery_lift_m);
+            guard_topology_vertical_recovery_trigger_distance_m = std::max(
+                    resolution,
+                    guard_topology_vertical_recovery_trigger_distance_m);
+            guard_topology_saturation_vertical_attempts = std::max(
+                    0, guard_topology_saturation_vertical_attempts);
+            guard_topology_base_no_path_vertical_attempts = std::max(
+                    0, guard_topology_base_no_path_vertical_attempts);
             guard_direct_goal_fallback_max_distance_m = std::max(
                     resolution, guard_direct_goal_fallback_max_distance_m);
             guard_direct_goal_fallback_min_duration_s = std::max(

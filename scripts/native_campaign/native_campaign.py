@@ -304,7 +304,8 @@ RAW_DIRECT_REF_MODES = frozenset(
      *REFERENCE_ABLATION_PROFILES.keys())
 )
 
-FIELDS = ["map", "run", "mode", "experiment_profile", "success", "run_valid",
+FIELDS = ["map", "run", "mode", "experiment_profile", "filter_profile",
+          "success", "run_valid",
           "monitor_type", "monitor_flight_cpu_pct", "live_cloud_enabled", "preflight_ready",
           "preflight_cloud_messages", "preflight_odom_messages", "goal_messages",
           "position_command_messages", "trajectory_flag2_messages",
@@ -383,6 +384,11 @@ FIELDS = ["map", "run", "mode", "experiment_profile", "success", "run_valid",
           "filter_frames", "filter_input_points", "filter_kept_points",
           "filter_kept_pct", "filter_armed", "filter_armed_duty_pct",
           "filter_open", "filter_open_duty_pct", "filter_open_point_duty_pct",
+          "filter_recovery_active", "filter_open_burst_s",
+          "filter_open_cooldown_s",
+          "filter_near_field_radius_m", "filter_near_field_speed_gain_s",
+          "filter_near_field_max_radius_m",
+          "filter_max_effective_near_field_radius_m",
           "filter_arm_transitions", "filter_open_transitions",
           "filter_close_transitions", "filter_first_transition_time_s",
           "filter_first_arm_time_s", "filter_first_stall_candidate_time_s",
@@ -511,7 +517,8 @@ def build_loop_monitor_command(wps, switch, timeout, out_json, monitor_options="
 def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             seedmap_super_config_override=None,
             seedmap_static_pcd=False,
-            loop_timeout_override=None):
+            loop_timeout_override=None,
+            filter_profile="legacy"):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
     is_seed12 = (map_name == "seed12")
@@ -572,8 +579,6 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         )
     else:
         wps, switch, timeout = LOOP_WPS, LOOP_SWITCH, LOOP_TIMEOUT
-        if loop_timeout_override is not None:
-            timeout = loop_timeout_override
         if sweep_vel is not None:
             # loop24's four-corner path is ~220-250 m total; scale the
             # timeout so low sweep speeds (e.g. 1 m/s -> ~250s cruise)
@@ -585,6 +590,11 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             # giving this explicitly named recovery experiment enough time to
             # distinguish eventual recovery from a true geometric deadlock.
             timeout = max(timeout, 120.0)
+        # An explicit campaign override is authoritative.  Applying it before
+        # the speed/reroute defaults silently changed --loop-timeout 140 back
+        # to 120 for full_guard_reroute_v7.
+        if loop_timeout_override is not None:
+            timeout = loop_timeout_override
     tag = f"{map_name}_run{run}_{mode}"
     out_json = os.path.join(TMPDIR, f"{tag}.json")
     filt_log = os.path.join(TMPDIR, f"{tag}.filt.log")
@@ -687,6 +697,18 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             is_seedmap_guard
         )
         filter_options = f" --stats-json {filt_stats_json}"
+        if filter_profile == "strict-burst" and base_mode != "full":
+            # A fixed-sector ablation must remain a fixed sector.  Adaptive
+            # keeps velocity alignment and stall recovery, but recovery uses
+            # bounded full-cloud bursts instead of the legacy nearly
+            # continuous replan-failure opening.
+            filter_options += " --no-replan-guard"
+            if base_mode == "adaptive":
+                filter_options += (
+                    " --open-burst-s 0.6 --open-cooldown-s 1.4"
+                    " --near-field-speed-gain-s 0.2"
+                    " --near-field-max-radius-m 3.0"
+                )
         if is_dynamic:
             filter_options += (
                 f" --input-topic /cloud_seed12 --track-trap "
@@ -940,6 +962,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
 
         rec = {"map": map_name, "run": run, "mode": mode,
                "experiment_profile": mode if is_reference_ablation else None,
+               "filter_profile": filter_profile,
                "perf_row_start": row_start, "perf_row_end": row_end, "kept_pct": kept_pct,
                "fsm_cpu_pct": fsm_cpu_pct, "filter_cpu_pct": filter_cpu_pct,
                "monitor_cpu_pct": monitor_cpu_pct,
@@ -1151,6 +1174,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
 
     return {"map": map_name, "run": run, "mode": mode,
             "experiment_profile": mode if mode in REFERENCE_ABLATION_PROFILES else None,
+            "filter_profile": filter_profile,
             "success": False, "run_valid": False}
 
 
@@ -1188,6 +1212,16 @@ def main():
         "--loop-timeout",
         type=float,
         help="override the seedmap loop timeout in seconds",
+    )
+    ap.add_argument(
+        "--filter-profile",
+        choices=("legacy", "strict-burst"),
+        default="legacy",
+        help=(
+            "legacy preserves the historical replan full-open valve; "
+            "strict-burst keeps sector fixed and gives adaptive bounded "
+            "stall-triggered full-cloud bursts"
+        ),
     )
     ap.add_argument(
         "--artifacts-dir",
@@ -1256,6 +1290,7 @@ def main():
                         seedmap_super_config_override=args.seedmap_super_config,
                         seedmap_static_pcd=args.seedmap_static_pcd,
                         loop_timeout_override=args.loop_timeout,
+                        filter_profile=args.filter_profile,
                     )
                     w.writerow(rec); f.flush()
                     done += 1

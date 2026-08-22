@@ -1,6 +1,42 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-22 strict v7 결과 — 아래 2026-08-21 배너의 설정과 결론을
+> 대체한다.** 이전 sector/adaptive는 wall-time의 약 91% 동안 full-open이라 입력점을
+> 약 3%밖에 줄이지 못해 사용자가 의도한 ablation이 아니었다. 새 `strict-burst`는
+> fixed Sector를 계속 닫아 두고 Adaptive에만 0.6 s full-cloud burst/1.4 s cooldown과
+> 속도 의존 near-field halo를 준다. Full은 필터를 거치지 않는 direct
+> `/cloud_registered`와 전용 tight-v7 설정을 사용했다.
+>
+> v=7, `loop24.txt`, timeout 240 s, seed1-10 각 n=5의 유효 150회 결과는 raw
+> 완주 Full **50/50**, Sector **50/50**, Adaptive **49/50**이다. static-PCD 접촉까지
+> 0이어야 하는 안전 완주는 **50/50, 46/50, 49/50**이다. Full live/static 접촉은
+> 모두 0이었다. Sector는 seed7 run2/run4, seed8 run3, seed10 run5에서 live와
+> static 양쪽이 확인한 실제 접촉 4 run/6 live episode/4 static episode가 있었고,
+> 최악 body clearance는 -0.184 m였다. Adaptive는 접촉 0, 최악 clearance
+> +0.103 m였지만 seed9 run1이 waypoint 4/5에서 timeout됐다.
+>
+> Full 대비 Sector의 처리점/update와 mapping/update는 **52.40%/57.04% 감소**,
+> Adaptive는 **40.54%/47.19% 감소**했다. Sector/Adaptive 입력점 감소는
+> 46.09%/30.30%, Adaptive full-open frame duty는 15.28%다. 설정 주파수는 모두
+> LiDAR 10 Hz, replan 15 Hz, FSM/command 100 Hz로 같지만 관측 map commit은
+> 2.977/3.216/2.816 Hz였다. filtered cloud callback은 Sector/Adaptive
+> 4.070/3.982 Hz이며 Full direct callback은 계측하지 않았다.
+>
+> 따라서 이 표본은 **Full 100%/충돌 0, fixed Sector의 정보 절단에 따른 안전 저하,
+> Adaptive의 안전 회복과 Full 대비 연산량 절감**이라는 연구 방향을 기술적으로
+> 지지한다. 다만 Adaptive raw liveness는 Sector보다 좋아지지 않았고, paired exact
+> McNemar도 safe completion `p=0.375`, static contact `p=0.125`로 유의하지 않다.
+> population 보장이나 flight-ready로 쓰면 안 된다. 새 saturation vertical recovery는
+> marker 0회라 이 결과의 원인으로 주장할 수 없다. raw-cloud CIRI는 계속
+> shadow-only/default false다.
+>
+> 상세/원시는 `docs/strict_v7_3mode_n5_20260822.md`,
+> `results/strict_v7_full_n5_raw_20260822.csv`,
+> `results/strict_v7_sector_adaptive_n5_raw_20260822.csv`,
+> `results/strict_v7_3mode_n5_summary_20260822.csv` 및 viability 문서 §8.17을 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-21 동일 코드 full/sector/adaptive seed1-10 각 n=5 결과 — 아래
 > 2026-08-20 seed9/10 local 10/10 배너의 완주 결론을 대체한다.** 총 150회는
 > 모두 valid였고 static PCD가 실제 로드됐다. 완주는 full **46/50 (92%)**,

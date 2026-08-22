@@ -81,6 +81,8 @@ void ProbMap::initProbMap() {
 
     occupancy_buffer_.resize(map_size, 0);
     raycast_data_.raycaster.setResolution(cfg_.resolution);
+    raycast_data_.observed_raycaster.setResolution(
+            cfg_.resolution * kObservedNeighborRadiusCells);
     raycast_data_.operation_cnt.resize(map_size, 0);
     raycast_data_.hit_cnt.resize(map_size, 0);
 
@@ -735,6 +737,19 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
                     continue;
                 }
                 posToGlobalIndex(p, pt_id_g);
+                const int hit_hash = getHashIndexFromGlobalIndex(pt_id_g);
+                if (raycast_data_.hit_cnt[hit_hash] > 0) {
+                    // The probability cache is voxel-indexed and a single
+                    // p_hit=0.9 observation already crosses the configured
+                    // occupied threshold (p_occ=0.85).  Repeating the same
+                    // hit also repeats an up-to-10 m free-space march even
+                    // though those candidates are merged by hash afterward.
+                    // Coalesce only exact same-resolution hit voxels within
+                    // this scan.  Angular coverage and input point accounting
+                    // remain unchanged, while the expensive ray march is
+                    // performed once for the geometry the map can represent.
+                    continue;
+                }
                 insertUpdateCandidate(pt_id_g, true);
                 // record cache box size;
                 raycast_data_.cache_box_min = raycast_data_.cache_box_min.cwiseMin(p);
@@ -754,9 +769,20 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
                         cfg_.raycast_range_min,
                         dist - cfg_.observed_mark_range_max);
                 const Vec3f raycast_start = cur_odom + dir * march_start_dist;
-                raycast_data_.raycaster.setInput(raycast_start, p);
+                // The fixed-map immutable snapshot answers isUnknown() with
+                // a +/-3 raw-cell neighborhood.  Marching every 0.05 m and
+                // then expanding each query by the same 0.15 m needlessly
+                // writes many equivalent free markers.  Use the matching
+                // 0.15 m DDA only for that snapshot configuration; dynamic
+                // maps, whose direct queries do not have this neighborhood,
+                // retain the original raw-resolution march.
+                auto& observed_raycaster =
+                        (!cfg_.map_sliding_en && !cfg_.unk_inflation_en)
+                        ? raycast_data_.observed_raycaster
+                        : raycast_data_.raycaster;
+                observed_raycaster.setInput(raycast_start, p);
                 Vec3f ray_pt;
-                while (raycast_data_.raycaster.step(ray_pt)) {
+                while (observed_raycaster.step(ray_pt)) {
                     Vec3i cur_ray_id_g;
                     posToGlobalIndex(ray_pt, cur_ray_id_g);
                     if (!insideLocalMap(cur_ray_id_g)) {

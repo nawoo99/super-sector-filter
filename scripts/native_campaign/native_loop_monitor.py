@@ -86,16 +86,54 @@ class StaticPcdIndex:
         delta = candidates - position
         return candidates[np.einsum("ij,ij->i", delta, delta) <= radius_m**2]
 
-    def nearest(self, position):
-        # Adjacent 0.5 m cells contain every point that could be within the
-        # 0.20 m body radius, while avoiding a 5x5x5 lookup at 100 Hz.
-        candidates = self.nearby_points(position, radius_m=self.CELL_M)
-        if not len(candidates):
-            return None, None
-        delta = candidates - position
-        distance_sq = np.einsum("ij,ij->i", delta, delta)
-        index = int(np.argmin(distance_sq))
-        return float(np.sqrt(distance_sq[index])), candidates[index]
+    def nearest(self, position, max_distance_m=None):
+        if max_distance_m is not None:
+            candidates = self.nearby_points(position, radius_m=max_distance_m)
+            if not len(candidates):
+                return None, None
+            delta = candidates - position
+            distance_sq = np.einsum("ij,ij->i", delta, delta)
+            index = int(np.argmin(distance_sq))
+            return float(np.sqrt(distance_sq[index])), candidates[index]
+
+        # This metric is reported as an actual nearest distance, not merely a
+        # collision-within-one-cell test.  The old fixed 0.5 m query returned
+        # None whenever the whole flight stayed farther than 0.5 m from the
+        # static PCD, which serialized a perfectly clear run as a missing
+        # (null) measurement.  Visit Chebyshev cell shells until the nearest
+        # point found is closer than every face of the searched cube.  At that
+        # point no unvisited cell can contain a closer point, so the result is
+        # exact while normal near-obstacle queries still inspect only a few
+        # cells.
+        center = np.floor(position / self.CELL_M).astype(np.int32)
+        best_distance_sq = float("inf")
+        best_point = None
+        reach = 0
+        while True:
+            offsets = itertools.product(range(-reach, reach + 1), repeat=3)
+            for offset in offsets:
+                if reach and max(abs(value) for value in offset) != reach:
+                    continue
+                bounds = self.cells.get(tuple(center + np.asarray(offset)))
+                if bounds is None:
+                    continue
+                candidates = self.points[bounds[0]:bounds[1]]
+                delta = candidates - position
+                distance_sq = np.einsum("ij,ij->i", delta, delta)
+                index = int(np.argmin(distance_sq))
+                if float(distance_sq[index]) < best_distance_sq:
+                    best_distance_sq = float(distance_sq[index])
+                    best_point = candidates[index]
+
+            low = (center - reach) * self.CELL_M
+            high = (center + reach + 1) * self.CELL_M
+            unsearched_lower_bound = float(
+                np.min(np.concatenate((position - low, high - position)))
+            )
+            if (best_point is not None and
+                    best_distance_sq <= unsearched_lower_bound**2):
+                return float(np.sqrt(best_distance_sq)), best_point
+            reach += 1
 
 
 class LoopMonitor(Node):
@@ -349,7 +387,20 @@ class LoopMonitor(Node):
             self.in_collision = colliding
 
         if self.static_pcd is not None:
-            static_distance, static_nearest = self.static_pcd.nearest(position)
+            # One exact query establishes a finite upper bound.  Thereafter a
+            # point can change the run-wide minimum only if it lies inside the
+            # current minimum, while collision episode tracking needs at most
+            # the body radius.  Bounding later lookups this way preserves both
+            # results exactly without paying for a global nearest query at
+            # every 100 Hz odometry sample.
+            static_search_radius = (
+                None
+                if self.static_pcd_min_distance == float("inf")
+                else max(DRONE_R, self.static_pcd_min_distance)
+            )
+            static_distance, static_nearest = self.static_pcd.nearest(
+                position, max_distance_m=static_search_radius
+            )
             if static_distance is not None:
                 self.static_pcd_min_distance = min(
                     self.static_pcd_min_distance, static_distance

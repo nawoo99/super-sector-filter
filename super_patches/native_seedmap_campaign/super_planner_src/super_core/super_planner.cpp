@@ -370,6 +370,20 @@ namespace super_planner {
         }
         bool clearance_escape_prefix = false;
         bool clearance_escape_completed = false;
+        double latest_clearance_violation_tt = -1.0;
+        // The per-segment DDA emits a voxel centre and the exact polynomial
+        // endpoint at the same time stamp. Near a margin boundary those two
+        // representations can alternate occupied/free until the trajectory
+        // has actually left the starting voxel. Do not declare escape in the
+        // middle of this stream: retain only the bounded starting-voxel
+        // cluster, then require a continuous free tail after all queries have
+        // been inspected.
+        const double clearance_escape_free_confirmation_s =
+                2.0 * sample_dt;
+        const double clearance_escape_min_displacement_m =
+                map_config.inflation_resolution;
+        const double clearance_escape_cluster_radius_m =
+                std::sqrt(3.0) * map_config.inflation_resolution + 1.0e-6;
         double first_clearance_violation_tt = -1.0;
         Vec3f first_clearance_violation_pos = Vec3f::Zero();
         for (std::size_t query_index = 0; query_index < map_queries.size(); ++query_index) {
@@ -419,10 +433,6 @@ namespace super_planner {
                     }
                 }
                 if (!guard_occupied) {
-                    if (clearance_escape_prefix) {
-                        clearance_escape_completed = true;
-                        result.clearance_escape_completed_tt = query.tt;
-                    }
                     continue;
                 }
 
@@ -447,7 +457,13 @@ namespace super_planner {
                     result.status = TrajectorySafetyStatus::OCCUPIED;
                 } else if (allow_initial_clearance_escape &&
                            !clearance_escape_completed &&
-                           (query_index == 0 || clearance_escape_prefix ||
+                           (query_index == 0 ||
+                            (first_clearance_violation_tt < 0.0 &&
+                             (point - map_queries.front().point).norm() <=
+                                     clearance_escape_cluster_radius_m) ||
+                            (clearance_escape_prefix &&
+                             (point - first_clearance_violation_pos).norm() <=
+                                     clearance_escape_cluster_radius_m) ||
                             (guard_corridor_retry_pending_.load(
                                      std::memory_order_acquire) &&
                              query.tt - checked_from_tt <=
@@ -455,6 +471,7 @@ namespace super_planner {
                            query.tt - checked_from_tt <=
                                    cfg_.trajectory_guard_escape_max_duration_s) {
                     clearance_escape_prefix = true;
+                    latest_clearance_violation_tt = query.tt;
                     if (first_clearance_violation_tt < 0.0) {
                         first_clearance_violation_tt = query.tt;
                         first_clearance_violation_pos = point;
@@ -470,13 +487,30 @@ namespace super_planner {
                     std::chrono::steady_clock::now() - query_start).count();
             return result;
         }
-        if (clearance_escape_prefix && !clearance_escape_completed) {
-            result.status = TrajectorySafetyStatus::CLEARANCE_MARGIN;
-            result.first_collision_tt = first_clearance_violation_tt;
-            result.first_collision_pos = first_clearance_violation_pos;
-            result.map_query_ms = std::chrono::duration<double, std::milli>(
-                    std::chrono::steady_clock::now() - query_start).count();
-            return result;
+        if (clearance_escape_prefix) {
+            const bool has_continuous_free_tail =
+                    latest_clearance_violation_tt >= 0.0 &&
+                    total_duration - latest_clearance_violation_tt >=
+                            clearance_escape_free_confirmation_s;
+            const bool has_spatial_departure =
+                    first_clearance_violation_tt >= 0.0 &&
+                    !map_queries.empty() &&
+                    (map_queries.back().point -
+                     first_clearance_violation_pos).norm() >=
+                            clearance_escape_min_displacement_m;
+            if (!has_continuous_free_tail || !has_spatial_departure) {
+                result.status = TrajectorySafetyStatus::CLEARANCE_MARGIN;
+                result.first_collision_tt = first_clearance_violation_tt;
+                result.first_collision_pos = first_clearance_violation_pos;
+                result.map_query_ms = std::chrono::duration<double, std::milli>(
+                        std::chrono::steady_clock::now() - query_start).count();
+                return result;
+            }
+            clearance_escape_completed = true;
+            result.clearance_escape_completed_tt = std::min(
+                    total_duration,
+                    latest_clearance_violation_tt +
+                            clearance_escape_free_confirmation_s);
         }
         result.used_clearance_escape = clearance_escape_completed;
         result.map_query_ms = std::chrono::duration<double, std::milli>(
@@ -645,10 +679,18 @@ namespace super_planner {
         guard_topology_branch_directions_.clear();
         guard_topology_branch_depths_.clear();
         guard_topology_no_path_failures_ = 0;
+        guard_topology_base_no_path_recoveries_ = 0;
+        guard_topology_saturation_recoveries_ = 0;
+        guard_topology_corridor_failures_ = 0;
+        guard_topology_post_corridor_failures_ = 0;
         guard_topology_epoch_ = 0;
         guard_topology_stall_generation_ = 0;
         guard_topology_stall_collision_.setZero();
         guard_topology_stall_rejects_ = 0;
+        guard_vertical_recovery_pending_.store(false,
+                                               std::memory_order_release);
+        guard_rest_to_rest_hold_until_wt_ =
+                -std::numeric_limits<double>::infinity();
         guard_certified_stop_for_reroute_.store(false,
                                                 std::memory_order_release);
     }
@@ -720,11 +762,63 @@ namespace super_planner {
 
         if (guard_topology_avoidance_centers_.size() >=
             static_cast<std::size_t>(cfg_.guard_topology_reroute_max_zones)) {
+            const double horizontal_collision_distance =
+                    (safety.first_collision_pos.head<2>() -
+                     start_pos.head<2>()).norm();
+            const bool start_adjacent_lower_rejection =
+                    std::isfinite(horizontal_collision_distance) &&
+                    horizontal_collision_distance <=
+                            cfg_.guard_topology_vertical_recovery_trigger_distance_m &&
+                    safety.first_collision_pos.z() <=
+                            start_pos.z() + cfg_.resolution;
+            const bool vertical_budget_available =
+                    guard_topology_saturation_recoveries_ <
+                            cfg_.guard_topology_saturation_vertical_attempts;
+            if (cfg_.guard_topology_vertical_recovery_en &&
+                vertical_budget_available) {
+                const std::size_t cleared_zones =
+                        guard_topology_avoidance_centers_.size();
+                guard_topology_avoidance_centers_.clear();
+                guard_topology_avoidance_radii_.clear();
+                guard_topology_branch_directions_.clear();
+                guard_topology_branch_depths_.clear();
+                guard_topology_no_path_failures_ = 0;
+                guard_topology_corridor_failures_ = 0;
+                guard_topology_post_corridor_failures_ = 0;
+                guard_topology_stall_generation_ = 0;
+                guard_topology_stall_collision_.setZero();
+                guard_topology_stall_rejects_ = 0;
+                ++guard_topology_saturation_recoveries_;
+                ++guard_topology_epoch_;
+                guard_vertical_recovery_pending_.store(
+                        true, std::memory_order_release);
+                ros_ptr_->warn(
+                        " -- [TRAJ_GUARD_VERTICAL_RECOVERY_ARM] gen={} "
+                        "cleared_zones={} epoch={} attempt={}/{} "
+                        "reason={} horizontal_distance={:.3f} "
+                        "start_z={:.3f} collision_z={:.3f} action=lift_then_reroute",
+                        candidate_generation, cleared_zones,
+                        guard_topology_epoch_,
+                        guard_topology_saturation_recoveries_,
+                        cfg_.guard_topology_saturation_vertical_attempts,
+                        start_adjacent_lower_rejection
+                                ? "start_adjacent_lower_rejection"
+                                : "horizontal_topology_exhausted",
+                        horizontal_collision_distance,
+                        start_pos.z(), safety.first_collision_pos.z());
+                return;
+            }
             ros_ptr_->warn(
                     " -- [TRAJ_GUARD_REROUTE_STALL] gen={} rejects={} zones={} "
+                    "horizontal_distance={:.3f} start_z={:.3f} "
+                    "collision_z={:.3f} vertical_attempts={}/{} "
                     "action=saturated",
                     candidate_generation, guard_topology_stall_rejects_,
-                    guard_topology_avoidance_centers_.size());
+                    guard_topology_avoidance_centers_.size(),
+                    horizontal_collision_distance, start_pos.z(),
+                    safety.first_collision_pos.z(),
+                    guard_topology_saturation_recoveries_,
+                    cfg_.guard_topology_saturation_vertical_attempts);
             return;
         }
 
@@ -865,6 +959,99 @@ namespace super_planner {
                 current_speed_mps);
     }
 
+    bool SuperPlanner::armTopologyRouteBlockFromGuidePath(
+            const vec_Vec3f &guide_path,
+            const Vec3f &start_pos,
+            const char *reason) {
+        if (!cfg_.guard_topology_reroute_en || guide_path.size() < 2 ||
+            !start_pos.array().isFinite().all() ||
+            guard_topology_avoidance_centers_.size() >=
+                    static_cast<std::size_t>(
+                            cfg_.guard_topology_reroute_max_zones)) {
+            return false;
+        }
+
+        // Use the actual outgoing A* guide, not the distant mission goal. A
+        // point roughly half a metre ahead is far enough to ignore voxel
+        // jitter at the start while still identifying the selected local
+        // homotopy before a curved detour rejoins the global route.
+        Vec3f route_direction = Vec3f::Zero();
+        const double direction_sample_distance = std::max(
+                0.5, 5.0 * cfg_.resolution);
+        for (const auto &path_point : guide_path) {
+            Vec3f delta = path_point - start_pos;
+            delta.z() = 0.0;
+            if (delta.array().isFinite().all() &&
+                delta.norm() >= direction_sample_distance) {
+                route_direction = delta;
+                break;
+            }
+        }
+        if (route_direction.norm() < 1.0e-3) {
+            route_direction = gi_.goal_p - start_pos;
+            route_direction.z() = 0.0;
+        }
+        if (!route_direction.array().isFinite().all() ||
+            route_direction.norm() < 1.0e-3) {
+            return false;
+        }
+        route_direction.normalize();
+
+        const double merge_angle_rad =
+                cfg_.guard_topology_reroute_direction_merge_angle_deg *
+                M_PI / 180.0;
+        const double merge_cos = std::cos(merge_angle_rad);
+        std::size_t branch = guard_topology_branch_directions_.size();
+        double best_direction_dot = -1.0;
+        for (std::size_t i = 0;
+             i < guard_topology_branch_directions_.size(); ++i) {
+            const double direction_dot =
+                    route_direction.dot(guard_topology_branch_directions_[i]);
+            if (direction_dot > best_direction_dot) {
+                best_direction_dot = direction_dot;
+                branch = i;
+            }
+        }
+
+        int branch_depth = 0;
+        if (branch < guard_topology_branch_directions_.size() &&
+            best_direction_dot >= merge_cos) {
+            branch_depth = ++guard_topology_branch_depths_[branch];
+            route_direction = guard_topology_branch_directions_[branch];
+        } else {
+            branch = guard_topology_branch_directions_.size();
+            guard_topology_branch_directions_.push_back(route_direction);
+            guard_topology_branch_depths_.push_back(0);
+            best_direction_dot = 1.0;
+        }
+
+        const double radius = std::min(
+                cfg_.guard_topology_reroute_max_radius_m,
+                cfg_.guard_topology_reroute_radius_m +
+                        static_cast<double>(branch_depth) *
+                                cfg_.guard_topology_reroute_growth_m);
+        const double forward_distance =
+                radius + cfg_.guard_topology_reroute_start_clearance_m +
+                static_cast<double>(branch_depth) *
+                        cfg_.guard_topology_reroute_block_spacing_m;
+        const Vec3f center = start_pos +
+                forward_distance * route_direction;
+        guard_topology_avoidance_centers_.push_back(center);
+        guard_topology_avoidance_radii_.push_back(radius);
+        ros_ptr_->warn(
+                " -- [TRAJ_GUARD_REROUTE_ARM] zone={} zones={} "
+                "center=[{:.3f},{:.3f},{:.3f}] radius={:.3f} "
+                "start_distance={:.3f} branch={} depth={} "
+                "direction_dot={:.3f} reason={} "
+                "action=block_optimizer_failed_route",
+                guard_topology_avoidance_centers_.size() - 1,
+                guard_topology_avoidance_centers_.size(),
+                center.x(), center.y(), center.z(), radius,
+                (center - start_pos).norm(), branch, branch_depth,
+                best_direction_dot, reason);
+        return true;
+    }
+
     bool SuperPlanner::checkKnownFreeViaCloud(const Vec3f &seed_near_pt,
                                               const Vec3f &seed_far_pt,
                                               const vec_E<Vec3f> &accumulated_cloud,
@@ -958,8 +1145,11 @@ namespace super_planner {
         double checked_from_tt = ros_ptr_->getSimTime() -
                                  candidate.pos_traj.start_WT;
         bool allow_clearance_escape = false;
-        const bool plan_from_rest = phase &&
-                std::string(phase).rfind("PlanFromRest/", 0) == 0;
+        const std::string phase_name = phase ? phase : "";
+        const bool plan_from_rest =
+                phase_name.rfind("PlanFromRest/", 0) == 0;
+        const bool vertical_recovery_candidate =
+                phase_name == "PlanFromRest/certified_vertical_recovery";
         bool stopped_for_reroute = false;
         const bool certified_stop_for_reroute = plan_from_rest &&
                 guard_certified_stop_for_reroute_.load(
@@ -987,6 +1177,7 @@ namespace super_planner {
             }
             const bool plan_from_rest_geometric_rejection =
                     plan_from_rest &&
+                    !vertical_recovery_candidate &&
                     safety.status == TrajectorySafetyStatus::CLEARANCE_MARGIN &&
                     rejected_segment == "EXP";
             if (cfg_.corridor_guard_retry_inflated &&
@@ -1327,6 +1518,13 @@ namespace super_planner {
         last_exp_traj_info_ = fallback_exp;
         robot_on_backup_traj_ = false;
         gi_.new_goal = false;
+        // minimumJerkInterpolation produces a different polynomial order
+        // from the normal EXP optimizer. Let this short rest-to-rest fallback
+        // finish instead of hot-splicing a ReplanOnce polynomial into it;
+        // mixed orders are intentionally rejected by the ROS trajectory
+        // serializer and previously terminated fsm_node.
+        guard_rest_to_rest_hold_until_wt_ =
+                start_wt + cmd_traj_info_.getTotalDuration();
         ros_ptr_->vizCommittedTraj(cmd_traj_info_.posTraj(), -1);
         latest_replan.setRetCode(
                 SUPER_RET_CODE::SUPER_SUCCESS_NO_BACKUP);
@@ -1334,6 +1532,131 @@ namespace super_planner {
                 " -- [TRAJ_GUARD_DIRECT_GOAL_FALLBACK] action=commit "
                 "distance={:.3f}m duration={:.3f}s",
                 distance, duration);
+        return true;
+    }
+
+    bool SuperPlanner::tryCommitCertifiedVerticalRecovery(
+            const Vec3f &start_p) {
+        if (!cfg_.guard_topology_vertical_recovery_en ||
+            !cfg_.guard_viability_en ||
+            !guard_vertical_recovery_pending_.load(
+                    std::memory_order_acquire) ||
+            !start_p.array().isFinite().all()) {
+            return false;
+        }
+
+        Vec3f odom_position = Vec3f::Zero();
+        double odom_yaw = 0.0;
+        double odom_speed = std::numeric_limits<double>::infinity();
+        {
+            std::lock_guard<std::mutex> state_lock(drone_state_mutex_);
+            odom_position = robot_state_.p;
+            odom_yaw = robot_state_.yaw;
+            odom_speed = robot_state_.v.norm();
+        }
+        const double start_shift = (start_p - odom_position).norm();
+        const bool certified_stop =
+                guard_certified_stop_for_reroute_.load(
+                        std::memory_order_acquire);
+        if (!odom_position.array().isFinite().all() ||
+            !std::isfinite(odom_yaw) || !std::isfinite(start_shift) ||
+            !std::isfinite(odom_speed) || start_shift > 0.15 ||
+            (!certified_stop && odom_speed >
+                    cfg_.guard_topology_reroute_max_stop_speed_mps)) {
+            return false;
+        }
+
+        // Consume exactly one recovery request. If the lift itself is not
+        // certifiable, normal guarded planning continues; another lift can be
+        // armed only after a fresh bounded blocker-saturation episode.
+        if (!guard_vertical_recovery_pending_.exchange(
+                    false, std::memory_order_acq_rel)) {
+            return false;
+        }
+
+        // The nearest grid-cell start used by A* may be centimetres away from
+        // odometry. A recovery command must remain position-continuous, so
+        // construct the lift from the measured stationary pose itself; the
+        // full guard below decides whether escaping from that exact pose is
+        // physically and geometrically admissible.
+        const Vec3f lift_start = odom_position;
+        Vec3f lift_goal = lift_start;
+        lift_goal.z() += cfg_.guard_topology_vertical_recovery_lift_m;
+        const double distance = (lift_goal - lift_start).norm();
+
+        const double velocity_limit = std::max(
+                1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_vel);
+        const double acceleration_limit = std::max(
+                1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_acc);
+        const double jerk_limit = std::max(
+                1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_jerk);
+        const double duration = std::max({
+                cfg_.guard_direct_goal_fallback_min_duration_s,
+                1.875 * distance / velocity_limit,
+                std::sqrt(5.774 * distance / acceleration_limit),
+                std::cbrt(60.0 * distance / jerk_limit)});
+
+        Eigen::Matrix<double, 3, 3> initial_pva;
+        Eigen::Matrix<double, 3, 3> goal_pva;
+        initial_pva.setZero();
+        goal_pva.setZero();
+        initial_pva.col(0) = lift_start;
+        goal_pva.col(0) = lift_goal;
+        Eigen::Matrix<double, 3, Eigen::Dynamic> position_waypoints(3, 0);
+        VecDf durations(1);
+        durations << duration;
+        Trajectory position_trajectory =
+                poly_interpo::minimumJerkInterpolation<3>(
+                        initial_pva, goal_pva, position_waypoints, durations);
+
+        Eigen::Matrix<double, 1, 3> initial_yaw;
+        Eigen::Matrix<double, 1, 3> goal_yaw;
+        initial_yaw.setZero();
+        goal_yaw.setZero();
+        initial_yaw(0, 0) = odom_yaw;
+        goal_yaw(0, 0) = odom_yaw;
+        Eigen::Matrix<double, 1, Eigen::Dynamic> yaw_waypoints(1, 0);
+        Trajectory yaw_trajectory =
+                poly_interpo::minimumJerkInterpolation<1>(
+                        initial_yaw, goal_yaw, yaw_waypoints, durations);
+
+        const double start_wt = ros_ptr_->getSimTime();
+        position_trajectory.start_WT = start_wt;
+        yaw_trajectory.start_WT = start_wt;
+        ExpTraj recovery_exp;
+        recovery_exp.setTrajectory(start_wt, position_trajectory,
+                                   yaw_trajectory);
+        // This is an intermediate topology-changing manoeuvre. The mission
+        // goal remains unchanged and is replanned after the lift finishes.
+        recovery_exp.setGoalConnectedFlag(false);
+
+        CmdTraj::Candidate candidate;
+        if (!CmdTraj::buildCandidate(recovery_exp, candidate) ||
+            !commitTrajectoryCandidate(
+                    std::move(candidate),
+                    "PlanFromRest/certified_vertical_recovery")) {
+            ros_ptr_->warn(
+                    " -- [TRAJ_GUARD_VERTICAL_RECOVERY_REJECTED] "
+                    "lift={:.3f}m duration={:.3f}s start_z={:.3f} target_z={:.3f}",
+                    distance, duration, lift_start.z(), lift_goal.z());
+            return false;
+        }
+
+        last_exp_traj_info_ = recovery_exp;
+        robot_on_backup_traj_ = false;
+        gi_.new_goal = false;
+        guard_rest_to_rest_hold_until_wt_ =
+                start_wt + cmd_traj_info_.getTotalDuration();
+        ros_ptr_->vizCommittedTraj(cmd_traj_info_.posTraj(), -1);
+        latest_replan.setRetCode(
+                SUPER_RET_CODE::SUPER_SUCCESS_NO_BACKUP);
+        ros_ptr_->warn(
+                " -- [TRAJ_GUARD_VERTICAL_RECOVERY] action=commit "
+                "lift={:.3f}m duration={:.3f}s start_z={:.3f} target_z={:.3f} "
+                "stop_source={} odom_speed={:.3f}",
+                distance, duration, lift_start.z(), lift_goal.z(),
+                certified_stop ? "certified_brake" : "stationary_odom",
+                odom_speed);
         return true;
     }
 
@@ -1381,6 +1704,10 @@ namespace super_planner {
             }
         }
         latest_replan.setLocalStartP(local_star_pt);
+
+        if (tryCommitCertifiedVerticalRecovery(local_star_pt)) {
+            return SUCCESS;
+        }
 
         /// 2) Generate Exp traj
         ExpTraj exp_traj_info;
@@ -1486,6 +1813,38 @@ namespace super_planner {
             latest_replan.setRetCode(SUPER_RET_CODE::SUPER_SUCCESS_NO_BACKUP);
             return SUCCESS;
         }
+
+        // BackupTraj's CIRI construction can be infeasible at a certified
+        // stopped pose even though the already-generated outgoing EXP is
+        // geometrically safe. Without this branch PlanFromRest regenerates
+        // the same valid EXP and fails the independent backup corridor at the
+        // same seed line indefinitely (observed >1,400 times on seed9).
+        // The viability guard is the replacement certificate here: it proves
+        // a dynamically-limited, map-safe emergency stop exists from sampled
+        // states along the EXP horizon. Commit still passes through both the
+        // full geometric guard and that stop-viability check.
+        if (back_ret_code == FAILED && cfg_.guard_viability_en) {
+            CmdTraj::Candidate exp_only_candidate;
+            if (CmdTraj::buildCandidate(exp_traj_info,
+                                         exp_only_candidate) &&
+                commitTrajectoryCandidate(
+                        std::move(exp_only_candidate),
+                        "PlanFromRest/backup_generation_fallback")) {
+                last_exp_traj_info_ = exp_traj_info;
+                robot_on_backup_traj_ = false;
+                gi_.new_goal = false;
+                ros_ptr_->vizCommittedTraj(cmd_traj_info_.posTraj(), -1);
+                latest_replan.setRetCode(
+                        SUPER_RET_CODE::SUPER_SUCCESS_NO_BACKUP);
+                ros_ptr_->warn(
+                        " -- [TRAJ_GUARD_BACKUP_GENERATION_FALLBACK] "
+                        "action=commit_guarded_exp_with_viable_stops");
+                return SUCCESS;
+            }
+            ros_ptr_->warn(
+                    " -- [TRAJ_GUARD_BACKUP_GENERATION_FALLBACK_REJECTED] "
+                    "action=retain_certified_stop");
+        }
         ros_ptr_->warn(" -- [SUPER] in [PlanFromRest] generateBackupTrajectory return [{}], force return",
                        RET_CODE_STR[back_ret_code].c_str());
         return FAILED;
@@ -1498,6 +1857,13 @@ namespace super_planner {
                              const bool &new_goal) {
         TimeConsuming replan_total_t("ReplanOnce", false);
         std::lock_guard<std::mutex> guard(replan_lock_);
+
+        // Certified vertical and direct-goal recoveries are complete
+        // rest-to-rest manoeuvres. Do not let the normal 15 Hz moving-state
+        // replanner replace either before its terminal stop.
+        if (ros_ptr_->getSimTime() < guard_rest_to_rest_hold_until_wt_) {
+            return FAILED;
+        }
 
         gi_.goal_p = goal_p;
         gi_.goal_yaw = goal_yaw;
@@ -1964,7 +2330,8 @@ namespace super_planner {
 //                        return FAILED;
 //                    }
 //                }
-                if (!PathSearch(guide_path.back(), gi_.goal_p, temp_horizon, new_path)) {
+                if (!PathSearch(guide_path.back(), gi_.goal_p, temp_horizon,
+                                new_path, last_exp_traj_info.empty())) {
                     ros_ptr_->warn(" -- [SUPER] PathSearch for new path failed");
                     return FAILED;
                 }
@@ -2065,9 +2432,80 @@ namespace super_planner {
                 guard_topology_avoidance_centers_, guard_topology_avoidance_radii_);
 
         if (!bool_ret_code) {
+            // A moving-state ReplanOnce failure leaves the previously
+            // committed trajectory in charge.  It is neither a certified
+            // stop nor evidence that repeated PlanFromRest attempts selected
+            // one unusable topology, so never mutate stopped-state recovery
+            // from this path.
+            if (!cfg_.guard_topology_reroute_en ||
+                !last_exp_traj_info.empty()) {
+                guard_topology_corridor_failures_ = 0;
+                ros_ptr_->warn(" -- [SUPER] SearchPolytopeOnPath for new path failed");
+                return FAILED;
+            }
+            ++guard_topology_corridor_failures_;
+            if (guard_topology_corridor_failures_ >=
+                cfg_.guard_topology_reroute_no_path_reset_attempts) {
+                guard_topology_corridor_failures_ = 0;
+                if (guard_topology_avoidance_centers_.empty()) {
+                    // A* can return the same guide indefinitely even when its
+                    // adjacent CIRI polytopes have no usable overlap.  The old
+                    // counter only advanced when a temporary blocker already
+                    // existed, so this base-corridor failure was a permanent
+                    // PlanFromRest loop.  Reject the selected outgoing route
+                    // after a bounded number of identical failures and let A*
+                    // choose a different topology.  The resulting candidate
+                    // still has to pass the unchanged corridor, geometric and
+                    // stop-viability checks before it can be committed.
+                    if (armTopologyRouteBlockFromGuidePath(
+                                guide_path, pos_init_state.col(0),
+                                "corridor_continuity_failed")) {
+                        guard_topology_no_path_failures_ = 0;
+                        ++guard_topology_epoch_;
+                        guard_corridor_retry_pending_.store(
+                                true, std::memory_order_release);
+                        ros_ptr_->warn(
+                                " -- [TRAJ_GUARD_CORRIDOR_RECOVERY] epoch={} "
+                                "zones={} reason=corridor_continuity_failed "
+                                "action=change_topology",
+                                guard_topology_epoch_,
+                                guard_topology_avoidance_centers_.size());
+                    } else if (cfg_.guard_topology_vertical_recovery_en) {
+                        guard_vertical_recovery_pending_.store(
+                                true, std::memory_order_release);
+                        ++guard_topology_epoch_;
+                        ros_ptr_->warn(
+                                " -- [TRAJ_GUARD_CORRIDOR_RECOVERY] epoch={} "
+                                "zones=0 reason=corridor_continuity_failed "
+                                "action=guarded_vertical_lift",
+                                guard_topology_epoch_);
+                    }
+                } else {
+                    const std::size_t cleared_zones =
+                            guard_topology_avoidance_centers_.size();
+                    guard_topology_avoidance_centers_.clear();
+                    guard_topology_avoidance_radii_.clear();
+                    guard_topology_branch_directions_.clear();
+                    guard_topology_branch_depths_.clear();
+                    guard_topology_stall_generation_ = 0;
+                    guard_topology_stall_collision_.setZero();
+                    guard_topology_stall_rejects_ = 0;
+                    guard_topology_no_path_failures_ = 0;
+                    guard_topology_post_corridor_failures_ = 0;
+                    ++guard_topology_epoch_;
+                    guard_corridor_retry_pending_.store(
+                            true, std::memory_order_release);
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_REROUTE_EPOCH_RESET] epoch={} "
+                            "cleared_zones={} reason=corridor_no_path "
+                            "action=certified_stop_reseed",
+                            guard_topology_epoch_, cleared_zones);
+                }
+            }
             ros_ptr_->warn(" -- [SUPER] SearchPolytopeOnPath for new path failed");
             return FAILED;
         }
+        guard_topology_corridor_failures_ = 0;
         {
             TimeConsuming t_viz("tviz", false);
             ros_ptr_->vizExpSfc(sfc);
@@ -2093,6 +2531,65 @@ namespace super_planner {
         Trajectory out_traj;
         TimeConsuming t_exp_opt("t_exp_opt", false);
         auto original_sfc = sfc;
+        auto record_post_corridor_failure = [&](const char *reason) {
+            // Moving-state replans retain the previously committed safe
+            // trajectory and must not mutate stopped-state topology recovery.
+            // PlanFromRest has an empty guide trajectory and a zero-PVA start.
+            if (!cfg_.guard_topology_reroute_en ||
+                !last_exp_traj_info.empty()) {
+                guard_topology_post_corridor_failures_ = 0;
+                return;
+            }
+            ++guard_topology_post_corridor_failures_;
+            if (guard_topology_post_corridor_failures_ <
+                cfg_.guard_topology_reroute_no_path_reset_attempts) {
+                return;
+            }
+
+            guard_topology_post_corridor_failures_ = 0;
+            if (armTopologyRouteBlockFromGuidePath(
+                        guide_path, pos_init_state.col(0), reason)) {
+                guard_topology_no_path_failures_ = 0;
+                guard_topology_corridor_failures_ = 0;
+                ++guard_topology_epoch_;
+                guard_corridor_retry_pending_.store(
+                        true, std::memory_order_release);
+                ros_ptr_->warn(
+                        " -- [TRAJ_GUARD_POST_CORRIDOR_RECOVERY] epoch={} "
+                        "zones={} reason={} action=change_topology",
+                        guard_topology_epoch_,
+                        guard_topology_avoidance_centers_.size(), reason);
+                return;
+            }
+
+            // Every bounded horizontal topology has now been tried. Clear the
+            // temporary blockers and request one fully guarded rest-to-rest
+            // lift; the next PlanFromRest then searches again from a distinct
+            // vertical state instead of oscillating between the same routes.
+            const std::size_t cleared_zones =
+                    guard_topology_avoidance_centers_.size();
+            guard_topology_avoidance_centers_.clear();
+            guard_topology_avoidance_radii_.clear();
+            guard_topology_branch_directions_.clear();
+            guard_topology_branch_depths_.clear();
+            guard_topology_stall_generation_ = 0;
+            guard_topology_stall_collision_.setZero();
+            guard_topology_stall_rejects_ = 0;
+            guard_topology_no_path_failures_ = 0;
+            guard_topology_corridor_failures_ = 0;
+            ++guard_topology_epoch_;
+            if (cfg_.guard_topology_vertical_recovery_en) {
+                guard_vertical_recovery_pending_.store(
+                        true, std::memory_order_release);
+            }
+            ros_ptr_->warn(
+                    " -- [TRAJ_GUARD_POST_CORRIDOR_RECOVERY] epoch={} "
+                    "cleared_zones={} reason={} action={}",
+                    guard_topology_epoch_, cleared_zones, reason,
+                    cfg_.guard_topology_vertical_recovery_en
+                            ? "guarded_vertical_lift"
+                            : "reseed_without_lift");
+        };
         temp_ret = exp_traj_opt_->optimize(pos_init_state,
                                            pos_fina_state,
                                            guide_path,
@@ -2107,14 +2604,17 @@ namespace super_planner {
             latest_replan.setExpCondition(init_ts, init_ps, pos_init_state, pos_fina_state, sfc);
         }
         if (!temp_ret) {
+            record_post_corridor_failure("trajectory_optimization_failed");
             ros_ptr_->warn(" -- [SUPER] OptimizationExpTrajInPolytopes for new path failed");
             return FAILED;
         }
         double replan_total_t = (ros_ptr_->getSimTime() - replan_process_start_WT);
         if (replan_total_t > cfg_.replan_forward_dt) {
+            record_post_corridor_failure("trajectory_optimization_overtime");
             ros_ptr_->warn(" -- [SUPER] Replan over time({})!!!! Return FAILED", replan_total_t);
             return FAILED;
         }
+        guard_topology_post_corridor_failures_ = 0;
 
         {
             TimeConsuming t_viz("tviz", false);
@@ -2467,7 +2967,8 @@ namespace super_planner {
     bool
     SuperPlanner::PathSearch(const Vec3f &start_pt, const Vec3f &goal,
                              const double &searching_horizon,
-                             vec_Vec3f &path) {
+                             vec_Vec3f &path,
+                             const bool planning_from_rest) {
         using namespace path_search;
         if (searching_horizon <= 0.0) {
             ros_ptr_->error(" -- [SUPER] Goal waypoints empty or searching horizon negative, force return.");
@@ -2534,13 +3035,78 @@ namespace super_planner {
                 guard_topology_avoidance_centers_,
                 guard_topology_avoidance_radii_);
 
-        if (ret_code == NO_PATH &&
+        if (ret_code == NO_PATH && cfg_.guard_topology_reroute_en &&
+            planning_from_rest &&
+            guard_topology_avoidance_centers_.empty()) {
+            // The old recovery counter only ran after a rejected candidate
+            // had already created a virtual blocker. A stopped base search
+            // with no path therefore retried the identical topology forever.
+            // After the same bounded threshold, request one guarded vertical
+            // state change. A negative failure count marks exhausted recovery
+            // for this goal and prevents repeated warning/action loops.
+            if (guard_topology_no_path_failures_ >= 0) {
+                ++guard_topology_no_path_failures_;
+            }
+            if (guard_topology_no_path_failures_ >=
+                cfg_.guard_topology_reroute_no_path_reset_attempts) {
+                guard_topology_corridor_failures_ = 0;
+                guard_topology_post_corridor_failures_ = 0;
+                const bool can_lift =
+                        cfg_.guard_topology_vertical_recovery_en &&
+                        guard_topology_base_no_path_recoveries_ <
+                                cfg_.guard_topology_base_no_path_vertical_attempts;
+                if (can_lift) {
+                    ++guard_topology_base_no_path_recoveries_;
+                    guard_topology_no_path_failures_ = 0;
+                    ++guard_topology_epoch_;
+                    guard_vertical_recovery_pending_.store(
+                            true, std::memory_order_release);
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_BASE_NO_PATH_RECOVERY] epoch={} "
+                            "attempt={}/{} start=[{:.3f},{:.3f},{:.3f}] "
+                            "goal=[{:.3f},{:.3f},{:.3f}] "
+                            "action=guarded_vertical_lift",
+                            guard_topology_epoch_,
+                            guard_topology_base_no_path_recoveries_,
+                            cfg_.guard_topology_base_no_path_vertical_attempts,
+                            temp_start_point.x(), temp_start_point.y(),
+                            temp_start_point.z(), goal.x(), goal.y(), goal.z());
+                } else {
+                    guard_topology_no_path_failures_ = -1;
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_BASE_NO_PATH_EXHAUSTED] "
+                            "attempts={}/{} start=[{:.3f},{:.3f},{:.3f}] "
+                            "action=certified_hold",
+                            guard_topology_base_no_path_recoveries_,
+                            cfg_.guard_topology_base_no_path_vertical_attempts,
+                            temp_start_point.x(), temp_start_point.y(),
+                            temp_start_point.z());
+                }
+            }
+        } else if (ret_code == NO_PATH &&
             !guard_topology_avoidance_centers_.empty()) {
             ++guard_topology_no_path_failures_;
             if (guard_topology_no_path_failures_ >=
                 cfg_.guard_topology_reroute_no_path_reset_attempts) {
                 const std::size_t cleared_zones =
                         guard_topology_avoidance_centers_.size();
+                const double horizontal_collision_distance =
+                        (guard_topology_stall_collision_.head<2>() -
+                         temp_start_point.head<2>()).norm();
+                const double collision_z =
+                        guard_topology_stall_collision_.z();
+                const bool start_adjacent_lower_rejection =
+                        guard_topology_stall_rejects_ > 0 &&
+                        guard_topology_stall_collision_.array()
+                                .isFinite().all() &&
+                        std::isfinite(horizontal_collision_distance) &&
+                        horizontal_collision_distance <=
+                                cfg_.guard_topology_vertical_recovery_trigger_distance_m &&
+                        guard_topology_stall_collision_.z() <=
+                                temp_start_point.z() + cfg_.resolution;
+                const bool arm_vertical_recovery =
+                        cfg_.guard_topology_vertical_recovery_en &&
+                        start_adjacent_lower_rejection;
                 guard_topology_avoidance_centers_.clear();
                 guard_topology_avoidance_radii_.clear();
                 guard_topology_branch_directions_.clear();
@@ -2549,14 +3115,29 @@ namespace super_planner {
                 guard_topology_stall_collision_.setZero();
                 guard_topology_stall_rejects_ = 0;
                 guard_topology_no_path_failures_ = 0;
+                guard_topology_corridor_failures_ = 0;
+                guard_topology_post_corridor_failures_ = 0;
                 ++guard_topology_epoch_;
-                guard_corridor_retry_pending_.store(
-                        true, std::memory_order_release);
-                ros_ptr_->warn(
-                        " -- [TRAJ_GUARD_REROUTE_EPOCH_RESET] epoch={} "
-                        "cleared_zones={} reason=astar_no_path "
-                        "action=certified_stop_reseed",
-                        guard_topology_epoch_, cleared_zones);
+                if (arm_vertical_recovery) {
+                    guard_vertical_recovery_pending_.store(
+                            true, std::memory_order_release);
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_VERTICAL_RECOVERY_ARM] "
+                            "cleared_zones={} epoch={} reason=astar_no_path "
+                            "horizontal_distance={:.3f} start_z={:.3f} "
+                            "collision_z={:.3f} action=lift_then_reroute",
+                            cleared_zones, guard_topology_epoch_,
+                            horizontal_collision_distance,
+                            temp_start_point.z(), collision_z);
+                } else {
+                    guard_corridor_retry_pending_.store(
+                            true, std::memory_order_release);
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_REROUTE_EPOCH_RESET] epoch={} "
+                            "cleared_zones={} reason=astar_no_path "
+                            "action=certified_stop_reseed",
+                            guard_topology_epoch_, cleared_zones);
+                }
             }
         } else if (ret_code == REACH_HORIZON || ret_code == REACH_GOAL) {
             guard_topology_no_path_failures_ = 0;

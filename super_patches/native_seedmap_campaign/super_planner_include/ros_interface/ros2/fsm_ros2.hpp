@@ -98,6 +98,11 @@ namespace fsm {
         bool brake_stability_started_{false};
         double brake_recovery_last_attempt_wt_{-
                 std::numeric_limits<double>::infinity()};
+        double brake_activation_retry_last_wt_{-
+                std::numeric_limits<double>::infinity()};
+        Vec3f brake_passive_stability_anchor_{Vec3f::Zero()};
+        double brake_passive_stability_start_wt_{0.0};
+        bool brake_passive_stability_started_{false};
 
         enum class RawCloudSafetyStatus {
             DISABLED,
@@ -875,10 +880,81 @@ namespace fsm {
 
         bool mapFreshEnoughForMotion(
                 const rog_map::MapHealthSnapshot &health,
-                double &map_age_s) const {
+                double &map_age_s,
+                double &map_age_limit_s,
+                double &motion_speed_mps) const {
+            map_age_limit_s = cfg_.trajectory_guard_brake_trigger_map_age_s;
+            motion_speed_mps = 0.0;
+            const double low_speed =
+                    cfg_.trajectory_guard_brake_trigger_low_speed_mps;
+            const double high_speed =
+                    cfg_.trajectory_guard_brake_trigger_high_speed_mps;
+            const double high_speed_limit =
+                    cfg_.trajectory_guard_brake_trigger_high_speed_map_age_s;
+            if (high_speed > low_speed + 1.0e-9 &&
+                high_speed_limit < map_age_limit_s - 1.0e-9) {
+                // ROG's legacy RobotState carries pose but its velocity is
+                // unset in the perfect-tracking benchmark.  Prefer the latest
+                // command that was actually published.  The command and FSM
+                // timers are independent, though: publication can be skipped
+                // briefly while a map-version revalidation is pending, so a
+                // hard 0.1 s cache cutoff used to report zero speed while the
+                // vehicle was still following the committed polynomial.  For
+                // freshness only, retain the last published velocity for at
+                // most the low-speed map-age budget, then sample the immutable
+                // committed trajectory if even that cache has expired.  The
+                // longer window is never used as a brake initial state.
+                mars_quadrotor_msgs::msg::PositionCommand command;
+                bool command_valid;
+                double command_wt;
+                {
+                    std::lock_guard<std::mutex> lock(latest_cmd_mutex_);
+                    command_valid = last_published_cmd_valid_;
+                    command_wt = last_published_cmd_wt_;
+                    if (command_valid) {
+                        command = last_published_cmd_;
+                    }
+                }
+                const double command_age_s = command_valid
+                        ? ros_ptr_->getSimTime() - command_wt
+                        : std::numeric_limits<double>::infinity();
+                const Vec3f command_velocity(command.velocity.x,
+                                             command.velocity.y,
+                                             command.velocity.z);
+                const double freshness_velocity_max_age_s = std::max(
+                        cfg_.brake_command_max_age_s,
+                        cfg_.trajectory_guard_brake_trigger_map_age_s);
+                if (command_valid && std::isfinite(command_age_s) &&
+                    command_age_s >= 0.0 &&
+                    command_age_s <= freshness_velocity_max_age_s &&
+                    command_velocity.array().isFinite().all()) {
+                    motion_speed_mps = command_velocity.norm();
+                } else {
+                    const auto snapshot =
+                            planner_ptr_->getCommittedTrajectorySnapshot();
+                    if (!snapshot.empty && !snapshot.pos_traj.empty() &&
+                        std::isfinite(snapshot.start_wt) &&
+                        std::isfinite(snapshot.total_duration) &&
+                        snapshot.total_duration >= 0.0) {
+                        const double trajectory_tt = std::clamp(
+                                ros_ptr_->getSimTime() - snapshot.start_wt,
+                                0.0, snapshot.total_duration);
+                        const Vec3f trajectory_velocity =
+                                snapshot.pos_traj.getVel(trajectory_tt);
+                        if (trajectory_velocity.array().isFinite().all()) {
+                            motion_speed_mps = trajectory_velocity.norm();
+                        }
+                    }
+                }
+                const double alpha = std::clamp(
+                        (motion_speed_mps - low_speed) /
+                                (high_speed - low_speed),
+                        0.0, 1.0);
+                map_age_limit_s += alpha *
+                        (high_speed_limit - map_age_limit_s);
+            }
             return mapFreshForGuard(health, map_age_s) &&
-                   map_age_s <=
-                           cfg_.trajectory_guard_brake_trigger_map_age_s;
+                   map_age_s <= map_age_limit_s;
         }
 
         bool refreshSafetyCertificate(const char *trigger) {
@@ -888,10 +964,13 @@ namespace fsm {
             const auto health = map_ptr_->getMapHealthSnapshot();
             const auto generation = planner_ptr_->getCommittedTrajectoryGeneration();
             double map_age_s;
+            double map_age_limit_s;
+            double motion_speed_mps;
             // Do not wait until the map is already too old to certify a stop.
             // The lower motion threshold reserves time for constructing and
             // atomically certifying the brake against a still-valid snapshot.
-            const bool map_fresh = mapFreshEnoughForMotion(health, map_age_s);
+            const bool map_fresh = mapFreshEnoughForMotion(
+                    health, map_age_s, map_age_limit_s, motion_speed_mps);
 
             {
                 std::lock_guard<std::mutex> lock(safety_mutex_);
@@ -934,11 +1013,13 @@ namespace fsm {
                 const double ttc = result.first_collision_tt >= 0.0
                         ? result.first_collision_tt - current_tt : -1.0;
                 fmt::print(" -- [TRAJ_GUARD_CERT] trigger={} status={} gen={} map={} "
-                           "map_age={:.3f}s samples={} range=[{:.3f},{:.3f}] "
+                           "map_age={:.3f}s map_age_limit={:.3f}s motion_speed={:.3f}mps "
+                           "samples={} range=[{:.3f},{:.3f}] "
                            "collision_tt={:.3f} ttc={:.3f} p=[{:.3f},{:.3f},{:.3f}]\n",
                            trigger, trajectorySafetyStatusName(result.status),
                            result.trajectory_generation, result.map_version,
-                           map_age_s, result.checked_samples,
+                           map_age_s, map_age_limit_s, motion_speed_mps,
+                           result.checked_samples,
                            result.checked_from_tt, result.checked_to_tt,
                            result.first_collision_tt, ttc,
                            result.first_collision_pos.x(),
@@ -1002,6 +1083,12 @@ namespace fsm {
             // finished and the stability checks in tryRecoverFromEmergencyBrake
             // pass. Never carry a previous recovery certificate into it.
             planner_ptr_->setCertifiedStopForReroute(false);
+            if (machine_state_ != EMER_STOP) {
+                // A new guard event starts a new passive-stop observation.
+                // Reusing an old anchor would let a later return to roughly
+                // the same point appear stable immediately.
+                brake_passive_stability_started_ = false;
+            }
 
             // Refresh odometry before selecting a brake initial state. A
             // PositionCommand is command-continuous only while it is recent
@@ -1140,6 +1227,27 @@ namespace fsm {
             }
             if (!std::isfinite(initial_yaw)) initial_yaw = 0.0;
 
+            // Command suppression after an uncertified brake is fail-closed,
+            // and the controller can bring the vehicle to rest before a
+            // fresh-map brake candidate becomes available.  Track that fact
+            // from independent odometry.  It does not certify any movement;
+            // it only enables the zero-displacement hold special case below.
+            bool passive_stop_stable = false;
+            if (odom_position_ready && recovery_motion_velocity_valid_ &&
+                recovery_motion_velocity_.norm() <= 0.05) {
+                if (!brake_passive_stability_started_ ||
+                    (robot_state_.p - brake_passive_stability_anchor_).norm() >
+                            0.03) {
+                    brake_passive_stability_anchor_ = robot_state_.p;
+                    brake_passive_stability_start_wt_ = selection_wt;
+                    brake_passive_stability_started_ = true;
+                }
+                passive_stop_stable = selection_wt -
+                        brake_passive_stability_start_wt_ >= 0.25;
+            } else {
+                brake_passive_stability_started_ = false;
+            }
+
             // 2026-08-18: tried a CIRI-corridor-based known-free guarantee
             // here (buildEmergencyStopPolytope, matching the SUPER paper's
             // actual backup-trajectory mechanism), first sourced from the
@@ -1176,6 +1284,8 @@ namespace fsm {
                     std::numeric_limits<double>::infinity();
             RawCloudSafetyStatus raw_brake_status =
                     RawCloudSafetyStatus::DISABLED;
+            bool certified_stationary_hold = false;
+            bool certified_stationary_margin_hold = false;
             double raw_cloud_age_s =
                     std::numeric_limits<double>::infinity();
             std::uint64_t raw_cloud_sequence = 0;
@@ -1205,10 +1315,78 @@ namespace fsm {
                     const bool map_is_fresh =
                             mapFreshForGuard(health_after, map_age_after_s);
                     certified_map_age_s = map_age_after_s;
-                    const bool certificate_is_current =
+                    bool certificate_is_current =
                             brake_safety.safe() &&
                             map_is_fresh &&
                             brake_safety.map_version == health_after.map_version;
+                    // A zero-displacement candidate is a terminal hold, not a
+                    // moving brake.  Do not accept it until independent
+                    // odometry has proved 0.25 s of physical stability.  Once
+                    // stable, a strict SAFE result certifies the hold
+                    // immediately; this avoids replaying a nominal 0.4 s
+                    // brake plus another stability wait on every map-stale
+                    // recovery.  The LiDAR blind region can label the current
+                    // robot centre UNOBSERVED forever, so that one status is
+                    // re-checked without treating unknown as occupied.
+                    // OCCUPIED and clearance failures still reject, and moving
+                    // brakes retain the strict unknown-as-occupied rule.
+                    const double hold_displacement =
+                            (candidate.getPos(candidate.getTotalDuration()) -
+                             initial.col(0)).norm();
+                    const bool stationary_candidate =
+                            initial.col(1).norm() <= 0.05 &&
+                            std::isfinite(hold_displacement) &&
+                            hold_displacement <= 0.03;
+                    if (stationary_candidate && !passive_stop_stable) {
+                        // All later duration attempts describe the same
+                        // stationary point, so retrying them cannot improve
+                        // the certificate.  Leave EMER_STOP fail-closed and
+                        // let the bounded outer retry accumulate odometry
+                        // stability instead.
+                        certificate_is_current = false;
+                        break;
+                    }
+                    if (stationary_candidate && certificate_is_current) {
+                        certified_stationary_hold = true;
+                    } else if (stationary_candidate && passive_stop_stable &&
+                               brake_safety.status ==
+                                       TrajectorySafetyStatus::CLEARANCE_MARGIN &&
+                               map_is_fresh &&
+                               brake_safety.map_version ==
+                                       health_after.map_version) {
+                        // CLEARANCE_MARGIN is returned only after the
+                        // validator has rejected unknown space and confirmed
+                        // that the robot_r body offsets contain no raw
+                        // occupied voxel.  For a physically stable,
+                        // zero-displacement hold, requiring the larger 0.3 m
+                        // planning inflation forever creates a liveness trap:
+                        // the vehicle is safely stopped but can never enter
+                        // the recovery planner.  Accept that margin-only case
+                        // here; OCCUPIED, UNOBSERVED and moving candidates are
+                        // unchanged.
+                        certificate_is_current = true;
+                        certified_stationary_hold = true;
+                        certified_stationary_margin_hold = true;
+                    } else if (stationary_candidate && passive_stop_stable &&
+                               brake_safety.status ==
+                                       TrajectorySafetyStatus::UNOBSERVED) {
+                        const auto hold_safety =
+                                planner_ptr_->validatePositionTrajectory(
+                                        candidate, 0.0, 0, false, false);
+                        const auto hold_health_after =
+                                map_ptr_->getMapHealthSnapshot();
+                        double hold_map_age_s;
+                        const bool hold_map_is_fresh = mapFreshForGuard(
+                                hold_health_after, hold_map_age_s);
+                        if (hold_safety.safe() && hold_map_is_fresh &&
+                            hold_safety.map_version ==
+                                    hold_health_after.map_version) {
+                            brake_safety = hold_safety;
+                            certified_map_age_s = hold_map_age_s;
+                            certificate_is_current = true;
+                            certified_stationary_hold = true;
+                        }
+                    }
                     raw_brake_status = validateTrajectoryAgainstRawCloud(
                             candidate, 0.0, raw_collision_position,
                             raw_cloud_age_s, raw_cloud_sequence);
@@ -1224,7 +1402,6 @@ namespace fsm {
                     if (certificate_is_current &&
                         raw_certificate_allows_brake) {
                         brake_trajectory = std::move(candidate);
-                        certified_map_age_s = map_age_after_s;
                         certified_brake_found = true;
                         break;
                     }
@@ -1289,8 +1466,25 @@ namespace fsm {
                 // ended up walling off the vehicle's own flight path.
                 // Reverted; see docs for the corridor-containment approach
                 // (buildEmergencyStopPolytope) that replaced it instead.
-                ChangeState("TrajectoryGuardFailClosed", EMER_STOP);
+                if (machine_state_ != EMER_STOP) {
+                    ChangeState("TrajectoryGuardFailClosed", EMER_STOP);
+                }
                 return false;
+            }
+
+            if (certified_stationary_hold) {
+                ros_ptr_->warn(
+                        " -- [TRAJ_GUARD_STATIONARY_HOLD] trigger={} "
+                        "stable_for={:.3f}s displacement={:.3f}m "
+                        "action={}",
+                        reason,
+                        selection_wt - brake_passive_stability_start_wt_,
+                        (brake_trajectory.getPos(
+                                 brake_trajectory.getTotalDuration()) -
+                         initial.col(0)).norm(),
+                        certified_stationary_margin_hold
+                                ? "publish_physically_clear_margin_hold"
+                                : "publish_certified_hold");
             }
 
             Eigen::Matrix<double, 3, 1> yaw_coeff;
@@ -1307,15 +1501,32 @@ namespace fsm {
                 }
                 brake_pos_traj_ = brake_trajectory;
                 brake_yaw_traj_ = yaw_trajectory;
-                brake_start_wt_ = start_wt;
+                // A stationary fallback has already satisfied the same
+                // odometry position/stability predicates required below.
+                // Backdate its constant trajectory and carry that stability
+                // certificate forward instead of replaying a redundant 0.4 s
+                // zero-motion polynomial followed by another 0.25 s wait.
+                // If recovery planning fails, getBrakeSample continues to
+                // publish the terminal hold indefinitely.
+                brake_start_wt_ = certified_stationary_hold
+                        ? start_wt - duration : start_wt;
                 brake_duration_s_ = duration;
                 brake_yaw_ = initial_yaw;
                 brake_reason_ = reason;
                 brake_stop_position_ = brake_trajectory.getPos(duration);
-                brake_stability_started_ = false;
+                if (certified_stationary_hold) {
+                    brake_stability_anchor_ = brake_stop_position_;
+                    brake_stability_start_wt_ =
+                            brake_passive_stability_start_wt_;
+                    brake_stability_started_ = true;
+                } else {
+                    brake_stability_started_ = false;
+                }
+                brake_passive_stability_started_ = false;
                 brake_recovery_last_attempt_wt_ = -
                         std::numeric_limits<double>::infinity();
-                safety_brake_finished_.store(false, std::memory_order_release);
+                safety_brake_finished_.store(certified_stationary_hold,
+                                              std::memory_order_release);
                 safety_brake_active_.store(true, std::memory_order_release);
             }
 
@@ -1877,6 +2088,27 @@ namespace fsm {
             }
             if (safety_brake_active_.load(std::memory_order_acquire)) {
                 tryRecoverFromEmergencyBrake();
+                return;
+            }
+            if (cfg_.trajectory_guard_en && machine_state_ == EMER_STOP) {
+                // A rejected brake used to fall through to callMainFsmOnce,
+                // whose legacy EMER_STOP transition immediately entered
+                // GENERATE_TRAJ.  That invoked PlanFromRest while the vehicle
+                // was still moving and reproduced as thousands of identical
+                // MINCO or CIRI/polytope failures on seeds 3/6/7/9.  A stale
+                // map is a temporary inability to certify a stop, not proof
+                // that planning from rest is valid.  Hold publication
+                // fail-closed, let map/odom callbacks progress, and retry the
+                // brake at a bounded cadence.  Only
+                // tryRecoverFromEmergencyBrake may leave this state after a
+                // real brake and stable terminal hold have been certified.
+                const double now_wt = ros_ptr_->getSimTime();
+                if (!std::isfinite(brake_activation_retry_last_wt_) ||
+                    now_wt - brake_activation_retry_last_wt_ >=
+                            cfg_.brake_retry_interval_s) {
+                    brake_activation_retry_last_wt_ = now_wt;
+                    activateEmergencyBrake("emergency_stop_retry");
+                }
                 return;
             }
             if (cfg_.trajectory_guard_shadow_en &&
