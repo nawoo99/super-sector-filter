@@ -83,8 +83,16 @@ void ProbMap::initProbMap() {
     raycast_data_.raycaster.setResolution(cfg_.resolution);
     raycast_data_.observed_raycaster.setResolution(
             cfg_.resolution * kObservedNeighborRadiusCells);
-    raycast_data_.operation_cnt.resize(map_size, 0);
-    raycast_data_.hit_cnt.resize(map_size, 0);
+    if (cfg_.raycasting_en) {
+        raycast_data_.operation_cnt.resize(map_size, 0);
+        raycast_data_.hit_cnt.resize(map_size, 0);
+    }
+    else {
+        // Avoid a fixed pair of map-sized uint16 arrays when raycasting is
+        // disabled.  This reserve covers normal scan batches without tying
+        // memory to the full configured map volume.
+        raycast_data_.sparse_update_counts.reserve(262144);
+    }
 
     resetLocalMap();
 
@@ -584,15 +592,29 @@ void ProbMap::probabilisticMapFromCache() {
         globalIndexToLocalIndex(id_g, id_l);
         int hash_id = getLocalIndexHash(id_l);
         globalIndexToPos(id_g, pos);
-        if (raycast_data_.hit_cnt[hash_id] > 0) {
-            hitPointUpdate(pos, hash_id, raycast_data_.hit_cnt[hash_id]);
+        uint16_t operation_cnt = 0;
+        uint16_t hit_cnt = 0;
+        if (cfg_.raycasting_en) {
+            operation_cnt = raycast_data_.operation_cnt[hash_id];
+            hit_cnt = raycast_data_.hit_cnt[hash_id];
+            raycast_data_.hit_cnt[hash_id] = 0;
+            raycast_data_.operation_cnt[hash_id] = 0;
         }
         else {
-            missPointUpdate(pos, hash_id,
-                            raycast_data_.operation_cnt[hash_id] - raycast_data_.hit_cnt[hash_id]);
+            const auto it = raycast_data_.sparse_update_counts.find(hash_id);
+            if (it == raycast_data_.sparse_update_counts.end()) {
+                continue;
+            }
+            operation_cnt = it->second.operation_cnt;
+            hit_cnt = it->second.hit_cnt;
+            raycast_data_.sparse_update_counts.erase(it);
         }
-        raycast_data_.hit_cnt[hash_id] = 0;
-        raycast_data_.operation_cnt[hash_id] = 0;
+        if (hit_cnt > 0) {
+            hitPointUpdate(pos, hash_id, hit_cnt);
+        }
+        else {
+            missPointUpdate(pos, hash_id, operation_cnt - hit_cnt);
+        }
     }
 }
 
@@ -738,7 +760,10 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
                 }
                 posToGlobalIndex(p, pt_id_g);
                 const int hit_hash = getHashIndexFromGlobalIndex(pt_id_g);
-                if (raycast_data_.hit_cnt[hit_hash] > 0) {
+                const auto sparse_it =
+                        raycast_data_.sparse_update_counts.find(hit_hash);
+                if (sparse_it != raycast_data_.sparse_update_counts.end() &&
+                    sparse_it->second.hit_cnt > 0) {
                     // The probability cache is voxel-indexed and a single
                     // p_hit=0.9 observation already crosses the configured
                     // occupied threshold (p_occ=0.85).  Repeating the same
@@ -868,6 +893,18 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
 
 void ProbMap::insertUpdateCandidate(const Vec3i& id_g, bool is_hit) {
     const auto& hash_id = getHashIndexFromGlobalIndex(id_g);
+    if (!cfg_.raycasting_en) {
+        auto [it, inserted] = raycast_data_.sparse_update_counts.try_emplace(hash_id);
+        auto& count = it->second;
+        ++count.operation_cnt;
+        if (inserted) {
+            raycast_data_.update_cache_id_g.push(id_g);
+        }
+        if (is_hit) {
+            ++count.hit_cnt;
+        }
+        return;
+    }
     raycast_data_.operation_cnt[hash_id]++;
     if (raycast_data_.operation_cnt[hash_id] == 1) {
         raycast_data_.update_cache_id_g.push(id_g);
@@ -919,4 +956,5 @@ void ProbMap::resetLocalMap() {
     raycast_data_.batch_update_counter = 0;
     std::fill(raycast_data_.operation_cnt.begin(), raycast_data_.operation_cnt.end(), 0);
     std::fill(raycast_data_.hit_cnt.begin(), raycast_data_.hit_cnt.end(), 0);
+    raycast_data_.sparse_update_counts.clear();
 }

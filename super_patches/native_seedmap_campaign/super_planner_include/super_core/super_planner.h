@@ -427,8 +427,16 @@ namespace super_planner {
             map_ptr_->updateMap(cloud, pose);
         }
 
-        LogOneReplan getLatestReplanLog() {
-            latest_replan.setSfcPc(cg_ptr_->getLatestCloud());
+        LogOneReplan getLatestReplanLog(const bool include_sfc_cloud = true) {
+            auto latest_cloud = cg_ptr_->getLatestCloud();
+            if (include_sfc_cloud) {
+                latest_replan.setSfcPc(std::move(latest_cloud));
+            }
+            else {
+                // Always consume the generator cloud, but do not retain it in
+                // normal campaign logs when detailed logging is disabled.
+                latest_replan.clearSfcPc();
+            }
             latest_replan.setComptT(time_consuming_);
             return latest_replan;
         }

@@ -26,6 +26,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <deque>
 #include <queue>
 #include <memory>
 #include <mutex>
@@ -136,9 +137,9 @@ namespace fsm {
             }
 
             // save on log
-            replan_logs_.push_back(planner_ptr_->getLatestReplanLog());
+            const int ret_code = recordLatestReplanLog();
             fmt::print(fmt::fg(fmt::color::green), " -- Replan ID: {}, ret code: {}\n",
-                       replan_logs_.size() - 1, replan_logs_.back().getRetCode());
+                       replan_log_total_count_ - 1, ret_code);
         }
 
         Eigen::Quaterniond eulerToQuaternion(double roll, double pitch, double yaw) {
@@ -164,7 +165,11 @@ namespace fsm {
         }
 
     protected:
-        vector<LogOneReplan> replan_logs_;
+        std::deque<LogOneReplan> replan_logs_;
+        std::size_t replan_log_total_count_{0};
+        std::size_t replan_log_dropped_count_{0};
+
+        int recordLatestReplanLog();
         /* Callback functions */
         bool finish_plan = false;
         double system_start_time_;

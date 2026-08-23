@@ -326,6 +326,31 @@ private:
            options_.mode == "legacy-trigger";
   }
 
+  bool effectiveFullOpen() const {
+    return options_.mode == "full" ||
+           (statefulMode() && effective_recovery_open_) ||
+           replan_guard_open_;
+  }
+
+  void observeEffectiveFullOpen(double now) {
+    const bool current = effectiveFullOpen();
+    if (!effective_full_open_initialized_) {
+      effective_full_open_ = current;
+      effective_full_open_initialized_ = true;
+      return;
+    }
+    if (current == effective_full_open_)
+      return;
+    effective_full_open_ = current;
+    if (current) {
+      ++effective_full_open_transitions_;
+      if (!first_effective_full_open_time_s_)
+        first_effective_full_open_time_s_ = rounded(now);
+    } else {
+      ++effective_full_close_transitions_;
+    }
+  }
+
   double nowSeconds() { return get_clock()->now().seconds(); }
 
   bool shouldPublishCloud(double now) {
@@ -651,9 +676,7 @@ private:
     total_points_ += input_points;
     if (statefulMode() && armed_)
       ++armed_frames_;
-    const bool effective_open = options_.mode == "full" ||
-                                (statefulMode() && effective_recovery_open_) ||
-                                replan_guard_open_;
+    const bool effective_open = effectiveFullOpen();
     if (effective_open) {
       ++open_frames_;
       open_input_points_ += input_points;
@@ -761,10 +784,9 @@ private:
   }
 
   void publishState() {
+    observeEffectiveFullOpen(nowSeconds());
     std_msgs::msg::Bool full_open;
-    full_open.data = options_.mode == "full" ||
-                     (statefulMode() && effective_recovery_open_) ||
-                     replan_guard_open_;
+    full_open.data = effectiveFullOpen();
     full_open_pub_->publish(full_open);
     std_msgs::msg::Bool armed;
     armed.data = statefulMode() && armed_;
@@ -886,12 +908,18 @@ private:
     boolean("replan_guard_open", replan_guard_open_);
     integer("replan_guard_open_transitions", replan_guard_open_transitions_);
     integer("replan_guard_close_transitions", replan_guard_close_transitions_);
+    integer("effective_full_open_transitions",
+            effective_full_open_transitions_);
+    integer("effective_full_close_transitions",
+            effective_full_close_transitions_);
     number("replan_guard_open_duty_pct",
            rounded(100.0 * replan_guard_open_frames_ / frame_denominator, 1e3));
     integer("replan_status_count", replan_status_count_);
     integer("replan_fail_count", replan_fail_count_);
     integer("max_replan_fail_streak", max_replan_fail_streak_);
     optional("first_replan_guard_open_time_s", first_replan_guard_open_time_s_);
+    optional("first_effective_full_open_time_s",
+             first_effective_full_open_time_s_);
     out << "\n}\n";
     return out.str();
   }
@@ -994,10 +1022,15 @@ private:
   uint64_t replan_guard_open_frames_{0};
   uint64_t replan_guard_open_transitions_{0};
   uint64_t replan_guard_close_transitions_{0};
+  bool effective_full_open_{false};
+  bool effective_full_open_initialized_{false};
+  uint64_t effective_full_open_transitions_{0};
+  uint64_t effective_full_close_transitions_{0};
   uint64_t replan_status_count_{0};
   uint64_t replan_fail_count_{0};
   int max_replan_fail_streak_{0};
   std::optional<double> first_replan_guard_open_time_s_;
+  std::optional<double> first_effective_full_open_time_s_;
 };
 
 int main(int argc, char **argv) {

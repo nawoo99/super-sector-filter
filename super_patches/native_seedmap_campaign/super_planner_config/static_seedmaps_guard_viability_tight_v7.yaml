@@ -110,7 +110,10 @@ fsm:
 
 super_planner:
   backup_traj_en: true
-  detailed_log_en: true
+  # Campaign runs retain scalar/timing records only. Full SFC point clouds are
+  # a debug artifact and previously accumulated without bound in replan_logs_.
+  detailed_log_en: false
+  detailed_log_max_entries: 64
   visualization_en: false
   use_fov_cut: false
   print_log: false

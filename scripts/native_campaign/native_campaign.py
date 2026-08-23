@@ -15,6 +15,7 @@ from correlate_shadow_contacts import correlate as correlate_shadow_contacts
 
 ROS_ENV = "source /opt/ros/humble/setup.bash && source /root/super_ws/install/setup.bash"
 PERF_LOG = "/root/super_ws/src/SUPER/rog_map/log/rm_performance_log.csv"
+SUPER_CONFIG_DIR = "/root/super_ws/src/SUPER/super_planner/config"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 LOOP_MON = os.path.join(SCRIPT_DIR, "native_loop_monitor.py")
@@ -47,6 +48,161 @@ def proc_ticks(pid):
         return int(rest[11]) + int(rest[12])
     except (OSError, IndexError, ValueError):
         return None
+
+
+def read_keyed_kib(path, key):
+    """Read a ``Key: N kB`` value, returning None when unavailable."""
+    try:
+        with open(path) as stream:
+            for line in stream:
+                if line.startswith(key + ":"):
+                    return int(line.split()[1])
+    except (OSError, IndexError, ValueError):
+        pass
+    return None
+
+
+def read_int_file(path):
+    try:
+        return int(open(path).read().strip())
+    except (OSError, ValueError):
+        return None
+
+
+def read_cgroup_event(name):
+    try:
+        with open("/sys/fs/cgroup/memory.events") as stream:
+            for line in stream:
+                key, value = line.split()
+                if key == name:
+                    return int(value)
+    except (OSError, ValueError):
+        pass
+    return None
+
+
+def super_config_cloud_topic(config_name):
+    """Return a SUPER config's ROG-Map cloud topic without a YAML dependency."""
+    if not config_name:
+        return None
+    path = os.path.join(SUPER_CONFIG_DIR, os.path.basename(config_name))
+    try:
+        with open(path) as stream:
+            for line in stream:
+                match = re.match(r'^\s*cloud_topic:\s*["\']?([^"\'\s#]+)', line)
+                if match:
+                    return match.group(1)
+    except OSError:
+        return None
+    return None
+
+
+def read_memory_psi():
+    values = {"psi_some_avg10": None, "psi_full_avg10": None}
+    try:
+        with open("/proc/pressure/memory") as stream:
+            for line in stream:
+                fields = line.split()
+                if not fields:
+                    continue
+                prefix = fields[0]
+                for field in fields[1:]:
+                    if field.startswith("avg10=") and prefix in ("some", "full"):
+                        values[f"psi_{prefix}_avg10"] = float(field.split("=", 1)[1])
+    except (OSError, ValueError):
+        pass
+    return values
+
+
+class MemoryMeter:
+    """Low-rate per-attempt FSM and host memory sampler."""
+
+    FIELDNAMES = (
+        "elapsed_s", "fsm_rss_kib", "fsm_pss_kib", "fsm_swap_kib",
+        "system_available_kib", "system_swap_used_kib",
+        "cgroup_memory_kib", "cgroup_swap_kib",
+        "psi_some_avg10", "psi_full_avg10",
+    )
+
+    def __init__(self, pid, trace_path):
+        self.pid = pid
+        self.trace_path = trace_path
+        self.started = time.monotonic()
+        self.rows = []
+        with open(trace_path, "w", newline="") as stream:
+            csv.DictWriter(
+                stream, fieldnames=self.FIELDNAMES, lineterminator="\n"
+            ).writeheader()
+
+    def sample(self):
+        mem_total = read_keyed_kib("/proc/meminfo", "SwapTotal")
+        mem_free = read_keyed_kib("/proc/meminfo", "SwapFree")
+        row = {
+            "elapsed_s": round(time.monotonic() - self.started, 3),
+            "fsm_rss_kib": read_keyed_kib(f"/proc/{self.pid}/status", "VmRSS"),
+            "fsm_pss_kib": read_keyed_kib(f"/proc/{self.pid}/smaps_rollup", "Pss"),
+            "fsm_swap_kib": read_keyed_kib(f"/proc/{self.pid}/status", "VmSwap"),
+            "system_available_kib": read_keyed_kib("/proc/meminfo", "MemAvailable"),
+            "system_swap_used_kib": (
+                mem_total - mem_free
+                if mem_total is not None and mem_free is not None else None
+            ),
+            "cgroup_memory_kib": (
+                value // 1024
+                if (value := read_int_file("/sys/fs/cgroup/memory.current")) is not None
+                else None
+            ),
+            "cgroup_swap_kib": (
+                value // 1024
+                if (value := read_int_file("/sys/fs/cgroup/memory.swap.current")) is not None
+                else None
+            ),
+        }
+        row.update(read_memory_psi())
+        self.rows.append(row)
+        with open(self.trace_path, "a", newline="") as stream:
+            csv.DictWriter(
+                stream, fieldnames=self.FIELDNAMES, lineterminator="\n"
+            ).writerow(row)
+
+    def summary(self):
+        def extrema(key, fn):
+            values = [row[key] for row in self.rows if row.get(key) is not None]
+            return fn(values) / 1024.0 if values else None
+
+        return {
+            "fsm_peak_rss_mib": extrema("fsm_rss_kib", max),
+            "fsm_peak_pss_mib": extrema("fsm_pss_kib", max),
+            "fsm_peak_swap_mib": extrema("fsm_swap_kib", max),
+            "system_min_available_mib": extrema("system_available_kib", min),
+            "system_peak_swap_used_mib": extrema("system_swap_used_kib", max),
+            "cgroup_peak_memory_mib": extrema("cgroup_memory_kib", max),
+            "cgroup_peak_swap_mib": extrema("cgroup_swap_kib", max),
+            "memory_psi_some_avg10_max": max(
+                (row["psi_some_avg10"] for row in self.rows
+                 if row.get("psi_some_avg10") is not None), default=None
+            ),
+            "memory_psi_full_avg10_max": max(
+                (row["psi_full_avg10"] for row in self.rows
+                 if row.get("psi_full_avg10") is not None), default=None
+            ),
+        }
+
+
+def merge_memory_summaries(summaries):
+    merged = {}
+    for key in (
+        "fsm_peak_rss_mib", "fsm_peak_pss_mib", "fsm_peak_swap_mib",
+        "system_peak_swap_used_mib", "cgroup_peak_memory_mib",
+        "cgroup_peak_swap_mib", "memory_psi_some_avg10_max",
+        "memory_psi_full_avg10_max",
+    ):
+        values = [item[key] for item in summaries if item.get(key) is not None]
+        merged[key] = max(values) if values else None
+    values = [item["system_min_available_mib"] for item in summaries
+              if item.get("system_min_available_mib") is not None]
+    merged["system_min_available_mib"] = min(values) if values else None
+    return merged
 
 
 def parse_shadow_guard_log(path):
@@ -425,10 +581,13 @@ FIELDS = ["map", "run", "mode", "experiment_profile", "filter_profile",
           "filter_replan_ok_streak_close", "filter_replan_guard_open",
           "filter_replan_guard_open_transitions",
           "filter_replan_guard_close_transitions",
+          "filter_effective_full_open_transitions",
+          "filter_effective_full_close_transitions",
           "filter_replan_guard_open_duty_pct",
           "filter_replan_status_count", "filter_replan_fail_count",
           "filter_max_replan_fail_streak",
-          "filter_first_replan_guard_open_time_s", "recovery_triggered",
+          "filter_first_replan_guard_open_time_s",
+          "filter_first_effective_full_open_time_s", "recovery_triggered",
           "recovery_reclosed", "recovery_spawn_after_arm",
           "recovery_open_after_spawn", "recovery_open_during_hold",
           "recovery_success",
@@ -449,6 +608,13 @@ FIELDS = ["map", "run", "mode", "experiment_profile", "filter_profile",
           "pts_mean", "total_ms_mean", "raycast_ms_mean", "update_ms_mean",
           "inflation_ms_mean", "kept_pct", "fsm_cpu_pct", "filter_cpu_pct",
           "monitor_cpu_pct",
+          "attempt_count", "retry_count", "first_attempt_success",
+          "retry_reasons", "oom_kill_delta",
+          "fsm_peak_rss_mib", "fsm_peak_pss_mib", "fsm_peak_swap_mib",
+          "system_min_available_mib", "system_peak_swap_used_mib",
+          "cgroup_peak_memory_mib", "cgroup_peak_swap_mib",
+          "memory_psi_some_avg10_max", "memory_psi_full_avg10_max",
+          "memory_trace_csv",
           "perf_row_start", "perf_row_end", "input_distance_m",
           "kept_distance_m"]
 
@@ -582,6 +748,19 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         and os.environ.get(f"{map_name.upper()}_MATCHED_PREFIX", "0").lower()
         in ("1", "true", "yes", "on")
     )
+    override_cloud_topic = super_config_cloud_topic(
+        seedmap_super_config_override
+    )
+    if (
+        base_mode in ("sector", "adaptive")
+        and seedmap_super_config_override
+        and override_cloud_topic != "/cloud_sector"
+    ):
+        raise ValueError(
+            f"{base_mode} requires a SUPER config whose cloud_topic is "
+            f"/cloud_sector; {seedmap_super_config_override} uses "
+            f"{override_cloud_topic or 'an unknown topic'}"
+        )
     if is_ref or is_map0:
         base_wps, base_switch, base_timeout = (
             (MAP0_WPS, MAP0_SWITCH, MAP0_TIMEOUT) if is_map0
@@ -622,21 +801,29 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         if loop_timeout_override is not None:
             timeout = loop_timeout_override
     tag = f"{map_name}_run{run}_{mode}"
-    out_json = os.path.join(TMPDIR, f"{tag}.json")
-    filt_log = os.path.join(TMPDIR, f"{tag}.filt.log")
-    filt_event_json = os.path.join(TMPDIR, f"{tag}.filt_event.json")
-    filt_stats_json = os.path.join(TMPDIR, f"{tag}.filt_stats.json")
-    scenario_log = os.path.join(TMPDIR, f"{tag}.scenario.log")
-    scenario_event_json = os.path.join(TMPDIR, f"{tag}.scenario_event.json")
-    scenario_trace_csv = os.path.join(TMPDIR, f"{tag}.scenario_trace.csv")
-    mission_log = os.path.join(TMPDIR, f"{tag}.mission.log")
-    mission_event_json = os.path.join(TMPDIR, f"{tag}.mission_event.json")
-    reference_monitor_log = os.path.join(TMPDIR, f"{tag}.reference_monitor.log")
-    reference_stack_log = os.path.join(TMPDIR, f"{tag}.stack.log")
-    ready_json = os.path.join(TMPDIR, f"{tag}.ready.json")
+    oom_kill_start = read_cgroup_event("oom_kill")
+    retry_reasons = []
+    memory_summaries = []
+    memory_trace_paths = []
 
     for attempt in range(1, attempt_max + 1):
         kill_all()
+        # Every attempt gets unique evidence paths. A retry must never replace
+        # the stack/memory trace that explains the first-attempt failure.
+        attempt_tag = f"{tag}.attempt{attempt}"
+        out_json = os.path.join(TMPDIR, f"{attempt_tag}.json")
+        filt_log = os.path.join(TMPDIR, f"{attempt_tag}.filt.log")
+        filt_event_json = os.path.join(TMPDIR, f"{attempt_tag}.filt_event.json")
+        filt_stats_json = os.path.join(TMPDIR, f"{attempt_tag}.filt_stats.json")
+        scenario_log = os.path.join(TMPDIR, f"{attempt_tag}.scenario.log")
+        scenario_event_json = os.path.join(TMPDIR, f"{attempt_tag}.scenario_event.json")
+        scenario_trace_csv = os.path.join(TMPDIR, f"{attempt_tag}.scenario_trace.csv")
+        mission_log = os.path.join(TMPDIR, f"{attempt_tag}.mission.log")
+        mission_event_json = os.path.join(TMPDIR, f"{attempt_tag}.mission_event.json")
+        reference_monitor_log = os.path.join(TMPDIR, f"{attempt_tag}.reference_monitor.log")
+        reference_stack_log = os.path.join(TMPDIR, f"{attempt_tag}.stack.log")
+        memory_trace_csv = os.path.join(TMPDIR, f"{attempt_tag}.memory.csv")
+        ready_json = os.path.join(TMPDIR, f"{attempt_tag}.ready.json")
         for path in (
             out_json,
             filt_event_json,
@@ -721,6 +908,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         # by the simulator renderer and safety callbacks.
         raw_direct = ((is_ref or is_map0) and mode in RAW_DIRECT_REF_MODES) or (
             is_seedmap_guard
+        ) or (
+            base_mode == "full" and
+            override_cloud_topic == "/cloud_registered"
         )
         filter_options = f" --stats-json {filt_stats_json}"
         if filter_profile == "strict-burst" and base_mode != "full":
@@ -851,6 +1041,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         # confirm fsm_node actually came up
         up = subprocess.run(["pgrep", "-f", "fsm_node"], stdout=subprocess.DEVNULL).returncode == 0
         if not up:
+            retry_reasons.append("fsm_node did not start")
             log(f"  {tag} attempt {attempt}/{attempt_max}: fsm_node did not start -> retry")
             kill_group(launch_proc)
             kill_group(filt_proc)
@@ -867,6 +1058,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             required_processes.append(("recovery mission", recovery_mission_proc))
         exited = [name for name, proc in required_processes if proc.poll() is not None]
         if exited:
+            retry_reasons.append(f"{', '.join(exited)} exited during startup")
             log(
                 f"  {tag} attempt {attempt}/{attempt_max}: "
                 f"{', '.join(exited)} exited during startup -> retry"
@@ -898,6 +1090,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             ):
                 time.sleep(0.1)
             if mon_proc.poll() is not None or not os.path.exists(ready_json):
+                retry_reasons.append("reference monitor did not reach READY")
                 log(
                     f"  {tag} attempt {attempt}/{attempt_max}: "
                     "reference monitor did not reach READY -> retry"
@@ -917,6 +1110,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             if filter_backend == "python" else SECTOR_CPP_EXECUTABLE
         )
         fsm_cpu.start()
+        memory_meter = MemoryMeter(fsm_cpu.pid, memory_trace_csv)
+        memory_trace_paths.append(memory_trace_csv)
+        memory_meter.sample()
         if filt_proc is not None:
             if filter_backend == "cpp":
                 filt_cpu.start_executable(SECTOR_CPP_EXECUTABLE)
@@ -976,6 +1172,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         while mon_proc.poll() is None and time.monotonic() < monitor_deadline:
             time.sleep(1.0)
             monitor_cpu.sample()
+            memory_meter.sample()
             if not pgrep("/fsm_node"):
                 runtime_process_failure = "fsm_node exited during mission"
                 break
@@ -983,6 +1180,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 runtime_process_failure = "filter exited during mission"
                 break
         if runtime_process_failure is not None:
+            memory_summaries.append(memory_meter.summary())
+            retry_reasons.append(runtime_process_failure)
             log(
                 f"  {tag} attempt {attempt}/{attempt_max}: "
                 f"{runtime_process_failure} -> retry"
@@ -995,6 +1194,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         if mon_proc.poll() is None:
             log(f"  {tag}: monitor HUNG -> kill")
             kill_group(mon_proc)
+
+        memory_meter.sample()
+        memory_summaries.append(memory_meter.summary())
 
         fsm_cpu_pct = fsm_cpu.stop()
         filter_cpu_pct = filt_cpu.stop() if filt_proc is not None else None
@@ -1026,7 +1228,18 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                "perf_row_start": row_start, "perf_row_end": row_end, "kept_pct": kept_pct,
                "fsm_cpu_pct": fsm_cpu_pct, "filter_cpu_pct": filter_cpu_pct,
                "monitor_cpu_pct": monitor_cpu_pct,
+               "attempt_count": attempt,
+               "retry_count": attempt - 1,
+               "first_attempt_success": attempt == 1,
+               "retry_reasons": "; ".join(retry_reasons) or None,
+               "oom_kill_delta": (
+                   max(0, current_oom - oom_kill_start)
+                   if oom_kill_start is not None
+                   and (current_oom := read_cgroup_event("oom_kill")) is not None
+                   else None
+               ),
                "matched_prefix": matched_prefix if is_dynamic else None}
+        rec.update(merge_memory_summaries(memory_summaries))
         if os.path.exists(out_json):
             monitor_result = json.load(open(out_json))
             rec.update(monitor_result)
@@ -1057,6 +1270,27 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 artifact_path = os.path.join(artifacts_dir, f"{tag}.json")
                 shutil.copyfile(out_json, artifact_path)
                 rec["forensics_json"] = os.path.relpath(artifact_path, REPO_ROOT)
+                copied_memory_traces = []
+                for attempt_number in range(1, attempt + 1):
+                    evidence_prefix = f"{tag}.attempt{attempt_number}"
+                    for suffix in (
+                        "stack.log", "memory.csv", "filt.log",
+                        "reference_monitor.log", "mission.log",
+                    ):
+                        source = os.path.join(
+                            TMPDIR, f"{evidence_prefix}.{suffix}"
+                        )
+                        if not os.path.exists(source):
+                            continue
+                        destination = os.path.join(
+                            artifacts_dir, os.path.basename(source)
+                        )
+                        shutil.copyfile(source, destination)
+                        if suffix == "memory.csv":
+                            copied_memory_traces.append(
+                                os.path.relpath(destination, REPO_ROOT)
+                            )
+                rec["memory_trace_csv"] = ";".join(copied_memory_traces)
                 if is_reference_ablation:
                     for source, suffix in (
                         (reference_stack_log, "stack.log"),
@@ -1076,6 +1310,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                         reference_stack_log,
                         os.path.join(artifacts_dir, f"{tag}.stack.log"),
                     )
+            else:
+                rec["memory_trace_csv"] = ";".join(memory_trace_paths)
             rec.update(slice_perf(row_start, row_end))
         else:
             rec["success"] = False
@@ -1176,6 +1412,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
 
         # retry if we never even got odom samples (startup race), else accept the result
         if rec.get("samples", 0) in (0, None) and attempt < attempt_max:
+            retry_reasons.append("no odom samples")
             log(f"  {tag} attempt {attempt}/{attempt_max}: no odom samples -> retry")
             continue
         if (
@@ -1183,6 +1420,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             and rec.get("run_valid") is not True
             and attempt < attempt_max
         ):
+            retry_reasons.append("reference validity failed")
             if artifacts_dir and os.path.exists(out_json):
                 invalid_artifact = os.path.join(
                     artifacts_dir, f"{tag}_attempt{attempt}_invalid.json"
@@ -1202,6 +1440,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             and rec.get("run_valid") is not True
             and attempt < attempt_max
         ):
+            retry_reasons.append("static PCD monitor was not active")
             log(
                 f"  {tag} attempt {attempt}/{attempt_max}: "
                 "static PCD monitor was not active -> retry"
@@ -1212,6 +1451,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             and rec.get("valid_spawn") is False
             and attempt < attempt_max
         ):
+            retry_reasons.append("invalid recovery trigger pose")
             log(
                 f"  {tag} attempt {attempt}/{attempt_max}: "
                 "invalid recovery trigger pose -> retry"
@@ -1232,10 +1472,22 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             f"pts={rec.get('pts_mean')} kept={kept_pct}% fsm_cpu={fsm_cpu_pct}")
         return rec
 
-    return {"map": map_name, "run": run, "mode": mode,
+    oom_kill_end = read_cgroup_event("oom_kill")
+    failed_rec = {"map": map_name, "run": run, "mode": mode,
             "experiment_profile": mode if mode in REFERENCE_ABLATION_PROFILES else None,
             "filter_profile": filter_profile, "filter_backend": filter_backend,
-            "success": False, "run_valid": False}
+            "success": False, "run_valid": False,
+            "attempt_count": attempt_max, "retry_count": attempt_max - 1,
+            "first_attempt_success": False,
+            "retry_reasons": "; ".join(retry_reasons) or None,
+            "oom_kill_delta": (
+                max(0, oom_kill_end - oom_kill_start)
+                if oom_kill_start is not None and oom_kill_end is not None
+                else None
+            ),
+            "memory_trace_csv": ";".join(memory_trace_paths)}
+    failed_rec.update(merge_memory_summaries(memory_summaries))
+    return failed_rec
 
 
 def main():
@@ -1344,7 +1596,9 @@ def main():
                 "campaign schema; choose a new --out path"
             )
     f = open(args.out, "a", newline="")
-    w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
+    w = csv.DictWriter(
+        f, fieldnames=FIELDS, extrasaction="ignore", lineterminator="\n"
+    )
     if fresh:
         w.writeheader(); f.flush()
 

@@ -43,6 +43,13 @@ namespace fsm {
     public:
         bool timer_en{true};
 
+        // Detailed binary replan logs retain the complete point cloud used to
+        // build each safe-flight corridor.  Keep the feature explicitly
+        // controlled and bounded: long, dense-map missions otherwise retain
+        // hundreds of point clouds until process shutdown.
+        bool detailed_log_en{false};
+        int detailed_log_max_entries{64};
+
         // Fsm Params
         bool click_goal_en{},visualization_en{};
         double replan_rate{}, resolution{};
@@ -141,6 +148,12 @@ namespace fsm {
             yaml_loader::YamlLoader loader(cfg_path);
             vector<double> tem_gain;
             loader.LoadParam("fsm/timer_en", timer_en, false);
+            loader.LoadParam("super_planner/detailed_log_en",
+                             detailed_log_en, false);
+            loader.LoadParam("super_planner/detailed_log_max_entries",
+                             detailed_log_max_entries, 64);
+            detailed_log_max_entries = std::max(0,
+                                                 detailed_log_max_entries);
             loader.LoadParam("fsm/click_goal_en", click_goal_en, false);
             loader.LoadParam("fsm/click_yaw_en", click_yaw_en, false);
             loader.LoadParam("fsm/replan_rate", replan_rate, 10.0);

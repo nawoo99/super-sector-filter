@@ -185,7 +185,7 @@ namespace fsm {
             int total_replan_num{0};
             double average_compt_t{0.0};
             Vec3f cur_p{0, 0, 0};
-            for (auto rp: replan_logs_) {
+            for (const auto &rp: replan_logs_) {
                 if (rp.getRetCode() > 0) {
                     if (cur_p.norm() < 1e-6) {
                         cur_p = rp.getRobotP();
@@ -211,7 +211,10 @@ namespace fsm {
                                          ? LOG_FILE_DIR(
                                                  "cmd_logs/" + BinaryFileHandler<int>::getCurrentTimeStr() + ".csv")
                                          : LOG_FILE_DIR("cmd_logs/" + name + ".csv");
-            BinaryFileHandler<vector<LogOneReplan>>::save(save_path, replan_logs_);
+            const vector<LogOneReplan> persisted_logs(
+                    replan_logs_.begin(), replan_logs_.end());
+            BinaryFileHandler<vector<LogOneReplan>>::save(save_path,
+                                                           persisted_logs);
 
             std::ofstream csv_writer;
             csv_writer.open(csv_path, std::ios::out | std::ios::trunc);

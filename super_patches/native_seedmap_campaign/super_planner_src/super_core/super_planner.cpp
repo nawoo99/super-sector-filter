@@ -1175,10 +1175,18 @@ namespace super_planner {
             if (rejected_segment_out) {
                 *rejected_segment_out = rejected_segment;
             }
+            // Both statuses are geometric evidence about the outgoing EXP
+            // topology.  Previously only a clearance-margin rejection could
+            // arm recovery; a stopped candidate whose first samples were
+            // already OCCUPIED repeated the same guarded rejection forever.
+            // MAP_STALE and UNOBSERVED remain excluded because they do not
+            // identify a route that should be blocked.
             const bool plan_from_rest_geometric_rejection =
                     plan_from_rest &&
                     !vertical_recovery_candidate &&
-                    safety.status == TrajectorySafetyStatus::CLEARANCE_MARGIN &&
+                    (safety.status ==
+                             TrajectorySafetyStatus::CLEARANCE_MARGIN ||
+                     safety.status == TrajectorySafetyStatus::OCCUPIED) &&
                     rejected_segment == "EXP";
             if (cfg_.corridor_guard_retry_inflated &&
                 safety.status == TrajectorySafetyStatus::CLEARANCE_MARGIN &&

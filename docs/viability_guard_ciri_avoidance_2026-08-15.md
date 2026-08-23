@@ -1550,15 +1550,104 @@ Raw-cloud CIRI remains shadow-only/default false. Full tables and artifacts are
 in `docs/native_cpp_timeout_recovery_v7_20260823.md` and
 `results/full_adaptive_timeoutfix_summary_20260823.csv`.
 
-## Current status — native Adaptive and Full passed the stopped-timeout n=5 gate
+### 8.21 Bounded memory and valid three-mode n=1 regression (2026-08-23)
 
-- **Section 8.20 is the current Full/native-Adaptive liveness and safety gate;
-  8.17 remains the fixed-Sector control:** The stopped A* timeout fix changed
+The memory/swap contamination in 8.20 had two independent sources. First,
+`detailed_log_en=true` retained every replan record's complete SFC point cloud
+in an unbounded `replan_logs_` vector. One failing Full seed5 attempt reached
+about 7.09 GiB FSM RSS with host swap exhausted before a kernel OOM kill. The
+normal campaign profile now disables detailed cloud retention, replan records
+are held in a deque capped at 64, and the corridor cloud is consumed by move.
+Scalar/trajectory/timing records remain; full cloud debug logs require an
+explicit opt-in and a deliberately selected cap.
+
+Second, the fixed-map profile has `raycasting_en=false` but ROG-Map still
+allocated two map-volume `uint16_t` counter arrays. At 491 x 491 x 981 cells
+these reserved about 0.88 GiB. The no-raycasting path now stores only per-batch
+touched voxel counters in an `unordered_map`; the existing dense fast path is
+unchanged for `raycasting_en=true`. A bounded-log, pre-sparse seed6/10 x n=3
+diagnostic reached 4383.98 MiB peak FSM RSS. The comparable post-sparse Full
+gate peaked at 3472.67 MiB.
+
+The campaign runner now records per-attempt memory traces, FSM RSS/PSS/swap,
+host and cgroup memory/swap, PSI, retry reason, and cgroup OOM-kill delta. It
+also found an experiment-validity bug in this session: an initial
+Sector/Adaptive diagnostic used the direct-Full YAML, so the planner consumed
+`/cloud_registered` rather than the filter's `/cloud_sector`. Those rows are
+excluded from mode comparison. A Sector/Adaptive config override is now
+rejected unless its parsed ROG-Map `cloud_topic` is `/cloud_sector`; a direct
+Full override no longer launches an unused pass-through filter.
+
+The final valid smoke uses v=7, `loop24.txt`, timeout 240 s, static PCD,
+seed1-10 x n=1. Full uses the direct tight-v7 config and Sector/Adaptive use
+the filtered tight-v7 config with the C++ strict-burst filter. Both configs
+disable detailed SFC-cloud retention and use the same 64-record bound. Raw
+completion was **10/10 in all three modes**. Static-safe completion was Full
+**10/10**, Sector **9/10**, Adaptive **10/10**. Sector seed7 completed the
+loop but had two contact events, one static contact episode, and -0.007 m worst
+body clearance. Full and Adaptive had zero live/static contact; their worst
+body clearances were +0.208 and +0.216 m.
+
+The C++ filter now counts the exact combined output state transition rather
+than trying to infer it from overlapping causes. Adaptive observed **321
+effective full-open and 320 full-close transitions** (per-run opens 23-45),
+with a time-weighted full-open duty of 23.38%. Seed5 ended while open, which
+explains the one-count difference. The separate component counters were 7/2
+stall-recovery entry/exit and 248/248 replan-guard open/close; they cannot be
+added because a recovery episode can pulse repeatedly and causes can overlap.
+
+Relative to Full, Sector reduced processed points/update 51.39%, throughput
+54.00%, mapping/update 60.73%, and mapping work/mission 61.12%. Adaptive
+reduced them 28.33%, 57.09%, 43.55%, and 58.64%. The observed combined
+FSM+filter CPU-work reductions were 9.38% and 9.74%, respectively, but these
+are sequential n=1 arms without order crossing, not an end-to-end population
+claim. Mean mission time was 73.87 s Full, 77.30 s Sector, and 90.41 s
+Adaptive.
+
+All final rows had retry count 0, OOM delta 0, and FSM swap 0 MiB. One Sector
+seed1 sample observed a brief host-wide memory PSI `some/full avg10` value of
+0.18; every other row was 0. Peak FSM RSS across the 30 rows was 3455.69 MiB.
+The host still had nearly 2 GiB swap occupied by its broader environment, but
+the FSM did not use swap and there was no retry/OOM increment, so the 8.20
+sustained pressure did not recur in this cohort.
+
+One invalid raw-input diagnostic also exposed a stopped `PlanFromRest` EXP
+`OCCUPIED` loop. A certified stopped EXP rejection with either `OCCUPIED` or
+`CLEARANCE_MARGIN` can now arm the existing bounded topology recovery;
+`MAP_STALE`, `UNOBSERVED`, and moving-state behavior remain excluded. Targeted
+post-change runs passed, but the rare branch did not reoccur, so it is not
+execution-proven by the valid final cohort.
+
+The final fair rerun's sampled maxima were 7.004 m/s Full, 7.014 m/s Sector,
+and 7.006 m/s Adaptive. A preliminary Adaptive row from the superseded
+mixed-logging comparison reported 9.842 m/s, but a dedicated repeat and the
+final fair seed3 rerun both reported about 7.000 m/s; it is excluded from the
+final table. This entire section is an unpaired n=1 smoke, no McNemar test is
+reported, and 10/10 is not a population or flight-readiness guarantee.
+Raw-cloud CIRI remains default false. Full details and tables are in
+`docs/memory_bounded_3mode_v7_20260823.md` and
+`results/final_postopt_3mode_*_20260823.csv`.
+
+## Current status — bounded-memory three-mode smoke passed, population gate unchanged
+
+- **Section 8.21 is the current memory and valid three-mode smoke; section 8.20
+  remains the stronger Full/native-Adaptive liveness gate and 8.17 the n=5
+  fixed-Sector control:** The stopped A* timeout fix changed
   same-session pre-patch Full/Adaptive 49/50 and 48/50 into patched 50/50 and
   50/50, with zero live/static contact. Fixed Sector was not rerun; its current
-  control remains 46/50 static-safe in 8.17. These are observed cohorts, not a
-  population guarantee or paired experiment.
-- **Map workload reduction passed at n=50; end-to-end CPU needs a clean rerun:**
+  n=5 control remains 46/50 static-safe in 8.17. Section 8.21 adds a same-code,
+  correctly routed n=1 comparison of 10/10, 9/10, and 10/10 static-safe Full,
+  Sector, and Adaptive completion. These are observed cohorts, not a
+  population guarantee or one paired experiment.
+- **The memory failure is fixed at smoke scale; a clean order-crossed broad CPU
+  campaign remains pending:** 8.21 bounds detailed replan logs, removes about
+  0.88 GiB of no-raycasting dense counters, and observes 30 runs with zero FSM
+  swap/retry/OOM increment. Its exact Adaptive transition count is 321 open and
+  320 close. Section 8.20's n=50 map workload reduction remains valid, but its
+  end-to-end CPU baseline is contaminated; 8.21's lower CPU work is only
+  sequential n=1 evidence.
+- **Map workload reduction passed at n=50; end-to-end CPU still needs a clean
+  broad rerun:**
   native Adaptive reduced processed points/update 25.58%, throughput 32.53%,
   mapping/update 29.62%, and mapping work/mission 48.39% against the final Full
   rows. The later Full arm was affected by memory/swap pressure, so its combined

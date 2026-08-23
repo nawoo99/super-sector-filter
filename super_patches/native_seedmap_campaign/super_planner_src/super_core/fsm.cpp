@@ -45,6 +45,26 @@ namespace fsm {
         write_time_ << endl;
     }
 
+    int Fsm::recordLatestReplanLog() {
+        auto replan_log = planner_ptr_->getLatestReplanLog(
+                cfg_.detailed_log_en);
+        const int ret_code = replan_log.getRetCode();
+        ++replan_log_total_count_;
+
+        const auto max_entries = static_cast<std::size_t>(
+                cfg_.detailed_log_max_entries);
+        if (max_entries == 0) {
+            ++replan_log_dropped_count_;
+            return ret_code;
+        }
+        if (replan_logs_.size() >= max_entries) {
+            replan_logs_.pop_front();
+            ++replan_log_dropped_count_;
+        }
+        replan_logs_.push_back(std::move(replan_log));
+        return ret_code;
+    }
+
     void Fsm::callReplanOnce() {
         if (stop) {
             return;
@@ -85,7 +105,7 @@ namespace fsm {
         planner_ptr_->getModuleTimeConsuming(log_module_time);
         log_module_time[log_module_time.size() - 2] = replan_once_time.stop();
         // save on log
-        replan_logs_.push_back(planner_ptr_->getLatestReplanLog());
+        recordLatestReplanLog();
         WriteTimeToLog();
     }
 
@@ -180,7 +200,7 @@ namespace fsm {
                     cout << YELLOW << " -- [Fsm] PlanFromRest failed, try replan." << RESET << endl;
                     // ros::Duration(0.1).sleep();
                 }
-                replan_logs_.push_back(planner_ptr_->getLatestReplanLog());
+                recordLatestReplanLog();
                 break;
             }
             case FOLLOW_TRAJ: {

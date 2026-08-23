@@ -82,8 +82,11 @@ namespace super_planner {
                                        vec_E<Vec3f> &pc) const;
     public:
         vec_Vec3f getLatestCloud() {
-            vec_Vec3f out = latest_pc;
-            latest_pc.clear();
+            // Transfer ownership instead of copying the potentially large
+            // per-replan corridor cloud.  Moving also drops the producer's
+            // retained high-water capacity after each replan.
+            vec_Vec3f out = std::move(latest_pc);
+            latest_pc = vec_Vec3f{};
             return out;
         }
 

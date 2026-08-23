@@ -1,6 +1,43 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-23 bounded-memory + 유효한 3-mode 후속 — 바로 아래 §8.20 배너의
+> memory/swap 미해결 상태를 대체하되, n=50 liveness 결과 자체는 대체하지 않는다.**
+> Full 후반 오염의 직접 원인은 (1) 모든 재계획 로그가 SFC 전체 cloud를 종료
+> 때까지 보관하던 무제한 누적과 (2) `raycasting_en=false`에서도 491 x 491 x 981
+> 전체 맵 크기로 잡던 두 `uint16_t` counter 배열 약 0.88 GiB였다. 일반 캠페인은
+> detailed cloud를 끄고 scalar/trajectory 로그만 최근 64개로 제한했으며, no-raycast
+> counter는 스캔에서 실제 건드린 voxel만 저장하는 sparse batch cache로 바꿨다.
+>
+> runner는 이제 attempt별 memory trace, FSM RSS/PSS/swap, host/cgroup memory/swap,
+> PSI, retry reason, OOM delta를 보존한다. 동시에 이번 세션 초기 Sector/Adaptive가
+> direct-Full YAML을 받아 실제로는 `/cloud_registered`를 읽은 유효성 오류를 찾았다.
+> 그 행은 비교에서 전부 제외했다. 이제 Sector/Adaptive override가
+> `/cloud_sector`가 아니면 실행 전에 실패하고, direct Full은 불필요한 filter를
+> 띄우지 않는다.
+>
+> 올바른 입력으로 v=7, `loop24.txt`, static PCD, seed1-10 x n=1을 다시 실행한
+> 결과 raw 완주는 Full/Sector/Adaptive 모두 **10/10**, static-safe 완주는
+> **10/10, 9/10, 10/10**이다. direct/filtered 양쪽 모두 detailed SFC cloud를
+> 끄고 같은 64-record bound를 사용했다. Sector seed7만 2 contact events/1 static
+> episode, body clearance -0.007 m였고 Full/Adaptive는 contact 0이다. Adaptive
+> 실제 출력 상태는 full-open **321회**, close **320회** 전환했고 time-weighted
+> open duty는 23.38%였다. seed5가 open 상태로 종료되어 close가 하나 적다.
+>
+> Adaptive는 Full 대비 points/update 28.33%, throughput 57.09%, mapping/update
+> 43.55%, mapping work/mission 58.64%를 줄였다. 관측 combined CPU-work도 9.74%
+> 낮았지만 순차 n=1이라 broad end-to-end CPU 결론은 아니다. 최종 30회는 FSM
+> swap 0, retry 0, OOM delta 0이며 peak FSM RSS는 3455.69 MiB였다. Sector seed1에서
+> host-wide memory PSI 0.18이 잠깐 관측됐지만 나머지는 0이고 FSM swap/OOM은 없었다.
+> 최종 최고속도는 Full/Sector/Adaptive 7.004/7.014/7.006 m/s다. 이 n=1은
+> unpaired smoke이고 McNemar 미검정, population/flight-ready 보장이 아니다.
+> raw-cloud CIRI는 계속 default false다.
+>
+> 상세는 viability §8.21,
+> `docs/memory_bounded_3mode_v7_20260823.md`,
+> `results/final_postopt_3mode_n1_summary_20260823.csv`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-23 stopped A* timeout 후속 — 바로 아래 native n=1 배너의 “n=5
 > pending” 상태를 대체한다.** 같은 세션의 패치 전 seed1-10 x n=5에서 Full은
 > 49/50, native C++ Adaptive는 48/50이었고, 세 실패 모두 seed9의 정지 상태

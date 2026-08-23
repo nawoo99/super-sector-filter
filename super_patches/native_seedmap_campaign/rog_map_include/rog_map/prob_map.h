@@ -25,6 +25,7 @@
 #pragma once
 
 #include <queue>
+#include <unordered_map>
 #include <unordered_set>
 #include <rog_map/inf_map.h>
 #include <rog_map/free_cnt_map.h>
@@ -122,11 +123,23 @@ namespace rog_map {
 
         bool map_empty_{true};
         struct RaycastData {
+            struct SparseUpdateCount {
+                uint16_t operation_cnt{0};
+                uint16_t hit_cnt{0};
+            };
+
             raycaster::RayCaster raycaster;
             raycaster::RayCaster observed_raycaster;
             std::queue<Vec3i> update_cache_id_g;
             std::vector<uint16_t> operation_cnt;
             std::vector<uint16_t> hit_cnt;
+            // Fixed maps in this project deliberately disable full
+            // raycasting.  Allocating two counters for every cell of their
+            // 491 x 491 x 981 grid costs about 0.88 GiB even though a scan
+            // touches only a small fraction of those cells.  Preserve the
+            // dense fast path for raycasting maps and use a per-batch sparse
+            // cache for the no-raycasting path.
+            std::unordered_map<int, SparseUpdateCount> sparse_update_counts;
             Vec3f cache_box_max, cache_box_min, local_update_box_max, local_update_box_min;
             int batch_update_counter{0};
             std::mutex raycast_range_mtx;
