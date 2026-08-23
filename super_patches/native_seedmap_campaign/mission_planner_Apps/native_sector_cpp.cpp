@@ -4,6 +4,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/msg/point_field.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/u_int64.hpp>
 
 #include <algorithm>
 #include <array>
@@ -31,6 +32,10 @@ struct Options {
   std::string input_topic{"/cloud_registered"};
   std::string output_topic{"/cloud_sector"};
   double max_publish_hz{0.0};
+  std::string map_commit_topic{"/rog_map/commit_version"};
+  double map_commit_refresh_age_s{0.12};
+  double map_commit_refresh_min_interval_s{0.10};
+  uint64_t full_open_extra_max_points{6000};
   bool track_trap{false};
   bool sector_until_trap{false};
   double trap_intensity{12012.0};
@@ -110,6 +115,17 @@ Options parseArgs(int argc, char **argv) {
       options.output_topic = requireValue(i, arg);
     } else if (arg == "--max-publish-hz") {
       options.max_publish_hz = parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--map-commit-topic") {
+      options.map_commit_topic = requireValue(i, arg);
+    } else if (arg == "--map-commit-refresh-age-s") {
+      options.map_commit_refresh_age_s =
+          parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--map-commit-refresh-min-interval-s") {
+      options.map_commit_refresh_min_interval_s =
+          parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--full-open-extra-max-points") {
+      options.full_open_extra_max_points = static_cast<uint64_t>(
+          parseInt(arg, requireValue(i, arg)));
     } else if (arg == "--track-trap") {
       options.track_trap = true;
     } else if (arg == "--sector-until-trap") {
@@ -179,6 +195,8 @@ Options parseArgs(int argc, char **argv) {
       options.replan_open_cooldown_s.value_or(options.open_cooldown_s);
   if (options.half_angle_deg < 0.0 || options.half_angle_deg > 180.0 ||
       options.max_publish_hz < 0.0 || options.stall_v < 0.0 ||
+      options.map_commit_refresh_age_s < 0.0 ||
+      options.map_commit_refresh_min_interval_s < 0.0 ||
       options.stall_t < 0.0 || options.resume_v < 0.0 ||
       options.resume_t < 0.0 || options.open_burst_s < 0.0 ||
       options.open_cooldown_s < 0.0 || options.near_field_radius_m < 0.0 ||
@@ -297,6 +315,13 @@ public:
           std::bind(&NativeSectorCpp::replanCallback, this,
                     std::placeholders::_1));
     }
+    if (options_.mode == "adaptive" && options_.max_publish_hz > 0.0 &&
+        options_.map_commit_refresh_age_s > 0.0) {
+      map_commit_sub_ = create_subscription<std_msgs::msg::UInt64>(
+          options_.map_commit_topic, sensor_qos,
+          std::bind(&NativeSectorCpp::mapCommitCallback, this,
+                    std::placeholders::_1));
+    }
     cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
         options_.output_topic, sensor_qos);
     full_open_pub_ =
@@ -311,9 +336,13 @@ public:
         std::chrono::seconds(5), std::bind(&NativeSectorCpp::report, this));
 
     RCLCPP_INFO(get_logger(),
-                "%s mode, half-angle %.1f deg, input %s, publish cap %.2f Hz",
+                "%s mode, half-angle %.1f deg, input %s, publish cap %.2f Hz, "
+                "commit refresh %.3f s, full-open extra budget %lu",
                 options_.mode.c_str(), options_.half_angle_deg,
-                options_.input_topic.c_str(), options_.max_publish_hz);
+                options_.input_topic.c_str(), options_.max_publish_hz,
+                options_.map_commit_refresh_age_s,
+                static_cast<unsigned long>(
+                    options_.full_open_extra_max_points));
     publishState();
     writeStats();
   }
@@ -353,22 +382,46 @@ private:
 
   double nowSeconds() { return get_clock()->now().seconds(); }
 
-  bool shouldPublishCloud(double now) {
+  enum class PublishDecision { DROP, REGULAR, COMMIT_REFRESH };
+
+  PublishDecision publicationDecision(double now) {
     if (options_.max_publish_hz <= 0.0)
-      return true;
+      return PublishDecision::REGULAR;
     const double period = 1.0 / options_.max_publish_hz;
     if (!next_publish_time_s_) {
       next_publish_time_s_ = now + period;
-      return true;
+      return PublishDecision::REGULAR;
     }
-    if (now < *next_publish_time_s_) {
-      ++rate_limited_frames_;
-      return false;
+    if (now >= *next_publish_time_s_) {
+      const double elapsed = now - *next_publish_time_s_;
+      const double periods = std::floor(elapsed / period) + 1.0;
+      *next_publish_time_s_ += periods * period;
+      return PublishDecision::REGULAR;
     }
-    const double elapsed = now - *next_publish_time_s_;
-    const double periods = std::floor(elapsed / period) + 1.0;
-    *next_publish_time_s_ += periods * period;
-    return true;
+
+    // The cap controls expensive Adaptive publications, not safety evidence.
+    // When the actual ROG-Map commit acknowledgement ages, allow one bounded
+    // sector-only heartbeat.  A minimum interval and depth-1 QoS retain
+    // latest-only behavior even if a commit is temporarily delayed.
+    const bool commit_refresh_due = options_.mode == "adaptive" &&
+        last_map_commit_rx_s_ &&
+        now - *last_map_commit_rx_s_ >=
+            options_.map_commit_refresh_age_s &&
+        (!last_commit_refresh_publish_s_ ||
+         now - *last_commit_refresh_publish_s_ >=
+             options_.map_commit_refresh_min_interval_s);
+    if (commit_refresh_due) {
+      last_commit_refresh_publish_s_ = now;
+      return PublishDecision::COMMIT_REFRESH;
+    }
+    ++rate_limited_frames_;
+    return PublishDecision::DROP;
+  }
+
+  void mapCommitCallback(const std_msgs::msg::UInt64::SharedPtr msg) {
+    last_map_commit_rx_s_ = nowSeconds();
+    last_map_commit_version_ = msg->data;
+    ++map_commit_status_count_;
   }
 
   void recordTransition(const std::string &transition, double now) {
@@ -683,13 +736,26 @@ private:
     }
     if (replan_guard_open_)
       ++replan_guard_open_frames_;
-    if (!shouldPublishCloud(now))
+    if (last_map_commit_rx_s_) {
+      const double commit_age_s = std::max(0.0, now - *last_map_commit_rx_s_);
+      map_commit_age_sum_s_ += commit_age_s;
+      ++map_commit_age_samples_;
+      map_commit_age_max_s_ = std::max(map_commit_age_max_s_, commit_age_s);
+    }
+    const PublishDecision publish_decision = publicationDecision(now);
+    if (publish_decision == PublishDecision::DROP)
       return;
+    const bool commit_refresh =
+        publish_decision == PublishDecision::COMMIT_REFRESH;
+    if (commit_refresh)
+      ++commit_refresh_frames_;
     ++published_frames_;
 
+    const bool bounded_full_open =
+        options_.mode == "adaptive" && effective_open && !commit_refresh &&
+        options_.full_open_extra_max_points > 0;
     const bool passthrough = options_.mode == "full" || !drone_ ||
-                             (statefulMode() && effective_recovery_open_) ||
-                             replan_guard_open_;
+        (effective_open && !commit_refresh && !bounded_full_open);
     if (passthrough) {
       kept_points_ += input_points;
       cloud_pub_->publish(*msg);
@@ -733,9 +799,27 @@ private:
     // path observably different at the ROG-Map subscription boundary.
     output.point_step = packedPointStep(*msg);
     output.is_dense = true;
-    output.data.reserve(static_cast<size_t>(input_points) * msg->point_step);
+    output.data.reserve(static_cast<size_t>(input_points) * output.point_step);
+
+    const auto appendPoint = [&output, &msg](const uint8_t *point) {
+      const size_t output_offset = output.data.size();
+      output.data.resize(output_offset + output.point_step, 0);
+      uint8_t *destination = output.data.data() + output_offset;
+      for (const auto &field : msg->fields) {
+        const size_t byte_count = fieldByteSize(field.datatype) * field.count;
+        if (byte_count == 0 || field.offset + byte_count > msg->point_step ||
+            field.offset + byte_count > output.point_step) {
+          continue;
+        }
+        std::memcpy(destination + field.offset, point + field.offset,
+                    byte_count);
+      }
+    };
 
     uint64_t kept_this_frame = 0;
+    std::vector<size_t> full_open_extra_offsets;
+    if (bounded_full_open)
+      full_open_extra_offsets.reserve(static_cast<size_t>(input_points / 2));
     for (uint32_t row = 0; row < msg->height; ++row) {
       const size_t row_base = static_cast<size_t>(row) * msg->row_step;
       for (uint32_t column = 0; column < msg->width; ++column) {
@@ -760,22 +844,30 @@ private:
                                    std::sqrt(horizontal_sq) * half_angle_cos_;
         const bool near = options_.near_field_radius_m > 0.0 &&
                           dx * dx + dy * dy + dz * dz <= near_radius_sq;
-        if (!in_sector && !near)
+        if (!in_sector && !near) {
+          if (bounded_full_open)
+            full_open_extra_offsets.push_back(offset);
           continue;
-        const size_t output_offset = output.data.size();
-        output.data.resize(output_offset + output.point_step, 0);
-        uint8_t *destination = output.data.data() + output_offset;
-        for (const auto &field : msg->fields) {
-          const size_t byte_count = fieldByteSize(field.datatype) * field.count;
-          if (byte_count == 0 || field.offset + byte_count > msg->point_step ||
-              field.offset + byte_count > output.point_step) {
-            continue;
-          }
-          std::memcpy(destination + field.offset, point + field.offset,
-                      byte_count);
         }
+        appendPoint(point);
         ++kept_this_frame;
       }
+    }
+    if (bounded_full_open && !full_open_extra_offsets.empty()) {
+      full_open_extra_candidates_ += full_open_extra_offsets.size();
+      const size_t extra_to_keep = std::min(
+          full_open_extra_offsets.size(),
+          static_cast<size_t>(options_.full_open_extra_max_points));
+      for (size_t i = 0; i < extra_to_keep; ++i) {
+        const size_t selected = std::min(
+            full_open_extra_offsets.size() - 1,
+            static_cast<size_t>((static_cast<long double>(i) + 0.5L) *
+                                full_open_extra_offsets.size() /
+                                extra_to_keep));
+        appendPoint(msg->data.data() + full_open_extra_offsets[selected]);
+      }
+      kept_this_frame += extra_to_keep;
+      full_open_extra_kept_ += extra_to_keep;
     }
     output.width = static_cast<uint32_t>(kept_this_frame);
     output.row_step = output.width * output.point_step;
@@ -855,6 +947,23 @@ private:
     integer("published_frames", published_frames_);
     integer("rate_limited_frames", rate_limited_frames_);
     number("max_publish_hz", options_.max_publish_hz);
+    string("map_commit_topic", options_.map_commit_topic);
+    number("map_commit_refresh_age_s",
+           options_.map_commit_refresh_age_s);
+    number("map_commit_refresh_min_interval_s",
+           options_.map_commit_refresh_min_interval_s);
+    integer("map_commit_status_count", map_commit_status_count_);
+    integer("map_commit_version", last_map_commit_version_);
+    integer("commit_refresh_frames", commit_refresh_frames_);
+    number("map_commit_age_mean_s",
+           map_commit_age_samples_ > 0
+               ? rounded(map_commit_age_sum_s_ / map_commit_age_samples_)
+               : 0.0);
+    number("map_commit_age_max_s", rounded(map_commit_age_max_s_));
+    integer("full_open_extra_max_points",
+            options_.full_open_extra_max_points);
+    integer("full_open_extra_candidates", full_open_extra_candidates_);
+    integer("full_open_extra_kept", full_open_extra_kept_);
     number("publish_duty_pct",
            rounded(100.0 * published_frames_ / frame_denominator, 1e3));
     integer("input_points", input_points_);
@@ -967,6 +1076,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr replan_sub_;
+  rclcpp::Subscription<std_msgs::msg::UInt64>::SharedPtr map_commit_sub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr full_open_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr armed_pub_;
@@ -984,6 +1094,16 @@ private:
   uint64_t rate_limited_frames_{0};
   uint64_t input_points_{0};
   std::optional<double> next_publish_time_s_;
+  std::optional<double> last_map_commit_rx_s_;
+  std::optional<double> last_commit_refresh_publish_s_;
+  uint64_t map_commit_status_count_{0};
+  uint64_t last_map_commit_version_{0};
+  uint64_t commit_refresh_frames_{0};
+  uint64_t map_commit_age_samples_{0};
+  double map_commit_age_sum_s_{0.0};
+  double map_commit_age_max_s_{0.0};
+  uint64_t full_open_extra_candidates_{0};
+  uint64_t full_open_extra_kept_{0};
 
   bool recovery_active_{false};
   bool effective_recovery_open_{false};

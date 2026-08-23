@@ -302,7 +302,8 @@ namespace super_planner {
                 double checked_from_tt,
                 std::uint64_t trajectory_generation = 0,
                 bool allow_initial_clearance_escape = false,
-                bool unknown_as_occupied = false) const;
+                bool unknown_as_occupied = false,
+                const Vec3f *hard_current_pose = nullptr) const;
 
         TrajectorySafetyResult validateCommittedTrajectory(double now_wt) const;
 

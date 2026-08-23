@@ -1694,29 +1694,99 @@ three-mode gate. Raw-cloud CIRI remains default false. Full tables are in
 `docs/order_crossed_3mode_strict_v7_n5_20260823.md` and
 `results/order_crossed_3mode_strict_v7_n5_*_20260823.csv`.
 
-## Current status — clean broad gate complete; Full endpoint safety hole remains
+### 8.23 Full endpoint hard guard and Adaptive commit-aware refresh n=1 gate (2026-08-23)
 
-- **Section 8.22 is the current same-code, correctly routed, order-crossed broad
-  gate:** raw completion is 50/50 in all modes, but all-detector-safe completion
-  is Full 49/50, Sector 47/50, Adaptive 50/50. Adaptive removes all three
-  observed Sector contacts, yet Full has an independent seed7 endpoint contact.
-  Therefore the sample has the requested Sector/Adaptive ordering but does not
-  meet the Full 100%/zero-contact target.
-- **The clean n=50 performance campaign is complete:** Adaptive reduces Full
-  points/update 32.61%, throughput 63.71%, mapping/update 44.23%, mapping
-  work/mission 63.25%, and combined FSM+filter CPU-work/mission 16.13%.
-  Exact effective transitions are 1518 open/1512 close. Mean mission time is
-  22.35% longer than Full, so the result is a workload/safety trade-off rather
-  than a free speedup.
+The 8.22 Full failure exposed a narrow but hard safety hole: the inflated-grid
+continuous certificate could accept a very short tail whose endpoint disagreed
+with the raw occupied grid, after which the endpoint became a stationary hold.
+`validatePositionTrajectory()` now treats the actual current odometry pose, the
+first checked trajectory pose, and the terminal pose as mandatory raw-grid body
+queries. It searches raw OCCUPIED voxel centres within `robot_r`, checks virtual
+ground/ceiling body clearance, and returns `OCCUPIED` before considering the
+initial-clearance escape exception. Only these two or three poses pay the raw
+box-search cost; the existing inflated-grid DDA remains the continuous-path
+certificate. Commit and viability-rescale validation both carry the same actual
+current-pose snapshot.
+
+The Adaptive timing diagnosis also showed that the 5 Hz publication cap had no
+feedback from whether ROG-Map had actually committed the most recent cloud.
+ROG-Map now publishes `/rog_map/commit_version` after a committed update. If
+the normal cap is blocking, the Adaptive C++ filter may send one sector-only
+latest refresh when the ACK is at least 0.12 s old, with a 0.10 s minimum
+interval. A depth-1 QoS queue retains latest-only behavior. Effective full-open
+frames keep every sector and near-field point but deterministically sample at
+most 6,000 additional far-field points; commit refreshes never use the full-open
+extra budget. The fixed Sector path is unchanged.
+
+All three changed packages built successfully. Synthetic C++ filtering and the
+campaign/monitor checks passed. A Full seed7 smoke completed 5/5 with contact 0
+and +0.230 m static body clearance. An Adaptive seed9 smoke completed in 126.57
+s with contact 0, 60 refresh frames and 4.06 commit ACK/s; its `MAP_STALE`/brake
+counts fell to 23/29, although optimizer/topology retries still kept the time in
+the prior range.
+
+The requested main gate used v=7, `loop24.txt`, static PCD, timeout 240 s,
+seed1-10 x n=1 x Full/Sector/Adaptive, with order rotation continuing across
+seed boundaries. Every row was valid and required one attempt. Raw and
+all-detector-safe completion was Full **10/10**, Sector **9/10**, Adaptive
+**10/10**. All 30 runs had zero live contact events and zero static-PCD contact
+episodes. Worst static body clearance was +0.252/+0.108/+0.174 m. Sector seed10
+alone stopped at waypoint 4 and timed out safely at 240.01 s; Full and Adaptive
+seed10 completed in 85.39/118.91 s.
+
+Mean mission time was 72.679/92.820/85.875 s; Sector's completed-only mean was
+76.466 s. Full-relative Adaptive reductions were 40.56% map commits, 36.30%
+points/update, 62.13% throughput, 47.66% mapping/update, 63.24% mapping
+work/mission, and 15.08% combined CPU-work/mission. Adaptive time remained
+18.16% longer than Full. Adaptive emitted 289 effective full-open and 289
+full-close edges, 20.97% mean open duty, 309 commit-refresh frames, and 2,889
+commit ACKs (3.364 ACK/s by total mission time).
+
+Against the larger 8.22 n=5 reference, Adaptive map commits rose 2.944 -> 3.336
+Hz (+13.33%); `MAP_STALE` fell 70.86 -> 61.30/run (-13.49%), successful brakes
+45.84 -> 38.80/run (-15.36%), and mean mission time 92.122 -> 85.875 s
+(-6.78%). Full also varied 75.292 -> 72.679 s, so this is directional n=1
+evidence rather than a paired effect estimate. On seed9, stale/brake counts fell
+118.8/74.6 -> 84/59, but topology arm/search rose 11.0/14.4 -> 19/25. Seed10
+also recorded 11/24 arm/search events. Commit starvation was real, but the
+remaining late-seed delay is now principally the geometric topology/optimizer
+recovery workload.
+
+No Full log in this gate executed a new `status=OCCUPIED` endpoint rejection.
+The seed7 smoke plus campaign and all ten main Full rows were safe, so the patch
+is regression-clean and closes the identified code path, but the rare rejection
+branch is not execution-proven. This n=1 cannot establish population 100%; even
+10/10 has an exact two-sided 95% lower bound of about 69.15%. A repeated seed7
+and broad crossed gate remain required for a safety claim.
+
+Every row had retry 0, OOM delta 0, and FSM swap 0. Peak FSM RSS/PSS was
+3476.25/3452.99 MiB and minimum available host memory 4821.88 MiB. Host swap was
+already near 2 GiB used. Sector seed10 briefly recorded host-wide PSI some/full
+0.12 during its long stall, but no FSM swap, OOM, or infrastructure retry
+occurred. Raw-cloud CIRI remains default false. Detailed tables are in
+`docs/endpoint_guard_commit_refresh_3mode_v7_n1_20260823.md` and
+`results/endpoint_commitrefresh_3mode_strict_v7_n1_*_20260823.csv`.
+
+## Current status — endpoint hole patched; repeated safety gate still required
+
+- **Section 8.23 is the newest same-code smoke gate:** the current/first/terminal
+  pose raw-body invariant is implemented, and Full/Adaptive were both 10/10
+  safe while Sector was 9/10 safe with one non-contact timeout. The rare Full
+  endpoint reject did not execute, so 8.23 is not population or branch proof.
+- **Section 8.22 remains the larger order-crossed n=50 reference:** Adaptive
+  reduces Full points/update 32.61%, throughput 63.71%, mapping/update 44.23%,
+  mapping work/mission 63.25%, and combined CPU-work/mission 16.13%, with a
+  22.35% time penalty. The new n=1 directionally narrows that penalty to 18.16%
+  while increasing commit cadence, but it does not supersede the n=50 estimate.
 - **The memory fix now has broad evidence:** all 150 rows have one attempt,
   FSM swap 0, retry 0, OOM delta 0, and PSI max 0; peak FSM RSS is 3474.36 MiB.
   Host-wide swap was still occupied, but it did not recreate the prior FSM
   pressure or contaminate the crossed comparison.
-- **The next implementation target is Full short-tail/hold endpoint
-  certification:** require hard current and terminal-pose clearance before a
-  tail or stationary hold can be accepted, and trigger the stop before the
-  body envelope is entered. More topology retries or filter tuning do not fix
-  an endpoint that has already contacted an obstacle.
+- **The next validation target is repetition, not more endpoint tuning:** run a
+  seed7-focused gate and a new crossed seed1-10 campaign to exercise or bound
+  the rare Full endpoint case. The remaining Adaptive seed9/10 time target is
+  topology/optimizer recovery efficiency, not another blind publication-rate
+  increase.
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),

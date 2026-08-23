@@ -1,6 +1,37 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-23 endpoint hard guard + Adaptive commit-refresh 후속 — 바로 아래
+> §8.22 배너의 “다음 구현”을 완료했다.** Full trajectory commit은 실제 current
+> odometry pose, 첫 검사 pose, terminal pose에 대해 raw OCCUPIED voxel과
+> `robot_r` body clearance를 hard invariant로 검사한다. 이 검사는 initial
+> clearance escape 밖에 있어 short tail이 접촉 pose에서 stationary hold가 되는
+> 경로를 닫는다. Adaptive는 ROG-Map의 `/rog_map/commit_version` ACK가 0.12초
+> 이상 늦을 때 0.10초 최소 간격으로 sector-only latest refresh를 허용하고,
+> full-open의 sector/near-field 밖 far-field를 프레임당 6,000점으로 제한한다.
+>
+> v=7, `loop24.txt`, static PCD, seed1-10 x n=1 x 3 modes에서 Full은
+> **10/10**, Sector **9/10**, Adaptive **10/10** 완주했고 30/30 contact 0이다.
+> 최악 static body clearance는 +0.252/+0.108/+0.174 m다. seed10 Sector만
+> 4/5 waypoint에서 240.01초 timeout했고 Full/Adaptive는 85.39/118.91초로
+> 완주했다. Adaptive는 실제 full-open/close 289/289회, commit refresh 309회,
+> ACK 2,889회(3.364 Hz)를 기록했다.
+>
+> Full 대비 Adaptive는 points/update 36.30%, throughput 62.13%,
+> mapping/update 47.66%, mapping work/mission 63.24%, combined CPU-work 15.08%
+> 감소했고 mean mission은 18.16% 길다. 이전 n=5보다 Adaptive map commit은
+> 2.944 -> 3.336 Hz, `MAP_STALE`은 70.86 -> 61.30/run, brakes는 45.84 ->
+> 38.80/run으로 개선됐다. 다만 seed9/10은 topology arm/search가 계속 많아
+> 늦은 시드의 시간 문제를 완전히 해소하지 못했다.
+>
+> 이 n=1에서 새 endpoint `OCCUPIED` reject 자체는 발생하지 않았다. 따라서
+> identified code hole의 수정과 무회귀 증거이지 희귀 분기의 execution proof나
+> population 100% 보장이 아니다. 모든 row retry/OOM/FSM swap 0, peak FSM RSS
+> 3476.25 MiB였다. raw-cloud CIRI는 default false다. 상세는 viability §8.23,
+> `docs/endpoint_guard_commit_refresh_3mode_v7_n1_20260823.md`,
+> `results/endpoint_commitrefresh_3mode_strict_v7_n1_*_20260823.csv`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-23 order-crossed 3-mode n=5 후속 — 아래 bounded-memory n=1
 > 배너의 “broad clean campaign pending” 상태를 대체한다.** v=7,
 > `loop24.txt`, static PCD, seed1-10 x n=5에서 Full/Sector/Adaptive를 한

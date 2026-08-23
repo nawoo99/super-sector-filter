@@ -47,6 +47,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/u_int64.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -92,6 +93,7 @@ namespace rog_map {
             rclcpp::CallbackGroup::SharedPtr odom_me_cbk_group, cloud_me_cbk_group, update_cbk_group;
             rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
             rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_sub;
+            rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr commit_pub;
             bool pending_frame{false};
             std::uint64_t pc_seq{0};
             MapHealthClock::time_point pc_rx_time{};
@@ -220,6 +222,11 @@ namespace rog_map {
             recordMapUpdateStarted();
             const auto result = updateProbMap(temp_pc, temp_pose);
             recordMapUpdateFinished(scan_seq, scan_rx_time, result);
+            if (result.map_committed && rc_.commit_pub) {
+                std_msgs::msg::UInt64 commit;
+                commit.data = getMapHealthSnapshot().map_version;
+                rc_.commit_pub->publish(commit);
+            }
 
             writeTimeConsumingToLog(time_log_file_);
         }
@@ -434,6 +441,9 @@ namespace rog_map {
             vm_.mkr_arr_pub = nh_->create_publisher<visualization_msgs::msg::MarkerArray>("rog_map/map_bound", qos);
 
             if (cfg_.ros_callback_en) {
+                rc_.commit_pub =
+                        nh_->create_publisher<std_msgs::msg::UInt64>(
+                                "/rog_map/commit_version", qos);
                 rc_.odom_me_cbk_group = nh_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
                 rc_.cloud_me_cbk_group = nh_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
                 rclcpp::SubscriptionOptions so;

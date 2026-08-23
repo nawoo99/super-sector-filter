@@ -227,7 +227,8 @@ namespace super_planner {
             double checked_from_tt,
             const std::uint64_t trajectory_generation,
             const bool allow_initial_clearance_escape,
-            const bool unknown_as_occupied) const {
+            const bool unknown_as_occupied,
+            const Vec3f *hard_current_pose) const {
         TrajectorySafetyResult result;
         result.trajectory_generation = trajectory_generation;
         if (!trajectoryValidationEnabled()) {
@@ -266,17 +267,19 @@ namespace super_planner {
         struct MapQueryPoint {
             Vec3f point;
             double tt;
+            bool hard_body_clearance;
         };
         std::vector<MapQueryPoint> map_queries;
         const auto append_finite_point = [&result, &map_queries](
-                const Vec3f &point, const double tt) -> bool {
+                const Vec3f &point, const double tt,
+                const bool hard_body_clearance = false) -> bool {
             if (!point.array().isFinite().all()) {
                 result.status = TrajectorySafetyStatus::INVALID_TRAJECTORY;
                 result.first_collision_tt = tt;
                 result.first_collision_pos = point;
                 return false;
             }
-            map_queries.push_back({point, tt});
+            map_queries.push_back({point, tt, hard_body_clearance});
             return true;
         };
 
@@ -306,8 +309,14 @@ namespace super_planner {
         Vec3f previous_point = sample_position(previous_tt);
         result.trajectory_eval_ms += std::chrono::duration<double, std::milli>(
                 std::chrono::steady_clock::now() - operation_start).count();
+        if (hard_current_pose) {
+            ++result.checked_samples;
+            if (!append_finite_point(*hard_current_pose, previous_tt, true)) {
+                return result;
+            }
+        }
         ++result.checked_samples;
-        if (!append_finite_point(previous_point, previous_tt)) {
+        if (!append_finite_point(previous_point, previous_tt, true)) {
             return result;
         }
 
@@ -339,10 +348,11 @@ namespace super_planner {
             if (voxel_raycaster.setInput(previous_point, next_point)) {
                 Vec3f ray_point;
                 while (voxel_raycaster.step(ray_point)) {
-                    map_queries.push_back({ray_point, next_tt});
+                    map_queries.push_back({ray_point, next_tt, false});
                 }
             }
-            map_queries.push_back({next_point, next_tt});
+            map_queries.push_back({next_point, next_tt,
+                                   next_tt >= total_duration - 1.0e-9});
             result.voxelize_ms += std::chrono::duration<double, std::milli>(
                     std::chrono::steady_clock::now() - operation_start).count();
             previous_tt = next_tt;
@@ -392,6 +402,50 @@ namespace super_planner {
             if (!map_ptr_->insideLocalMap(point)) {
                 result.status = TrajectorySafetyStatus::OUT_OF_MAP;
             } else {
+                // The inflated grid is the efficient continuous-path guard,
+                // but its coarser voxelization can disagree with the raw
+                // occupied grid at a trajectory's current/terminal pose.  A
+                // short tail that ends in such an alias must never become a
+                // stationary hold: query raw occupied voxel centres directly
+                // against the physical body radius at these mandatory poses.
+                // This is a hard contact check and is intentionally outside
+                // the initial-clearance escape exception below.
+                if (query.hard_body_clearance) {
+                    bool body_occupied =
+                            point.z() <= map_config.virtual_ground_height +
+                                             cfg_.robot_r ||
+                            point.z() >= map_config.virtual_ceil_height -
+                                             cfg_.robot_r;
+                    if (!body_occupied) {
+                        vec_E<Vec3f> occupied_points;
+                        const double search_radius = cfg_.robot_r +
+                                0.5 * map_config.resolution;
+                        const Vec3f search_extent =
+                                Vec3f::Constant(search_radius);
+                        map_ptr_->boxSearch(point - search_extent,
+                                            point + search_extent,
+                                            rog_map::GridType::OCCUPIED,
+                                            occupied_points);
+                        for (const auto &occupied_point : occupied_points) {
+                            if ((occupied_point - point).norm() <=
+                                    cfg_.robot_r + 1.0e-9) {
+                                body_occupied = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (body_occupied) {
+                        result.status = TrajectorySafetyStatus::OCCUPIED;
+                        result.first_collision_tt = query.tt;
+                        result.first_collision_pos = point;
+                        result.map_query_ms =
+                                std::chrono::duration<double, std::milli>(
+                                        std::chrono::steady_clock::now() -
+                                        query_start).count();
+                        return result;
+                    }
+                }
+
                 // Unobserved space is not near any detected obstacle, so it
                 // doesn't fit the OCCUPIED/CLEARANCE_MARGIN physical-escape
                 // logic below (that logic assumes the violation is a margin
@@ -1154,6 +1208,13 @@ namespace super_planner {
         const bool certified_stop_for_reroute = plan_from_rest &&
                 guard_certified_stop_for_reroute_.load(
                         std::memory_order_acquire);
+        std::optional<Vec3f> hard_current_pose;
+        {
+            std::lock_guard<std::mutex> state_lock(drone_state_mutex_);
+            if (robot_state_.rcv && robot_state_.p.array().isFinite().all()) {
+                hard_current_pose = robot_state_.p;
+            }
+        }
         double plan_from_rest_speed = std::numeric_limits<double>::infinity();
         if (plan_from_rest) {
             std::lock_guard<std::mutex> state_lock(drone_state_mutex_);
@@ -1166,7 +1227,11 @@ namespace super_planner {
         const auto safety = validatePositionTrajectory(candidate.pos_traj,
                                                        checked_from_tt,
                                                        candidate_generation,
-                                                       allow_clearance_escape);
+                                                       allow_clearance_escape,
+                                                       false,
+                                                       hard_current_pose
+                                                               ? &*hard_current_pose
+                                                               : nullptr);
         if (!safety.safe()) {
             trajectory_guard_rejection_pending_.store(true,
                                                       std::memory_order_release);
@@ -1255,7 +1320,8 @@ namespace super_planner {
                 // than assumed.
                 const auto rescaled_safety = validatePositionTrajectory(
                         candidate.pos_traj, checked_from_tt, candidate_generation,
-                        allow_clearance_escape);
+                        allow_clearance_escape, false,
+                        hard_current_pose ? &*hard_current_pose : nullptr);
                 if (!rescaled_safety.safe()) {
                     ros_ptr_->error(
                             " -- [TRAJ_GUARD_VIABILITY_RESCALE_UNSAFE] phase={} "

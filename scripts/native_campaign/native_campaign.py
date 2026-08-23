@@ -560,6 +560,14 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_resume_v", "filter_resume_t", "filter_velocity_yaw_update_v",
           "filter_frames", "filter_published_frames",
           "filter_rate_limited_frames", "filter_max_publish_hz",
+          "filter_map_commit_topic", "filter_map_commit_refresh_age_s",
+          "filter_map_commit_refresh_min_interval_s",
+          "filter_map_commit_status_count", "filter_map_commit_version",
+          "filter_commit_refresh_frames", "filter_map_commit_age_mean_s",
+          "filter_map_commit_age_max_s",
+          "filter_full_open_extra_max_points",
+          "filter_full_open_extra_candidates",
+          "filter_full_open_extra_kept",
           "filter_publish_duty_pct", "filter_input_points", "filter_kept_points",
           "filter_kept_pct", "filter_armed", "filter_armed_duty_pct",
           "filter_open", "filter_open_duty_pct", "filter_open_point_duty_pct",
@@ -1276,6 +1284,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     evidence_prefix = f"{tag}.attempt{attempt_number}"
                     for suffix in (
                         "stack.log", "memory.csv", "filt.log",
+                        "filt_stats.json",
                         "reference_monitor.log", "mission.log",
                     ):
                         source = os.path.join(
