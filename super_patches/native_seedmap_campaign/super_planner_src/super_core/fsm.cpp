@@ -153,6 +153,12 @@ namespace fsm {
                     return;
                 }
                 int retcode = planner_ptr_->PlanFromRest(gi_.goal_p, gi_.goal_yaw, gi_.new_goal);
+                // External sensing recovery must observe stopped-state planning
+                // failures too.  Previously only ReplanOnce published this
+                // status, so a vehicle that never left GENERATE_TRAJ could not
+                // trigger the adaptive full-cloud burst that was intended to
+                // make the missing topology visible.
+                ros_ptr_->pubReplanStatus(retcode == SUCCESS || retcode == FINISH);
                 if (!planner_ptr_->goalValid()) {
                     cout << YELLOW << " -- [Fsm] Goal is invalid, skip this goal." << RESET << endl;
                     gi_.new_goal = false;

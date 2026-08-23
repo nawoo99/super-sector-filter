@@ -3035,12 +3035,27 @@ namespace super_planner {
                 guard_topology_avoidance_centers_,
                 guard_topology_avoidance_radii_);
 
-        if (ret_code == NO_PATH && cfg_.guard_topology_reroute_en &&
-            planning_from_rest &&
+        // A bounded A* TIME_OUT is the same recovery signal as NO_PATH while
+        // planning from a certified stop: neither result produced a candidate
+        // trajectory, and retrying the identical topology cannot make
+        // progress.  Moving-state timeouts are deliberately excluded because
+        // the already committed trajectory remains in charge there.
+        const bool stopped_guard_astar_failure =
+                cfg_.guard_topology_reroute_en && planning_from_rest &&
+                (ret_code == NO_PATH || ret_code == TIME_OUT);
+        const bool guarded_astar_failure_with_zones =
+                cfg_.guard_topology_reroute_en &&
+                (ret_code == NO_PATH ||
+                 (planning_from_rest && ret_code == TIME_OUT));
+        const char *astar_failure_reason =
+                ret_code == TIME_OUT ? "astar_timeout" : "astar_no_path";
+
+        if (stopped_guard_astar_failure &&
             guard_topology_avoidance_centers_.empty()) {
             // The old recovery counter only ran after a rejected candidate
             // had already created a virtual blocker. A stopped base search
-            // with no path therefore retried the identical topology forever.
+            // with no path or a bounded timeout therefore retried the
+            // identical topology forever.
             // After the same bounded threshold, request one guarded vertical
             // state change. A negative failure count marks exhausted recovery
             // for this goal and prevents repeated warning/action loops.
@@ -3063,27 +3078,31 @@ namespace super_planner {
                             true, std::memory_order_release);
                     ros_ptr_->warn(
                             " -- [TRAJ_GUARD_BASE_NO_PATH_RECOVERY] epoch={} "
-                            "attempt={}/{} start=[{:.3f},{:.3f},{:.3f}] "
+                            "attempt={}/{} reason={} "
+                            "start=[{:.3f},{:.3f},{:.3f}] "
                             "goal=[{:.3f},{:.3f},{:.3f}] "
                             "action=guarded_vertical_lift",
                             guard_topology_epoch_,
                             guard_topology_base_no_path_recoveries_,
                             cfg_.guard_topology_base_no_path_vertical_attempts,
+                            astar_failure_reason,
                             temp_start_point.x(), temp_start_point.y(),
                             temp_start_point.z(), goal.x(), goal.y(), goal.z());
                 } else {
                     guard_topology_no_path_failures_ = -1;
                     ros_ptr_->warn(
                             " -- [TRAJ_GUARD_BASE_NO_PATH_EXHAUSTED] "
-                            "attempts={}/{} start=[{:.3f},{:.3f},{:.3f}] "
+                            "attempts={}/{} reason={} "
+                            "start=[{:.3f},{:.3f},{:.3f}] "
                             "action=certified_hold",
                             guard_topology_base_no_path_recoveries_,
                             cfg_.guard_topology_base_no_path_vertical_attempts,
+                            astar_failure_reason,
                             temp_start_point.x(), temp_start_point.y(),
                             temp_start_point.z());
                 }
             }
-        } else if (ret_code == NO_PATH &&
+        } else if (guarded_astar_failure_with_zones &&
             !guard_topology_avoidance_centers_.empty()) {
             ++guard_topology_no_path_failures_;
             if (guard_topology_no_path_failures_ >=
@@ -3123,10 +3142,11 @@ namespace super_planner {
                             true, std::memory_order_release);
                     ros_ptr_->warn(
                             " -- [TRAJ_GUARD_VERTICAL_RECOVERY_ARM] "
-                            "cleared_zones={} epoch={} reason=astar_no_path "
+                            "cleared_zones={} epoch={} reason={} "
                             "horizontal_distance={:.3f} start_z={:.3f} "
                             "collision_z={:.3f} action=lift_then_reroute",
                             cleared_zones, guard_topology_epoch_,
+                            astar_failure_reason,
                             horizontal_collision_distance,
                             temp_start_point.z(), collision_z);
                 } else {
@@ -3134,9 +3154,10 @@ namespace super_planner {
                             true, std::memory_order_release);
                     ros_ptr_->warn(
                             " -- [TRAJ_GUARD_REROUTE_EPOCH_RESET] epoch={} "
-                            "cleared_zones={} reason=astar_no_path "
+                            "cleared_zones={} reason={} "
                             "action=certified_stop_reseed",
-                            guard_topology_epoch_, cleared_zones);
+                            guard_topology_epoch_, cleared_zones,
+                            astar_failure_reason);
                 }
             }
         } else if (ret_code == REACH_HORIZON || ret_code == REACH_GOAL) {

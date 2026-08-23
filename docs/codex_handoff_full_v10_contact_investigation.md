@@ -1,6 +1,39 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-23 stopped A* timeout 후속 — 바로 아래 native n=1 배너의 “n=5
+> pending” 상태를 대체한다.** 같은 세션의 패치 전 seed1-10 x n=5에서 Full은
+> 49/50, native C++ Adaptive는 48/50이었고, 세 실패 모두 seed9의 정지 상태
+> `PlanFromRest -> A* TIME_OUT` 반복이었다. 기존 topology recovery가 `NO_PATH`만
+> 인정하고 `PlanFromRest()` 결과는 Adaptive filter의 `/planning/replan_status`로
+> 발행하지 않아 동일 topology와 sensing state를 반복했다.
+>
+> `fsm.cpp`는 이제 `PlanFromRest()` 성공 여부도 replan status로 발행한다.
+> `super_planner.cpp`는 topology guard가 켜지고 `planning_from_rest=true`일 때만
+> `TIME_OUT`을 기존 `NO_PATH`와 같은 bounded recovery evidence로 인정한다.
+> 이동 중 timeout은 제외했고 clearance, 충돌 판정, sector 형상, raw-CIRI 권한은
+> 바꾸지 않았다.
+>
+> 패치 후 seed9 targeted는 Full/Adaptive 각각 5/5, 전체 seed1-10 x n=1도 각각
+> 10/10이었다. 최종 독립 n=5에서 Full과 native Adaptive가 모두 raw/static-safe
+> **50/50**, live/static 접촉 **0/50**을 관측했다. 최악 static body clearance는
+> Full +0.155 m, Adaptive +0.139 m이고 seed9/10도 양쪽 모두 각 5/5다. Adaptive
+> 최종 로그에서는 실제 `reason=astar_timeout` recovery가 5회 실행됐고 관련 run은
+> 모두 완주했다.
+>
+> Adaptive는 최종 Full 대비 processed points/update 25.58%, throughput 32.53%,
+> mapping/update 29.62%, mapping work/mission 48.39%를 줄였다. 다만 Full arm 도중
+> infrastructure retry 1회와 심한 memory/swap pressure가 관측돼 이 n=50 쌍의
+> end-to-end CPU 비교는 오염됐다. 깨끗한 patched n=1에서는 Adaptive combined
+> CPU-work가 15.62% 낮았지만, n=50 CPU 결론은 clean host/order-crossed 재측정 전까지
+> 보류한다. 코호트는 unpaired라 McNemar를 하지 않았고 50/50은 population 보장이
+> 아니다. raw-cloud CIRI는 계속 default false다.
+>
+> 상세는 viability §8.20,
+> `docs/native_cpp_timeout_recovery_v7_20260823.md`,
+> `results/full_adaptive_timeoutfix_summary_20260823.csv`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-23 native C++ Adaptive 후속 — Python CPU 병목은 n=1-per-seed
 > smoke에서 해소됐다.** strict Adaptive 정책은 바꾸지 않고 별도 ROS2 C++ node
 > `native_sector_cpp`로 옮겼다. 캠페인은 `--filter-backend cpp`로 선택하며 기본은

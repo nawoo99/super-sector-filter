@@ -1503,26 +1503,68 @@ and summary files are `results/adaptive_cpp_strict_v7_*_20260823.csv` and
 `results/adaptive_cpp_strict_v7_n1_summary_20260823.csv`. Raw-cloud CIRI
 remains shadow-only/default false.
 
-## Current status — native Adaptive passed n=1-per-seed; n=5 still pending
+### 8.20 Stopped A* timeout recovery and native n=5 gate (2026-08-23)
 
-- **Section 8.18 remains the broad Adaptive result; 8.19 is the native CPU
-  smoke; 8.17 remains the Full/Sector baseline:** The native C++ filter passed
-  two seed1-10 x n=1 cohorts with 10/10 raw and static-safe completion in both.
-  The corrected CPU cohort measured 54.56 combined CPU-s/mission, 2.44% below
-  Full and 14.88% below Python Adaptive, but also had one live-only 0.1995 m
-  boundary event on seed10 while static PCD clearance stayed +0.121 m. Repeat
-  n=5 before promoting the end-to-end CPU result or claiming every detector
-  remained contact-free.
-- **Section 8.18 is the current n=50 Adaptive result; 8.17 remains the Full/Sector
-  baseline:** Full direct observed 50/50 raw and
-  safe completion with zero contact; fixed Sector observed 50/50 raw but
-  46/50 safe completion with four independently confirmed contact runs;
-  the follow-up Adaptive observed 50/50 raw/safe completion with zero contact.
-  Adaptive used 29.22% fewer processed points, 25.55% less processed
-  throughput, and 32.40% less mapping time per update than Full. Its Python
-  filter means end-to-end FSM+filter CPU-work is still 14.61% above Full, so
-  only mapping-work reduction is established. None of these n=50 observations
-  is a population guarantee.
+The same-session pre-patch seed1-10 x n=5 gates reproduced the remaining
+liveness defect without any measured contact. Full completed 49/50 and native
+Adaptive completed 48/50. All three failures were seed9 stopped-state planning
+loops: Full seed9 run2 stopped at waypoint 4/5, while Adaptive seed9 run2 never
+left the start and run4 stopped at waypoint 2/5. The repeated search result was
+bounded A* `TIME_OUT`, but the topology-recovery code admitted only `NO_PATH`.
+In addition, `PlanFromRest()` did not publish `/planning/replan_status`, so an
+Adaptive run that never entered `FOLLOW_TRAJ` could not arm the sensing-side
+one-shot full-cloud recovery.
+
+`fsm.cpp` now publishes the `PlanFromRest()` result through the existing replan
+status topic. `super_planner.cpp` treats `TIME_OUT` as recovery evidence only
+when `planning_from_rest=true` and the topology guard is enabled. This reuses
+the existing bounded base-vertical, blocker-clear, and certified-stop epoch
+reseed paths. Moving-state timeouts remain excluded because the committed
+trajectory is still authoritative there. No clearance threshold, collision
+rule, sector geometry, or raw-CIRI authority changed.
+
+The patched seed9 targeted gates were 5/5 Full and 5/5 native Adaptive. The
+seed1-10 x n=1 regression was then 10/10 for both. Finally, independent
+seed1-10 x n=5 campaigns observed **50/50 Full and 50/50 native Adaptive raw
+and static-safe completion**, with zero live and static contact in both modes.
+Worst static body clearance was +0.155 m Full and +0.139 m Adaptive; seed9 and
+seed10 were each 5/5 in both modes. Adaptive's final logs contain five actual
+`reason=astar_timeout` recovery actions across seeds 6, 7, and 9, and every
+affected run completed. Full needed no timeout recovery in its final 50 rows;
+one existing `astar_no_path` recovery ran on seed10 and completed.
+
+The final n=50 workload comparison retained the intended map-side reduction:
+Adaptive used 25.58% fewer processed points/update, 32.53% less processed
+throughput, 29.62% less mapping time/update, and 48.39% less accumulated
+mapping work/mission than Full. Do not use this particular n=50 pair to claim
+end-to-end CPU reduction. The later Full campaign had one infrastructure
+retry and then ran while the host had about 4.38 GiB FSM RSS and all 2 GiB of
+swap occupied; its wall-time and CPU percentage were visibly distorted.
+Adaptive combined CPU-work was therefore 5.41% above this contaminated Full
+measurement, while the earlier clean patched n=1 smoke measured it 15.62%
+below Full. A clean order-crossed repetition is required for an n=50 CPU claim.
+
+The Full and Adaptive cohorts were sequential and unpaired, so no McNemar test
+is reported. The observed 50/50 is not a population or flight-readiness proof.
+Raw-cloud CIRI remains shadow-only/default false. Full tables and artifacts are
+in `docs/native_cpp_timeout_recovery_v7_20260823.md` and
+`results/full_adaptive_timeoutfix_summary_20260823.csv`.
+
+## Current status — native Adaptive and Full passed the stopped-timeout n=5 gate
+
+- **Section 8.20 is the current Full/native-Adaptive liveness and safety gate;
+  8.17 remains the fixed-Sector control:** The stopped A* timeout fix changed
+  same-session pre-patch Full/Adaptive 49/50 and 48/50 into patched 50/50 and
+  50/50, with zero live/static contact. Fixed Sector was not rerun; its current
+  control remains 46/50 static-safe in 8.17. These are observed cohorts, not a
+  population guarantee or paired experiment.
+- **Map workload reduction passed at n=50; end-to-end CPU needs a clean rerun:**
+  native Adaptive reduced processed points/update 25.58%, throughput 32.53%,
+  mapping/update 29.62%, and mapping work/mission 48.39% against the final Full
+  rows. The later Full arm was affected by memory/swap pressure, so its combined
+  CPU-work must not be used as a clean baseline. Section 8.19's n=1 CPU smoke
+  remains directional evidence, not a replacement for an order-crossed n=50
+  performance cohort.
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),
@@ -1602,10 +1644,10 @@ remains shadow-only/default false.
 
 Do not describe `static_seedmaps_guard_viability_v7.yaml` or any of its
 `_wide`/`_tight`/`_tight_h08` variants as flight-ready. The current strict
-baseline and follow-up establish the intended descriptive safety/mapping-work
-pattern and observed 50/50 Adaptive liveness, but not population completion or
-end-to-end CPU reduction at n=50. Section 8.19 has moved the filter into a
-native implementation and passed an n=1-per-seed CPU/safety/liveness smoke;
-follow-up should repeat that native gate at n=5 while retaining the
+baseline and section 8.20 establish the intended descriptive
+safety/mapping-work pattern and observed 50/50 Full plus 50/50 native Adaptive
+liveness, but not population completion, flight readiness, or a clean
+end-to-end CPU reduction at n=50. A follow-up performance campaign should run
+on a clean host and cross the Full/Adaptive execution order while retaining the
 static-PCD monitor, fixed-Sector control, and CIRI shadow's non-authoritative
 default-off status.
