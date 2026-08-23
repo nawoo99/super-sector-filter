@@ -1,6 +1,43 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-23 order-crossed 3-mode n=5 후속 — 아래 bounded-memory n=1
+> 배너의 “broad clean campaign pending” 상태를 대체한다.** v=7,
+> `loop24.txt`, static PCD, seed1-10 x n=5에서 Full/Sector/Adaptive를 한
+> 캠페인 안에서 순서 교차해 150회를 실행했다. Full은 direct
+> `/cloud_registered`, Sector/Adaptive는 C++ strict-burst를 거친
+> `/cloud_sector`를 사용했고 150행 모두 valid/1 attempt/raw complete였다.
+>
+> static-safe는 **49/50, 48/50, 50/50**, live-only threshold까지 포함한
+> all-detector-safe는 **49/50, 47/50, 50/50**이다. contact runs/events는
+> Full 1/2, Sector 3/6, Adaptive 0/0이다. Adaptive는 관측 표본에서 Sector
+> 접촉을 모두 제거했지만 Full 목표인 100%/접촉 0은 달성하지 못했다.
+>
+> Full 유일 접촉은 seed7 run1의 시작 배치 문제가 아니다. generation-7
+> short tail이 `[11.950,12.850,1.050]`에서 끝났고 guard는 짧은 remainder와
+> 두 `no_backup` tail을 `SAFE`로 commit했지만, 같은 시각 CIRI는 obstacle
+> distance 0.0179 m로 corridor infeasible을 경고했다. trajectory가 그
+> endpoint에서 끝난 뒤 static/live가 모두 접촉을 확인했다. 다음 코어 수정은
+> topology 재시도나 필터 튜닝이 아니라 **현재 pose와 terminal stop pose의 hard
+> clearance를 short-tail/stationary-hold 인증 전제조건으로 넣고, body envelope
+> 진입 전에 stop하게 하는 것**이다.
+>
+> Adaptive 실제 출력 상태는 full-open **1518회**, close **1512회**, time-weighted
+> open duty 22.43%다. Full 대비 map commit/points-update/throughput/
+> mapping-update/mapping-work/combined CPU-work 감소는 각각 46.15/32.61/
+> 63.71/44.23/63.25/16.13%다. mean mission time은 22.35% 길다. exact paired
+> McNemar는 Full-Sector p=0.625, Sector-Adaptive p=0.250,
+> Full-Adaptive p=1.000으로 유의하지 않다. Adaptive 50/50의 exact two-sided
+> 95% population lower bound는 92.89%이므로 population 100% 주장은 금지한다.
+>
+> 전체 150회는 FSM swap/retry/OOM/PSI가 모두 0이고 peak FSM RSS 3474.36
+> MiB였다. runner는 direct/filtered split config를 topic까지 검증하며, seed
+> 경계에서도 순서 회전을 이어가고 sequence/order position을 CSV에 남긴다.
+> raw-cloud CIRI는 계속 default false다. 상세는 viability §8.22,
+> `docs/order_crossed_3mode_strict_v7_n5_20260823.md`,
+> `results/order_crossed_3mode_strict_v7_n5_*_20260823.csv`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-23 bounded-memory + 유효한 3-mode 후속 — 바로 아래 §8.20 배너의
 > memory/swap 미해결 상태를 대체하되, n=50 liveness 결과 자체는 대체하지 않는다.**
 > Full 후반 오염의 직접 원인은 (1) 모든 재계획 로그가 SFC 전체 cloud를 종료

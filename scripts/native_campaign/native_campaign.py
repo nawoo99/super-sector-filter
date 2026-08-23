@@ -479,7 +479,8 @@ RAW_DIRECT_REF_MODES = frozenset(
      *REFERENCE_ABLATION_PROFILES.keys())
 )
 
-FIELDS = ["map", "run", "mode", "experiment_profile", "filter_profile",
+FIELDS = ["map", "run", "mode", "campaign_sequence_index",
+          "mode_order_position", "experiment_profile", "filter_profile",
           "filter_backend",
           "success", "run_valid",
           "monitor_type", "monitor_flight_cpu_pct", "live_cloud_enabled", "preflight_ready",
@@ -1516,6 +1517,20 @@ def main():
         ),
     )
     ap.add_argument(
+        "--seedmap-full-super-config",
+        help=(
+            "direct-Full SUPER config for a mixed full/sector/adaptive "
+            "campaign; must use /cloud_registered"
+        ),
+    )
+    ap.add_argument(
+        "--seedmap-filtered-super-config",
+        help=(
+            "Sector/Adaptive SUPER config for a mixed campaign; must use "
+            "/cloud_sector"
+        ),
+    )
+    ap.add_argument(
         "--seedmap-static-pcd",
         action="store_true",
         help="measure every seedmap mode against the same unfiltered static PCD",
@@ -1553,7 +1568,53 @@ def main():
 
     if args.loop_timeout is not None and args.loop_timeout <= 0.0:
         ap.error("--loop-timeout must be positive")
-    if args.seedmap_super_config or args.seedmap_static_pcd:
+    split_configs = (
+        args.seedmap_full_super_config,
+        args.seedmap_filtered_super_config,
+    )
+    if args.seedmap_super_config and any(split_configs):
+        ap.error(
+            "--seedmap-super-config cannot be combined with the mode-specific "
+            "--seedmap-full-super-config/--seedmap-filtered-super-config"
+        )
+    if any(split_configs) and not all(split_configs):
+        ap.error(
+            "mode-specific routing requires both --seedmap-full-super-config "
+            "and --seedmap-filtered-super-config"
+        )
+    if all(split_configs):
+        unsupported_modes = [
+            mode for mode in args.modes
+            if mode not in ("full", "sector", "adaptive")
+        ]
+        if unsupported_modes:
+            ap.error(
+                "mode-specific config routing supports only plain "
+                "full/sector/adaptive modes; unsupported modes: "
+                + ", ".join(unsupported_modes)
+            )
+        full_topic = super_config_cloud_topic(args.seedmap_full_super_config)
+        if full_topic != "/cloud_registered":
+            ap.error(
+                "--seedmap-full-super-config must use /cloud_registered; "
+                f"{args.seedmap_full_super_config} uses "
+                f"{full_topic or 'an unknown topic'}"
+            )
+        filtered_topic = super_config_cloud_topic(
+            args.seedmap_filtered_super_config
+        )
+        if filtered_topic != "/cloud_sector":
+            ap.error(
+                "--seedmap-filtered-super-config must use /cloud_sector; "
+                f"{args.seedmap_filtered_super_config} uses "
+                f"{filtered_topic or 'an unknown topic'}"
+            )
+
+    if (
+        args.seedmap_super_config
+        or any(split_configs)
+        or args.seedmap_static_pcd
+    ):
         invalid_maps = [
             map_name for map_name in args.maps
             if not re.fullmatch(r"seed(?:[1-9]|10)", map_name)
@@ -1606,13 +1667,26 @@ def main():
     done = 0
     t0 = time.time()
     try:
-        for map_name in args.maps:
+        for map_index, map_name in enumerate(args.maps):
             for run in range(1, args.runs + 1):
                 modes = list(args.modes)
                 if args.rotate_modes and modes:
-                    shift = (run - 1) % len(modes)
+                    # Continue the rotation across seed boundaries. Resetting
+                    # at every seed gives a systematic 20/10/20 position
+                    # imbalance for 10 seeds x 5 runs x 3 modes; the global
+                    # sequence gives the closest possible 17/17/16 balance.
+                    shift = (
+                        map_index * args.runs + run - 1
+                    ) % len(modes)
                     modes = modes[shift:] + modes[:shift]
-                for mode in modes:
+                for mode_position, mode in enumerate(modes, start=1):
+                    mode_config = args.seedmap_super_config
+                    if all(split_configs):
+                        mode_config = (
+                            args.seedmap_full_super_config
+                            if mode == "full"
+                            else args.seedmap_filtered_super_config
+                        )
                     rec = run_one(
                         map_name,
                         mode,
@@ -1622,12 +1696,14 @@ def main():
                             if args.artifacts_dir
                             else None
                         ),
-                        seedmap_super_config_override=args.seedmap_super_config,
+                        seedmap_super_config_override=mode_config,
                         seedmap_static_pcd=args.seedmap_static_pcd,
                         loop_timeout_override=args.loop_timeout,
                         filter_profile=args.filter_profile,
                         filter_backend=args.filter_backend,
                     )
+                    rec["campaign_sequence_index"] = done + 1
+                    rec["mode_order_position"] = mode_position
                     w.writerow(rec); f.flush()
                     done += 1
                     el = time.time() - t0

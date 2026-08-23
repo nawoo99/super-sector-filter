@@ -1628,32 +1628,95 @@ Raw-cloud CIRI remains default false. Full details and tables are in
 `docs/memory_bounded_3mode_v7_20260823.md` and
 `results/final_postopt_3mode_*_20260823.csv`.
 
-## Current status — bounded-memory three-mode smoke passed, population gate unchanged
+### 8.22 Order-crossed Full/Sector/Adaptive n=5 gate (2026-08-23)
 
-- **Section 8.21 is the current memory and valid three-mode smoke; section 8.20
-  remains the stronger Full/native-Adaptive liveness gate and 8.17 the n=5
-  fixed-Sector control:** The stopped A* timeout fix changed
-  same-session pre-patch Full/Adaptive 49/50 and 48/50 into patched 50/50 and
-  50/50, with zero live/static contact. Fixed Sector was not rerun; its current
-  n=5 control remains 46/50 static-safe in 8.17. Section 8.21 adds a same-code,
-  correctly routed n=1 comparison of 10/10, 9/10, and 10/10 static-safe Full,
-  Sector, and Adaptive completion. These are observed cohorts, not a
-  population guarantee or one paired experiment.
-- **The memory failure is fixed at smoke scale; a clean order-crossed broad CPU
-  campaign remains pending:** 8.21 bounds detailed replan logs, removes about
-  0.88 GiB of no-raycasting dense counters, and observes 30 runs with zero FSM
-  swap/retry/OOM increment. Its exact Adaptive transition count is 321 open and
-  320 close. Section 8.20's n=50 map workload reduction remains valid, but its
-  end-to-end CPU baseline is contaminated; 8.21's lower CPU work is only
-  sequential n=1 evidence.
-- **Map workload reduction passed at n=50; end-to-end CPU still needs a clean
-  broad rerun:**
-  native Adaptive reduced processed points/update 25.58%, throughput 32.53%,
-  mapping/update 29.62%, and mapping work/mission 48.39% against the final Full
-  rows. The later Full arm was affected by memory/swap pressure, so its combined
-  CPU-work must not be used as a clean baseline. Section 8.19's n=1 CPU smoke
-  remains directional evidence, not a replacement for an order-crossed n=50
-  performance cohort.
+The clean broad comparison requested by 8.21 ran Full, fixed Sector, and native
+Adaptive inside one interleaved campaign: `loop24.txt`, v=7, static PCD,
+timeout 240 s, seeds 1-10 x n=5, 150 rows. Full consumed
+`/cloud_registered`; Sector/Adaptive consumed `/cloud_sector` through the C++
+strict-burst filter. The runner now accepts and validates separate direct and
+filtered configs, continues mode rotation across seed boundaries, and records
+global sequence plus order position. Position counts were balanced to
+17/16/17 Full, 17/17/16 Sector, and 16/17/17 Adaptive.
+
+All 150 rows were valid, completed the five-waypoint loop, and required one
+attempt. Raw completion was therefore 50/50 for every mode. Static-safe
+completion was Full **49/50**, Sector **48/50**, Adaptive **50/50**.
+All-detector-safe completion, which also includes live-cloud-only threshold
+events, was **49/50, 47/50, 50/50**. Contact runs/events were Full 1/2,
+Sector 3/6, Adaptive 0/0. Worst static body clearance was -0.146 m, -0.027 m,
+and +0.141 m.
+
+The Full event was seed7 run1, not a spawn artifact. A generation-7 tail ended
+at approximately `[11.950,12.850,1.050]`; the guard repeatedly certified its
+short remainder `SAFE` while CIRI warned that corridor decomposition was
+infeasible at 0.0179 m obstacle distance. Two `no_backup` tails then committed,
+the trajectory finished inside the obstacle envelope, and static/live monitors
+both reported contact. Topology reroute recovered liveness only after contact.
+This is a current/terminal-pose clearance hole in short-tail/stationary-hold
+certification, not the already-fixed same-topology or stopped-timeout loop.
+
+Sector contacts were seed8 run1 (live-only center distance 0.194 m) and seed10
+runs 2 and 4 (live plus static, worst static clearances -0.007/-0.027 m).
+They occurred once in each order position; the Full event occurred in position
+1. The crossed order does not show a single order-position cause. Exact paired
+McNemar tests are now defined: Full/Sector p=0.625 (discordances 3 vs 1),
+Sector/Adaptive p=0.250 (0 vs 3), and Full/Adaptive p=1.000 (0 vs 1).
+The descriptive safety ordering is not significant at 0.05.
+
+Adaptive recorded **1518 effective full-open and 1512 full-close edges**,
+30.36 +/- 9.81 opens/run (range 19-62), and a 22.43% time-weighted open duty.
+Six runs ended while open. Component counts were 36/13 stall-recovery
+entry/exit and 1201/1201 replan-guard open/close, which are not additive
+substitutes for the effective output edges.
+
+The order-crossed workload result is clean. Relative to Full, Sector reduced
+map commits 11.60%, points/update 51.15%, throughput 56.82%, mapping/update
+59.93%, mapping work/mission 61.97%, and combined CPU-work/mission 11.62%.
+Adaptive reductions were 46.15%, 32.61%, 63.71%, 44.23%, 63.25%, and 16.13%.
+Mean mission time increased 7.35% Sector and 22.35% Adaptive. Compared directly
+with Sector, Adaptive processed 37.96% more points/update during open bursts
+but had 15.95% lower throughput, 3.38% lower mapping work/mission, 5.11% lower
+combined CPU-work, and 13.98% longer mission time.
+
+Every row had retry 0, OOM delta 0, FSM swap 0, and memory PSI some/full max 0.
+Peak FSM RSS/PSS was 3474.36/3451.11 MiB. Host swap remained near 2 GiB used
+and available memory fell to 3351.88 MiB late in seed10, but there was no FSM
+swap, retry, OOM, or PSI response. The old unbounded growth did not recur.
+
+Exact two-sided 95% Clopper-Pearson intervals for all-detector safety are
+89.35-99.95% Full, 83.45-98.75% Sector, and 92.89-100% Adaptive. Thus Adaptive
+50/50 is not population-level 100%, and the requested Full 100% target is not
+even met descriptively in this cohort. The next safety implementation should
+fail closed on current and terminal stop-pose clearance before accepting a
+short tail/hold, followed by a seed7 Full repetition gate and another crossed
+three-mode gate. Raw-cloud CIRI remains default false. Full tables are in
+`docs/order_crossed_3mode_strict_v7_n5_20260823.md` and
+`results/order_crossed_3mode_strict_v7_n5_*_20260823.csv`.
+
+## Current status — clean broad gate complete; Full endpoint safety hole remains
+
+- **Section 8.22 is the current same-code, correctly routed, order-crossed broad
+  gate:** raw completion is 50/50 in all modes, but all-detector-safe completion
+  is Full 49/50, Sector 47/50, Adaptive 50/50. Adaptive removes all three
+  observed Sector contacts, yet Full has an independent seed7 endpoint contact.
+  Therefore the sample has the requested Sector/Adaptive ordering but does not
+  meet the Full 100%/zero-contact target.
+- **The clean n=50 performance campaign is complete:** Adaptive reduces Full
+  points/update 32.61%, throughput 63.71%, mapping/update 44.23%, mapping
+  work/mission 63.25%, and combined FSM+filter CPU-work/mission 16.13%.
+  Exact effective transitions are 1518 open/1512 close. Mean mission time is
+  22.35% longer than Full, so the result is a workload/safety trade-off rather
+  than a free speedup.
+- **The memory fix now has broad evidence:** all 150 rows have one attempt,
+  FSM swap 0, retry 0, OOM delta 0, and PSI max 0; peak FSM RSS is 3474.36 MiB.
+  Host-wide swap was still occupied, but it did not recreate the prior FSM
+  pressure or contaminate the crossed comparison.
+- **The next implementation target is Full short-tail/hold endpoint
+  certification:** require hard current and terminal-pose clearance before a
+  tail or stationary hold can be accepted, and trigger the stop before the
+  body envelope is entered. More topology retries or filter tuning do not fix
+  an endpoint that has already contacted an obstacle.
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),
@@ -1733,10 +1796,10 @@ Raw-cloud CIRI remains default false. Full details and tables are in
 
 Do not describe `static_seedmaps_guard_viability_v7.yaml` or any of its
 `_wide`/`_tight`/`_tight_h08` variants as flight-ready. The current strict
-baseline and section 8.20 establish the intended descriptive
-safety/mapping-work pattern and observed 50/50 Full plus 50/50 native Adaptive
-liveness, but not population completion, flight readiness, or a clean
-end-to-end CPU reduction at n=50. A follow-up performance campaign should run
-on a clean host and cross the Full/Adaptive execution order while retaining the
-static-PCD monitor, fixed-Sector control, and CIRI shadow's non-authoritative
-default-off status.
+baseline and section 8.22 establish the intended descriptive
+safety/mapping-work pattern and a clean order-crossed CPU/workload reduction,
+but not population completion or flight readiness. Section 8.22 also replaces
+the previous clean-campaign TODO: Full itself contacted once at a short-tail
+endpoint, so endpoint/current-pose clearance certification is now the next
+safety target. Retain the static-PCD monitor, live-cloud forensics, fixed-Sector
+control, and CIRI shadow's non-authoritative default-off status in that work.
