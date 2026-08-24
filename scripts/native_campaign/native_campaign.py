@@ -562,8 +562,18 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_rate_limited_frames", "filter_max_publish_hz",
           "filter_map_commit_topic", "filter_map_commit_refresh_age_s",
           "filter_map_commit_refresh_min_interval_s",
+          "filter_map_commit_pre_stale_full_age_s",
           "filter_map_commit_status_count", "filter_map_commit_version",
-          "filter_commit_refresh_frames", "filter_map_commit_age_mean_s",
+          "filter_commit_refresh_frames",
+          "filter_pre_stale_full_refresh_frames",
+          "filter_pre_stale_full_refresh_ack_count",
+          "filter_pre_stale_full_refresh_pending_ack",
+          "filter_pre_stale_full_refresh_same_version_suppressed_frames",
+          "filter_pre_stale_full_refresh_trigger_age_mean_s",
+          "filter_pre_stale_full_refresh_trigger_age_max_s",
+          "filter_pre_stale_full_refresh_ack_latency_mean_s",
+          "filter_pre_stale_full_refresh_ack_latency_max_s",
+          "filter_map_commit_age_mean_s",
           "filter_map_commit_age_max_s",
           "filter_full_open_extra_max_points",
           "filter_full_open_extra_candidates",
@@ -742,6 +752,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             adaptive_max_publish_hz=5.0,
             adaptive_trajectory_guard_hold_s=2.5,
             adaptive_trajectory_guard_active_max_publish_hz=0.0,
+            adaptive_pre_stale_full_age_s=0.25,
             adaptive_full_open_extra_max_points=6000):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
@@ -961,6 +972,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     f"{adaptive_trajectory_guard_hold_s}"
                     f" --trajectory-guard-active-max-publish-hz "
                     f"{adaptive_trajectory_guard_active_max_publish_hz}"
+                    f" --map-commit-pre-stale-full-age-s "
+                    f"{adaptive_pre_stale_full_age_s}"
                     f" --full-open-extra-max-points "
                     f"{adaptive_full_open_extra_max_points}"
                     " --near-field-speed-gain-s 0.2"
@@ -1625,6 +1638,15 @@ def main():
         help="strict-burst Adaptive far-field point budget while open",
     )
     ap.add_argument(
+        "--adaptive-pre-stale-full-age-s",
+        type=float,
+        default=0.25,
+        help=(
+            "send at most one full scan per map version after this ACK age; "
+            "0 disables the pre-stale refresh"
+        ),
+    )
+    ap.add_argument(
         "--artifacts-dir",
         help="copy each run's monitor JSON, including contact context, here",
     )
@@ -1644,6 +1666,8 @@ def main():
         )
     if args.adaptive_full_open_extra_max_points < 0:
         ap.error("--adaptive-full-open-extra-max-points must be non-negative")
+    if args.adaptive_pre_stale_full_age_s < 0.0:
+        ap.error("--adaptive-pre-stale-full-age-s must be non-negative")
     split_configs = (
         args.seedmap_full_super_config,
         args.seedmap_filtered_super_config,
@@ -1783,6 +1807,9 @@ def main():
                         ),
                         adaptive_trajectory_guard_active_max_publish_hz=(
                             args.adaptive_trajectory_guard_active_max_publish_hz
+                        ),
+                        adaptive_pre_stale_full_age_s=(
+                            args.adaptive_pre_stale_full_age_s
                         ),
                         adaptive_full_open_extra_max_points=(
                             args.adaptive_full_open_extra_max_points

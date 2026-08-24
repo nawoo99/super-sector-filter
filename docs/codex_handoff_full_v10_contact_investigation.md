@@ -1,6 +1,36 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-25 pre-stale full refresh n=3 gate — 바로 아래 2026-08-24
+> first-brake 반례의 다음 구현을 완료했다.** Adaptive C++ filter가 map commit
+> age 0.25초에서 complete scan을 한 map version당 한 번만 보내고, 이후
+> `commit_version > source_version`을 version-advance ACK proxy로 기록한다.
+> 실행 파일 기본값은 0/off이고 strict campaign runner만 0.25초를 쓴다. 이 ACK는
+> 특정 frame content의 처리 완료 token이나 formal freshness certificate가 아니다.
+>
+> seed7 threshold 0.35/0.25초 각 n=3은 모두 완주·contact 0이었다. 0.25초가 실제
+> trigger 0.403초, ACK 0.175초, mean mission 102.68초로 더 나아 채택했다. 이어
+> order-crossed seed1-10 x n=3 x Full/Sector/Adaptive 90회는 모두 valid,
+> one attempt, raw complete였다. Full/Adaptive는 각각 **30/30·contact 0**, fixed
+> Sector는 **30/30이지만 seed9/10의 2 runs에서 3 contact events**였다. 이전
+> Adaptive seed7 stale-map first-brake contact는 재발하지 않았다.
+>
+> Full 대비 Adaptive는 update-weighted points/update 18.90%, map total/update
+> 23.86%, map update time 15.12%를 줄였지만 mean mission은 76.63->103.26초,
+> **+34.75%** 길어졌다. pre-stale frame/version advance는 2,369/2,369, pending
+> 0, 평균 trigger/ACK latency는 0.386/0.207초였지만 최대는 3.150/11.245초다.
+> late seed guard duty도 80-92%다. 다음 구현은 threshold/cap 추가 튜닝이 아니라
+> **content-specific request/generation ACK + fresh-map successful replan 뒤 certified
+> resume**, SLA miss 시 **certified stop-and-topology-reroute 1회**다. 같은 version
+> full frame flood와 blind hold 축소는 금지한다.
+>
+> 이 결과는 local n=3 기술 통계이며 population 100%/flight-ready 보장이 아니다.
+> McNemar는 수행하지 않았다. raw-cloud CIRI는 계속 default false/non-authoritative다.
+> 상세 맵별 표와 forensics는 viability §8.26 및
+> `docs/pre_stale_refresh_3mode_v7_n3_20260825.md`, raw는
+> `results/prestale025_order_crossed_3mode_v7_n3_raw_20260825.csv`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-24 guard duty attribution 및 first-brake 반례 — 아래 direct
 > guard refresh 배너의 “최종 contact 0” 상태를 새 n=1 gate가 반증했다.**
 > C++ Adaptive 통계에 direct guard의 실제 `active`와 recovery 뒤

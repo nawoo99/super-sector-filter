@@ -35,6 +35,7 @@ struct Options {
   std::string map_commit_topic{"/rog_map/commit_version"};
   double map_commit_refresh_age_s{0.12};
   double map_commit_refresh_min_interval_s{0.10};
+  double map_commit_pre_stale_full_age_s{0.0};
   uint64_t full_open_extra_max_points{6000};
   bool track_trap{false};
   bool sector_until_trap{false};
@@ -127,6 +128,9 @@ Options parseArgs(int argc, char **argv) {
     } else if (arg == "--map-commit-refresh-min-interval-s") {
       options.map_commit_refresh_min_interval_s =
           parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--map-commit-pre-stale-full-age-s") {
+      options.map_commit_pre_stale_full_age_s =
+          parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--full-open-extra-max-points") {
       options.full_open_extra_max_points = static_cast<uint64_t>(
           parseInt(arg, requireValue(i, arg)));
@@ -209,6 +213,7 @@ Options parseArgs(int argc, char **argv) {
       options.max_publish_hz < 0.0 || options.stall_v < 0.0 ||
       options.map_commit_refresh_age_s < 0.0 ||
       options.map_commit_refresh_min_interval_s < 0.0 ||
+      options.map_commit_pre_stale_full_age_s < 0.0 ||
       options.stall_t < 0.0 || options.resume_v < 0.0 ||
       options.resume_t < 0.0 || options.open_burst_s < 0.0 ||
       options.open_cooldown_s < 0.0 ||
@@ -339,7 +344,8 @@ public:
                     std::placeholders::_1));
     }
     if (options_.mode == "adaptive" && options_.max_publish_hz > 0.0 &&
-        options_.map_commit_refresh_age_s > 0.0) {
+        (options_.map_commit_refresh_age_s > 0.0 ||
+         options_.map_commit_pre_stale_full_age_s > 0.0)) {
       map_commit_sub_ = create_subscription<std_msgs::msg::UInt64>(
           options_.map_commit_topic, sensor_qos,
           std::bind(&NativeSectorCpp::mapCommitCallback, this,
@@ -405,7 +411,28 @@ private:
 
   double nowSeconds() { return get_clock()->now().seconds(); }
 
-  enum class PublishDecision { DROP, REGULAR, COMMIT_REFRESH };
+  enum class PublishDecision {
+    DROP,
+    REGULAR,
+    COMMIT_REFRESH,
+    PRE_STALE_FULL_REFRESH
+  };
+
+  void recordFullRefreshSourceVersion(bool pre_stale, double now,
+                                      double trigger_age_s = 0.0) {
+    if (!last_map_commit_rx_s_)
+      return;
+    last_full_refresh_source_version_ = last_map_commit_version_;
+    if (!pre_stale)
+      return;
+    ++pre_stale_full_refresh_frames_;
+    pre_stale_full_refresh_pending_ack_ = true;
+    pre_stale_full_refresh_source_version_ = last_map_commit_version_;
+    pre_stale_full_refresh_send_s_ = now;
+    pre_stale_full_refresh_trigger_age_sum_s_ += trigger_age_s;
+    pre_stale_full_refresh_trigger_age_max_s_ =
+        std::max(pre_stale_full_refresh_trigger_age_max_s_, trigger_age_s);
+  }
 
   PublishDecision publicationDecision(double now) {
     trajectory_guard_unbounded_refresh_frame_ = false;
@@ -416,6 +443,7 @@ private:
       trajectory_guard_refresh_pending_ = false;
       trajectory_guard_unbounded_refresh_frame_ = true;
       ++trajectory_guard_refresh_frames_;
+      recordFullRefreshSourceVersion(false, now);
       return PublishDecision::REGULAR;
     }
     double publish_hz = options_.max_publish_hz;
@@ -423,6 +451,30 @@ private:
         options_.trajectory_guard_active_max_publish_hz > publish_hz) {
       publish_hz = options_.trajectory_guard_active_max_publish_hz;
     }
+
+    // A guard true-edge is too late to change the brake that was already
+    // certified against a stale map. Before that stale threshold, allow one
+    // complete scan per acknowledged map version. The version gate prevents a
+    // stalled map worker from being flooded with repeated full scans.
+    const double commit_age_s = last_map_commit_rx_s_
+        ? std::max(0.0, now - *last_map_commit_rx_s_)
+        : 0.0;
+    const bool pre_stale_age_due = options_.mode == "adaptive" &&
+        options_.map_commit_pre_stale_full_age_s > 0.0 &&
+        last_map_commit_rx_s_ &&
+        commit_age_s >= options_.map_commit_pre_stale_full_age_s;
+    const bool version_already_refreshed =
+        last_full_refresh_source_version_ &&
+        *last_full_refresh_source_version_ == last_map_commit_version_;
+    if (pre_stale_age_due && !version_already_refreshed) {
+      recordFullRefreshSourceVersion(true, now, commit_age_s);
+      if (publish_hz > 0.0)
+        next_publish_time_s_ = now + 1.0 / publish_hz;
+      return PublishDecision::PRE_STALE_FULL_REFRESH;
+    }
+    if (pre_stale_age_due && version_already_refreshed)
+      ++pre_stale_full_refresh_same_version_suppressed_frames_;
+
     if (publish_hz <= 0.0)
       return PublishDecision::REGULAR;
     const double period = 1.0 / publish_hz;
@@ -457,7 +509,22 @@ private:
   }
 
   void mapCommitCallback(const std_msgs::msg::UInt64::SharedPtr msg) {
-    last_map_commit_rx_s_ = nowSeconds();
+    const double now = nowSeconds();
+    if (pre_stale_full_refresh_pending_ack_ &&
+        pre_stale_full_refresh_source_version_ &&
+        msg->data > *pre_stale_full_refresh_source_version_) {
+      ++pre_stale_full_refresh_ack_count_;
+      if (pre_stale_full_refresh_send_s_) {
+        const double latency =
+            std::max(0.0, now - *pre_stale_full_refresh_send_s_);
+        pre_stale_full_refresh_ack_latency_sum_s_ += latency;
+        pre_stale_full_refresh_ack_latency_max_s_ =
+            std::max(pre_stale_full_refresh_ack_latency_max_s_, latency);
+      }
+      pre_stale_full_refresh_pending_ack_ = false;
+      pre_stale_full_refresh_send_s_.reset();
+    }
+    last_map_commit_rx_s_ = now;
     last_map_commit_version_ = msg->data;
     ++map_commit_status_count_;
   }
@@ -841,6 +908,8 @@ private:
       return;
     const bool commit_refresh =
         publish_decision == PublishDecision::COMMIT_REFRESH;
+    const bool pre_stale_full_refresh =
+        publish_decision == PublishDecision::PRE_STALE_FULL_REFRESH;
     if (commit_refresh)
       ++commit_refresh_frames_;
     ++published_frames_;
@@ -855,6 +924,7 @@ private:
         !trajectory_guard_unbounded_refresh_frame_ &&
         options_.full_open_extra_max_points > 0;
     const bool passthrough = options_.mode == "full" || !drone_ ||
+        pre_stale_full_refresh ||
         (effective_open && !commit_refresh && !bounded_full_open);
     if (passthrough) {
       kept_points_ += input_points;
@@ -1052,9 +1122,33 @@ private:
            options_.map_commit_refresh_age_s);
     number("map_commit_refresh_min_interval_s",
            options_.map_commit_refresh_min_interval_s);
+    number("map_commit_pre_stale_full_age_s",
+           options_.map_commit_pre_stale_full_age_s);
     integer("map_commit_status_count", map_commit_status_count_);
     integer("map_commit_version", last_map_commit_version_);
     integer("commit_refresh_frames", commit_refresh_frames_);
+    integer("pre_stale_full_refresh_frames",
+            pre_stale_full_refresh_frames_);
+    integer("pre_stale_full_refresh_ack_count",
+            pre_stale_full_refresh_ack_count_);
+    boolean("pre_stale_full_refresh_pending_ack",
+            pre_stale_full_refresh_pending_ack_);
+    integer("pre_stale_full_refresh_same_version_suppressed_frames",
+            pre_stale_full_refresh_same_version_suppressed_frames_);
+    number("pre_stale_full_refresh_trigger_age_mean_s",
+           pre_stale_full_refresh_frames_ > 0
+               ? rounded(pre_stale_full_refresh_trigger_age_sum_s_ /
+                         pre_stale_full_refresh_frames_)
+               : 0.0);
+    number("pre_stale_full_refresh_trigger_age_max_s",
+           rounded(pre_stale_full_refresh_trigger_age_max_s_));
+    number("pre_stale_full_refresh_ack_latency_mean_s",
+           pre_stale_full_refresh_ack_count_ > 0
+               ? rounded(pre_stale_full_refresh_ack_latency_sum_s_ /
+                         pre_stale_full_refresh_ack_count_)
+               : 0.0);
+    number("pre_stale_full_refresh_ack_latency_max_s",
+           rounded(pre_stale_full_refresh_ack_latency_max_s_));
     number("map_commit_age_mean_s",
            map_commit_age_samples_ > 0
                ? rounded(map_commit_age_sum_s_ / map_commit_age_samples_)
@@ -1229,9 +1323,20 @@ private:
   std::optional<double> next_publish_time_s_;
   std::optional<double> last_map_commit_rx_s_;
   std::optional<double> last_commit_refresh_publish_s_;
+  std::optional<uint64_t> last_full_refresh_source_version_;
+  std::optional<uint64_t> pre_stale_full_refresh_source_version_;
+  std::optional<double> pre_stale_full_refresh_send_s_;
   uint64_t map_commit_status_count_{0};
   uint64_t last_map_commit_version_{0};
   uint64_t commit_refresh_frames_{0};
+  uint64_t pre_stale_full_refresh_frames_{0};
+  uint64_t pre_stale_full_refresh_ack_count_{0};
+  bool pre_stale_full_refresh_pending_ack_{false};
+  uint64_t pre_stale_full_refresh_same_version_suppressed_frames_{0};
+  double pre_stale_full_refresh_trigger_age_sum_s_{0.0};
+  double pre_stale_full_refresh_trigger_age_max_s_{0.0};
+  double pre_stale_full_refresh_ack_latency_sum_s_{0.0};
+  double pre_stale_full_refresh_ack_latency_max_s_{0.0};
   uint64_t map_commit_age_samples_{0};
   double map_commit_age_sum_s_{0.0};
   double map_commit_age_max_s_{0.0};
