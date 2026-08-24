@@ -59,6 +59,7 @@ struct Options {
   std::string trajectory_guard_topic{
       "/planning/trajectory_guard_recovery_active"};
   double trajectory_guard_hold_s{2.5};
+  double trajectory_guard_active_max_publish_hz{0.0};
 };
 
 double parseDouble(const std::string &name, const char *value) {
@@ -174,6 +175,9 @@ Options parseArgs(int argc, char **argv) {
     } else if (arg == "--trajectory-guard-hold-s") {
       options.trajectory_guard_hold_s =
           parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--trajectory-guard-active-max-publish-hz") {
+      options.trajectory_guard_active_max_publish_hz =
+          parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--help" || arg == "-h") {
       throw std::runtime_error(
           "usage: native_sector_cpp [full|sector|velocity|adaptive] "
@@ -209,6 +213,7 @@ Options parseArgs(int argc, char **argv) {
       options.resume_t < 0.0 || options.open_burst_s < 0.0 ||
       options.open_cooldown_s < 0.0 ||
       options.trajectory_guard_hold_s < 0.0 ||
+      options.trajectory_guard_active_max_publish_hz < 0.0 ||
       options.near_field_radius_m < 0.0 ||
       options.near_field_speed_gain_s < 0.0 ||
       near_max < options.near_field_radius_m || guard_burst < 0.0 ||
@@ -413,9 +418,14 @@ private:
       ++trajectory_guard_refresh_frames_;
       return PublishDecision::REGULAR;
     }
-    if (options_.max_publish_hz <= 0.0)
+    double publish_hz = options_.max_publish_hz;
+    if (options_.mode == "adaptive" && trajectory_guard_active_ &&
+        options_.trajectory_guard_active_max_publish_hz > publish_hz) {
+      publish_hz = options_.trajectory_guard_active_max_publish_hz;
+    }
+    if (publish_hz <= 0.0)
       return PublishDecision::REGULAR;
-    const double period = 1.0 / options_.max_publish_hz;
+    const double period = 1.0 / publish_hz;
     if (!next_publish_time_s_) {
       next_publish_time_s_ = now + period;
       return PublishDecision::REGULAR;
@@ -815,6 +825,11 @@ private:
       ++replan_guard_open_frames_;
     if (trajectory_guard_open_)
       ++trajectory_guard_open_frames_;
+    if (trajectory_guard_active_) {
+      ++trajectory_guard_active_frames_;
+    } else if (trajectory_guard_open_) {
+      ++trajectory_guard_hold_only_frames_;
+    }
     if (last_map_commit_rx_s_) {
       const double commit_age_s = std::max(0.0, now - *last_map_commit_rx_s_);
       map_commit_age_sum_s_ += commit_age_s;
@@ -829,6 +844,11 @@ private:
     if (commit_refresh)
       ++commit_refresh_frames_;
     ++published_frames_;
+    if (trajectory_guard_active_) {
+      ++trajectory_guard_active_published_frames_;
+    } else if (trajectory_guard_open_) {
+      ++trajectory_guard_hold_only_published_frames_;
+    }
 
     const bool bounded_full_open =
         options_.mode == "adaptive" && effective_open && !commit_refresh &&
@@ -1110,6 +1130,8 @@ private:
              first_effective_full_open_time_s_);
     string("trajectory_guard_topic", options_.trajectory_guard_topic);
     number("trajectory_guard_hold_s", options_.trajectory_guard_hold_s);
+    number("trajectory_guard_active_max_publish_hz",
+           options_.trajectory_guard_active_max_publish_hz);
     boolean("trajectory_guard_active", trajectory_guard_active_);
     boolean("trajectory_guard_open", trajectory_guard_open_);
     integer("trajectory_guard_status_count", trajectory_guard_status_count_);
@@ -1122,6 +1144,20 @@ private:
             trajectory_guard_refresh_frames_);
     number("trajectory_guard_open_duty_pct",
            rounded(100.0 * trajectory_guard_open_frames_ /
+                   frame_denominator, 1e3));
+    integer("trajectory_guard_active_frames",
+            trajectory_guard_active_frames_);
+    integer("trajectory_guard_hold_only_frames",
+            trajectory_guard_hold_only_frames_);
+    integer("trajectory_guard_active_published_frames",
+            trajectory_guard_active_published_frames_);
+    integer("trajectory_guard_hold_only_published_frames",
+            trajectory_guard_hold_only_published_frames_);
+    number("trajectory_guard_active_duty_pct",
+           rounded(100.0 * trajectory_guard_active_frames_ /
+                   frame_denominator, 1e3));
+    number("trajectory_guard_hold_only_duty_pct",
+           rounded(100.0 * trajectory_guard_hold_only_frames_ /
                    frame_denominator, 1e3));
     optional("first_trajectory_guard_open_time_s",
              first_trajectory_guard_open_time_s_);
@@ -1256,6 +1292,10 @@ private:
   uint64_t trajectory_guard_status_count_{0};
   uint64_t trajectory_guard_active_count_{0};
   uint64_t trajectory_guard_open_frames_{0};
+  uint64_t trajectory_guard_active_frames_{0};
+  uint64_t trajectory_guard_hold_only_frames_{0};
+  uint64_t trajectory_guard_active_published_frames_{0};
+  uint64_t trajectory_guard_hold_only_published_frames_{0};
   uint64_t trajectory_guard_open_transitions_{0};
   uint64_t trajectory_guard_close_transitions_{0};
   uint64_t trajectory_guard_refresh_frames_{0};

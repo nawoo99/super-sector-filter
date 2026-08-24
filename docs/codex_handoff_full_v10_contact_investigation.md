@@ -1,6 +1,37 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-24 guard duty attribution 및 first-brake 반례 — 아래 direct
+> guard refresh 배너의 “최종 contact 0” 상태를 새 n=1 gate가 반증했다.**
+> C++ Adaptive 통계에 direct guard의 실제 `active`와 recovery 뒤
+> `hold-only` frame/duty를 분리했다. 기존 5 Hz·2.5초 hold·6,000점 동작은
+> 바꾸지 않았다. seed6-10 진단은 5/5·contact 0이었고 active/hold-only
+> duty 평균은 59.42%/32.86%여서, 후반 비용은 hold만이 아니라 실제 guard
+> 재발이 더 큰 원인임을 확인했다.
+>
+> guard active 동안만 6 Hz를 허용한 후보도 seed6-10 5/5·contact 0이었지만
+> 평균 시간 133.02->163.89초(+23.20%), map total/update
+> 26.26->29.45ms(+12.14%)로 악화돼 폐기했다. 옵션 기본값은 0으로, 기존
+> 5 Hz를 그대로 쓴다.
+>
+> 이어 실행한 order-crossed seed1-10 x n=1 x 3-mode 30회는 전부 valid,
+> retry/FSM swap/OOM 0이고 세 모드 모두 10/10 완주했다. 그러나 live contact
+> run은 Full 0, Sector 1(seed10), Adaptive 1(seed7)이다. Adaptive seed7은
+> static-PCD contact는 아니지만 static body clearance가 +0.036m뿐이었고,
+> live point는 0.19861m로 0.20m body threshold 안쪽이었다. 따라서 Adaptive는
+> 현재 contact-zero 목표를 충족하지 못한다.
+>
+> 원인은 hold가 아니다. epoch 1787565836.311에 guard가 map age 0.558초의
+> `MAP_STALE`을 감지한 뒤 stale map에서 0.529초 brake를 `SAFE`로 승인했고,
+> direct true-edge가 새 full scan을 요청했지만 이미 실행 중인 첫 brake의
+> endpoint는 바꾸지 못했다. 0.440초 뒤 brake 끝에서 contact가 기록됐다.
+> 다음 구현은 0.50-0.55초 stale threshold **이전**에 ACK/version-gated full
+> refresh 1회를 보내는 bounded pre-stale 방식이다. hold 단축이나 6 Hz 재적용은
+> 금지한다. 상세 맵별 표와 로그 해석은 viability §8.25 및
+> `docs/guard_duty_3mode_v7_n1_20260824.md`를 볼 것. raw-cloud CIRI는 계속
+> default false/non-authoritative다.
+
+> [!IMPORTANT]
 > **2026-08-24 direct trajectory-guard sensing 후속 — 아래 2026-08-23
 > 배너들의 “반복 gate 필요”를 실행했다.** 먼저 bounded local horizontal
 > escape를 추가했다. certified stop 뒤 A* `NO_PATH`일 때 rejected route 반대

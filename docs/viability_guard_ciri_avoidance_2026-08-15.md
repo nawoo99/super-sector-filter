@@ -1875,17 +1875,81 @@ Primary raw results are
 `results/guard_edge_refresh_adaptive_seed1_10_n1_raw_20260824.csv`, and
 `results/guard_edge_refresh_full_sector_seed6_10_n1_raw_20260824.csv`.
 
-## Current status — direct guard refresh closes observed Adaptive failures
+### 8.25 Guard duty attribution, rejected 6 Hz candidate, and the first-brake hole (2026-08-24)
 
-- **Section 8.24 is the newest same-code gate.** Full was 50/50 and contact-free
-  in the pre-signal crossed cohort; the final direct guard-edge refresh passed
-  Adaptive seed6/7 at 10/10 and Adaptive seed1-10 at 10/10, all contact-free.
-  The final n=1 Full/Adaptive rows were both 10/10 and contact-free while fixed
-  Sector contacted on 2/10. This does not prove population 100%.
-- **The remaining Adaptive problem is efficiency, not an observed safety or
-  completion failure in the final gates.** Late seeds spend 83-97% of frames
-  under direct-guard open hold and Adaptive mean time remains 12.78% above
-  Full, although points/update, map/update work, and FSM CPU remain lower.
+The direct-guard open metric was split into actual `active` and post-recovery
+`hold-only` frames without changing the established 5 Hz, 2.5 s hold, and
+6,000-extra-point behavior.  A seed6-10 Adaptive diagnostic completed 5/5 with
+zero contact.  Mean direct-active/hold-only duty was 59.42%/32.86%, proving
+that late-map cost is not caused by the hold alone: actual guard recurrence is
+the larger component.
+
+Raising the cap to 6 Hz only while the direct guard was active was tested on
+the same five maps and rejected.  It also completed 5/5 with zero contact, but
+mean mission time increased 133.02 -> 163.89 s (+23.20%) and map total/update
+increased 26.26 -> 29.45 ms (+12.14%).  Only seed8 improved in time.  The new
+option is disabled by default (`0`, so the base 5 Hz cap remains authoritative)
+and exists only to reproduce the diagnostic.
+
+The final order-crossed seed1-10 x n=1 x three-mode gate had 30/30 valid rows,
+one attempt each, retry/FSM-swap/OOM all zero, and peak FSM RSS 3453.69 MiB.
+All modes completed 10/10.  Full had zero live/static contact.  Fixed Sector
+had one live contact on seed10.  Adaptive had one live contact on seed7, so the
+new gate does not satisfy the Adaptive contact-zero target.  All static-PCD
+contact counts were zero, but Adaptive seed7's static body clearance was only
++0.036 m.
+
+| mode | completion | contact runs | mean time (s) | worst static clearance (m) | points/update | map total/update (ms) | FSM CPU (%) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Full | 10/10 | 0 | 79.843 | +0.203 | 27,995 | 40.990 | 91.40 |
+| fixed Sector | 10/10 | 1 | 82.621 | +0.069 | 14,075 | 15.013 | 76.91 |
+| Adaptive | 10/10 | 1 | 97.550 | +0.036 | 22,554 | 31.376 | 64.10 |
+
+Against Full, Adaptive reduced update-weighted points 19.43%, map total/update
+23.45%, map update time 15.37%, and time-weighted FSM CPU 29.87%; mean mission
+time was 22.18% longer.  Across the ten Adaptive rows, direct-active and
+hold-only duty averaged 33.68% and 36.17%, with 340 direct guard episodes and
+339 edge-refresh frames.
+
+The Adaptive seed7 contact happened 4.8221 s after mission start while a guard
+brake was ending at 0.2229 m/s.  The live nearest point was 0.19861 m from the
+vehicle, while the common static PCD measured a 0.236 m minimum.  At epoch
+1787565836.311 the guard had detected `MAP_STALE` (age 0.558 s), emitted the
+direct true edge, and certified a 0.529 s brake ending near
+`[6.886, 7.880, 1.208]` as `SAFE` against the stale map.  The contact followed
+0.440 s later near that endpoint.  The true-edge scan updates only a subsequent
+map and therefore cannot revise the already executing first brake.
+
+This moves the next Adaptive safety target earlier than the post-guard hold:
+one bounded, ACK/version-gated full refresh should be evaluated before the
+guard's 0.50-0.55 s stale threshold.  Do not shorten the hold or enable the
+rejected 6 Hz candidate as a substitute.  The complete map-by-map tables and
+forensics are in `docs/guard_duty_3mode_v7_n1_20260824.md`; primary raw inputs
+are `results/guard_duty_attribution_adaptive_seed6_10_n1_raw_20260824.csv`,
+`results/guard_active6_adaptive_seed6_10_n1_raw_20260824.csv`, and
+`results/guard_duty_final_order_crossed_3mode_v7_n1_raw_20260824.csv`.  This is
+n=1, no McNemar test was performed, and raw-cloud CIRI remains default false.
+
+## Current status — direct refresh works after the edge, but the first stale-map brake remains exposed
+
+- **Section 8.25 is the newest same-code gate.** Full was 10/10 and contact-free;
+  fixed Sector completed 10/10 with one seed10 live contact; Adaptive completed
+  10/10 but had one seed7 live contact at the end of its first stale-map brake.
+  Adaptive therefore does not currently meet the contact-zero target.
+- **The remaining Adaptive problem includes safety timing as well as
+  efficiency.** The edge refresh protects subsequent recovery maps but cannot
+  revise the brake already certified against a stale map.  In the new gate,
+  Adaptive direct-active/hold-only duty averaged 33.68%/36.17%, points/update
+  remained 19.43% below Full, and mean time was 22.18% above Full.
+- **The next implementation target is a bounded pre-stale full refresh, not a
+  shorter hold or a higher active publication cap.** It must be ACK/version
+  gated and occur before the 0.50-0.55 s guard stale threshold.  The active-only
+  6 Hz candidate was explicitly rejected after worsening seed6-10 mean time
+  and map cost/update.
+- **Section 8.24 remains the direct-edge mechanism and its earlier local gate.**
+  It closed the observed gap between repeated guard episodes, but section 8.25
+  supplies a new first-brake counterexample and supersedes the claim that the
+  remaining issue is efficiency only.
 - **The local horizontal escape is bounded but not execution-proven as a
   successful recovery.** It may be tried once after a certified stop and A*
   `NO_PATH`; it never bypasses the existing guard/viability commit checks.
@@ -1990,7 +2054,8 @@ Do not describe `static_seedmaps_guard_viability_v7.yaml` or any of its
 baseline and section 8.22 establish the intended descriptive
 safety/mapping-work pattern and a clean order-crossed CPU/workload reduction,
 but not population completion or flight readiness. Sections 8.23 and 8.24 close
-the observed Full endpoint hole and the observed Adaptive guard-gap failures;
-the next target is reducing late-seed direct-guard duty and time without
-re-opening those gaps. Retain the static-PCD monitor, live-cloud forensics,
-fixed-Sector control, and CIRI shadow's non-authoritative default-off status.
+the observed Full endpoint and between-episode guard-gap holes, while section
+8.25 exposes the distinct first stale-map brake timing hole.  The next target
+is a bounded pre-stale refresh, followed by repeated seed7 and order-crossed
+testing. Retain the static-PCD monitor, live-cloud forensics, fixed-Sector
+control, and CIRI shadow's non-authoritative default-off status.

@@ -599,6 +599,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_first_effective_full_open_time_s",
           "filter_trajectory_guard_topic",
           "filter_trajectory_guard_hold_s",
+          "filter_trajectory_guard_active_max_publish_hz",
           "filter_trajectory_guard_active",
           "filter_trajectory_guard_open",
           "filter_trajectory_guard_status_count",
@@ -607,6 +608,12 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_trajectory_guard_close_transitions",
           "filter_trajectory_guard_refresh_frames",
           "filter_trajectory_guard_open_duty_pct",
+          "filter_trajectory_guard_active_frames",
+          "filter_trajectory_guard_hold_only_frames",
+          "filter_trajectory_guard_active_published_frames",
+          "filter_trajectory_guard_hold_only_published_frames",
+          "filter_trajectory_guard_active_duty_pct",
+          "filter_trajectory_guard_hold_only_duty_pct",
           "filter_first_trajectory_guard_open_time_s",
           "recovery_triggered",
           "recovery_reclosed", "recovery_spawn_after_arm",
@@ -731,7 +738,11 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             seedmap_static_pcd=False,
             loop_timeout_override=None,
             filter_profile="legacy",
-            filter_backend="python"):
+            filter_backend="python",
+            adaptive_max_publish_hz=5.0,
+            adaptive_trajectory_guard_hold_s=2.5,
+            adaptive_trajectory_guard_active_max_publish_hz=0.0,
+            adaptive_full_open_extra_max_points=6000):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
     is_seed12 = (map_name == "seed12")
@@ -945,7 +956,13 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     " --bounded-replan-guard --replan-fail-streak-open 3"
                     " --replan-open-burst-s 0.6"
                     " --replan-open-cooldown-s 1.4"
-                    " --max-publish-hz 5.0"
+                    f" --max-publish-hz {adaptive_max_publish_hz}"
+                    f" --trajectory-guard-hold-s "
+                    f"{adaptive_trajectory_guard_hold_s}"
+                    f" --trajectory-guard-active-max-publish-hz "
+                    f"{adaptive_trajectory_guard_active_max_publish_hz}"
+                    f" --full-open-extra-max-points "
+                    f"{adaptive_full_open_extra_max_points}"
                     " --near-field-speed-gain-s 0.2"
                     " --near-field-max-radius-m 3.0"
                 )
@@ -1581,6 +1598,33 @@ def main():
         ),
     )
     ap.add_argument(
+        "--adaptive-max-publish-hz",
+        type=float,
+        default=5.0,
+        help="strict-burst Adaptive publication cap (default: 5.0 Hz)",
+    )
+    ap.add_argument(
+        "--adaptive-trajectory-guard-hold-s",
+        type=float,
+        default=2.5,
+        help="strict-burst Adaptive post-guard full-open hold (default: 2.5 s)",
+    )
+    ap.add_argument(
+        "--adaptive-trajectory-guard-active-max-publish-hz",
+        type=float,
+        default=0.0,
+        help=(
+            "strict-burst Adaptive cap used only while the direct trajectory "
+            "guard is active (0 keeps the base cap)"
+        ),
+    )
+    ap.add_argument(
+        "--adaptive-full-open-extra-max-points",
+        type=int,
+        default=6000,
+        help="strict-burst Adaptive far-field point budget while open",
+    )
+    ap.add_argument(
         "--artifacts-dir",
         help="copy each run's monitor JSON, including contact context, here",
     )
@@ -1589,6 +1633,17 @@ def main():
 
     if args.loop_timeout is not None and args.loop_timeout <= 0.0:
         ap.error("--loop-timeout must be positive")
+    if args.adaptive_max_publish_hz < 0.0:
+        ap.error("--adaptive-max-publish-hz must be non-negative")
+    if args.adaptive_trajectory_guard_hold_s < 0.0:
+        ap.error("--adaptive-trajectory-guard-hold-s must be non-negative")
+    if args.adaptive_trajectory_guard_active_max_publish_hz < 0.0:
+        ap.error(
+            "--adaptive-trajectory-guard-active-max-publish-hz must be "
+            "non-negative"
+        )
+    if args.adaptive_full_open_extra_max_points < 0:
+        ap.error("--adaptive-full-open-extra-max-points must be non-negative")
     split_configs = (
         args.seedmap_full_super_config,
         args.seedmap_filtered_super_config,
@@ -1722,6 +1777,16 @@ def main():
                         loop_timeout_override=args.loop_timeout,
                         filter_profile=args.filter_profile,
                         filter_backend=args.filter_backend,
+                        adaptive_max_publish_hz=args.adaptive_max_publish_hz,
+                        adaptive_trajectory_guard_hold_s=(
+                            args.adaptive_trajectory_guard_hold_s
+                        ),
+                        adaptive_trajectory_guard_active_max_publish_hz=(
+                            args.adaptive_trajectory_guard_active_max_publish_hz
+                        ),
+                        adaptive_full_open_extra_max_points=(
+                            args.adaptive_full_open_extra_max_points
+                        ),
                     )
                     rec["campaign_sequence_index"] = done + 1
                     rec["mode_order_position"] = mode_position
