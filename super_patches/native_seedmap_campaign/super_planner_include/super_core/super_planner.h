@@ -170,6 +170,7 @@ namespace super_planner {
         int guard_topology_no_path_failures_{0};
         int guard_topology_base_no_path_recoveries_{0};
         int guard_topology_saturation_recoveries_{0};
+        int guard_topology_local_escape_recoveries_{0};
         int guard_topology_corridor_failures_{0};
         // Consecutive failures after A* and CIRI have both succeeded.  A
         // virtual blocker can leave a geometrically valid corridor whose
@@ -183,6 +184,8 @@ namespace super_planner {
         Vec3f guard_topology_stall_collision_{Vec3f::Zero()};
         int guard_topology_stall_rejects_{0};
         std::atomic_bool guard_certified_stop_for_reroute_{false};
+        std::atomic_bool guard_local_escape_pending_{false};
+        Vec3f guard_local_escape_direction_{Vec3f::Zero()};
         std::atomic_bool guard_vertical_recovery_pending_{false};
         // Suppress the periodic moving-state replanner until a short
         // rest-to-rest recovery (vertical lift or direct final connection)
@@ -356,6 +359,8 @@ namespace super_planner {
 
         bool tryCommitCertifiedDirectGoalFallback(const Vec3f &start_p,
                                                   const Vec3f &goal_p);
+
+        bool tryCommitCertifiedLocalEscape(const Vec3f &start_p);
 
         bool tryCommitCertifiedVerticalRecovery(const Vec3f &start_p);
 

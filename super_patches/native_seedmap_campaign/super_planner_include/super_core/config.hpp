@@ -127,6 +127,14 @@ namespace super_planner {
         bool guard_topology_vertical_recovery_en{false};
         double guard_topology_vertical_recovery_lift_m{0.6};
         double guard_topology_vertical_recovery_trigger_distance_m{0.75};
+        // A start-adjacent rejected route can lie inside the gap deliberately
+        // left between the stopped vehicle and the first virtual blocker. In
+        // that case, make one short rest-to-rest move opposite the rejected
+        // route before rebuilding topology. The unchanged trajectory and
+        // stop-viability guards still decide whether it may be committed.
+        bool guard_topology_local_escape_en{false};
+        double guard_topology_local_escape_distance_m{0.6};
+        int guard_topology_local_escape_attempts{1};
         // Once every configured horizontal blocker slot has been consumed,
         // allow a bounded number of guarded vertical topology changes per
         // mission goal.  The lift is still committed only if the unchanged
@@ -281,6 +289,15 @@ namespace super_planner {
                     "super_planner/guard_topology_reroute/vertical_recovery_trigger_distance_m",
                     guard_topology_vertical_recovery_trigger_distance_m, 0.75);
             loader.LoadParam(
+                    "super_planner/guard_topology_reroute/local_escape_enable",
+                    guard_topology_local_escape_en, false);
+            loader.LoadParam(
+                    "super_planner/guard_topology_reroute/local_escape_distance_m",
+                    guard_topology_local_escape_distance_m, 0.6);
+            loader.LoadParam(
+                    "super_planner/guard_topology_reroute/local_escape_attempts",
+                    guard_topology_local_escape_attempts, 1);
+            loader.LoadParam(
                     "super_planner/guard_topology_reroute/saturation_vertical_attempts",
                     guard_topology_saturation_vertical_attempts, 1);
             loader.LoadParam(
@@ -361,6 +378,10 @@ namespace super_planner {
             guard_topology_vertical_recovery_trigger_distance_m = std::max(
                     resolution,
                     guard_topology_vertical_recovery_trigger_distance_m);
+            guard_topology_local_escape_distance_m = std::max(
+                    resolution, guard_topology_local_escape_distance_m);
+            guard_topology_local_escape_attempts = std::max(
+                    0, guard_topology_local_escape_attempts);
             guard_topology_saturation_vertical_attempts = std::max(
                     0, guard_topology_saturation_vertical_attempts);
             guard_topology_base_no_path_vertical_attempts = std::max(

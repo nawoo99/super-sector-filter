@@ -735,12 +735,16 @@ namespace super_planner {
         guard_topology_no_path_failures_ = 0;
         guard_topology_base_no_path_recoveries_ = 0;
         guard_topology_saturation_recoveries_ = 0;
+        guard_topology_local_escape_recoveries_ = 0;
         guard_topology_corridor_failures_ = 0;
         guard_topology_post_corridor_failures_ = 0;
         guard_topology_epoch_ = 0;
         guard_topology_stall_generation_ = 0;
         guard_topology_stall_collision_.setZero();
         guard_topology_stall_rejects_ = 0;
+        guard_local_escape_pending_.store(false,
+                                          std::memory_order_release);
+        guard_local_escape_direction_.setZero();
         guard_vertical_recovery_pending_.store(false,
                                                std::memory_order_release);
         guard_rest_to_rest_hold_until_wt_ =
@@ -1202,7 +1206,8 @@ namespace super_planner {
         const std::string phase_name = phase ? phase : "";
         const bool plan_from_rest =
                 phase_name.rfind("PlanFromRest/", 0) == 0;
-        const bool vertical_recovery_candidate =
+        const bool topology_recovery_candidate =
+                phase_name == "PlanFromRest/certified_local_escape" ||
                 phase_name == "PlanFromRest/certified_vertical_recovery";
         bool stopped_for_reroute = false;
         const bool certified_stop_for_reroute = plan_from_rest &&
@@ -1248,7 +1253,7 @@ namespace super_planner {
             // identify a route that should be blocked.
             const bool plan_from_rest_geometric_rejection =
                     plan_from_rest &&
-                    !vertical_recovery_candidate &&
+                    !topology_recovery_candidate &&
                     (safety.status ==
                              TrajectorySafetyStatus::CLEARANCE_MARGIN ||
                      safety.status == TrajectorySafetyStatus::OCCUPIED) &&
@@ -1609,6 +1614,131 @@ namespace super_planner {
         return true;
     }
 
+    bool SuperPlanner::tryCommitCertifiedLocalEscape(
+            const Vec3f &start_p) {
+        if (!cfg_.guard_topology_local_escape_en ||
+            !cfg_.guard_viability_en ||
+            !guard_local_escape_pending_.load(std::memory_order_acquire) ||
+            !start_p.array().isFinite().all()) {
+            return false;
+        }
+
+        Vec3f odom_position = Vec3f::Zero();
+        double odom_yaw = 0.0;
+        double odom_speed = std::numeric_limits<double>::infinity();
+        {
+            std::lock_guard<std::mutex> state_lock(drone_state_mutex_);
+            odom_position = robot_state_.p;
+            odom_yaw = robot_state_.yaw;
+            odom_speed = robot_state_.v.norm();
+        }
+        Vec3f escape_direction = guard_local_escape_direction_;
+        escape_direction.z() = 0.0;
+        const double direction_norm = escape_direction.norm();
+        const double start_shift = (start_p - odom_position).norm();
+        const bool certified_stop =
+                guard_certified_stop_for_reroute_.load(
+                        std::memory_order_acquire);
+        if (!odom_position.array().isFinite().all() ||
+            !std::isfinite(odom_yaw) || !std::isfinite(odom_speed) ||
+            !std::isfinite(start_shift) || start_shift > 0.15 ||
+            !std::isfinite(direction_norm) || direction_norm < 1.0e-3 ||
+            (!certified_stop && odom_speed >
+                    cfg_.guard_topology_reroute_max_stop_speed_mps)) {
+            return false;
+        }
+
+        // Consume one bounded request only after odometry and the stored
+        // escape direction are usable. A rejected escape is never submitted
+        // again; the separately-budgeted vertical fallback may run next.
+        if (!guard_local_escape_pending_.exchange(
+                    false, std::memory_order_acq_rel)) {
+            return false;
+        }
+
+        escape_direction /= direction_norm;
+        const Vec3f escape_start = odom_position;
+        const Vec3f escape_goal = escape_start +
+                cfg_.guard_topology_local_escape_distance_m * escape_direction;
+        const double distance = (escape_goal - escape_start).norm();
+        const double velocity_limit = std::max(
+                1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_vel);
+        const double acceleration_limit = std::max(
+                1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_acc);
+        const double jerk_limit = std::max(
+                1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_jerk);
+        const double duration = std::max({
+                cfg_.guard_direct_goal_fallback_min_duration_s,
+                1.875 * distance / velocity_limit,
+                std::sqrt(5.774 * distance / acceleration_limit),
+                std::cbrt(60.0 * distance / jerk_limit)});
+
+        Eigen::Matrix<double, 3, 3> initial_pva;
+        Eigen::Matrix<double, 3, 3> goal_pva;
+        initial_pva.setZero();
+        goal_pva.setZero();
+        initial_pva.col(0) = escape_start;
+        goal_pva.col(0) = escape_goal;
+        Eigen::Matrix<double, 3, Eigen::Dynamic> position_waypoints(3, 0);
+        VecDf durations(1);
+        durations << duration;
+        Trajectory position_trajectory =
+                poly_interpo::minimumJerkInterpolation<3>(
+                        initial_pva, goal_pva, position_waypoints, durations);
+
+        Eigen::Matrix<double, 1, 3> initial_yaw;
+        Eigen::Matrix<double, 1, 3> goal_yaw;
+        initial_yaw.setZero();
+        goal_yaw.setZero();
+        initial_yaw(0, 0) = odom_yaw;
+        goal_yaw(0, 0) = odom_yaw;
+        Eigen::Matrix<double, 1, Eigen::Dynamic> yaw_waypoints(1, 0);
+        Trajectory yaw_trajectory =
+                poly_interpo::minimumJerkInterpolation<1>(
+                        initial_yaw, goal_yaw, yaw_waypoints, durations);
+
+        const double start_wt = ros_ptr_->getSimTime();
+        position_trajectory.start_WT = start_wt;
+        yaw_trajectory.start_WT = start_wt;
+        ExpTraj recovery_exp;
+        recovery_exp.setTrajectory(start_wt, position_trajectory,
+                                   yaw_trajectory);
+        recovery_exp.setGoalConnectedFlag(false);
+
+        CmdTraj::Candidate candidate;
+        if (!CmdTraj::buildCandidate(recovery_exp, candidate) ||
+            !commitTrajectoryCandidate(
+                    std::move(candidate),
+                    "PlanFromRest/certified_local_escape")) {
+            ros_ptr_->warn(
+                    " -- [TRAJ_GUARD_LOCAL_ESCAPE_REJECTED] "
+                    "distance={:.3f}m duration={:.3f}s "
+                    "direction=[{:.3f},{:.3f},{:.3f}]",
+                    distance, duration, escape_direction.x(),
+                    escape_direction.y(), escape_direction.z());
+            return false;
+        }
+
+        last_exp_traj_info_ = recovery_exp;
+        robot_on_backup_traj_ = false;
+        gi_.new_goal = false;
+        guard_rest_to_rest_hold_until_wt_ =
+                start_wt + cmd_traj_info_.getTotalDuration();
+        ros_ptr_->vizCommittedTraj(cmd_traj_info_.posTraj(), -1);
+        latest_replan.setRetCode(
+                SUPER_RET_CODE::SUPER_SUCCESS_NO_BACKUP);
+        ros_ptr_->warn(
+                " -- [TRAJ_GUARD_LOCAL_ESCAPE] action=commit "
+                "distance={:.3f}m duration={:.3f}s "
+                "direction=[{:.3f},{:.3f},{:.3f}] "
+                "stop_source={} odom_speed={:.3f}",
+                distance, duration, escape_direction.x(),
+                escape_direction.y(), escape_direction.z(),
+                certified_stop ? "certified_brake" : "stationary_odom",
+                odom_speed);
+        return true;
+    }
+
     bool SuperPlanner::tryCommitCertifiedVerticalRecovery(
             const Vec3f &start_p) {
         if (!cfg_.guard_topology_vertical_recovery_en ||
@@ -1779,6 +1909,9 @@ namespace super_planner {
         }
         latest_replan.setLocalStartP(local_star_pt);
 
+        if (tryCommitCertifiedLocalEscape(local_star_pt)) {
+            return SUCCESS;
+        }
         if (tryCommitCertifiedVerticalRecovery(local_star_pt)) {
             return SUCCESS;
         }
@@ -3197,9 +3330,23 @@ namespace super_planner {
                                 cfg_.guard_topology_vertical_recovery_trigger_distance_m &&
                         guard_topology_stall_collision_.z() <=
                                 temp_start_point.z() + cfg_.resolution;
+                Vec3f local_escape_direction =
+                        temp_start_point - guard_topology_stall_collision_;
+                local_escape_direction.z() = 0.0;
+                const bool local_escape_direction_valid =
+                        local_escape_direction.array().isFinite().all() &&
+                        local_escape_direction.norm() >= cfg_.resolution;
+                const bool arm_local_escape =
+                        cfg_.guard_topology_local_escape_en &&
+                        start_adjacent_lower_rejection &&
+                        local_escape_direction_valid &&
+                        guard_topology_local_escape_recoveries_ <
+                                cfg_.guard_topology_local_escape_attempts;
                 const bool arm_vertical_recovery =
                         cfg_.guard_topology_vertical_recovery_en &&
-                        start_adjacent_lower_rejection;
+                        start_adjacent_lower_rejection &&
+                        guard_topology_saturation_recoveries_ <
+                                cfg_.guard_topology_saturation_vertical_attempts;
                 guard_topology_avoidance_centers_.clear();
                 guard_topology_avoidance_radii_.clear();
                 guard_topology_branch_directions_.clear();
@@ -3211,19 +3358,43 @@ namespace super_planner {
                 guard_topology_corridor_failures_ = 0;
                 guard_topology_post_corridor_failures_ = 0;
                 ++guard_topology_epoch_;
+                if (arm_local_escape) {
+                    guard_local_escape_direction_ =
+                            local_escape_direction.normalized();
+                    ++guard_topology_local_escape_recoveries_;
+                    guard_local_escape_pending_.store(
+                            true, std::memory_order_release);
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_LOCAL_ESCAPE_ARM] "
+                            "cleared_zones={} epoch={} attempt={}/{} "
+                            "reason={} horizontal_distance={:.3f} "
+                            "direction=[{:.3f},{:.3f},{:.3f}] "
+                            "action=escape_then_reroute",
+                            cleared_zones, guard_topology_epoch_,
+                            guard_topology_local_escape_recoveries_,
+                            cfg_.guard_topology_local_escape_attempts,
+                            astar_failure_reason,
+                            horizontal_collision_distance,
+                            guard_local_escape_direction_.x(),
+                            guard_local_escape_direction_.y(),
+                            guard_local_escape_direction_.z());
+                }
                 if (arm_vertical_recovery) {
+                    ++guard_topology_saturation_recoveries_;
                     guard_vertical_recovery_pending_.store(
                             true, std::memory_order_release);
                     ros_ptr_->warn(
                             " -- [TRAJ_GUARD_VERTICAL_RECOVERY_ARM] "
-                            "cleared_zones={} epoch={} reason={} "
+                            "cleared_zones={} epoch={} attempt={}/{} reason={} "
                             "horizontal_distance={:.3f} start_z={:.3f} "
                             "collision_z={:.3f} action=lift_then_reroute",
                             cleared_zones, guard_topology_epoch_,
+                            guard_topology_saturation_recoveries_,
+                            cfg_.guard_topology_saturation_vertical_attempts,
                             astar_failure_reason,
                             horizontal_collision_distance,
                             temp_start_point.z(), collision_z);
-                } else {
+                } else if (!arm_local_escape) {
                     guard_corridor_retry_pending_.store(
                             true, std::memory_order_release);
                     ros_ptr_->warn(

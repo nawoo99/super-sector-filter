@@ -182,6 +182,13 @@ super_planner:
     vertical_recovery_enable: true
     vertical_recovery_lift_m: 0.60
     vertical_recovery_trigger_distance_m: 0.75
+    # If a rejected first segment lies inside the 0.30 m blocker-free start
+    # margin, a blocker cannot change those first centimetres. From the
+    # certified stop, first try one 0.60 m move opposite that rejected route;
+    # it is committed only through the unchanged guard + viability checks.
+    local_escape_enable: true
+    local_escape_distance_m: 0.60
+    local_escape_attempts: 1
     saturation_vertical_attempts: 1
     base_no_path_vertical_attempts: 1
   # Pre-commit viability guard (new, untested): mirrors the runtime brake's

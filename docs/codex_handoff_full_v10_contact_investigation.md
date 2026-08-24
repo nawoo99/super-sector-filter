@@ -1,6 +1,42 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-24 direct trajectory-guard sensing 후속 — 아래 2026-08-23
+> 배너들의 “반복 gate 필요”를 실행했다.** 먼저 bounded local horizontal
+> escape를 추가했다. certified stop 뒤 A* `NO_PATH`일 때 rejected route 반대
+> 방향 0.6 m 후보를 1회만 시도하고, 실패하면 기존 vertical 후보 1회 뒤 hold한다.
+> 모든 후보는 기존 trajectory guard/viability를 그대로 통과해야 하며 Full seed7
+> n=10은 10/10·contact 0이었지만 local branch 자체는 실행되지 않았다.
+>
+> 같은 코드의 seed1-10 x n=5 x 3-mode order-crossed 150회에서 Full은
+> **50/50·contact 0**, fixed Sector는 **50/50·contact 3 runs**, Adaptive는
+> **49/50·contact 1 run**이었다. Adaptive seed7 run2는 emergency brake 중
+> 두 번 접촉한 뒤 3/5 waypoint에서 멈췄다. 기존 0.6초 replan-failure burst는
+> 실제 guard brake 사이에 닫힐 수 있었다.
+>
+> `FsmRos2`가 이제 reliable transient-local
+> `/planning/trajectory_guard_recovery_active`를 직접 발행하고 Adaptive C++
+> filter만 구독한다. guard recovery 종료 후 2.5초 hold하며, 매 guard true-edge의
+> 다음 cloud 한 프레임은 5 Hz cap과 6,000-point far-field limit를 모두 한 번
+> 우회한다. 이후 open frame은 다시 6,000점 상한이다. true-edge가 아니라 open
+> transition에 refresh를 묶었던 중간 구현은 37 guard events를 refresh 2회로
+> 합쳐 seed6을 2/5에서 정지시켰으므로 폐기했다. 5 Hz cap 전체 해제도 kept
+> 63.75->80.53%, FSM CPU 57.07->61.58%로 악화돼 폐기했다.
+>
+> 최종 edge-refresh는 seed6/7 Adaptive 각 n=5에서 **10/10·contact 0**, 별도
+> Adaptive seed1-10 n=1에서 **10/10·contact 0**이다. 최종 n=1 비교는
+> Full/Adaptive **10/10·contact 0**, Sector **10/10이지만 seed9/10 contact**다.
+> Full 대비 Adaptive weighted reduction은 points/update 23.39%, map
+> total/update 23.17%, map update 16.29%, FSM CPU 25.10%이고 mean mission은
+> 71.75->80.92초(+12.78%)다. 늦은 seed의 direct-guard open duty가 83-97%라
+> 다음 과제는 **hold를 맹목적으로 줄이지 않고** duty/time을 낮추는 것이다.
+>
+> 이 결과는 population 100%나 flight-ready 보장이 아니고 최종 3-arm n=1은
+> 진단 때문에 split follow-up으로 완성했으므로 McNemar 미검정이다. raw-cloud
+> CIRI는 계속 default false/non-authoritative다. 상세는 viability §8.24와
+> `results/*20260824.csv`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-23 endpoint hard guard + Adaptive commit-refresh 후속 — 바로 아래
 > §8.22 배너의 “다음 구현”을 완료했다.** Full trajectory commit은 실제 current
 > odometry pose, 첫 검사 pose, terminal pose에 대해 raw OCCUPIED voxel과

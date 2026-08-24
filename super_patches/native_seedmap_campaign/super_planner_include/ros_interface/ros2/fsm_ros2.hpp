@@ -37,6 +37,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "mars_quadrotor_msgs/msg/position_command.hpp"
 #include "mars_quadrotor_msgs/msg/polynomial_trajectory.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <utils/optimization/polynomial_interpolation.h>
@@ -63,6 +64,8 @@ namespace fsm {
         rclcpp::Publisher<mars_quadrotor_msgs::msg::PositionCommand>::SharedPtr cmd_pub_;
         rclcpp::Publisher<mars_quadrotor_msgs::msg::PolynomialTrajectory>::SharedPtr mpc_cmd_pub_;
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
+        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr
+                trajectory_guard_recovery_pub_;
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub_;
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
                 guard_cloud_sub_;
@@ -103,6 +106,23 @@ namespace fsm {
         Vec3f brake_passive_stability_anchor_{Vec3f::Zero()};
         double brake_passive_stability_start_wt_{0.0};
         bool brake_passive_stability_started_{false};
+        std::atomic_bool trajectory_guard_recovery_announced_{false};
+
+        void publishTrajectoryGuardRecoveryState(const bool active) {
+            if (!trajectory_guard_recovery_pub_) {
+                return;
+            }
+            bool expected = !active;
+            if (!trajectory_guard_recovery_announced_.compare_exchange_strong(
+                        expected, active, std::memory_order_acq_rel)) {
+                return;
+            }
+            std_msgs::msg::Bool message;
+            message.data = active;
+            trajectory_guard_recovery_pub_->publish(message);
+            ros_ptr_->info(
+                    " -- [TRAJ_GUARD_RECOVERY_SIGNAL] active={}", active);
+        }
 
         enum class RawCloudSafetyStatus {
             DISABLED,
@@ -1074,6 +1094,11 @@ namespace fsm {
             if (!cfg_.trajectory_guard_en) {
                 return false;
             }
+            // Adaptive sensing must react to the guard event itself, not infer
+            // it later from a streak of planning failures. Keep this latched
+            // across brake construction/retry; the filter applies its own
+            // post-recovery quiet-period hold before closing again.
+            publishTrajectoryGuardRecoveryState(true);
             std::lock_guard<std::mutex> activation_lock(
                     brake_activation_mutex_);
             if (safety_brake_active_.load(std::memory_order_acquire)) {
@@ -1690,6 +1715,7 @@ namespace fsm {
                 safety_brake_finished_.store(false, std::memory_order_release);
                 safety_brake_active_.store(false, std::memory_order_release);
             }
+            publishTrajectoryGuardRecoveryState(false);
             ros_ptr_->info(" -- [TRAJ_GUARD_RECOVERED] trigger={} gen={} map={}",
                            recovered_reason,
                            planner_ptr_->getCommittedTrajectoryGeneration(),
@@ -1840,6 +1866,20 @@ namespace fsm {
             // 初始化Planner
             ros_ptr_ = std::make_shared<ros_interface::Ros2Interface>(nh_);
             planner_ptr_ = std::make_shared<SuperPlanner>(cfg_path, ros_ptr_, map_ptr_);
+            if (cfg_.trajectory_guard_en) {
+                const rclcpp::QoS guard_recovery_qos(
+                        rclcpp::QoS(1).reliable().keep_last(1)
+                                .transient_local());
+                trajectory_guard_recovery_pub_ =
+                        nh_->create_publisher<std_msgs::msg::Bool>(
+                                "/planning/trajectory_guard_recovery_active",
+                                guard_recovery_qos);
+                // Give a late-starting Adaptive filter an explicit initial
+                // state through the transient-local publisher.
+                std_msgs::msg::Bool inactive;
+                inactive.data = false;
+                trajectory_guard_recovery_pub_->publish(inactive);
+            }
             if (cfg_.trajectory_guard_raw_cloud_en ||
                 cfg_.trajectory_guard_raw_cloud_ciri_shadow_en) {
                 const char *cloud_source = "map_observer";

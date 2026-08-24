@@ -56,6 +56,9 @@ struct Options {
   std::optional<double> near_field_max_radius_m;
   double open_burst_s{0.0};
   double open_cooldown_s{0.0};
+  std::string trajectory_guard_topic{
+      "/planning/trajectory_guard_recovery_active"};
+  double trajectory_guard_hold_s{2.5};
 };
 
 double parseDouble(const std::string &name, const char *value) {
@@ -166,6 +169,11 @@ Options parseArgs(int argc, char **argv) {
       options.open_burst_s = parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--open-cooldown-s") {
       options.open_cooldown_s = parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--trajectory-guard-topic") {
+      options.trajectory_guard_topic = requireValue(i, arg);
+    } else if (arg == "--trajectory-guard-hold-s") {
+      options.trajectory_guard_hold_s =
+          parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--help" || arg == "-h") {
       throw std::runtime_error(
           "usage: native_sector_cpp [full|sector|velocity|adaptive] "
@@ -199,7 +207,9 @@ Options parseArgs(int argc, char **argv) {
       options.map_commit_refresh_min_interval_s < 0.0 ||
       options.stall_t < 0.0 || options.resume_v < 0.0 ||
       options.resume_t < 0.0 || options.open_burst_s < 0.0 ||
-      options.open_cooldown_s < 0.0 || options.near_field_radius_m < 0.0 ||
+      options.open_cooldown_s < 0.0 ||
+      options.trajectory_guard_hold_s < 0.0 ||
+      options.near_field_radius_m < 0.0 ||
       options.near_field_speed_gain_s < 0.0 ||
       near_max < options.near_field_radius_m || guard_burst < 0.0 ||
       guard_cooldown < 0.0) {
@@ -315,6 +325,14 @@ public:
           std::bind(&NativeSectorCpp::replanCallback, this,
                     std::placeholders::_1));
     }
+    if (options_.mode == "adaptive") {
+      const auto guard_qos =
+          rclcpp::QoS(rclcpp::KeepLast(1)).reliable().transient_local();
+      trajectory_guard_sub_ = create_subscription<std_msgs::msg::Bool>(
+          options_.trajectory_guard_topic, guard_qos,
+          std::bind(&NativeSectorCpp::trajectoryGuardCallback, this,
+                    std::placeholders::_1));
+    }
     if (options_.mode == "adaptive" && options_.max_publish_hz > 0.0 &&
         options_.map_commit_refresh_age_s > 0.0) {
       map_commit_sub_ = create_subscription<std_msgs::msg::UInt64>(
@@ -358,7 +376,7 @@ private:
   bool effectiveFullOpen() const {
     return options_.mode == "full" ||
            (statefulMode() && effective_recovery_open_) ||
-           replan_guard_open_;
+           replan_guard_open_ || trajectory_guard_open_;
   }
 
   void observeEffectiveFullOpen(double now) {
@@ -385,6 +403,16 @@ private:
   enum class PublishDecision { DROP, REGULAR, COMMIT_REFRESH };
 
   PublishDecision publicationDecision(double now) {
+    trajectory_guard_unbounded_refresh_frame_ = false;
+    // The first cloud after a guard brake is safety evidence, so do not make
+    // it wait behind the Adaptive publication cap. Only one latest cloud is
+    // exempted per guard true-edge.
+    if (trajectory_guard_refresh_pending_) {
+      trajectory_guard_refresh_pending_ = false;
+      trajectory_guard_unbounded_refresh_frame_ = true;
+      ++trajectory_guard_refresh_frames_;
+      return PublishDecision::REGULAR;
+    }
     if (options_.max_publish_hz <= 0.0)
       return PublishDecision::REGULAR;
     const double period = 1.0 / options_.max_publish_hz;
@@ -650,6 +678,54 @@ private:
     }
   }
 
+  void setTrajectoryGuardOpen(bool open, double now) {
+    if (open == trajectory_guard_open_)
+      return;
+    trajectory_guard_open_ = open;
+    if (open) {
+      ++trajectory_guard_open_transitions_;
+      if (!first_trajectory_guard_open_time_s_)
+        first_trajectory_guard_open_time_s_ = rounded(now);
+    } else {
+      ++trajectory_guard_close_transitions_;
+      trajectory_guard_hold_until_s_.reset();
+    }
+  }
+
+  void trajectoryGuardCallback(const std_msgs::msg::Bool::SharedPtr msg) {
+    const double now = nowSeconds();
+    ++trajectory_guard_status_count_;
+    trajectory_guard_active_ = msg->data;
+    if (msg->data) {
+      ++trajectory_guard_active_count_;
+      // A held-open interval can contain many distinct guard episodes. Each
+      // true edge needs one complete, uncapped scan; tying this refresh to an
+      // open transition silently collapsed dozens of episodes into one.
+      trajectory_guard_refresh_pending_ = true;
+      trajectory_guard_hold_until_s_.reset();
+      setTrajectoryGuardOpen(true, now);
+    } else if (trajectory_guard_open_ &&
+               options_.trajectory_guard_hold_s > 0.0) {
+      trajectory_guard_hold_until_s_ =
+          now + options_.trajectory_guard_hold_s;
+    } else {
+      setTrajectoryGuardOpen(false, now);
+    }
+    publishState();
+    writeStats();
+  }
+
+  bool updateTrajectoryGuardHold(double now) {
+    const bool previous = trajectory_guard_open_;
+    if (trajectory_guard_active_) {
+      setTrajectoryGuardOpen(true, now);
+    } else if (trajectory_guard_hold_until_s_ &&
+               now >= *trajectory_guard_hold_until_s_) {
+      setTrajectoryGuardOpen(false, now);
+    }
+    return previous != trajectory_guard_open_;
+  }
+
   struct CloudFields {
     const sensor_msgs::msg::PointField *x{nullptr};
     const sensor_msgs::msg::PointField *y{nullptr};
@@ -719,7 +795,8 @@ private:
   void cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
     const double now = nowSeconds();
     const bool state_changed =
-        updateRecoveryBurst(now) | updateReplanGuardBurst(now);
+        updateRecoveryBurst(now) | updateReplanGuardBurst(now) |
+        updateTrajectoryGuardHold(now);
     if (state_changed)
       publishState();
     ++frames_;
@@ -736,6 +813,8 @@ private:
     }
     if (replan_guard_open_)
       ++replan_guard_open_frames_;
+    if (trajectory_guard_open_)
+      ++trajectory_guard_open_frames_;
     if (last_map_commit_rx_s_) {
       const double commit_age_s = std::max(0.0, now - *last_map_commit_rx_s_);
       map_commit_age_sum_s_ += commit_age_s;
@@ -753,6 +832,7 @@ private:
 
     const bool bounded_full_open =
         options_.mode == "adaptive" && effective_open && !commit_refresh &&
+        !trajectory_guard_unbounded_refresh_frame_ &&
         options_.full_open_extra_max_points > 0;
     const bool passthrough = options_.mode == "full" || !drone_ ||
         (effective_open && !commit_refresh && !bounded_full_open);
@@ -972,8 +1052,7 @@ private:
     boolean("armed", armed_);
     number("armed_duty_pct",
            rounded(100.0 * armed_frames_ / frame_denominator, 1e3));
-    boolean("open", options_.mode == "full" || effective_recovery_open_ ||
-                        replan_guard_open_);
+    boolean("open", effectiveFullOpen());
     boolean("recovery_active", recovery_active_);
     number("open_burst_s", options_.open_burst_s);
     number("open_cooldown_s", options_.open_cooldown_s);
@@ -1029,6 +1108,23 @@ private:
     optional("first_replan_guard_open_time_s", first_replan_guard_open_time_s_);
     optional("first_effective_full_open_time_s",
              first_effective_full_open_time_s_);
+    string("trajectory_guard_topic", options_.trajectory_guard_topic);
+    number("trajectory_guard_hold_s", options_.trajectory_guard_hold_s);
+    boolean("trajectory_guard_active", trajectory_guard_active_);
+    boolean("trajectory_guard_open", trajectory_guard_open_);
+    integer("trajectory_guard_status_count", trajectory_guard_status_count_);
+    integer("trajectory_guard_active_count", trajectory_guard_active_count_);
+    integer("trajectory_guard_open_transitions",
+            trajectory_guard_open_transitions_);
+    integer("trajectory_guard_close_transitions",
+            trajectory_guard_close_transitions_);
+    integer("trajectory_guard_refresh_frames",
+            trajectory_guard_refresh_frames_);
+    number("trajectory_guard_open_duty_pct",
+           rounded(100.0 * trajectory_guard_open_frames_ /
+                   frame_denominator, 1e3));
+    optional("first_trajectory_guard_open_time_s",
+             first_trajectory_guard_open_time_s_);
     out << "\n}\n";
     return out.str();
   }
@@ -1076,6 +1172,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr replan_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr trajectory_guard_sub_;
   rclcpp::Subscription<std_msgs::msg::UInt64>::SharedPtr map_commit_sub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr full_open_pub_;
@@ -1151,6 +1248,18 @@ private:
   int max_replan_fail_streak_{0};
   std::optional<double> first_replan_guard_open_time_s_;
   std::optional<double> first_effective_full_open_time_s_;
+  bool trajectory_guard_active_{false};
+  bool trajectory_guard_open_{false};
+  bool trajectory_guard_refresh_pending_{false};
+  bool trajectory_guard_unbounded_refresh_frame_{false};
+  std::optional<double> trajectory_guard_hold_until_s_;
+  uint64_t trajectory_guard_status_count_{0};
+  uint64_t trajectory_guard_active_count_{0};
+  uint64_t trajectory_guard_open_frames_{0};
+  uint64_t trajectory_guard_open_transitions_{0};
+  uint64_t trajectory_guard_close_transitions_{0};
+  uint64_t trajectory_guard_refresh_frames_{0};
+  std::optional<double> first_trajectory_guard_open_time_s_;
 };
 
 int main(int argc, char **argv) {

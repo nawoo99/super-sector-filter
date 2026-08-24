@@ -1767,9 +1767,130 @@ occurred. Raw-cloud CIRI remains default false. Detailed tables are in
 `docs/endpoint_guard_commit_refresh_3mode_v7_n1_20260823.md` and
 `results/endpoint_commitrefresh_3mode_strict_v7_n1_*_20260823.csv`.
 
-## Current status — endpoint hole patched; repeated safety gate still required
+### 8.24 Direct guard-state Adaptive refresh and bounded local escape (2026-08-24)
 
-- **Section 8.23 is the newest same-code smoke gate:** the current/first/terminal
+The repeated gate requested by 8.23 first exposed two separate failure classes.
+The seed7 Full n=10 gate completed 10/10 with zero live/static contact. A
+bounded stopped-state topology fallback was added for the earlier same-route
+stall: after a certified stop and `A* NO_PATH`, one 0.6 m horizontal
+minimum-jerk candidate is armed opposite the rejected route, followed by the
+already bounded vertical candidate. Both candidates pass the unchanged
+trajectory guard and viability checks, and the vertical saturation counter is
+now advanced on the `NO_PATH` path instead of being re-armed forever. The Full
+gate did not execute the new local-escape branch, so it is a bounded fallback,
+not branch proof.
+
+The subsequent order-crossed seed1-10 x n=5 x three-mode campaign had all 150
+valid rows, one attempt per row, retry 0 and FSM swap 0. Raw completion and
+contact runs were:
+
+| mode | completion | live/static contact runs | mean time (s) |
+|---|---:|---:|---:|
+| Full | 50/50 | 0 | 71.039 |
+| fixed Sector | 50/50 | 3 | 73.816 |
+| Adaptive | 49/50 | 1 | 86.634 |
+
+Adaptive's only failure was seed7 run2: it contacted twice while executing
+trajectory-guard emergency brakes, then stopped at 3/5 waypoints with static
+body clearance -0.054 m. Replan-failure bursts were an indirect signal: the
+filter could close between repeated guard brakes even though that interval was
+exactly when lateral obstacle evidence was needed. `FsmRos2` therefore now
+publishes a reliable transient-local
+`/planning/trajectory_guard_recovery_active` Boolean directly on guard
+activation/recovery. Only Adaptive subscribes. It keeps its effective full-open
+state for 2.5 s after recovery; fixed Sector remains closed and Full remains a
+direct raw-cloud input. The state is latched across rejected brake construction
+and retry, so a failed brake cannot silently close sensing.
+
+The first implementation passed seed7 Adaptive 10/10 with zero contact, but a
+2.5 s hold merged 41-75 guard episodes into only 2-5 open edges. It also meant
+that the intended immediate safety refresh ran only on an open edge rather
+than on every guard event. A later seed6 smoke reproduced the consequence:
+contact stayed zero, but the vehicle stopped at 2/5 waypoints with +0.077 m
+static body clearance, after which every outgoing candidate was `OCCUPIED` in
+the updated voxel map. Local/vertical escape were correctly bounded but could
+not certify motion from that start.
+
+The final design treats every guard `false -> true episode` as a new sensing
+event even when the 2.5 s open hold is already active. The next cloud bypasses
+the 5 Hz publication cap once and is passed without the 6,000-point far-field
+limit. All later open frames retain the 6,000-point bound. This produced 32
+refreshes for 33 seed6 guard episodes in the first smoke (the final episode
+ended with a pending refresh), then completed seed6/7 at 5/5 each with zero
+contact. A separate post-patch Adaptive seed1-10 n=1 sweep also completed
+10/10 with zero contact.
+
+Removing the 5 Hz cap was explicitly rejected. It completed seed7 5/5 and
+reduced mean time 99.10 -> 94.29 s, but raised kept points 63.75% -> 80.53%,
+FSM CPU 57.07% -> 61.58%, and reduced the worst static clearance from +0.205
+to +0.138 m. The final profile therefore retains the cap and uses only the
+one-frame guard-edge exemption.
+
+The final n=1 comparison combines the post-patch Adaptive seed1-10 sweep with
+the unaffected Full/fixed-Sector rows. All inputs used static PCD validation,
+v=7, `loop24.txt`, strict-burst C++ filtering and timeout 240 s:
+
+| mode | completion | contact runs | mean time (s) | worst clearance (m) | points/update | map total/update (ms) | FSM CPU (%) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Full | 10/10 | 0 | 71.748 | +0.213 | 29,113 | 35.728 | 95.94 |
+| fixed Sector | 10/10 | 2 | 75.805 | -0.161 | 14,388 | 13.871 | 76.62 |
+| Adaptive | 10/10 | 0 | 80.920 | +0.157 | 22,304 | 27.449 | 71.86 |
+
+Against Full, Adaptive reduced weighted points/update 23.39%, map total/update
+23.17%, map update time 16.29%, and FSM CPU 25.10%. Mean mission time remained
+12.78% longer. Fixed Sector reduced points/update 50.58% and map total/update
+61.18%, but contacted on seeds9 and 10. This is the intended descriptive
+trade-off: Adaptive recovered the observed Sector safety/completion result
+while retaining a smaller, but material, compute reduction relative to Full.
+
+Adaptive activation telemetry for that final sweep was:
+
+| seed | effective open edges | direct guard episodes | full refresh frames | direct-guard open duty (%) |
+|---:|---:|---:|---:|---:|
+| 1 | 13 | 9 | 9 | 43.736 |
+| 2 | 14 | 19 | 19 | 57.602 |
+| 3 | 7 | 32 | 32 | 72.180 |
+| 4 | 13 | 25 | 25 | 59.960 |
+| 5 | 9 | 41 | 41 | 75.877 |
+| 6 | 2 | 42 | 42 | 90.042 |
+| 7 | 4 | 46 | 46 | 96.903 |
+| 8 | 4 | 41 | 41 | 89.030 |
+| 9 | 8 | 50 | 50 | 82.991 |
+| 10 | 3 | 63 | 63 | 95.019 |
+
+The direct signal is highly active on late dense seeds; this explains the
+remaining Adaptive time penalty and is the next efficiency target. It must not
+be shortened blindly because the pre-patch contact occurred in the gaps
+between emergency-brake episodes. The current evidence is a same-code local
+gate, not a population 100% guarantee: the final three arms were completed in
+split follow-up sweeps after the first combined campaign was stopped for the
+seed6 diagnosis, and no McNemar test was performed on n=1. Raw-cloud CIRI
+remains default false and non-authoritative.
+
+Primary raw results are
+`results/local_escape_order_crossed_3mode_strict_v7_n5_raw_20260824.csv`,
+`results/guard_signal_bounded_seed7_adaptive_n10_raw_20260824.csv`,
+`results/guard_signal_uncapped_seed7_adaptive_n5_raw_20260824.csv`,
+`results/guard_edge_refresh_seed6_seed7_adaptive_n5_raw_20260824.csv`,
+`results/guard_edge_refresh_adaptive_seed1_10_n1_raw_20260824.csv`, and
+`results/guard_edge_refresh_full_sector_seed6_10_n1_raw_20260824.csv`.
+
+## Current status — direct guard refresh closes observed Adaptive failures
+
+- **Section 8.24 is the newest same-code gate.** Full was 50/50 and contact-free
+  in the pre-signal crossed cohort; the final direct guard-edge refresh passed
+  Adaptive seed6/7 at 10/10 and Adaptive seed1-10 at 10/10, all contact-free.
+  The final n=1 Full/Adaptive rows were both 10/10 and contact-free while fixed
+  Sector contacted on 2/10. This does not prove population 100%.
+- **The remaining Adaptive problem is efficiency, not an observed safety or
+  completion failure in the final gates.** Late seeds spend 83-97% of frames
+  under direct-guard open hold and Adaptive mean time remains 12.78% above
+  Full, although points/update, map/update work, and FSM CPU remain lower.
+- **The local horizontal escape is bounded but not execution-proven as a
+  successful recovery.** It may be tried once after a certified stop and A*
+  `NO_PATH`; it never bypasses the existing guard/viability commit checks.
+
+- **Section 8.23 remains the endpoint-invariant smoke gate:** the current/first/terminal
   pose raw-body invariant is implemented, and Full/Adaptive were both 10/10
   safe while Sector was 9/10 safe with one non-contact timeout. The rare Full
   endpoint reject did not execute, so 8.23 is not population or branch proof.
@@ -1868,8 +1989,8 @@ Do not describe `static_seedmaps_guard_viability_v7.yaml` or any of its
 `_wide`/`_tight`/`_tight_h08` variants as flight-ready. The current strict
 baseline and section 8.22 establish the intended descriptive
 safety/mapping-work pattern and a clean order-crossed CPU/workload reduction,
-but not population completion or flight readiness. Section 8.22 also replaces
-the previous clean-campaign TODO: Full itself contacted once at a short-tail
-endpoint, so endpoint/current-pose clearance certification is now the next
-safety target. Retain the static-PCD monitor, live-cloud forensics, fixed-Sector
-control, and CIRI shadow's non-authoritative default-off status in that work.
+but not population completion or flight readiness. Sections 8.23 and 8.24 close
+the observed Full endpoint hole and the observed Adaptive guard-gap failures;
+the next target is reducing late-seed direct-guard duty and time without
+re-opening those gaps. Retain the static-PCD monitor, live-cloud forensics,
+fixed-Sector control, and CIRI shadow's non-authoritative default-off status.
