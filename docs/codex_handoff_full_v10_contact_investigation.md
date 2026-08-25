@@ -1,6 +1,38 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-26 reliable-link n=3 반복·stationary-defer 기각 — 바로 아래 n=1
+> 채택안을 seed6-10 x Full/Sector/Adaptive x n=3으로 반복했다.** 45/45가 current
+> runner 기준 valid·first-attempt였다. Full/Adaptive는 각각 15/15 완주, contact
+> 0, static-PCD collision 0이었다. Fixed Sector는 13/15 완주, contact run 3개,
+> event 5회였다. 평균 시간은 84.85/101.57/82.31초이며 Sector 평균에는 seed10의
+> 240초 timeout 2개가 포함된다.
+>
+> Adaptive는 Full 대비 points/update 14.83%, map total/update 15.15%, 전체
+> mapping point/work 35.97%/36.20%, FSM+filter core-seconds 7.46%를 줄였고 이
+> 표본의 평균 mission은 3.00% 짧았다. Pre-stale generation 1,274개 중 1,273개가
+> exact ACK됐으며 supersede/timeout은 0, 종료 시 pending 1개다. Recovery gate
+> 502/502는 모두 ACK를 받았다.
+>
+> 남은 brake rejection marker 906개 중 707개(78.0%)가 speed<=0.05 m/s 정지
+> proxy에서 발생했다. Passive-stop 안정화 전에 zero-displacement 후보의 중복
+> map/grid 검사를 미루는 fail-closed stationary-defer를 구현해 seed9 3회
+> 시험했지만 평균 152.23초로 개선이 입증되지 않았다. 원복 뒤 isolated smoke도
+> 213.05초여서 post-build 실행 regime 교란이 있으며 후보의 인과적 악화라고
+> 단정하지 않는다. 안전하게 후보를 기각했고 planner source는 tracked baseline과
+> byte-identical하게 원복·재빌드했다. Parser marker만 재현성을 위해 남겼다.
+>
+> 새 핵심 결함은 Full seed7 run3의 `max_speed_mps=10.027`이다. PerfectDrone은
+> command velocity를 odometry로 그대로 복사하므로 monitor 노이즈만으로 볼 수
+> 없다. 현재 `run_valid`는 v=7 제한을 검사하지 않으므로 15/15는 완주/contact
+> 기준이지 speed-qualified 100%가 아니다. 다음은 속도 exceedance의 trajectory
+> context를 저장하고 publication hard validation을 넣은 뒤 동일 3-mode gate를
+> speed-qualified로 재실행하는 것이다. population 100%/flight-ready 보장이
+> 아니며 McNemar 미검정, raw-cloud CIRI default false/non-authoritative다. 상세는
+> viability §8.29 및
+> `docs/reliable_link_n3_and_stationary_defer_rejection_20260826.md`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-26 reliable filtered-link local gate — 아래 2026-08-25 exact ACK
 > 작업의 후속 원인 제거를 완료했다.** 이전 Adaptive seed6-10 n=1의 delivered
 > generation ACK는 최대 0.1034초였지만 best-effort `/cloud_sector` hop에서

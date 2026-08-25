@@ -2112,9 +2112,78 @@ raw inputs are
 `results/reliable_link_adaptive_seed6_10_n1_raw_20260826.csv`, and
 `results/ack_retry_adaptive_seed6_10_n1_raw_20260825.csv`.
 
-## Current status — filtered-link loss is closed locally; repetition remains
+### 8.29 Reliable-link n=3 repetition, guard attribution, and rejected stationary defer (2026-08-26)
 
-- **Section 8.28 is the newest same-code late-map gate.** Full and Adaptive
+The reliable-link profile was repeated on seed6-10 x n=3 x all three modes.
+All 45 rows were valid under the current runner, first-attempt, and free of
+retry/OOM/FSM swap/memory PSI. Full and Adaptive were each 15/15 complete with
+zero live contact and zero static-PCD collision. Fixed Sector was 13/15
+complete with three contact runs and five contact events: seed7 run3 completed
+with two events, while seed10 run1/run2 contacted and timed out. Mean mission
+times were 84.85/101.57/82.31 s for Full/Sector/Adaptive; the Sector mean
+includes both 240 s timeouts.
+
+| mode | completion | contact runs/events | mean time (s) | worst static clearance (m) | points/update | map total/update (ms) | FSM CPU (%) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Full | 15/15 | 0/0 | 84.85 | +0.151 | 37,114 | 36.127 | 80.50 |
+| fixed Sector | 13/15 | 3/5 | 101.57 | -0.188 | 32,689 | 12.055 | 58.98 |
+| Adaptive | 15/15 | 0/0 | 82.31 | +0.160 | 31,610 | 30.655 | 73.75 |
+
+Against Full, Adaptive reduced points/update 14.83%, map total/update 15.15%,
+map-update compute 7.44%, observed map rate 22.49%, and time-weighted FSM CPU
+8.38%. Across the 15 runs it reduced total mapping point work 35.97%, mapping
+wall work 36.20%, and FSM+filter core-seconds 7.46%; mean mission time was
+3.00% shorter in this cohort.
+
+Adaptive emitted 1,274 pre-stale generations and received 1,273 exact ACKs,
+with zero supersede and zero timeout. One seed6 generation remained pending at
+shutdown. All 502 recovery gates received an ACK. The logs still contained
+906 brake-rejection markers and 514.205 s of recovery-active time. Attribution
+found 683 `emergency_stop_retry`, 168 `main_pre`, 44
+`candidate_without_safe_follow`, 8 `main_post`, and 3 `replan_post` markers.
+Using speed <=0.05 m/s only as a diagnostic proxy, 707/906 (78.0%) occurred
+while stationary.
+
+A fail-closed stationary fast-defer candidate skipped redundant map/grid work
+for a zero-displacement candidate before the 0.25 s passive-stop stability
+window elapsed. Three seed9 Adaptive samples remained contact-free but averaged
+152.23 s versus the same-day baseline cohort's 85.64 s, so no benefit was
+demonstrated. A fully reverted isolated smoke was also long at 213.05 s,
+showing that the post-build isolated execution regime confounded causal
+attribution. The candidate was conservatively rejected, its planner source was
+restored byte-identical to the tracked baseline, and the installed binary was
+rebuilt. Only the parser field for the rejected marker remains for
+reproducibility.
+
+One Full seed7 run reported 10.027 m/s despite the v=7 configuration. The
+PerfectDrone copies planner command velocity into odometry, so this is not
+just a monitor-side scalar artifact. Current `run_valid` does not enforce a
+velocity bound. Therefore 15/15 is a completion/contact statement, not a
+speed-constraint-valid or population-level guarantee. The next target is
+context-rich speed-bound telemetry and a validated publication invariant,
+followed by the same three-mode gate with speed-qualified validity. No
+McNemar test was performed. Raw-cloud CIRI remains default false and
+non-authoritative. Full tables and candidate/revert evidence are in
+`docs/reliable_link_n3_and_stationary_defer_rejection_20260826.md`; primary raw
+input is
+`results/reliable_link_repeated_3mode_seed6_10_n3_raw_20260826.csv`.
+
+## Current status — reliable-link repetition passes; speed validity is next
+
+- **Section 8.29 is the newest same-code late-map gate.** Full and Adaptive
+  each passed seed6-10 15/15 with zero contact; fixed Sector was 13/15 with
+  three contact runs and five events. This is the requested repeated evidence,
+  not a population guarantee.
+- **The stationary fast-defer candidate is rejected and fully reverted.** It
+  did not demonstrate an efficiency benefit, and a reverted isolated smoke
+  exposed a confounded guard long tail. Keep the existing certificate ordering
+  until the execution regime is controlled.
+- **Speed-qualified validity is now the next blocker.** Full seed7 run3 reached
+  10.027 m/s under a v=7 profile, while current `run_valid` checks no command or
+  odometry velocity bound. Add context-rich exceedance telemetry and a hard
+  validated publication invariant before claiming Full 100% validity.
+
+- **Section 8.28 remains the reliable-link n=1 adoption gate.** Full and Adaptive
   each passed seed6-10 5/5 with zero contact; fixed Sector completed 5/5 but
   contacted seed8 once. Reliable depth-1 on the filtered internal hop removed
   all 8.27-style generation loss in this sample without increasing cloud
@@ -2122,11 +2191,11 @@ raw inputs are
 - **The retransmission approach is rejected.** It reduced timeout markers but
   increased scans, stale detections, guard episodes, recovery time, and mission
   time. Keep its age at default 0/off; do not use scan flood to mask link loss.
-- **The next target is repeated evidence on the opt-in profile, then guard
-  rejection attribution.** The n=1 gate narrowed the Adaptive time penalty to
-  2.21% and reduced guard work, but 195 guard gates and 205.638 s of aggregate
-  recovery-active time remain. Repeat the Full/Sector/Adaptive map-labelled
-  cohort before promoting the profile or changing existing defaults.
+- **The repeated-evidence and first attribution steps are complete.** Section
+  8.29 found 906 rejection markers, 78.0% at diagnostic stationary speed, but
+  also showed that changing this timing-sensitive path without a controlled
+  execution regime is not justified. Guard efficiency remains a later target
+  after velocity validity.
 
 - **Section 8.27 remains the exact freshness/certified-resume mechanism.** Its
   best-effort transport gate passed all three modes 5/5 with zero contact.
@@ -2162,14 +2231,14 @@ raw inputs are
   FSM swap 0, retry 0, OOM delta 0, and PSI max 0; peak FSM RSS is 3474.36 MiB.
   Host-wide swap was still occupied, but it did not recreate the prior FSM
   pressure or contaminate the crossed comparison.
-- **The requested repetition remains §8.26:** seed7 targeted n=3 and a new
+- **The earlier broad repetition remains §8.26:** seed7 targeted n=3 and a new
   order-crossed seed1-10 x three-mode n=3 both completed. Section 8.27
   implements its generation-specific acknowledgement target on the harder
   seed6-10 subset. Section 8.28 removes the observed filtered-hop loss locally
-  and shows that blind retransmission makes guard work worse. The remaining
-  target is repeated evidence followed by guard rejection and
-  topology/optimizer recovery efficiency, not a higher publication rate or a
-  weaker ACK SLA.
+  and shows that blind retransmission makes guard work worse. Section 8.29
+  repeats that adopted link and rejects an unproven guard micro-optimization.
+  The remaining first target is speed-qualified trajectory validity, not a
+  higher publication rate or a weaker ACK SLA.
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),

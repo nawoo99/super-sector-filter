@@ -275,6 +275,7 @@ def parse_full_refresh_ack_log(path):
         "guard_topology_reroute_searches": 0,
         "guard_brake_successes": 0,
         "guard_brake_rejections": 0,
+        "guard_brake_stationary_defers": 0,
         "guard_brake_main_pre_successes": 0,
         "guard_brake_retry_successes": 0,
         "guard_brake_ack_timeout_successes": 0,
@@ -316,6 +317,8 @@ def parse_full_refresh_ack_log(path):
                     counts["guard_brake_ack_timeout_successes"] += 1
             if "[TRAJ_GUARD_BRAKE_REJECTED]" in line:
                 counts["guard_brake_rejections"] += 1
+            if "[TRAJ_GUARD_STATIONARY_DEFER]" in line:
+                counts["guard_brake_stationary_defers"] += 1
             if (
                 "[TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE"
                 in line
@@ -576,6 +579,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "guard_topology_reroute_arms",
           "guard_topology_reroute_searches",
           "guard_brake_successes", "guard_brake_rejections",
+          "guard_brake_stationary_defers",
           "guard_brake_main_pre_successes",
           "guard_brake_retry_successes",
           "guard_brake_ack_timeout_successes",
