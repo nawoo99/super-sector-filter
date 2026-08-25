@@ -478,8 +478,14 @@ namespace rog_map {
                 rc_.odom_sub = nh_->create_subscription<nav_msgs::msg::Odometry>(
                     cfg_.odom_topic, qos, std::bind(&ROGMapROS::odomCallback, this, std::placeholders::_1), so);
                 so.callback_group = rc_.cloud_me_cbk_group;
+                const auto cloud_qos = cfg_.cloud_reliable
+                        ? rclcpp::QoS(rclcpp::KeepLast(1)).reliable()
+                                .durability_volatile()
+                        : qos;
                 rc_.cloud_sub = nh_->create_subscription<sensor_msgs::msg::PointCloud2>(
-                    cfg_.cloud_topic, qos, std::bind(&ROGMapROS::cloudCallback, this, std::placeholders::_1), so);
+                    cfg_.cloud_topic, cloud_qos,
+                    std::bind(&ROGMapROS::cloudCallback, this,
+                              std::placeholders::_1), so);
                 // cloudCallback drives map commits directly; retain this
                 // handle only for constructor/source compatibility.
                 rc_.update_cbk_group = planner_map_cbk_group;

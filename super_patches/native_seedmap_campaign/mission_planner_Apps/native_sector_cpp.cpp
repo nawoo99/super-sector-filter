@@ -33,11 +33,13 @@ struct Options {
   double half_angle_deg{60.0};
   std::string input_topic{"/cloud_registered"};
   std::string output_topic{"/cloud_sector"};
+  bool reliable_output{false};
   double max_publish_hz{0.0};
   std::string map_commit_topic{"/rog_map/commit_version"};
   double map_commit_refresh_age_s{0.12};
   double map_commit_refresh_min_interval_s{0.10};
   double map_commit_pre_stale_full_age_s{0.0};
+  double map_commit_pre_stale_ack_retry_age_s{0.0};
   std::string map_process_ack_topic{"/rog_map/cloud_process_ack"};
   std::string full_refresh_request_topic{"/sector/full_refresh_request"};
   bool full_refresh_generation_ack_en{false};
@@ -123,6 +125,8 @@ Options parseArgs(int argc, char **argv) {
       options.input_topic = requireValue(i, arg);
     } else if (arg == "--output-topic") {
       options.output_topic = requireValue(i, arg);
+    } else if (arg == "--reliable-output") {
+      options.reliable_output = true;
     } else if (arg == "--max-publish-hz") {
       options.max_publish_hz = parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--map-commit-topic") {
@@ -135,6 +139,9 @@ Options parseArgs(int argc, char **argv) {
           parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--map-commit-pre-stale-full-age-s") {
       options.map_commit_pre_stale_full_age_s =
+          parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--map-commit-pre-stale-ack-retry-age-s") {
+      options.map_commit_pre_stale_ack_retry_age_s =
           parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--map-process-ack-topic") {
       options.map_process_ack_topic = requireValue(i, arg);
@@ -225,6 +232,7 @@ Options parseArgs(int argc, char **argv) {
       options.map_commit_refresh_age_s < 0.0 ||
       options.map_commit_refresh_min_interval_s < 0.0 ||
       options.map_commit_pre_stale_full_age_s < 0.0 ||
+      options.map_commit_pre_stale_ack_retry_age_s < 0.0 ||
       options.stall_t < 0.0 || options.resume_v < 0.0 ||
       options.resume_t < 0.0 || options.open_burst_s < 0.0 ||
       options.open_cooldown_s < 0.0 ||
@@ -379,8 +387,11 @@ public:
           create_publisher<std_msgs::msg::UInt64MultiArray>(
               options_.full_refresh_request_topic, request_qos);
     }
+    const auto output_qos = options_.reliable_output
+        ? rclcpp::QoS(rclcpp::KeepLast(1)).reliable().durability_volatile()
+        : sensor_qos;
     cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
-        options_.output_topic, sensor_qos);
+        options_.output_topic, output_qos);
     full_open_pub_ =
         create_publisher<std_msgs::msg::Bool>("/sector/full_open", 1);
     armed_pub_ =
@@ -455,13 +466,16 @@ private:
   };
 
   void recordFullRefreshSourceVersion(bool pre_stale,
-                                      double trigger_age_s = 0.0) {
+                                      double trigger_age_s = 0.0,
+                                      bool exact_ack_retry = false) {
     if (!last_map_commit_rx_s_)
       return;
     last_full_refresh_source_version_ = last_map_commit_version_;
     if (!pre_stale)
       return;
     ++pre_stale_full_refresh_frames_;
+    if (exact_ack_retry)
+      ++pre_stale_full_refresh_ack_retry_frames_;
     pre_stale_full_refresh_source_version_ = last_map_commit_version_;
     pre_stale_full_refresh_pending_version_advance_ = true;
     pre_stale_full_refresh_trigger_age_sum_s_ += trigger_age_s;
@@ -501,6 +515,43 @@ private:
     const bool version_already_refreshed =
         last_full_refresh_source_version_ &&
         *last_full_refresh_source_version_ == last_map_commit_version_;
+    const bool exact_ack_retry_enabled =
+        options_.full_refresh_generation_ack_en &&
+        options_.map_commit_pre_stale_ack_retry_age_s > 0.0;
+    double pending_exact_ack_age_s = 0.0;
+    const bool exact_ack_pending = !pre_stale_pending_exact_ack_.empty();
+    if (exact_ack_pending) {
+      pending_exact_ack_age_s = std::max(
+          0.0, now - pre_stale_pending_exact_ack_.begin()->second.send_s);
+    }
+    const bool retry_already_used =
+        pre_stale_full_refresh_ack_retry_source_version_ &&
+        *pre_stale_full_refresh_ack_retry_source_version_ ==
+            last_map_commit_version_;
+    const bool exact_ack_retry_due = pre_stale_age_due &&
+        version_already_refreshed && exact_ack_retry_enabled &&
+        exact_ack_pending && !retry_already_used &&
+        pending_exact_ack_age_s >=
+            options_.map_commit_pre_stale_ack_retry_age_s;
+    if (exact_ack_retry_due) {
+      // The reliable request token can arrive while its best-effort cloud is
+      // lost. Send the next LiDAR generation once for this source map
+      // version. This is content-driven and bounded: the retry has a new
+      // stamp, supersedes the old pending generation, and cannot repeat until
+      // the map version advances.
+      pre_stale_full_refresh_ack_retry_source_version_ =
+          last_map_commit_version_;
+      recordFullRefreshSourceVersion(true, commit_age_s, true);
+      if (publish_hz > 0.0)
+        next_publish_time_s_ = now + 1.0 / publish_hz;
+      return PublishDecision::PRE_STALE_FULL_REFRESH;
+    }
+    if (pre_stale_age_due && version_already_refreshed &&
+        exact_ack_retry_enabled && exact_ack_pending && retry_already_used &&
+        pending_exact_ack_age_s >=
+            options_.map_commit_pre_stale_ack_retry_age_s) {
+      ++pre_stale_full_refresh_ack_retry_suppressed_frames_;
+    }
     if (pre_stale_age_due && !version_already_refreshed) {
       recordFullRefreshSourceVersion(true, commit_age_s);
       if (publish_hz > 0.0)
@@ -1201,6 +1252,7 @@ private:
 
     string("mode", options_.mode);
     string("implementation", "cpp");
+    boolean("reliable_output", options_.reliable_output);
     number("half_angle_deg", rounded(options_.half_angle_deg, 1e3));
     number("stall_v", options_.stall_v);
     number("stall_t", options_.stall_t);
@@ -1221,6 +1273,8 @@ private:
            options_.map_commit_refresh_min_interval_s);
     number("map_commit_pre_stale_full_age_s",
            options_.map_commit_pre_stale_full_age_s);
+    number("map_commit_pre_stale_ack_retry_age_s",
+           options_.map_commit_pre_stale_ack_retry_age_s);
     boolean("full_refresh_generation_ack_en",
             options_.full_refresh_generation_ack_en);
     string("map_process_ack_topic", options_.map_process_ack_topic);
@@ -1243,6 +1297,10 @@ private:
             pre_stale_full_refresh_ack_committed_count_);
     integer("pre_stale_full_refresh_superseded_count",
             pre_stale_full_refresh_superseded_count_);
+    integer("pre_stale_full_refresh_ack_retry_frames",
+            pre_stale_full_refresh_ack_retry_frames_);
+    integer("pre_stale_full_refresh_ack_retry_suppressed_frames",
+            pre_stale_full_refresh_ack_retry_suppressed_frames_);
     integer("pre_stale_full_refresh_version_advance_count",
             pre_stale_full_refresh_version_advance_count_);
     boolean("pre_stale_full_refresh_pending_version_advance",
@@ -1456,6 +1514,8 @@ private:
   std::optional<double> last_commit_refresh_publish_s_;
   std::optional<uint64_t> last_full_refresh_source_version_;
   std::optional<uint64_t> pre_stale_full_refresh_source_version_;
+  std::optional<uint64_t>
+      pre_stale_full_refresh_ack_retry_source_version_;
   std::unordered_map<uint64_t, PendingFullRefresh>
       pre_stale_pending_exact_ack_;
   uint64_t map_commit_status_count_{0};
@@ -1465,6 +1525,8 @@ private:
   uint64_t pre_stale_full_refresh_ack_count_{0};
   uint64_t pre_stale_full_refresh_ack_committed_count_{0};
   uint64_t pre_stale_full_refresh_superseded_count_{0};
+  uint64_t pre_stale_full_refresh_ack_retry_frames_{0};
+  uint64_t pre_stale_full_refresh_ack_retry_suppressed_frames_{0};
   uint64_t pre_stale_full_refresh_version_advance_count_{0};
   bool pre_stale_full_refresh_pending_version_advance_{false};
   uint64_t pre_stale_full_refresh_pending_ack_max_{0};

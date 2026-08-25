@@ -2051,19 +2051,89 @@ in `docs/generation_ack_certified_resume_v7_seed6_10_n1_20260825.md`; primary
 raw input is
 `results/generation_ack_final_3mode_seed6_10_n1_raw_20260825.csv`.
 
-## Current status — exact freshness evidence is bounded; high guard duty remains
+### 8.28 Reliable depth-1 filtered link reduces loss-driven guard work (2026-08-26)
 
-- **Section 8.27 is the newest same-code late-map gate.** Full, Sector, and
-  Adaptive each passed seed6-10 5/5 with zero contact.  Exact generation ACK,
-  certified fresh-map resume, and a bounded ACK-SLA stop are implemented.
-- **The old 11.245 s ACK tail was a proxy-semantics problem, but cloud loss is
-  real.** Delivered generations ACKed within 0.1034 s; 70/582 pre-stale full
-  generations were superseded without exact ACK and 26 SLA timeouts made that
-  failure visible and fail-closed.
-- **The remaining Adaptive blocker is repeated guard duty and population
-  evidence.** This gate reduced total mapping work versus Full but Adaptive
-  still took 14.77% longer and guard duty remained 79.60-94.68%.  Do not tune
-  the ACK threshold merely to hide these guard episodes.
+Section 8.27 showed that delivered full generations ACKed within 0.1034 s but
+70/582 generations were superseded without an exact ACK and 26 oldest-request
+SLA timeouts occurred. Log attribution found 184 `main_pre MAP_STALE` events
+and 225 guard/recovery episodes totalling 247.457 s. These events were not a
+reason to weaken the freshness certificate. They identified loss on the
+native filter-to-ROG-Map best-effort cloud hop.
+
+A bounded retransmission candidate sent one newer full generation after a
+missing ACK. Seed6-10 Adaptive n=1 remained 5/5 with zero contact and timeout
+markers fell from 26 to 5, but full generations rose from 582 to 657, guard
+gates from 225 to 258, stale detections from 184 to 223, active recovery time
+from 247.457 to 291.722 s, and mean mission time from 96.408 to 104.306 s.
+The extra scans increased map-worker contention, so the option remains
+default zero/off and was not used in the final gate.
+
+The adopted candidate instead makes only the internal `/cloud_sector` hop
+reliable depth-1. ROG-Map's `cloud_reliable` and the native filter's
+`--reliable-output` both default false. A new explicit
+`_filtered_reliable.yaml` profile and runner flag enable them together; the
+simulator-to-filter input remains best-effort. Fixed Sector and Adaptive use
+the same link QoS. Existing profiles, full-refresh rate, exact ACK SLA,
+certified resume conditions, and raw-CIRI's non-authoritative default-off
+status are unchanged.
+
+The fresh seed6-10 x n=1 x three-mode gate was 15/15 valid and first attempt.
+Full and Adaptive were each 5/5 with zero live contact and zero static-PCD
+collision. Fixed Sector completed 5/5 but had one live/static-PCD contact on
+seed8; paired Full and Adaptive were contact-free.
+
+| mode | completion | contact | mean time (s) | worst static clearance (m) | points/update | map total/update (ms) | observed map Hz | FSM CPU (%) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Full | 5/5 | 0 | 84.16 | +0.177 | 37,568 | 36.234 | 4.60 | 80.14 |
+| fixed Sector | 5/5 | 1 | 83.94 | -0.079 | 19,497 | 14.330 | 4.53 | 71.33 |
+| Adaptive | 5/5 | 0 | 86.02 | +0.193 | 31,040 | 30.981 | 3.39 | 67.90 |
+
+Against Full, Adaptive reduced update-weighted points/update 17.38%, map
+total/update 14.50%, map-update compute 6.93%, observed update rate 26.32%, and
+time-weighted FSM CPU 15.28%; mean mission time was only 2.21% longer. Across
+the five maps, mapping point work, mapping wall work, and FSM+filter
+core-seconds were 37.78%, 35.61%, and 9.59% lower.
+
+All 393 pre-stale full generations received their exact ACK, with zero
+supersede, zero timeout, and final pending zero. ACK latency was 0.0468 s
+count-weighted mean and 0.1357 s maximum. Versus the previous best-effort n=1
+cohort, Adaptive mean time fell 10.78%, guard gates fell 225 to 195, stale
+detections fell 184 to 164, and active recovery time fell 16.90%; Full's mean
+time changed only +0.18%. This is directional, unpaired n=1 evidence, not a
+population estimate or causal timing proof.
+
+All final rows had retry/OOM/FSM-swap/PSI zero. The result is a local
+regression gate, not population 100%, flight-ready, or hard real-time proof;
+no McNemar test was performed. Detailed map tables, guard attribution, and
+the rejected retry are in
+`docs/reliable_filtered_link_guard_duty_v7_seed6_10_n1_20260826.md`. Primary
+raw inputs are
+`results/reliable_link_final_3mode_seed6_10_n1_raw_20260826.csv`,
+`results/reliable_link_adaptive_seed6_10_n1_raw_20260826.csv`, and
+`results/ack_retry_adaptive_seed6_10_n1_raw_20260825.csv`.
+
+## Current status — filtered-link loss is closed locally; repetition remains
+
+- **Section 8.28 is the newest same-code late-map gate.** Full and Adaptive
+  each passed seed6-10 5/5 with zero contact; fixed Sector completed 5/5 but
+  contacted seed8 once. Reliable depth-1 on the filtered internal hop removed
+  all 8.27-style generation loss in this sample without increasing cloud
+  publication count.
+- **The retransmission approach is rejected.** It reduced timeout markers but
+  increased scans, stale detections, guard episodes, recovery time, and mission
+  time. Keep its age at default 0/off; do not use scan flood to mask link loss.
+- **The next target is repeated evidence on the opt-in profile, then guard
+  rejection attribution.** The n=1 gate narrowed the Adaptive time penalty to
+  2.21% and reduced guard work, but 195 guard gates and 205.638 s of aggregate
+  recovery-active time remain. Repeat the Full/Sector/Adaptive map-labelled
+  cohort before promoting the profile or changing existing defaults.
+
+- **Section 8.27 remains the exact freshness/certified-resume mechanism.** Its
+  best-effort transport gate passed all three modes 5/5 with zero contact.
+  Exact generation ACK, certified fresh-map resume, and a bounded ACK-SLA stop
+  remain implemented and unchanged by 8.28. Its 70 superseded generations and
+  26 SLA timeouts are the counterexample that motivated the reliable internal
+  link, not current reliable-profile counts.
 
 - **Section 8.26 remains the larger n=3 comparison.** Full and Adaptive each passed
   30/30 with zero contact; fixed Sector completed 30/30 with contact on seed9
@@ -2086,8 +2156,8 @@ raw input is
   reduces Full points/update 32.61%, throughput 63.71%, mapping/update 44.23%,
   mapping work/mission 63.25%, and combined CPU-work/mission 16.13%, with a
   22.35% time penalty. Section 8.23's n=1 directionally narrowed that penalty
-  to 18.16%, while the newest 8.27 late-map-only n=1 measured 14.77%; neither
-  supersedes the n=50 estimate.
+  to 18.16%, 8.27's late-map-only n=1 measured 14.77%, and the newest 8.28
+  reliable-link n=1 measured 2.21%; none supersedes the n=50 estimate.
 - **The memory fix now has broad evidence:** all 150 rows have one attempt,
   FSM swap 0, retry 0, OOM delta 0, and PSI max 0; peak FSM RSS is 3474.36 MiB.
   Host-wide swap was still occupied, but it did not recreate the prior FSM
@@ -2095,9 +2165,11 @@ raw input is
 - **The requested repetition remains §8.26:** seed7 targeted n=3 and a new
   order-crossed seed1-10 x three-mode n=3 both completed. Section 8.27
   implements its generation-specific acknowledgement target on the harder
-  seed6-10 subset. The remaining Adaptive time target is repeated guard and
-  topology/optimizer recovery efficiency, not another blind publication-rate
-  increase or weaker ACK SLA.
+  seed6-10 subset. Section 8.28 removes the observed filtered-hop loss locally
+  and shows that blind retransmission makes guard work worse. The remaining
+  target is repeated evidence followed by guard rejection and
+  topology/optimizer recovery efficiency, not a higher publication rate or a
+  weaker ACK SLA.
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),
@@ -2187,8 +2259,10 @@ local gates. Section 8.27 replaces its version proxy with exact generation ACK,
 requires a fresh certified replan before resume, and enters certified stop on a
 bounded ACK miss. It also proves that the old 11.245 s tail was not exact cloud
 processing latency, while exposing real best-effort cloud loss and persistent
-79.60-94.68% late-map guard duty. The next target is guard-episode attribution
-and a bounded reduction of repeated stop/replan work without weakening the ACK
-gate or safety certificate. Retain the static-PCD monitor, live-cloud
-forensics, fixed-Sector control, and CIRI shadow's non-authoritative default-off
-status.
+79.60-94.68% late-map guard duty. Section 8.28 closes that observed filtered-hop
+loss in a local n=1 gate with an opt-in reliable depth-1 link; it does not
+replace the larger repeated evidence. The next target is a repeated
+map-labelled gate, then bounded reduction of guard rejection and stop/replan
+work without weakening the ACK gate or safety certificate. Retain the
+static-PCD monitor, live-cloud forensics, fixed-Sector control, and CIRI
+shadow's non-authoritative default-off status.

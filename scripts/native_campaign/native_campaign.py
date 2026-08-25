@@ -273,6 +273,16 @@ def parse_full_refresh_ack_log(path):
         "full_refresh_ack_timeout_recoveries": 0,
         "guard_topology_reroute_arms": 0,
         "guard_topology_reroute_searches": 0,
+        "guard_brake_successes": 0,
+        "guard_brake_rejections": 0,
+        "guard_brake_main_pre_successes": 0,
+        "guard_brake_retry_successes": 0,
+        "guard_brake_ack_timeout_successes": 0,
+        "guard_main_pre_map_stale": 0,
+        "guard_recoveries": 0,
+        "guard_recovery_active_duration_s": 0.0,
+        "guard_recovery_active_duration_mean_s": None,
+        "guard_recovery_active_duration_max_s": None,
     }
     markers = {
         "FULL_REFRESH_ACK_TIMEOUT": "full_refresh_ack_timeouts",
@@ -283,6 +293,9 @@ def parse_full_refresh_ack_log(path):
         "TRAJ_GUARD_REROUTE_ARM": "guard_topology_reroute_arms",
         "TRAJ_GUARD_REROUTE_SEARCH": "guard_topology_reroute_searches",
     }
+    active_since = None
+    active_durations = []
+    stamp_pattern = re.compile(r"\[(\d+(?:\.\d+)?)\]")
     with open(path, errors="replace") as stream:
         for line in stream:
             for marker, key in markers.items():
@@ -293,6 +306,40 @@ def parse_full_refresh_ack_log(path):
                 and "trigger=full_refresh_ack_timeout" in line
             ):
                 counts["full_refresh_ack_timeout_recoveries"] += 1
+            if "[TRAJ_GUARD_BRAKE] trigger=" in line:
+                counts["guard_brake_successes"] += 1
+                if "trigger=main_pre_uncertified" in line:
+                    counts["guard_brake_main_pre_successes"] += 1
+                elif "trigger=emergency_stop_retry" in line:
+                    counts["guard_brake_retry_successes"] += 1
+                elif "trigger=full_refresh_ack_timeout" in line:
+                    counts["guard_brake_ack_timeout_successes"] += 1
+            if "[TRAJ_GUARD_BRAKE_REJECTED]" in line:
+                counts["guard_brake_rejections"] += 1
+            if (
+                "[TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE"
+                in line
+            ):
+                counts["guard_main_pre_map_stale"] += 1
+            if "[TRAJ_GUARD_RECOVERED]" in line:
+                counts["guard_recoveries"] += 1
+            stamp_match = stamp_pattern.search(line)
+            stamp = float(stamp_match.group(1)) if stamp_match else None
+            if "[TRAJ_GUARD_RECOVERY_SIGNAL] active=true" in line:
+                if active_since is None and stamp is not None:
+                    active_since = stamp
+            elif "[TRAJ_GUARD_RECOVERY_SIGNAL] active=false" in line:
+                if active_since is not None and stamp is not None:
+                    active_durations.append(max(0.0, stamp - active_since))
+                    active_since = None
+    if active_durations:
+        counts["guard_recovery_active_duration_s"] = sum(active_durations)
+        counts["guard_recovery_active_duration_mean_s"] = st.mean(
+            active_durations
+        )
+        counts["guard_recovery_active_duration_max_s"] = max(
+            active_durations
+        )
     return counts
 
 
@@ -528,6 +575,14 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "full_refresh_ack_timeout_recoveries",
           "guard_topology_reroute_arms",
           "guard_topology_reroute_searches",
+          "guard_brake_successes", "guard_brake_rejections",
+          "guard_brake_main_pre_successes",
+          "guard_brake_retry_successes",
+          "guard_brake_ack_timeout_successes",
+          "guard_main_pre_map_stale", "guard_recoveries",
+          "guard_recovery_active_duration_s",
+          "guard_recovery_active_duration_mean_s",
+          "guard_recovery_active_duration_max_s",
           "shadow_safe_candidates", "shadow_unsafe_candidates",
           "shadow_skipped_candidates", "shadow_validated_candidates",
           "shadow_geometric_unsafe", "shadow_map_race",
@@ -596,13 +651,15 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "wall_center_spacing_m", "wall_point_count", "horizon_m",
           "intensity",
           "matched_prefix",
-          "filter_half_angle_deg", "filter_stall_v", "filter_stall_t",
+          "filter_half_angle_deg", "filter_reliable_output",
+          "filter_stall_v", "filter_stall_t",
           "filter_resume_v", "filter_resume_t", "filter_velocity_yaw_update_v",
           "filter_frames", "filter_published_frames",
           "filter_rate_limited_frames", "filter_max_publish_hz",
           "filter_map_commit_topic", "filter_map_commit_refresh_age_s",
           "filter_map_commit_refresh_min_interval_s",
           "filter_map_commit_pre_stale_full_age_s",
+          "filter_map_commit_pre_stale_ack_retry_age_s",
           "filter_full_refresh_generation_ack_en",
           "filter_map_process_ack_topic",
           "filter_full_refresh_request_topic",
@@ -615,6 +672,8 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_pre_stale_full_refresh_pending_ack_max",
           "filter_pre_stale_full_refresh_ack_committed_count",
           "filter_pre_stale_full_refresh_superseded_count",
+          "filter_pre_stale_full_refresh_ack_retry_frames",
+          "filter_pre_stale_full_refresh_ack_retry_suppressed_frames",
           "filter_pre_stale_full_refresh_version_advance_count",
           "filter_pre_stale_full_refresh_pending_version_advance",
           "filter_full_refresh_request_count",
@@ -810,7 +869,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             adaptive_trajectory_guard_hold_s=2.5,
             adaptive_trajectory_guard_active_max_publish_hz=0.0,
             adaptive_pre_stale_full_age_s=0.25,
+            adaptive_pre_stale_ack_retry_age_s=0.0,
             adaptive_full_refresh_generation_ack=True,
+            filtered_reliable_map_link=False,
             adaptive_full_open_extra_max_points=6000):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
@@ -1032,6 +1093,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     f"{adaptive_trajectory_guard_active_max_publish_hz}"
                     f" --map-commit-pre-stale-full-age-s "
                     f"{adaptive_pre_stale_full_age_s}"
+                    f" --map-commit-pre-stale-ack-retry-age-s "
+                    f"{adaptive_pre_stale_ack_retry_age_s}"
                     f"{' --full-refresh-generation-ack' if adaptive_full_refresh_generation_ack else ''}"
                     f" --full-open-extra-max-points "
                     f"{adaptive_full_open_extra_max_points}"
@@ -1040,6 +1103,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 )
             else:
                 filter_options += " --no-replan-guard"
+            if filtered_reliable_map_link:
+                filter_options += " --reliable-output"
         if is_dynamic:
             filter_options += (
                 f" --input-topic /cloud_seed12 --track-trap "
@@ -1708,6 +1773,15 @@ def main():
         ),
     )
     ap.add_argument(
+        "--adaptive-pre-stale-ack-retry-age-s",
+        type=float,
+        default=0.0,
+        help=(
+            "after a missing exact ACK, send one newer full generation per "
+            "source map version at this age; 0 disables the bounded retry"
+        ),
+    )
+    ap.add_argument(
         "--no-adaptive-full-refresh-generation-ack",
         dest="adaptive_full_refresh_generation_ack",
         action="store_false",
@@ -1715,6 +1789,14 @@ def main():
         help=(
             "disable the strict-burst Adaptive exact-cloud generation ACK "
             "and planner recovery handshake"
+        ),
+    )
+    ap.add_argument(
+        "--filtered-reliable-map-link",
+        action="store_true",
+        help=(
+            "request reliable depth-1 delivery from the native C++ filter; "
+            "the selected filtered planner config must request the same QoS"
         ),
     )
     ap.add_argument(
@@ -1739,6 +1821,12 @@ def main():
         ap.error("--adaptive-full-open-extra-max-points must be non-negative")
     if args.adaptive_pre_stale_full_age_s < 0.0:
         ap.error("--adaptive-pre-stale-full-age-s must be non-negative")
+    if args.adaptive_pre_stale_ack_retry_age_s < 0.0:
+        ap.error(
+            "--adaptive-pre-stale-ack-retry-age-s must be non-negative"
+        )
+    if args.filtered_reliable_map_link and args.filter_backend != "cpp":
+        ap.error("--filtered-reliable-map-link requires --filter-backend cpp")
     split_configs = (
         args.seedmap_full_super_config,
         args.seedmap_filtered_super_config,
@@ -1882,8 +1970,14 @@ def main():
                         adaptive_pre_stale_full_age_s=(
                             args.adaptive_pre_stale_full_age_s
                         ),
+                        adaptive_pre_stale_ack_retry_age_s=(
+                            args.adaptive_pre_stale_ack_retry_age_s
+                        ),
                         adaptive_full_refresh_generation_ack=(
                             args.adaptive_full_refresh_generation_ack
+                        ),
+                        filtered_reliable_map_link=(
+                            args.filtered_reliable_map_link
                         ),
                         adaptive_full_open_extra_max_points=(
                             args.adaptive_full_open_extra_max_points

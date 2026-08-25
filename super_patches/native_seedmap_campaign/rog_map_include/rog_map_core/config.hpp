@@ -115,6 +115,7 @@ namespace rog_map {
 
             loader.LoadParam(name_space + "/ros_callback/enable", ros_callback_en, false);
             loader.LoadParam(name_space + "/ros_callback/cloud_topic", cloud_topic, string("/cloud_registered"));
+            loader.LoadParam(name_space + "/ros_callback/cloud_reliable", cloud_reliable, false);
             loader.LoadParam(name_space + "/ros_callback/odom_topic", odom_topic, string("/lidar_slam/odom"));
             loader.LoadParam(name_space + "/ros_callback/odom_timeout", odom_timeout, 0.05);
 
@@ -321,7 +322,8 @@ namespace rog_map {
         int inf_virtual_ceil_height_id_g{}, inf_virtual_ground_height_id_g{};
 
         bool visualization_en{false}, frontier_extraction_en{false},
-                raycasting_en{true}, ros_callback_en{false}, pub_unknown_map_en{false};
+                raycasting_en{true}, ros_callback_en{false},
+                cloud_reliable{false}, pub_unknown_map_en{false};
 
         /* Spherical neighbor for inflation*/
         std::vector<Vec3i> inf_spherical_neighbor{};

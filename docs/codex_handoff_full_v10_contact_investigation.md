@@ -1,6 +1,40 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-26 reliable filtered-link local gate — 아래 2026-08-25 exact ACK
+> 작업의 후속 원인 제거를 완료했다.** 이전 Adaptive seed6-10 n=1의 delivered
+> generation ACK는 최대 0.1034초였지만 best-effort `/cloud_sector` hop에서
+> 70/582 generation이 유실되어 superseded됐고 SLA timeout이 26회 발생했다.
+> guard attribution은 `main_pre MAP_STALE` 184회, recovery gate 225회,
+> active 합 247.457초였다.
+>
+> ACK 미수신 뒤 Full을 한 번 더 보내는 후보는 5/5·contact 0이고 timeout을
+> 26->5로 줄였지만 full frame 582->657, guard 225->258, stale 184->223,
+> active 합 247.457->291.722초, 평균 시간 96.408->104.306초(+8.19%)로
+> 악화돼 기각했다. retry age는 default 0/off이고 최종 gate에서 사용하지 않았다.
+>
+> 채택 후보는 native C++ filter publisher와 ROG-Map subscriber 사이 내부
+> hop만 reliable depth-1로 맞춘다. 실행 파일과 ROG-Map option 기본값은 false,
+> 새 `_filtered_reliable.yaml` 및 runner flag에서만 opt-in이다. 기존 프로파일,
+> simulator->filter best-effort 입력, exact ACK/certified resume, raw-cloud CIRI
+> default false/non-authoritative는 바뀌지 않았다.
+>
+> 최종 seed6-10 x Full/Sector/Adaptive x n=1은 15/15 valid, first-attempt
+> 완주였다. Full/Adaptive는 각 5/5·contact 0·static-PCD collision 0이고 fixed
+> Sector는 seed8에서 contact/static collision 1회가 있었다. 평균 시간은
+> 84.16/83.94/86.02초다. Adaptive는 Full 대비 points/update 17.38%, map
+> total/update 14.50%, 전체 mapping point/work 37.78%/35.61%, FSM+filter
+> core-seconds 9.59%를 줄였고 시간 penalty는 2.21%였다.
+>
+> Adaptive pre-stale generation은 393/393 exact ACK, superseded/timeout/final
+> pending 0이다. 이전 best-effort n=1 대비 평균 시간 -10.78%, guard gate
+> 225->195, stale 184->164, recovery active 합 -16.90%다. 그러나 이는 n=1
+> local regression gate라 population 100%/flight-ready 보장이 아니며 McNemar를
+> 하지 않았다. 다음은 이 opt-in 프로파일의 map-labelled 반복 검증이고, 그 뒤
+> 남은 brake rejection/stop-replan 비용을 분해한다. 상세는 viability §8.28 및
+> `docs/reliable_filtered_link_guard_duty_v7_seed6_10_n1_20260826.md`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-25 exact full-generation ACK + certified resume — 바로 아래
 > pre-stale proxy의 다음 구현을 완료했다.** Adaptive full refresh가 reliable
 > request sequence와 exact `PointCloud2` stamp를 보내고, ROG-Map이 그 scan을
