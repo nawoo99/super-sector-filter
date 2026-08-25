@@ -65,6 +65,8 @@ namespace rog_map {
         MapHealthClock::time_point latest_committed_scan_rx_time{};
         MapHealthClock::time_point latest_map_commit_time{};
         std::int64_t latest_source_stamp_ns{0};
+        std::int64_t latest_processed_source_stamp_ns{0};
+        std::int64_t latest_committed_source_stamp_ns{0};
         bool update_in_progress{false};
     };
 
@@ -244,6 +246,7 @@ namespace rog_map {
         void recordMapUpdateStarted();
 
         void recordMapUpdateFinished(std::uint64_t scan_seq,
+                                     std::int64_t source_stamp_ns,
                                      MapHealthClock::time_point scan_rx_time,
                                      const ProbMapUpdateResult& result);
 

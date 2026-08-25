@@ -86,6 +86,10 @@ namespace fsm {
         double trajectory_guard_brake_trigger_high_speed_map_age_s{0.75};
         double trajectory_guard_brake_trigger_low_speed_mps{0.0};
         double trajectory_guard_brake_trigger_high_speed_mps{0.0};
+        // Optional runtime handshake with the Adaptive filter. A positive
+        // SLA enables subscriptions, but recovery is gated only after that
+        // filter advertises generation-token support.
+        double trajectory_guard_full_refresh_ack_sla_s{0.0};
         // Optional low-latency supplement to the committed occupancy map.
         // It checks the registered sensor cloud without waiting for a full
         // ROG-map update and is disabled for legacy profiles.
@@ -206,6 +210,11 @@ namespace fsm {
             trajectory_guard_brake_trigger_high_speed_mps = std::max(
                     trajectory_guard_brake_trigger_low_speed_mps,
                     trajectory_guard_brake_trigger_high_speed_mps);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/full_refresh_ack_sla_s",
+                    trajectory_guard_full_refresh_ack_sla_s, 0.0);
+            trajectory_guard_full_refresh_ack_sla_s = std::max(
+                    0.0, trajectory_guard_full_refresh_ack_sla_s);
             loader.LoadParam("fsm/trajectory_guard/raw_cloud/enable",
                              trajectory_guard_raw_cloud_en, false);
             loader.LoadParam("fsm/trajectory_guard/raw_cloud/max_age_s",

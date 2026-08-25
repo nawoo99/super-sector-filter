@@ -81,6 +81,12 @@ fsm:
     brake_trigger_high_speed_map_age_s: 0.50
     brake_trigger_low_speed_mps: 2.5
     brake_trigger_high_speed_mps: 3.5
+    # Runtime opt-in: only an Adaptive filter started with
+    # --full-refresh-generation-ack advertises the request stream. Fixed
+    # Sector uses this same planner profile but emits no advertisement, so it
+    # is not gated. An overdue exact-cloud ACK enters the existing certified
+    # stop/replan/reroute boundary instead of flooding another full scan.
+    full_refresh_ack_sla_s: 0.75
     raw_cloud:
       # 2026-08-18: briefly turned this on to feed a raw-scan-accumulation
       # window into a CIRI-based brake corridor (see docs/

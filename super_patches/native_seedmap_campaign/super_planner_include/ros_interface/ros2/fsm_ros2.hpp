@@ -38,6 +38,7 @@
 #include "mars_quadrotor_msgs/msg/position_command.hpp"
 #include "mars_quadrotor_msgs/msg/polynomial_trajectory.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/u_int64_multi_array.hpp"
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <utils/optimization/polynomial_interpolation.h>
@@ -66,6 +67,10 @@ namespace fsm {
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr
                 trajectory_guard_recovery_pub_;
+        rclcpp::Subscription<std_msgs::msg::UInt64MultiArray>::SharedPtr
+                full_refresh_request_sub_;
+        rclcpp::Subscription<std_msgs::msg::UInt64MultiArray>::SharedPtr
+                cloud_process_ack_sub_;
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub_;
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
                 guard_cloud_sub_;
@@ -74,6 +79,7 @@ namespace fsm {
         rclcpp::TimerBase::SharedPtr execution_timer_, replan_timer_, cmd_timer_;
         rclcpp::CallbackGroup::SharedPtr exec_cbk_group_, map_cbk_group_, replan_cbk_group_, cmd_cbk_group_, goal_cbk_group_;
         rclcpp::CallbackGroup::SharedPtr guard_cloud_cbk_group_;
+        rclcpp::CallbackGroup::SharedPtr refresh_ack_cbk_group_;
 
         mars_quadrotor_msgs::msg::PositionCommand pid_cmd_;
         rog_map::ROGMapROS::Ptr map_ptr_;
@@ -108,6 +114,201 @@ namespace fsm {
         bool brake_passive_stability_started_{false};
         std::atomic_bool trajectory_guard_recovery_announced_{false};
 
+        struct RefreshProcessAck {
+            std::uint64_t stamp_ns{0};
+            std::uint64_t map_version{0};
+        };
+
+        mutable std::mutex full_refresh_mutex_;
+        bool full_refresh_gate_advertised_{false};
+        std::uint64_t latest_full_refresh_request_seq_{0};
+        std::uint64_t latest_full_refresh_request_stamp_ns_{0};
+        bool latest_full_refresh_request_acked_{false};
+        rog_map::MapHealthClock::time_point
+                full_refresh_unacked_since_time_{};
+        std::uint64_t full_refresh_timeout_handled_seq_{0};
+        std::uint64_t required_full_refresh_min_seq_{0};
+        std::uint64_t required_full_refresh_target_seq_{0};
+        std::uint64_t required_full_refresh_stamp_ns_{0};
+        std::uint64_t required_full_refresh_ack_map_version_{0};
+        bool required_full_refresh_acked_{false};
+        std::deque<RefreshProcessAck> recent_refresh_process_acks_;
+
+        bool findRefreshAckLocked(const std::uint64_t stamp_ns,
+                                  std::uint64_t &map_version) const {
+            for (auto it = recent_refresh_process_acks_.rbegin();
+                 it != recent_refresh_process_acks_.rend(); ++it) {
+                if (it->stamp_ns == stamp_ns) {
+                    map_version = it->map_version;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        void armFullRefreshRecoveryGate() {
+            if (cfg_.trajectory_guard_full_refresh_ack_sla_s <= 0.0) {
+                return;
+            }
+            std::lock_guard<std::mutex> lock(full_refresh_mutex_);
+            if (!full_refresh_gate_advertised_) {
+                return;
+            }
+            required_full_refresh_min_seq_ =
+                    latest_full_refresh_request_seq_ + 1;
+            required_full_refresh_target_seq_ = 0;
+            required_full_refresh_stamp_ns_ = 0;
+            required_full_refresh_ack_map_version_ = 0;
+            required_full_refresh_acked_ = false;
+            ros_ptr_->info(
+                    " -- [FULL_REFRESH_RECOVERY_GATE_ARM] min_request_seq={}",
+                    required_full_refresh_min_seq_);
+        }
+
+        void clearFullRefreshRecoveryGate() {
+            std::lock_guard<std::mutex> lock(full_refresh_mutex_);
+            required_full_refresh_min_seq_ = 0;
+            required_full_refresh_target_seq_ = 0;
+            required_full_refresh_stamp_ns_ = 0;
+            required_full_refresh_ack_map_version_ = 0;
+            required_full_refresh_acked_ = false;
+        }
+
+        void fullRefreshRequestCallback(
+                const std_msgs::msg::UInt64MultiArray::SharedPtr msg) {
+            if (msg->data.size() < 3) {
+                ros_ptr_->warn(
+                        " -- [FULL_REFRESH_REQUEST] malformed size={}",
+                        msg->data.size());
+                return;
+            }
+            const std::uint64_t request_seq = msg->data[0];
+            const std::uint64_t stamp_ns = msg->data[1];
+            bool target_selected = false;
+            bool target_acked = false;
+            std::uint64_t target_map_version = 0;
+            {
+                std::lock_guard<std::mutex> lock(full_refresh_mutex_);
+                full_refresh_gate_advertised_ = true;
+                if (request_seq == 0 ||
+                    request_seq <= latest_full_refresh_request_seq_) {
+                    return;
+                }
+                const bool unresolved_chain_active =
+                        latest_full_refresh_request_seq_ != 0 &&
+                        !latest_full_refresh_request_acked_;
+                if (!unresolved_chain_active) {
+                    full_refresh_unacked_since_time_ =
+                            rog_map::MapHealthClock::now();
+                }
+                latest_full_refresh_request_seq_ = request_seq;
+                latest_full_refresh_request_stamp_ns_ = stamp_ns;
+                latest_full_refresh_request_acked_ =
+                        findRefreshAckLocked(stamp_ns, target_map_version);
+                if (required_full_refresh_min_seq_ != 0 &&
+                    !required_full_refresh_acked_ &&
+                    request_seq >= required_full_refresh_min_seq_) {
+                    // latest-only recovery: a best-effort cloud can be lost
+                    // after its reliable request token arrives. In that case
+                    // a later full generation may supersede the missing one,
+                    // but recovery still requires an exact ACK for the newly
+                    // selected timestamp before replanning.
+                    required_full_refresh_target_seq_ = request_seq;
+                    required_full_refresh_stamp_ns_ = stamp_ns;
+                    required_full_refresh_acked_ =
+                            latest_full_refresh_request_acked_;
+                    required_full_refresh_ack_map_version_ =
+                            latest_full_refresh_request_acked_
+                                    ? target_map_version : 0;
+                    target_selected = true;
+                    target_acked = required_full_refresh_acked_;
+                }
+            }
+            if (target_selected) {
+                ros_ptr_->info(
+                        " -- [FULL_REFRESH_RECOVERY_TARGET] request_seq={} "
+                        "stamp_ns={} already_acked={} map={}",
+                        request_seq, stamp_ns, target_acked,
+                        target_map_version);
+            }
+        }
+
+        void cloudProcessAckCallback(
+                const std_msgs::msg::UInt64MultiArray::SharedPtr msg) {
+            if (msg->data.size() < 4) {
+                ros_ptr_->warn(
+                        " -- [CLOUD_PROCESS_ACK] malformed size={}",
+                        msg->data.size());
+                return;
+            }
+            const std::uint64_t stamp_ns = msg->data[1];
+            const std::uint64_t map_version = msg->data[2];
+            std::uint64_t satisfied_seq = 0;
+            {
+                std::lock_guard<std::mutex> lock(full_refresh_mutex_);
+                recent_refresh_process_acks_.push_back(
+                        RefreshProcessAck{stamp_ns, map_version});
+                while (recent_refresh_process_acks_.size() > 64) {
+                    recent_refresh_process_acks_.pop_front();
+                }
+                if (latest_full_refresh_request_seq_ != 0 &&
+                    latest_full_refresh_request_stamp_ns_ == stamp_ns) {
+                    latest_full_refresh_request_acked_ = true;
+                    full_refresh_unacked_since_time_ =
+                            rog_map::MapHealthClock::time_point{};
+                }
+                if (required_full_refresh_target_seq_ != 0 &&
+                    required_full_refresh_stamp_ns_ == stamp_ns) {
+                    required_full_refresh_acked_ = true;
+                    required_full_refresh_ack_map_version_ = map_version;
+                    satisfied_seq = required_full_refresh_target_seq_;
+                }
+            }
+            if (satisfied_seq != 0) {
+                ros_ptr_->info(
+                        " -- [FULL_REFRESH_RECOVERY_ACK] request_seq={} "
+                        "stamp_ns={} map={} committed={}",
+                        satisfied_seq, stamp_ns, map_version, msg->data[3]);
+            }
+        }
+
+        bool fullRefreshRecoveryGateSatisfied(
+                const rog_map::MapHealthSnapshot &health) const {
+            std::lock_guard<std::mutex> lock(full_refresh_mutex_);
+            if (required_full_refresh_min_seq_ == 0) {
+                return true;
+            }
+            return required_full_refresh_target_seq_ >=
+                           required_full_refresh_min_seq_ &&
+                    required_full_refresh_acked_ &&
+                    health.map_version >=
+                           required_full_refresh_ack_map_version_;
+        }
+
+        bool consumeFullRefreshAckSlaTimeout(
+                std::uint64_t &request_seq, double &age_s) {
+            if (cfg_.trajectory_guard_full_refresh_ack_sla_s <= 0.0) {
+                return false;
+            }
+            std::lock_guard<std::mutex> lock(full_refresh_mutex_);
+            if (!full_refresh_gate_advertised_ ||
+                latest_full_refresh_request_seq_ == 0 ||
+                latest_full_refresh_request_acked_ ||
+                full_refresh_timeout_handled_seq_ >=
+                        latest_full_refresh_request_seq_) {
+                return false;
+            }
+            age_s = std::chrono::duration<double>(
+                    rog_map::MapHealthClock::now() -
+                    full_refresh_unacked_since_time_).count();
+            if (age_s < cfg_.trajectory_guard_full_refresh_ack_sla_s) {
+                return false;
+            }
+            request_seq = latest_full_refresh_request_seq_;
+            full_refresh_timeout_handled_seq_ = request_seq;
+            return true;
+        }
+
         void publishTrajectoryGuardRecoveryState(const bool active) {
             if (!trajectory_guard_recovery_pub_) {
                 return;
@@ -117,9 +318,15 @@ namespace fsm {
                         expected, active, std::memory_order_acq_rel)) {
                 return;
             }
+            if (active) {
+                armFullRefreshRecoveryGate();
+            }
             std_msgs::msg::Bool message;
             message.data = active;
             trajectory_guard_recovery_pub_->publish(message);
+            if (!active) {
+                clearFullRefreshRecoveryGate();
+            }
             ros_ptr_->info(
                     " -- [TRAJ_GUARD_RECOVERY_SIGNAL] active={}", active);
         }
@@ -1632,6 +1839,13 @@ namespace fsm {
                 !mapFreshForGuard(health, map_age_s)) {
                 return false;
             }
+            // For an advertised Adaptive generation stream, do not plan from
+            // rest until ROG-Map has acknowledged the exact full cloud sent
+            // after this guard edge. The fresh-map replan and safety
+            // certificate below therefore necessarily occur after that ACK.
+            if (!fullRefreshRecoveryGateSatisfied(health)) {
+                return false;
+            }
 
             planner_ptr_->getRobotState(robot_state_);
             const double now_wt = ros_ptr_->getSimTime();
@@ -1879,6 +2093,36 @@ namespace fsm {
                 std_msgs::msg::Bool inactive;
                 inactive.data = false;
                 trajectory_guard_recovery_pub_->publish(inactive);
+                if (cfg_.trajectory_guard_full_refresh_ack_sla_s > 0.0) {
+                    refresh_ack_cbk_group_ = nh_->create_callback_group(
+                            rclcpp::CallbackGroupType::MutuallyExclusive);
+                    rclcpp::SubscriptionOptions refresh_options;
+                    refresh_options.callback_group = refresh_ack_cbk_group_;
+                    const auto request_qos = rclcpp::QoS(
+                            rclcpp::KeepLast(16)).reliable()
+                                    .transient_local();
+                    const auto ack_qos = rclcpp::QoS(
+                            rclcpp::KeepLast(16)).reliable()
+                                    .durability_volatile();
+                    full_refresh_request_sub_ = nh_->create_subscription<
+                            std_msgs::msg::UInt64MultiArray>(
+                                    "/sector/full_refresh_request",
+                                    request_qos,
+                                    std::bind(
+                                            &FsmRos2::fullRefreshRequestCallback,
+                                            this, std::placeholders::_1),
+                                    refresh_options);
+                    cloud_process_ack_sub_ = nh_->create_subscription<
+                            std_msgs::msg::UInt64MultiArray>(
+                                    "/rog_map/cloud_process_ack", ack_qos,
+                                    std::bind(
+                                            &FsmRos2::cloudProcessAckCallback,
+                                            this, std::placeholders::_1),
+                                    refresh_options);
+                    ros_ptr_->info(
+                            " -- [FULL_REFRESH_ACK_GATE] listening sla={:.3f}s",
+                            cfg_.trajectory_guard_full_refresh_ack_sla_s);
+                }
             }
             if (cfg_.trajectory_guard_raw_cloud_en ||
                 cfg_.trajectory_guard_raw_cloud_ciri_shadow_en) {
@@ -2129,6 +2373,23 @@ namespace fsm {
                             " -- [TRAJ_GUARD_RAW_DEBUG] sequence={} "
                             "latest_age_s={:.3f}",
                             seq, age_s);
+                }
+            }
+            if (!safety_brake_active_.load(std::memory_order_acquire)) {
+                std::uint64_t timed_out_request_seq = 0;
+                double full_refresh_ack_age_s = 0.0;
+                if (consumeFullRefreshAckSlaTimeout(
+                            timed_out_request_seq,
+                            full_refresh_ack_age_s)) {
+                    ros_ptr_->error(
+                            " -- [FULL_REFRESH_ACK_TIMEOUT] request_seq={} "
+                            "age={:.3f}s sla={:.3f}s "
+                            "action=certified_stop_then_fresh_reroute",
+                            timed_out_request_seq,
+                            full_refresh_ack_age_s,
+                            cfg_.trajectory_guard_full_refresh_ack_sla_s);
+                    activateEmergencyBrake("full_refresh_ack_timeout");
+                    return;
                 }
             }
             if (safety_brake_active_.load(std::memory_order_acquire)) {

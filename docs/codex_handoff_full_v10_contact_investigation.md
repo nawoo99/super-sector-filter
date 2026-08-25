@@ -1,6 +1,41 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-25 exact full-generation ACK + certified resume — 바로 아래
+> pre-stale proxy의 다음 구현을 완료했다.** Adaptive full refresh가 reliable
+> request sequence와 exact `PointCloud2` stamp를 보내고, ROG-Map이 그 scan을
+> 실제 처리한 뒤 exact stamp/map-version ACK를 발행한다. guard recovery는
+> post-edge full의 exact ACK, fresh map/odom, certified stop, 새 `PlanFromRest`,
+> 새 trajectory certificate 뒤에만 재개한다. oldest unresolved request가
+> 0.75초 SLA를 넘기면 정상 비행을 계속하지 않고 certified brake 경계로
+> 들어간다. fresh candidate가 기하학적으로 거부되면 기존 topology blocker가
+> 다른 homotopy를 탐색한다. ACK loss 자체로 가짜 obstacle을 만들지는 않는다.
+>
+> 최종 seed6-10 x Full/Sector/Adaptive x n=1 15회는 모두 valid, first attempt,
+> 완주·live contact 0·static-PCD collision 0이다. retry/OOM/FSM swap/PSI도 0이다.
+> Adaptive 평균 시간은 Full 84.00초 대비 96.41초(+14.77%)이고,
+> update-weighted points/update 16.12%, map total/update 15.52%, observed map
+> rate 32.47%, time-weighted FSM CPU 24.68%를 줄였다. 같은 5개 맵의 total
+> mapping point/work는 34.99%/34.52% 감소했다.
+>
+> pre-stale full 582개 중 512개가 exact ACK, 70개가 superseded, final pending
+> 0이다. delivered ACK latency는 평균 0.0436초, 최대 0.1034초였다. 따라서 아래
+> version-proxy 최대 11.245초는 특정 full cloud 처리 latency가 아니었다. 같은
+> 실행의 기존 proxy는 582/582 advance였지만 exact ACK는 512/582뿐이었다. 다만
+> best-effort cloud loss는 실제이며 0.75초 SLA timeout marker가 26회 관측됐다. recovery
+> gate는 225/225 exact ACK 뒤 재개했고 모든 run이 완주했다. Full/Sector는
+> generation stream을 광고하지 않아 새 gate 지표가 전부 0이다.
+>
+> 실행 파일/planner option 기본값은 계속 off이고 strict Adaptive runner만
+> 켠다. raw-cloud CIRI도 계속 default false/non-authoritative다. 이 결과는
+> late-map n=1 local gate이며 population 100%/flight-ready 보장이 아니고
+> McNemar 미검정이다. guard duty도 79.60-94.68%로 남았다. 다음 과제는 ACK
+> threshold를 숨기는 튜닝이 아니라 repeated guard episode/stop-replan 비용을
+> 원인별로 줄이는 것이다. 상세는 viability §8.27,
+> `docs/generation_ack_certified_resume_v7_seed6_10_n1_20260825.md`, raw는
+> `results/generation_ack_final_3mode_seed6_10_n1_raw_20260825.csv`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-25 pre-stale full refresh n=3 gate — 바로 아래 2026-08-24
 > first-brake 반례의 다음 구현을 완료했다.** Adaptive C++ filter가 map commit
 > age 0.25초에서 complete scan을 한 map version당 한 번만 보내고, 이후

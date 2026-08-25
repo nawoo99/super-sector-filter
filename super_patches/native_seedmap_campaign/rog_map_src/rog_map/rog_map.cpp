@@ -759,6 +759,7 @@ void ROGMap::recordMapUpdateStarted() {
 }
 
 void ROGMap::recordMapUpdateFinished(const std::uint64_t scan_seq,
+                                     const std::int64_t source_stamp_ns,
                                      const MapHealthClock::time_point scan_rx_time,
                                      const ProbMapUpdateResult& result) {
     const auto commit_time = MapHealthClock::now();
@@ -775,6 +776,7 @@ void ROGMap::recordMapUpdateFinished(const std::uint64_t scan_seq,
         ++map_health_.processed_scan_count;
         map_health_.latest_processed_scan_rx_time = scan_rx_time;
         map_health_.latest_scan_process_time = commit_time;
+        map_health_.latest_processed_source_stamp_ns = source_stamp_ns;
     }
     if (result.map_committed) {
         ++map_health_.committed_scan_count;
@@ -782,6 +784,7 @@ void ROGMap::recordMapUpdateFinished(const std::uint64_t scan_seq,
         map_health_.latest_committed_scan_seq = scan_seq;
         map_health_.latest_committed_scan_rx_time = scan_rx_time;
         map_health_.latest_map_commit_time = commit_time;
+        map_health_.latest_committed_source_stamp_ns = source_stamp_ns;
     }
     map_health_.update_in_progress = false;
 }

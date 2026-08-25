@@ -1981,26 +1981,99 @@ are `results/prestale_seed7_adaptive_n3_raw_20260825.csv`,
 `results/prestale025_seed7_adaptive_n3_raw_20260825.csv`, and
 `results/prestale025_order_crossed_3mode_v7_n3_raw_20260825.csv`.
 
-## Current status — the observed first-brake contact is closed; ACK-tail/guard duty is now the main blocker
+### 8.27 Exact generation ACK, certified resume, and bounded ACK-SLA stop (2026-08-25)
 
-- **Section 8.26 is the newest same-code gate.** Full and Adaptive each passed
+Section 8.26's version-advance proxy could not prove that the requested full
+cloud was processed.  The native Adaptive filter now publishes a reliable
+request token containing a monotonically increasing request sequence, the
+exact `PointCloud2` source stamp, and the refresh kind.  ROG-Map publishes a
+reliable processing ACK containing its scan sequence, that exact source stamp,
+the map version after processing, and whether the scan changed the map.  An ACK
+is emitted after every accepted scan, including a processed scan with no map
+delta.  The filter executable defaults this handshake to off; the strict
+Adaptive campaign enables it.
+
+At a trajectory-guard edge, planner recovery now selects a post-edge full
+request and refuses to leave the certified terminal hold until the exact
+generation is ACKed, its map version is available, the map and odometry are
+fresh, physical stop stability has held for 0.25 s, and a new `PlanFromRest`
+candidate passes the existing trajectory certificate.  A best-effort cloud
+can be lost after its reliable token arrives, so an unACKed target may be
+superseded by the next full generation; pending state remains latest-only and
+bounded.  A 0.75 s oldest-unresolved-request SLA enters the same certified
+brake boundary instead of continuing normal publication.  A geometrically
+rejected fresh candidate then arms the existing route blocker and searches a
+different topology.  ACK loss alone does not invent an unsupported obstacle.
+Planner and filter defaults remain off, and fixed Sector never advertises the
+startup marker, so its runtime behavior is not gated.
+
+The final seed6-10 x n=1 x three-mode gate produced 15/15 valid,
+first-attempt completions with zero live contact and zero static-PCD collision.
+Retry, OOM delta, FSM swap and memory PSI were all zero; minimum available host
+memory was 4,138 MiB.
+
+| mode | completion | contact | mean time (s) | worst static clearance (m) | points/update | map total/update (ms) | observed map Hz | FSM CPU (%) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Full | 5/5 | 0 | 84.00 | +0.214 | 36,973 | 35.713 | 4.71 | 82.71 |
+| fixed Sector | 5/5 | 0 | 89.72 | +0.157 | 18,696 | 14.285 | 4.13 | 64.67 |
+| Adaptive | 5/5 | 0 | 96.41 | +0.217 | 31,011 | 30.171 | 3.18 | 62.30 |
+
+Against Full, Adaptive reduced update-weighted points/update 16.12%, map
+total/update 15.52%, observed map update rate 32.47%, and time-weighted FSM CPU
+24.68%, while mean mission time was 14.77% longer.  Across the same five maps,
+total mapping point work and mapping wall work were 34.99% and 34.52% lower.
+Adaptive effective full-open transitions were 28; direct guard transitions
+were 22.  Guard duty nevertheless remained 79.60-94.68%, so this change fixes
+freshness semantics and bounded failure behavior, not the repeated-guard cost.
+
+Of 582 pre-stale full generations, 512 received their own exact ACK and 70 were
+superseded, with final pending zero.  Exact delivered-generation ACK latency
+was 0.0436 s count-weighted mean and 0.1034 s maximum.  Therefore 8.26's
+11.245 s version-proxy tail was not the processing latency of a particular
+full cloud; it mixed later/unrelated version progress with missing cloud
+generations.  The old proxy still counted 582/582 version advances while exact
+generation ACK counted only 512/582.  The SLA emitted 26 timeout markers for
+unresolved chains.  All five runs
+completed and all 225 armed recovery gates observed an exact ACK before
+resume.  The Adaptive logs contained 41 topology arms and 54 topology
+searches, but these are total guard-rejection recovery counts, not proof that
+every ACK timeout needed a topology change.
+
+The implementation was built sequentially after a parallel build filled the
+2 GiB host swap and left only about 442 MiB available.  That event happened
+during compilation, not the campaign.  The final campaign itself had zero
+retry/swap/PSI/OOM.  A synthetic ROS smoke also proved that a wrong stamp does
+not clear pending state and the exact stamp does.  This late-map n=1 gate is
+descriptive only: it is not population 100%, flight-ready, or hard real-time
+proof, and no McNemar test was performed.  Raw-cloud CIRI remains default
+false and non-authoritative.  Full map tables and implementation details are
+in `docs/generation_ack_certified_resume_v7_seed6_10_n1_20260825.md`; primary
+raw input is
+`results/generation_ack_final_3mode_seed6_10_n1_raw_20260825.csv`.
+
+## Current status — exact freshness evidence is bounded; high guard duty remains
+
+- **Section 8.27 is the newest same-code late-map gate.** Full, Sector, and
+  Adaptive each passed seed6-10 5/5 with zero contact.  Exact generation ACK,
+  certified fresh-map resume, and a bounded ACK-SLA stop are implemented.
+- **The old 11.245 s ACK tail was a proxy-semantics problem, but cloud loss is
+  real.** Delivered generations ACKed within 0.1034 s; 70/582 pre-stale full
+  generations were superseded without exact ACK and 26 SLA timeouts made that
+  failure visible and fail-closed.
+- **The remaining Adaptive blocker is repeated guard duty and population
+  evidence.** This gate reduced total mapping work versus Full but Adaptive
+  still took 14.77% longer and guard duty remained 79.60-94.68%.  Do not tune
+  the ACK threshold merely to hide these guard episodes.
+
+- **Section 8.26 remains the larger n=3 comparison.** Full and Adaptive each passed
   30/30 with zero contact; fixed Sector completed 30/30 with contact on seed9
   and seed10.  The §8.25 Adaptive seed7 first-brake contact did not recur.
-- **The remaining Adaptive blocker is efficiency and bounded freshness
-  evidence.** Adaptive kept 18.90% fewer points and 23.86% lower map
-  total/update than Full, but mean mission time was 34.75% longer.  Late-map
-  guard duty reached 80-92%, and the longest version-advance ACK proxy took
-  11.245 s.
-- **The next implementation target is content-specific ACK plus certified
-  resume/reroute, not a lower threshold, shorter hold, or higher cap.** A guard
-  may close only after the requested full generation is committed and a
-  fresh-map replan succeeds; a bounded SLA miss should stop and change
-  topology once without flooding the same map version.
 - **Section 8.24 remains the direct-edge mechanism and its earlier local gate.**
   It closed the observed gap between repeated guard episodes, but section 8.25
   supplies a new first-brake counterexample and supersedes the claim that the
   remaining issue was efficiency only. Section 8.26 adds the earlier sensing
-  action that closes that observed counterexample in the current local sample.
+  action that closes that observed counterexample in the current local sample;
+  section 8.27 then makes that sensing evidence generation-specific.
 - **The local horizontal escape is bounded but not execution-proven as a
   successful recovery.** It may be tried once after a certified stop and A*
   `NO_PATH`; it never bypasses the existing guard/viability commit checks.
@@ -2012,17 +2085,19 @@ are `results/prestale_seed7_adaptive_n3_raw_20260825.csv`,
 - **Section 8.22 remains the larger order-crossed n=50 reference:** Adaptive
   reduces Full points/update 32.61%, throughput 63.71%, mapping/update 44.23%,
   mapping work/mission 63.25%, and combined CPU-work/mission 16.13%, with a
-  22.35% time penalty. The new n=1 directionally narrows that penalty to 18.16%
-  while increasing commit cadence, but it does not supersede the n=50 estimate.
+  22.35% time penalty. Section 8.23's n=1 directionally narrowed that penalty
+  to 18.16%, while the newest 8.27 late-map-only n=1 measured 14.77%; neither
+  supersedes the n=50 estimate.
 - **The memory fix now has broad evidence:** all 150 rows have one attempt,
   FSM swap 0, retry 0, OOM delta 0, and PSI max 0; peak FSM RSS is 3474.36 MiB.
   Host-wide swap was still occupied, but it did not recreate the prior FSM
   pressure or contaminate the crossed comparison.
-- **The requested repetition is now §8.26:** seed7 targeted n=3 and a new
-  order-crossed seed1-10 x three-mode n=3 both completed. The remaining
-  Adaptive time target is generation-specific map acknowledgement and
+- **The requested repetition remains §8.26:** seed7 targeted n=3 and a new
+  order-crossed seed1-10 x three-mode n=3 both completed. Section 8.27
+  implements its generation-specific acknowledgement target on the harder
+  seed6-10 subset. The remaining Adaptive time target is repeated guard and
   topology/optimizer recovery efficiency, not another blind publication-rate
-  increase.
+  increase or weaker ACK SLA.
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),
@@ -2108,8 +2183,12 @@ but not population completion or flight readiness. Sections 8.23 and 8.24 close
 the observed Full endpoint and between-episode guard-gap holes, while section
 8.25 exposes the distinct first stale-map brake timing hole. Section 8.26's
 pre-stale refresh closes that observed contact in the current seed7 and n=3
-local gates, but exposes long version-ACK tails and 80-92% late-map guard duty.
-The next target is content-specific generation ACK, certified fresh-map resume,
-and a bounded stop-and-topology-reroute fallback. Retain the static-PCD monitor,
-live-cloud forensics, fixed-Sector control, and CIRI shadow's non-authoritative
-default-off status.
+local gates. Section 8.27 replaces its version proxy with exact generation ACK,
+requires a fresh certified replan before resume, and enters certified stop on a
+bounded ACK miss. It also proves that the old 11.245 s tail was not exact cloud
+processing latency, while exposing real best-effort cloud loss and persistent
+79.60-94.68% late-map guard duty. The next target is guard-episode attribution
+and a bounded reduction of repeated stop/replan work without weakening the ACK
+gate or safety certificate. Retain the static-PCD monitor, live-cloud
+forensics, fixed-Sector control, and CIRI shadow's non-authoritative default-off
+status.

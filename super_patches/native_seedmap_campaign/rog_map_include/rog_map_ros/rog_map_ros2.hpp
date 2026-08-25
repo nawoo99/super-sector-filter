@@ -48,6 +48,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/u_int64.hpp>
+#include <std_msgs/msg/u_int64_multi_array.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -94,8 +95,11 @@ namespace rog_map {
             rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
             rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_sub;
             rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr commit_pub;
+            rclcpp::Publisher<std_msgs::msg::UInt64MultiArray>::SharedPtr
+                cloud_process_ack_pub;
             bool pending_frame{false};
             std::uint64_t pc_seq{0};
+            std::int64_t pc_source_stamp_ns{0};
             MapHealthClock::time_point pc_rx_time{};
             Pose pc_pose;
             PointCloud pc;
@@ -176,6 +180,7 @@ namespace rog_map {
                 rc_.pc = std::move(temp_pc);
                 rc_.pc_pose = std::make_pair(robot_state.p, robot_state.q);
                 rc_.pc_seq = scan_seq;
+                rc_.pc_source_stamp_ns = source_stamp_ns;
                 rc_.pc_rx_time = rx_time;
                 rc_.pending_frame = true;
             }
@@ -192,6 +197,7 @@ namespace rog_map {
             PointCloud temp_pc;
             Pose temp_pose;
             std::uint64_t scan_seq{0};
+            std::int64_t source_stamp_ns{0};
             MapHealthClock::time_point scan_rx_time{};
             bool has_pending_frame = false;
             {
@@ -200,6 +206,7 @@ namespace rog_map {
                     temp_pc = std::move(rc_.pc);
                     temp_pose = rc_.pc_pose;
                     scan_seq = rc_.pc_seq;
+                    source_stamp_ns = rc_.pc_source_stamp_ns;
                     scan_rx_time = rc_.pc_rx_time;
                     rc_.pending_frame = false;
                     has_pending_frame = true;
@@ -221,10 +228,25 @@ namespace rog_map {
             auto map_write_transaction = acquireMapWriteTransaction();
             recordMapUpdateStarted();
             const auto result = updateProbMap(temp_pc, temp_pose);
-            recordMapUpdateFinished(scan_seq, scan_rx_time, result);
+            recordMapUpdateFinished(scan_seq, source_stamp_ns, scan_rx_time,
+                                    result);
+            const auto health = getMapHealthSnapshot();
+            if (result.scan_processed && rc_.cloud_process_ack_pub) {
+                // Content-specific acknowledgement. The PointCloud2 source
+                // stamp survives the sector filter unchanged and therefore
+                // identifies the exact cloud consumed by this map update,
+                // even when it produces no occupancy delta/map-version bump.
+                std_msgs::msg::UInt64MultiArray ack;
+                ack.data = {
+                    scan_seq,
+                    static_cast<std::uint64_t>(source_stamp_ns),
+                    health.map_version,
+                    result.map_committed ? 1ULL : 0ULL};
+                rc_.cloud_process_ack_pub->publish(ack);
+            }
             if (result.map_committed && rc_.commit_pub) {
                 std_msgs::msg::UInt64 commit;
-                commit.data = getMapHealthSnapshot().map_version;
+                commit.data = health.map_version;
                 rc_.commit_pub->publish(commit);
             }
 
@@ -444,6 +466,11 @@ namespace rog_map {
                 rc_.commit_pub =
                         nh_->create_publisher<std_msgs::msg::UInt64>(
                                 "/rog_map/commit_version", qos);
+                const auto ack_qos = rclcpp::QoS(rclcpp::KeepLast(16))
+                        .reliable().durability_volatile();
+                rc_.cloud_process_ack_pub = nh_->create_publisher<
+                        std_msgs::msg::UInt64MultiArray>(
+                                "/rog_map/cloud_process_ack", ack_qos);
                 rc_.odom_me_cbk_group = nh_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
                 rc_.cloud_me_cbk_group = nh_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
                 rclcpp::SubscriptionOptions so;

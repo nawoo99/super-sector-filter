@@ -5,6 +5,7 @@
 #include <sensor_msgs/msg/point_field.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/u_int64.hpp>
+#include <std_msgs/msg/u_int64_multi_array.hpp>
 
 #include <algorithm>
 #include <array>
@@ -19,6 +20,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -36,6 +38,9 @@ struct Options {
   double map_commit_refresh_age_s{0.12};
   double map_commit_refresh_min_interval_s{0.10};
   double map_commit_pre_stale_full_age_s{0.0};
+  std::string map_process_ack_topic{"/rog_map/cloud_process_ack"};
+  std::string full_refresh_request_topic{"/sector/full_refresh_request"};
+  bool full_refresh_generation_ack_en{false};
   uint64_t full_open_extra_max_points{6000};
   bool track_trap{false};
   bool sector_until_trap{false};
@@ -131,6 +136,12 @@ Options parseArgs(int argc, char **argv) {
     } else if (arg == "--map-commit-pre-stale-full-age-s") {
       options.map_commit_pre_stale_full_age_s =
           parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--map-process-ack-topic") {
+      options.map_process_ack_topic = requireValue(i, arg);
+    } else if (arg == "--full-refresh-request-topic") {
+      options.full_refresh_request_topic = requireValue(i, arg);
+    } else if (arg == "--full-refresh-generation-ack") {
+      options.full_refresh_generation_ack_en = true;
     } else if (arg == "--full-open-extra-max-points") {
       options.full_open_extra_max_points = static_cast<uint64_t>(
           parseInt(arg, requireValue(i, arg)));
@@ -351,6 +362,23 @@ public:
           std::bind(&NativeSectorCpp::mapCommitCallback, this,
                     std::placeholders::_1));
     }
+    if (options_.mode == "adaptive" &&
+        options_.full_refresh_generation_ack_en) {
+      const auto generation_qos = rclcpp::QoS(rclcpp::KeepLast(16))
+                                      .reliable()
+                                      .durability_volatile();
+      map_process_ack_sub_ =
+          create_subscription<std_msgs::msg::UInt64MultiArray>(
+              options_.map_process_ack_topic, generation_qos,
+              std::bind(&NativeSectorCpp::mapProcessAckCallback, this,
+                        std::placeholders::_1));
+      const auto request_qos = rclcpp::QoS(rclcpp::KeepLast(16))
+                                   .reliable()
+                                   .transient_local();
+      full_refresh_request_pub_ =
+          create_publisher<std_msgs::msg::UInt64MultiArray>(
+              options_.full_refresh_request_topic, request_qos);
+    }
     cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
         options_.output_topic, sensor_qos);
     full_open_pub_ =
@@ -363,6 +391,14 @@ public:
     });
     report_timer_ = create_wall_timer(
         std::chrono::seconds(5), std::bind(&NativeSectorCpp::report, this));
+
+    if (full_refresh_request_pub_) {
+      // A transient-local zero record advertises that this Adaptive filter
+      // participates in generation-gated recovery before the first cloud.
+      std_msgs::msg::UInt64MultiArray enabled;
+      enabled.data = {0, 0, 0};
+      full_refresh_request_pub_->publish(enabled);
+    }
 
     RCLCPP_INFO(get_logger(),
                 "%s mode, half-angle %.1f deg, input %s, publish cap %.2f Hz, "
@@ -418,7 +454,7 @@ private:
     PRE_STALE_FULL_REFRESH
   };
 
-  void recordFullRefreshSourceVersion(bool pre_stale, double now,
+  void recordFullRefreshSourceVersion(bool pre_stale,
                                       double trigger_age_s = 0.0) {
     if (!last_map_commit_rx_s_)
       return;
@@ -426,9 +462,8 @@ private:
     if (!pre_stale)
       return;
     ++pre_stale_full_refresh_frames_;
-    pre_stale_full_refresh_pending_ack_ = true;
     pre_stale_full_refresh_source_version_ = last_map_commit_version_;
-    pre_stale_full_refresh_send_s_ = now;
+    pre_stale_full_refresh_pending_version_advance_ = true;
     pre_stale_full_refresh_trigger_age_sum_s_ += trigger_age_s;
     pre_stale_full_refresh_trigger_age_max_s_ =
         std::max(pre_stale_full_refresh_trigger_age_max_s_, trigger_age_s);
@@ -443,7 +478,7 @@ private:
       trajectory_guard_refresh_pending_ = false;
       trajectory_guard_unbounded_refresh_frame_ = true;
       ++trajectory_guard_refresh_frames_;
-      recordFullRefreshSourceVersion(false, now);
+      recordFullRefreshSourceVersion(false);
       return PublishDecision::REGULAR;
     }
     double publish_hz = options_.max_publish_hz;
@@ -467,7 +502,7 @@ private:
         last_full_refresh_source_version_ &&
         *last_full_refresh_source_version_ == last_map_commit_version_;
     if (pre_stale_age_due && !version_already_refreshed) {
-      recordFullRefreshSourceVersion(true, now, commit_age_s);
+      recordFullRefreshSourceVersion(true, commit_age_s);
       if (publish_hz > 0.0)
         next_publish_time_s_ = now + 1.0 / publish_hz;
       return PublishDecision::PRE_STALE_FULL_REFRESH;
@@ -510,23 +545,80 @@ private:
 
   void mapCommitCallback(const std_msgs::msg::UInt64::SharedPtr msg) {
     const double now = nowSeconds();
-    if (pre_stale_full_refresh_pending_ack_ &&
+    if (pre_stale_full_refresh_pending_version_advance_ &&
         pre_stale_full_refresh_source_version_ &&
         msg->data > *pre_stale_full_refresh_source_version_) {
-      ++pre_stale_full_refresh_ack_count_;
-      if (pre_stale_full_refresh_send_s_) {
-        const double latency =
-            std::max(0.0, now - *pre_stale_full_refresh_send_s_);
-        pre_stale_full_refresh_ack_latency_sum_s_ += latency;
-        pre_stale_full_refresh_ack_latency_max_s_ =
-            std::max(pre_stale_full_refresh_ack_latency_max_s_, latency);
-      }
-      pre_stale_full_refresh_pending_ack_ = false;
-      pre_stale_full_refresh_send_s_.reset();
+      ++pre_stale_full_refresh_version_advance_count_;
+      pre_stale_full_refresh_pending_version_advance_ = false;
     }
     last_map_commit_rx_s_ = now;
     last_map_commit_version_ = msg->data;
     ++map_commit_status_count_;
+  }
+
+  struct PendingFullRefresh {
+    double send_s{0.0};
+  };
+
+  static uint64_t cloudStampNs(const sensor_msgs::msg::PointCloud2 &msg) {
+    const int64_t stamp_ns =
+        static_cast<int64_t>(msg.header.stamp.sec) * 1000000000LL +
+        static_cast<int64_t>(msg.header.stamp.nanosec);
+    return static_cast<uint64_t>(stamp_ns);
+  }
+
+  void publishFullRefreshRequest(
+      const sensor_msgs::msg::PointCloud2 &msg, uint64_t kind, double now) {
+    if (!full_refresh_request_pub_)
+      return;
+    const uint64_t stamp_ns = cloudStampNs(msg);
+    const uint64_t request_seq = ++full_refresh_request_seq_;
+    std_msgs::msg::UInt64MultiArray request;
+    // [filter request sequence, exact PointCloud2 source stamp, kind]
+    // kind 1 = pre-stale; kind 2 = trajectory-guard true edge.
+    request.data = {request_seq, stamp_ns, kind};
+    full_refresh_request_pub_->publish(request);
+    ++full_refresh_request_count_;
+    if (kind == 1) {
+      if (!pre_stale_pending_exact_ack_.empty()) {
+        pre_stale_full_refresh_superseded_count_ +=
+            pre_stale_pending_exact_ack_.size();
+        pre_stale_pending_exact_ack_.clear();
+      }
+      const auto [it, inserted] = pre_stale_pending_exact_ack_.emplace(
+          stamp_ns, PendingFullRefresh{now});
+      if (!inserted) {
+        ++full_refresh_duplicate_stamp_count_;
+        it->second.send_s = now;
+      }
+      pre_stale_full_refresh_pending_ack_max_ = std::max<uint64_t>(
+          pre_stale_full_refresh_pending_ack_max_,
+          pre_stale_pending_exact_ack_.size());
+    }
+  }
+
+  void mapProcessAckCallback(
+      const std_msgs::msg::UInt64MultiArray::SharedPtr msg) {
+    ++map_process_ack_status_count_;
+    if (msg->data.size() < 4) {
+      ++map_process_ack_malformed_count_;
+      return;
+    }
+    const uint64_t stamp_ns = msg->data[1];
+    last_map_process_ack_scan_seq_ = msg->data[0];
+    last_map_process_ack_stamp_ns_ = stamp_ns;
+    last_map_process_ack_version_ = msg->data[2];
+    const auto pending = pre_stale_pending_exact_ack_.find(stamp_ns);
+    if (pending == pre_stale_pending_exact_ack_.end())
+      return;
+    ++pre_stale_full_refresh_ack_count_;
+    if (msg->data[3] != 0)
+      ++pre_stale_full_refresh_ack_committed_count_;
+    const double latency = std::max(0.0, nowSeconds() - pending->second.send_s);
+    pre_stale_full_refresh_ack_latency_sum_s_ += latency;
+    pre_stale_full_refresh_ack_latency_max_s_ =
+        std::max(pre_stale_full_refresh_ack_latency_max_s_, latency);
+    pre_stale_pending_exact_ack_.erase(pending);
   }
 
   void recordTransition(const std::string &transition, double now) {
@@ -926,6 +1018,11 @@ private:
     const bool passthrough = options_.mode == "full" || !drone_ ||
         pre_stale_full_refresh ||
         (effective_open && !commit_refresh && !bounded_full_open);
+    if (pre_stale_full_refresh) {
+      publishFullRefreshRequest(*msg, 1, now);
+    } else if (trajectory_guard_unbounded_refresh_frame_) {
+      publishFullRefreshRequest(*msg, 2, now);
+    }
     if (passthrough) {
       kept_points_ += input_points;
       cloud_pub_->publish(*msg);
@@ -1124,6 +1221,11 @@ private:
            options_.map_commit_refresh_min_interval_s);
     number("map_commit_pre_stale_full_age_s",
            options_.map_commit_pre_stale_full_age_s);
+    boolean("full_refresh_generation_ack_en",
+            options_.full_refresh_generation_ack_en);
+    string("map_process_ack_topic", options_.map_process_ack_topic);
+    string("full_refresh_request_topic",
+           options_.full_refresh_request_topic);
     integer("map_commit_status_count", map_commit_status_count_);
     integer("map_commit_version", last_map_commit_version_);
     integer("commit_refresh_frames", commit_refresh_frames_);
@@ -1132,7 +1234,32 @@ private:
     integer("pre_stale_full_refresh_ack_count",
             pre_stale_full_refresh_ack_count_);
     boolean("pre_stale_full_refresh_pending_ack",
-            pre_stale_full_refresh_pending_ack_);
+            !pre_stale_pending_exact_ack_.empty());
+    integer("pre_stale_full_refresh_pending_ack_count",
+            pre_stale_pending_exact_ack_.size());
+    integer("pre_stale_full_refresh_pending_ack_max",
+            pre_stale_full_refresh_pending_ack_max_);
+    integer("pre_stale_full_refresh_ack_committed_count",
+            pre_stale_full_refresh_ack_committed_count_);
+    integer("pre_stale_full_refresh_superseded_count",
+            pre_stale_full_refresh_superseded_count_);
+    integer("pre_stale_full_refresh_version_advance_count",
+            pre_stale_full_refresh_version_advance_count_);
+    boolean("pre_stale_full_refresh_pending_version_advance",
+            pre_stale_full_refresh_pending_version_advance_);
+    integer("full_refresh_request_count", full_refresh_request_count_);
+    integer("full_refresh_request_sequence", full_refresh_request_seq_);
+    integer("full_refresh_duplicate_stamp_count",
+            full_refresh_duplicate_stamp_count_);
+    integer("map_process_ack_status_count", map_process_ack_status_count_);
+    integer("map_process_ack_malformed_count",
+            map_process_ack_malformed_count_);
+    integer("last_map_process_ack_scan_seq",
+            last_map_process_ack_scan_seq_);
+    integer("last_map_process_ack_stamp_ns",
+            last_map_process_ack_stamp_ns_);
+    integer("last_map_process_ack_version",
+            last_map_process_ack_version_);
     integer("pre_stale_full_refresh_same_version_suppressed_frames",
             pre_stale_full_refresh_same_version_suppressed_frames_);
     number("pre_stale_full_refresh_trigger_age_mean_s",
@@ -1304,7 +1431,11 @@ private:
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr replan_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr trajectory_guard_sub_;
   rclcpp::Subscription<std_msgs::msg::UInt64>::SharedPtr map_commit_sub_;
+  rclcpp::Subscription<std_msgs::msg::UInt64MultiArray>::SharedPtr
+      map_process_ack_sub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_pub_;
+  rclcpp::Publisher<std_msgs::msg::UInt64MultiArray>::SharedPtr
+      full_refresh_request_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr full_open_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr armed_pub_;
   rclcpp::TimerBase::SharedPtr state_timer_;
@@ -1325,13 +1456,26 @@ private:
   std::optional<double> last_commit_refresh_publish_s_;
   std::optional<uint64_t> last_full_refresh_source_version_;
   std::optional<uint64_t> pre_stale_full_refresh_source_version_;
-  std::optional<double> pre_stale_full_refresh_send_s_;
+  std::unordered_map<uint64_t, PendingFullRefresh>
+      pre_stale_pending_exact_ack_;
   uint64_t map_commit_status_count_{0};
   uint64_t last_map_commit_version_{0};
   uint64_t commit_refresh_frames_{0};
   uint64_t pre_stale_full_refresh_frames_{0};
   uint64_t pre_stale_full_refresh_ack_count_{0};
-  bool pre_stale_full_refresh_pending_ack_{false};
+  uint64_t pre_stale_full_refresh_ack_committed_count_{0};
+  uint64_t pre_stale_full_refresh_superseded_count_{0};
+  uint64_t pre_stale_full_refresh_version_advance_count_{0};
+  bool pre_stale_full_refresh_pending_version_advance_{false};
+  uint64_t pre_stale_full_refresh_pending_ack_max_{0};
+  uint64_t full_refresh_request_count_{0};
+  uint64_t full_refresh_request_seq_{0};
+  uint64_t full_refresh_duplicate_stamp_count_{0};
+  uint64_t map_process_ack_status_count_{0};
+  uint64_t map_process_ack_malformed_count_{0};
+  uint64_t last_map_process_ack_scan_seq_{0};
+  uint64_t last_map_process_ack_stamp_ns_{0};
+  uint64_t last_map_process_ack_version_{0};
   uint64_t pre_stale_full_refresh_same_version_suppressed_frames_{0};
   double pre_stale_full_refresh_trigger_age_sum_s_{0.0};
   double pre_stale_full_refresh_trigger_age_max_s_{0.0};

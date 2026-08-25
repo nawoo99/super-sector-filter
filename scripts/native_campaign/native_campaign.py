@@ -263,6 +263,39 @@ def parse_shadow_guard_log(path):
     }
 
 
+def parse_full_refresh_ack_log(path):
+    """Count generation-ACK safety transitions from the planner log."""
+    counts = {
+        "full_refresh_ack_timeouts": 0,
+        "full_refresh_recovery_gate_arms": 0,
+        "full_refresh_recovery_targets": 0,
+        "full_refresh_recovery_acks": 0,
+        "full_refresh_ack_timeout_recoveries": 0,
+        "guard_topology_reroute_arms": 0,
+        "guard_topology_reroute_searches": 0,
+    }
+    markers = {
+        "FULL_REFRESH_ACK_TIMEOUT": "full_refresh_ack_timeouts",
+        "FULL_REFRESH_RECOVERY_GATE_ARM":
+            "full_refresh_recovery_gate_arms",
+        "FULL_REFRESH_RECOVERY_TARGET": "full_refresh_recovery_targets",
+        "FULL_REFRESH_RECOVERY_ACK": "full_refresh_recovery_acks",
+        "TRAJ_GUARD_REROUTE_ARM": "guard_topology_reroute_arms",
+        "TRAJ_GUARD_REROUTE_SEARCH": "guard_topology_reroute_searches",
+    }
+    with open(path, errors="replace") as stream:
+        for line in stream:
+            for marker, key in markers.items():
+                if marker in line:
+                    counts[key] += 1
+            if (
+                "TRAJ_GUARD_RECOVERED" in line
+                and "trigger=full_refresh_ack_timeout" in line
+            ):
+                counts["full_refresh_ack_timeout_recoveries"] += 1
+    return counts
+
+
 class CpuMeter:
     """Average CPU% of the busiest process matching `pattern`, between start()/stop()."""
     def __init__(self, pattern):
@@ -488,6 +521,13 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "position_command_messages", "trajectory_flag2_messages",
           "trajectory_flag3_messages",
           "guard_stop_detected", "guard_stop_time_s",
+          "full_refresh_ack_timeouts",
+          "full_refresh_recovery_gate_arms",
+          "full_refresh_recovery_targets",
+          "full_refresh_recovery_acks",
+          "full_refresh_ack_timeout_recoveries",
+          "guard_topology_reroute_arms",
+          "guard_topology_reroute_searches",
           "shadow_safe_candidates", "shadow_unsafe_candidates",
           "shadow_skipped_candidates", "shadow_validated_candidates",
           "shadow_geometric_unsafe", "shadow_map_race",
@@ -563,11 +603,28 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_map_commit_topic", "filter_map_commit_refresh_age_s",
           "filter_map_commit_refresh_min_interval_s",
           "filter_map_commit_pre_stale_full_age_s",
+          "filter_full_refresh_generation_ack_en",
+          "filter_map_process_ack_topic",
+          "filter_full_refresh_request_topic",
           "filter_map_commit_status_count", "filter_map_commit_version",
           "filter_commit_refresh_frames",
           "filter_pre_stale_full_refresh_frames",
           "filter_pre_stale_full_refresh_ack_count",
           "filter_pre_stale_full_refresh_pending_ack",
+          "filter_pre_stale_full_refresh_pending_ack_count",
+          "filter_pre_stale_full_refresh_pending_ack_max",
+          "filter_pre_stale_full_refresh_ack_committed_count",
+          "filter_pre_stale_full_refresh_superseded_count",
+          "filter_pre_stale_full_refresh_version_advance_count",
+          "filter_pre_stale_full_refresh_pending_version_advance",
+          "filter_full_refresh_request_count",
+          "filter_full_refresh_request_sequence",
+          "filter_full_refresh_duplicate_stamp_count",
+          "filter_map_process_ack_status_count",
+          "filter_map_process_ack_malformed_count",
+          "filter_last_map_process_ack_scan_seq",
+          "filter_last_map_process_ack_stamp_ns",
+          "filter_last_map_process_ack_version",
           "filter_pre_stale_full_refresh_same_version_suppressed_frames",
           "filter_pre_stale_full_refresh_trigger_age_mean_s",
           "filter_pre_stale_full_refresh_trigger_age_max_s",
@@ -753,6 +810,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             adaptive_trajectory_guard_hold_s=2.5,
             adaptive_trajectory_guard_active_max_publish_hz=0.0,
             adaptive_pre_stale_full_age_s=0.25,
+            adaptive_full_refresh_generation_ack=True,
             adaptive_full_open_extra_max_points=6000):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
@@ -974,6 +1032,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     f"{adaptive_trajectory_guard_active_max_publish_hz}"
                     f" --map-commit-pre-stale-full-age-s "
                     f"{adaptive_pre_stale_full_age_s}"
+                    f"{' --full-refresh-generation-ack' if adaptive_full_refresh_generation_ack else ''}"
                     f" --full-open-extra-max-points "
                     f"{adaptive_full_open_extra_max_points}"
                     " --near-field-speed-gain-s 0.2"
@@ -1405,6 +1464,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     with open(correlation_path, "w") as stream:
                         json.dump(correlation, stream, indent=2)
                         stream.write("\n")
+        if os.path.exists(reference_stack_log):
+            rec.update(parse_full_refresh_ack_log(reference_stack_log))
         if is_recovery:
             base_recovery_success = bool(
                 rec.get("success")
@@ -1647,6 +1708,16 @@ def main():
         ),
     )
     ap.add_argument(
+        "--no-adaptive-full-refresh-generation-ack",
+        dest="adaptive_full_refresh_generation_ack",
+        action="store_false",
+        default=True,
+        help=(
+            "disable the strict-burst Adaptive exact-cloud generation ACK "
+            "and planner recovery handshake"
+        ),
+    )
+    ap.add_argument(
         "--artifacts-dir",
         help="copy each run's monitor JSON, including contact context, here",
     )
@@ -1810,6 +1881,9 @@ def main():
                         ),
                         adaptive_pre_stale_full_age_s=(
                             args.adaptive_pre_stale_full_age_s
+                        ),
+                        adaptive_full_refresh_generation_ack=(
+                            args.adaptive_full_refresh_generation_ack
                         ),
                         adaptive_full_open_extra_max_points=(
                             args.adaptive_full_open_extra_max_points
