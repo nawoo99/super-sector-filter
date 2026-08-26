@@ -2594,3 +2594,64 @@ readiness or formal collision freedom. McNemar was not run. Raw-cloud CIRI
 remains default false, shadow-only and non-authoritative. The `obs_skip_num`
 no-op, NaN/clearance-penalty design defects, BackupTrajOpt coverage limitation
 and `DRONE_R=robot_r` metric limitation remain outside this correction.
+
+### 8.33 Independent final-binary n=5 generalization gate (2026-08-27)
+
+A fresh order-rotated map1-10 x Full/fixed-Sector/Adaptive x n=5 campaign
+completed all 150 requested rows. It reused neither the preceding n=3 rows nor
+their broken computation window. Every row was first-attempt, speed-valid,
+performance-generation-ready and performance-window-valid.
+
+Full completed 50/50 with zero live/static contact. Fixed Sector completed
+49/50, had one live-contact run/two events, one static-collision run/one event,
+and was safety-qualified on 48/50. Adaptive completed 50/50 with zero
+live/static contact. Mean times including the Sector timeout were
+76.26/75.50/75.10 s; medians were 70.76/71.02/74.56 s. Full's mean contains a
+293.79 s long tail, while Adaptive's maximum was 96.30 s.
+
+The paired mechanism evidence occurred on two different maps. Map7 run1
+Sector stopped after waypoint 4/5 and timed out at 300.01 s with no contact;
+paired Adaptive completed in 80.80 s and opened full view ten times. Map8 run1
+Sector completed but made two live contact events and one static collision,
+with -0.170 m worst static clearance; paired Adaptive completed in 69.67 s,
+contact-free at +0.286 m, with 13 effective opens. The prior n=3 map9 contact
+did not repeat in this n=5 cohort, so the degradation is trajectory-dependent
+rather than deterministic per seed.
+
+All 50 Full/Adaptive computation pairs are valid. Adaptive reduced Full
+points/update 16.41%, map total/update 19.31%, occupancy update time 11.74%,
+FSM CPU 17.49%, and time-integrated FSM+filter CPU work 13.33%. It retained
+59.73% of points and made 534 effective full-view transitions (10.68/run).
+Underlying stall, replan-guard and trajectory-guard counters overlap and must
+not be summed. Exact-generation delivery remained closed: trajectory-guard
+ACK commit was 1,336/1,336 and pre-stale ACK commit 3,656/3,656, with zero
+retry, pending, supersede, abandon or timeout.
+
+One separate Full liveness tail remains. Map8 run2 repeatedly received guarded
+A* `NO_PATH` while stopped, accumulated 154 topology arms and 363 searches,
+then recovered and finished in 293.79 s, 6.21 s before timeout. Paired Adaptive
+finished in 81.30 s after two arms/two searches. This did not lower Full's
+observed completion rate, but it prevents describing Full timing as robust and
+is the next engineering target.
+
+This section also corrects the earlier "McNemar not run" gap. In the
+independent n=5 cohort, exact paired safety discordance was 2:0 with two-sided
+`p=0.5`. Supplementarily pooling the same-binary n=3+n=5 cohorts gives Full
+80/80, Sector 75/80 and Adaptive 80/80 safety-qualified completion; exact
+discordance 5:0 gives `p=0.0625`. The direction is consistent but not yet
+significant at 0.05. Full/Adaptive 50/50 has a 95% Wilson lower bound of
+92.87%, not population 100%.
+
+There was no infrastructure retry or OOM, accepted FSM swap stayed 0, minimum
+available host memory was 4.65 GiB, and sampled memory PSI was 0. `py_compile`,
+13 unittest cases and 19 pytest cases pass. Full map tables, intervals,
+transition accounting, paired counterexamples and claim boundaries are in
+`docs/final_generalization_n5_20260827.md`; raw data is
+`results/final_generalization_3mode_seed1_10_n5_raw_20260827.csv`.
+
+The next engineering step is to bound or reuse certified topology information
+in the stopped Full search without weakening the certificate. The next
+experimental step is a preregistered held-out map/noise cohort. Raw-cloud CIRI
+remains default false/non-authoritative, and the `obs_skip_num` no-op,
+NaN/clearance-penalty defects, BackupTrajOpt gap and `DRONE_R=robot_r` metric
+limitation remain unchanged.

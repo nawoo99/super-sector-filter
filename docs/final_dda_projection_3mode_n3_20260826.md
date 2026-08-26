@@ -146,3 +146,15 @@ Python tests pass. Raw-cloud CIRI remains default false, shadow-only and
 non-authoritative. McNemar was not run. The known `obs_skip_num` no-op,
 NaN/clearance-penalty defects, BackupTrajOpt coverage limitation, and
 `DRONE_R=robot_r` metric limitation remain outside this correction.
+
+## Independent n=5 follow-up
+
+The next-day fresh n=5 gate completed all 150 rows with valid performance
+windows. Full/Adaptive were each 50/50 safety-qualified; fixed Sector was
+48/50, with one non-contact timeout and one different contact run. Adaptive
+reduced Full points/update 16.41% and total/update 19.31%. Exact paired safety
+McNemar was 2:0, `p=0.5`; pooling this n=3 and the new n=5 descriptively gives
+5:0, `p=0.0625`, so the direction is consistent but is not yet a statistically
+significant population claim. See
+`docs/final_generalization_n5_20260827.md` and
+`results/final_generalization_3mode_seed1_10_n5_raw_20260827.csv`.

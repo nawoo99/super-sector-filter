@@ -1,6 +1,39 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-27 final-binary 독립 n=5 일반화 gate 완료.** Fresh
+> map1-10 x Full/Sector/Adaptive x n=5, order rotation 150회를 수행했다.
+> Full 50/50·Adaptive 50/50은 완주, live/static contact 0, speed-valid였다.
+> Fixed Sector는 49/50 완주, live contact 1 run/2 events, static collision
+> 1 run/1 event, safety-qualified 48/50이었다. Map7 run1 Sector는 contact 없이
+> waypoint 4/5에서 300.01초 timeout, paired Adaptive는 80.80초·contact 0으로
+> 완주했다. Map8 run1 Sector는 완주했지만 live/static contact가 발생했고
+> -0.170 m였으며, paired Adaptive는 69.67초·contact 0·+0.286 m였다.
+>
+> 유효한 50개 Full/Adaptive pair에서 Adaptive는 points/update 16.41%, map
+> total/update 19.31%, update time 11.74%, FSM CPU 17.49%, time-integrated
+> FSM+filter CPU work 13.33%를 줄였다. Point kept 59.73%, effective full-view
+> open 534회(10.68/run)다. Trajectory-guard ACK 1,336/1,336, pre-stale ACK
+> 3,656/3,656이며 retry/pending/supersede/abandon/timeout 0이다.
+>
+> Full은 50/50을 유지했지만 map8 run2가 guarded A* `NO_PATH` 뒤 topology
+> arm/search 154/363회를 소비하고 293.79초에 끝난 liveness tail이 남았다.
+> 이는 메모리 문제가 아니다: retry/OOM/FSM swap/PSI 모두 0, 최소 available
+> memory 4.65 GiB였다. 다음 engineering target은 hard certificate를 약화하지
+> 않고 이 stopped topology search tail을 bound/reuse하는 것이다.
+>
+> 이번에는 exact paired McNemar도 수행했다. 독립 n=5 safe discordance 2:0은
+> `p=0.5`, same-binary n=3+n=5의 5:0도 `p=0.0625`라 아직 유의하지 않다.
+> Full/Adaptive 50/50의 95% Wilson lower bound는 92.87%다. 따라서 population
+> 100%/flight-ready 주장은 금지하고, 다음 실험은 같은 seed 반복이 아니라
+> preregistered held-out map/noise cohort로 갈 것. 상세는 viability §8.33,
+> `docs/final_generalization_n5_20260827.md`, raw는
+> `results/final_generalization_3mode_seed1_10_n5_raw_20260827.csv`를 볼 것.
+> Raw-cloud CIRI default false/non-authoritative, `obs_skip_num` no-op,
+> NaN/clearance-penalty, BackupTrajOpt 미커버, `DRONE_R=robot_r` 지표 한계도
+> 계속 유효하다.
+
+> [!IMPORTANT]
 > **2026-08-26 final DDA 3-mode n=3 + 대형 맵 연산계측 race 수정 완료.**
 > 최종 DDA/body-coordinate 바이너리로 map1-10 x Full/Sector/Adaptive x n=3
 > (총 90회, order rotation)을 수행했다. Full 30/30·Adaptive 30/30은
