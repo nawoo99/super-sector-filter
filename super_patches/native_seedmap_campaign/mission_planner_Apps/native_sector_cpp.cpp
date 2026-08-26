@@ -68,6 +68,7 @@ struct Options {
       "/planning/trajectory_guard_recovery_active"};
   double trajectory_guard_hold_s{2.5};
   double trajectory_guard_active_max_publish_hz{0.0};
+  double trajectory_guard_ack_retry_age_s{0.0};
 };
 
 double parseDouble(const std::string &name, const char *value) {
@@ -200,6 +201,9 @@ Options parseArgs(int argc, char **argv) {
     } else if (arg == "--trajectory-guard-active-max-publish-hz") {
       options.trajectory_guard_active_max_publish_hz =
           parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--trajectory-guard-ack-retry-age-s") {
+      options.trajectory_guard_ack_retry_age_s =
+          parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--help" || arg == "-h") {
       throw std::runtime_error(
           "usage: native_sector_cpp [full|sector|velocity|adaptive] "
@@ -238,6 +242,7 @@ Options parseArgs(int argc, char **argv) {
       options.open_cooldown_s < 0.0 ||
       options.trajectory_guard_hold_s < 0.0 ||
       options.trajectory_guard_active_max_publish_hz < 0.0 ||
+      options.trajectory_guard_ack_retry_age_s < 0.0 ||
       options.near_field_radius_m < 0.0 ||
       options.near_field_speed_gain_s < 0.0 ||
       near_max < options.near_field_radius_m || guard_burst < 0.0 ||
@@ -495,6 +500,25 @@ private:
       recordFullRefreshSourceVersion(false);
       return PublishDecision::REGULAR;
     }
+    if (trajectory_guard_active_ &&
+        options_.full_refresh_generation_ack_en &&
+        options_.trajectory_guard_ack_retry_age_s > 0.0 &&
+        trajectory_guard_pending_exact_ack_stamp_ns_ &&
+        trajectory_guard_pending_exact_ack_send_s_ &&
+        now - *trajectory_guard_pending_exact_ack_send_s_ >=
+            options_.trajectory_guard_ack_retry_age_s) {
+      // A reliable depth-1 DDS hop guarantees transport delivery, not that a
+      // slow subscriber will take this exact cloud before a newer sample
+      // replaces it. While the planner is already fail-closed, resend one
+      // latest complete generation at a bounded stop-and-wait cadence until
+      // an exact process ACK arrives. Normal flight and pre-stale publication
+      // remain unchanged.
+      trajectory_guard_unbounded_refresh_frame_ = true;
+      ++trajectory_guard_refresh_frames_;
+      ++trajectory_guard_full_refresh_ack_retry_frames_;
+      recordFullRefreshSourceVersion(false);
+      return PublishDecision::REGULAR;
+    }
     double publish_hz = options_.max_publish_hz;
     if (options_.mode == "adaptive" && trajectory_guard_active_ &&
         options_.trajectory_guard_active_max_publish_hz > publish_hz) {
@@ -645,6 +669,13 @@ private:
       pre_stale_full_refresh_pending_ack_max_ = std::max<uint64_t>(
           pre_stale_full_refresh_pending_ack_max_,
           pre_stale_pending_exact_ack_.size());
+    } else if (kind == 2) {
+      if (trajectory_guard_pending_exact_ack_stamp_ns_) {
+        ++trajectory_guard_full_refresh_superseded_count_;
+      }
+      trajectory_guard_pending_exact_ack_stamp_ns_ = stamp_ns;
+      trajectory_guard_pending_exact_ack_send_s_ = now;
+      trajectory_guard_full_refresh_pending_ack_max_ = 1;
     }
   }
 
@@ -659,6 +690,22 @@ private:
     last_map_process_ack_scan_seq_ = msg->data[0];
     last_map_process_ack_stamp_ns_ = stamp_ns;
     last_map_process_ack_version_ = msg->data[2];
+    if (trajectory_guard_pending_exact_ack_stamp_ns_ &&
+        *trajectory_guard_pending_exact_ack_stamp_ns_ == stamp_ns) {
+      ++trajectory_guard_full_refresh_ack_count_;
+      if (msg->data[3] != 0)
+        ++trajectory_guard_full_refresh_ack_committed_count_;
+      if (trajectory_guard_pending_exact_ack_send_s_) {
+        const double latency = std::max(
+            0.0, nowSeconds() -
+                     *trajectory_guard_pending_exact_ack_send_s_);
+        trajectory_guard_full_refresh_ack_latency_sum_s_ += latency;
+        trajectory_guard_full_refresh_ack_latency_max_s_ = std::max(
+            trajectory_guard_full_refresh_ack_latency_max_s_, latency);
+      }
+      trajectory_guard_pending_exact_ack_stamp_ns_.reset();
+      trajectory_guard_pending_exact_ack_send_s_.reset();
+    }
     const auto pending = pre_stale_pending_exact_ack_.find(stamp_ns);
     if (pending == pre_stale_pending_exact_ack_.end())
       return;
@@ -924,12 +971,19 @@ private:
       trajectory_guard_refresh_pending_ = true;
       trajectory_guard_hold_until_s_.reset();
       setTrajectoryGuardOpen(true, now);
-    } else if (trajectory_guard_open_ &&
-               options_.trajectory_guard_hold_s > 0.0) {
-      trajectory_guard_hold_until_s_ =
-          now + options_.trajectory_guard_hold_s;
     } else {
-      setTrajectoryGuardOpen(false, now);
+      if (trajectory_guard_pending_exact_ack_stamp_ns_) {
+        ++trajectory_guard_full_refresh_abandoned_count_;
+        trajectory_guard_pending_exact_ack_stamp_ns_.reset();
+        trajectory_guard_pending_exact_ack_send_s_.reset();
+      }
+      if (trajectory_guard_open_ &&
+          options_.trajectory_guard_hold_s > 0.0) {
+        trajectory_guard_hold_until_s_ =
+            now + options_.trajectory_guard_hold_s;
+      } else {
+        setTrajectoryGuardOpen(false, now);
+      }
     }
     publishState();
     writeStats();
@@ -1411,6 +1465,8 @@ private:
     number("trajectory_guard_hold_s", options_.trajectory_guard_hold_s);
     number("trajectory_guard_active_max_publish_hz",
            options_.trajectory_guard_active_max_publish_hz);
+    number("trajectory_guard_ack_retry_age_s",
+           options_.trajectory_guard_ack_retry_age_s);
     boolean("trajectory_guard_active", trajectory_guard_active_);
     boolean("trajectory_guard_open", trajectory_guard_open_);
     integer("trajectory_guard_status_count", trajectory_guard_status_count_);
@@ -1421,6 +1477,27 @@ private:
             trajectory_guard_close_transitions_);
     integer("trajectory_guard_refresh_frames",
             trajectory_guard_refresh_frames_);
+    boolean("trajectory_guard_full_refresh_pending_ack",
+            trajectory_guard_pending_exact_ack_stamp_ns_.has_value());
+    integer("trajectory_guard_full_refresh_pending_ack_max",
+            trajectory_guard_full_refresh_pending_ack_max_);
+    integer("trajectory_guard_full_refresh_ack_count",
+            trajectory_guard_full_refresh_ack_count_);
+    integer("trajectory_guard_full_refresh_ack_committed_count",
+            trajectory_guard_full_refresh_ack_committed_count_);
+    integer("trajectory_guard_full_refresh_superseded_count",
+            trajectory_guard_full_refresh_superseded_count_);
+    integer("trajectory_guard_full_refresh_ack_retry_frames",
+            trajectory_guard_full_refresh_ack_retry_frames_);
+    integer("trajectory_guard_full_refresh_abandoned_count",
+            trajectory_guard_full_refresh_abandoned_count_);
+    number("trajectory_guard_full_refresh_ack_latency_mean_s",
+           trajectory_guard_full_refresh_ack_count_ > 0
+               ? rounded(trajectory_guard_full_refresh_ack_latency_sum_s_ /
+                         trajectory_guard_full_refresh_ack_count_)
+               : 0.0);
+    number("trajectory_guard_full_refresh_ack_latency_max_s",
+           rounded(trajectory_guard_full_refresh_ack_latency_max_s_));
     number("trajectory_guard_open_duty_pct",
            rounded(100.0 * trajectory_guard_open_frames_ /
                    frame_denominator, 1e3));
@@ -1610,6 +1687,16 @@ private:
   uint64_t trajectory_guard_open_transitions_{0};
   uint64_t trajectory_guard_close_transitions_{0};
   uint64_t trajectory_guard_refresh_frames_{0};
+  std::optional<uint64_t> trajectory_guard_pending_exact_ack_stamp_ns_;
+  std::optional<double> trajectory_guard_pending_exact_ack_send_s_;
+  uint64_t trajectory_guard_full_refresh_pending_ack_max_{0};
+  uint64_t trajectory_guard_full_refresh_ack_count_{0};
+  uint64_t trajectory_guard_full_refresh_ack_committed_count_{0};
+  uint64_t trajectory_guard_full_refresh_superseded_count_{0};
+  uint64_t trajectory_guard_full_refresh_ack_retry_frames_{0};
+  uint64_t trajectory_guard_full_refresh_abandoned_count_{0};
+  double trajectory_guard_full_refresh_ack_latency_sum_s_{0.0};
+  double trajectory_guard_full_refresh_ack_latency_max_s_{0.0};
   std::optional<double> first_trajectory_guard_open_time_s_;
 };
 

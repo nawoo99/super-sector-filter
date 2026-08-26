@@ -404,6 +404,10 @@ namespace super_planner {
     public:
         void getRobotState(rog_map::RobotState &out);
 
+        double getConfiguredMaxVelocity() const {
+            return cfg_.exp_traj_cfg.max_vel;
+        }
+
         bool isEasyGoal(const Vec3f &goal_position);
 
         rog_map::ROGMapROS::Ptr &getMap() {

@@ -25,6 +25,17 @@ def parse_args():
     parser.add_argument("--cloud-topic", default="/cloud_registered")
     parser.add_argument("--trap-intensity", type=float, default=12012.0)
     parser.add_argument(
+        "--speed-limit-mps",
+        type=float,
+        help="optional 3-D PositionCommand/odometry speed validity bound",
+    )
+    parser.add_argument(
+        "--speed-tolerance-mps",
+        type=float,
+        default=0.01,
+        help="absolute numerical tolerance added to --speed-limit-mps",
+    )
+    parser.add_argument(
         "--static-pcd",
         help=(
             "optional ASCII PCD used for an auxiliary occupied-sample union; "
@@ -32,6 +43,10 @@ def parse_args():
         ),
     )
     args, ros_args = parser.parse_known_args()
+    if args.speed_limit_mps is not None and args.speed_limit_mps <= 0.0:
+        parser.error("--speed-limit-mps must be positive")
+    if args.speed_tolerance_mps < 0.0:
+        parser.error("--speed-tolerance-mps must be non-negative")
     return args, ros_args
 
 
@@ -164,6 +179,14 @@ class LoopMonitor(Node):
         self.final_position = None
         self.path_length = 0.0
         self.max_speed = 0.0
+        self.max_odom_speed_3d = 0.0
+        self.max_command_speed = 0.0
+        self.max_command_horizontal_speed = 0.0
+        self.speed_exceedance_count = 0
+        self.command_speed_exceedance_count = 0
+        self.odom_speed_exceedance_count = 0
+        self.first_speed_exceedance = None
+        self.max_speed_context = None
         self.min_x = float("inf")
         self.max_x = float("-inf")
         self.min_y = float("inf")
@@ -222,6 +245,64 @@ class LoopMonitor(Node):
             "trajectory_id": int(msg.trajectory_id),
             "trajectory_flag": int(msg.trajectory_flag),
         }
+        velocity = np.array(
+            [msg.velocity.x, msg.velocity.y, msg.velocity.z], dtype=np.float64
+        )
+        speed = float(np.linalg.norm(velocity))
+        horizontal_speed = float(np.hypot(msg.velocity.x, msg.velocity.y))
+        self.max_command_speed = max(self.max_command_speed, speed)
+        self.max_command_horizontal_speed = max(
+            self.max_command_horizontal_speed, horizontal_speed
+        )
+        self.record_speed_sample(
+            "command",
+            speed,
+            np.array(
+                [msg.position.x, msg.position.y, msg.position.z],
+                dtype=np.float64,
+            ),
+            velocity,
+            self.latest_command,
+        )
+
+    def record_speed_sample(self, kind, speed, position, velocity, command=None):
+        if not np.isfinite(speed):
+            exceeded = ARGS.speed_limit_mps is not None
+        else:
+            exceeded = (
+                ARGS.speed_limit_mps is not None
+                and speed > ARGS.speed_limit_mps + ARGS.speed_tolerance_mps
+            )
+        context = {
+            "kind": kind,
+            "elapsed_s": round(time.time() - self.start_time, 6),
+            "speed_mps": round(float(speed), 6),
+            "position": np.round(position, 6).tolist(),
+            "velocity": np.round(velocity, 6).tolist(),
+            "acceleration": (
+                command.get("acceleration") if command is not None else None
+            ),
+            "trajectory_id": (
+                command.get("trajectory_id") if command is not None else None
+            ),
+            "trajectory_flag": (
+                command.get("trajectory_flag") if command is not None else None
+            ),
+        }
+        if (
+            self.max_speed_context is None
+            or speed > self.max_speed_context["speed_mps"]
+        ):
+            self.max_speed_context = context
+        if not exceeded:
+            return
+        self.speed_exceedance_count += 1
+        if kind == "command":
+            self.command_speed_exceedance_count += 1
+        else:
+            self.odom_speed_exceedance_count += 1
+        if self.first_speed_exceedance is None:
+            self.first_speed_exceedance = context
 
     def marker_points(self, msg):
         points = []
@@ -367,6 +448,11 @@ class LoopMonitor(Node):
         v = msg.twist.twist.linear
         velocity = np.array([v.x, v.y, v.z], dtype=np.float32)
         self.max_speed = max(self.max_speed, float(np.hypot(v.x, v.y)))
+        odom_speed_3d = float(np.linalg.norm(velocity))
+        self.max_odom_speed_3d = max(self.max_odom_speed_3d, odom_speed_3d)
+        self.record_speed_sample(
+            "odom", odom_speed_3d, position, velocity, self.latest_command
+        )
         final_x, final_y = WPS[-1]
         self.closest_final_goal_distance = min(
             self.closest_final_goal_distance,
@@ -502,6 +588,43 @@ result = {
     "max_y": round(node.max_y, 3) if node.max_y != float("-inf") else None,
     "path_length_m": round(node.path_length, 3),
     "max_speed_mps": round(node.max_speed, 3),
+    "max_odom_speed_3d_mps": round(node.max_odom_speed_3d, 6),
+    "max_command_speed_mps": round(node.max_command_speed, 6),
+    "max_command_horizontal_speed_mps": round(
+        node.max_command_horizontal_speed, 6
+    ),
+    "speed_limit_mps": ARGS.speed_limit_mps,
+    "speed_tolerance_mps": ARGS.speed_tolerance_mps,
+    "speed_limit_valid": (
+        None
+        if ARGS.speed_limit_mps is None
+        else node.speed_exceedance_count == 0
+    ),
+    "speed_exceedance_count": node.speed_exceedance_count,
+    "command_speed_exceedance_count": node.command_speed_exceedance_count,
+    "odom_speed_exceedance_count": node.odom_speed_exceedance_count,
+    "first_speed_exceedance_kind": (
+        node.first_speed_exceedance.get("kind")
+        if node.first_speed_exceedance else None
+    ),
+    "first_speed_exceedance_time_s": (
+        node.first_speed_exceedance.get("elapsed_s")
+        if node.first_speed_exceedance else None
+    ),
+    "first_speed_exceedance_mps": (
+        node.first_speed_exceedance.get("speed_mps")
+        if node.first_speed_exceedance else None
+    ),
+    "first_speed_exceedance_trajectory_id": (
+        node.first_speed_exceedance.get("trajectory_id")
+        if node.first_speed_exceedance else None
+    ),
+    "first_speed_exceedance_trajectory_flag": (
+        node.first_speed_exceedance.get("trajectory_flag")
+        if node.first_speed_exceedance else None
+    ),
+    "speed_exceedance_context": node.first_speed_exceedance,
+    "max_speed_context": node.max_speed_context,
     "closest_final_goal_distance_m": (
         round(node.closest_final_goal_distance, 3)
         if node.closest_final_goal_distance != float("inf")

@@ -99,6 +99,8 @@ namespace fsm {
         Trajectory brake_yaw_traj_{};
         double brake_start_wt_{0.0};
         double brake_duration_s_{0.0};
+        double brake_velocity_limit_mps_{0.0};
+        std::uint64_t brake_source_generation_{0};
         double brake_yaw_{0.0};
         std::string brake_reason_{};
         Vec3f brake_stop_position_{Vec3f::Zero()};
@@ -1001,6 +1003,25 @@ namespace fsm {
                     return;
                 }
             }
+            if (cfg_.trajectory_guard_en) {
+                const double velocity_limit =
+                        planner_ptr_->getConfiguredMaxVelocity();
+                const double max_velocity =
+                        snapshot.pos_traj.getMaxVelRate();
+                if (!std::isfinite(velocity_limit) ||
+                    velocity_limit <= 0.0 ||
+                    !std::isfinite(max_velocity) ||
+                    max_velocity > velocity_limit * 1.001) {
+                    ros_ptr_->error(
+                            " -- [TRAJ_VELOCITY_REJECT] source=poly_publish "
+                            "gen={} max_vel={:.6f} limit={:.6f}",
+                            snapshot.generation, max_velocity,
+                            velocity_limit);
+                    safety_revalidation_requested_.store(
+                            true, std::memory_order_release);
+                    return;
+                }
+            }
             mars_quadrotor_msgs::msg::PolynomialTrajectory cmd_traj;
             fillPolynomialTrajectory(snapshot.pos_traj, snapshot.yaw_traj, cmd_traj);
             mpc_cmd_pub_->publish(cmd_traj);
@@ -1058,6 +1079,7 @@ namespace fsm {
             pos_cmd.yaw_dot = sample.yaw_dot;
             pos_cmd.trajectory_flag = trajectory_flag >= 0
                     ? trajectory_flag : (sample.on_backup ? 2 : 1);
+            pos_cmd.trajectory_id = sample.generation;
             Vec3f rpy, omg;
             double aT;
             geometry_utils::convertFlatOutputToAttAndOmg(
@@ -1072,6 +1094,29 @@ namespace fsm {
             pos_cmd.thrust.z = aT;
             latest_cmd = pos_cmd;
             cmd_logs_.push_back(latest_cmd);
+        }
+
+        bool commandVelocityWithinLimit(
+                const CmdTraj::Sample &sample,
+                const char *source,
+                const double velocity_limit) const {
+            const Vec3f velocity = sample.pvaj.col(1);
+            const double speed = velocity.norm();
+            if (std::isfinite(velocity_limit) && velocity_limit > 0.0 &&
+                velocity.array().isFinite().all() &&
+                std::isfinite(speed) &&
+                speed <= velocity_limit * 1.001) {
+                return true;
+            }
+            ros_ptr_->error(
+                    " -- [TRAJ_VELOCITY_REJECT] source={} gen={} "
+                    "tt={:.6f} speed={:.6f} limit={:.6f} "
+                    "vel=[{:.6f},{:.6f},{:.6f}] backup={}",
+                    source, sample.generation, sample.trajectory_time,
+                    speed, velocity_limit,
+                    velocity.x(), velocity.y(), velocity.z(),
+                    sample.on_backup);
+            return false;
         }
 
         void getOnePositionCommand(mars_quadrotor_msgs::msg::PositionCommand &pos_cmd,
@@ -1274,11 +1319,19 @@ namespace fsm {
         }
 
         bool brakeDynamicsWithinLimits(const Trajectory &trajectory,
+                                       const double max_velocity_limit,
+                                       double &max_velocity,
                                        double &max_acc,
                                        double &max_jerk) const {
+            max_velocity = 0.0;
             max_acc = 0.0;
             max_jerk = 0.0;
             if (trajectory.empty()) {
+                return false;
+            }
+            max_velocity = trajectory.getMaxVelRate();
+            if (!std::isfinite(max_velocity) ||
+                max_velocity > max_velocity_limit * 1.001) {
                 return false;
             }
             const double duration = trajectory.getTotalDuration();
@@ -1338,7 +1391,7 @@ namespace fsm {
                     std::numeric_limits<double>::infinity();
             if (odom_position_ready) {
                 recovery_motion_dt_s =
-                        selection_wt - recovery_motion_last_wt_;
+                        robot_state_.rcv_time - recovery_motion_last_wt_;
                 if (std::isfinite(recovery_motion_last_wt_) &&
                     recovery_motion_dt_s >= 0.005 &&
                     recovery_motion_dt_s <= 0.5) {
@@ -1360,7 +1413,14 @@ namespace fsm {
                     recovery_motion_dt_s >= 0.005 ||
                     recovery_motion_dt_s < 0.0) {
                     recovery_motion_last_position_ = robot_state_.p;
-                    recovery_motion_last_wt_ = selection_wt;
+                    // These are odometry positions. Divide them by the
+                    // odometry receive-time delta, not by the times at which
+                    // asynchronous guard callbacks happened to inspect them.
+                    // The callback-time denominator produced a 10.055 m/s
+                    // estimate from a 6.323 m/s command when retries were
+                    // only 6 ms apart, then published a brake from that false
+                    // initial velocity.
+                    recovery_motion_last_wt_ = robot_state_.rcv_time;
                 }
             } else {
                 recovery_motion_velocity_valid_ = false;
@@ -1507,6 +1567,14 @@ namespace fsm {
             duration = std::min(duration, max_duration);
             const double start_wt = ros_ptr_->getSimTime();
             Trajectory brake_trajectory;
+            const double configured_velocity_limit = std::max(
+                    1.0e-3, planner_ptr_->getConfiguredMaxVelocity());
+            // If an external disturbance already put the vehicle over the
+            // configured limit, braking must remain possible. The brake may
+            // start at that measured speed but must not create a new maximum.
+            const double brake_velocity_limit = std::max(
+                    configured_velocity_limit, initial.col(1).norm());
+            double max_velocity = 0.0;
             double max_acc = 0.0;
             double max_jerk = 0.0;
             bool dynamics_ok = false;
@@ -1526,6 +1594,8 @@ namespace fsm {
             for (int attempt = 0; attempt < 30; ++attempt) {
                 auto candidate = buildBrakeTrajectory(initial, duration, start_wt);
                 dynamics_ok = brakeDynamicsWithinLimits(candidate,
+                                                        brake_velocity_limit,
+                                                        max_velocity,
                                                         max_acc, max_jerk);
                 if (dynamics_ok) {
                     // Cheap copy only. Accumulation, voxelization and CIRI are
@@ -1662,7 +1732,8 @@ namespace fsm {
                         "initial_source={} cmd_age={:.3f}s "
                         "cmd_pos_err={:.3f} cmd_vel_err={:.3f} "
                         "motion_speed={:.3f} motion_dt={:.3f}s "
-                        "last_dynamics_ok={} max_acc={:.3f} max_jerk={:.3f} "
+                        "last_dynamics_ok={} max_vel={:.3f} "
+                        "vel_limit={:.3f} max_acc={:.3f} max_jerk={:.3f} "
                             "last_path_status={} last_map={} map_age={:.3f}s "
                             "raw_status={} raw_cloud={} raw_age={:.3f}s "
                             "ciri_shadow={} ciri_shadow_result={} "
@@ -1676,7 +1747,8 @@ namespace fsm {
                                 ? recovery_motion_velocity_.norm()
                                 : std::numeric_limits<double>::infinity(),
                         recovery_motion_dt_s,
-                        dynamics_ok, max_acc, max_jerk,
+                        dynamics_ok, max_velocity, brake_velocity_limit,
+                        max_acc, max_jerk,
                         trajectorySafetyStatusName(brake_safety.status),
                         brake_safety.map_version, certified_map_age_s,
                         rawCloudSafetyStatusName(raw_brake_status),
@@ -1743,6 +1815,9 @@ namespace fsm {
                 brake_start_wt_ = certified_stationary_hold
                         ? start_wt - duration : start_wt;
                 brake_duration_s_ = duration;
+                brake_velocity_limit_mps_ = brake_velocity_limit;
+                brake_source_generation_ =
+                        planner_ptr_->getCommittedTrajectoryGeneration();
                 brake_yaw_ = initial_yaw;
                 brake_reason_ = reason;
                 brake_stop_position_ = brake_trajectory.getPos(duration);
@@ -1767,6 +1842,7 @@ namespace fsm {
                             "speed0={:.3f} initial_source={} cmd_age={:.3f}s "
                             "cmd_pos_err={:.3f} cmd_vel_err={:.3f} "
                             "motion_speed={:.3f} motion_dt={:.3f}s "
+                            "max_vel={:.3f} vel_limit={:.3f} "
                             "max_acc={:.3f} max_jerk={:.3f} "
                             "dynamics_ok={} path_status={} map={} map_age={:.3f}s "
                             "raw_status={} raw_cloud={} raw_age={:.3f}s "
@@ -1780,7 +1856,9 @@ namespace fsm {
                             recovery_motion_velocity_valid_
                                     ? recovery_motion_velocity_.norm()
                                     : std::numeric_limits<double>::infinity(),
-                            recovery_motion_dt_s, max_acc, max_jerk,
+                            recovery_motion_dt_s,
+                            max_velocity, brake_velocity_limit,
+                            max_acc, max_jerk,
                             dynamics_ok, trajectorySafetyStatusName(brake_safety.status),
                             brake_safety.map_version, certified_map_age_s,
                             rawCloudSafetyStatusName(raw_brake_status),
@@ -1811,6 +1889,7 @@ namespace fsm {
                 return false;
             }
             sample.start_wt = brake_start_wt_;
+            sample.generation = brake_source_generation_;
             sample.trajectory_time = eval_tt;
             sample.total_duration = brake_duration_s_;
             sample.finished = raw_tt >= brake_duration_s_;
@@ -1824,6 +1903,11 @@ namespace fsm {
                 safety_brake_finished_.store(true, std::memory_order_release);
             }
             return true;
+        }
+
+        double getBrakeVelocityLimit() const {
+            std::lock_guard<std::mutex> lock(safety_mutex_);
+            return brake_velocity_limit_mps_;
         }
 
         bool tryRecoverFromEmergencyBrake() {
@@ -1925,6 +2009,8 @@ namespace fsm {
                 recovered_reason = brake_reason_;
                 brake_pos_traj_ = Trajectory{};
                 brake_yaw_traj_ = Trajectory{};
+                brake_velocity_limit_mps_ = 0.0;
+                brake_source_generation_ = 0;
                 brake_stability_started_ = false;
                 safety_brake_finished_.store(false, std::memory_order_release);
                 safety_brake_active_.store(false, std::memory_order_release);
@@ -2252,6 +2338,11 @@ namespace fsm {
                 if (!getBrakeSample(brake_sample)) {
                     return;
                 }
+                if (!commandVelocityWithinLimit(
+                            brake_sample, "emergency_brake",
+                            getBrakeVelocityLimit())) {
+                    return;
+                }
                 mars_quadrotor_msgs::msg::PolynomialTrajectory heartbeat;
                 getOneHeartBeatMsg(heartbeat, brake_sample, true);
                 // 3 is reserved locally for the trajectory-guard emergency
@@ -2296,6 +2387,16 @@ namespace fsm {
                     return;
                 }
             } else if (!planner_ptr_->getOneCommandSample(command_sample)) {
+                return;
+            }
+
+            if (cfg_.trajectory_guard_en &&
+                !commandVelocityWithinLimit(
+                        command_sample, "position_command",
+                        planner_ptr_->getConfiguredMaxVelocity())) {
+                safety_revalidation_requested_.store(
+                        true, std::memory_order_release);
+                activateEmergencyBrake("command_velocity_limit");
                 return;
             }
 

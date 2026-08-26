@@ -1149,6 +1149,68 @@ namespace super_planner {
         if (rejected_segment_out) {
             rejected_segment_out->clear();
         }
+        // The optimizer treats velocity as a soft penalty and its historical
+        // post-check is disabled. Guarded publication needs a hard command
+        // invariant, so time-scale a finite candidate before segment metadata
+        // is captured or geometric certification is performed. The spatial
+        // path is unchanged and the exact polynomial extremum is checked
+        // again after scaling.
+        if (cfg_.trajectory_guard_en) {
+            const double velocity_limit = cfg_.exp_traj_cfg.max_vel;
+            const double max_velocity = candidate.pos_traj.empty()
+                    ? std::numeric_limits<double>::infinity()
+                    : candidate.pos_traj.getMaxVelRate();
+            if (!std::isfinite(velocity_limit) || velocity_limit <= 0.0 ||
+                !std::isfinite(max_velocity)) {
+                ros_ptr_->error(
+                        " -- [TRAJ_VELOCITY_REJECT] phase={} gen={} "
+                        "reason=NONFINITE max_vel={:.6f} limit={:.6f}",
+                        phase, cmd_traj_info_.generation() + 1,
+                        max_velocity, velocity_limit);
+                trajectory_guard_rejection_pending_.store(
+                        true, std::memory_order_release);
+                return false;
+            }
+            if (max_velocity > velocity_limit * 1.001) {
+                const double scale =
+                        max_velocity / velocity_limit * 1.001;
+                candidate.pos_traj = timeScaleTrajectory(
+                        candidate.pos_traj, scale);
+                candidate.yaw_traj = timeScaleTrajectory(
+                        candidate.yaw_traj, scale);
+                if (std::isfinite(candidate.backup_traj_start_tt)) {
+                    candidate.backup_traj_start_tt *= scale;
+                }
+                if (candidate.carry_backup_start_tt >= 0.0) {
+                    candidate.carry_backup_start_tt *= scale;
+                }
+                if (candidate.carry_backup_end_tt >= 0.0) {
+                    candidate.carry_backup_end_tt *= scale;
+                }
+                const double scaled_max_velocity =
+                        candidate.pos_traj.getMaxVelRate();
+                if (!std::isfinite(scaled_max_velocity) ||
+                    scaled_max_velocity > velocity_limit * 1.001) {
+                    ros_ptr_->error(
+                            " -- [TRAJ_VELOCITY_REJECT] phase={} gen={} "
+                            "reason=RESCALE_FAILED before={:.6f} "
+                            "after={:.6f} limit={:.6f} scale={:.6f}",
+                            phase, cmd_traj_info_.generation() + 1,
+                            max_velocity, scaled_max_velocity,
+                            velocity_limit, scale);
+                    trajectory_guard_rejection_pending_.store(
+                            true, std::memory_order_release);
+                    return false;
+                }
+                ros_ptr_->warn(
+                        " -- [TRAJ_VELOCITY_SLOWDOWN] phase={} gen={} "
+                        "before={:.6f} after={:.6f} limit={:.6f} "
+                        "scale={:.6f}",
+                        phase, cmd_traj_info_.generation() + 1,
+                        max_velocity, scaled_max_velocity,
+                        velocity_limit, scale);
+            }
+        }
         const bool has_appended_backup = candidate.has_appended_backup;
         const bool has_carry_backup = candidate.has_carry_backup;
         const double backup_start_tt = candidate.backup_traj_start_tt;
@@ -1658,9 +1720,24 @@ namespace super_planner {
 
         escape_direction /= direction_norm;
         const Vec3f escape_start = odom_position;
-        const Vec3f escape_goal = escape_start +
-                cfg_.guard_topology_local_escape_distance_m * escape_direction;
-        const double distance = (escape_goal - escape_start).norm();
+        // A single "away from the latest collision" direction is not a
+        // topology change when optimizer jitter moves the reported collision
+        // from one side of a stopped vehicle to the other.  Seed8 exposed
+        // exactly that case: the stored direction pointed into the originally
+        // rejected route and the planner then reseeded that route for almost a
+        // minute.  Enumerate the four horizontal homotopy exits once and let
+        // the unchanged trajectory certificate select the first safe one.
+        // This remains a bounded, stop-only recovery; no unsafe candidate can
+        // be published merely because it is an alternate direction.
+        const Vec3f perpendicular(-escape_direction.y(),
+                                  escape_direction.x(), 0.0);
+        const std::vector<Vec3f> escape_directions{
+                escape_direction,
+                -escape_direction,
+                perpendicular,
+                -perpendicular};
+        const double distance =
+                cfg_.guard_topology_local_escape_distance_m;
         const double velocity_limit = std::max(
                 1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_vel);
         const double acceleration_limit = std::max(
@@ -1673,51 +1750,82 @@ namespace super_planner {
                 std::sqrt(5.774 * distance / acceleration_limit),
                 std::cbrt(60.0 * distance / jerk_limit)});
 
-        Eigen::Matrix<double, 3, 3> initial_pva;
-        Eigen::Matrix<double, 3, 3> goal_pva;
-        initial_pva.setZero();
-        goal_pva.setZero();
-        initial_pva.col(0) = escape_start;
-        goal_pva.col(0) = escape_goal;
-        Eigen::Matrix<double, 3, Eigen::Dynamic> position_waypoints(3, 0);
-        VecDf durations(1);
-        durations << duration;
-        Trajectory position_trajectory =
-                poly_interpo::minimumJerkInterpolation<3>(
-                        initial_pva, goal_pva, position_waypoints, durations);
-
-        Eigen::Matrix<double, 1, 3> initial_yaw;
-        Eigen::Matrix<double, 1, 3> goal_yaw;
-        initial_yaw.setZero();
-        goal_yaw.setZero();
-        initial_yaw(0, 0) = odom_yaw;
-        goal_yaw(0, 0) = odom_yaw;
-        Eigen::Matrix<double, 1, Eigen::Dynamic> yaw_waypoints(1, 0);
-        Trajectory yaw_trajectory =
-                poly_interpo::minimumJerkInterpolation<1>(
-                        initial_yaw, goal_yaw, yaw_waypoints, durations);
-
         const double start_wt = ros_ptr_->getSimTime();
-        position_trajectory.start_WT = start_wt;
-        yaw_trajectory.start_WT = start_wt;
         ExpTraj recovery_exp;
-        recovery_exp.setTrajectory(start_wt, position_trajectory,
-                                   yaw_trajectory);
-        recovery_exp.setGoalConnectedFlag(false);
+        bool committed = false;
+        std::size_t committed_direction = 0;
+        for (std::size_t direction_index = 0;
+             direction_index < escape_directions.size(); ++direction_index) {
+            const Vec3f trial_direction =
+                    escape_directions[direction_index].normalized();
+            const Vec3f escape_goal = escape_start +
+                    distance * trial_direction;
+            Eigen::Matrix<double, 3, 3> initial_pva;
+            Eigen::Matrix<double, 3, 3> goal_pva;
+            initial_pva.setZero();
+            goal_pva.setZero();
+            initial_pva.col(0) = escape_start;
+            goal_pva.col(0) = escape_goal;
+            Eigen::Matrix<double, 3, Eigen::Dynamic>
+                    position_waypoints(3, 0);
+            VecDf durations(1);
+            durations << duration;
+            Trajectory position_trajectory =
+                    poly_interpo::minimumJerkInterpolation<3>(
+                            initial_pva, goal_pva,
+                            position_waypoints, durations);
 
-        CmdTraj::Candidate candidate;
-        if (!CmdTraj::buildCandidate(recovery_exp, candidate) ||
-            !commitTrajectoryCandidate(
-                    std::move(candidate),
-                    "PlanFromRest/certified_local_escape")) {
+            Eigen::Matrix<double, 1, 3> initial_yaw;
+            Eigen::Matrix<double, 1, 3> goal_yaw;
+            initial_yaw.setZero();
+            goal_yaw.setZero();
+            initial_yaw(0, 0) = odom_yaw;
+            goal_yaw(0, 0) = odom_yaw;
+            Eigen::Matrix<double, 1, Eigen::Dynamic> yaw_waypoints(1, 0);
+            Trajectory yaw_trajectory =
+                    poly_interpo::minimumJerkInterpolation<1>(
+                            initial_yaw, goal_yaw,
+                            yaw_waypoints, durations);
+            position_trajectory.start_WT = start_wt;
+            yaw_trajectory.start_WT = start_wt;
+
+            ExpTraj trial_exp;
+            trial_exp.setTrajectory(start_wt, position_trajectory,
+                                    yaw_trajectory);
+            trial_exp.setGoalConnectedFlag(false);
+            CmdTraj::Candidate candidate;
+            if (CmdTraj::buildCandidate(trial_exp, candidate) &&
+                commitTrajectoryCandidate(
+                        std::move(candidate),
+                        "PlanFromRest/certified_local_escape")) {
+                recovery_exp = trial_exp;
+                escape_direction = trial_direction;
+                committed_direction = direction_index;
+                committed = true;
+                break;
+            }
             ros_ptr_->warn(
-                    " -- [TRAJ_GUARD_LOCAL_ESCAPE_REJECTED] "
+                    " -- [TRAJ_GUARD_LOCAL_ESCAPE_DIRECTION_REJECTED] "
+                    "attempt={}/{} "
                     "distance={:.3f}m duration={:.3f}s "
                     "direction=[{:.3f},{:.3f},{:.3f}]",
-                    distance, duration, escape_direction.x(),
-                    escape_direction.y(), escape_direction.z());
+                    direction_index + 1, escape_directions.size(),
+                    distance, duration, trial_direction.x(),
+                    trial_direction.y(), trial_direction.z());
+        }
+        if (!committed) {
+            ros_ptr_->warn(
+                    " -- [TRAJ_GUARD_LOCAL_ESCAPE_REJECTED] "
+                    "attempts={} distance={:.3f}m duration={:.3f}s",
+                    escape_directions.size(), distance, duration);
             return false;
         }
+
+        // The vertical request is a fallback for the case where every
+        // horizontal direction is rejected.  Do not leave it armed after a
+        // certified horizontal escape was committed.
+        guard_vertical_recovery_pending_.store(false,
+                                               std::memory_order_release);
 
         last_exp_traj_info_ = recovery_exp;
         robot_on_backup_traj_ = false;
@@ -1729,9 +1837,10 @@ namespace super_planner {
                 SUPER_RET_CODE::SUPER_SUCCESS_NO_BACKUP);
         ros_ptr_->warn(
                 " -- [TRAJ_GUARD_LOCAL_ESCAPE] action=commit "
-                "distance={:.3f}m duration={:.3f}s "
+                "attempt={}/{} distance={:.3f}m duration={:.3f}s "
                 "direction=[{:.3f},{:.3f},{:.3f}] "
                 "stop_source={} odom_speed={:.3f}",
+                committed_direction + 1, escape_directions.size(),
                 distance, duration, escape_direction.x(),
                 escape_direction.y(), escape_direction.z(),
                 certified_stop ? "certified_brake" : "stationary_odom",
@@ -2690,6 +2799,43 @@ namespace super_planner {
                 } else {
                     const std::size_t cleared_zones =
                             guard_topology_avoidance_centers_.size();
+                    const Vec3f stopped_start = pos_init_state.col(0);
+                    const double horizontal_collision_distance =
+                            (guard_topology_stall_collision_.head<2>() -
+                             stopped_start.head<2>()).norm();
+                    const double collision_z =
+                            guard_topology_stall_collision_.z();
+                    Vec3f local_escape_direction =
+                            stopped_start - guard_topology_stall_collision_;
+                    local_escape_direction.z() = 0.0;
+                    const bool start_adjacent_rejection =
+                            guard_topology_stall_rejects_ > 0 &&
+                            guard_topology_stall_collision_.array()
+                                    .isFinite().all() &&
+                            std::isfinite(horizontal_collision_distance) &&
+                            horizontal_collision_distance <=
+                                    cfg_.guard_topology_vertical_recovery_trigger_distance_m;
+                    const bool local_escape_direction_valid =
+                            local_escape_direction.array().isFinite().all() &&
+                            local_escape_direction.norm() >= cfg_.resolution;
+                    const bool arm_local_escape =
+                            cfg_.guard_topology_local_escape_en &&
+                            start_adjacent_rejection &&
+                            local_escape_direction_valid &&
+                            guard_topology_local_escape_recoveries_ <
+                                    cfg_.guard_topology_local_escape_attempts;
+                    // A vertical lift is only sensible when the rejected
+                    // boundary is not above the stopped vehicle. Horizontal
+                    // escape is valid for either sign because it moves away
+                    // from the observed start-adjacent rejection and is still
+                    // subject to the unchanged trajectory guard.
+                    const bool arm_vertical_recovery =
+                            cfg_.guard_topology_vertical_recovery_en &&
+                            start_adjacent_rejection &&
+                            collision_z <=
+                                    stopped_start.z() + cfg_.resolution &&
+                            guard_topology_saturation_recoveries_ <
+                                    cfg_.guard_topology_saturation_vertical_attempts;
                     guard_topology_avoidance_centers_.clear();
                     guard_topology_avoidance_radii_.clear();
                     guard_topology_branch_directions_.clear();
@@ -2700,13 +2846,52 @@ namespace super_planner {
                     guard_topology_no_path_failures_ = 0;
                     guard_topology_post_corridor_failures_ = 0;
                     ++guard_topology_epoch_;
-                    guard_corridor_retry_pending_.store(
-                            true, std::memory_order_release);
-                    ros_ptr_->warn(
-                            " -- [TRAJ_GUARD_REROUTE_EPOCH_RESET] epoch={} "
-                            "cleared_zones={} reason=corridor_no_path "
-                            "action=certified_stop_reseed",
-                            guard_topology_epoch_, cleared_zones);
+                    if (arm_local_escape) {
+                        guard_local_escape_direction_ =
+                                local_escape_direction.normalized();
+                        ++guard_topology_local_escape_recoveries_;
+                        guard_local_escape_pending_.store(
+                                true, std::memory_order_release);
+                        ros_ptr_->warn(
+                                " -- [TRAJ_GUARD_LOCAL_ESCAPE_ARM] "
+                                "cleared_zones={} epoch={} attempt={}/{} "
+                                "reason=corridor_no_path "
+                                "horizontal_distance={:.3f} "
+                                "direction=[{:.3f},{:.3f},{:.3f}] "
+                                "action=escape_then_reroute",
+                                cleared_zones, guard_topology_epoch_,
+                                guard_topology_local_escape_recoveries_,
+                                cfg_.guard_topology_local_escape_attempts,
+                                horizontal_collision_distance,
+                                guard_local_escape_direction_.x(),
+                                guard_local_escape_direction_.y(),
+                                guard_local_escape_direction_.z());
+                    }
+                    if (arm_vertical_recovery) {
+                        ++guard_topology_saturation_recoveries_;
+                        guard_vertical_recovery_pending_.store(
+                                true, std::memory_order_release);
+                        ros_ptr_->warn(
+                                " -- [TRAJ_GUARD_VERTICAL_RECOVERY_ARM] "
+                                "cleared_zones={} epoch={} attempt={}/{} "
+                                "reason=corridor_no_path "
+                                "horizontal_distance={:.3f} start_z={:.3f} "
+                                "collision_z={:.3f} action=lift_then_reroute",
+                                cleared_zones, guard_topology_epoch_,
+                                guard_topology_saturation_recoveries_,
+                                cfg_.guard_topology_saturation_vertical_attempts,
+                                horizontal_collision_distance,
+                                stopped_start.z(),
+                                collision_z);
+                    } else if (!arm_local_escape) {
+                        guard_corridor_retry_pending_.store(
+                                true, std::memory_order_release);
+                        ros_ptr_->warn(
+                                " -- [TRAJ_GUARD_REROUTE_EPOCH_RESET] epoch={} "
+                                "cleared_zones={} reason=corridor_no_path "
+                                "action=certified_stop_reseed",
+                                guard_topology_epoch_, cleared_zones);
+                    }
                 }
             }
             ros_ptr_->warn(" -- [SUPER] SearchPolytopeOnPath for new path failed");

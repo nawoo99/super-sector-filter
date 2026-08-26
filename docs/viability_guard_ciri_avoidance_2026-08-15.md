@@ -2168,29 +2168,134 @@ non-authoritative. Full tables and candidate/revert evidence are in
 input is
 `results/reliable_link_repeated_3mode_seed6_10_n3_raw_20260826.csv`.
 
-## Current status — reliable-link repetition passes; speed validity is next
+### 8.30 Hard v7 publication bound, recovery-only ACK retry, and bounded multi-exit reroute (2026-08-26)
 
-- **Section 8.29 is the newest same-code late-map gate.** Full and Adaptive
-  each passed seed6-10 15/15 with zero contact; fixed Sector was 13/15 with
-  three contact runs and five events. This is the requested repeated evidence,
-  not a population guarantee.
+The speed-qualified follow-up to 8.29 found that its completion/contact-valid
+headline was not velocity-valid. In Full seed7 run3, a fresh 6.323 m/s command
+was first rejected as `UNOBSERVED`; 5.2 ms later the retry divided two odometry
+positions by callback-selection time rather than their odometry receive time.
+This fabricated `odom_motion=10.055 m/s`, certified a brake from that false
+state, and published an observed 10.027 m/s command. PerfectDrone copies
+`PositionCommand.velocity` into odometry, so this was not monitor
+differentiation noise.
+
+The fix establishes three publication boundaries:
+
+- guarded candidates use the polynomial's exact maximum velocity before
+  commit; finite over-limit candidates are time-scaled without changing the
+  spatial path and checked again;
+- emergency motion estimation uses `robot_state_.rcv_time`, and every brake is
+  checked for exact maximum velocity plus sampled acceleration/jerk;
+- polynomial and individual `PositionCommand` publication recheck the limit;
+  a normal candidate violation enters the existing certified recovery instead
+  of being published.
+
+The old direct odometry-twist assignment remains reverted because 8.15 showed
+that it caused a real seed10 contact. Runtime exact checks allow 0.1% numerical
+slack and the monitor allows 0.01 m/s. Thus the gate is explicit and
+speed-qualified, but it is not a mathematical claim that every message is
+`<=7.000000` with zero tolerance.
+
+The first seed6-10 x three-mode n=3 speed gate was 45/45 speed-valid and had
+zero Full/Adaptive contact, but it exposed two independent liveness tails.
+One Full seed10 run timed out after a certified stop because corridor failure
+cleared its temporary zones and reseeded the same route. One Adaptive seed8
+run took 166.68 s because the post-guard full generation was not taken by the
+depth-1 subscriber and the next exact request arrived 84 s later. A
+recovery-only, default-off `trajectory_guard_ack_retry_age_s` now resends one
+latest full generation at a stop-and-wait cadence while the guard is already
+fail-closed. It does not alter normal flight or pre-stale retry behavior.
+
+A subsequent seed8 Adaptive n=5 received every exact ACK promptly but still
+contained a 151.77 s run. The full ACK arrived in 0.042 s; the actual long
+interval was 59.69 s of repeated stopped `PlanFromRest` topology. The single
+stored `away-from-latest-collision` direction was unstable because optimizer
+jitter moved the reported collision across the vehicle. The bounded local
+recovery now enumerates the stored direction, its opposite, and the two
+perpendicular horizontal exits exactly once. Every exit is passed through the
+unchanged velocity, geometric, map-freshness, and viability commit gates; only
+the first certified direction can be published, otherwise the existing
+vertical/certified reroute continues.
+
+After that change, seed8 Adaptive n=5 completed 5/5 with zero contact/static
+collision and 5/5 speed-valid. Time was 70.40-91.47 s (mean 81.21 s) and the
+maximum continuous recovery interval was 2.52 s. The four-way branch did not
+execute in those five samples, so this is regression evidence, not branch
+proof.
+
+The final same-binary map1-10 x Full/Sector/Adaptive x n=1 gate completed all
+30/30 runs on the first attempt. Live contact, static-PCD collision, speed
+invalid, OOM, and infrastructure retry were all zero. Mode means were:
+
+| Mode | Complete | Contact | Speed-valid | Mean time (s) | Worst static body clearance (m) | Max command (m/s) |
+|---|---:|---:|---:|---:|---:|---:|
+| Full | 10/10 | 0 | 10/10 | 71.04 | +0.174 | 7.005352 |
+| fixed Sector | 10/10 | 0 | 10/10 | 72.05 | +0.196 | 7.005983 |
+| Adaptive | 10/10 | 0 | 10/10 | 78.89 | +0.175 | 7.005280 |
+
+Update-weighted points/update were 28,793/14,797/25,083 and update time was
+13.57/4.76/11.39 ms for Full/Sector/Adaptive. In this n=1 descriptive cohort,
+Adaptive reduced Full points/update by 12.88%, total/update by 22.91%, map
+update time by 16.09%, and FSM+filter core-seconds by 8.86%, while taking
+11.04% longer. Adaptive entered effective full view 123 times across 241 guard
+episodes. Its 241/241 recovery full generations received exact ACK, with zero
+supersede/retry/abandon and maximum ACK latency 0.101465 s.
+
+The corridor-failure epoch-reset branch executed once in map7 Adaptive and a
+new trajectory committed about 0.64 s later. The event was not start-adjacent,
+so the new four-way local-exit branch did not execute. Likewise the 0.75 s ACK
+retry never triggered because every exact ACK arrived earlier. These two paths
+therefore have build and broad non-regression evidence but no live trigger
+proof in the final cohort.
+
+Source changes are mirrored under `super_patches/native_seedmap_campaign/` for
+`super_planner.h`, `super_planner.cpp`, `fsm_ros2.hpp`, and
+`native_sector_cpp.cpp`. The campaign runner now parses the configured maximum
+velocity, records 3-D command/odometry context, and makes speed validity part
+of `run_valid` rather than masking it as infrastructure retry. The ROS build
+passed with only the pre-existing constructor reorder warning; 12 Python tests
+and `py_compile` passed. Full details and map-labelled tables are in
+`docs/guarded_velocity_bound_v7_20260826.md`; final raw data is
+`results/final_multiexit_3mode_seed1_10_n1_raw_20260826.csv`.
+
+This section does not claim population 100%, hardware/flight readiness, or a
+zero-tolerance velocity theorem. McNemar was not run, and the final n=1 cohort
+cannot establish the intended population difference between Sector and
+Adaptive. Raw-cloud CIRI remains default false and non-authoritative. The known
+handoff corrections also remain in force: `obs_skip_num` is operationally a
+no-op in the investigated path, NaN handling and clearance-penalty design
+issues are not evidence for this result, `BackupTrajOpt` must not be described
+as fully covered by an EXP-only argument, and `DRONE_R=robot_r` alone is not a
+sufficient clearance metric.
+
+## Current status — speed-qualified local gate passes; rare recovery branches need trigger proof
+
+- **Section 8.30 is the newest same-binary speed-qualified gate.** Map1-10
+  Full/Sector/Adaptive completed 30/30 with zero live/static contact and 30/30
+  speed-valid. The targeted seed8 Adaptive follow-up was also 5/5 with a
+  2.52 s maximum recovery interval. This is a local regression result, not a
+  population guarantee.
 - **The stationary fast-defer candidate is rejected and fully reverted.** It
   did not demonstrate an efficiency benefit, and a reverted isolated smoke
   exposed a confounded guard long tail. Keep the existing certificate ordering
   until the execution regime is controlled.
-- **Speed-qualified validity is now the next blocker.** Full seed7 run3 reached
-  10.027 m/s under a v=7 profile, while current `run_valid` checks no command or
-  odometry velocity bound. Add context-rich exceedance telemetry and a hard
-  validated publication invariant before claiming Full 100% validity.
+- **The observed v7 publication hole is closed locally.** Exact candidate and
+  brake velocity checks, odometry receive-time motion estimation, publish
+  boundary checks, and speed-qualified `run_valid` are implemented. The next
+  blocker is live trigger proof for the recovery-only ACK retry and four-way
+  local escape, followed by repeated population evidence.
 
 - **Section 8.28 remains the reliable-link n=1 adoption gate.** Full and Adaptive
   each passed seed6-10 5/5 with zero contact; fixed Sector completed 5/5 but
   contacted seed8 once. Reliable depth-1 on the filtered internal hop removed
   all 8.27-style generation loss in this sample without increasing cloud
   publication count.
-- **The retransmission approach is rejected.** It reduced timeout markers but
+- **The pre-stale retransmission approach is rejected.** It reduced timeout markers but
   increased scans, stale detections, guard episodes, recovery time, and mission
   time. Keep its age at default 0/off; do not use scan flood to mask link loss.
+  Section 8.30's separate recovery-only stop-and-wait option is also default
+  off; it was enabled at 0.75 s for the final gate but never triggered because
+  exact ACK latency stayed below 0.102 s.
 - **The repeated-evidence and first attribution steps are complete.** Section
   8.29 found 906 rejection markers, 78.0% at diagnostic stationary speed, but
   also showed that changing this timing-sensitive path without a controlled
@@ -2237,8 +2342,9 @@ input is
   seed6-10 subset. Section 8.28 removes the observed filtered-hop loss locally
   and shows that blind retransmission makes guard work worse. Section 8.29
   repeats that adopted link and rejects an unproven guard micro-optimization.
-  The remaining first target is speed-qualified trajectory validity, not a
-  higher publication rate or a weaker ACK SLA.
+  Section 8.30 then adds speed-qualified publication and bounded stopped
+  recovery. The remaining first target is direct trigger proof and repeated
+  population evidence, not a higher publication rate or weaker ACK SLA.
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),

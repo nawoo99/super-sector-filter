@@ -97,6 +97,26 @@ def super_config_cloud_topic(config_name):
     return None
 
 
+def super_config_max_velocity(config_name):
+    """Return traj_opt/boundary/max_vel without requiring PyYAML."""
+    if not config_name:
+        return None
+    path = os.path.join(SUPER_CONFIG_DIR, os.path.basename(config_name))
+    try:
+        with open(path) as stream:
+            for line in stream:
+                match = re.match(
+                    r"^\s*max_vel:\s*([-+]?(?:\d+(?:\.\d*)?|\.\d+))",
+                    line,
+                )
+                if match:
+                    value = float(match.group(1))
+                    return value if value > 0.0 else None
+    except (OSError, ValueError):
+        return None
+    return None
+
+
 def read_memory_psi():
     values = {"psi_some_avg10": None, "psi_full_avg10": None}
     try:
@@ -276,6 +296,8 @@ def parse_full_refresh_ack_log(path):
         "guard_brake_successes": 0,
         "guard_brake_rejections": 0,
         "guard_brake_stationary_defers": 0,
+        "trajectory_velocity_slowdowns": 0,
+        "trajectory_velocity_rejections": 0,
         "guard_brake_main_pre_successes": 0,
         "guard_brake_retry_successes": 0,
         "guard_brake_ack_timeout_successes": 0,
@@ -319,6 +341,10 @@ def parse_full_refresh_ack_log(path):
                 counts["guard_brake_rejections"] += 1
             if "[TRAJ_GUARD_STATIONARY_DEFER]" in line:
                 counts["guard_brake_stationary_defers"] += 1
+            if "[TRAJ_VELOCITY_SLOWDOWN]" in line:
+                counts["trajectory_velocity_slowdowns"] += 1
+            if "[TRAJ_VELOCITY_REJECT]" in line:
+                counts["trajectory_velocity_rejections"] += 1
             if (
                 "[TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE"
                 in line
@@ -580,6 +606,8 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "guard_topology_reroute_searches",
           "guard_brake_successes", "guard_brake_rejections",
           "guard_brake_stationary_defers",
+          "trajectory_velocity_slowdowns",
+          "trajectory_velocity_rejections",
           "guard_brake_main_pre_successes",
           "guard_brake_retry_successes",
           "guard_brake_ack_timeout_successes",
@@ -619,7 +647,15 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "first_contact_nearest_z", "forensics_json", "samples",
           "clearance_samples",
           "final_x", "final_y", "final_z", "min_x", "max_x", "min_y", "max_y",
-          "path_length_m", "max_speed_mps", "closest_final_goal_distance_m",
+          "path_length_m", "max_speed_mps", "max_odom_speed_3d_mps",
+          "max_command_speed_mps", "max_command_horizontal_speed_mps",
+          "speed_limit_mps", "speed_tolerance_mps", "speed_limit_valid",
+          "speed_exceedance_count", "command_speed_exceedance_count",
+          "odom_speed_exceedance_count", "first_speed_exceedance_kind",
+          "first_speed_exceedance_time_s", "first_speed_exceedance_mps",
+          "first_speed_exceedance_trajectory_id",
+          "first_speed_exceedance_trajectory_flag",
+          "closest_final_goal_distance_m",
           "observed_open_time_s", "observed_open_x", "observed_open_y",
           "observed_close_time_s", "observed_close_x", "observed_close_y",
           "trap_collisions", "trap_min_surface_distance_m", "trap_clearance_m",
@@ -730,6 +766,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_trajectory_guard_topic",
           "filter_trajectory_guard_hold_s",
           "filter_trajectory_guard_active_max_publish_hz",
+          "filter_trajectory_guard_ack_retry_age_s",
           "filter_trajectory_guard_active",
           "filter_trajectory_guard_open",
           "filter_trajectory_guard_status_count",
@@ -737,6 +774,15 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_trajectory_guard_open_transitions",
           "filter_trajectory_guard_close_transitions",
           "filter_trajectory_guard_refresh_frames",
+          "filter_trajectory_guard_full_refresh_pending_ack",
+          "filter_trajectory_guard_full_refresh_pending_ack_max",
+          "filter_trajectory_guard_full_refresh_ack_count",
+          "filter_trajectory_guard_full_refresh_ack_committed_count",
+          "filter_trajectory_guard_full_refresh_superseded_count",
+          "filter_trajectory_guard_full_refresh_ack_retry_frames",
+          "filter_trajectory_guard_full_refresh_abandoned_count",
+          "filter_trajectory_guard_full_refresh_ack_latency_mean_s",
+          "filter_trajectory_guard_full_refresh_ack_latency_max_s",
           "filter_trajectory_guard_open_duty_pct",
           "filter_trajectory_guard_active_frames",
           "filter_trajectory_guard_hold_only_frames",
@@ -872,6 +918,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             adaptive_max_publish_hz=5.0,
             adaptive_trajectory_guard_hold_s=2.5,
             adaptive_trajectory_guard_active_max_publish_hz=0.0,
+            adaptive_trajectory_guard_ack_retry_age_s=0.0,
             adaptive_pre_stale_full_age_s=0.25,
             adaptive_pre_stale_ack_retry_age_s=0.0,
             adaptive_full_refresh_generation_ack=True,
@@ -1095,6 +1142,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     f"{adaptive_trajectory_guard_hold_s}"
                     f" --trajectory-guard-active-max-publish-hz "
                     f"{adaptive_trajectory_guard_active_max_publish_hz}"
+                    f" --trajectory-guard-ack-retry-age-s "
+                    f"{adaptive_trajectory_guard_ack_retry_age_s}"
                     f" --map-commit-pre-stale-full-age-s "
                     f"{adaptive_pre_stale_full_age_s}"
                     f" --map-commit-pre-stale-ack-retry-age-s "
@@ -1138,6 +1187,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         # auto-start (and before waypoint_mission on the standard maps).
         time.sleep(1.0)
 
+        active_super_config = None
         if is_ref:
             if mode in REFERENCE_ABLATION_PROFILES:
                 super_config = REFERENCE_ABLATION_PROFILES[mode]["super_config"]
@@ -1165,6 +1215,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     "ros2 launch mission_planner benchmark_reference.launch.py "
                     f"super_config:={super_config}"
                 )
+            active_super_config = super_config
         elif is_map0:
             # map0 only supports the plain raw-direct comparison and the
             # paper's speed sweep -- none of seed11's ablation-debugging
@@ -1179,6 +1230,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 "ros2 launch mission_planner benchmark_map0.launch.py "
                 f"super_config:={super_config}"
             )
+            active_super_config = super_config
         elif is_recovery:
             launch_cmd = (
                 "{ ros2 run perfect_drone_sim perfect_drone_node --ros-args "
@@ -1186,6 +1238,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 "ros2 run super_planner fsm_node --ros-args "
                 "-p config_name:=static_recovery.yaml & wait; }"
             )
+            active_super_config = "static_recovery.yaml"
         else:
             if is_seedmap_shadow:
                 seedmap_super_config = "static_seedmaps_shadow_v10.yaml"
@@ -1205,6 +1258,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 )
             if seedmap_super_config_override:
                 seedmap_super_config = seedmap_super_config_override
+            active_super_config = seedmap_super_config
             launch_cmd = (
                 "ros2 launch mission_planner benchmark_seedmap.launch.py "
                 f"waypoint_data:=loop24.txt drone_config:={map_name}.yaml "
@@ -1330,6 +1384,12 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     "mars_uav_sim/perfect_drone_sim/pcd/seed_maps/"
                     f"{map_name}.pcd"
                 )
+            speed_limit_mps = super_config_max_velocity(active_super_config)
+            if speed_limit_mps is not None:
+                monitor_options += (
+                    f" --speed-limit-mps {speed_limit_mps:.9g}"
+                    " --speed-tolerance-mps 0.01"
+                )
             # Options must precede "--". Everything after it is positional,
             # protecting waypoint strings that start with "-" (for example
             # map0's negative-x goal).
@@ -1423,9 +1483,13 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             monitor_result = json.load(open(out_json))
             rec.update(monitor_result)
             if seedmap_static_pcd:
-                rec["run_valid"] = bool(
+                static_pcd_valid = bool(
                     monitor_result.get("static_pcd_enabled") is True
                     and (monitor_result.get("static_pcd_point_count") or 0) > 0
+                )
+                speed_limit_valid = monitor_result.get("speed_limit_valid")
+                rec["run_valid"] = bool(
+                    static_pcd_valid and speed_limit_valid is not False
                 )
             events = monitor_result.get("contact_events") or []
             if events:
@@ -1619,7 +1683,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             continue
         if (
             seedmap_static_pcd
-            and rec.get("run_valid") is not True
+            and not (
+                rec.get("static_pcd_enabled") is True
+                and (rec.get("static_pcd_point_count") or 0) > 0
+            )
             and attempt < attempt_max
         ):
             retry_reasons.append("static PCD monitor was not active")
@@ -1651,6 +1718,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         )
         log(f"  {tag}: success={rec.get('success')} time={rec.get('mission_time_s')}s "
             f"coll={contact_count} minclr={clearance} "
+            f"speed={rec.get('max_command_speed_mps')}/"
+            f"{rec.get('speed_limit_mps')} valid={rec.get('speed_limit_valid')} "
             f"pts={rec.get('pts_mean')} kept={kept_pct}% fsm_cpu={fsm_cpu_pct}")
         return rec
 
@@ -1762,6 +1831,16 @@ def main():
         ),
     )
     ap.add_argument(
+        "--adaptive-trajectory-guard-ack-retry-age-s",
+        type=float,
+        default=0.0,
+        help=(
+            "while certified recovery is active, resend one latest full "
+            "generation at this stop-and-wait interval until its exact ACK; "
+            "0 disables the recovery-only retry"
+        ),
+    )
+    ap.add_argument(
         "--adaptive-full-open-extra-max-points",
         type=int,
         default=6000,
@@ -1819,6 +1898,11 @@ def main():
     if args.adaptive_trajectory_guard_active_max_publish_hz < 0.0:
         ap.error(
             "--adaptive-trajectory-guard-active-max-publish-hz must be "
+            "non-negative"
+        )
+    if args.adaptive_trajectory_guard_ack_retry_age_s < 0.0:
+        ap.error(
+            "--adaptive-trajectory-guard-ack-retry-age-s must be "
             "non-negative"
         )
     if args.adaptive_full_open_extra_max_points < 0:
@@ -1970,6 +2054,9 @@ def main():
                         ),
                         adaptive_trajectory_guard_active_max_publish_hz=(
                             args.adaptive_trajectory_guard_active_max_publish_hz
+                        ),
+                        adaptive_trajectory_guard_ack_retry_age_s=(
+                            args.adaptive_trajectory_guard_ack_retry_age_s
                         ),
                         adaptive_pre_stale_full_age_s=(
                             args.adaptive_pre_stale_full_age_s

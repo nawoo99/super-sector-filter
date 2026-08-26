@@ -1,6 +1,43 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-26 v7 속도 hard bound + stopped recovery 후속 완료.** 아래
+> reliable-link n=3의 Full seed7 run3 `10.027 m/s`는 planner가 실제 발행한
+> 명령이었다. Guard retry가 두 odometry 위치를 표본 수신시각이 아니라 callback
+> read 시각 차이(6 ms)로 나눠 가짜 `odom_motion=10.055 m/s`를 만들었다.
+> `robot_state_.rcv_time`으로 시간축을 교정했고, guarded candidate exact-max
+> time scaling, brake dynamics/max-velocity 검사, polynomial/PositionCommand
+> publish 직전 재검사, speed-qualified `run_valid`를 추가했다. 과거 seed10
+> contact를 만든 odometry twist 직접 대입은 복원하지 않았다.
+>
+> 첫 speed-qualified seed6-10 x 3-mode x n=3은 45/45 속도 유효였지만 Full
+> seed10 timeout 1회와 Adaptive seed8 166.68초 long-tail을 드러냈다. Recovery
+> active 중 exact full-generation ACK가 0.75초 안에 없을 때만 최신 full 하나를
+> stop-and-wait 재전송하는 옵션을 넣었다(기본 0/off). 이후 seed8 n=5에서 모든
+> ACK가 빠르게 왔는데도 151.77초가 나와, 진짜 원인을 최신 충돌점 방향이
+> 뒤집히며 같은 stopped topology를 59.69초 반복한 것으로 확정했다. Local
+> recovery는 수평 네 출구를 각 한 번만 검사하고 기존 hard certificate를 통과한
+> 첫 candidate만 commit하도록 보완했다.
+>
+> 보완 후 seed8 Adaptive n=5는 5/5 완주·contact/static collision 0·속도 유효,
+> 평균 81.21초, 최대 recovery 2.52초였다. 최종 동일 바이너리 map1-10 x
+> Full/Sector/Adaptive x n=1은 30/30 완주, contact/static collision 0,
+> speed-qualified 30/30이다. 평균 시간은 71.04/72.05/78.89초. Adaptive는
+> Full 대비 points/update 12.88%, total/update 22.91%, update time 16.09%,
+> FSM+filter core-seconds 8.86% 감소, 시간 +11.04%였다. Full-view 전환 123회,
+> guard episode/ACK 241/241, ACK 최대 0.101465초, retry/supersede/abandon 0이다.
+>
+> Corridor epoch-reset은 map7 Adaptive에서 실제 1회 실행돼 약 0.64초 뒤
+> 회복했다. 하지만 recovery ACK retry와 새 네 방향 local-escape는 최종 표본에서
+> trigger되지 않았으므로 직접 branch proof는 아니다. Population 100%,
+> flight-ready, zero-tolerance `<=7.000000`을 주장하지 말 것. McNemar 미검정,
+> raw-cloud CIRI default false/non-authoritative다. `obs_skip_num` no-op,
+> NaN/clearance-penalty 결함, BackupTrajOpt 미커버, `DRONE_R=robot_r` 지표 한계
+> 정정도 계속 유효하다. 상세는 viability §8.30 및
+> `docs/guarded_velocity_bound_v7_20260826.md`, raw는
+> `results/final_multiexit_3mode_seed1_10_n1_raw_20260826.csv`를 볼 것.
+
+> [!IMPORTANT]
 > **2026-08-26 reliable-link n=3 반복·stationary-defer 기각 — 바로 아래 n=1
 > 채택안을 seed6-10 x Full/Sector/Adaptive x n=3으로 반복했다.** 45/45가 current
 > runner 기준 valid·first-attempt였다. Full/Adaptive는 각각 15/15 완주, contact
