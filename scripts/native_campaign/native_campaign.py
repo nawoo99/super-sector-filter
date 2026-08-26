@@ -852,7 +852,8 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "cgroup_peak_memory_mib", "cgroup_peak_swap_mib",
           "memory_psi_some_avg10_max", "memory_psi_full_avg10_max",
           "memory_trace_csv",
-          "perf_row_start", "perf_row_end", "input_distance_m",
+          "perf_log_generation_ready", "perf_window_valid",
+          "perf_trace_csv", "perf_row_start", "perf_row_end", "input_distance_m",
           "kept_distance_m"]
 
 
@@ -906,9 +907,41 @@ def perf_row_count():
         return 0
 
 
-def slice_perf(start, end):
+def perf_log_signature():
+    """Identify the current ROG-Map performance-log generation."""
     try:
-        rows = list(csv.reader(open(PERF_LOG)))
+        stat = os.stat(PERF_LOG)
+        return stat.st_mtime_ns, stat.st_size
+    except OSError:
+        return None
+
+
+def wait_for_perf_log_generation(previous_signature, timeout_s=30.0,
+                                 poll_s=0.05):
+    """Wait until the newly launched ROG-Map has truncated/opened its log.
+
+    Large static maps can take more than the historical fixed four-second
+    startup delay to construct.  Taking ``perf_row_start`` before that point
+    races ROGMap::init(), whose ofstream opens the shared CSV with ``trunc``.
+    """
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        signature = perf_log_signature()
+        if signature is not None and signature != previous_signature:
+            try:
+                with open(PERF_LOG) as perf_file:
+                    header = perf_file.readline()
+                if "PointCloudNumber" in header and "Total" in header:
+                    return True
+            except OSError:
+                pass
+        time.sleep(poll_s)
+    return False
+
+
+def slice_perf(start, end, perf_log=PERF_LOG):
+    try:
+        rows = list(csv.reader(open(perf_log)))
     except OSError:
         return {}
     if not rows or start is None or end is None or end <= start:
@@ -1072,6 +1105,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         reference_monitor_log = os.path.join(TMPDIR, f"{attempt_tag}.reference_monitor.log")
         reference_stack_log = os.path.join(TMPDIR, f"{attempt_tag}.stack.log")
         memory_trace_csv = os.path.join(TMPDIR, f"{attempt_tag}.memory.csv")
+        perf_trace_csv = os.path.join(TMPDIR, f"{attempt_tag}.performance.csv")
         ready_json = os.path.join(TMPDIR, f"{attempt_tag}.ready.json")
         for path in (
             out_json,
@@ -1082,6 +1116,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             mission_event_json,
             ready_json,
             ready_json + ".tmp",
+            perf_trace_csv,
         ):
             if os.path.exists(path):
                 os.remove(path)
@@ -1310,6 +1345,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 "SUPER_TEST_FORCE_INITIAL_FOOTPRINT_EGRESS_ONCE=1 "
                 + launch_cmd
             )
+        perf_log_before_launch = perf_log_signature()
         launch_proc = subprocess.Popen(
             ["bash", "-c", f"{ROS_ENV} && {launch_cmd}"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
@@ -1345,6 +1381,15 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             kill_group(scenario_proc)
             kill_group(recovery_mission_proc)
             continue
+
+        perf_log_generation_ready = wait_for_perf_log_generation(
+            perf_log_before_launch
+        )
+        if not perf_log_generation_ready:
+            log(
+                f"  {tag} attempt {attempt}/{attempt_max}: performance log "
+                "did not open a new generation before measurement"
+            )
 
         is_reference_ablation = mode in REFERENCE_ABLATION_PROFILES
         if is_reference_ablation:
@@ -1485,6 +1530,13 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         filter_cpu_pct = filt_cpu.stop() if filt_proc is not None else None
         monitor_cpu_pct = monitor_cpu.stop()
         row_end = perf_row_count()
+        perf_window_valid = bool(
+            perf_log_generation_ready and row_end > row_start
+        )
+        try:
+            shutil.copyfile(PERF_LOG, perf_trace_csv)
+        except OSError:
+            pass
 
         # Backward-compatible fallback when a filter predates --stats-json.
         kept_pct = None
@@ -1508,6 +1560,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                "experiment_profile": mode if is_reference_ablation else None,
                "filter_profile": filter_profile,
                "filter_backend": filter_backend if filt_proc is not None else "direct",
+               "perf_log_generation_ready": perf_log_generation_ready,
+               "perf_window_valid": perf_window_valid,
+               "perf_trace_csv": perf_trace_csv if os.path.exists(perf_trace_csv) else None,
                "perf_row_start": row_start, "perf_row_end": row_end, "kept_pct": kept_pct,
                "fsm_cpu_pct": fsm_cpu_pct, "filter_cpu_pct": filter_cpu_pct,
                "monitor_cpu_pct": monitor_cpu_pct,
@@ -1562,7 +1617,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     evidence_prefix = f"{tag}.attempt{attempt_number}"
                     for suffix in (
                         "stack.log", "memory.csv", "filt.log",
-                        "filt_stats.json",
+                        "filt_stats.json", "performance.csv",
                         "reference_monitor.log", "mission.log",
                     ):
                         source = os.path.join(
@@ -1577,6 +1632,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                         if suffix == "memory.csv":
                             copied_memory_traces.append(
                                 os.path.relpath(destination, REPO_ROOT)
+                            )
+                        elif suffix == "performance.csv":
+                            rec["perf_trace_csv"] = os.path.relpath(
+                                destination, REPO_ROOT
                             )
                 rec["memory_trace_csv"] = ";".join(copied_memory_traces)
                 if is_reference_ablation:
@@ -1600,7 +1659,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     )
             else:
                 rec["memory_trace_csv"] = ";".join(memory_trace_paths)
-            rec.update(slice_perf(row_start, row_end))
+            if perf_window_valid:
+                rec.update(slice_perf(row_start, row_end, perf_trace_csv))
         else:
             rec["success"] = False
         if os.path.exists(scenario_event_json):

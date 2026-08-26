@@ -56,3 +56,52 @@ def test_super_config_max_velocity_parses_boundary():
             assert MODULE.super_config_max_velocity("profile.yaml") == 7.0
     finally:
         MODULE.SUPER_CONFIG_DIR = original
+
+
+def test_wait_for_new_perf_log_generation():
+    original = MODULE.PERF_LOG
+    try:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "performance.csv")
+            MODULE.PERF_LOG = str(path)
+            path.write_text("PointCloudNumber, Total\n1, 0.1\n")
+            previous = MODULE.perf_log_signature()
+
+            path.write_text("PointCloudNumber, Total\n2, 0.2\n3, 0.3\n")
+
+            assert MODULE.wait_for_perf_log_generation(
+                previous, timeout_s=0.1, poll_s=0.001
+            )
+    finally:
+        MODULE.PERF_LOG = original
+
+
+def test_unchanged_perf_log_is_not_a_new_generation():
+    original = MODULE.PERF_LOG
+    try:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "performance.csv")
+            MODULE.PERF_LOG = str(path)
+            path.write_text("PointCloudNumber, Total\n1, 0.1\n")
+            previous = MODULE.perf_log_signature()
+
+            assert not MODULE.wait_for_perf_log_generation(
+                previous, timeout_s=0.01, poll_s=0.001
+            )
+    finally:
+        MODULE.PERF_LOG = original
+
+
+def test_slice_perf_uses_attempt_snapshot():
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory, "performance.csv")
+        path.write_text(
+            "PointCloudNumber, Total, Raycast, Update_cache, Inflation\n"
+            "10, 0.010, 0.003, 0.004, 0.001\n"
+            "30, 0.030, 0.009, 0.012, 0.003\n"
+        )
+
+        result = MODULE.slice_perf(0, 2, str(path))
+
+        assert result["pts_mean"] == 20
+        assert result["total_ms_mean"] == 20

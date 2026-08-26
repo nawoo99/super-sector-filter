@@ -1,6 +1,38 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-26 final DDA 3-mode n=3 + 대형 맵 연산계측 race 수정 완료.**
+> 최종 DDA/body-coordinate 바이너리로 map1-10 x Full/Sector/Adaptive x n=3
+> (총 90회, order rotation)을 수행했다. Full 30/30·Adaptive 30/30은
+> live/static contact 0, speed-valid 30/30이었다. Fixed Sector는 29/30,
+> live contact 3 runs/6 events, static collision 3 runs/3 events,
+> safety-qualified 27/30이었다. Map9 run2 Sector는 contact 후 300초 timeout,
+> paired Adaptive는 89.74초·contact 0·+0.265 m로 완주했다.
+>
+> 29개 matched metric pair에서 Adaptive는 Full 대비 points/update 17.22%,
+> map total/update 20.70%, update time 13.03%, FSM CPU 19.12% 감소했다. 전체
+> 30회 time-integrated FSM+filter CPU work는 11.66% 감소, 평균 mission time은
+> 5.91% 증가했다. Effective full-view open은 321회이며 원인별 counter는
+> overlap되므로 서로 더하면 안 된다.
+>
+> Map10 Full run1에서 `perf_row_start=472 > perf_row_end=446`인 연산계측
+> race도 발견했다. 큰 static map의 ROGMap init이 runner의 4초 대기보다 늦어
+> shared performance CSV를 뒤늦게 truncate한 문제다. Runner가 새 log
+> generation/header를 기다리고 positive window를 확인한 뒤, teardown 전에
+> per-attempt CSV snapshot을 남기도록 고쳤다. Post-fix map10 3-mode n=1은
+> generation/window valid 3/3, 완주 3/3, contact 0이다. 이 race는 기존 90회
+> 중 computation 한 행만 비웠고 completion/contact/time 판정에는 영향 없다.
+>
+> 상세 맵별 표와 claim boundary는 viability §8.32 및
+> `docs/final_dda_projection_3mode_n3_20260826.md`, raw는
+> `results/final_dda_projection_3mode_seed1_10_n3_raw_20260826.csv`와
+> `results/perf_generation_seed10_3mode_n1_raw_20260826.csv`를 볼 것.
+> Population 100%/flight-ready 주장은 금지하며 McNemar 미검정이다.
+> raw-cloud CIRI default false/non-authoritative, `obs_skip_num` no-op,
+> NaN/clearance-penalty, BackupTrajOpt 미커버, `DRONE_R=robot_r` 지표 한계
+> 정정도 계속 유효하다.
+
+> [!IMPORTANT]
 > **2026-08-26 recovery branch proof + DDA/body-coordinate 후속 완료.**
 > Recovery-only exact-generation ACK retry는 첫 guard full cloud를 한 번
 > 강제로 drop했을 때 drop/retry 1/1, exact ACK commit 32, abandon 0으로

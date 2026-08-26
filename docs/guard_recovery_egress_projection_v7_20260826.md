@@ -26,6 +26,8 @@ After the correction:
 - map 8 Adaptive focused repetition: 5/5 complete, contact 0;
 - final map 8-10 Full/Adaptive n=3: 18/18 complete, live/static contact 0,
   speed-valid 18/18, retry 0.
+- subsequent map 1-10 Full/Sector/Adaptive n=3: Full and Adaptive 30/30
+  complete with contact 0; fixed Sector 29/30 with three contact runs.
 
 This closes the observed DDA-coordinate liveness defect in the tested local
 population. It is not a population-wide or flight-readiness guarantee.
@@ -245,7 +247,7 @@ Verification:
   constructor reorder warning remained;
 - source/mirror files are byte-identical;
 - `native_campaign.py` compiles;
-- 13 Python tests pass;
+- 19 Python tests pass;
 - final accepted campaigns have no retry/OOM and preserve the v7 speed bound.
 
 ## 6. Claim boundary and next step
@@ -262,9 +264,11 @@ initial-footprint egress option is enabled only in the two current tight-v7
 research profiles and remains false by default in `Config`. It never bypasses
 the continuous-free-tail, speed, map-version or candidate-commit checks.
 
-The next meaningful evidence step is a fresh order-crossed map1-10
-Full/Sector/Adaptive n=3 or n=5 campaign on this final binary. That campaign
-should confirm the intended result simultaneously: Full safe completion,
-fixed-Sector degradation, and Adaptive recovery with less mapping work than
-Full. Only after repeated clean cohorts should guard long-tail optimization be
-resumed.
+The requested fresh order-crossed map1-10 Full/Sector/Adaptive n=3 campaign is
+now complete. Full and Adaptive passed 30/30 with zero contact, while fixed
+Sector completed 29/30 and had contact on three runs. The runner's large-map
+performance-log generation race and its post-fix map10 instrumentation gate
+are documented in `docs/final_dda_projection_3mode_n3_20260826.md`. Further
+work should increase independent repetitions and vary maps/noise before any
+population-level claim; guard long-tail optimization must not weaken the
+current safety or exact-ACK certificates.

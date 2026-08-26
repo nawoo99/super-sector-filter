@@ -2268,7 +2268,19 @@ issues are not evidence for this result, `BackupTrajOpt` must not be described
 as fully covered by an EXP-only argument, and `DRONE_R=robot_r` alone is not a
 sufficient clearance metric.
 
-## Current status — DDA/body-coordinate defect closed in the dense-map local gate
+## Current status — final three-mode DDA gate passed locally
+
+- **Section 8.32 is the newest broad evidence and measurement correction.** On
+  the final DDA/body-coordinate binary, map1-10 x Full/Sector/Adaptive x n=3
+  gave Full 30/30 and Adaptive 30/30 with zero live/static contact, while fixed
+  Sector was 29/30 with three contact runs and 27/30 safety-qualified
+  completions. All 90 rows were speed-valid and first-attempt. Adaptive reduced
+  Full points/update 17.22% and total/update 20.70% over 29 matched metric pairs,
+  and time-integrated FSM+filter CPU work 11.66% over all 30 runs, while mean
+  mission time increased 5.91%. A large-map performance-log generation race
+  was fixed and directly revalidated on map10; it affected one computation
+  row, not flight outcome. This is still local n=3 evidence, not population or
+  flight-readiness proof.
 
 - **Section 8.31 is the newest code and local regression evidence.** The
   recovery-only ACK retry, four-way local escape, and initial-footprint egress
@@ -2330,9 +2342,11 @@ sufficient clearance metric.
   remaining issue was efficiency only. Section 8.26 adds the earlier sensing
   action that closes that observed counterexample in the current local sample;
   section 8.27 then makes that sensing evidence generation-specific.
-- **The local horizontal escape is bounded but not execution-proven as a
-  successful recovery.** It may be tried once after a certified stop and A*
-  `NO_PATH`; it never bypasses the existing guard/viability commit checks.
+- **The local horizontal escape is bounded and has deterministic execution
+  proof.** Section 8.31 forced one first-direction skip and committed a
+  remaining certified direction successfully. It may be tried once after a
+  certified stop and A* `NO_PATH`; it never bypasses the existing
+  guard/viability commit checks. It had zero natural commits in 8.32.
 
 - **Section 8.23 remains the endpoint-invariant smoke gate:** the current/first/terminal
   pose raw-body invariant is implemented, and Full/Adaptive were both 10/10
@@ -2355,8 +2369,10 @@ sufficient clearance metric.
   and shows that blind retransmission makes guard work worse. Section 8.29
   repeats that adopted link and rejects an unproven guard micro-optimization.
   Section 8.30 then adds speed-qualified publication and bounded stopped
-  recovery. The remaining first target is direct trigger proof and repeated
-  population evidence, not a higher publication rate or weaker ACK SLA.
+  recovery. Section 8.31 supplies direct trigger proof and 8.32 supplies the
+  final-binary repeated local gate. The remaining target is independent
+  repetition with varied maps/noise, not a higher publication rate or weaker
+  ACK SLA.
 
 - **Executor threading (8.1), unknown-space tracking scoped to the brake
   (8.2), the EMER_STOP fix (8.5), guard-corridor retry alternation (8.9),
@@ -2532,3 +2548,49 @@ claim boundaries are in
 forced raws use the matching `dda_projection_*` names. Raw-cloud CIRI remains
 default false, shadow-only and non-authoritative. McNemar was not run, and
 this local n=3 result does not establish population 100% or flight readiness.
+
+### 8.32 Final map1-10 three-mode n=3 gate and performance-generation fix (2026-08-26)
+
+The fresh final-binary, order-rotated map1-10 x Full/Sector/Adaptive x n=3
+campaign completed 90 rows. Full and Adaptive each completed 30/30 with zero
+live contact, zero static-PCD collision and 30/30 valid v7 speed. Fixed Sector
+completed 29/30, had live contact on 3 runs/6 events and static collision on
+3 runs/3 events, and was safety-qualified on 27/30. Its map9 run2 contacted
+and timed out at 300 s. The corresponding mean times, including that timeout,
+were 71.67/79.41/75.91 s.
+
+The paired map9 evidence was especially direct. Run1 Sector completed with
+-0.160 m static clearance, while Adaptive completed in 84.73 s with contact 0
+and +0.282 m clearance. Run2 Sector contacted and timed out, while Adaptive
+completed in 89.74 s with contact 0 and +0.265 m clearance. Full remained
+30/30 and contact-free, so the requested Full baseline, degraded fixed-Sector
+control, and Adaptive recovery pattern all occurred in the same cohort.
+
+One Full map10 computation row was empty although its flight evidence was
+valid: `perf_row_start=472` and `perf_row_end=446`. ROG-Map opens the shared
+performance CSV with truncation during initialization, and the large map can
+finish initialization after the runner's fixed four-second delay. The runner
+now waits for a changed performance-log generation with a valid header,
+requires a positive row window, and snapshots the per-attempt CSV before
+teardown. A post-fix map10 three-mode n=1 gate had generation/window valid
+3/3, completion 3/3, contact 0 and speed-valid 3/3.
+
+Over the 29 matched broad rows with complete per-update data, Adaptive reduced
+Full points/update 17.22%, map total/update 20.70%, update time 13.03% and FSM
+CPU 19.12%. Over all 30 runs, time-integrated FSM+filter CPU work fell 11.66%
+and mean mission time increased 5.91%. Adaptive retained 58.80% of input
+points and recorded 321 effective full-view opens. The fixed instrumentation
+smoke independently measured map10 point/update and total/update reductions of
+11.98% and 10.75%; its n=1 time/CPU observation does not replace the n=3
+estimate.
+
+All broad and instrumentation rows were first-attempt, retry 0, OOM delta 0
+and FSM swap 0. `py_compile` and all 19 native-campaign tests pass. Detailed
+map-labelled tables, transition definitions, measurement analysis and raw
+paths are in `docs/final_dda_projection_3mode_n3_20260826.md`.
+
+This local result does not establish population 100%, hardware flight
+readiness or formal collision freedom. McNemar was not run. Raw-cloud CIRI
+remains default false, shadow-only and non-authoritative. The `obs_skip_num`
+no-op, NaN/clearance-penalty design defects, BackupTrajOpt coverage limitation
+and `DRONE_R=robot_r` metric limitation remain outside this correction.
