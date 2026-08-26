@@ -182,6 +182,12 @@ namespace super_planner {
         double trajectory_guard_additional_clearance_m{0.0};
         double trajectory_guard_escape_max_duration_s{1.0};
         double trajectory_guard_escape_entry_grace_s{0.0};
+        // A stopped robot may occupy a stale/quantized raw voxel that was
+        // committed after its previously certified arrival.  When enabled,
+        // permit only a bounded egress that masks raw occupied voxel centres
+        // already inside the initial physical footprint.  All occupancy
+        // outside that footprint and the terminal pose remain hard checks.
+        bool trajectory_guard_initial_footprint_egress_en{false};
         // Reject an emergency-brake candidate (only -- NOT normal EXP/backup
         // candidates, which must be free to extend into never-yet-observed
         // space or the vehicle could never explore) that falls in
@@ -234,6 +240,9 @@ namespace super_planner {
                              trajectory_guard_unknown_as_occupied, false);
             loader.LoadParam("fsm/trajectory_guard/escape_entry_grace_s",
                              trajectory_guard_escape_entry_grace_s, 0.0);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/initial_footprint_egress_enable",
+                    trajectory_guard_initial_footprint_egress_en, false);
             loader.LoadParam("super_planner/safe_corridor_line_max_length", safe_corridor_line_max_length, 3.0);
             loader.LoadParam("super_planner/sensing_horizon", sensing_horizon, 3.0);
             loader.LoadParam("super_planner/obs_skip_num", obs_skip_num, 1);

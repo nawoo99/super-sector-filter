@@ -2268,7 +2268,19 @@ issues are not evidence for this result, `BackupTrajOpt` must not be described
 as fully covered by an EXP-only argument, and `DRONE_R=robot_r` alone is not a
 sufficient clearance metric.
 
-## Current status — speed-qualified local gate passes; rare recovery branches need trigger proof
+## Current status — DDA/body-coordinate defect closed in the dense-map local gate
+
+- **Section 8.31 is the newest code and local regression evidence.** The
+  recovery-only ACK retry, four-way local escape, and initial-footprint egress
+  now have deterministic fault-injection branch proof. A pre-fix n=5 campaign
+  exposed one Adaptive timeout, and a later natural map8 failure identified a
+  coordinate bug: inflated-grid DDA cell centres were being reused as robot
+  centres for the raw physical-body test. Physical clearance now uses the
+  closest polynomial-chord projection, while the DDA coordinate remains the
+  inflated-map query. The final map8-10 Full/Adaptive n=3 gate passed 18/18,
+  contact 0, speed-valid 18/18, retry 0. This supersedes 8.30's statement that
+  those rare branches lack direct execution proof, but still is not a
+  population or flight-readiness guarantee.
 
 - **Section 8.30 is the newest same-binary speed-qualified gate.** Map1-10
   Full/Sector/Adaptive completed 30/30 with zero live/static contact and 30/30
@@ -2441,3 +2453,82 @@ map-labelled gate, then bounded reduction of guard rejection and stop/replan
 work without weakening the ACK gate or safety certificate. Retain the
 static-PCD monitor, live-cloud forensics, fixed-Sector control, and CIRI
 shadow's non-authoritative default-off status.
+
+### 8.31 Deterministic recovery proof and DDA/body-coordinate correction (2026-08-26)
+
+The recovery-only exact-generation retry and stopped four-way local escape
+were first made directly testable. A native C++ test flag drops one requested
+trajectory-guard full cloud exactly once; map8 Adaptive then completed in
+72.76 s with drop/retry 1/1, exact ACK commit 32, supersede 1, abandon 0,
+contact 0 and valid v7 speed. A separate environment fault arms one stopped
+local escape and skips its first direction; the remaining certified direction
+committed, and map8 completed in 86.45 s with contact 0 and +0.261 m static
+clearance. Both hooks are default-off and have no production authority.
+
+The following same-binary map1-10 x Full/Sector/Adaptive x n=5 campaign
+completed Full 50/50, fixed Sector 50/50 and Adaptive 49/50. Full had zero
+live/static contact. Fixed Sector had 4 live-contact runs (10 events), 3
+static-collision runs (3 events), and 46/50 safety-qualified completions.
+Adaptive had zero contact but one map10 run4 timeout at waypoint 0/5, despite
++0.041 m static clearance; it issued 16 topology arms and 440 reroute searches.
+The corresponding mean times were 73.22/74.69/81.29 s. This was the desired
+Sector safety degradation, but not yet acceptable Adaptive liveness.
+
+The campaign also had one infrastructure-contaminated Full map2 row: two
+`no odom samples` retries while host available memory fell to 390 MiB, swap
+occupancy reached 2 GiB, cgroup swap reached 1.53 GiB and memory PSI was high.
+The accepted planner attempt had no OOM delta and zero FSM swap. Inspection
+found 17,452 stale Fast-DDS shared-memory files occupying about 4.5 GiB in
+`/dev/shm`; removing only entries older than ten minutes restored launch
+reliability. The final post-fix gate had retry 0, so this is classified as
+accumulated test-infrastructure state rather than a Full algorithm failure.
+
+The first validator correction replaced robot-radius shell voxel lookup with
+direct occupied-voxel-centre distance, matching the static-PCD contact oracle.
+Map10 Adaptive passed 5/5 afterward, but a broad n=1 run still left map9
+Adaptive stopped at waypoint 4/5 with contact 0 and +0.108 m static clearance.
+An initial-footprint egress exception then passed forced injection and map9
+3/3, but a new map8 Adaptive run reproduced a 240 s stop at waypoint 2/5. Its
+online live-cloud marker reported one contact while static PCD reported no
+collision and +0.074 m clearance. All four local directions were rejected.
+
+The exact root cause was that one `map_queries` stream mixed polynomial robot
+centres with inflated-grid DDA cell centres. The latter were passed to the raw
+body-distance query as though the robot actually occupied that cell centre,
+adding an artificial half-voxel displacement. Each query now carries both the
+map coordinate and the closest projection on the sampled polynomial chord.
+Inflated occupancy uses the DDA coordinate; physical body clearance uses the
+projected trajectory centre. The initial-footprint mask additionally requires
+the candidate not to move closer to any cell already inside the stopped body,
+and all existing bounded-window, continuous-free-tail, version, velocity and
+commit checks remain authoritative.
+
+Forced footprint injection then passed map8 1/1 with injection/egress commit
+1/1, contact 0, +0.273 m static clearance and valid speed. Natural map8
+Adaptive repetition passed 5/5, contact 0, mean 86.32 s and minimum static
+clearance +0.227 m. The final order-rotated map8-10 Full/Adaptive n=3 gate
+passed all 18/18 on the first attempt with contact 0 and valid speed:
+
+| Map | Mode | Complete | Mean time (s) | Worst static clearance (m) | Points/update | Total/update (ms) | FSM CPU (%) | Adaptive arm/open |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 8 | Full | 3/3 | 70.04 | +0.244 | 34,514 | 41.39 | 103.19 | 0/0 |
+| 8 | Adaptive | 3/3 | 81.29 | +0.256 | 28,554 | 32.17 | 72.60 | 2/1 |
+| 9 | Full | 3/3 | 91.91 | +0.204 | 41,873 | 36.40 | 79.75 | 0/0 |
+| 9 | Adaptive | 3/3 | 92.11 | +0.197 | 36,667 | 30.62 | 70.42 | 1/3 |
+| 10 | Full | 3/3 | 93.63 | +0.150 | 41,867 | 36.63 | 74.12 | 0/0 |
+| 10 | Adaptive | 3/3 | 91.84 | +0.178 | 36,070 | 31.21 | 73.89 | 1/0 |
+
+Across those dense maps, Adaptive reduced Full points/update 14.34%, map
+total/update 17.85%, and FSM CPU 15.62%, while mean mission time increased
+3.78%. Mean kept percentage was 63.96%, and full-view arm/open transitions
+were 4/4. The ROS build passed with only the pre-existing constructor reorder
+warning; source/mirror pairs are byte-identical; `py_compile` and 13 Python
+tests pass.
+
+Full implementation notes, the complete pre-fix map-labelled n=5 table and
+claim boundaries are in
+`docs/guard_recovery_egress_projection_v7_20260826.md`. Final raw data is
+`results/dda_projection_dense_full_adaptive_n3_raw_20260826.csv`; focused and
+forced raws use the matching `dda_projection_*` names. Raw-cloud CIRI remains
+default false, shadow-only and non-authoritative. McNemar was not run, and
+this local n=3 result does not establish population 100% or flight readiness.

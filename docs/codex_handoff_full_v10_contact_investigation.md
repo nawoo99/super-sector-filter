@@ -1,6 +1,42 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-26 recovery branch proof + DDA/body-coordinate 후속 완료.**
+> Recovery-only exact-generation ACK retry는 첫 guard full cloud를 한 번
+> 강제로 drop했을 때 drop/retry 1/1, exact ACK commit 32, abandon 0으로
+> 완주했고, stopped four-way local escape는 첫 방향을 강제로 skip한 뒤 다른
+> 방향을 hard certificate로 commit해 완주했다. 두 fault hook은 default-off다.
+>
+> 이어서 동일 바이너리 map1-10 x Full/Sector/Adaptive x n=5를 수행했다.
+> Full 50/50·contact 0, fixed Sector 50/50이지만 live contact 4 runs/10 events와
+> static collision 3 runs/3 events, Adaptive 49/50·contact 0이었다. Adaptive
+> map10 run4가 +0.041 m static clearance인데도 waypoint 0에서 240초 정지해
+> liveness 결함이 남았다. Full map2 run3의 두 `no odom samples` retry는
+> `/dev/shm`에 남은 Fast-DDS 파일 17,452개(약 4.5 GiB)와 host memory/swap
+> pressure가 원인이었고, planner OOM/accepted-attempt FSM swap은 아니었다.
+>
+> Physical shell/voxel quantization을 exact occupied-centre distance로 고친
+> 뒤에도 map9 Adaptive가 4/5 waypoint에서 정지했고, initial-footprint egress
+> 1차안 뒤에는 map8에서 다시 정지했다. 최종 원인은 inflated-grid DDA cell
+> centre를 raw physical-body 검사에서도 robot centre로 사용한 좌표 혼용이다.
+> 이제 inflated query는 DDA 좌표를 유지하되 raw body distance는 polynomial
+> chord 투영점을 쓴다. 초기 footprint 셀은 candidate가 그 셀에 더 가까워지지
+> 않을 때만 bounded egress에서 무시하며 continuous free tail이 여전히 필수다.
+>
+> 최종 forced footprint 시험은 injection/commit 1/1·contact 0, map8 Adaptive
+> n=5는 5/5·contact 0, 최종 map8-10 Full/Adaptive n=3은 18/18·contact 0·
+> speed-valid 18/18·retry 0이다. Adaptive는 이 dense gate에서 Full 대비
+> points/update 14.34%, map total/update 17.85%, FSM CPU 15.62%를 줄였고 평균
+> 시간은 3.78% 길었다. Adaptive arm/open은 4/4회다. 상세는 viability §8.31,
+> `docs/guard_recovery_egress_projection_v7_20260826.md`, raw는
+> `results/dda_projection_dense_full_adaptive_n3_raw_20260826.csv`를 볼 것.
+>
+> 이것은 관측된 결함의 local regression 통과이지 population 100%나
+> flight-ready 보장이 아니다. McNemar 미검정, raw-cloud CIRI default
+> false/non-authoritative, `obs_skip_num` no-op, NaN/clearance-penalty 결함,
+> BackupTrajOpt 미커버, `DRONE_R=robot_r` 지표 한계 정정은 계속 유효하다.
+
+> [!IMPORTANT]
 > **2026-08-26 v7 속도 hard bound + stopped recovery 후속 완료.** 아래
 > reliable-link n=3의 Full seed7 run3 `10.027 m/s`는 planner가 실제 발행한
 > 명령이었다. Guard retry가 두 odometry 위치를 표본 수신시각이 아니라 callback

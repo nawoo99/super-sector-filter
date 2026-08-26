@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from native_campaign import parse_shadow_guard_log
+from native_campaign import parse_full_refresh_ack_log, parse_shadow_guard_log
 
 
 class ShadowGuardLogTest(unittest.TestCase):
@@ -35,6 +35,34 @@ class ShadowGuardLogTest(unittest.TestCase):
         self.assertEqual(result["shadow_unsafe_stitch"], 1)
         self.assertAlmostEqual(result["shadow_validation_ms_mean"], 2.82)
         self.assertAlmostEqual(result["shadow_validation_ms_max"], 5.0)
+
+
+class RecoveryBranchLogTest(unittest.TestCase):
+    def test_counts_fault_injection_and_bounded_egress_markers(self):
+        lines = """\
+[WARN] -- [TEST_FAULT_LOCAL_ESCAPE_ARM] direction=[1,0,0]
+[WARN] -- [TEST_FAULT_LOCAL_ESCAPE_DIRECTION_SKIP] attempt=1/4
+[WARN] -- [TRAJ_GUARD_LOCAL_ESCAPE_DIRECTION_REJECTED] attempt=2/4
+[WARN] -- [TRAJ_GUARD_LOCAL_ESCAPE] action=commit direction_attempt=3/4
+[WARN] -- [TRAJ_GUARD_LOCAL_ESCAPE_REJECTED] attempts=4
+[WARN] -- [TEST_FAULT_INITIAL_FOOTPRINT_OCCUPANCY] action=inject_once
+[INFO] -- [TRAJ_GUARD_COMMIT] phase=x footprint_egress=true
+"""
+        handle, path = tempfile.mkstemp(text=True)
+        try:
+            with os.fdopen(handle, "w") as stream:
+                stream.write(lines)
+            result = parse_full_refresh_ack_log(path)
+        finally:
+            os.unlink(path)
+
+        self.assertEqual(result["guard_local_escape_test_injections"], 1)
+        self.assertEqual(result["guard_local_escape_direction_skips"], 1)
+        self.assertEqual(result["guard_local_escape_direction_rejections"], 1)
+        self.assertEqual(result["guard_local_escape_commits"], 1)
+        self.assertEqual(result["guard_local_escape_rejections"], 1)
+        self.assertEqual(result["guard_initial_footprint_test_injections"], 1)
+        self.assertEqual(result["guard_initial_footprint_egress_commits"], 1)
 
 
 if __name__ == "__main__":

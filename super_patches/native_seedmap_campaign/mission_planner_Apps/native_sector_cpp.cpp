@@ -69,6 +69,7 @@ struct Options {
   double trajectory_guard_hold_s{2.5};
   double trajectory_guard_active_max_publish_hz{0.0};
   double trajectory_guard_ack_retry_age_s{0.0};
+  bool test_drop_first_trajectory_guard_full_cloud{false};
 };
 
 double parseDouble(const std::string &name, const char *value) {
@@ -204,6 +205,9 @@ Options parseArgs(int argc, char **argv) {
     } else if (arg == "--trajectory-guard-ack-retry-age-s") {
       options.trajectory_guard_ack_retry_age_s =
           parseDouble(arg, requireValue(i, arg));
+    } else if (arg ==
+               "--test-drop-first-trajectory-guard-full-cloud") {
+      options.test_drop_first_trajectory_guard_full_cloud = true;
     } else if (arg == "--help" || arg == "-h") {
       throw std::runtime_error(
           "usage: native_sector_cpp [full|sector|velocity|adaptive] "
@@ -251,6 +255,13 @@ Options parseArgs(int argc, char **argv) {
   }
   if (options.resume_v <= options.stall_v) {
     throw std::runtime_error("resume-v must be greater than stall-v");
+  }
+  if (options.test_drop_first_trajectory_guard_full_cloud &&
+      (options.mode != "adaptive" ||
+       !options.full_refresh_generation_ack_en)) {
+    throw std::runtime_error(
+        "test trajectory-guard cloud drop requires adaptive mode and "
+        "full-refresh generation ACK");
   }
   if (options.bounded_replan_guard && guard_burst <= 0.0) {
     throw std::runtime_error(
@@ -1127,6 +1138,16 @@ private:
       publishFullRefreshRequest(*msg, 1, now);
     } else if (trajectory_guard_unbounded_refresh_frame_) {
       publishFullRefreshRequest(*msg, 2, now);
+      if (options_.test_drop_first_trajectory_guard_full_cloud &&
+          test_dropped_trajectory_guard_full_clouds_ == 0) {
+        ++test_dropped_trajectory_guard_full_clouds_;
+        RCLCPP_WARN(
+            get_logger(),
+            "[TEST_FAULT_DROP_TRAJECTORY_GUARD_FULL_CLOUD] stamp_ns=%lu "
+            "action=request_without_cloud",
+            static_cast<unsigned long>(cloudStampNs(*msg)));
+        return;
+      }
     }
     if (passthrough) {
       kept_points_ += input_points;
@@ -1467,6 +1488,10 @@ private:
            options_.trajectory_guard_active_max_publish_hz);
     number("trajectory_guard_ack_retry_age_s",
            options_.trajectory_guard_ack_retry_age_s);
+    boolean("test_drop_first_trajectory_guard_full_cloud",
+            options_.test_drop_first_trajectory_guard_full_cloud);
+    integer("test_dropped_trajectory_guard_full_clouds",
+            test_dropped_trajectory_guard_full_clouds_);
     boolean("trajectory_guard_active", trajectory_guard_active_);
     boolean("trajectory_guard_open", trajectory_guard_open_);
     integer("trajectory_guard_status_count", trajectory_guard_status_count_);
@@ -1697,6 +1722,7 @@ private:
   uint64_t trajectory_guard_full_refresh_abandoned_count_{0};
   double trajectory_guard_full_refresh_ack_latency_sum_s_{0.0};
   double trajectory_guard_full_refresh_ack_latency_max_s_{0.0};
+  uint64_t test_dropped_trajectory_guard_full_clouds_{0};
   std::optional<double> first_trajectory_guard_open_time_s_;
 };
 

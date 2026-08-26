@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <stdexcept>
 #include <super_utils/scope_timer.hpp>
 #include <utils/optimization/polynomial_interpolation.h>
@@ -86,20 +87,6 @@ namespace super_planner {
                             cfg_.trajectory_guard_additional_clearance_m +
                             1.0e-9) {
                             trajectory_guard_clearance_offsets_.push_back(offset);
-                        }
-                    }
-                }
-            }
-            const int physical_steps = static_cast<int>(std::ceil(
-                    cfg_.robot_r / rog_map_cfg.resolution));
-            for (int x = -physical_steps; x <= physical_steps; ++x) {
-                for (int y = -physical_steps; y <= physical_steps; ++y) {
-                    for (int z = -physical_steps; z <= physical_steps; ++z) {
-                        if (x == 0 && y == 0 && z == 0) continue;
-                        const Vec3f offset = rog_map_cfg.resolution *
-                                Vec3f(x, y, z);
-                        if (offset.norm() <= cfg_.robot_r + 1.0e-9) {
-                            trajectory_physical_clearance_offsets_.push_back(offset);
                         }
                     }
                 }
@@ -228,7 +215,8 @@ namespace super_planner {
             const std::uint64_t trajectory_generation,
             const bool allow_initial_clearance_escape,
             const bool unknown_as_occupied,
-            const Vec3f *hard_current_pose) const {
+            const Vec3f *hard_current_pose,
+            const bool test_force_initial_footprint_occupancy) const {
         TrajectorySafetyResult result;
         result.trajectory_generation = trajectory_generation;
         if (!trajectoryValidationEnabled()) {
@@ -266,6 +254,11 @@ namespace super_planner {
                 trajectory_guard_hard_clearance_m_;
         struct MapQueryPoint {
             Vec3f point;
+            // `point` is the inflated-grid location used by the DDA/map
+            // query.  A DDA cell centre is not necessarily on the
+            // polynomial, so use this projected trajectory centre for the
+            // raw occupied-voxel/body-distance test.
+            Vec3f physical_center;
             double tt;
             bool hard_body_clearance;
         };
@@ -279,7 +272,8 @@ namespace super_planner {
                 result.first_collision_pos = point;
                 return false;
             }
-            map_queries.push_back({point, tt, hard_body_clearance});
+            map_queries.push_back(
+                    {point, point, tt, hard_body_clearance});
             return true;
         };
 
@@ -347,11 +341,25 @@ namespace super_planner {
             operation_start = std::chrono::steady_clock::now();
             if (voxel_raycaster.setInput(previous_point, next_point)) {
                 Vec3f ray_point;
+                const Vec3f segment_delta = next_point - previous_point;
+                const double segment_length_sq = segment_delta.squaredNorm();
                 while (voxel_raycaster.step(ray_point)) {
-                    map_queries.push_back({ray_point, next_tt, false});
+                    double segment_alpha = 1.0;
+                    if (segment_length_sq > 1.0e-12) {
+                        segment_alpha = std::clamp(
+                                (ray_point - previous_point).dot(segment_delta) /
+                                        segment_length_sq,
+                                0.0, 1.0);
+                    }
+                    map_queries.push_back(
+                            {ray_point,
+                             previous_point + segment_alpha * segment_delta,
+                             previous_tt +
+                                     segment_alpha * (next_tt - previous_tt),
+                             false});
                 }
             }
-            map_queries.push_back({next_point, next_tt,
+            map_queries.push_back({next_point, next_point, next_tt,
                                    next_tt >= total_duration - 1.0e-9});
             result.voxelize_ms += std::chrono::duration<double, std::milli>(
                     std::chrono::steady_clock::now() - operation_start).count();
@@ -381,6 +389,64 @@ namespace super_planner {
         bool clearance_escape_prefix = false;
         bool clearance_escape_completed = false;
         double latest_clearance_violation_tt = -1.0;
+        // Use one physical-body definition throughout the certificate.  The
+        // previous general-path test sampled a robot-radius shell and then
+        // queried the voxel containing every shell point.  That silently
+        // added up to half a raw voxel to robot_r: a stopped pose could pass
+        // the exact mandatory-pose check while every short escape from it was
+        // labelled OCCUPIED.  Compare occupied voxel centres with robot_r,
+        // matching the mandatory-pose check and the static-PCD contact oracle.
+        const auto physical_body_occupied =
+                [this, &map_config, hard_current_pose,
+                 allow_initial_clearance_escape,
+                 test_force_initial_footprint_occupancy, &result](
+                        const Vec3f &point,
+                        const bool allow_initial_footprint_mask) {
+            if (point.z() <= map_config.virtual_ground_height + cfg_.robot_r ||
+                point.z() >= map_config.virtual_ceil_height - cfg_.robot_r) {
+                return true;
+            }
+            vec_E<Vec3f> occupied_points;
+            const double search_radius = cfg_.robot_r +
+                    0.5 * map_config.resolution;
+            const Vec3f search_extent = Vec3f::Constant(search_radius);
+            map_ptr_->boxSearch(point - search_extent,
+                                point + search_extent,
+                                rog_map::GridType::OCCUPIED,
+                                occupied_points);
+            if (test_force_initial_footprint_occupancy &&
+                hard_current_pose != nullptr &&
+                (point - *hard_current_pose).norm() <= cfg_.robot_r) {
+                occupied_points.push_back(*hard_current_pose);
+            }
+            for (const auto &occupied_point : occupied_points) {
+                const double candidate_distance =
+                        (occupied_point - point).norm();
+                if (candidate_distance <= cfg_.robot_r + 1.0e-9) {
+                    const double initial_distance =
+                            hard_current_pose != nullptr
+                                    ? (occupied_point -
+                                       *hard_current_pose).norm()
+                                    : std::numeric_limits<double>::infinity();
+                    const bool inside_initial_footprint =
+                            allow_initial_footprint_mask &&
+                            cfg_.trajectory_guard_initial_footprint_egress_en &&
+                            allow_initial_clearance_escape &&
+                            hard_current_pose != nullptr &&
+                            initial_distance <= cfg_.robot_r + 1.0e-9 &&
+                            // Never use the mask to move farther into a real
+                            // hit.  It is only an egress exception for a cell
+                            // already intersecting the stopped footprint.
+                            candidate_distance + 1.0e-9 >= initial_distance;
+                    if (inside_initial_footprint) {
+                        result.used_initial_footprint_egress = true;
+                        continue;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        };
         // The per-segment DDA emits a voxel centre and the exact polynomial
         // endpoint at the same time stamp. Near a margin boundary those two
         // representations can alternate occupied/free until the trajectory
@@ -394,6 +460,9 @@ namespace super_planner {
                 map_config.inflation_resolution;
         const double clearance_escape_cluster_radius_m =
                 std::sqrt(3.0) * map_config.inflation_resolution + 1.0e-6;
+        const double initial_footprint_egress_radius_m =
+                cfg_.robot_r + trajectory_guard_hard_clearance_m_ +
+                map_config.inflation_resolution;
         double first_clearance_violation_tt = -1.0;
         Vec3f first_clearance_violation_pos = Vec3f::Zero();
         for (std::size_t query_index = 0; query_index < map_queries.size(); ++query_index) {
@@ -409,32 +478,18 @@ namespace super_planner {
                 // stationary hold: query raw occupied voxel centres directly
                 // against the physical body radius at these mandatory poses.
                 // This is a hard contact check and is intentionally outside
-                // the initial-clearance escape exception below.
+                // the ordinary initial-clearance escape exception below.
+                // The optional footprint-egress mask is narrower: it ignores
+                // only voxel centres already inside the stopped robot's
+                // initial body, for at most the bounded escape window.  A
+                // terminal violation still fails the continuous-free-tail
+                // requirement below.
                 if (query.hard_body_clearance) {
-                    bool body_occupied =
-                            point.z() <= map_config.virtual_ground_height +
-                                             cfg_.robot_r ||
-                            point.z() >= map_config.virtual_ceil_height -
-                                             cfg_.robot_r;
-                    if (!body_occupied) {
-                        vec_E<Vec3f> occupied_points;
-                        const double search_radius = cfg_.robot_r +
-                                0.5 * map_config.resolution;
-                        const Vec3f search_extent =
-                                Vec3f::Constant(search_radius);
-                        map_ptr_->boxSearch(point - search_extent,
-                                            point + search_extent,
-                                            rog_map::GridType::OCCUPIED,
-                                            occupied_points);
-                        for (const auto &occupied_point : occupied_points) {
-                            if ((occupied_point - point).norm() <=
-                                    cfg_.robot_r + 1.0e-9) {
-                                body_occupied = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (body_occupied) {
+                    const bool footprint_mask_window =
+                            query.tt - checked_from_tt <=
+                                    cfg_.trajectory_guard_escape_max_duration_s;
+                    if (physical_body_occupied(query.physical_center,
+                                               footprint_mask_window)) {
                         result.status = TrajectorySafetyStatus::OCCUPIED;
                         result.first_collision_tt = query.tt;
                         result.first_collision_pos = point;
@@ -478,6 +533,12 @@ namespace super_planner {
                 bool guard_occupied = point.z() <= guard_ground_height ||
                                       point.z() >= guard_ceil_height ||
                                       map_ptr_->isOccupiedInflate(point);
+                if (test_force_initial_footprint_occupancy &&
+                    hard_current_pose != nullptr &&
+                    (point - *hard_current_pose).norm() <=
+                            trajectory_guard_hard_clearance_m_) {
+                    guard_occupied = true;
+                }
                 for (const auto &offset : trajectory_guard_clearance_offsets_) {
                     const Vec3f clearance_point = point + offset;
                     if (map_ptr_->insideLocalMap(clearance_point) &&
@@ -492,21 +553,11 @@ namespace super_planner {
 
                 // A conservative guard-margin violation may be escaped only
                 // when the physical body still clears raw occupied voxels.
-                bool physical_occupied =
-                        point.z() <= map_config.virtual_ground_height + cfg_.robot_r ||
-                        point.z() >= map_config.virtual_ceil_height - cfg_.robot_r ||
-                        map_ptr_->getGridType(point) == rog_map::GridType::OCCUPIED;
-                if (!physical_occupied) {
-                    for (const auto &offset : trajectory_physical_clearance_offsets_) {
-                        const Vec3f body_point = point + offset;
-                        if (map_ptr_->insideLocalMap(body_point) &&
-                            map_ptr_->getGridType(body_point) ==
-                                    rog_map::GridType::OCCUPIED) {
-                            physical_occupied = true;
-                            break;
-                        }
-                    }
-                }
+                const bool footprint_mask_window =
+                        query.tt - checked_from_tt <=
+                                cfg_.trajectory_guard_escape_max_duration_s;
+                const bool physical_occupied = physical_body_occupied(
+                        query.physical_center, footprint_mask_window);
                 if (physical_occupied) {
                     result.status = TrajectorySafetyStatus::OCCUPIED;
                 } else if (allow_initial_clearance_escape &&
@@ -516,8 +567,12 @@ namespace super_planner {
                              (point - map_queries.front().point).norm() <=
                                      clearance_escape_cluster_radius_m) ||
                             (clearance_escape_prefix &&
-                             (point - first_clearance_violation_pos).norm() <=
-                                     clearance_escape_cluster_radius_m) ||
+                             ((point - first_clearance_violation_pos).norm() <=
+                                      clearance_escape_cluster_radius_m ||
+                              (result.used_initial_footprint_egress &&
+                               hard_current_pose != nullptr &&
+                               (point - *hard_current_pose).norm() <=
+                                       initial_footprint_egress_radius_m))) ||
                             (guard_corridor_retry_pending_.load(
                                      std::memory_order_acquire) &&
                              query.tt - checked_from_tt <=
@@ -536,7 +591,10 @@ namespace super_planner {
                 }
             }
             result.first_collision_tt = query.tt;
-            result.first_collision_pos = point;
+            result.first_collision_pos =
+                    result.status == TrajectorySafetyStatus::OCCUPIED
+                            ? query.physical_center
+                            : point;
             result.map_query_ms = std::chrono::duration<double, std::milli>(
                     std::chrono::steady_clock::now() - query_start).count();
             return result;
@@ -1291,6 +1349,21 @@ namespace super_planner {
                     cfg_.guard_topology_reroute_max_stop_speed_mps ||
                     certified_stop_for_reroute;
         }
+        const char *test_force_initial_footprint_egress = std::getenv(
+                "SUPER_TEST_FORCE_INITIAL_FOOTPRINT_EGRESS_ONCE");
+        const bool inject_initial_footprint_occupancy =
+                !guard_test_initial_footprint_egress_injected_ &&
+                test_force_initial_footprint_egress != nullptr &&
+                std::string(test_force_initial_footprint_egress) == "1" &&
+                plan_from_rest && allow_clearance_escape &&
+                cfg_.trajectory_guard_initial_footprint_egress_en;
+        if (inject_initial_footprint_occupancy) {
+            guard_test_initial_footprint_egress_injected_ = true;
+            ros_ptr_->warn(
+                    " -- [TEST_FAULT_INITIAL_FOOTPRINT_OCCUPANCY] "
+                    "phase={} radius={:.3f}m action=inject_once",
+                    phase, cfg_.robot_r);
+        }
         const auto safety = validatePositionTrajectory(candidate.pos_traj,
                                                        checked_from_tt,
                                                        candidate_generation,
@@ -1298,7 +1371,8 @@ namespace super_planner {
                                                        false,
                                                        hard_current_pose
                                                                ? &*hard_current_pose
-                                                               : nullptr);
+                                                               : nullptr,
+                                                       inject_initial_footprint_occupancy);
         if (!safety.safe()) {
             trajectory_guard_rejection_pending_.store(true,
                                                       std::memory_order_release);
@@ -1416,10 +1490,12 @@ namespace super_planner {
         guard_topology_goal_valid_ = false;
         if (cfg_.trajectory_guard_en) {
             ros_ptr_->info(" -- [TRAJ_GUARD_COMMIT] phase={} gen={} map={} samples={} "
-                           "range=[{:.3f},{:.3f}] escape={} escape_done_tt={:.3f}",
+                           "range=[{:.3f},{:.3f}] escape={} footprint_egress={} "
+                           "escape_done_tt={:.3f}",
                            phase, committed_generation, safety.map_version,
                            safety.checked_samples, safety.checked_from_tt,
                            safety.checked_to_tt, safety.used_clearance_escape,
+                           safety.used_initial_footprint_egress,
                            safety.clearance_escape_completed_tt);
         }
         return true;
@@ -1758,6 +1834,16 @@ namespace super_planner {
              direction_index < escape_directions.size(); ++direction_index) {
             const Vec3f trial_direction =
                     escape_directions[direction_index].normalized();
+            if (guard_test_local_escape_skip_first_direction_ &&
+                direction_index == 0) {
+                guard_test_local_escape_skip_first_direction_ = false;
+                ros_ptr_->warn(
+                        " -- [TEST_FAULT_LOCAL_ESCAPE_DIRECTION_SKIP] "
+                        "attempt=1/{} direction=[{:.3f},{:.3f},{:.3f}]",
+                        escape_directions.size(), trial_direction.x(),
+                        trial_direction.y(), trial_direction.z());
+                continue;
+            }
             const Vec3f escape_goal = escape_start +
                     distance * trial_direction;
             Eigen::Matrix<double, 3, 3> initial_pva;
@@ -2017,6 +2103,34 @@ namespace super_planner {
             }
         }
         latest_replan.setLocalStartP(local_star_pt);
+
+        const char *test_force_local_escape =
+                std::getenv("SUPER_TEST_FORCE_LOCAL_ESCAPE_ONCE");
+        if (!guard_test_local_escape_injected_ &&
+            test_force_local_escape != nullptr &&
+            std::string(test_force_local_escape) == "1" &&
+            cfg_.guard_topology_local_escape_en &&
+            cfg_.guard_viability_en) {
+            Vec3f test_direction = goal_p - robot_state_.p;
+            test_direction.z() = 0.0;
+            if (!test_direction.array().isFinite().all() ||
+                test_direction.norm() < cfg_.resolution) {
+                test_direction = Vec3f(std::cos(robot_state_.yaw),
+                                       std::sin(robot_state_.yaw), 0.0);
+            }
+            guard_local_escape_direction_ = test_direction.normalized();
+            guard_local_escape_pending_.store(true,
+                                              std::memory_order_release);
+            guard_test_local_escape_skip_first_direction_ = true;
+            guard_test_local_escape_injected_ = true;
+            ros_ptr_->warn(
+                    " -- [TEST_FAULT_LOCAL_ESCAPE_ARM] "
+                    "action=skip_first_then_certify direction="
+                    "[{:.3f},{:.3f},{:.3f}]",
+                    guard_local_escape_direction_.x(),
+                    guard_local_escape_direction_.y(),
+                    guard_local_escape_direction_.z());
+        }
 
         if (tryCommitCertifiedLocalEscape(local_star_pt)) {
             return SUCCESS;

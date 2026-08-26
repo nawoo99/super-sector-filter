@@ -97,6 +97,7 @@ namespace super_planner {
         double trajectory_eval_ms{0.0};
         double voxelize_ms{0.0};
         bool used_clearance_escape{false};
+        bool used_initial_footprint_egress{false};
         double clearance_escape_completed_tt{-1.0};
 
         bool safe() const {
@@ -186,6 +187,11 @@ namespace super_planner {
         std::atomic_bool guard_certified_stop_for_reroute_{false};
         std::atomic_bool guard_local_escape_pending_{false};
         Vec3f guard_local_escape_direction_{Vec3f::Zero()};
+        // Explicit environment-gated regression hook. It is never enabled by
+        // a production profile and is consumed only once per planner process.
+        bool guard_test_local_escape_injected_{false};
+        bool guard_test_local_escape_skip_first_direction_{false};
+        bool guard_test_initial_footprint_egress_injected_{false};
         std::atomic_bool guard_vertical_recovery_pending_{false};
         // Suppress the periodic moving-state replanner until a short
         // rest-to-rest recovery (vertical lift or direct final connection)
@@ -205,7 +211,6 @@ namespace super_planner {
         std::thread shadow_worker_;
         std::chrono::steady_clock::time_point last_shadow_validation_time_{};
         vec_E<Vec3f> trajectory_guard_clearance_offsets_;
-        vec_E<Vec3f> trajectory_physical_clearance_offsets_;
         double trajectory_guard_hard_clearance_m_{0.0};
 
         vector<double> time_consuming_;
@@ -306,7 +311,8 @@ namespace super_planner {
                 std::uint64_t trajectory_generation = 0,
                 bool allow_initial_clearance_escape = false,
                 bool unknown_as_occupied = false,
-                const Vec3f *hard_current_pose = nullptr) const;
+                const Vec3f *hard_current_pose = nullptr,
+                bool test_force_initial_footprint_occupancy = false) const;
 
         TrajectorySafetyResult validateCommittedTrajectory(double now_wt) const;
 

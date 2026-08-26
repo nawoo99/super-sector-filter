@@ -101,6 +101,11 @@ fsm:
     # Only active for a stopped PlanFromRest attempt after a raw EXP guard
     # rejection, while using the inflated recovery corridor.
     escape_entry_grace_s: 0.0
+    # Occupancy-only mapping never clears old hits inside the moving robot's
+    # blind footprint. Permit a stopped, bounded candidate to egress voxel
+    # centres already inside its initial body; outside/terminal occupancy is
+    # still rejected by the unchanged certificate.
+    initial_footprint_egress_enable: true
     # 2026-08-17: reject guard points that fall in never-observed raw-grid
     # space (not just confirmed-occupied). See rog_map's known_pages fix --
     # isOccupiedInflate alone can't tell "confirmed empty" from "LiDAR never

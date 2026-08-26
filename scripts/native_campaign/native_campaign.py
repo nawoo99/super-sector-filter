@@ -293,6 +293,13 @@ def parse_full_refresh_ack_log(path):
         "full_refresh_ack_timeout_recoveries": 0,
         "guard_topology_reroute_arms": 0,
         "guard_topology_reroute_searches": 0,
+        "guard_local_escape_test_injections": 0,
+        "guard_local_escape_direction_skips": 0,
+        "guard_local_escape_direction_rejections": 0,
+        "guard_local_escape_commits": 0,
+        "guard_local_escape_rejections": 0,
+        "guard_initial_footprint_egress_commits": 0,
+        "guard_initial_footprint_test_injections": 0,
         "guard_brake_successes": 0,
         "guard_brake_rejections": 0,
         "guard_brake_stationary_defers": 0,
@@ -324,6 +331,23 @@ def parse_full_refresh_ack_log(path):
             for marker, key in markers.items():
                 if marker in line:
                     counts[key] += 1
+            if "[TEST_FAULT_LOCAL_ESCAPE_ARM]" in line:
+                counts["guard_local_escape_test_injections"] += 1
+            if "[TEST_FAULT_LOCAL_ESCAPE_DIRECTION_SKIP]" in line:
+                counts["guard_local_escape_direction_skips"] += 1
+            if "[TRAJ_GUARD_LOCAL_ESCAPE_DIRECTION_REJECTED]" in line:
+                counts["guard_local_escape_direction_rejections"] += 1
+            if "[TRAJ_GUARD_LOCAL_ESCAPE] action=commit" in line:
+                counts["guard_local_escape_commits"] += 1
+            if "[TRAJ_GUARD_LOCAL_ESCAPE_REJECTED]" in line:
+                counts["guard_local_escape_rejections"] += 1
+            if (
+                "[TRAJ_GUARD_COMMIT]" in line
+                and "footprint_egress=true" in line
+            ):
+                counts["guard_initial_footprint_egress_commits"] += 1
+            if "[TEST_FAULT_INITIAL_FOOTPRINT_OCCUPANCY]" in line:
+                counts["guard_initial_footprint_test_injections"] += 1
             if (
                 "TRAJ_GUARD_RECOVERED" in line
                 and "trigger=full_refresh_ack_timeout" in line
@@ -604,6 +628,13 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "full_refresh_ack_timeout_recoveries",
           "guard_topology_reroute_arms",
           "guard_topology_reroute_searches",
+          "guard_local_escape_test_injections",
+          "guard_local_escape_direction_skips",
+          "guard_local_escape_direction_rejections",
+          "guard_local_escape_commits",
+          "guard_local_escape_rejections",
+          "guard_initial_footprint_egress_commits",
+          "guard_initial_footprint_test_injections",
           "guard_brake_successes", "guard_brake_rejections",
           "guard_brake_stationary_defers",
           "trajectory_velocity_slowdowns",
@@ -783,6 +814,8 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_trajectory_guard_full_refresh_abandoned_count",
           "filter_trajectory_guard_full_refresh_ack_latency_mean_s",
           "filter_trajectory_guard_full_refresh_ack_latency_max_s",
+          "filter_test_drop_first_trajectory_guard_full_cloud",
+          "filter_test_dropped_trajectory_guard_full_clouds",
           "filter_trajectory_guard_open_duty_pct",
           "filter_trajectory_guard_active_frames",
           "filter_trajectory_guard_hold_only_frames",
@@ -919,11 +952,14 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             adaptive_trajectory_guard_hold_s=2.5,
             adaptive_trajectory_guard_active_max_publish_hz=0.0,
             adaptive_trajectory_guard_ack_retry_age_s=0.0,
+            adaptive_test_drop_first_trajectory_guard_full_cloud=False,
             adaptive_pre_stale_full_age_s=0.25,
             adaptive_pre_stale_ack_retry_age_s=0.0,
             adaptive_full_refresh_generation_ack=True,
             filtered_reliable_map_link=False,
-            adaptive_full_open_extra_max_points=6000):
+            adaptive_full_open_extra_max_points=6000,
+            test_force_local_escape_once=False,
+            test_force_initial_footprint_egress_once=False):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
     is_seed12 = (map_name == "seed12")
@@ -1144,6 +1180,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     f"{adaptive_trajectory_guard_active_max_publish_hz}"
                     f" --trajectory-guard-ack-retry-age-s "
                     f"{adaptive_trajectory_guard_ack_retry_age_s}"
+                    f"{' --test-drop-first-trajectory-guard-full-cloud' if adaptive_test_drop_first_trajectory_guard_full_cloud else ''}"
                     f" --map-commit-pre-stale-full-age-s "
                     f"{adaptive_pre_stale_full_age_s}"
                     f" --map-commit-pre-stale-ack-retry-age-s "
@@ -1266,6 +1303,13 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             )
             if is_seedmap_observed or seedmap_super_config_override:
                 launch_cmd += f" > {reference_stack_log} 2>&1"
+        if test_force_local_escape_once:
+            launch_cmd = "SUPER_TEST_FORCE_LOCAL_ESCAPE_ONCE=1 " + launch_cmd
+        if test_force_initial_footprint_egress_once:
+            launch_cmd = (
+                "SUPER_TEST_FORCE_INITIAL_FOOTPRINT_EGRESS_ONCE=1 "
+                + launch_cmd
+            )
         launch_proc = subprocess.Popen(
             ["bash", "-c", f"{ROS_ENV} && {launch_cmd}"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
@@ -1760,6 +1804,14 @@ def main():
         help="rotate requested mode order each run to balance order effects",
     )
     ap.add_argument(
+        "--resume-existing",
+        action="store_true",
+        help=(
+            "skip map/run/mode keys already present in --out and append only "
+            "the missing rows"
+        ),
+    )
+    ap.add_argument(
         "--seedmap-super-config",
         help=(
             "override the SUPER config for seed1..10 modes; intended for a "
@@ -1841,6 +1893,14 @@ def main():
         ),
     )
     ap.add_argument(
+        "--adaptive-test-drop-first-trajectory-guard-full-cloud",
+        action="store_true",
+        help=(
+            "test only: drop the first trajectory-guard full cloud after its "
+            "generation request to prove the recovery-only ACK retry"
+        ),
+    )
+    ap.add_argument(
         "--adaptive-full-open-extra-max-points",
         type=int,
         default=6000,
@@ -1883,6 +1943,22 @@ def main():
         ),
     )
     ap.add_argument(
+        "--test-force-local-escape-once",
+        action="store_true",
+        help=(
+            "test only: arm one stopped local escape and skip its first "
+            "direction before certifying the remaining directions"
+        ),
+    )
+    ap.add_argument(
+        "--test-force-initial-footprint-egress-once",
+        action="store_true",
+        help=(
+            "test only: inject one synthetic stale voxel inside the stopped "
+            "initial footprint and require bounded certified egress"
+        ),
+    )
+    ap.add_argument(
         "--artifacts-dir",
         help="copy each run's monitor JSON, including contact context, here",
     )
@@ -1915,6 +1991,40 @@ def main():
         )
     if args.filtered_reliable_map_link and args.filter_backend != "cpp":
         ap.error("--filtered-reliable-map-link requires --filter-backend cpp")
+    if args.adaptive_test_drop_first_trajectory_guard_full_cloud:
+        if args.filter_backend != "cpp":
+            ap.error(
+                "--adaptive-test-drop-first-trajectory-guard-full-cloud "
+                "requires --filter-backend cpp"
+            )
+        if not args.adaptive_full_refresh_generation_ack:
+            ap.error(
+                "--adaptive-test-drop-first-trajectory-guard-full-cloud "
+                "requires generation ACK"
+            )
+        if "adaptive" not in args.modes:
+            ap.error(
+                "--adaptive-test-drop-first-trajectory-guard-full-cloud "
+                "requires adaptive mode"
+            )
+    if args.test_force_local_escape_once:
+        if args.modes != ["adaptive"]:
+            ap.error(
+                "--test-force-local-escape-once requires exactly "
+                "--modes adaptive"
+            )
+        if args.runs != 1:
+            ap.error("--test-force-local-escape-once requires --runs 1")
+    if args.test_force_initial_footprint_egress_once:
+        if args.modes != ["adaptive"]:
+            ap.error(
+                "--test-force-initial-footprint-egress-once requires exactly "
+                "--modes adaptive"
+            )
+        if args.runs != 1:
+            ap.error(
+                "--test-force-initial-footprint-egress-once requires --runs 1"
+            )
     split_configs = (
         args.seedmap_full_super_config,
         args.seedmap_filtered_super_config,
@@ -1995,14 +2105,31 @@ def main():
             )
 
     fresh = not os.path.exists(args.out) or os.path.getsize(args.out) == 0
+    existing_keys = set()
+    max_existing_sequence = 0
     if not fresh:
         with open(args.out, newline="") as existing:
-            existing_header = next(csv.reader(existing), [])
+            reader = csv.DictReader(existing)
+            existing_header = reader.fieldnames or []
+            existing_rows = list(reader) if args.resume_existing else []
         if existing_header != FIELDS:
             raise SystemExit(
                 f"refusing to append to {args.out}: CSV header is from a different "
                 "campaign schema; choose a new --out path"
             )
+        for row in existing_rows:
+            try:
+                row_run = int(row["run"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            existing_keys.add((row.get("map"), row_run, row.get("mode")))
+            try:
+                max_existing_sequence = max(
+                    max_existing_sequence,
+                    int(row.get("campaign_sequence_index") or 0),
+                )
+            except (TypeError, ValueError):
+                pass
     f = open(args.out, "a", newline="")
     w = csv.DictWriter(
         f, fieldnames=FIELDS, extrasaction="ignore", lineterminator="\n"
@@ -2010,7 +2137,13 @@ def main():
     if fresh:
         w.writeheader(); f.flush()
 
-    total = len(args.maps) * len(args.modes) * args.runs
+    requested_keys = {
+        (map_name, run, mode)
+        for map_name in args.maps
+        for run in range(1, args.runs + 1)
+        for mode in args.modes
+    }
+    total = len(requested_keys - existing_keys)
     done = 0
     t0 = time.time()
     try:
@@ -2027,6 +2160,8 @@ def main():
                     ) % len(modes)
                     modes = modes[shift:] + modes[:shift]
                 for mode_position, mode in enumerate(modes, start=1):
+                    if (map_name, run, mode) in existing_keys:
+                        continue
                     mode_config = args.seedmap_super_config
                     if all(split_configs):
                         mode_config = (
@@ -2058,6 +2193,9 @@ def main():
                         adaptive_trajectory_guard_ack_retry_age_s=(
                             args.adaptive_trajectory_guard_ack_retry_age_s
                         ),
+                        adaptive_test_drop_first_trajectory_guard_full_cloud=(
+                            args.adaptive_test_drop_first_trajectory_guard_full_cloud
+                        ),
                         adaptive_pre_stale_full_age_s=(
                             args.adaptive_pre_stale_full_age_s
                         ),
@@ -2073,8 +2211,16 @@ def main():
                         adaptive_full_open_extra_max_points=(
                             args.adaptive_full_open_extra_max_points
                         ),
+                        test_force_local_escape_once=(
+                            args.test_force_local_escape_once
+                        ),
+                        test_force_initial_footprint_egress_once=(
+                            args.test_force_initial_footprint_egress_once
+                        ),
                     )
-                    rec["campaign_sequence_index"] = done + 1
+                    rec["campaign_sequence_index"] = (
+                        max_existing_sequence + done + 1
+                    )
                     rec["mode_order_position"] = mode_position
                     w.writerow(rec); f.flush()
                     done += 1
