@@ -208,7 +208,8 @@ super_planner:
     # it is committed only through the unchanged guard + viability checks.
     local_escape_enable: true
     local_escape_distance_m: 0.60
-    local_escape_attempts: 1
+    local_escape_attempts: 4
+    episode_progress_reset_m: 2.0
     saturation_vertical_attempts: 1
     base_no_path_vertical_attempts: 1
   # Pre-commit viability guard (new, untested): mirrors the runtime brake's

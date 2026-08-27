@@ -785,18 +785,14 @@ namespace super_planner {
         }
     }
 
-    void SuperPlanner::resetTopologyRecoveryState() {
+    void SuperPlanner::clearTopologyRecoverySearchState() {
         guard_topology_avoidance_centers_.clear();
         guard_topology_avoidance_radii_.clear();
         guard_topology_branch_directions_.clear();
         guard_topology_branch_depths_.clear();
         guard_topology_no_path_failures_ = 0;
-        guard_topology_base_no_path_recoveries_ = 0;
-        guard_topology_saturation_recoveries_ = 0;
-        guard_topology_local_escape_recoveries_ = 0;
         guard_topology_corridor_failures_ = 0;
         guard_topology_post_corridor_failures_ = 0;
-        guard_topology_epoch_ = 0;
         guard_topology_stall_generation_ = 0;
         guard_topology_stall_collision_.setZero();
         guard_topology_stall_rejects_ = 0;
@@ -809,6 +805,16 @@ namespace super_planner {
                 -std::numeric_limits<double>::infinity();
         guard_certified_stop_for_reroute_.store(false,
                                                 std::memory_order_release);
+    }
+
+    void SuperPlanner::resetTopologyRecoveryState() {
+        clearTopologyRecoverySearchState();
+        guard_topology_base_no_path_recoveries_ = 0;
+        guard_topology_saturation_recoveries_ = 0;
+        guard_topology_local_escape_recoveries_ = 0;
+        guard_topology_epoch_ = 0;
+        guard_topology_episode_anchor_.setZero();
+        guard_topology_episode_anchor_valid_ = false;
     }
 
     void SuperPlanner::armTopologyRouteBlock(
@@ -1486,8 +1492,14 @@ namespace super_planner {
                                                   std::memory_order_release);
         guard_corridor_retry_pending_.store(false, std::memory_order_release);
         guard_corridor_retry_attempts_.store(0, std::memory_order_release);
-        resetTopologyRecoveryState();
-        guard_topology_goal_valid_ = false;
+        // A successful short PlanFromRest candidate changes the current pose,
+        // so its virtual blockers cannot be reused verbatim.  The recovery
+        // budget, however, belongs to the stopped-location episode.  Resetting
+        // the entire state here re-armed the same four-way escape and vertical
+        // lift after every sub-metre commit (map8 Full: 154 arms/363 searches).
+        // Preserve those budgets and the goal identity until PlanFromRest
+        // observes material horizontal progress or a genuinely new goal.
+        clearTopologyRecoverySearchState();
         if (cfg_.trajectory_guard_en) {
             ros_ptr_->info(" -- [TRAJ_GUARD_COMMIT] phase={} gen={} map={} samples={} "
                            "range=[{:.3f},{:.3f}] escape={} footprint_egress={} "
@@ -1801,17 +1813,45 @@ namespace super_planner {
         // from one side of a stopped vehicle to the other.  Seed8 exposed
         // exactly that case: the stored direction pointed into the originally
         // rejected route and the planner then reseeded that route for almost a
-        // minute.  Enumerate the four horizontal homotopy exits once and let
-        // the unchanged trajectory certificate select the first safe one.
+        // minute.  Four cardinal exits were still insufficient at map8's
+        // diagonal boundary pocket. Enumerate the eight horizontal homotopy
+        // exits once and let the unchanged trajectory certificate select the
+        // first safe one.
         // This remains a bounded, stop-only recovery; no unsafe candidate can
         // be published merely because it is an alternate direction.
         const Vec3f perpendicular(-escape_direction.y(),
                                   escape_direction.x(), 0.0);
-        const std::vector<Vec3f> escape_directions{
+        std::vector<Vec3f> escape_directions{
                 escape_direction,
                 -escape_direction,
                 perpendicular,
-                -perpendicular};
+                -perpendicular,
+                (escape_direction + perpendicular).normalized(),
+                (escape_direction - perpendicular).normalized(),
+                (-escape_direction + perpendicular).normalized(),
+                (-escape_direction - perpendicular).normalized()};
+        // A geometrically safe step can still make the next corridor problem
+        // worse when it moves toward the map boundary.  Seed10 exposed this:
+        // the first safe "away from collision" direction moved north-east
+        // while the waypoint was almost due west, leaving FIRI at y=24.95
+        // indefinitely.  Keep the same eight certified alternatives, but try
+        // the directions that make the most horizontal waypoint progress
+        // first.  stable_sort preserves the collision-relative order when a
+        // goal direction is unavailable or scores tie.
+        Vec3f goal_direction = gi_.goal_p - escape_start;
+        goal_direction.z() = 0.0;
+        const double goal_direction_norm = goal_direction.norm();
+        if (goal_direction.array().isFinite().all() &&
+            std::isfinite(goal_direction_norm) &&
+            goal_direction_norm >= cfg_.resolution) {
+            goal_direction /= goal_direction_norm;
+            std::stable_sort(
+                    escape_directions.begin(), escape_directions.end(),
+                    [&goal_direction](const Vec3f &lhs, const Vec3f &rhs) {
+                        return lhs.dot(goal_direction) >
+                               rhs.dot(goal_direction);
+                    });
+        }
         const double distance =
                 cfg_.guard_topology_local_escape_distance_m;
         const double velocity_limit = std::max(
@@ -2103,6 +2143,50 @@ namespace super_planner {
             }
         }
         latest_replan.setLocalStartP(local_star_pt);
+
+        if (cfg_.guard_topology_reroute_en) {
+            const Vec3f episode_position = robot_state_.p;
+            if (!guard_topology_episode_anchor_valid_) {
+                guard_topology_episode_anchor_ = episode_position;
+                guard_topology_episode_anchor_valid_ = true;
+            } else {
+                const double horizontal_progress =
+                        (episode_position.head<2>() -
+                         guard_topology_episode_anchor_.head<2>()).norm();
+                if (std::isfinite(horizontal_progress) &&
+                    horizontal_progress >=
+                            cfg_.guard_topology_episode_progress_reset_m) {
+                    const int old_local_recoveries =
+                            guard_topology_local_escape_recoveries_;
+                    const int old_vertical_recoveries =
+                            guard_topology_saturation_recoveries_;
+                    const int old_base_recoveries =
+                            guard_topology_base_no_path_recoveries_;
+                    const bool certified_stop =
+                            guard_certified_stop_for_reroute_.load(
+                                    std::memory_order_acquire);
+                    clearTopologyRecoverySearchState();
+                    guard_certified_stop_for_reroute_.store(
+                            certified_stop, std::memory_order_release);
+                    guard_topology_local_escape_recoveries_ = 0;
+                    guard_topology_saturation_recoveries_ = 0;
+                    guard_topology_base_no_path_recoveries_ = 0;
+                    guard_topology_epoch_ = 0;
+                    guard_topology_episode_anchor_ = episode_position;
+                    guard_topology_episode_anchor_valid_ = true;
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_RECOVERY_EPISODE_RESET] "
+                            "reason=horizontal_progress progress={:.3f}m "
+                            "threshold={:.3f}m prior_local={} "
+                            "prior_vertical={} prior_base={}",
+                            horizontal_progress,
+                            cfg_.guard_topology_episode_progress_reset_m,
+                            old_local_recoveries,
+                            old_vertical_recoveries,
+                            old_base_recoveries);
+                }
+            }
+        }
 
         const char *test_force_local_escape =
                 std::getenv("SUPER_TEST_FORCE_LOCAL_ESCAPE_ONCE");
@@ -2980,8 +3064,7 @@ namespace super_planner {
                                 guard_local_escape_direction_.x(),
                                 guard_local_escape_direction_.y(),
                                 guard_local_escape_direction_.z());
-                    }
-                    if (arm_vertical_recovery) {
+                    } else if (arm_vertical_recovery) {
                         ++guard_topology_saturation_recoveries_;
                         guard_vertical_recovery_pending_.store(
                                 true, std::memory_order_release);
@@ -2997,7 +3080,7 @@ namespace super_planner {
                                 horizontal_collision_distance,
                                 stopped_start.z(),
                                 collision_z);
-                    } else if (!arm_local_escape) {
+                    } else {
                         guard_corridor_retry_pending_.store(
                                 true, std::memory_order_release);
                         ros_ptr_->warn(
@@ -3677,8 +3760,7 @@ namespace super_planner {
                             guard_local_escape_direction_.x(),
                             guard_local_escape_direction_.y(),
                             guard_local_escape_direction_.z());
-                }
-                if (arm_vertical_recovery) {
+                } else if (arm_vertical_recovery) {
                     ++guard_topology_saturation_recoveries_;
                     guard_vertical_recovery_pending_.store(
                             true, std::memory_order_release);
@@ -3693,7 +3775,7 @@ namespace super_planner {
                             astar_failure_reason,
                             horizontal_collision_distance,
                             temp_start_point.z(), collision_z);
-                } else if (!arm_local_escape) {
+                } else {
                     guard_corridor_retry_pending_.store(
                             true, std::memory_order_release);
                     ros_ptr_->warn(

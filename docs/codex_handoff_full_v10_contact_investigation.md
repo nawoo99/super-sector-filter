@@ -1,7 +1,41 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
-> **2026-08-27 final-binary 독립 n=5 일반화 gate 완료.** Fresh
+> **2026-08-27 stopped-recovery tail 수정 및 현재 바이너리 3-mode n=3 gate 완료.**
+> 이전 독립 n=5에서 map8 Full이 154 arm/363 search 뒤 293.79초에 끝난 원인은
+> 짧은 certified escape commit마다 topology recovery 전체 상태와 예산을
+> 초기화하여 같은 local/vertical 복구를 다시 허용한 것이었다. 이제
+> pose-specific blocker만 지우고 episode budget은 보존하며, 같은 goal에서
+> 2.0 m XY 진전 후에만 예산을 reset한다. Local escape는 8방향을 현재
+> waypoint 진전 순으로 시도하고 local/vertical budget은 한 이벤트에서
+> 동시에 소비하지 않는다. 기존 trajectory/stop-viability certificate는
+> 약화하지 않았다.
+>
+> 첫 버전은 map10 Adaptive run3에서 goal 반대 방향 탈출 뒤 300.01초 timeout,
+> arm/search/epoch-reset 121/357/116을 내어 폐기했다. 최종 수정 뒤 map10
+> Adaptive n=5는 5/5, maps7-10 Full/Adaptive n=3는 24/24 first-attempt,
+> contact 0이었다. 현재 바이너리의 map1-10 x Full/Sector/Adaptive x n=3
+> 90회는 전부 first-attempt 완주·speed-valid, retry/OOM 0이다. Full과
+> Adaptive는 safety-qualified 30/30, fixed Sector는 29/30이다. Sector map9
+> run1만 live contact 2, static collision 1, clearance -0.107 m였다.
+>
+> Adaptive는 Full 대비 points/update 14.52%, total/update 21.68%, update
+> time 14.60%, FSM CPU 19.48% 감소했고 mission time은 7.93% 증가했다.
+> Effective full-view open은 323회(10.77/run)다. 다만 현재 n=3의 paired
+> discordance는 1:0, exact McNemar `p=1.0`, Full/Adaptive 30/30의 95%
+> Wilson lower bound는 88.65%이므로 population 100% 주장은 금지한다.
+>
+> 직전 map8 Full n=10 중 한 process가 약 3.0→9.1 GiB RSS로 증가하고 host
+> swap full 상태에서 OOM-kill된 뒤 retry 1회가 성공했다. 최종 90회에는
+> OOM/retry가 없었고 원인 allocation은 아직 미확정이다. 상세는 viability
+> §8.34와 `docs/goal_ordered_recovery_final_n3_20260827.md`, 최종 raw는
+> `results/goal_ordered_final_3mode_seed1_10_n3_raw_20260827.csv`를 볼 것.
+> Raw-cloud CIRI default false/non-authoritative, `obs_skip_num` no-op,
+> NaN/clearance-penalty 결함, BackupTrajOpt 미커버,
+> `DRONE_R=robot_r` 지표 한계도 계속 유효하다.
+
+> [!IMPORTANT]
+> **2026-08-27 직전 바이너리 독립 n=5 일반화 gate 완료.** Fresh
 > map1-10 x Full/Sector/Adaptive x n=5, order rotation 150회를 수행했다.
 > Full 50/50·Adaptive 50/50은 완주, live/static contact 0, speed-valid였다.
 > Fixed Sector는 49/50 완주, live contact 1 run/2 events, static collision

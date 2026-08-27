@@ -189,11 +189,17 @@ super_planner:
     vertical_recovery_trigger_distance_m: 0.75
     # If a rejected first segment lies inside the 0.30 m blocker-free start
     # margin, a blocker cannot change those first centimetres. From the
-    # certified stop, first try one 0.60 m move opposite that rejected route;
-    # it is committed only through the unchanged guard + viability checks.
+    # certified stop, try at most four 0.60 m moves from the eight horizontal
+    # alternatives, ordered by progress toward the current waypoint. Each is
+    # committed only through the unchanged guard + viability checks, and the
+    # episode budget resets only after the existing 2.0 m progress threshold.
     local_escape_enable: true
     local_escape_distance_m: 0.60
-    local_escape_attempts: 1
+    local_escape_attempts: 4
+    # A short certified candidate at the same stopped pocket must not re-arm
+    # the same escape/lift budget. A new recovery episode begins only after
+    # material XY progress toward the current waypoint.
+    episode_progress_reset_m: 2.0
     saturation_vertical_attempts: 1
     base_no_path_vertical_attempts: 1
   # Pre-commit viability guard (new, untested): mirrors the runtime brake's

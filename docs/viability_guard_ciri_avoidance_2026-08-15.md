@@ -2655,3 +2655,53 @@ experimental step is a preregistered held-out map/noise cohort. Raw-cloud CIRI
 remains default false/non-authoritative, and the `obs_skip_num` no-op,
 NaN/clearance-penalty defects, BackupTrajOpt gap and `DRONE_R=robot_r` metric
 limitation remain unchanged.
+
+### 8.34 Goal-ordered bounded recovery and final three-mode n=3 regression (2026-08-27)
+
+The map8 Full 293.79 s tail was traced to recovery-state lifetime rather than
+an unsafe certificate: every short certified escape commit cleared the entire
+topology state and re-armed the same local/vertical recovery budgets. Recovery
+budgets now belong to a stopped-location episode. A short commit clears only
+pose-specific blockers and pending actions; budgets reset for a new mission
+goal or after 2.0 m horizontal progress. Local escape enumerates eight
+horizontal alternatives in current-waypoint progress order, and local versus
+vertical arming is mutually exclusive. The existing trajectory and sampled
+stop-viability certificates remain authoritative.
+
+An intermediate maps7-10 Full/Adaptive n=3 gate rejected the first version:
+map10 Adaptive run3 timed out at 300.01 s after a safe but goal-opposed local
+step, 121 arms, 357 searches and 116 epoch resets. After goal ordering and
+sequential budget consumption, a focused map10 Adaptive n=5 gate completed
+5/5 first-attempt and contact-free, with maximum 98.61 s, 12 arms and 26
+searches. The final maps7-10 Full/Adaptive n=3 gate completed 24/24
+first-attempt, contact-free and speed-valid.
+
+The final order-rotated map1-10 x Full/fixed-Sector/Adaptive x n=3 campaign
+completed all 90 rows on the first attempt, with retry/OOM 0 and speed-valid
+90/90. Full and Adaptive were safety-qualified 30/30. Fixed Sector was 29/30:
+map9 run1 completed but recorded two live contacts, one static collision and
+-0.107 m static clearance. Full and Adaptive had zero live/static contact and
+worst static clearances of +0.195/+0.188 m.
+
+Adaptive versus Full reduced points/update 14.52%, map total/update 21.68%,
+occupancy update time 14.60% and FSM CPU 19.48%; mean mission time increased
+7.93%. Adaptive made 323 effective full-view opens (10.77/run). Fixed Sector
+reduced points/update 47.74% and map total/update 62.42%, but supplied the one
+unsafe run. The current n=3 paired safety discordance is only 1:0, so exact
+two-sided McNemar is `p=1.0`; 30/30 has a 95% Wilson lower bound of 88.65%, not
+population 100%.
+
+One infrastructure anomaly occurred in the preceding map8 Full n=10 gate: a
+single process grew from about 3.0 to 9.1 GiB RSS while host swap was full and
+was OOM-killed, then its retry completed normally. Other attempts stayed near
+3.3-3.5 GiB and the final 90-run campaign had OOM/retry 0. The allocation
+source remains unresolved, but neither batch accumulation nor topology count
+explains it directly.
+
+The final build, `compileall`, 13 unittest cases and 19 pytest cases pass.
+Detailed chronological evidence, map-labelled tables and raw paths are in
+`docs/goal_ordered_recovery_final_n3_20260827.md`; the final raw campaign is
+`results/goal_ordered_final_3mode_seed1_10_n3_raw_20260827.csv`. Raw-cloud CIRI
+remains default false/non-authoritative. The `obs_skip_num` no-op,
+NaN/clearance-penalty defects, BackupTrajOpt coverage gap and
+`DRONE_R=robot_r` metric limitation remain outside this change.

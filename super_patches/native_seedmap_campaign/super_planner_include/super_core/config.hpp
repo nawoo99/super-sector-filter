@@ -129,12 +129,19 @@ namespace super_planner {
         double guard_topology_vertical_recovery_trigger_distance_m{0.75};
         // A start-adjacent rejected route can lie inside the gap deliberately
         // left between the stopped vehicle and the first virtual blocker. In
-        // that case, make one short rest-to-rest move opposite the rejected
-        // route before rebuilding topology. The unchanged trajectory and
-        // stop-viability guards still decide whether it may be committed.
+        // that case, make a bounded sequence of short rest-to-rest moves from
+        // the eight horizontal alternatives, ordered by waypoint progress,
+        // before rebuilding topology. The unchanged trajectory and
+        // stop-viability guards still decide whether any may be committed.
         bool guard_topology_local_escape_en{false};
         double guard_topology_local_escape_distance_m{0.6};
-        int guard_topology_local_escape_attempts{1};
+        int guard_topology_local_escape_attempts{4};
+        // Recovery budgets belong to one stopped-location episode, not one
+        // short committed trajectory. Reset those budgets only after the
+        // vehicle has made material horizontal progress toward the same
+        // mission goal; otherwise sub-metre escape commits can re-arm the
+        // identical local/vertical recovery forever.
+        double guard_topology_episode_progress_reset_m{2.0};
         // Once every configured horizontal blocker slot has been consumed,
         // allow a bounded number of guarded vertical topology changes per
         // mission goal.  The lift is still committed only if the unchanged
@@ -305,7 +312,10 @@ namespace super_planner {
                     guard_topology_local_escape_distance_m, 0.6);
             loader.LoadParam(
                     "super_planner/guard_topology_reroute/local_escape_attempts",
-                    guard_topology_local_escape_attempts, 1);
+                    guard_topology_local_escape_attempts, 4);
+            loader.LoadParam(
+                    "super_planner/guard_topology_reroute/episode_progress_reset_m",
+                    guard_topology_episode_progress_reset_m, 2.0);
             loader.LoadParam(
                     "super_planner/guard_topology_reroute/saturation_vertical_attempts",
                     guard_topology_saturation_vertical_attempts, 1);
@@ -391,6 +401,8 @@ namespace super_planner {
                     resolution, guard_topology_local_escape_distance_m);
             guard_topology_local_escape_attempts = std::max(
                     0, guard_topology_local_escape_attempts);
+            guard_topology_episode_progress_reset_m = std::max(
+                    resolution, guard_topology_episode_progress_reset_m);
             guard_topology_saturation_vertical_attempts = std::max(
                     0, guard_topology_saturation_vertical_attempts);
             guard_topology_base_no_path_vertical_attempts = std::max(

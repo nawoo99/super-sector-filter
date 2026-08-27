@@ -172,6 +172,10 @@ namespace super_planner {
         int guard_topology_base_no_path_recoveries_{0};
         int guard_topology_saturation_recoveries_{0};
         int guard_topology_local_escape_recoveries_{0};
+        // Anchor and budgets survive short commits at the same stopped
+        // location. They reset only on a new goal or material XY progress.
+        Vec3f guard_topology_episode_anchor_{Vec3f::Zero()};
+        bool guard_topology_episode_anchor_valid_{false};
         int guard_topology_corridor_failures_{0};
         // Consecutive failures after A* and CIRI have both succeeded.  A
         // virtual blocker can leave a geometrically valid corridor whose
@@ -362,6 +366,10 @@ namespace super_planner {
                 const char *reason);
 
         void resetTopologyRecoveryState();
+
+        // Clear blockers and pending actions tied to the current pose while
+        // preserving stopped-episode budgets and the mission-goal identity.
+        void clearTopologyRecoverySearchState();
 
         bool tryCommitCertifiedDirectGoalFallback(const Vec3f &start_p,
                                                   const Vec3f &goal_p);
