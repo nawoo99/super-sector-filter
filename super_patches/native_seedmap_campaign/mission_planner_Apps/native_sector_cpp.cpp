@@ -9,7 +9,9 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cmath>
+#include <condition_variable>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -20,6 +22,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -413,6 +416,7 @@ public:
     armed_pub_ =
         create_publisher<std_msgs::msg::Bool>("/sector/trigger_armed", 1);
     state_timer_ = create_wall_timer(std::chrono::seconds(1), [this]() {
+      std::lock_guard<std::mutex> lock(state_mutex_);
       publishState();
       writeStats();
     });
@@ -437,9 +441,21 @@ public:
                     options_.full_open_extra_max_points));
     publishState();
     writeStats();
+    cloud_worker_ = std::thread(&NativeSectorCpp::cloudWorkerLoop, this);
   }
 
-  ~NativeSectorCpp() override { writeStats(); }
+  ~NativeSectorCpp() override {
+    {
+      std::lock_guard<std::mutex> lock(cloud_queue_mutex_);
+      cloud_worker_stop_ = true;
+      pending_cloud_.reset();
+    }
+    cloud_queue_cv_.notify_one();
+    if (cloud_worker_.joinable())
+      cloud_worker_.join();
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    writeStats();
+  }
 
 private:
   bool statefulMode() const {
@@ -630,6 +646,7 @@ private:
   }
 
   void mapCommitCallback(const std_msgs::msg::UInt64::SharedPtr msg) {
+    std::lock_guard<std::mutex> lock(state_mutex_);
     const double now = nowSeconds();
     if (pre_stale_full_refresh_pending_version_advance_ &&
         pre_stale_full_refresh_source_version_ &&
@@ -692,6 +709,7 @@ private:
 
   void mapProcessAckCallback(
       const std_msgs::msg::UInt64MultiArray::SharedPtr msg) {
+    std::lock_guard<std::mutex> lock(state_mutex_);
     ++map_process_ack_status_count_;
     if (msg->data.size() < 4) {
       ++map_process_ack_malformed_count_;
@@ -834,6 +852,7 @@ private:
   }
 
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
+    std::lock_guard<std::mutex> lock(state_mutex_);
     const auto &p = msg->pose.pose.position;
     const auto &q = msg->pose.pose.orientation;
     drone_ = std::array<double, 3>{p.x, p.y, p.z};
@@ -923,6 +942,7 @@ private:
   }
 
   void replanCallback(const std_msgs::msg::Bool::SharedPtr msg) {
+    std::lock_guard<std::mutex> lock(state_mutex_);
     const double now = nowSeconds();
     ++replan_status_count_;
     if (msg->data) {
@@ -971,6 +991,7 @@ private:
   }
 
   void trajectoryGuardCallback(const std_msgs::msg::Bool::SharedPtr msg) {
+    std::lock_guard<std::mutex> lock(state_mutex_);
     const double now = nowSeconds();
     ++trajectory_guard_status_count_;
     trajectory_guard_active_ = msg->data;
@@ -1078,6 +1099,35 @@ private:
   }
 
   void cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+    ++cloud_input_callbacks_;
+    {
+      std::lock_guard<std::mutex> lock(cloud_queue_mutex_);
+      if (pending_cloud_)
+        ++cloud_worker_overwrites_;
+      pending_cloud_ = msg;
+    }
+    cloud_queue_cv_.notify_one();
+  }
+
+  void cloudWorkerLoop() {
+    while (true) {
+      sensor_msgs::msg::PointCloud2::SharedPtr msg;
+      {
+        std::unique_lock<std::mutex> lock(cloud_queue_mutex_);
+        cloud_queue_cv_.wait(lock, [this]() {
+          return cloud_worker_stop_ || static_cast<bool>(pending_cloud_);
+        });
+        if (cloud_worker_stop_)
+          return;
+        msg = std::move(pending_cloud_);
+        pending_cloud_.reset();
+      }
+      std::lock_guard<std::mutex> state_lock(state_mutex_);
+      processCloud(msg);
+    }
+  }
+
+  void processCloud(const sensor_msgs::msg::PointCloud2::SharedPtr &msg) {
     const double now = nowSeconds();
     const bool state_changed =
         updateRecoveryBurst(now) | updateReplanGuardBurst(now) |
@@ -1338,6 +1388,8 @@ private:
                ? options_.resume_v
                : 0.2);
     integer("frames", frames_);
+    integer("cloud_input_callbacks", cloud_input_callbacks_.load());
+    integer("cloud_worker_overwrites", cloud_worker_overwrites_.load());
     integer("published_frames", published_frames_);
     integer("rate_limited_frames", rate_limited_frames_);
     number("max_publish_hz", options_.max_publish_hz);
@@ -1562,6 +1614,7 @@ private:
   }
 
   void report() {
+    std::lock_guard<std::mutex> lock(state_mutex_);
     if (frames_ == 0)
       return;
     const double kept_pct =
@@ -1600,6 +1653,21 @@ private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr armed_pub_;
   rclcpp::TimerBase::SharedPtr state_timer_;
   rclcpp::TimerBase::SharedPtr report_timer_;
+
+  // The input is best-effort depth-1 by design. Keep its DDS callback cheap
+  // and move point filtering plus reliable publication to a latest-only
+  // worker, so slow output/map work is removed from the cloud subscription
+  // callback and pending raw input remains bounded. All filter state stays
+  // serialized under state_mutex_, preserving the former single-threaded
+  // transition order.
+  mutable std::mutex state_mutex_;
+  std::mutex cloud_queue_mutex_;
+  std::condition_variable cloud_queue_cv_;
+  sensor_msgs::msg::PointCloud2::SharedPtr pending_cloud_;
+  std::thread cloud_worker_;
+  bool cloud_worker_stop_{false};
+  std::atomic<uint64_t> cloud_input_callbacks_{0};
+  std::atomic<uint64_t> cloud_worker_overwrites_{0};
 
   std::optional<std::array<double, 3>> drone_;
   double yaw_{0.0};

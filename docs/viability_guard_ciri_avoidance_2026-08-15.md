@@ -2705,3 +2705,61 @@ Detailed chronological evidence, map-labelled tables and raw paths are in
 remains default false/non-authoritative. The `obs_skip_num` no-op,
 NaN/clearance-penalty defects, BackupTrajOpt coverage gap and
 `DRONE_R=robot_r` metric limitation remain outside this change.
+
+### 8.35 Native-filter async scheduling optimization and threshold rejection (2026-08-27)
+
+The remaining Adaptive time tail on maps9-10 was concentrated in repeated
+`MAP_STALE -> certified brake -> fresh-map replan` cycles. A direct attempt to
+shorten the trajectory-guard hold from 2.5 s to 0.5 s was rejected: map9
+completed 3/3 without contact, but the first map10 run completed with two live
+contacts, one static-PCD collision and -0.157 m static clearance. The first
+contact occurred 1.676 s after the shortened hold closed. No safety profile or
+default contains that candidate value.
+
+The accepted change preserves all hold, FOV, clearance, exact-generation ACK,
+certified-resume and velocity thresholds. The native C++ filter's DDS input
+callback now only replaces a bounded pending cloud and returns. A dedicated
+worker performs point filtering, state update and reliable publication. Its
+pending queue is latest-only, shutdown drops the pending item and joins the
+worker, and all mutable filter/guard/ACK state remains serialized under one
+mutex. New counters expose input callbacks and worker overwrites.
+
+A maps9-10 Adaptive n=3 gate completed 6/6 first-attempt, contact-free and
+speed-valid. Relative to the preceding same-config n=3 observation, mean time
+fell from 102.87 to 88.01 s (-14.45%), brake count from 51.50 to 35.17 per run
+(-31.72%), and recovery-active duration from 54.60 to 41.08 s (-24.77%). The
+minimum static clearance was +0.193 m. Trajectory-guard ACK was 211/211 and
+pre-stale ACK 522/522, with zero timeout, abandon, supersede or retry.
+
+The subsequent map1-10 x Full/fixed-Sector/Adaptive x n=1 regression completed
+all 30 rows on the first attempt. Every row was live/static-contact-free and
+speed-valid. Mean Full/Sector/Adaptive times were 72.08/70.85/72.86 s. In this
+small broad gate, Adaptive versus Full reduced points/update 13.72%, map
+total/update 18.76%, occupancy update time 10.49%, FSM CPU 15.23% and
+time-integrated planner-plus-filter CPU work 10.92%, while mission time rose
+1.09%. Adaptive opened full view 108 times. The preceding n=3 Sector map9
+contact remains the fixed-Sector control evidence; this clean n=1 does not
+reclassify Sector as safe.
+
+Input callbacks equalled processed frames and worker overwrites were zero in
+all accepted filter rows. The observed gain therefore cannot be attributed to
+discarding large numbers of scans; it is consistent with changing the
+scheduling boundary around DDS input and reliable output. Because the old and
+new n=3 cohorts were not interleaved paired A/B, the 14.45% wall-time change is
+not claimed as a precise causal effect. Map8 Adaptive also remained 17.07 s
+slower than Full in the broad n=1 run, so timing variance is not eliminated.
+
+The ROS build, synthetic Python/C++ geometry equivalence, `compileall`, 13
+unittest cases and 19 pytest cases pass; source and mirror are byte-identical.
+There was no retry, OOM, FSM swap or memory PSI in the accepted 36 runs. Full
+tables and claim boundaries are in
+`docs/native_filter_async_latest_optimization_20260827.md`; raw files are
+`results/adaptive_async_latest_seed9_10_n3_raw_20260827.csv`,
+`results/async_latest_3mode_seed1_10_n1_raw_20260827.csv`, and the rejected
+`results/adaptive_hold05_seed9_10_n3_raw_20260827.csv`.
+
+This evidence does not establish population 100%, formal collision freedom or
+hardware flight readiness. Raw-cloud CIRI remains default false and
+non-authoritative. The `obs_skip_num` no-op, NaN/clearance-penalty defects,
+BackupTrajOpt coverage gap and `DRONE_R=robot_r` metric limitation remain
+unchanged.

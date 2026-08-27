@@ -1,6 +1,38 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-27 native C++ filter latest-only worker 최적화와 36-run 회귀 완료.**
+> Maps9-10 Adaptive의 100초대 tail은 `MAP_STALE -> brake -> fresh-map replan`
+> 반복에 집중됐다. Guard hold 2.5→0.5초 후보는 map9 3/3을 빠르게 끝냈지만
+> map10 첫 run에서 live contact 2, static collision 1, clearance -0.157m를
+> 만들어 폐기했다. Default/profile에는 반영하지 않았다.
+>
+> 채택 구현은 safety threshold를 전혀 바꾸지 않고 native C++ filter의 raw-cloud
+> DDS callback을 enqueue-only로 만들고 point filtering + reliable publish를
+> 별도 latest-only worker로 옮겼다. Filter/guard/ACK state는 mutex로 직렬화하고
+> 종료 시 pending drop + join한다. Maps9-10 Adaptive n=3은 6/6 first-attempt,
+> contact 0, 평균 88.01초로 직전 102.87초보다 14.45% 짧았다. Brake/run은
+> 51.50→35.17, recovery active는 54.60→41.08초였다.
+>
+> 이어진 map1-10 x Full/Sector/Adaptive x n=1은 30/30 first-attempt 완주,
+> live/static contact 0, speed-valid였다. 평균 시간은 72.08/70.85/72.86초다.
+> 이 n=1에서 Adaptive는 Full 대비 points/update 13.72%, total/update 18.76%,
+> update 10.49%, FSM CPU 15.23%, planner+filter core-seconds 10.92%를 줄이고
+> mission time은 1.09% 늘었다. Adaptive open은 108회다.
+>
+> 모든 accepted filter row에서 input callback==processed frame, overwrite 0이므로
+> 프레임 폐기가 개선 원인은 아니다. 이전/이후 n=3도 interleaved paired A/B가
+> 아니므로 14.45%를 정밀 인과효과로 주장하지 말 것. 직전 n=3의 Sector map9
+> contact는 여전히 유효하며 이번 clean n=1로 Sector를 safe로 재분류하지 않는다.
+> 상세는 viability §8.35,
+> `docs/native_filter_async_latest_optimization_20260827.md`, raw는
+> `results/adaptive_async_latest_seed9_10_n3_raw_20260827.csv` 및
+> `results/async_latest_3mode_seed1_10_n1_raw_20260827.csv`를 볼 것.
+> Raw-cloud CIRI default false/non-authoritative, `obs_skip_num` no-op,
+> NaN/clearance-penalty 결함, BackupTrajOpt 미커버,
+> `DRONE_R=robot_r` 지표 한계도 계속 유효하다.
+
+> [!IMPORTANT]
 > **2026-08-27 stopped-recovery tail 수정 및 현재 바이너리 3-mode n=3 gate 완료.**
 > 이전 독립 n=5에서 map8 Full이 154 arm/363 search 뒤 293.79초에 끝난 원인은
 > 짧은 certified escape commit마다 topology recovery 전체 상태와 예산을
