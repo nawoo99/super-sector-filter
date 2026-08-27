@@ -34,7 +34,7 @@ void ProbMap::initProbMap() {
     initSlidingMap(cfg_.half_map_size_i, cfg_.resolution,
                    cfg_.map_sliding_en, cfg_.map_sliding_thresh,
                    cfg_.fix_map_origin);
-    time_consuming_.resize(7);
+    time_consuming_.resize(time_consuming_name_.size());
     inf_map_ = std::make_shared<InfMap>(cfg_);
 
 
@@ -315,11 +315,15 @@ void ProbMap::slideAllMap(const rog_map::Vec3f& pos) {
     }
 }
 
-ProbMapUpdateResult ProbMap::updateProbMap(const PointCloud& cloud, const Pose& pose) {
+ProbMapUpdateResult ProbMap::updateProbMap(
+        const PointCloud& cloud, const Pose& pose,
+        std::uint64_t payload_bytes, std::uint32_t point_step) {
     ProbMapUpdateResult result;
     TimeConsuming tc("updateMap", false);
     const Vec3f& pos = pose.first;
     time_consuming_[4] = cloud.size();
+    time_consuming_[7] = static_cast<double>(payload_bytes);
+    time_consuming_[8] = static_cast<double>(point_step);
     if (cfg_.map_sliding_en && !insideLocalMap(pos) && raycast_data_.batch_update_counter == 0) {
         std::cout << YELLOW << " -- [ROGMapCore] cur_pose out of map range, reset the map." << RESET << std::endl;
         std::cout << YELLOW << " -- [ROGMapCore] Sliding to map center at: " << pos.transpose() << RESET << std::endl;

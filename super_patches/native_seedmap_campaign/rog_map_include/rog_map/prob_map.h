@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
@@ -104,7 +105,10 @@ namespace rog_map {
 
         void writeMapInfoToLog(std::ofstream &log_file);
 
-        ProbMapUpdateResult updateProbMap(const PointCloud &cloud, const Pose &pose);
+        ProbMapUpdateResult updateProbMap(
+            const PointCloud &cloud, const Pose &pose,
+            std::uint64_t payload_bytes = 0,
+            std::uint32_t point_step = 0);
 
     protected:
         // Immutable snapshots treat a query as observed when any raw-grid
@@ -146,8 +150,10 @@ namespace rog_map {
         } raycast_data_;
 
         vector<double> time_consuming_;
-        vector<string> time_consuming_name_{"Total", "Raycast", "Update_cache", "Inflation", "PointCloudNumber",
-                                            "CacheNumber", "InflationNumber"};
+        vector<string> time_consuming_name_{
+            "Total", "Raycast", "Update_cache", "Inflation",
+            "PointCloudNumber", "CacheNumber", "InflationNumber",
+            "PointCloudPayloadBytes", "PointCloudPointStep"};
 
         // standardization query
         // Known free < l_free

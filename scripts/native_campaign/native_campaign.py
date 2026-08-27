@@ -293,6 +293,9 @@ def parse_full_refresh_ack_log(path):
         "full_refresh_ack_timeout_recoveries": 0,
         "guard_topology_reroute_arms": 0,
         "guard_topology_reroute_searches": 0,
+        "guard_base_no_path_local_escape_arms": 0,
+        "guard_base_no_path_test_injections": 0,
+        "guard_base_no_path_forced_failures": 0,
         "guard_local_escape_test_injections": 0,
         "guard_local_escape_direction_skips": 0,
         "guard_local_escape_direction_rejections": 0,
@@ -322,6 +325,8 @@ def parse_full_refresh_ack_log(path):
         "FULL_REFRESH_RECOVERY_ACK": "full_refresh_recovery_acks",
         "TRAJ_GUARD_REROUTE_ARM": "guard_topology_reroute_arms",
         "TRAJ_GUARD_REROUTE_SEARCH": "guard_topology_reroute_searches",
+        "TRAJ_GUARD_BASE_NO_PATH_LOCAL_ESCAPE":
+            "guard_base_no_path_local_escape_arms",
     }
     active_since = None
     active_durations = []
@@ -331,6 +336,10 @@ def parse_full_refresh_ack_log(path):
             for marker, key in markers.items():
                 if marker in line:
                     counts[key] += 1
+            if "[TEST_FAULT_BASE_NO_PATH_ARM]" in line:
+                counts["guard_base_no_path_test_injections"] += 1
+            if "[TEST_FAULT_BASE_NO_PATH]" in line:
+                counts["guard_base_no_path_forced_failures"] += 1
             if "[TEST_FAULT_LOCAL_ESCAPE_ARM]" in line:
                 counts["guard_local_escape_test_injections"] += 1
             if "[TEST_FAULT_LOCAL_ESCAPE_DIRECTION_SKIP]" in line:
@@ -628,6 +637,9 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "full_refresh_ack_timeout_recoveries",
           "guard_topology_reroute_arms",
           "guard_topology_reroute_searches",
+          "guard_base_no_path_local_escape_arms",
+          "guard_base_no_path_test_injections",
+          "guard_base_no_path_forced_failures",
           "guard_local_escape_test_injections",
           "guard_local_escape_direction_skips",
           "guard_local_escape_direction_rejections",
@@ -843,7 +855,10 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "mission_driver_release_wall_time_s",
           "mission_driver_release_speed_mps",
           "mission_driver_release_low_speed_duration_s",
-          "pts_mean", "total_ms_mean", "raycast_ms_mean", "update_ms_mean",
+          "pts_mean", "map_perf_frames", "map_frames_s", "map_points_s",
+          "map_payload_bytes_mean", "map_payload_bytes_total",
+          "map_payload_mib_s", "map_payload_mbps", "map_point_step_mean",
+          "total_ms_mean", "raycast_ms_mean", "update_ms_mean",
           "inflation_ms_mean", "kept_pct", "fsm_cpu_pct", "filter_cpu_pct",
           "monitor_cpu_pct",
           "attempt_count", "retry_count", "first_attempt_success",
@@ -940,7 +955,7 @@ def wait_for_perf_log_generation(previous_signature, timeout_s=30.0,
     return False
 
 
-def slice_perf(start, end, perf_log=PERF_LOG):
+def slice_perf(start, end, perf_log=PERF_LOG, duration_s=None):
     try:
         rows = list(csv.reader(open(perf_log)))
     except OSError:
@@ -955,17 +970,44 @@ def slice_perf(start, end, perf_log=PERF_LOG):
     if not seg:
         return {}
     col = {h: i for i, h in enumerate(hdr)}
-    def m(name, scale):
+    def values(name):
         if name not in col:
-            return None
-        return st.mean([r[col[name]] for r in seg]) * scale
-    return {
-        "pts_mean": m("PointCloudNumber", 1),
+            return []
+        return [r[col[name]] for r in seg]
+    def m(name, scale):
+        vals = values(name)
+        return st.mean(vals) * scale if vals else None
+    point_values = values("PointCloudNumber")
+    payload_values = values("PointCloudPayloadBytes")
+    result = {
+        "pts_mean": st.mean(point_values) if point_values else None,
+        "map_perf_frames": len(seg),
+        "map_payload_bytes_mean": (
+            st.mean(payload_values) if payload_values else None
+        ),
+        "map_payload_bytes_total": (
+            sum(payload_values) if payload_values else None
+        ),
+        "map_point_step_mean": m("PointCloudPointStep", 1),
         "total_ms_mean": m("Total", 1000),
         "raycast_ms_mean": m("Raycast", 1000),
         "update_ms_mean": m("Update_cache", 1000),
         "inflation_ms_mean": m("Inflation", 1000),
     }
+    if duration_s is not None and duration_s > 0:
+        result["map_frames_s"] = len(seg) / duration_s
+        result["map_points_s"] = (
+            sum(point_values) / duration_s if point_values else None
+        )
+        result["map_payload_mib_s"] = (
+            sum(payload_values) / duration_s / (1024.0 * 1024.0)
+            if payload_values else None
+        )
+        result["map_payload_mbps"] = (
+            sum(payload_values) * 8.0 / duration_s / 1e6
+            if payload_values else None
+        )
+    return result
 
 
 def build_loop_monitor_command(wps, switch, timeout, out_json, monitor_options=""):
@@ -1661,7 +1703,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             else:
                 rec["memory_trace_csv"] = ";".join(memory_trace_paths)
             if perf_window_valid:
-                rec.update(slice_perf(row_start, row_end, perf_trace_csv))
+                rec.update(slice_perf(
+                    row_start, row_end, perf_trace_csv,
+                    duration_s=rec.get("mission_time_s"),
+                ))
         else:
             rec["success"] = False
         if os.path.exists(scenario_event_json):
@@ -1825,7 +1870,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             f"coll={contact_count} minclr={clearance} "
             f"speed={rec.get('max_command_speed_mps')}/"
             f"{rec.get('speed_limit_mps')} valid={rec.get('speed_limit_valid')} "
-            f"pts={rec.get('pts_mean')} kept={kept_pct}% fsm_cpu={fsm_cpu_pct}")
+            f"pts={rec.get('pts_mean')} kept={kept_pct}% "
+            f"payload={rec.get('map_payload_mib_s')}MiB/s "
+            f"fsm_cpu={fsm_cpu_pct}")
         return rec
 
     oom_kill_end = read_cgroup_event("oom_kill")

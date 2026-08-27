@@ -105,3 +105,24 @@ def test_slice_perf_uses_attempt_snapshot():
 
         assert result["pts_mean"] == 20
         assert result["total_ms_mean"] == 20
+
+
+def test_slice_perf_derives_map_payload_throughput():
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory, "performance.csv")
+        path.write_text(
+            "PointCloudNumber, Total, PointCloudPayloadBytes, PointCloudPointStep\n"
+            "10, 0.010, 320, 32\n"
+            "20, 0.020, 400, 20\n"
+        )
+
+        result = MODULE.slice_perf(0, 2, str(path), duration_s=2.0)
+
+        assert result["map_perf_frames"] == 2
+        assert result["map_frames_s"] == 1
+        assert result["map_points_s"] == 15
+        assert result["map_payload_bytes_mean"] == 360
+        assert result["map_payload_bytes_total"] == 720
+        assert result["map_payload_mib_s"] == 360 / (1024 * 1024)
+        assert result["map_payload_mbps"] == 720 * 8 / 2 / 1e6
+        assert result["map_point_step_mean"] == 26

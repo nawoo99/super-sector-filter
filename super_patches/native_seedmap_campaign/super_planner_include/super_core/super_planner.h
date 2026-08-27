@@ -196,6 +196,9 @@ namespace super_planner {
         bool guard_test_local_escape_injected_{false};
         bool guard_test_local_escape_skip_first_direction_{false};
         bool guard_test_initial_footprint_egress_injected_{false};
+        // -1 means the environment-gated regression hook has not been
+        // inspected yet; zero means disabled or fully consumed.
+        int guard_test_base_no_path_failures_remaining_{-1};
         std::atomic_bool guard_vertical_recovery_pending_{false};
         // Suppress the periodic moving-state replanner until a short
         // rest-to-rest recovery (vertical lift or direct final connection)

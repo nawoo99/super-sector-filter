@@ -3624,6 +3624,40 @@ namespace super_planner {
                 guard_topology_avoidance_centers_,
                 guard_topology_avoidance_radii_);
 
+        // Explicit one-shot regression hook for the otherwise stochastic
+        // base-NO_PATH tail. It is inert unless the test environment opts in.
+        // Mark the vertical budget consumed so the bounded horizontal
+        // fallback added below is the branch exercised by the smoke test.
+        if (planning_from_rest &&
+            guard_test_base_no_path_failures_remaining_ < 0) {
+            const char *test_force_base_no_path = std::getenv(
+                    "SUPER_TEST_FORCE_BASE_NO_PATH_ESCAPE_ONCE");
+            if (test_force_base_no_path != nullptr &&
+                std::string(test_force_base_no_path) == "1") {
+                guard_test_base_no_path_failures_remaining_ =
+                        cfg_.guard_topology_reroute_no_path_reset_attempts;
+                guard_topology_base_no_path_recoveries_ =
+                        cfg_.guard_topology_base_no_path_vertical_attempts;
+                ros_ptr_->warn(
+                        " -- [TEST_FAULT_BASE_NO_PATH_ARM] failures={} "
+                        "action=exercise_certified_local_escape",
+                        guard_test_base_no_path_failures_remaining_);
+            } else {
+                guard_test_base_no_path_failures_remaining_ = 0;
+            }
+        }
+        if (planning_from_rest &&
+            guard_topology_avoidance_centers_.empty() &&
+            guard_test_base_no_path_failures_remaining_ > 0) {
+            --guard_test_base_no_path_failures_remaining_;
+            ret_code = NO_PATH;
+            path.clear();
+            ros_ptr_->warn(
+                    " -- [TEST_FAULT_BASE_NO_PATH] remaining={} "
+                    "action=return_no_path",
+                    guard_test_base_no_path_failures_remaining_);
+        }
+
         // A bounded A* TIME_OUT is the same recovery signal as NO_PATH while
         // planning from a certified stop: neither result produced a candidate
         // trajectory, and retrying the identical topology cannot make
@@ -3659,6 +3693,17 @@ namespace super_planner {
                         cfg_.guard_topology_vertical_recovery_en &&
                         guard_topology_base_no_path_recoveries_ <
                                 cfg_.guard_topology_base_no_path_vertical_attempts;
+                Vec3f base_escape_direction = goal - temp_start_point;
+                base_escape_direction.z() = 0.0;
+                const double base_escape_direction_norm =
+                        base_escape_direction.norm();
+                const bool can_escape =
+                        cfg_.guard_topology_local_escape_en &&
+                        base_escape_direction.array().isFinite().all() &&
+                        std::isfinite(base_escape_direction_norm) &&
+                        base_escape_direction_norm >= cfg_.resolution &&
+                        guard_topology_local_escape_recoveries_ <
+                                cfg_.guard_topology_local_escape_attempts;
                 if (can_lift) {
                     ++guard_topology_base_no_path_recoveries_;
                     guard_topology_no_path_failures_ = 0;
@@ -3677,6 +3722,39 @@ namespace super_planner {
                             astar_failure_reason,
                             temp_start_point.x(), temp_start_point.y(),
                             temp_start_point.z(), goal.x(), goal.y(), goal.z());
+                } else if (can_escape) {
+                    // A base search can remain disconnected after its one
+                    // guarded vertical lift is rejected.  Previously that
+                    // state went straight to permanent certified hold even
+                    // when the separately-bounded horizontal escape budget
+                    // was still available.  Reuse the existing stop-only,
+                    // eight-direction local escape certificate to move to a
+                    // distinct start cell, then rerun A*.  The waypoint
+                    // direction is only an ordering hint; every trial still
+                    // passes the unchanged trajectory and viability guards.
+                    guard_local_escape_direction_ =
+                            base_escape_direction /
+                            base_escape_direction_norm;
+                    ++guard_topology_local_escape_recoveries_;
+                    guard_topology_no_path_failures_ = 0;
+                    ++guard_topology_epoch_;
+                    guard_local_escape_pending_.store(
+                            true, std::memory_order_release);
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_BASE_NO_PATH_LOCAL_ESCAPE] "
+                            "epoch={} attempt={}/{} reason={} "
+                            "start=[{:.3f},{:.3f},{:.3f}] "
+                            "direction=[{:.3f},{:.3f},{:.3f}] "
+                            "action=certified_escape_then_reroute",
+                            guard_topology_epoch_,
+                            guard_topology_local_escape_recoveries_,
+                            cfg_.guard_topology_local_escape_attempts,
+                            astar_failure_reason,
+                            temp_start_point.x(), temp_start_point.y(),
+                            temp_start_point.z(),
+                            guard_local_escape_direction_.x(),
+                            guard_local_escape_direction_.y(),
+                            guard_local_escape_direction_.z());
                 } else {
                     guard_topology_no_path_failures_ = -1;
                     ros_ptr_->warn(

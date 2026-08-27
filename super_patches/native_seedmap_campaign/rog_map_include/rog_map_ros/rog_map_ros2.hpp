@@ -100,6 +100,8 @@ namespace rog_map {
             bool pending_frame{false};
             std::uint64_t pc_seq{0};
             std::int64_t pc_source_stamp_ns{0};
+            std::uint64_t pc_payload_bytes{0};
+            std::uint32_t pc_point_step{0};
             MapHealthClock::time_point pc_rx_time{};
             Pose pc_pose;
             PointCloud pc;
@@ -181,6 +183,8 @@ namespace rog_map {
                 rc_.pc_pose = std::make_pair(robot_state.p, robot_state.q);
                 rc_.pc_seq = scan_seq;
                 rc_.pc_source_stamp_ns = source_stamp_ns;
+                rc_.pc_payload_bytes = cloud_msg->data.size();
+                rc_.pc_point_step = cloud_msg->point_step;
                 rc_.pc_rx_time = rx_time;
                 rc_.pending_frame = true;
             }
@@ -198,6 +202,8 @@ namespace rog_map {
             Pose temp_pose;
             std::uint64_t scan_seq{0};
             std::int64_t source_stamp_ns{0};
+            std::uint64_t payload_bytes{0};
+            std::uint32_t point_step{0};
             MapHealthClock::time_point scan_rx_time{};
             bool has_pending_frame = false;
             {
@@ -207,6 +213,8 @@ namespace rog_map {
                     temp_pose = rc_.pc_pose;
                     scan_seq = rc_.pc_seq;
                     source_stamp_ns = rc_.pc_source_stamp_ns;
+                    payload_bytes = rc_.pc_payload_bytes;
+                    point_step = rc_.pc_point_step;
                     scan_rx_time = rc_.pc_rx_time;
                     rc_.pending_frame = false;
                     has_pending_frame = true;
@@ -227,7 +235,8 @@ namespace rog_map {
 
             auto map_write_transaction = acquireMapWriteTransaction();
             recordMapUpdateStarted();
-            const auto result = updateProbMap(temp_pc, temp_pose);
+            const auto result = updateProbMap(
+                temp_pc, temp_pose, payload_bytes, point_step);
             recordMapUpdateFinished(scan_seq, source_stamp_ns, scan_rx_time,
                                     result);
             const auto health = getMapHealthSnapshot();

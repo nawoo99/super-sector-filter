@@ -1,6 +1,39 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-27 processed-payload bandwidth 계측과 base-NO_PATH 복구 완료.**
+> ROG-Map update에 실제 사용된 `PointCloud2.data` bytes/point_step을 기존
+> performance CSV에 기록하고 runner가 frames/s, points/s, MiB/s, Mbit/s를
+> 계산한다. 이는 DDS/RTPS overhead·retransmission·latest-only overwrite를
+> 제외한 processed application-payload이며 NIC/무선 대역폭이 아니다.
+>
+> Map1-10 x 3-mode n=1에서 Full/Sector/Adaptive 평균은
+> 5.077/1.977/2.748 MiB/s였다. Map별 Full 대비 감소율 평균은 Sector 64.44%,
+> Adaptive 49.02%다. Full 10/10, Sector 9/10, Adaptive 9/10 완주였고 map9
+> Sector는 접촉 후 timeout, Adaptive는 contact 0인 채 waypoint2/5에서
+> timeout했다. Adaptive timeout의 7.324 MiB/s는 92.19% full-open이 만든
+> 결과이지 대역폭 부족의 원인이 아니다.
+>
+> Map9 Adaptive는 local escape 뒤 base A* `NO_PATH`, guarded vertical lift
+> reject 후 남은 horizontal budget을 쓰지 않고 permanent hold에 들어가
+> 같은 실패를 140초/13,355회 반복했다. Base vertical budget 소진 뒤 기존
+> 8방향 certified local escape로 연결하도록 수정했다. 자연 map9 n=8은 8/8
+> 완주·contact 0·speed-valid였으나 새 분기를 밟지 않았다. Default-off fault
+> hook은 두 독립 smoke에서 각각 `NO_PATH` 3회 뒤 202-sample guard를 통과한
+> 0.6m escape를 commit했다. 둘 다 완주/contact 0/speed-valid였고 시간은
+> 65.75/60.19초, worst clearance는 +0.311m였다. v2 CSV가 injection 1,
+> forced failure 3, base escape arm 1, local commit 1을 직접 보존한다.
+>
+> 다음 gate는 **최종 바이너리 map1-10 x Full/Sector/Adaptive x n=3**이며
+> payload와 effective open을 같은 cohort에서 확정한다(약 2~2.5시간).
+> 상세는 viability §8.36,
+> `docs/payload_bandwidth_and_base_no_path_escape_20260827.md`, raw는
+> `results/bandwidth_3mode_seed1_10_n1_raw_20260827.csv`와 matching
+> `base_no_path_*_20260827.csv`를 볼 것. Population 100% 주장은 금지하며
+> raw-cloud CIRI default false/non-authoritative와 기존 known limitations는
+> 계속 유효하다.
+
+> [!IMPORTANT]
 > **2026-08-27 native C++ filter latest-only worker 최적화와 36-run 회귀 완료.**
 > Maps9-10 Adaptive의 100초대 tail은 `MAP_STALE -> brake -> fresh-map replan`
 > 반복에 집중됐다. Guard hold 2.5→0.5초 후보는 map9 3/3을 빠르게 끝냈지만

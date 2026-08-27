@@ -2763,3 +2763,61 @@ hardware flight readiness. Raw-cloud CIRI remains default false and
 non-authoritative. The `obs_skip_num` no-op, NaN/clearance-penalty defects,
 BackupTrajOpt coverage gap and `DRONE_R=robot_r` metric limitation remain
 unchanged.
+
+### 8.36 Processed-payload bandwidth and base-NO_PATH local escape (2026-08-27)
+
+ROG-Map now records the `PointCloud2.data.size()` and `point_step` of every
+frame selected for a map update. The campaign runner derives update frames/s,
+points/s, MiB/s and Mbit/s over the mission window. This is processed
+application-payload throughput: it excludes DDS/RTPS overhead, retransmission,
+metadata and latest-only frames overwritten before map update, and must not be
+described as host-NIC or wireless-link bandwidth.
+
+A map1-10 x Full/fixed-Sector/Adaptive x n=1 baseline gave mean processed
+payloads of 5.077/1.977/2.748 MiB/s. Equal-weight per-map reductions versus
+Full were 64.44% for Sector and 49.02% for Adaptive. Full completed 10/10 and
+was contact-free; Sector completed/contact-free 9/10; Adaptive completed 9/10
+but was contact-free 10/10. Map9 Sector contacted and timed out, while map9
+Adaptive timed out without contact. The latter stayed full-open for 92.19% of
+the run and reached 7.324 MiB/s, so its high payload was a consequence of the
+long recovery rather than evidence of bandwidth starvation.
+
+The map9 Adaptive failure stopped after waypoint 2/5 with +0.141 m static
+clearance. All 13 full-refresh generations were exact-ACKed. After one
+certified horizontal escape, base A* returned `NO_PATH`; the one vertical lift
+was rejected by the unchanged clearance guard; then the old state machine
+entered permanent certified hold despite remaining horizontal escape budget.
+It repeated the same A* failure 13,355 times over 140 seconds.
+
+After base vertical budget exhaustion, the planner now uses the remaining
+per-episode local-escape budget. The current waypoint direction only orders
+the existing eight horizontal alternatives; a candidate is still constructed
+only from rest and must pass the unchanged trajectory and stop-viability
+certificates. Distance, four-attempt episode budget, 2 m episode reset and all
+safety thresholds are unchanged.
+
+Natural map9 Adaptive post-patch n=3+n=5 completed 8/8 first-attempt,
+contact-free and speed-valid, with mean 87.30 s, range 69.55-96.61 s and
+minimum +0.234 m static clearance. Those runs did not enter the new branch.
+An explicit default-off one-shot fault hook then forced three base-NO_PATH
+results on map1. Two independent smokes each armed one base local escape and
+committed a 0.6 m/1.0 s move after 202 guard samples. Both completed 5/5
+waypoints in 65.75/60.19 s with contact 0, valid speed and worst +0.311 m
+static clearance. The second CSV directly records injection 1, forced failure
+3, base escape arm 1 and local commit 1.
+
+The ROS build, seven bandwidth parser tests and Python compileall pass, and
+source/mirror C++ files are byte-identical. Full tables, the measurement
+boundary, raw paths and log chronology are in
+`docs/payload_bandwidth_and_base_no_path_escape_20260827.md`. Primary raws are
+`results/bandwidth_3mode_seed1_10_n1_raw_20260827.csv`,
+`results/base_no_path_escape_seed9_adaptive_n3_raw_20260827.csv`,
+`results/base_no_path_escape_seed9_adaptive_n5_raw_20260827.csv` and
+`results/base_no_path_fault_seed1_adaptive_v2_raw_20260827.csv`.
+
+The next gate is final-binary map1-10 x three modes x n=3 with payload and
+effective-transition metrics in the same cohort. Population 100%, formal
+collision freedom and hardware readiness are not established. Raw-cloud CIRI
+remains default false/non-authoritative; the known `obs_skip_num`, NaN,
+clearance-penalty, BackupTrajOpt and `DRONE_R=robot_r` limitations are
+unchanged.

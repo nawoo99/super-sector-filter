@@ -41,6 +41,11 @@ class RecoveryBranchLogTest(unittest.TestCase):
     def test_counts_fault_injection_and_bounded_egress_markers(self):
         lines = """\
 [WARN] -- [TEST_FAULT_LOCAL_ESCAPE_ARM] direction=[1,0,0]
+[WARN] -- [TEST_FAULT_BASE_NO_PATH_ARM] failures=3
+[WARN] -- [TEST_FAULT_BASE_NO_PATH] remaining=2
+[WARN] -- [TEST_FAULT_BASE_NO_PATH] remaining=1
+[WARN] -- [TEST_FAULT_BASE_NO_PATH] remaining=0
+[WARN] -- [TRAJ_GUARD_BASE_NO_PATH_LOCAL_ESCAPE] attempt=1/4
 [WARN] -- [TEST_FAULT_LOCAL_ESCAPE_DIRECTION_SKIP] attempt=1/4
 [WARN] -- [TRAJ_GUARD_LOCAL_ESCAPE_DIRECTION_REJECTED] attempt=2/4
 [WARN] -- [TRAJ_GUARD_LOCAL_ESCAPE] action=commit direction_attempt=3/4
@@ -57,6 +62,9 @@ class RecoveryBranchLogTest(unittest.TestCase):
             os.unlink(path)
 
         self.assertEqual(result["guard_local_escape_test_injections"], 1)
+        self.assertEqual(result["guard_base_no_path_test_injections"], 1)
+        self.assertEqual(result["guard_base_no_path_forced_failures"], 3)
+        self.assertEqual(result["guard_base_no_path_local_escape_arms"], 1)
         self.assertEqual(result["guard_local_escape_direction_skips"], 1)
         self.assertEqual(result["guard_local_escape_direction_rejections"], 1)
         self.assertEqual(result["guard_local_escape_commits"], 1)

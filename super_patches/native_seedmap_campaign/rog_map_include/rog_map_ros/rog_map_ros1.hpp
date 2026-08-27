@@ -65,6 +65,8 @@ namespace rog_map {
         struct ROSCallback {
             ros::Subscriber odom_sub, cloud_sub;
             int unfinished_frame_cnt{0};
+            std::uint64_t pc_payload_bytes{0};
+            std::uint32_t pc_point_step{0};
             Pose pc_pose;
             PointCloud pc;
             ros::Timer update_timer;
@@ -108,6 +110,8 @@ namespace rog_map {
             rc_.updete_lock.lock();
             rc_.pc = tmp_pc;
             rc_.pc_pose = std::make_pair(robot_state_.p, robot_state_.q);
+            rc_.pc_payload_bytes = cloud_msg->data.size();
+            rc_.pc_point_step = cloud_msg->point_step;
             rc_.unfinished_frame_cnt++;
             map_empty_ = false;
             rc_.updete_lock.unlock();
@@ -135,15 +139,20 @@ namespace rog_map {
             }
             static PointCloud temp_pc;
             static Pose temp_pose;
+            std::uint64_t payload_bytes{0};
+            std::uint32_t point_step{0};
 
             rc_.updete_lock.lock();
             temp_pc = rc_.pc;
             temp_pose = rc_.pc_pose;
+            payload_bytes = rc_.pc_payload_bytes;
+            point_step = rc_.pc_point_step;
             rc_.unfinished_frame_cnt = 0;
             rc_.updete_lock.unlock();
 
             auto map_write_transaction = acquireMapWriteTransaction();
-            const auto result = updateProbMap(temp_pc, temp_pose);
+            const auto result = updateProbMap(
+                temp_pc, temp_pose, payload_bytes, point_step);
             if (result.map_committed) {
                 const auto snapshot = loadPublishedSnapshot();
                 publishCommittedSnapshot(snapshot ? snapshot->version + 1 : 1);
