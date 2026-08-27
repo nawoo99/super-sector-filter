@@ -149,13 +149,11 @@ Raw:
 - map9 natural regression: 8/8 complete/contact-free/speed-valid
 - forced branch smoke: 2/2 complete/contact-free/speed-valid, branch/guard commit 확인
 
-다음 단계는 이 최종 바이너리로 map1~10 x Full/Sector/Adaptive x n=3을 다시
-수행해 completion/contact/time/effective opens/CPU/map workload와 payload MiB/s를
-한 cohort에서 확정하는 것이다. 예상 소요는 약 2~2.5시간이다. 여기서 Full 또는
-Adaptive 실패가 다시 나오면 threshold 완화가 아니라 해당 certified recovery
-state와 정지 위치를 다시 분석한다. 통과하면 map별 paired 표와 exact McNemar,
-Wilson interval을 갱신한다. 새 맵 일반화나 raw-cloud CIRI authoritative 연결은
-이번 단계에 포함하지 않는다.
+여기서 예정한 최종 map1~10 x Full/Sector/Adaptive x n=3은 이후 완료됐다.
+Full/Adaptive는 각각 30/30 안전했고 Sector는 30/30 완주 중 4회 접촉했다.
+Map별 completion/contact/time/effective opens/CPU/payload와 McNemar/Wilson 결과는
+`docs/final_payload_base_no_path_n3_20260827.md`와 viability §8.37에 있다. 새 맵
+일반화나 raw-cloud CIRI authoritative 연결은 이 후속 단계에도 포함하지 않았다.
 
 이 결과는 population 100%, 형식적 collision freedom 또는 hardware flight
 readiness를 보장하지 않는다. Raw-cloud CIRI는 default false/non-authoritative다.

@@ -2821,3 +2821,61 @@ collision freedom and hardware readiness are not established. Raw-cloud CIRI
 remains default false/non-authoritative; the known `obs_skip_num`, NaN,
 clearance-penalty, BackupTrajOpt and `DRONE_R=robot_r` limitations are
 unchanged.
+
+### 8.37 Base-NO_PATH focused n=20 and final payload-aware three-mode n=3 gate (2026-08-27)
+
+The post-patch map9 Adaptive focused gate was extended from ten to twenty runs
+because the natural base-NO_PATH local-escape branch did not occur. All 20
+runs completed on the first attempt, contact/static-collision-free and
+speed-valid. Mean/range time was 90.07/76.71-122.25 s, minimum static
+clearance was +0.190 m and mean processed payload was 3.280 MiB/s. The runs
+made 165 effective full-view opens and 691 certified brakes but zero natural
+base local-escape arms or commits. This is regression and liveness evidence;
+the prior two default-off forced-fault smokes remain the direct branch proof.
+
+The same final binary then completed map1-10 x Full/fixed-Sector/Adaptive x
+n=3, 90/90 on the first attempt with zero timeout, retry or OOM and all rows
+speed-valid. Full and Adaptive were safety-qualified 30/30. Fixed Sector
+completed 30/30 but was safety-qualified 26/30: contact/static collision
+occurred once on map7, twice on map9 and once on map10, for four runs, nine live
+events and four static-PCD collision episodes. Adaptive was safe in each
+matching map/run block. Mean Full/Sector/Adaptive times were
+71.43/71.53/74.39 s and worst static clearances were
++0.193/-0.181/+0.210 m.
+
+Mean processed payloads were 5.069/1.569/2.351 MiB/s. Equal-weight per-map
+payload reductions versus Full were 69.43% for Sector and 54.24% for Adaptive.
+Using the ratio of all 30-run mode means, Adaptive also reduced points/update
+15.68%, map total/update 21.80%, occupancy update time 15.09%, FSM CPU 14.62%
+and time-integrated planner-plus-filter CPU work 8.65%; mean mission time rose
+4.14%. Adaptive made 372 effective full-view opens, or 12.4/run. Input
+callbacks equalled processed filter frames 26,430/26,430 with zero worker
+overwrite, so this reduction is not attributed to silently discarding frames.
+
+Trajectory-guard and pre-stale full-refresh ACKs were 712/712 and
+2,131/2,131, with zero timeout, retry, supersede, abandon or final pending.
+The campaign reached a maximum FSM RSS/PSS of 3,472/3,450 MiB, zero FSM swap,
+minimum system available memory of 5,228 MiB and zero memory-PSI avg10. Host
+swap was already nearly full and peaked at 2,043 MiB, but the earlier isolated
+9.1-GiB RSS/OOM event did not recur; its allocation source remains unresolved.
+
+For safety-qualified completion, matched-block discordance was 4:0 for Full
+versus Sector and 0:4 for Sector versus Adaptive; both exact two-sided McNemar
+values are `p=0.125`. Full versus Adaptive had zero discordance and `p=1.0`.
+Because every block used fixed Full->Sector->Adaptive order, these are
+exploratory matched-block statistics rather than randomized causal evidence.
+The Wilson 95% lower bound for 30/30 is 88.65%, and for Sector 26/30 it is
+70.32%, so population 100% is not established.
+
+Full map-labelled safety, time, switching, CPU and payload tables are in
+`docs/final_payload_base_no_path_n3_20260827.md`. Primary raw files are
+`results/final_base_no_path_seed9_adaptive_n10a_raw_20260827.csv`,
+`results/final_base_no_path_seed9_adaptive_n10b_raw_20260827.csv` and
+`results/final_payload_base_no_path_3mode_seed1_10_n3_raw_20260827.csv`.
+Campaign tests pass 20/20 and the six runtime/mirror C++ pairs are
+byte-identical.
+
+The processed-payload measurement boundary remains unchanged: this is not
+NIC/wireless/DDS wire bandwidth. Raw-cloud CIRI remains default false and
+non-authoritative. The `obs_skip_num` no-op, NaN and clearance-penalty defects,
+BackupTrajOpt coverage gap and `DRONE_R=robot_r` metric limitation also remain.

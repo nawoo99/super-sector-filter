@@ -1,6 +1,41 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-27 base-NO_PATH 집중 n=20과 최종 payload-aware 3-mode n=3 gate 완료.**
+> 수정 뒤 map9 Adaptive를 20회 추가 실행했고 20/20 first-attempt 완주,
+> contact/static collision 0, speed-valid였다. 평균/범위 시간은
+> 90.07/76.71~122.25초, worst clearance +0.190m였다. Natural base-NO_PATH
+> local-escape arm은 0이므로 이 20회는 regression/liveness 증거이며, 직접 분기
+> 증거는 앞서 default-off fault hook 두 번에서 확보한 3 NO_PATH→1 arm→
+> 202-sample 0.6m commit이다.
+>
+> 같은 최종 바이너리 map1-10 x Full/Sector/Adaptive x n=3은 90/90
+> first-attempt 완주·speed-valid, timeout/retry/OOM 0이다. Full과 Adaptive는
+> safety-qualified 30/30이다. Sector는 30/30 완주했지만 map7 1회, map9 2회,
+> map10 1회가 접촉해 safe 26/30, live events 9, static collision 4였다.
+> 같은 map/run Adaptive는 네 번 모두 안전했다. 평균 시간은
+> 71.43/71.53/74.39초, worst clearance는 +0.193/-0.181/+0.210m다.
+>
+> Full/Sector/Adaptive processed payload 평균은 5.069/1.569/2.351 MiB/s다.
+> Map별 동일가중 Full 대비 감소율은 Sector 69.43%, Adaptive 54.24%다.
+> 전체 mode 평균 비율에서 Adaptive는 points/update 15.68%, total/update
+> 21.80%, update 15.09%, FSM CPU 14.62%, planner+filter core-seconds 8.65%를
+> 줄였고 mission time은 4.14% 늘었다. Adaptive effective full-view open은
+> 372회(12.4/run)다. 이 payload는 ROG-Map processed application payload이며
+> NIC/무선/DDS wire bandwidth가 아니다.
+>
+> Matched safety discordance는 Full-Sector 4:0, Sector-Adaptive 0:4이고 exact
+> McNemar는 둘 다 `p=0.125`다. 고정 Full→Sector→Adaptive 순서라 exploratory
+> matched-block 결과다. Full/Adaptive 30/30의 Wilson 95% lower bound는
+> 88.65%라 population 100% 주장은 금지한다. 상세는 viability §8.37,
+> `docs/final_payload_base_no_path_n3_20260827.md`, raw는
+> `results/final_base_no_path_seed9_adaptive_n10{a,b}_raw_20260827.csv`와
+> `results/final_payload_base_no_path_3mode_seed1_10_n3_raw_20260827.csv`다.
+> Raw-cloud CIRI default false/non-authoritative, `obs_skip_num` no-op,
+> NaN/clearance-penalty 결함, BackupTrajOpt 미커버,
+> `DRONE_R=robot_r` 지표 한계도 계속 유효하다.
+
+> [!IMPORTANT]
 > **2026-08-27 processed-payload bandwidth 계측과 base-NO_PATH 복구 완료.**
 > ROG-Map update에 실제 사용된 `PointCloud2.data` bytes/point_step을 기존
 > performance CSV에 기록하고 runner가 frames/s, points/s, MiB/s, Mbit/s를
@@ -24,9 +59,8 @@
 > 65.75/60.19초, worst clearance는 +0.311m였다. v2 CSV가 injection 1,
 > forced failure 3, base escape arm 1, local commit 1을 직접 보존한다.
 >
-> 다음 gate는 **최종 바이너리 map1-10 x Full/Sector/Adaptive x n=3**이며
-> payload와 effective open을 같은 cohort에서 확정한다(약 2~2.5시간).
-> 상세는 viability §8.36,
+> 이 절에서 예정한 **최종 바이너리 map1-10 x Full/Sector/Adaptive x n=3**은
+> 위 최신 배너와 viability §8.37에서 완료됐다. 이 절의 구현 상세는 §8.36,
 > `docs/payload_bandwidth_and_base_no_path_escape_20260827.md`, raw는
 > `results/bandwidth_3mode_seed1_10_n1_raw_20260827.csv`와 matching
 > `base_no_path_*_20260827.csv`를 볼 것. Population 100% 주장은 금지하며
