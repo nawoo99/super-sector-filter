@@ -291,6 +291,7 @@ def parse_full_refresh_ack_log(path):
         "full_refresh_recovery_targets": 0,
         "full_refresh_recovery_acks": 0,
         "full_refresh_ack_timeout_recoveries": 0,
+        "guard_same_map_replan_skips": 0,
         "guard_topology_reroute_arms": 0,
         "guard_topology_reroute_searches": 0,
         "guard_base_no_path_local_escape_arms": 0,
@@ -331,8 +332,18 @@ def parse_full_refresh_ack_log(path):
     active_since = None
     active_durations = []
     stamp_pattern = re.compile(r"\[(\d+(?:\.\d+)?)\]")
+    same_map_replan_summary_pattern = re.compile(
+        r"\[REPLAN_SAME_MAP_COALESCE_SUMMARY\]\s+skipped=(\d+)"
+    )
     with open(path, errors="replace") as stream:
         for line in stream:
+            same_map_summary = same_map_replan_summary_pattern.search(line)
+            if same_map_summary:
+                counts["guard_same_map_replan_skips"] = int(
+                    same_map_summary.group(1)
+                )
+            elif "[REPLAN_SAME_MAP_COALESCED]" in line:
+                counts["guard_same_map_replan_skips"] += 1
             for marker, key in markers.items():
                 if marker in line:
                     counts[key] += 1
@@ -529,7 +540,7 @@ VALID_MODES = (
     "full_control_v10", "full_shadow_v10",
     "full_guard_v4", "full_guard_v7", "full_guard_v10",
     "full_guard_reroute_v7",
-    "full", "sector", "velocity", "adaptive", "trigger",
+    "full", "sector", "velocity", "adaptive", "adaptive_baseline", "trigger",
     # Paper-matched speed sweep for the seed1..10 filter ablation itself
     # (max_acc=20 m/s^2, max_vel in the paper's swept set) -- distinct from
     # the raw_v* sweep, which targets seed11/map0's SUPER-as-is comparison.
@@ -635,6 +646,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "full_refresh_recovery_targets",
           "full_refresh_recovery_acks",
           "full_refresh_ack_timeout_recoveries",
+          "guard_same_map_replan_skips",
           "guard_topology_reroute_arms",
           "guard_topology_reroute_searches",
           "guard_base_no_path_local_escape_arms",
@@ -1067,6 +1079,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
     seedmap_sweep_match = re.match(r"^(full|sector|adaptive)_v(\d+)$", mode)
     base_mode = (
         "full" if is_seedmap_observed
+        else "adaptive" if mode == "adaptive_baseline"
         else seedmap_sweep_match.group(1) if seedmap_sweep_match
         else mode
     )
@@ -1961,6 +1974,13 @@ def main():
         ),
     )
     ap.add_argument(
+        "--seedmap-adaptive-baseline-super-config",
+        help=(
+            "optional /cloud_sector SUPER config used only by the "
+            "adaptive_baseline mode in a same-binary crossed A/B campaign"
+        ),
+    )
+    ap.add_argument(
         "--seedmap-static-pcd",
         action="store_true",
         help="measure every seedmap mode against the same unfiltered static PCD",
@@ -2157,6 +2177,7 @@ def main():
         args.seedmap_full_super_config,
         args.seedmap_filtered_super_config,
     )
+    adaptive_baseline_config = args.seedmap_adaptive_baseline_super_config
     if args.seedmap_super_config and any(split_configs):
         ap.error(
             "--seedmap-super-config cannot be combined with the mode-specific "
@@ -2194,10 +2215,29 @@ def main():
                 f"{args.seedmap_filtered_super_config} uses "
                 f"{filtered_topic or 'an unknown topic'}"
             )
+    if "adaptive_baseline" in args.modes and not adaptive_baseline_config:
+        ap.error(
+            "adaptive_baseline mode requires "
+            "--seedmap-adaptive-baseline-super-config"
+        )
+    if adaptive_baseline_config:
+        if "adaptive_baseline" not in args.modes:
+            ap.error(
+                "--seedmap-adaptive-baseline-super-config requires "
+                "adaptive_baseline mode"
+            )
+        baseline_topic = super_config_cloud_topic(adaptive_baseline_config)
+        if baseline_topic != "/cloud_sector":
+            ap.error(
+                "--seedmap-adaptive-baseline-super-config must use "
+                f"/cloud_sector; {adaptive_baseline_config} uses "
+                f"{baseline_topic or 'an unknown topic'}"
+            )
 
     if (
         args.seedmap_super_config
         or any(split_configs)
+        or adaptive_baseline_config
         or args.seedmap_static_pcd
     ):
         invalid_maps = [
@@ -2291,6 +2331,8 @@ def main():
                     if (map_name, run, mode) in existing_keys:
                         continue
                     mode_config = args.seedmap_super_config
+                    if mode == "adaptive_baseline":
+                        mode_config = adaptive_baseline_config
                     if all(split_configs):
                         mode_config = (
                             args.seedmap_full_super_config

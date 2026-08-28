@@ -2954,3 +2954,54 @@ The 95% Wilson lower bound for Full/Adaptive 100/100 is 96.30%, and for Sector
 false/non-authoritative.  The `obs_skip_num` no-op, NaN/clearance-penalty
 defects, BackupTrajOpt gap and `DRONE_R=robot_r` metric limitation are
 unchanged.
+
+### 8.39 Bounded same-map replan coalescing and rejected standard-profile adoption (2026-08-29)
+
+The n=10 timing decomposition showed that Adaptive's extra time on maps5, 8
+and 9 was dominated by additional freshness brakes and recovery-active time,
+while exact full-refresh ACK latency stayed near 0.05 s with no loss or
+timeout. Successful `ReplanOnce` calls also produced multiple trajectory
+generations from one immutable map version. A default-off guard option was
+therefore added to coalesce a successful replan only when both map version and
+committed trajectory generation are unchanged.
+
+The first candidate skipped all further successful replans until a new map
+commit. It was rejected at row 27/30 of a seed5/8/9 crossed A/B: seed9 run4
+Adaptive stopped at waypoint 2/5 and timed out at 180 s. Static collision was
+zero, but clearance was +0.076 m and the stopped planner repeated 250 reroute
+searches from an immediately occupied fallback start. This proved that no new
+map information does not imply that progress-driven replanning can be
+suppressed indefinitely.
+
+The revised candidate forces a same-map replan again after 0.10 s. Seed9
+smoke was 3/3 complete/static-safe. A same-binary crossed A/B on maps5/8/9 was
+15/15 complete/static-safe for both baseline and candidate. Candidate time
+changed from 82.25 to 79.35 s, brakes from 34.33 to 28.93/run and recovery from
+34.06 to 30.39 s/run, while skipping 91.4 immediate duplicate timer ticks per
+run. The paired time 95% interval [-7.072,+1.280] s included zero, so this is
+not evidence of a uniform speedup.
+
+The map1-10 x Full/Sector/Adaptive x n=3 gate completed 90/90 rows, all
+run/speed-valid with retry/OOM zero. Full and Adaptive were each 30/30
+complete and source-static-PCD-safe. Sector was 30/30 complete but had one
+seed8 static collision; matching Adaptive was safe. Mean times were
+69.86/72.19/75.21 s and worst clearances +0.219/-0.169/+0.043 m. Adaptive
+reduced Full's map frequency 35.08%, points/update 15.76%, total/update 20.72%,
+occupancy update 13.13%, processed payload 56.98% and FSM CPU 21.37%, while
+mission time rose 7.65%. It made 344 effective full-view transitions.
+
+Although the bounded candidate eliminated the observed timeout, Adaptive
+seed9 averaged 95.62 s versus Full 83.55 s, used 41.3 brakes/run and reached
+only +0.043 m source-PCD clearance in run3. Consequently the standard
+`tight_v7` profiles were restored to the validated default-off behavior. The
+byte-identical tested candidate is preserved only in explicit
+`*_replan_coalesce_bounded.yaml` profiles. Max FSM RSS was 3,251.68 MiB; host
+swap remained near 2,048 MiB, but there was no infrastructure retry or OOM
+recurrence.
+
+Detailed tables, commands, raw paths, claim boundaries and remaining
+seed9-focused work are in
+`docs/bounded_same_map_replan_coalesce_20260829.md`. Raw-cloud CIRI remains
+default false/non-authoritative. The `obs_skip_num` no-op, NaN and
+clearance-penalty defects, BackupTrajOpt coverage gap and
+`DRONE_R=robot_r` metric limitation remain unchanged.

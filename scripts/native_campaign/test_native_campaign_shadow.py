@@ -52,6 +52,9 @@ class RecoveryBranchLogTest(unittest.TestCase):
 [WARN] -- [TRAJ_GUARD_LOCAL_ESCAPE_REJECTED] attempts=4
 [WARN] -- [TEST_FAULT_INITIAL_FOOTPRINT_OCCUPANCY] action=inject_once
 [INFO] -- [TRAJ_GUARD_COMMIT] phase=x footprint_egress=true
+[INFO] -- [REPLAN_SAME_MAP_COALESCED] map=40 generation=51 skipped_total=1
+[INFO] -- [REPLAN_SAME_MAP_COALESCED] map=40 generation=51 skipped_total=2
+[INFO] -- [REPLAN_SAME_MAP_COALESCE_SUMMARY] skipped=73 last_map=41 last_generation=52
 """
         handle, path = tempfile.mkstemp(text=True)
         try:
@@ -71,6 +74,7 @@ class RecoveryBranchLogTest(unittest.TestCase):
         self.assertEqual(result["guard_local_escape_rejections"], 1)
         self.assertEqual(result["guard_initial_footprint_test_injections"], 1)
         self.assertEqual(result["guard_initial_footprint_egress_commits"], 1)
+        self.assertEqual(result["guard_same_map_replan_skips"], 73)
 
 
 if __name__ == "__main__":

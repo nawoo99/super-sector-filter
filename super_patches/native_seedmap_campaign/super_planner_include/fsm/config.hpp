@@ -72,6 +72,8 @@ namespace fsm {
         // Runtime certification of the committed composite trajectory and a
         // sticky, continuous emergency brake when certification is lost.
         bool trajectory_guard_en{false};
+        bool trajectory_guard_same_map_replan_coalesce_en{false};
+        double trajectory_guard_same_map_replan_min_interval_s{0.0};
         // Planner-side candidate validation/logging only. This never suppresses
         // publication or activates the emergency brake.
         bool trajectory_guard_shadow_en{false};
@@ -173,6 +175,14 @@ namespace fsm {
             loader.LoadParam("fsm/map_readiness/max_cloud_age_s", map_readiness_max_cloud_age_s, 0.75);
             loader.LoadParam("fsm/map_readiness/max_map_age_s", map_readiness_max_map_age_s, 0.75);
             loader.LoadParam("fsm/trajectory_guard/enable", trajectory_guard_en, false);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/same_map_replan_coalesce_enable",
+                    trajectory_guard_same_map_replan_coalesce_en, false);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/same_map_replan_min_interval_s",
+                    trajectory_guard_same_map_replan_min_interval_s, 0.0);
+            trajectory_guard_same_map_replan_min_interval_s = std::max(
+                    0.0, trajectory_guard_same_map_replan_min_interval_s);
             loader.LoadParam("fsm/trajectory_guard/shadow",
                              trajectory_guard_shadow_en, false);
             loader.LoadParam("fsm/trajectory_guard/max_map_age_s",

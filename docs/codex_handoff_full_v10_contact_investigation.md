@@ -1,6 +1,35 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-29 bounded same-map replan coalescing은 구현/검증했지만 표준 채택 보류.**
+> map commit보다 빠른 성공 `ReplanOnce` 중복을 줄이기 위해 같은 map version과
+> trajectory generation을 병합했다. 새 map까지 무기한 생략한 첫 후보는 seed9
+> Adaptive가 waypoint 2/5, 180초 timeout에 걸려 기각했다. 0.10초가 지나면
+> same-map replan을 강제하는 제한형은 seed9 smoke 3/3, maps5/8/9 crossed A/B
+> 후보 15/15, 전체 map1-10 3-mode n=3의 Adaptive 30/30을 완주했고 정적 충돌
+> 0이었다.
+>
+> 전체 n=3은 90/90 first-attempt·run/speed-valid, retry/OOM 0이다. Full과
+> Adaptive는 각각 30/30 완주·source-static-PCD 충돌 0, Sector는 30/30
+> 완주지만 seed8 정적 충돌 1회였다. 평균 Full/Sector/Adaptive 시간은
+> 69.86/72.19/75.21초, worst clearance는 +0.219/-0.169/+0.043m다. Adaptive는
+> Full 대비 map Hz 35.08%, points/update 15.76%, total/update 20.72%, update
+> 13.13%, processed payload 56.98%, FSM CPU 21.37%를 줄였지만 시간은 7.65%
+> 늘었다. Effective full open은 344회다.
+>
+> 따라서 same-map 기능은 default false인 실험 코드로 보존하고, 검증된 표준
+> `tight_v7` 프로파일은 default-off로 복원했다. 테스트한 후보는 명시적인
+> `*_replan_coalesce_bounded.yaml`에만 있다. 다음 우선순위는 seed9 Adaptive의
+> +0.043m 저여유와 41.3 brakes/run, 48.56초 recovery를 만드는 freshness/map
+> commit cadence 분석이다. 상세는 viability §8.39와
+> `docs/bounded_same_map_replan_coalesce_20260829.md`, raw는
+> `results/replan_coalesce_bounded_3mode_seed1_10_n3_raw_20260829.csv`다.
+> 최종본까지 최소 8~12시간의 focused n=10 + 전체 300회 재검증이 남았다.
+> Raw-cloud CIRI는 계속 false/non-authoritative이며 `obs_skip_num` no-op,
+> NaN/clearance-penalty 결함, BackupTrajOpt 미커버, `DRONE_R=robot_r` 지표
+> 한계도 그대로다.
+
+> [!IMPORTANT]
 > **2026-08-28 교차균형 n=10 300회와 ROG-Map 메모리 worker 수정 완료.**
 > 최종 수정 바이너리로 map1-10 x Full/Sector/Adaptive x n=10을 실행했고
 > 300/300 모두 first-attempt 완주, run/speed-valid, retry/OOM 0이었다.

@@ -94,6 +94,17 @@ namespace fsm {
         std::atomic_bool safety_brake_active_{false};
         std::atomic_bool safety_brake_finished_{false};
         std::atomic_bool safety_revalidation_requested_{false};
+        // Replanning faster than the committed-map cadence used to generate
+        // several new polynomials from the same immutable map snapshot.  A
+        // successful replan leaves a guarded trajectory in charge, so the
+        // opt-in policy suppresses only immediate timer-tick duplicates.
+        // Progress replanning resumes after a bounded interval even if the
+        // map is unchanged. Failed replans are deliberately not recorded, so
+        // topology recovery and liveness retries remain unchanged.
+        std::uint64_t last_successful_replan_map_version_{0};
+        std::uint64_t last_successful_replan_generation_{0};
+        rog_map::MapHealthClock::time_point last_successful_replan_time_{};
+        std::uint64_t same_map_replan_skips_{0};
         std::uint64_t shadow_last_enqueued_map_version_{0};
         Trajectory brake_pos_traj_{};
         Trajectory brake_yaw_traj_{};
@@ -2035,6 +2046,15 @@ namespace fsm {
         FsmRos2() = default;
 
         ~FsmRos2() {
+            if (ros_ptr_ &&
+                cfg_.trajectory_guard_same_map_replan_coalesce_en) {
+                ros_ptr_->info(
+                        " -- [REPLAN_SAME_MAP_COALESCE_SUMMARY] skipped={} "
+                        "last_map={} last_generation={}",
+                        same_map_replan_skips_,
+                        last_successful_replan_map_version_,
+                        last_successful_replan_generation_);
+            }
             if (ciri_shadow_uses_map_cloud_observer_ && map_ptr_) {
                 map_ptr_->setAcceptedCloudObserver({});
             }
@@ -2421,14 +2441,44 @@ namespace fsm {
             if (safety_brake_active_.load(std::memory_order_acquire)) {
                 return;
             }
+            rog_map::MapHealthSnapshot replan_health;
+            std::uint64_t generation_before = 0;
             if (cfg_.trajectory_guard_en) {
-                const auto health = map_ptr_->getMapHealthSnapshot();
+                replan_health = map_ptr_->getMapHealthSnapshot();
                 double map_age_s;
                 const double replan_start_age_limit = std::max(
                         0.05, 0.5 * cfg_.trajectory_guard_max_map_age_s);
                 if (safety_revalidation_requested_.load(std::memory_order_acquire) ||
-                    !mapFreshForGuard(health, map_age_s) ||
+                    !mapFreshForGuard(replan_health, map_age_s) ||
                     map_age_s > replan_start_age_limit) {
+                    return;
+                }
+                generation_before =
+                        planner_ptr_->getCommittedTrajectoryGeneration();
+                const auto replan_now = rog_map::MapHealthClock::now();
+                const double since_success_s =
+                        last_successful_replan_time_.time_since_epoch().count() == 0
+                                ? std::numeric_limits<double>::infinity()
+                                : std::chrono::duration<double>(
+                                          replan_now -
+                                          last_successful_replan_time_).count();
+                if (cfg_.trajectory_guard_same_map_replan_coalesce_en &&
+                    cfg_.trajectory_guard_same_map_replan_min_interval_s > 0.0 &&
+                    replan_health.map_version != 0 &&
+                    last_successful_replan_map_version_ ==
+                            replan_health.map_version &&
+                    last_successful_replan_generation_ == generation_before &&
+                    since_success_s <
+                            cfg_.trajectory_guard_same_map_replan_min_interval_s) {
+                    ++same_map_replan_skips_;
+                    ros_ptr_->info(
+                            " -- [REPLAN_SAME_MAP_COALESCED] map={} "
+                            "generation={} age={:.3f}s min_interval={:.3f}s "
+                            "skipped_total={}",
+                            replan_health.map_version, generation_before,
+                            since_success_s,
+                            cfg_.trajectory_guard_same_map_replan_min_interval_s,
+                            same_map_replan_skips_);
                     return;
                 }
             }
@@ -2443,6 +2493,22 @@ namespace fsm {
                 !safety_brake_active_.load(std::memory_order_acquire) &&
                 !refreshSafetyCertificate("replan_post")) {
                 activateEmergencyBrake("replan_post_uncertified");
+                return;
+            }
+            if (cfg_.trajectory_guard_en &&
+                cfg_.trajectory_guard_same_map_replan_coalesce_en &&
+                !candidate_rejected &&
+                machine_state_ == FOLLOW_TRAJ &&
+                !safety_brake_active_.load(std::memory_order_acquire)) {
+                const std::uint64_t generation_after =
+                        planner_ptr_->getCommittedTrajectoryGeneration();
+                if (generation_after > generation_before) {
+                    last_successful_replan_map_version_ =
+                            replan_health.map_version;
+                    last_successful_replan_generation_ = generation_after;
+                    last_successful_replan_time_ =
+                            rog_map::MapHealthClock::now();
+                }
             }
         }
 
