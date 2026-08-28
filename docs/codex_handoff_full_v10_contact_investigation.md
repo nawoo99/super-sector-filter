@@ -1,6 +1,42 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-28 교차균형 n=10 300회와 ROG-Map 메모리 worker 수정 완료.**
+> 최종 수정 바이너리로 map1-10 x Full/Sector/Adaptive x n=10을 실행했고
+> 300/300 모두 first-attempt 완주, run/speed-valid, retry/OOM 0이었다.
+> Full과 Adaptive는 각각 100/100 source-static-PCD 무충돌이었다. Sector는
+> 100/100 완주했지만 map7·8·9에서 각 2회씩 정적 충돌해 safe 94/100이었다.
+> 동일 6개 map/run의 Adaptive는 모두 안전했다. 전체 순서를 연속 회전해 각
+> 모드의 1/2/3번째 위치가 33~34회로 균형됐고, Full-Sector 및
+> Sector-Adaptive matched discordance의 exact McNemar는 각각 `p=0.03125`다.
+>
+> 첫 n=10은 map5 Full timeout으로 132행에서 중단했다. Degenerate
+> collision-away 방향에 goal-order fallback을 넣되 기존 stop-only 8방향
+> trajectory/viability certificate는 유지했고, map5 Full 집중 n=8은 8/8
+> 통과했다. 다만 새 `direction_source=goal_fallback`은 자연 발생 0이므로
+> 직접 인과 증거로 주장하지 않는다.
+>
+> 두 번째 n=10은 277행 뒤 map10 run3 Full이 3.23→8.43 GiB RSS로 증가해
+> kernel OOM kill됐다. DDS cloud callback의 PCL 변환+map/COW/ACK를 executor
+> thread에서 동기 수행하던 구조가 원인이었다. Callback은 latest-only
+> enqueue만 하고 전용 단일 worker가 무거운 작업을 담당하도록 수정했다.
+> 집중 map10 Full/Adaptive n=3+n=3은 6/6, peak RSS 3.24 GiB 이하였고, 최종
+> 300회 peak RSS 3,263.95 MiB, memory PSI 0으로 OOM이 재발하지 않았다.
+>
+> 최종 평균 Full/Sector/Adaptive 시간은 71.61/70.05/74.33초다. Adaptive는
+> Full 대비 map update frequency 33.08%, points/update 16.68%,
+> total/update 20.63%, processed payload 56.08%, FSM CPU 17.05%를 줄였고
+> 시간은 3.80% 늘었다. Effective full-view open은 1,160회(11.60/run)다.
+> Payload는 ROG-Map processed application payload이며 NIC/무선/DDS wire
+> bandwidth가 아니다. 상세는 viability §8.38 및
+> `docs/counterbalanced_n5_n10_validation_20260828.md`, 최종 raw는
+> `results/counterbalanced_map_worker_3mode_seed1_10_n10_raw_20260828.csv`다.
+> 100/100의 Wilson 95% lower bound는 96.30%이므로 population 100% 주장은
+> 금지한다. Raw-cloud CIRI default false/non-authoritative,
+> `obs_skip_num` no-op, NaN/clearance-penalty 결함, BackupTrajOpt 미커버,
+> `DRONE_R=robot_r` 지표 한계도 계속 유효하다.
+
+> [!IMPORTANT]
 > **2026-08-27 base-NO_PATH 집중 n=20과 최종 payload-aware 3-mode n=3 gate 완료.**
 > 수정 뒤 map9 Adaptive를 20회 추가 실행했고 20/20 first-attempt 완주,
 > contact/static collision 0, speed-valid였다. 평균/범위 시간은

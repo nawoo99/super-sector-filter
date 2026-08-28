@@ -401,6 +401,25 @@ class LoopMonitor(Node):
             if self.static_pcd is not None
             else None
         )
+        # /cloud_registered is a rendered observation, not the simulator's
+        # static geometry oracle.  MARSIM fills angular pixels around each
+        # source PCD sample, so a live point can lie inside the 0.20 m marker
+        # radius even when the vehicle remains outside the source PCD.  Keep
+        # the historical live marker unchanged, but attach an independent
+        # static-PCD check at the event pose (and the rendered point's offset
+        # from that PCD) so a live-only rasterization boundary is not silently
+        # reported as a common physical collision across filter modes.
+        static_distance_at_event = None
+        static_nearest_at_event = None
+        live_point_static_distance = None
+        if self.static_pcd is not None:
+            static_distance_at_event, static_nearest_at_event = (
+                self.static_pcd.nearest(position)
+            )
+            if kind == "live_cloud":
+                live_point_static_distance, _ = self.static_pcd.nearest(
+                    nearest_point
+                )
         local_occupancy = None
         if self.occupancy_cloud is not None:
             delta = self.occupancy_cloud - position
@@ -417,6 +436,26 @@ class LoopMonitor(Node):
                 "velocity": np.round(velocity, 5).tolist(),
                 "speed_mps": round(float(np.linalg.norm(velocity)), 5),
                 "nearest_point": np.round(nearest_point, 5).tolist(),
+                "static_distance_at_event_m": (
+                    round(float(static_distance_at_event), 5)
+                    if static_distance_at_event is not None else None
+                ),
+                "static_clearance_at_event_m": (
+                    round(float(static_distance_at_event - DRONE_R), 5)
+                    if static_distance_at_event is not None else None
+                ),
+                "static_contact_at_event": (
+                    static_distance_at_event < DRONE_R
+                    if static_distance_at_event is not None else None
+                ),
+                "static_nearest_point_at_event": (
+                    np.round(static_nearest_at_event, 5).tolist()
+                    if static_nearest_at_event is not None else None
+                ),
+                "live_point_static_distance_m": (
+                    round(float(live_point_static_distance), 5)
+                    if live_point_static_distance is not None else None
+                ),
                 "position_command": self.latest_command,
                 "frontend_path": self.latest_frontend_path,
                 "committed_trajectory": self.latest_committed_trajectory,
@@ -561,6 +600,27 @@ result = {
         else None
     ),
     "contact_event_count": len(node.contact_events),
+    # Protocol safety authority is explicit.  Static seed-map campaigns use
+    # the same source PCD for every mode; runs without that oracle retain the
+    # historical live-cloud episode count.  The raw live fields above remain
+    # available and are never overwritten by this classification.
+    "safety_contact_source": (
+        "static_pcd" if node.static_pcd is not None else "live_cloud"
+    ),
+    "safety_collisions": (
+        node.static_pcd_collisions
+        if node.static_pcd is not None else node.collisions
+    ),
+    "live_only_contact_event_count": sum(
+        1 for event in node.contact_events
+        if event.get("kind") == "live_cloud"
+        and event.get("static_contact_at_event") is False
+    ),
+    "static_confirmed_live_contact_event_count": sum(
+        1 for event in node.contact_events
+        if event.get("kind") == "live_cloud"
+        and event.get("static_contact_at_event") is True
+    ),
     "contact_events": node.contact_events,
     "occupancy_messages": node.occupancy_messages,
     "occupancy_points_latest": (

@@ -896,6 +896,78 @@ namespace super_planner {
             const bool vertical_budget_available =
                     guard_topology_saturation_recoveries_ <
                             cfg_.guard_topology_saturation_vertical_attempts;
+            Vec3f local_escape_direction =
+                    start_pos - safety.first_collision_pos;
+            local_escape_direction.z() = 0.0;
+            const char *local_escape_direction_source = "collision_away";
+            double local_escape_direction_norm =
+                    local_escape_direction.norm();
+            if (!local_escape_direction.array().isFinite().all() ||
+                !std::isfinite(local_escape_direction_norm) ||
+                local_escape_direction_norm < cfg_.resolution) {
+                // A start-adjacent rejection can be almost vertically below
+                // the stopped vehicle.  In that case "away from collision"
+                // has no usable horizontal direction and repeatedly clearing
+                // the same blockers only regenerates the same candidate.
+                // The goal vector is only an ordering seed for the existing
+                // eight-direction, stop-only certified escape; it does not
+                // bypass any trajectory or viability check.
+                local_escape_direction = gi_.goal_p - start_pos;
+                local_escape_direction.z() = 0.0;
+                local_escape_direction_norm =
+                        local_escape_direction.norm();
+                local_escape_direction_source = "goal_fallback";
+            }
+            const bool local_escape_direction_valid =
+                    local_escape_direction.array().isFinite().all() &&
+                    std::isfinite(local_escape_direction_norm) &&
+                    local_escape_direction_norm >= cfg_.resolution;
+            const bool local_escape_budget_available =
+                    guard_topology_local_escape_recoveries_ <
+                            cfg_.guard_topology_local_escape_attempts;
+            if ((!cfg_.guard_topology_vertical_recovery_en ||
+                 !vertical_budget_available) &&
+                cfg_.guard_topology_local_escape_en &&
+                start_adjacent_lower_rejection &&
+                local_escape_direction_valid &&
+                local_escape_budget_available) {
+                const std::size_t cleared_zones =
+                        guard_topology_avoidance_centers_.size();
+                guard_topology_avoidance_centers_.clear();
+                guard_topology_avoidance_radii_.clear();
+                guard_topology_branch_directions_.clear();
+                guard_topology_branch_depths_.clear();
+                guard_topology_no_path_failures_ = 0;
+                guard_topology_corridor_failures_ = 0;
+                guard_topology_post_corridor_failures_ = 0;
+                guard_topology_stall_generation_ = 0;
+                guard_topology_stall_collision_.setZero();
+                guard_topology_stall_rejects_ = 0;
+                guard_local_escape_direction_ =
+                        local_escape_direction /
+                        local_escape_direction_norm;
+                ++guard_topology_local_escape_recoveries_;
+                ++guard_topology_epoch_;
+                guard_local_escape_pending_.store(
+                        true, std::memory_order_release);
+                ros_ptr_->warn(
+                        " -- [TRAJ_GUARD_LOCAL_ESCAPE_ARM] gen={} "
+                        "cleared_zones={} epoch={} attempt={}/{} "
+                        "reason=topology_saturated "
+                        "horizontal_distance={:.3f} direction_source={} "
+                        "direction=[{:.3f},{:.3f},{:.3f}] "
+                        "action=escape_then_reroute",
+                        candidate_generation, cleared_zones,
+                        guard_topology_epoch_,
+                        guard_topology_local_escape_recoveries_,
+                        cfg_.guard_topology_local_escape_attempts,
+                        horizontal_collision_distance,
+                        local_escape_direction_source,
+                        guard_local_escape_direction_.x(),
+                        guard_local_escape_direction_.y(),
+                        guard_local_escape_direction_.z());
+                return;
+            }
             if (cfg_.guard_topology_vertical_recovery_en &&
                 vertical_budget_available) {
                 const std::size_t cleared_zones =
@@ -3006,6 +3078,19 @@ namespace super_planner {
                     Vec3f local_escape_direction =
                             stopped_start - guard_topology_stall_collision_;
                     local_escape_direction.z() = 0.0;
+                    const char *local_escape_direction_source =
+                            "collision_away";
+                    double local_escape_direction_norm =
+                            local_escape_direction.norm();
+                    if (!local_escape_direction.array().isFinite().all() ||
+                        !std::isfinite(local_escape_direction_norm) ||
+                        local_escape_direction_norm < cfg_.resolution) {
+                        local_escape_direction = gi_.goal_p - stopped_start;
+                        local_escape_direction.z() = 0.0;
+                        local_escape_direction_norm =
+                                local_escape_direction.norm();
+                        local_escape_direction_source = "goal_fallback";
+                    }
                     const bool start_adjacent_rejection =
                             guard_topology_stall_rejects_ > 0 &&
                             guard_topology_stall_collision_.array()
@@ -3015,7 +3100,8 @@ namespace super_planner {
                                     cfg_.guard_topology_vertical_recovery_trigger_distance_m;
                     const bool local_escape_direction_valid =
                             local_escape_direction.array().isFinite().all() &&
-                            local_escape_direction.norm() >= cfg_.resolution;
+                            std::isfinite(local_escape_direction_norm) &&
+                            local_escape_direction_norm >= cfg_.resolution;
                     const bool arm_local_escape =
                             cfg_.guard_topology_local_escape_en &&
                             start_adjacent_rejection &&
@@ -3046,7 +3132,8 @@ namespace super_planner {
                     ++guard_topology_epoch_;
                     if (arm_local_escape) {
                         guard_local_escape_direction_ =
-                                local_escape_direction.normalized();
+                                local_escape_direction /
+                                local_escape_direction_norm;
                         ++guard_topology_local_escape_recoveries_;
                         guard_local_escape_pending_.store(
                                 true, std::memory_order_release);
@@ -3055,12 +3142,14 @@ namespace super_planner {
                                 "cleared_zones={} epoch={} attempt={}/{} "
                                 "reason=corridor_no_path "
                                 "horizontal_distance={:.3f} "
+                                "direction_source={} "
                                 "direction=[{:.3f},{:.3f},{:.3f}] "
                                 "action=escape_then_reroute",
                                 cleared_zones, guard_topology_epoch_,
                                 guard_topology_local_escape_recoveries_,
                                 cfg_.guard_topology_local_escape_attempts,
                                 horizontal_collision_distance,
+                                local_escape_direction_source,
                                 guard_local_escape_direction_.x(),
                                 guard_local_escape_direction_.y(),
                                 guard_local_escape_direction_.z());
@@ -3793,9 +3882,23 @@ namespace super_planner {
                 Vec3f local_escape_direction =
                         temp_start_point - guard_topology_stall_collision_;
                 local_escape_direction.z() = 0.0;
+                const char *local_escape_direction_source =
+                        "collision_away";
+                double local_escape_direction_norm =
+                        local_escape_direction.norm();
+                if (!local_escape_direction.array().isFinite().all() ||
+                    !std::isfinite(local_escape_direction_norm) ||
+                    local_escape_direction_norm < cfg_.resolution) {
+                    local_escape_direction = goal - temp_start_point;
+                    local_escape_direction.z() = 0.0;
+                    local_escape_direction_norm =
+                            local_escape_direction.norm();
+                    local_escape_direction_source = "goal_fallback";
+                }
                 const bool local_escape_direction_valid =
                         local_escape_direction.array().isFinite().all() &&
-                        local_escape_direction.norm() >= cfg_.resolution;
+                        std::isfinite(local_escape_direction_norm) &&
+                        local_escape_direction_norm >= cfg_.resolution;
                 const bool arm_local_escape =
                         cfg_.guard_topology_local_escape_en &&
                         start_adjacent_lower_rejection &&
@@ -3820,7 +3923,8 @@ namespace super_planner {
                 ++guard_topology_epoch_;
                 if (arm_local_escape) {
                     guard_local_escape_direction_ =
-                            local_escape_direction.normalized();
+                            local_escape_direction /
+                            local_escape_direction_norm;
                     ++guard_topology_local_escape_recoveries_;
                     guard_local_escape_pending_.store(
                             true, std::memory_order_release);
@@ -3828,6 +3932,7 @@ namespace super_planner {
                             " -- [TRAJ_GUARD_LOCAL_ESCAPE_ARM] "
                             "cleared_zones={} epoch={} attempt={}/{} "
                             "reason={} horizontal_distance={:.3f} "
+                            "direction_source={} "
                             "direction=[{:.3f},{:.3f},{:.3f}] "
                             "action=escape_then_reroute",
                             cleared_zones, guard_topology_epoch_,
@@ -3835,6 +3940,7 @@ namespace super_planner {
                             cfg_.guard_topology_local_escape_attempts,
                             astar_failure_reason,
                             horizontal_collision_distance,
+                            local_escape_direction_source,
                             guard_local_escape_direction_.x(),
                             guard_local_escape_direction_.y(),
                             guard_local_escape_direction_.z());

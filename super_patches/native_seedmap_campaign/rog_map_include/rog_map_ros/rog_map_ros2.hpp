@@ -39,9 +39,11 @@
 #define ROG_MAP_ROS_HPP
 
 #include <atomic>
+#include <condition_variable>
 #include <cstdint>
 #include <functional>
 #include <mutex>
+#include <thread>
 #include <utility>
 
 #include <rclcpp/rclcpp.hpp>
@@ -98,15 +100,18 @@ namespace rog_map {
             rclcpp::Publisher<std_msgs::msg::UInt64MultiArray>::SharedPtr
                 cloud_process_ack_pub;
             bool pending_frame{false};
+            bool stop_update_worker{false};
             std::uint64_t pc_seq{0};
             std::int64_t pc_source_stamp_ns{0};
             std::uint64_t pc_payload_bytes{0};
             std::uint32_t pc_point_step{0};
             MapHealthClock::time_point pc_rx_time{};
             Pose pc_pose;
-            PointCloud pc;
+            sensor_msgs::msg::PointCloud2::SharedPtr pc_msg;
             rclcpp::TimerBase::SharedPtr update_timer;
             std::mutex update_lock;
+            std::condition_variable update_cv;
+            std::thread update_worker;
         } rc_;
 
         void odomCallback(const nav_msgs::msg::Odometry::SharedPtr odom_msg) {
@@ -145,9 +150,7 @@ namespace rog_map {
                 std::cout << YELLOW << " -- [ROS] Odom timeout, skip cloud callback." << RESET << std::endl;
                 return;
             }
-            PointCloud temp_pc;
-            pcl::fromROSMsg(*cloud_msg, temp_pc);
-            if (temp_pc.empty() || !temp_pc.is_dense) {
+            if (cloud_msg->data.empty() || !cloud_msg->is_dense) {
                 std::cout << YELLOW << " -- [ROS] Empty or non-dense point cloud, skip cloud callback." << RESET
                           << std::endl;
                 return;
@@ -176,28 +179,47 @@ namespace rog_map {
             }
 
             bool overwrote_pending_frame = false;
+            bool worker_stopping = false;
             {
                 std::lock_guard<std::mutex> lock(rc_.update_lock);
-                overwrote_pending_frame = rc_.pending_frame;
-                rc_.pc = std::move(temp_pc);
-                rc_.pc_pose = std::make_pair(robot_state.p, robot_state.q);
-                rc_.pc_seq = scan_seq;
-                rc_.pc_source_stamp_ns = source_stamp_ns;
-                rc_.pc_payload_bytes = cloud_msg->data.size();
-                rc_.pc_point_step = cloud_msg->point_step;
-                rc_.pc_rx_time = rx_time;
-                rc_.pending_frame = true;
+                worker_stopping = rc_.stop_update_worker;
+                if (!worker_stopping) {
+                    overwrote_pending_frame = rc_.pending_frame;
+                    rc_.pc_msg = cloud_msg;
+                    rc_.pc_pose = std::make_pair(robot_state.p, robot_state.q);
+                    rc_.pc_seq = scan_seq;
+                    rc_.pc_source_stamp_ns = source_stamp_ns;
+                    rc_.pc_payload_bytes = cloud_msg->data.size();
+                    rc_.pc_point_step = cloud_msg->point_step;
+                    rc_.pc_rx_time = rx_time;
+                    rc_.pending_frame = true;
+                }
             }
-            if (overwrote_pending_frame) {
+            if (overwrote_pending_frame || worker_stopping) {
                 recordDroppedScan();
             }
-            // Commit the latest frame from the cloud callback itself. The
-            // former 1 ms timer could be starved by continuously-ready planner
-            // timers and caused periodic MAP_STALE emergency stops.
-            updateCallback();
+            if (!worker_stopping) {
+                rc_.update_cv.notify_one();
+            }
+        }
+
+        void updateWorkerLoop() {
+            while (true) {
+                {
+                    std::unique_lock<std::mutex> lock(rc_.update_lock);
+                    rc_.update_cv.wait(lock, [this] {
+                        return rc_.stop_update_worker || rc_.pending_frame;
+                    });
+                    if (rc_.stop_update_worker) {
+                        return;
+                    }
+                }
+                updateCallback();
+            }
         }
 
         void updateCallback() {
+            sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg;
             PointCloud temp_pc;
             Pose temp_pose;
             std::uint64_t scan_seq{0};
@@ -209,7 +231,7 @@ namespace rog_map {
             {
                 std::lock_guard<std::mutex> lock(rc_.update_lock);
                 if (rc_.pending_frame) {
-                    temp_pc = std::move(rc_.pc);
+                    cloud_msg = std::move(rc_.pc_msg);
                     temp_pose = rc_.pc_pose;
                     scan_seq = rc_.pc_seq;
                     source_stamp_ns = rc_.pc_source_stamp_ns;
@@ -230,6 +252,19 @@ namespace rog_map {
                         std::endl;
                     last_print_t = cur_t;
                 }
+                return;
+            }
+
+            // Keep deserialization and all map/snapshot allocation on this
+            // one dedicated worker thread.  Running the heavy conversion and
+            // COW publication directly on whichever executor thread happened
+            // to take the DDS callback allowed allocator high-water state to
+            // accumulate across executor arenas during planner stalls.
+            pcl::fromROSMsg(*cloud_msg, temp_pc);
+            if (temp_pc.empty() || !temp_pc.is_dense) {
+                std::cout << YELLOW
+                          << " -- [ROS] Empty or non-dense point cloud, skip map update."
+                          << RESET << std::endl;
                 return;
             }
 
@@ -416,6 +451,19 @@ namespace rog_map {
     public:
         typedef shared_ptr<ROGMapROS> Ptr;
 
+        ~ROGMapROS() override {
+            {
+                std::lock_guard<std::mutex> lock(rc_.update_lock);
+                rc_.stop_update_worker = true;
+                rc_.pending_frame = false;
+                rc_.pc_msg.reset();
+            }
+            rc_.update_cv.notify_all();
+            if (rc_.update_worker.joinable()) {
+                rc_.update_worker.join();
+            }
+        }
+
         void setAcceptedCloudObserver(AcceptedCloudObserver observer) {
             std::lock_guard<std::mutex> lock(
                     accepted_cloud_observer_mutex_);
@@ -495,8 +543,13 @@ namespace rog_map {
                     cfg_.cloud_topic, cloud_qos,
                     std::bind(&ROGMapROS::cloudCallback, this,
                               std::placeholders::_1), so);
-                // cloudCallback drives map commits directly; retain this
-                // handle only for constructor/source compatibility.
+                // The DDS callback is enqueue-only.  One dedicated worker
+                // performs conversion and commits at its own pace, replacing
+                // an unprocessed frame with the newest one when necessary.
+                rc_.update_worker =
+                        std::thread(&ROGMapROS::updateWorkerLoop, this);
+                // Retain this handle only for constructor/source
+                // compatibility with the former update timer.
                 rc_.update_cbk_group = planner_map_cbk_group;
             }
         }

@@ -2879,3 +2879,78 @@ The processed-payload measurement boundary remains unchanged: this is not
 NIC/wireless/DDS wire bandwidth. Raw-cloud CIRI remains default false and
 non-authoritative. The `obs_skip_num` no-op, NaN and clearance-penalty defects,
 BackupTrajOpt coverage gap and `DRONE_R=robot_r` metric limitation also remain.
+
+### 8.38 Crossed-order n=10, map-update worker memory fix and 100/100 cohort (2026-08-28)
+
+The final candidate was first exercised with continuous order rotation rather
+than fixed Full->Sector->Adaptive order.  A 150-row n=5 gate completed every
+mission with zero source-static-PCD body intersection.  Legacy rendered-cloud
+events were retained separately, and event-level source-PCD corroboration
+confirmed that they were outside the common physical safety boundary.  The
+monitor and runner now record `safety_contact_source`, source-PCD distance at
+the first live event, live-only events and static-confirmed live events without
+overwriting the historical detector fields.
+
+Two n=10 attempts were rejected before the final gate.  The first stopped at
+132 rows after map5 Full run4 timed out at 180 s.  Three degenerate
+collision-away local-escape branches gained a goal-direction ordering fallback
+while retaining the same stop-only eight-direction trajectory and viability
+certificates.  Focused map5 Full n=3+n=5 completed 8/8 first-attempt and
+static-contact-free.  No natural `direction_source=goal_fallback` event
+occurred, so this is regression evidence and not direct proof of that branch's
+effect.
+
+The second attempt saved 277 rows before map10 run3 Full's `fsm_node` was
+kernel-OOM-killed.  Its trace grew from 3.23 to 8.43 GiB RSS in 150.5 s and
+`dmesg` reported about 8.47 GiB anonymous RSS; normal attempts remained near
+3.3--3.5 GiB.  The ROG-Map DDS cloud callback had been doing PCL conversion,
+map update, copy-on-write snapshot publication and ACK synchronously on
+executor threads.  The accepted architecture makes that callback enqueue-only
+and moves all heavy work to one dedicated latest-only worker.  Pending input
+is bounded to one immutable ROS message; shutdown clears it, notifies and
+joins the worker.  Safety/FOV/clearance/ACK/recovery parameters are unchanged.
+
+Focused map10 Full n=3 and Adaptive n=3 both completed 3/3 first-attempt,
+static-contact-free and without retry/OOM.  Peak Full/Adaptive RSS stayed below
+3,237/3,233 MiB.  The fresh corrected-binary map1-10 x three-mode x n=10
+campaign then completed 300/300 rows with process exit code 0.  All rows were
+first-attempt, run-valid, speed-valid and source-static-PCD-enabled.  Full and
+Adaptive each completed and were safety-qualified 100/100.  Fixed Sector
+completed 100/100 but was safety-qualified 94/100: maps7, 8 and 9 each had two
+separate static-PCD collision runs.  Adaptive was safe in all six matching
+blocks.
+
+Mean Full/Sector/Adaptive mission times were 71.61/70.05/74.33 s, and worst
+static clearances were +0.157/-0.189/+0.146 m.  Adaptive made 1,160 effective
+full-view transitions (11.60/run).  Relative to Full run means, Adaptive
+reduced map update frequency 33.08%, points/update 16.68%, map total/update
+20.63%, occupancy update time 13.05%, processed payload 56.08% and FSM CPU
+17.05%, while mean mission time rose 3.80%.  Update-weighted point, total and
+occupancy reductions were 15.47%, 20.36% and 12.75%.  Sector reduced points
+48.50% and map total time 63.26%, but supplied all six unsafe runs.  The
+payload remains processed ROG-Map application payload rather than NIC/DDS wire
+bandwidth.
+
+Accepted Sector/Adaptive filter rows processed 43,628/43,628 and
+44,776/44,776 input callbacks with worker overwrite zero.  Final rows had no
+trajectory-guard ACK timeout, retry, supersede, abandon or pending generation.
+Global order rotation placed each mode in each order position 33 or 34 times.
+Matched safety discordance was 6:0 for Full versus Sector and 0:6 for Sector
+versus Adaptive; exact two-sided McNemar is `p=0.03125` for both.  Full versus
+Adaptive had no discordance (`p=1.0`).
+
+The final campaign had retry/OOM zero, maximum FSM RSS 3,263.95 MiB, minimum
+host available memory 3,862.91 MiB and sampled memory-PSI avg10 zero.  Host
+swap remained nearly full and peaked near 2,048 MiB, but the earlier unbounded
+RSS event did not recur; the formerly failing map10 run3 Full completed on its
+first attempt.
+
+Detailed chronology, map-labelled tables and raw paths are in
+`docs/counterbalanced_n5_n10_validation_20260828.md`.  The final raw is
+`results/counterbalanced_map_worker_3mode_seed1_10_n10_raw_20260828.csv`.
+The 95% Wilson lower bound for Full/Adaptive 100/100 is 96.30%, and for Sector
+94/100 it is 87.52%; this is observed cohort performance, not a population
+100% or formal collision-freedom guarantee.  Raw-cloud CIRI remains default
+false/non-authoritative.  The `obs_skip_num` no-op, NaN/clearance-penalty
+defects, BackupTrajOpt gap and `DRONE_R=robot_r` metric limitation are
+unchanged.

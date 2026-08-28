@@ -683,11 +683,19 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "static_pcd_contact_r020", "static_pcd_contact_r025",
           "static_pcd_episodes_r015", "static_pcd_episodes_r020",
           "static_pcd_episodes_r025", "contact_event_count",
+          "safety_contact_source", "safety_collisions",
+          "live_only_contact_event_count",
+          "static_confirmed_live_contact_event_count",
           "first_contact_kind", "first_contact_time_s",
           "first_contact_distance_m", "first_contact_x", "first_contact_y",
           "first_contact_z", "first_contact_speed_mps",
           "first_contact_nearest_x", "first_contact_nearest_y",
-          "first_contact_nearest_z", "forensics_json", "samples",
+          "first_contact_nearest_z",
+          "first_contact_static_distance_m",
+          "first_contact_static_clearance_m",
+          "first_contact_static_confirmed",
+          "first_contact_live_point_static_distance_m",
+          "forensics_json", "samples",
           "clearance_samples",
           "final_x", "final_y", "final_z", "min_x", "max_x", "min_y", "max_y",
           "path_length_m", "max_speed_mps", "max_odom_speed_3d_mps",
@@ -1649,6 +1657,18 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     "first_contact_nearest_x": nearest[0],
                     "first_contact_nearest_y": nearest[1],
                     "first_contact_nearest_z": nearest[2],
+                    "first_contact_static_distance_m": first_event.get(
+                        "static_distance_at_event_m"
+                    ),
+                    "first_contact_static_clearance_m": first_event.get(
+                        "static_clearance_at_event_m"
+                    ),
+                    "first_contact_static_confirmed": first_event.get(
+                        "static_contact_at_event"
+                    ),
+                    "first_contact_live_point_static_distance_m": (
+                        first_event.get("live_point_static_distance_m")
+                    ),
                 })
             if artifacts_dir:
                 os.makedirs(artifacts_dir, exist_ok=True)
