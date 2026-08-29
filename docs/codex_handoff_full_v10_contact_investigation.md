@@ -1,6 +1,44 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-29 감속 one-shot Full refresh와 최종 300회 완료.**
+> Seed9 잔여 접촉은 5.893초, 0.083m/s, source-PCD clearance -0.009641m에서
+> 확인됐다. Sector map이 약 0.2초마다 정상 commit돼 pre-stale trigger는
+> 닫혀 있었고 replan도 성공해 failure guard가 열리지 않았다. 기존 stall
+> state도 너무 늦었다. 즉 원인은 ACK loss나 same-map coalescing이 아니라
+> 성공 replan 뒤 high→low-speed blind-sector transition gap이다.
+>
+> Native C++ Adaptive filter에 3.0m/s에서 무장하고 1.5m/s 이하 감속 시
+> 최신 uncropped Full scan 한 장만 uncapped로 보내는 hysteretic one-shot을
+> 추가했다. 기존 generation/process ACK를 사용하며 다시 3.0m/s를 넘기 전에는
+> 재무장하지 않는다. 전역 기본값은 기존 ablation 재현성을 위해 0/off이고,
+> 검증 프로파일은 runner의
+> `--adaptive-slowdown-full-refresh-v 1.5`와
+> `--adaptive-slowdown-full-refresh-rearm-v 3.0`을 명시한다.
+>
+> Focused seed9 Adaptive n=10은 10/10 완주·source-static-PCD 충돌 0,
+> worst +0.179m였다. 이어진 rotating-order map1-10 x 3-mode x n=10은
+> 300/300 first-attempt·run/speed-valid, retry/OOM 0이었다. Full/Adaptive는
+> 각각 safety-qualified 100/100이다. Sector는 100/100 완주했지만 seed9
+> 충돌 1회로 safe 99/100이다. 평균 Full/Sector/Adaptive 시간은
+> 70.97/71.49/75.81초, worst clearance는 +0.150/-0.175/+0.038m다.
+>
+> Adaptive는 Full 대비 points/update 14.94%, map Hz 30.50%, processed
+> payload 52.25%, total/update 19.10%, FSM CPU 17.66%를 줄였고 시간은
+> 6.81% 늘었다. Effective Full open 1,198회, slowdown trigger/frame/commit
+> ACK는 4,816/4,711/4,706회다. 종료 순간 pending 5건은 모두 안전 완주한
+> 마지막 frame right-censoring이며 supersede 0이다. Exact matched McNemar는
+> Full-Sector/Sector-Adaptive 모두 p=1.0이고 100/100 Wilson 95% 하한은
+> 96.30%라 population 100% 주장은 금지한다.
+>
+> 상세는 viability §8.40과
+> `docs/adaptive_slowdown_full_refresh_final_n10_20260829.md`, 최종 raw/summary는
+> `results/final_slowdown_refresh_3mode_seed1_10_n10_{raw,summary}_20260829.csv`다.
+> Raw-cloud CIRI는 계속 false/non-authoritative이고 `obs_skip_num` no-op,
+> NaN/clearance-penalty 결함, BackupTrajOpt 미커버, `DRONE_R=robot_r` 지표
+> 한계도 그대로다.
+
+> [!IMPORTANT]
 > **2026-08-29 bounded same-map replan coalescing은 구현/검증했지만 표준 채택 보류.**
 > map commit보다 빠른 성공 `ReplanOnce` 중복을 줄이기 위해 같은 map version과
 > trajectory generation을 병합했다. 새 map까지 무기한 생략한 첫 후보는 seed9

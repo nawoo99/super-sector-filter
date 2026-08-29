@@ -691,7 +691,8 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "n_waypoints", "collisions", "min_clearance_m",
           "static_pcd_enabled", "static_pcd_point_count",
           "static_pcd_collisions", "static_pcd_min_distance_m",
-          "static_pcd_clearance_m", "static_pcd_contact_r015",
+          "static_pcd_clearance_m", "static_pcd_min_context",
+          "static_pcd_contact_r015",
           "static_pcd_contact_r020", "static_pcd_contact_r025",
           "static_pcd_episodes_r015", "static_pcd_episodes_r020",
           "static_pcd_episodes_r025", "contact_event_count",
@@ -757,6 +758,18 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_half_angle_deg", "filter_reliable_output",
           "filter_stall_v", "filter_stall_t",
           "filter_resume_v", "filter_resume_t", "filter_velocity_yaw_update_v",
+          "filter_slowdown_full_refresh_v",
+          "filter_slowdown_full_refresh_rearm_v",
+          "filter_slowdown_full_refresh_armed",
+          "filter_slowdown_full_refresh_pending",
+          "filter_slowdown_full_refresh_triggers",
+          "filter_slowdown_full_refresh_frames",
+          "filter_slowdown_full_refresh_pending_ack",
+          "filter_slowdown_full_refresh_ack_count",
+          "filter_slowdown_full_refresh_ack_committed_count",
+          "filter_slowdown_full_refresh_superseded_count",
+          "filter_slowdown_full_refresh_ack_latency_mean_s",
+          "filter_slowdown_full_refresh_ack_latency_max_s",
           "filter_frames", "filter_cloud_input_callbacks",
           "filter_cloud_worker_overwrites", "filter_published_frames",
           "filter_rate_limited_frames", "filter_max_publish_hz",
@@ -1045,6 +1058,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             filter_profile="legacy",
             filter_backend="python",
             adaptive_max_publish_hz=5.0,
+            adaptive_slowdown_full_refresh_v=0.0,
+            adaptive_slowdown_full_refresh_rearm_v=0.0,
             adaptive_trajectory_guard_hold_s=2.5,
             adaptive_trajectory_guard_active_max_publish_hz=0.0,
             adaptive_trajectory_guard_ack_retry_age_s=0.0,
@@ -1290,6 +1305,13 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     " --near-field-speed-gain-s 0.2"
                     " --near-field-max-radius-m 3.0"
                 )
+                if filter_backend == "cpp":
+                    filter_options += (
+                        f" --slowdown-full-refresh-v "
+                        f"{adaptive_slowdown_full_refresh_v}"
+                        f" --slowdown-full-refresh-rearm-v "
+                        f"{adaptive_slowdown_full_refresh_rearm_v}"
+                    )
             else:
                 filter_options += " --no-replan-guard"
             if filtered_reliable_map_link:
@@ -2016,6 +2038,24 @@ def main():
         help="strict-burst Adaptive publication cap (default: 5.0 Hz)",
     )
     ap.add_argument(
+        "--adaptive-slowdown-full-refresh-v",
+        type=float,
+        default=0.0,
+        help=(
+            "send one uncropped generation-ACKed scan when Adaptive slows "
+            "below this speed after re-arming; 0 disables the trigger"
+        ),
+    )
+    ap.add_argument(
+        "--adaptive-slowdown-full-refresh-rearm-v",
+        type=float,
+        default=0.0,
+        help=(
+            "speed required to re-arm the one-shot Adaptive slowdown full "
+            "refresh; must exceed the trigger speed"
+        ),
+    )
+    ap.add_argument(
         "--adaptive-trajectory-guard-hold-s",
         type=float,
         default=2.5,
@@ -2117,6 +2157,29 @@ def main():
         ap.error("--loop-timeout must be positive")
     if args.adaptive_max_publish_hz < 0.0:
         ap.error("--adaptive-max-publish-hz must be non-negative")
+    if args.adaptive_slowdown_full_refresh_v < 0.0:
+        ap.error("--adaptive-slowdown-full-refresh-v must be non-negative")
+    if args.adaptive_slowdown_full_refresh_v > 0.0 and not (
+        args.adaptive_slowdown_full_refresh_rearm_v
+        > args.adaptive_slowdown_full_refresh_v
+    ):
+        ap.error(
+            "--adaptive-slowdown-full-refresh-rearm-v must exceed "
+            "--adaptive-slowdown-full-refresh-v"
+        )
+    if (
+        args.adaptive_slowdown_full_refresh_v == 0.0
+        and args.adaptive_slowdown_full_refresh_rearm_v != 0.0
+    ):
+        ap.error(
+            "--adaptive-slowdown-full-refresh-rearm-v requires a positive "
+            "--adaptive-slowdown-full-refresh-v"
+        )
+    if (
+        args.adaptive_slowdown_full_refresh_v > 0.0
+        and args.filter_backend != "cpp"
+    ):
+        ap.error("Adaptive slowdown full refresh requires --filter-backend cpp")
     if args.adaptive_trajectory_guard_hold_s < 0.0:
         ap.error("--adaptive-trajectory-guard-hold-s must be non-negative")
     if args.adaptive_trajectory_guard_active_max_publish_hz < 0.0:
@@ -2354,6 +2417,12 @@ def main():
                         filter_profile=args.filter_profile,
                         filter_backend=args.filter_backend,
                         adaptive_max_publish_hz=args.adaptive_max_publish_hz,
+                        adaptive_slowdown_full_refresh_v=(
+                            args.adaptive_slowdown_full_refresh_v
+                        ),
+                        adaptive_slowdown_full_refresh_rearm_v=(
+                            args.adaptive_slowdown_full_refresh_rearm_v
+                        ),
                         adaptive_trajectory_guard_hold_s=(
                             args.adaptive_trajectory_guard_hold_s
                         ),

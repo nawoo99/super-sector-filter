@@ -56,6 +56,8 @@ struct Options {
   double stall_t{1.2};
   double resume_v{1.5};
   double resume_t{2.0};
+  double slowdown_full_refresh_v{0.0};
+  double slowdown_full_refresh_rearm_v{0.0};
   int replan_fail_streak_open{5};
   int replan_ok_streak_close{15};
   bool replan_guard_en{true};
@@ -175,6 +177,12 @@ Options parseArgs(int argc, char **argv) {
       options.resume_v = parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--resume-t") {
       options.resume_t = parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--slowdown-full-refresh-v") {
+      options.slowdown_full_refresh_v =
+          parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--slowdown-full-refresh-rearm-v") {
+      options.slowdown_full_refresh_rearm_v =
+          parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--replan-fail-streak-open") {
       options.replan_fail_streak_open = parseInt(arg, requireValue(i, arg));
     } else if (arg == "--replan-ok-streak-close") {
@@ -245,7 +253,9 @@ Options parseArgs(int argc, char **argv) {
       options.map_commit_pre_stale_full_age_s < 0.0 ||
       options.map_commit_pre_stale_ack_retry_age_s < 0.0 ||
       options.stall_t < 0.0 || options.resume_v < 0.0 ||
-      options.resume_t < 0.0 || options.open_burst_s < 0.0 ||
+      options.resume_t < 0.0 || options.slowdown_full_refresh_v < 0.0 ||
+      options.slowdown_full_refresh_rearm_v < 0.0 ||
+      options.open_burst_s < 0.0 ||
       options.open_cooldown_s < 0.0 ||
       options.trajectory_guard_hold_s < 0.0 ||
       options.trajectory_guard_active_max_publish_hz < 0.0 ||
@@ -258,6 +268,13 @@ Options parseArgs(int argc, char **argv) {
   }
   if (options.resume_v <= options.stall_v) {
     throw std::runtime_error("resume-v must be greater than stall-v");
+  }
+  if (options.slowdown_full_refresh_v > 0.0 &&
+      options.slowdown_full_refresh_rearm_v <=
+          options.slowdown_full_refresh_v) {
+    throw std::runtime_error(
+        "slowdown-full-refresh-rearm-v must be greater than "
+        "slowdown-full-refresh-v");
   }
   if (options.test_drop_first_trajectory_guard_full_cloud &&
       (options.mode != "adaptive" ||
@@ -517,6 +534,7 @@ private:
 
   PublishDecision publicationDecision(double now) {
     trajectory_guard_unbounded_refresh_frame_ = false;
+    slowdown_unbounded_refresh_frame_ = false;
     // The first cloud after a guard brake is safety evidence, so do not make
     // it wait behind the Adaptive publication cap. Only one latest cloud is
     // exempted per guard true-edge.
@@ -525,6 +543,17 @@ private:
       trajectory_guard_unbounded_refresh_frame_ = true;
       ++trajectory_guard_refresh_frames_;
       recordFullRefreshSourceVersion(false);
+      return PublishDecision::REGULAR;
+    }
+    // A successful short-horizon replan can decelerate into a blind-side
+    // obstacle without first producing a replan failure or guard edge. On a
+    // hysteretic high-to-low-speed transition, let exactly one latest scan
+    // bypass the Adaptive publication cap and sector crop. Re-arming requires
+    // a distinct high-speed phase, so stop jitter cannot flood the map worker.
+    if (slowdown_full_refresh_pending_) {
+      slowdown_full_refresh_pending_ = false;
+      slowdown_unbounded_refresh_frame_ = true;
+      ++slowdown_full_refresh_frames_;
       return PublishDecision::REGULAR;
     }
     if (trajectory_guard_active_ &&
@@ -678,7 +707,8 @@ private:
     const uint64_t request_seq = ++full_refresh_request_seq_;
     std_msgs::msg::UInt64MultiArray request;
     // [filter request sequence, exact PointCloud2 source stamp, kind]
-    // kind 1 = pre-stale; kind 2 = trajectory-guard true edge.
+    // kind 1 = pre-stale; kind 2 = trajectory-guard true edge;
+    // kind 3 = hysteretic high-to-low-speed transition.
     request.data = {request_seq, stamp_ns, kind};
     full_refresh_request_pub_->publish(request);
     ++full_refresh_request_count_;
@@ -704,6 +734,11 @@ private:
       trajectory_guard_pending_exact_ack_stamp_ns_ = stamp_ns;
       trajectory_guard_pending_exact_ack_send_s_ = now;
       trajectory_guard_full_refresh_pending_ack_max_ = 1;
+    } else if (kind == 3) {
+      if (slowdown_pending_exact_ack_stamp_ns_)
+        ++slowdown_full_refresh_superseded_count_;
+      slowdown_pending_exact_ack_stamp_ns_ = stamp_ns;
+      slowdown_pending_exact_ack_send_s_ = now;
     }
   }
 
@@ -734,6 +769,21 @@ private:
       }
       trajectory_guard_pending_exact_ack_stamp_ns_.reset();
       trajectory_guard_pending_exact_ack_send_s_.reset();
+    }
+    if (slowdown_pending_exact_ack_stamp_ns_ &&
+        *slowdown_pending_exact_ack_stamp_ns_ == stamp_ns) {
+      ++slowdown_full_refresh_ack_count_;
+      if (msg->data[3] != 0)
+        ++slowdown_full_refresh_ack_committed_count_;
+      if (slowdown_pending_exact_ack_send_s_) {
+        const double latency = std::max(
+            0.0, nowSeconds() - *slowdown_pending_exact_ack_send_s_);
+        slowdown_full_refresh_ack_latency_sum_s_ += latency;
+        slowdown_full_refresh_ack_latency_max_s_ = std::max(
+            slowdown_full_refresh_ack_latency_max_s_, latency);
+      }
+      slowdown_pending_exact_ack_stamp_ns_.reset();
+      slowdown_pending_exact_ack_send_s_.reset();
     }
     const auto pending = pre_stale_pending_exact_ack_.find(stamp_ns);
     if (pending == pre_stale_pending_exact_ack_.end())
@@ -861,6 +911,17 @@ private:
     const auto &v = msg->twist.twist.linear;
     const double speed = std::hypot(v.x, v.y);
     latest_speed_mps_ = speed;
+    if (options_.mode == "adaptive" &&
+        options_.slowdown_full_refresh_v > 0.0) {
+      if (speed >= options_.slowdown_full_refresh_rearm_v) {
+        slowdown_full_refresh_armed_ = true;
+      } else if (slowdown_full_refresh_armed_ &&
+                 speed <= options_.slowdown_full_refresh_v) {
+        slowdown_full_refresh_armed_ = false;
+        slowdown_full_refresh_pending_ = true;
+        ++slowdown_full_refresh_triggers_;
+      }
+    }
     const double velocity_update_v =
         (options_.mode == "velocity" || options_.mode == "adaptive")
             ? options_.resume_v
@@ -1180,9 +1241,11 @@ private:
     const bool bounded_full_open =
         options_.mode == "adaptive" && effective_open && !commit_refresh &&
         !trajectory_guard_unbounded_refresh_frame_ &&
+        !slowdown_unbounded_refresh_frame_ &&
         options_.full_open_extra_max_points > 0;
     const bool passthrough = options_.mode == "full" || !drone_ ||
         pre_stale_full_refresh ||
+        slowdown_unbounded_refresh_frame_ ||
         (effective_open && !commit_refresh && !bounded_full_open);
     if (pre_stale_full_refresh) {
       publishFullRefreshRequest(*msg, 1, now);
@@ -1198,6 +1261,8 @@ private:
             static_cast<unsigned long>(cloudStampNs(*msg)));
         return;
       }
+    } else if (slowdown_unbounded_refresh_frame_) {
+      publishFullRefreshRequest(*msg, 3, now);
     }
     if (passthrough) {
       kept_points_ += input_points;
@@ -1383,6 +1448,28 @@ private:
     number("stall_t", options_.stall_t);
     number("resume_v", options_.resume_v);
     number("resume_t", options_.resume_t);
+    number("slowdown_full_refresh_v", options_.slowdown_full_refresh_v);
+    number("slowdown_full_refresh_rearm_v",
+           options_.slowdown_full_refresh_rearm_v);
+    boolean("slowdown_full_refresh_armed", slowdown_full_refresh_armed_);
+    boolean("slowdown_full_refresh_pending", slowdown_full_refresh_pending_);
+    integer("slowdown_full_refresh_triggers", slowdown_full_refresh_triggers_);
+    integer("slowdown_full_refresh_frames", slowdown_full_refresh_frames_);
+    boolean("slowdown_full_refresh_pending_ack",
+            slowdown_pending_exact_ack_stamp_ns_.has_value());
+    integer("slowdown_full_refresh_ack_count",
+            slowdown_full_refresh_ack_count_);
+    integer("slowdown_full_refresh_ack_committed_count",
+            slowdown_full_refresh_ack_committed_count_);
+    integer("slowdown_full_refresh_superseded_count",
+            slowdown_full_refresh_superseded_count_);
+    number("slowdown_full_refresh_ack_latency_mean_s",
+           slowdown_full_refresh_ack_count_ > 0
+               ? rounded(slowdown_full_refresh_ack_latency_sum_s_ /
+                         slowdown_full_refresh_ack_count_)
+               : 0.0);
+    number("slowdown_full_refresh_ack_latency_max_s",
+           rounded(slowdown_full_refresh_ack_latency_max_s_));
     number("velocity_yaw_update_v",
            (options_.mode == "velocity" || options_.mode == "adaptive")
                ? options_.resume_v
@@ -1746,6 +1833,19 @@ private:
   double max_stall_candidate_duration_s_{0.0};
   std::optional<double> min_armed_closed_speed_mps_;
   double max_effective_near_field_radius_m_{options_.near_field_radius_m};
+
+  bool slowdown_full_refresh_armed_{false};
+  bool slowdown_full_refresh_pending_{false};
+  bool slowdown_unbounded_refresh_frame_{false};
+  uint64_t slowdown_full_refresh_triggers_{0};
+  uint64_t slowdown_full_refresh_frames_{0};
+  std::optional<uint64_t> slowdown_pending_exact_ack_stamp_ns_;
+  std::optional<double> slowdown_pending_exact_ack_send_s_;
+  uint64_t slowdown_full_refresh_ack_count_{0};
+  uint64_t slowdown_full_refresh_ack_committed_count_{0};
+  uint64_t slowdown_full_refresh_superseded_count_{0};
+  double slowdown_full_refresh_ack_latency_sum_s_{0.0};
+  double slowdown_full_refresh_ack_latency_max_s_{0.0};
 
   bool replan_guard_active_{false};
   bool replan_guard_open_{false};

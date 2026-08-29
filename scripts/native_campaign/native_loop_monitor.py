@@ -164,6 +164,7 @@ class LoopMonitor(Node):
         self.latest_committed_trajectory = []
         self.min_distance = float("inf")
         self.static_pcd_min_distance = float("inf")
+        self.static_pcd_min_context = None
         self.trap_min_distance = float("inf")
         self.collisions = 0
         self.static_pcd_collisions = 0
@@ -527,9 +528,20 @@ class LoopMonitor(Node):
                 position, max_distance_m=static_search_radius
             )
             if static_distance is not None:
-                self.static_pcd_min_distance = min(
-                    self.static_pcd_min_distance, static_distance
-                )
+                if static_distance < self.static_pcd_min_distance:
+                    self.static_pcd_min_distance = static_distance
+                    self.static_pcd_min_context = {
+                        "elapsed_s": round(time.time() - self.start_time, 6),
+                        "position": np.round(position, 6).tolist(),
+                        "velocity": np.round(velocity, 6).tolist(),
+                        "speed_mps": round(odom_speed_3d, 6),
+                        "nearest_point": np.round(static_nearest, 6).tolist(),
+                        "distance_m": round(float(static_distance), 6),
+                        "clearance_m": round(
+                            float(static_distance - DRONE_R), 6
+                        ),
+                        "waypoint_index": self.waypoint_index,
+                    }
                 static_colliding = static_distance < DRONE_R
                 if static_colliding and not self.in_static_pcd_collision:
                     self.static_pcd_collisions += 1
@@ -599,6 +611,7 @@ result = {
         if node.static_pcd_min_distance != float("inf")
         else None
     ),
+    "static_pcd_min_context": node.static_pcd_min_context,
     "contact_event_count": len(node.contact_events),
     # Protocol safety authority is explicit.  Static seed-map campaigns use
     # the same source PCD for every mode; runs without that oracle retain the

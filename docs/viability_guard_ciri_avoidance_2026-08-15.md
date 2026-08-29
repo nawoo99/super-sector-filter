@@ -3005,3 +3005,57 @@ seed9-focused work are in
 default false/non-authoritative. The `obs_skip_num` no-op, NaN and
 clearance-penalty defects, BackupTrajOpt coverage gap and
 `DRONE_R=robot_r` metric limitation remain unchanged.
+
+### 8.40 Hysteretic slowdown one-shot Full refresh and final n=10 (2026-08-29)
+
+Source-PCD minimum context showed that the remaining seed9 Adaptive contact
+occurred at 5.893 s, 0.083 m/s and -0.009641 m body clearance. Sector map
+commits continued about every 0.2 s, keeping map age below the 0.25 s
+pre-stale threshold. Replanning succeeded, so the failure guard stayed
+closed, while the old stall state armed and opened too late. The root cause
+was therefore a successful-replan high-to-low-speed blind-sector transition,
+not ACK loss or same-map replan coalescing.
+
+The native C++ filter now has a default-off hysteretic one-shot. Adaptive
+arms above 3.0 m/s and, after slowing below 1.5 m/s, sends the next latest
+cloud uncropped and uncapped through the existing generation/process ACK
+path. It disarms immediately and cannot fire again until speed exceeds the
+re-arm threshold, so stop jitter cannot create continuous Full traffic. The
+runner records trigger/frame/pending/ACK/latency counters, and the source-PCD
+monitor records time, pose, velocity, nearest point and waypoint index for
+every new minimum.
+
+A focused seed9 Adaptive n=10 completed 10/10, static-contact-free and
+speed-valid with minimum clearance +0.179 m. The final rotating-order
+map1-10 x Full/Sector/Adaptive x n=10 campaign then completed all 300 rows on
+the first attempt with retry/OOM zero. Full and Adaptive were each
+safety-qualified 100/100. Sector completed 100/100 but had one source-PCD
+collision on seed9, so it was safety-qualified 99/100. Mean
+Full/Sector/Adaptive times were 70.97/71.49/75.81 s and worst clearances were
++0.150/-0.175/+0.038 m.
+
+Adaptive reduced Full's run-mean points/update 14.94%, map update frequency
+30.50%, processed payload 52.25%, map total/update 19.10% and FSM CPU 17.66%,
+while mean mission time rose 6.81%. It made 1,198 effective Full-view opens.
+The new slowdown path triggered 4,816 times, sent 4,711 Full frames and had
+4,706 committed ACKs. Five final frames were still pending exactly at mission
+statistics shutdown; all five runs completed without contact and supersede
+was zero. This is recorded as mission-end right censoring, not runtime ACK
+loss.
+
+Actual exact paired McNemar values for safety-qualified completion are
+`p=1.0` for Full-Sector (one discordant block), Sector-Adaptive (one
+discordant block) and Full-Adaptive (zero discordance). Wilson 95% lower
+bounds are 96.30% for Full/Adaptive 100/100 and 94.55% for Sector 99/100, so
+population 100% and formal collision freedom are not established.
+
+The campaign had maximum FSM RSS 3,270.30 MiB, minimum host available memory
+4,576.53 MiB, zero memory-PSI avg10 and no infrastructure retry. Detailed
+cause analysis, map-labelled tables, command and claim boundaries are in
+`docs/adaptive_slowdown_full_refresh_final_n10_20260829.md`. Primary results
+are `results/final_slowdown_refresh_3mode_seed1_10_n10_raw_20260829.csv` and
+its `_summary_20260829.csv` companion. The verified 1.5/3.0 values remain an
+explicit profile; global CLI defaults remain off to preserve old ablations.
+Raw-cloud CIRI remains default false/non-authoritative, and the known
+`obs_skip_num`, NaN/clearance-penalty, BackupTrajOpt and `DRONE_R=robot_r`
+limitations remain.
