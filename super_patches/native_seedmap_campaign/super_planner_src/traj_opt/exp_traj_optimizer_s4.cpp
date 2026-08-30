@@ -54,6 +54,8 @@ void ExpTrajOpt::constraintsFunctional(const VecDf &T,
                                        const VecDf &penaltyWeights,
                                        const double &weightClr,
                                        const double &clearanceMargin,
+                                       const double &clearanceSpeedGate,
+                                       const double &clearanceSpeedTransition,
                                        flatness::FlatnessMap &flatMap,
         // outputs
                                        double &cost,
@@ -135,20 +137,60 @@ void ExpTrajOpt::constraintsFunctional(const VecDf &T,
                         tmp_cost += weightPos * violaPosPena;
                     }
 
-                    // Soft clearance push-off: same one-sided barrier shape as the hard
-                    // position constraint above, but evaluated clearanceMargin further
-                    // "inward" so it activates before the trajectory actually reaches
-                    // the wall. Zero cost/gradient once a point is clearanceMargin or
-                    // more away from every face, so it never fights the optimizer in
-                    // open space -- it only discourages hugging a nearby wall.
-                    if (weightClr > 0.0 && clearanceMargin > 0.0) {
-                        const double violaClr = violaPos + clearanceMargin;
-                        double violaClrPena, violaClrPenaD;
-                        if (gcopter::smoothedL1(violaClr, smoothFactor, violaClrPena, violaClrPenaD)) {
-                            gradPos += weightClr * violaClrPenaD * outerNormal;
-                            tmp_cost += weightClr * violaClrPena;
-                        }
+                }
+            }
+            // Use only the nearest SFC face. Summing every positive face made
+            // the old cost depend on decomposition face count and could apply
+            // mutually opposing gradients in narrow corridors. This remains a
+            // soft corridor-centering preference, not a hard clearance claim.
+            if (weightClr > 0.0 && clearanceMargin > 0.0 && K > 0) {
+                double nearestViola = -std::numeric_limits<double>::infinity();
+                Vec3f nearestNormal = Vec3f::Zero();
+                for (int k = 0; k < K; ++k) {
+                    const Vec3f outerNormal =
+                            hPolys[L].block<1, 3>(k, 0);
+                    const double normalNorm = outerNormal.norm();
+                    if (normalNorm <= 1.0e-9) {
+                        continue;
                     }
+                    const double violaClr =
+                            (outerNormal.dot(pos) + hPolys[L](k, 3)) /
+                            normalNorm + clearanceMargin;
+                    if (violaClr > nearestViola) {
+                        nearestViola = violaClr;
+                        nearestNormal = outerNormal / normalNorm;
+                    }
+                }
+                double clearanceGate = 1.0;
+                Vec3f clearanceGateGradVel = Vec3f::Zero();
+                if (clearanceSpeedGate > 0.0) {
+                    const double lowSqr = clearanceSpeedGate * clearanceSpeedGate;
+                    const double highSpeed = clearanceSpeedGate +
+                            std::max(0.0, clearanceSpeedTransition);
+                    const double highSqr = highSpeed * highSpeed;
+                    const double speedSqr = vel.squaredNorm();
+                    if (speedSqr >= highSqr) {
+                        clearanceGate = 0.0;
+                    } else if (speedSqr > lowSqr && highSqr > lowSqr) {
+                        const double t = (highSqr - speedSqr) /
+                                (highSqr - lowSqr);
+                        clearanceGate = t * t * (3.0 - 2.0 * t);
+                        const double dGateDSpeedSqr =
+                                -6.0 * t * (1.0 - t) /
+                                (highSqr - lowSqr);
+                        clearanceGateGradVel =
+                                2.0 * dGateDSpeedSqr * vel;
+                    }
+                }
+                double violaClrPena, violaClrPenaD;
+                if (clearanceGate > 0.0 &&
+                    gcopter::smoothedL1(nearestViola, smoothFactor,
+                                        violaClrPena, violaClrPenaD)) {
+                    gradPos += weightClr * clearanceGate *
+                            violaClrPenaD * nearestNormal;
+                    gradVel += weightClr * violaClrPena *
+                            clearanceGateGradVel;
+                    tmp_cost += weightClr * clearanceGate * violaClrPena;
                 }
             }
 
@@ -285,6 +327,8 @@ double ExpTrajOpt::costFunctional(void *ptr,
     const auto &penaltyWeights = obj.penaltyWeights;
     const auto &weightClr = obj.weightClr;
     const auto &clearanceMargin = obj.clearanceMargin;
+    const auto &clearanceSpeedGate = obj.clearanceSpeedGate;
+    const auto &clearanceSpeedTransition = obj.clearanceSpeedTransition;
     const auto &block_energy_cost = obj.block_energy_cost;
 
     auto &quadrotor_flatness = obj.quadrotor_flatness;
@@ -335,6 +379,7 @@ double ExpTrajOpt::costFunctional(void *ptr,
                           smooth_eps, integral_res,
                           magnitudeBounds, penaltyWeights,
                           weightClr, clearanceMargin,
+                          clearanceSpeedGate, clearanceSpeedTransition,
                           quadrotor_flatness,
                           cost, partialGradByTimes, partialGradByCoeffs, obj.penalty_log);
 
@@ -805,6 +850,8 @@ ExpTrajOpt::ExpTrajOpt(const traj_opt::Config &cfg, const ros_interface::RosInte
             cfg_.penna_thr;
     opt_vars.weightClr = cfg_.penna_clr;
     opt_vars.clearanceMargin = cfg_.clearance_margin;
+    opt_vars.clearanceSpeedGate = cfg_.clearance_speed_gate;
+    opt_vars.clearanceSpeedTransition = cfg_.clearance_speed_transition;
     opt_vars.rho = cfg_.penna_t;
     opt_vars.pos_constraint_type = cfg_.pos_constraint_type;
     opt_vars.block_energy_cost = cfg_.block_energy_cost;

@@ -77,6 +77,7 @@ namespace traj_opt {
             VecDf times;
             VecDf magnitudeBounds, penaltyWeights;
             double weightClr{0}, clearanceMargin{0};
+            double clearanceSpeedGate{0}, clearanceSpeedTransition{0};
 
             PolyhedraV vPolytopes; // the original sfc and intersecting sfc
             PolyhedraH hPolytopes; // the original sfc
@@ -119,6 +120,8 @@ namespace traj_opt {
                                           const VecDf &penaltyWeights,
                                           const double &weightClr,
                                           const double &clearanceMargin,
+                                          const double &clearanceSpeedGate,
+                                          const double &clearanceSpeedTransition,
                                           flatness::FlatnessMap &flatMap,
                                           double &cost,
                                           VecDf &gradT,

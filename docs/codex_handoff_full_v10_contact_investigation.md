@@ -1,6 +1,41 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-30 저속 nearest-face clearance shaping 후보와 90회 n=3 gate 완료.**
+> 최종 n=10 Map10 Adaptive의 `+0.038m` 저여유는 freshness/ACK 문제가 아니라
+> 저속 terminal/backup 구간의 trajectory preference/coverage 문제였다. 먼저
+> 0.10m hard terminal gate를 시도했지만 반복 reject가 certified-stop liveness
+> trap을 만들고 속도 제한형도 timeout을 내서 완전히 원복했다.
+>
+> 채택 후보는 CIRI 모든 face를 합산하던 기존 soft clearance를 normalized
+> nearest face 하나로 바꾸고, 누락됐던 BackupTrajOpt에도 동일 비용을 적용한다.
+> `penna_clr=1e6`, margin 0.10m, v<=1.5m/s full weight, 1.5~2.0m/s cubic fade,
+> v>=2.0m/s zero이며 speed-envelope gradient도 포함한다. 파라미터 미지정
+> 전역 동작은 off이고 tight_v7 검증 profile 두 개에 후보값을 명시했다.
+>
+> Speed-gated maps9-10 집중 n=3은 6/6 safe였다. 이어진 rotating-order
+> map1-10 x Full/Sector/Adaptive x n=3은 90/90 first-attempt·run/speed/perf
+> valid, retry/OOM 0이다. Full/Adaptive는 각각 30/30 완주·safe, Sector는
+> 29/30 완주·27/30 safe다. Map7 Sector에 timeout 1회와 완주 충돌 1회,
+> Map10 Sector에 완주 충돌 1회가 있었고 동일 Adaptive는 모두 safe다.
+> 평균 시간은 73.33/75.64/76.02초, worst clearance는
+> +0.145/-0.172/+0.153m다. Map10 Adaptive는 기존 +0.038m에서 +0.225m다.
+>
+> Adaptive는 Full 대비 points/update 15.79%, map Hz 28.80%, processed
+> payload 52.14%, total/update 19.65%, update 13.67%, FSM CPU 16.53%를
+> 줄였고 시간은 3.67% 늘었다. Effective Full open은 348회(11.6/run)다.
+> Exact matched McNemar는 Full-Sector/Sector-Adaptive/Full-Adaptive가
+> 0.25/0.25/1.0이고 30/30 Wilson 95% 하한은 88.65%다. 따라서 n=3 후보
+> gate일 뿐이며 새 최종본 선언 전 같은 바이너리 300회 n=10이 남았다.
+>
+> 상세는 viability §8.41과
+> `docs/speed_gated_nearest_face_clearance_n3_20260830.md`, raw/summary는
+> `results/speed_gated_nearest_face_clearance_3mode_seed1_10_n3_{raw,summary}_20260830.csv`다.
+> 이번에 face-summed clearance 설계와 BackupTrajOpt 미커버는 수정됐다.
+> 별도 NaN 버그, `obs_skip_num` no-op, `DRONE_R=robot_r` 지표 한계는 남아
+> 있고 raw-cloud CIRI는 계속 false/non-authoritative다.
+
+> [!IMPORTANT]
 > **2026-08-29 감속 one-shot Full refresh와 최종 300회 완료.**
 > Seed9 잔여 접촉은 5.893초, 0.083m/s, source-PCD clearance -0.009641m에서
 > 확인됐다. Sector map이 약 0.2초마다 정상 commit돼 pre-stale trigger는

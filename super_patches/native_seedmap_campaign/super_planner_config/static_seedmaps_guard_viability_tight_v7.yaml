@@ -261,6 +261,12 @@ traj_opt:
     penna_attract: 5.0e+8
     penna_omg: -1
     penna_thr: -1
+    # Soft, nearest-face corridor-centering preference. The trajectory guard
+    # remains the hard safety authority.
+    penna_clr: 1.0e+6
+    clearance_margin: 0.10
+    clearance_speed_gate: 1.50
+    clearance_speed_transition: 0.50
 
   backup_traj:
     uniform_time_en: true
@@ -280,6 +286,10 @@ traj_opt:
     penna_jerk: -1.0e+6
     penna_omg: -1
     penna_thr: -1
+    penna_clr: 1.0e+6
+    clearance_margin: 0.10
+    clearance_speed_gate: 1.50
+    clearance_speed_transition: 0.50
 
   flatness:
     mass: 1.64

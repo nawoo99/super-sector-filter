@@ -3059,3 +3059,62 @@ explicit profile; global CLI defaults remain off to preserve old ablations.
 Raw-cloud CIRI remains default false/non-authoritative, and the known
 `obs_skip_num`, NaN/clearance-penalty, BackupTrajOpt and `DRONE_R=robot_r`
 limitations remain.
+
+### 8.41 Low-speed nearest-face clearance shaping and n=3 gate (2026-08-30)
+
+The final n=10 Adaptive map10 `+0.038 m` minimum was reconstructed at low
+speed in a terminal/backup segment. Map freshness and exact ACK were normal,
+and the generated short tails were trajectory-guard safe. A hard `0.10 m`
+terminal-clearance gate was attempted first. It was reverted because repeated
+candidate rejection created a certified-stop liveness trap; the low-speed
+hard variant timed out on map10 run2.
+
+The retained candidate corrects the old clearance cost rather than adding a
+new hard rejection. Each quadrature sample uses the normalized nearest CIRI
+face only, eliminating face-count-dependent summed penalties. The same term
+now covers `BackupTrajOpt`, which was previously unprotected. With
+`penna_clr=1e6` and `clearance_margin=0.10 m`, the weight is full below
+1.5 m/s, fades with a cubic smoothstep to zero at 2.0 m/s, and contributes its
+speed-envelope derivative to the velocity gradient. Missing parameters still
+leave the feature globally off. The two `tight_v7` validation profiles carry
+the candidate explicitly.
+
+Ungated `2e6` completed maps9-10 n=10 each but raised their mean times to
+103.97/99.78 s, +9.3/+15.5% versus the previous final cohort, and was
+rejected. Ungated `1e6` produced a 141.01 s recovery tail. Speed-gated `1e6`
+passed maps9-10 n=3 each, 6/6 safety-qualified with worst +0.233 m. Combining
+that focused cohort with the subsequent same-binary regression gives map9 and
+map10 6/6 each, worst +0.172/+0.225 m; this sequential aggregate is not a
+pre-randomized experiment.
+
+The rotating-order map1-10 x three-mode x n=3 regression was 90/90
+first-attempt, run/speed/performance-valid with retry/OOM zero. Full and
+Adaptive were each complete and safety-qualified 30/30. Sector completed
+29/30 and was safety-qualified 27/30: map7 had one timeout plus one completed
+collision, and map10 had one completed collision. Matching Adaptive rows were
+all safe. Mean Full/Sector/Adaptive times, including the Sector timeout, were
+73.33/75.64/76.02 s; worst clearances were +0.145/-0.172/+0.153 m.
+
+Adaptive reduced Full's points/update 15.79%, map frequency 28.80%, processed
+payload 52.14%, total map time/update 19.65%, occupancy update time 13.67% and
+FSM CPU 16.53%, while mission time rose 3.67%. It made 348 effective Full-view
+opens, 11.6/run. Map10 Adaptive improved from the prior final `+0.038 m` to
+`+0.225 m` without increasing its cohort mean time, but map9's worst value
+fell from the prior `+0.210 m` to `+0.172 m`; the soft corridor objective is
+therefore not monotonic physical-clearance control.
+
+Matched safety discordances are 3:0, 0:3 and 0:0 for Full-Sector,
+Sector-Adaptive and Full-Adaptive; exact two-sided McNemar values are
+0.25/0.25/1.0. The 30/30 Wilson 95% lower bound is 88.65%, so this is a
+candidate n=3 gate, not population 100% or formal collision freedom. Host swap
+remained near 2,047 MiB but FSM swap, memory PSI, OOM and infrastructure retry
+were all zero; minimum available memory was 5,561.98 MiB and maximum FSM RSS
+3,274.52 MiB.
+
+Build, 20 campaign pytest cases, diff checks and seven source/mirror byte
+comparisons pass. Detailed map-labelled tables and raw paths are in
+`docs/speed_gated_nearest_face_clearance_n3_20260830.md`. Final adoption still
+requires the same rotating-order 300-row n=10 campaign. This work repairs the
+old face-summed clearance design and BackupTrajOpt coverage gap; the separate
+NaN bug, `obs_skip_num` no-op and `DRONE_R=robot_r` metric limitation remain.
+Raw-cloud CIRI remains default false/non-authoritative.

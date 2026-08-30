@@ -67,12 +67,15 @@ namespace traj_opt {
 
         double penna_margin{0.05};
 
-        // Soft clearance-from-corridor-wall penalty: unlike penna_pos (which only
-        // activates once the trajectory exits the SFC), this activates whenever a
-        // sampled trajectory point is within clearance_margin of ANY SFC face, even
-        // while still inside the corridor, nudging the optimizer to prefer standing
-        // off from walls instead of treating any interior point as equally free.
+        // Soft nearest-corridor-face penalty: unlike penna_pos (which only
+        // activates outside the SFC), this nudges samples away from their
+        // nearest face while inside clearance_margin. Only one face contributes
+        // per sample, so the cost does not scale with polytope face count.
         double penna_clr{0}, clearance_margin{0};
+        // Optional low-speed envelope for the soft clearance term. A non-
+        // positive gate leaves the term ungated. Above gate+transition the
+        // term is zero; a cubic smoothstep avoids a hard optimizer boundary.
+        double clearance_speed_gate{0}, clearance_speed_transition{0};
 
         double smooth_eps{0};
         int integral_reso{0};
@@ -120,6 +123,8 @@ namespace traj_opt {
             loader.LoadParam("traj_opt" + ns + "penna_pos", penna_pos, -1.0);
             loader.LoadParam("traj_opt" + ns + "penna_clr", penna_clr, -1.0);
             loader.LoadParam("traj_opt" + ns + "clearance_margin", clearance_margin, 0.0);
+            loader.LoadParam("traj_opt" + ns + "clearance_speed_gate", clearance_speed_gate, -1.0);
+            loader.LoadParam("traj_opt" + ns + "clearance_speed_transition", clearance_speed_transition, 0.0);
             loader.LoadParam("traj_opt" + ns + "penna_vel", penna_vel, -1.0);
             loader.LoadParam("traj_opt" + ns + "penna_acc", penna_acc, -1.0);
             loader.LoadParam("traj_opt" + ns + "penna_jerk", penna_jerk, -1.0);
@@ -131,6 +136,7 @@ namespace traj_opt {
                 penna_t = penna_t * penna_scale;
                 penna_ts = penna_ts * penna_scale;
                 penna_pos = penna_pos * penna_scale;
+                penna_clr = penna_clr * penna_scale;
                 penna_vel = penna_vel * penna_scale;
                 penna_acc = penna_acc * penna_scale;
                 penna_jerk = penna_jerk * penna_scale;
