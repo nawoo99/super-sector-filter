@@ -161,6 +161,54 @@ Release build는 `cmake --build ... -j4 -l4`로 통과했고 campaign pytest는
 모았다. 첫 entry profile 생성 중 YAML이 잘린 infrastructure-invalid 1회는
 비행 결과로 세지 않았으며, 올바른 full profile로 다시 실행한 v2만 표에 썼다.
 
+## Map 7 세 모드 각 10회 후속 검증
+
+동일한 Exp-only `2e4` 실험 profile을 Map 7에서 Full/Sector/Adaptive 각각
+10회, 총 30회 rotating order로 실행했다. Static PCD, C++ strict-burst filter,
+reliable link, Adaptive slowdown refresh 1.5/3.0 m/s를 유지했고 cgroup v2로
+algorithm(`fsm+filter`)과 end-to-end CPU를 계측했다.
+
+| 모드 | 완주 | static-safe | generic 후보 | 평균/최대 시간 (s) | 평균/최악 clearance (m) | 평균 passage imbalance (m) | guard brake/run |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Full | 10/10 | 10/10 | 0 | 85.03/103.36 | +0.251/+0.205 | 0.3244 | 32.4 |
+| Sector | 10/10 | 10/10 | 2 | 88.11/106.92 | +0.198/+0.000905 | 0.3254 | 38.7 |
+| Adaptive | 10/10 | 10/10 | 0 | 88.13/112.49 | +0.267/+0.233 | 0.3195 | 36.3 |
+
+30개 행 모두 first-attempt, run/speed/performance/cgroup-valid였고 retry와
+authoritative static contact는 0이었다. Sector의 generic contact 두 건은
+live-cloud-only 후보였다. 특히 run7은 source-static clearance가
+`+0.000905 m`라 접촉은 아니지만 사실상 경계 수준이다. 따라서 이 cohort는
+Sector의 명시적 collision 저하는 재현하지 못했으나, Full/Adaptive보다 낮은
+physical margin이라는 위험 신호는 보였다. 각 모드 10/10의 Wilson 95% 하한은
+약 72.25%이므로 population 100%를 뜻하지 않는다.
+
+| 모드 | payload (MiB/s) | map points/s | FSM CPU (%) | algorithm core·s | end-to-end core·s | algorithm PSS max (MiB) |
+|---|---:|---:|---:|---:|---:|---:|
+| Full | 5.808 | 190,315 | 86.01 | 73.455 | 89.699 | 3,239.4 |
+| Sector | 1.821 | 95,449 | 67.38 | 62.793 | 80.104 | 3,246.9 |
+| Adaptive | 3.047 | 121,039 | 72.30 | 67.237 | 84.317 | 3,252.2 |
+
+Adaptive는 Full 대비 algorithm CPU 8.465%, end-to-end CPU 6.000%, processed
+payload 47.538%, map frequency 26.076%, points/s 36.401%, FSM CPU 15.939%를
+줄였다. 평균 mission time은 3.646% 증가했다. Actual effective Full-open은
+총 87회, 평균 8.7회/run이었다. 내부 원인 event는 replan-guard open 248회,
+trajectory-guard open 49회, slowdown trigger 566회였지만 서로 겹칠 수 있으므로
+Adaptive 활성화 횟수는 실제 상태 전환인 87회를 사용한다.
+
+Passage Exp sample 활성 비율은 Full/Sector/Adaptive
+16.034/14.431/15.576%였다. 방향 기준 mean left/right clearance는
+Full 0.4077/0.4074 m, Sector 0.4158/0.4132 m, Adaptive 0.4011/0.3955 m로 cohort
+전체 평균은 거의 대칭이다. 그러나 최대 absolute imbalance는 각 모드에서
+2.27/2.04/2.00 m까지 있었고, 같은 바이너리의 default-off n=10 control이 없어
+centering 효과의 인과 비교는 아니다. Guard brake도 Adaptive가 Full보다 많아
+비용 채택의 근거로 쓰지 않는다.
+
+Host 최소 available memory는 6,327.2 MiB, cgroup swap 최대 0, memory PSI
+some/full 최대 0/0이었다. Infrastructure retry, OOM과 memory-pressure 오염은
+없었다. Raw와 모드별 집계는
+`results/passage_center_exp_w2e4_seed7_three_mode_n10_cgroup_{raw,summary}_20260831.csv`,
+forensics는 같은 이름의 `_forensics/`에 보존했다.
+
 ## 다음 판단 기준
 
 Near-field hard gate를 실사용으로 승격하려면 Map 7을 포함한 matched shadow-on/

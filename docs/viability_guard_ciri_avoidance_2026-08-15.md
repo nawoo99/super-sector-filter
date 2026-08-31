@@ -3299,3 +3299,30 @@ history and claim boundaries are in
 `docs/near_field_hard_gate_and_passage_centering_20260831.md`; the compact
 result index is
 `results/near_field_hard_gate_and_passage_centering_summary_20260831.csv`.
+
+A requested follow-up ran the same conservative Exp-only 2e4 passage profile
+on Map7 Full/Sector/Adaptive ten times each with rotating order and cgroup-v2
+accounting. All 30 rows were first-attempt, run/speed/performance/cgroup-valid;
+each mode completed and was static-PCD safe on 10/10, with retry zero. Mean
+times were 85.030/88.114/88.130 s and worst clearances were
++0.205/+0.000905/+0.233 m. Sector had two live-cloud-only generic contact
+candidates, one at the nearly zero positive static margin above, but no
+authoritative contact. This is a Sector risk signal, not a reproduced
+collision. Ten successes have a Wilson 95% lower bound of only about 72.25%.
+
+Mean Full/Sector/Adaptive algorithm core-seconds were
+73.455/62.793/67.237 and end-to-end core-seconds were
+89.699/80.104/84.317. Adaptive reduced Full's algorithm CPU 8.465%,
+end-to-end CPU 6.000%, processed payload 47.538%, map frequency 26.076%,
+points/s 36.401% and FSM CPU 15.939%, while mean mission time rose 3.646%.
+Adaptive made 87 effective Full-open transitions, 8.7/run. Maximum algorithm
+PSS was 3,252.2 MiB, minimum host available memory 6,327.2 MiB, and swap,
+memory PSI, OOM and infrastructure retry were zero.
+
+Weighted passage mean absolute imbalance was 0.3244/0.3254/0.3195 m, with
+active Exp sample fractions 16.034/14.431/15.576%. Cohort-wide directional
+left/right means were close, but maximum instantaneous imbalance still reached
+about 2.0-2.27 m. There is no same-binary default-off n=10 control, so this is
+not causal evidence that centering improved path quality and the candidate
+remains unadopted. Raw/summary paths are
+`results/passage_center_exp_w2e4_seed7_three_mode_n10_cgroup_{raw,summary}_20260831.csv`.

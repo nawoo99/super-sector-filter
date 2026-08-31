@@ -23,10 +23,21 @@
 > 않았다. Map7 3모드 smoke는 Full/Sector/Adaptive 모두 완주, static contact
 > 0/1/0, Adaptive Full-open 4회였다.
 >
+> 후속 Map7 세 모드 각 n=10 cgroup campaign은 30/30 first-attempt 완주,
+> static-safe, speed/perf/cgroup-valid, retry 0이었다. 평균시간은
+> 85.030/88.114/88.130초, worst clearance는
+> +0.205/+0.000905/+0.233m다. 따라서 n=1 Sector contact는 반복되지 않았지만
+> Sector run7의 거의 0인 양의 margin과 live-cloud-only 후보 2회는 위험 신호다.
+> Adaptive는 Full 대비 algorithm/end-to-end CPU 8.465/6.000%, payload
+> 47.538%, points/s 36.401%를 줄였고 시간은 3.646% 늘었다. Effective Full-open은
+> 87회(8.7/run)다. 같은 바이너리 default-off n=10 control이 없으므로 passage
+> centering 효과의 인과 증거는 아니며 후보는 계속 미채택이다.
+>
 > 모든 새 기능은 default off이고 표준/실사용 tight_v7 profile은 그대로다.
 > Raw-cloud CIRI도 계속 false/non-authoritative다. 상세는 viability §8.44,
 > `docs/near_field_hard_gate_and_passage_centering_20260831.md`, 요약 CSV는
-> `results/near_field_hard_gate_and_passage_centering_summary_20260831.csv`다.
+> `results/near_field_hard_gate_and_passage_centering_summary_20260831.csv`와
+> `results/passage_center_exp_w2e4_seed7_three_mode_n10_cgroup_summary_20260831.csv`다.
 
 > [!IMPORTANT]
 > **2026-08-31 Map7 recent-hit near-field shadow 구현·n=20 완료.**
