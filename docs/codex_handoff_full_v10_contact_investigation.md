@@ -1,6 +1,42 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-31 cgroup-accounted 최종 n=10 완료, Full blind-footprint 반례 발견.**
+> Speed-gated nearest-face 후보의 Map1-10 x Full/Sector/Adaptive x n=10은
+> 300/300 first-attempt·run/speed/perf/cgroup-valid, retry/OOM 0이다.
+> Completion은 100/99/100, 권위 source-static-PCD safety는 99/100/100이다.
+> 평균시간은 73.892/72.723/73.815초, worst clearance는
+> -0.144/+0.047/+0.106m다.
+>
+> 새 cgroup v2 계측에서 평균 algorithm core·s는
+> 90.175/75.633/78.249, end-to-end는 106.278/91.946/94.226이다. Adaptive는
+> Full 대비 algorithm CPU 13.226%, end-to-end CPU 11.340%, processed payload
+> 56.346%, points/update 17.481%, map time/update 25.591%를 줄였고 시간 변화는
+> -0.104%다. PSS는 세 모드 모두 약 3.2/3.6GiB라 메모리 절감은 아니다.
+>
+> Sector Map3 run7의 207.36초 미완주는 FSM PSS 8.22GiB, available 462MiB,
+> swap 포화와 PSI 93.34/87.66%가 동반된 infrastructure-contaminated run이다.
+> 건강한 replay는 61.20초에 완주·충돌 0이었다. 반면 Full Map7 run4는
+> 6.121초, 0.01155m/s, static clearance -0.1437m의 실제 접촉이다. 최신 map
+> guard는 SAFE였지만 장애물이 LiDAR blind 0.1m 안(거리 0.0563m)이라 local
+> map/CIRI face가 없었다. 저속 nearest-face 비용은 full weight였어도 입력
+> face가 없어 작동할 수 없었다. Replay는 safe라 관측 빈도는 1/10이다.
+>
+> 다음 구현은 static-PCD oracle을 쓰지 않고 최근 1~2초 raw hit를 bounded
+> near-field witness로 유지해 body/short-tail 진입을 hard gate하는 것이다.
+> 이미 footprint 안이면 거리 단조 증가 egress만 허용해야 liveness를 보존할
+> 수 있다. 먼저 shadow, Map7 Full n>=20, 3-mode n=3, 마지막 300회 순서다.
+> Map3 같은 PSI 오염 run의 automatic infrastructure retry도 별도 필요하다.
+>
+> Adaptive 100/100 Wilson 하한은 96.301%이고 Full safety와의 exact McNemar는
+> one discordance라 p=1.0이다. Population 100%, 유의한 안전 우위, 이번
+> n=10에서 Sector 안전 저하를 주장하면 안 된다. 상세는 viability §8.42와
+> `docs/final_speedgated_cgroup_n10_and_failure_forensics_20260831.md`, raw/summary는
+> `results/final_speedgated_cgroup_3mode_seed1_10_n10_{raw,summary}_20260831.csv`다.
+> Raw-cloud CIRI는 계속 false/non-authoritative이고 NaN, `obs_skip_num` no-op,
+> `DRONE_R=robot_r` 지표 한계도 남아 있다.
+
+> [!IMPORTANT]
 > **2026-08-30 저속 nearest-face clearance shaping 후보와 90회 n=3 gate 완료.**
 > 최종 n=10 Map10 Adaptive의 `+0.038m` 저여유는 freshness/ACK 문제가 아니라
 > 저속 terminal/backup 구간의 trajectory preference/coverage 문제였다. 먼저

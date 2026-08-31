@@ -9,7 +9,7 @@ Reliability lessons ported from the Gazebo g_campaign.py saga: fresh process
 teardown+restart per (map,mode,run), retry on startup failure, own process group
 so a hung run can be killed as a tree.
 """
-import argparse, csv, fcntl, os, re, shutil, signal, subprocess, sys, time, json, statistics as st
+import argparse, csv, fcntl, math, os, re, shutil, signal, subprocess, sys, time, json, statistics as st
 
 from correlate_shadow_contacts import correlate as correlate_shadow_contacts
 
@@ -207,6 +207,284 @@ class MemoryMeter:
                  if row.get("psi_full_avg10") is not None), default=None
             ),
         }
+
+
+def read_cpu_usage_usec(cgroup_path):
+    """Read hierarchical cgroup-v2 CPU usage, or None when unavailable."""
+    try:
+        with open(os.path.join(cgroup_path, "cpu.stat")) as stream:
+            for line in stream:
+                key, value = line.split()
+                if key == "usage_usec":
+                    return int(value)
+    except (OSError, ValueError):
+        pass
+    return None
+
+
+def nearest_rank_percentile(values, percentile):
+    """Deterministic nearest-rank percentile for interval samples."""
+    if not values:
+        return None
+    ordered = sorted(values)
+    rank = max(1, math.ceil(percentile * len(ordered)))
+    return ordered[min(len(ordered), rank) - 1]
+
+
+def process_tree_pids(root_pid):
+    """Return a live root process and every descendant visible in /proc."""
+    children = {}
+    for name in os.listdir("/proc"):
+        if not name.isdigit():
+            continue
+        pid = int(name)
+        try:
+            with open(f"/proc/{pid}/stat") as stream:
+                data = stream.read()
+            rest = data[data.rfind(")") + 2:].split()
+            parent = int(rest[1])
+        except (OSError, IndexError, ValueError):
+            continue
+        children.setdefault(parent, []).append(pid)
+    found = []
+    pending = [root_pid]
+    seen = set()
+    while pending:
+        pid = pending.pop()
+        if pid in seen:
+            continue
+        seen.add(pid)
+        if os.path.exists(f"/proc/{pid}"):
+            found.append(pid)
+            pending.extend(children.get(pid, ()))
+    return found
+
+
+class CgroupRunMeter:
+    """Mission-window CPU and process-memory accounting for two scopes.
+
+    ``algorithm`` contains fsm_node plus the optional cloud filter. ``stack``
+    contains the simulator, waypoint driver and ros2 launch wrapper. The
+    parent cgroup's cpu.stat is hierarchical, so it measures end-to-end CPU
+    while the algorithm child remains independently measurable. The host does
+    not delegate the memory controller at the root cgroup; peak RSS/PSS/swap
+    are therefore summed from the member PIDs instead of memory.current.
+    """
+
+    TRACE_FIELDS = (
+        "elapsed_s", "algorithm_usage_usec", "end_to_end_usage_usec",
+        "algorithm_interval_cores", "end_to_end_interval_cores",
+        "memory_sampled",
+        "algorithm_pids", "end_to_end_pids",
+        "algorithm_rss_kib", "algorithm_pss_kib", "algorithm_swap_kib",
+        "end_to_end_rss_kib", "end_to_end_pss_kib",
+        "end_to_end_swap_kib",
+    )
+
+    def __init__(self, tag, trace_path, root="/sys/fs/cgroup"):
+        safe_tag = re.sub(r"[^A-Za-z0-9_.-]+", "_", tag)
+        self.path = os.path.join(
+            root, f"super_sector_filter_{os.getpid()}_{safe_tag}"
+        )
+        self.algorithm_path = os.path.join(self.path, "algorithm")
+        self.stack_path = os.path.join(self.path, "stack")
+        self.trace_path = trace_path
+        self.started = None
+        self.last_sample_time = None
+        self.last_memory_sample_time = None
+        self.start_usage = {}
+        self.last_usage = {}
+        self.interval_cores = {"algorithm": [], "end_to_end": []}
+        self.memory_peaks = {
+            scope: {"rss_kib": 0, "pss_kib": 0, "swap_kib": 0,
+                    "pids": 0}
+            for scope in ("algorithm", "end_to_end")
+        }
+        self.last_memory = {
+            scope: {"rss_kib": 0, "pss_kib": 0, "swap_kib": 0,
+                    "pids": 0}
+            for scope in ("algorithm", "end_to_end")
+        }
+        os.mkdir(self.path)
+        try:
+            os.mkdir(self.algorithm_path)
+            os.mkdir(self.stack_path)
+            if read_cpu_usage_usec(self.path) is None:
+                raise RuntimeError("parent cpu.stat has no usage_usec")
+            if read_cpu_usage_usec(self.algorithm_path) is None:
+                raise RuntimeError("algorithm cpu.stat has no usage_usec")
+        except Exception:
+            self.cleanup()
+            raise
+        with open(self.trace_path, "w", newline="") as stream:
+            csv.DictWriter(
+                stream, fieldnames=self.TRACE_FIELDS, lineterminator="\n"
+            ).writeheader()
+
+    @staticmethod
+    def _write_pid(cgroup_path, pid):
+        try:
+            with open(os.path.join(cgroup_path, "cgroup.procs"), "w") as stream:
+                stream.write(str(pid))
+            return True
+        except (OSError, ValueError):
+            return False
+
+    def assign_tree(self, root_pid, scope):
+        target = self.algorithm_path if scope == "algorithm" else self.stack_path
+        moved = 0
+        # Move parents before children so later descendants inherit the same
+        # scope even if they fork while this snapshot is being traversed.
+        for pid in process_tree_pids(root_pid):
+            moved += int(self._write_pid(target, pid))
+        return moved
+
+    def assign_pid(self, pid, scope):
+        if pid is None:
+            return False
+        target = self.algorithm_path if scope == "algorithm" else self.stack_path
+        return self._write_pid(target, pid)
+
+    @staticmethod
+    def _recursive_pids(path):
+        found = set()
+        for directory, _, files in os.walk(path):
+            if "cgroup.procs" not in files:
+                continue
+            try:
+                with open(os.path.join(directory, "cgroup.procs")) as stream:
+                    found.update(int(line) for line in stream if line.strip())
+            except (OSError, ValueError):
+                continue
+        return sorted(found)
+
+    @staticmethod
+    def _process_memory(pids):
+        totals = {"rss_kib": 0, "pss_kib": 0, "swap_kib": 0, "pids": 0}
+        for pid in pids:
+            rss = read_keyed_kib(f"/proc/{pid}/status", "VmRSS")
+            pss = read_keyed_kib(f"/proc/{pid}/smaps_rollup", "Pss")
+            swap = read_keyed_kib(f"/proc/{pid}/status", "VmSwap")
+            if rss is None and pss is None and swap is None:
+                continue
+            totals["pids"] += 1
+            totals["rss_kib"] += rss or 0
+            totals["pss_kib"] += pss or 0
+            totals["swap_kib"] += swap or 0
+        return totals
+
+    def start(self):
+        now = time.monotonic()
+        self.started = now
+        self.last_sample_time = now
+        self.start_usage = {
+            "algorithm": read_cpu_usage_usec(self.algorithm_path),
+            "end_to_end": read_cpu_usage_usec(self.path),
+        }
+        if None in self.start_usage.values():
+            raise RuntimeError("cgroup cpu.stat became unavailable")
+        self.last_usage = dict(self.start_usage)
+        self.sample(write_interval=False)
+
+    def sample(self, write_interval=True, force_memory=False):
+        if self.started is None:
+            return
+        now = time.monotonic()
+        current = {
+            "algorithm": read_cpu_usage_usec(self.algorithm_path),
+            "end_to_end": read_cpu_usage_usec(self.path),
+        }
+        dt = now - self.last_sample_time
+        intervals = {"algorithm": None, "end_to_end": None}
+        if write_interval and dt > 0.0 and None not in current.values():
+            for scope in intervals:
+                delta_usec = max(0, current[scope] - self.last_usage[scope])
+                intervals[scope] = delta_usec / 1.0e6 / dt
+                self.interval_cores[scope].append(intervals[scope])
+        memory_sampled = bool(
+            force_memory or self.last_memory_sample_time is None or
+            now - self.last_memory_sample_time >= 10.0
+        )
+        if memory_sampled:
+            algorithm_pids = self._recursive_pids(self.algorithm_path)
+            end_to_end_pids = self._recursive_pids(self.path)
+            self.last_memory = {
+                "algorithm": self._process_memory(algorithm_pids),
+                "end_to_end": self._process_memory(end_to_end_pids),
+            }
+            self.last_memory_sample_time = now
+            for scope, values in self.last_memory.items():
+                for key, value in values.items():
+                    self.memory_peaks[scope][key] = max(
+                        self.memory_peaks[scope][key], value
+                    )
+        memory = self.last_memory
+        row = {
+            "elapsed_s": round(now - self.started, 6),
+            "algorithm_usage_usec": current["algorithm"],
+            "end_to_end_usage_usec": current["end_to_end"],
+            "algorithm_interval_cores": intervals["algorithm"],
+            "end_to_end_interval_cores": intervals["end_to_end"],
+            "memory_sampled": memory_sampled,
+            "algorithm_pids": memory["algorithm"]["pids"],
+            "end_to_end_pids": memory["end_to_end"]["pids"],
+            "algorithm_rss_kib": memory["algorithm"]["rss_kib"],
+            "algorithm_pss_kib": memory["algorithm"]["pss_kib"],
+            "algorithm_swap_kib": memory["algorithm"]["swap_kib"],
+            "end_to_end_rss_kib": memory["end_to_end"]["rss_kib"],
+            "end_to_end_pss_kib": memory["end_to_end"]["pss_kib"],
+            "end_to_end_swap_kib": memory["end_to_end"]["swap_kib"],
+        }
+        with open(self.trace_path, "a", newline="") as stream:
+            csv.DictWriter(
+                stream, fieldnames=self.TRACE_FIELDS, lineterminator="\n"
+            ).writerow(row)
+        if None not in current.values():
+            self.last_usage = current
+        self.last_sample_time = now
+
+    def summary(self):
+        now = time.monotonic()
+        duration = max(0.0, now - self.started) if self.started else 0.0
+        result = {
+            "cgroup_cpu_accounting": True,
+            "cgroup_cpu_duration_s": duration,
+            "cgroup_cpu_trace_csv": self.trace_path,
+            "cgroup_memory_source": "sum_proc_rss_pss_swap",
+        }
+        for scope, path in (
+            ("algorithm", self.algorithm_path),
+            ("end_to_end", self.path),
+        ):
+            usage = read_cpu_usage_usec(path)
+            core_s = (
+                max(0, usage - self.start_usage[scope]) / 1.0e6
+                if usage is not None and self.start_usage.get(scope) is not None
+                else None
+            )
+            values = self.interval_cores[scope]
+            result.update({
+                f"{scope}_cpu_core_s": core_s,
+                f"{scope}_cpu_cores_mean": (
+                    core_s / duration if core_s is not None and duration > 0 else None
+                ),
+                f"{scope}_cpu_cores_p95_1s": nearest_rank_percentile(values, 0.95),
+                f"{scope}_cpu_cores_max_1s": max(values) if values else None,
+                f"{scope}_peak_rss_mib": self.memory_peaks[scope]["rss_kib"] / 1024.0,
+                f"{scope}_peak_pss_mib": self.memory_peaks[scope]["pss_kib"] / 1024.0,
+                f"{scope}_peak_swap_mib": self.memory_peaks[scope]["swap_kib"] / 1024.0,
+                f"{scope}_max_processes": self.memory_peaks[scope]["pids"],
+            })
+        return result
+
+    def cleanup(self):
+        # Call only after campaign-owned processes have been terminated. Do
+        # not kill or migrate unrelated processes as part of cleanup.
+        for path in (self.algorithm_path, self.stack_path, self.path):
+            try:
+                os.rmdir(path)
+            except OSError:
+                pass
 
 
 def merge_memory_summaries(summaries):
@@ -894,6 +1172,17 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "total_ms_mean", "raycast_ms_mean", "update_ms_mean",
           "inflation_ms_mean", "kept_pct", "fsm_cpu_pct", "filter_cpu_pct",
           "monitor_cpu_pct",
+          "cgroup_cpu_accounting", "cgroup_cpu_duration_s",
+          "cgroup_memory_source", "cgroup_accounting_error",
+          "algorithm_cpu_core_s", "algorithm_cpu_cores_mean",
+          "algorithm_cpu_cores_p95_1s", "algorithm_cpu_cores_max_1s",
+          "algorithm_peak_rss_mib", "algorithm_peak_pss_mib",
+          "algorithm_peak_swap_mib", "algorithm_max_processes",
+          "end_to_end_cpu_core_s", "end_to_end_cpu_cores_mean",
+          "end_to_end_cpu_cores_p95_1s", "end_to_end_cpu_cores_max_1s",
+          "end_to_end_peak_rss_mib", "end_to_end_peak_pss_mib",
+          "end_to_end_peak_swap_mib", "end_to_end_max_processes",
+          "cgroup_cpu_trace_csv",
           "attempt_count", "retry_count", "first_attempt_success",
           "retry_reasons", "oom_kill_delta",
           "fsm_peak_rss_mib", "fsm_peak_pss_mib", "fsm_peak_swap_mib",
@@ -1070,7 +1359,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             filtered_reliable_map_link=False,
             adaptive_full_open_extra_max_points=6000,
             test_force_local_escape_once=False,
-            test_force_initial_footprint_egress_once=False):
+            test_force_initial_footprint_egress_once=False,
+            cgroup_cpu_accounting=False):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
     is_seed12 = (map_name == "seed12")
@@ -1184,6 +1474,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         reference_monitor_log = os.path.join(TMPDIR, f"{attempt_tag}.reference_monitor.log")
         reference_stack_log = os.path.join(TMPDIR, f"{attempt_tag}.stack.log")
         memory_trace_csv = os.path.join(TMPDIR, f"{attempt_tag}.memory.csv")
+        cgroup_trace_csv = os.path.join(TMPDIR, f"{attempt_tag}.cgroup.csv")
         perf_trace_csv = os.path.join(TMPDIR, f"{attempt_tag}.performance.csv")
         ready_json = os.path.join(TMPDIR, f"{attempt_tag}.ready.json")
         for path in (
@@ -1195,6 +1486,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             mission_event_json,
             ready_json,
             ready_json + ".tmp",
+            cgroup_trace_csv,
             perf_trace_csv,
         ):
             if os.path.exists(path):
@@ -1527,6 +1819,33 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             else:
                 filt_cpu.start()
 
+        cgroup_meter = None
+        cgroup_summary = {
+            "cgroup_cpu_accounting": False,
+            "cgroup_accounting_error": None,
+        }
+        if cgroup_cpu_accounting:
+            try:
+                cgroup_meter = CgroupRunMeter(attempt_tag, cgroup_trace_csv)
+                if cgroup_meter.assign_tree(launch_proc.pid, "stack") == 0:
+                    raise RuntimeError("launch process tree could not be assigned")
+                if filt_proc is not None:
+                    if cgroup_meter.assign_tree(filt_proc.pid, "algorithm") == 0:
+                        raise RuntimeError("filter process tree could not be assigned")
+                if not cgroup_meter.assign_pid(fsm_cpu.pid, "algorithm"):
+                    raise RuntimeError("fsm_node could not be assigned")
+                if scenario_proc is not None:
+                    cgroup_meter.assign_tree(scenario_proc.pid, "stack")
+                if recovery_mission_proc is not None:
+                    cgroup_meter.assign_tree(recovery_mission_proc.pid, "stack")
+                cgroup_meter.start()
+            except Exception as error:
+                if cgroup_meter is not None:
+                    cgroup_meter.cleanup()
+                raise RuntimeError(
+                    f"required cgroup CPU accounting failed: {error}"
+                ) from error
+
         if is_reference_ablation:
             waypoint_config = REFERENCE_ABLATION_PROFILES[mode]["waypoint_config"]
             reference_mission_cmd = (
@@ -1539,6 +1858,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 ["bash", "-c", f"{ROS_ENV} && {reference_mission_cmd}"],
                 preexec_fn=os.setsid,
             )
+            if cgroup_meter is not None:
+                cgroup_meter.assign_tree(reference_mission_proc.pid, "stack")
             monitor_pattern = "native_reference_monitor.py"
         else:
             if is_dynamic:
@@ -1587,6 +1908,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             time.sleep(1.0)
             monitor_cpu.sample()
             memory_meter.sample()
+            if cgroup_meter is not None:
+                cgroup_meter.sample()
             if not pgrep("/fsm_node"):
                 runtime_process_failure = "fsm_node exited during mission"
                 break
@@ -1594,6 +1917,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 runtime_process_failure = "filter exited during mission"
                 break
         if runtime_process_failure is not None:
+            if cgroup_meter is not None:
+                cgroup_meter.sample(force_memory=True)
+                cgroup_summary = cgroup_meter.summary()
             memory_summaries.append(memory_meter.summary())
             retry_reasons.append(runtime_process_failure)
             log(
@@ -1604,6 +1930,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             kill_group(filt_proc)
             kill_group(launch_proc)
             kill_all()
+            if cgroup_meter is not None:
+                cgroup_meter.cleanup()
             continue
         if mon_proc.poll() is None:
             log(f"  {tag}: monitor HUNG -> kill")
@@ -1611,6 +1939,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
 
         memory_meter.sample()
         memory_summaries.append(memory_meter.summary())
+        if cgroup_meter is not None:
+            cgroup_meter.sample(force_memory=True)
+            cgroup_summary = cgroup_meter.summary()
 
         fsm_cpu_pct = fsm_cpu.stop()
         filter_cpu_pct = filt_cpu.stop() if filt_proc is not None else None
@@ -1641,6 +1972,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         kill_group(reference_mission_proc)
         kill_group(launch_proc)
         kill_all()
+        if cgroup_meter is not None:
+            cgroup_meter.cleanup()
 
         rec = {"map": map_name, "run": run, "mode": mode,
                "experiment_profile": mode if is_reference_ablation else None,
@@ -1663,6 +1996,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                    else None
                ),
                "matched_prefix": matched_prefix if is_dynamic else None}
+        rec.update(cgroup_summary)
         rec.update(merge_memory_summaries(memory_summaries))
         if os.path.exists(out_json):
             monitor_result = json.load(open(out_json))
@@ -1714,7 +2048,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 for attempt_number in range(1, attempt + 1):
                     evidence_prefix = f"{tag}.attempt{attempt_number}"
                     for suffix in (
-                        "stack.log", "memory.csv", "filt.log",
+                        "stack.log", "memory.csv", "cgroup.csv", "filt.log",
                         "filt_stats.json", "performance.csv",
                         "reference_monitor.log", "mission.log",
                     ):
@@ -1730,6 +2064,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                         if suffix == "memory.csv":
                             copied_memory_traces.append(
                                 os.path.relpath(destination, REPO_ROOT)
+                            )
+                        elif suffix == "cgroup.csv":
+                            rec["cgroup_cpu_trace_csv"] = os.path.relpath(
+                                destination, REPO_ROOT
                             )
                         elif suffix == "performance.csv":
                             rec["perf_trace_csv"] = os.path.relpath(
@@ -2131,6 +2469,14 @@ def main():
         ),
     )
     ap.add_argument(
+        "--cgroup-cpu-accounting",
+        action="store_true",
+        help=(
+            "require per-run cgroup-v2 CPU accounting for algorithm "
+            "(fsm+filter) and end-to-end (sim+mission+algorithm) scopes"
+        ),
+    )
+    ap.add_argument(
         "--test-force-local-escape-once",
         action="store_true",
         help=(
@@ -2456,6 +2802,7 @@ def main():
                         test_force_initial_footprint_egress_once=(
                             args.test_force_initial_footprint_egress_once
                         ),
+                        cgroup_cpu_accounting=args.cgroup_cpu_accounting,
                     )
                     rec["campaign_sequence_index"] = (
                         max_existing_sequence + done + 1

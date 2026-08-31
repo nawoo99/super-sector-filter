@@ -3118,3 +3118,64 @@ requires the same rotating-order 300-row n=10 campaign. This work repairs the
 old face-summed clearance design and BackupTrajOpt coverage gap; the separate
 NaN bug, `obs_skip_num` no-op and `DRONE_R=robot_r` metric limitation remain.
 Raw-cloud CIRI remains default false/non-authoritative.
+
+### 8.42 Cgroup-accounted speed-gated final n=10 and blind-footprint counterexample (2026-08-31)
+
+The retained speed-gated nearest-face candidate was tested on the same binary
+over maps1-10 x Full/Sector/Adaptive x n=10 with rotating mode order. The
+runner now places `fsm_node` plus the optional native filter in an algorithm
+cgroup and the simulator/mission stack in a sibling; hierarchical cgroup-v2
+`cpu.stat:usage_usec` provides end-to-end CPU. Process PSS is sampled from
+member PIDs because the host does not delegate the memory controller.
+
+All 300 unique rows were first-attempt, run/speed/performance-valid and had
+valid cgroup accounting; retry, OOM kill and speed exceedance were zero. Full,
+Sector and Adaptive completed 100/99/100 rows and were source-static-PCD safe
+on 99/100/100 rows. Mean times were 73.892/72.723/73.815 s and worst static
+clearances were -0.144/+0.047/+0.106 m. Adaptive made 1,736 effective Full
+opens, 17.36/run.
+
+Mean algorithm core-seconds were 90.175/75.633/78.249 and end-to-end
+core-seconds were 106.278/91.946/94.226. Relative to Full, Adaptive reduced
+algorithm CPU 13.226%, end-to-end CPU 11.340%, processed payload 56.346%,
+points/update 17.481% and map time/update 25.591%; mean mission time changed
+-0.104%. Its algorithm/end-to-end interval-weighted p95 was 1.359/1.572 cores
+versus Full's 1.611/1.824. Peak-PSS p95 remained approximately 3.2/3.6 GiB in
+all modes, so this is not a memory reduction result.
+
+The Sector miss on map3 run7 was contaminated by a singular memory event:
+FSM PSS 8.22 GiB, host available 462 MiB, full swap and memory-PSI avg10
+93.34/87.66%. A healthy targeted replay completed in 61.20 s with 3.19 GiB
+algorithm PSS and no contact. The raw miss remains in the intention-to-run
+statistics, but it is classified as infrastructure pressure rather than a
+planner liveness counterexample.
+
+Full map7 run4 completed but made one real static contact at 6.121 s and
+0.01155 m/s. Its centre was 0.0563 m from the obstacle surface point while the
+simulated LiDAR blind range was 0.1 m. Just 21 ms before contact a short
+`ReplanOnce/no_backup` tail committed as guard-SAFE on the current map. The
+low-speed nearest-face cost was at full weight, but the blind local map had no
+face to penalize. A targeted replay was safe, so this is a stochastic 1/10
+counterexample, not an every-run failure. The next correction must latch a
+bounded recent raw near-field witness and hard-gate body/tail entry, with only
+monotonic egress allowed if already inside; a static-PCD oracle must not be fed
+to the planner.
+
+Sector map9 run9's generic `collisions=1` was a live-cloud-only candidate:
+source-static clearance was +0.094 m at the event and
+`safety_collisions=0`. It is not an authoritative safety failure. This is why
+campaign claims must use `safety_collisions`, not the generic contact counter.
+
+Adaptive's 100/100 Wilson 95% lower bound is 96.301%. Adaptive-Full safety and
+Adaptive-Sector completion each have only one matched discordance, so exact
+two-sided McNemar is p=1.0. The cohort therefore establishes a repeatable CPU
+and processed-payload reduction, but neither a population-level 100% safety
+guarantee nor a statistically significant safety advantage. It also fails to
+reproduce the intended Sector safety degradation in this n=10 cohort.
+
+Detailed map-labelled tables, claim boundaries and forensic evidence are in
+`docs/final_speedgated_cgroup_n10_and_failure_forensics_20260831.md`. Raw and
+summary files are
+`results/final_speedgated_cgroup_3mode_seed1_10_n10_{raw,summary}_20260831.csv`.
+Raw-cloud CIRI remains default false/non-authoritative. The separate NaN bug,
+`obs_skip_num` no-op and `DRONE_R=robot_r` metric limitation remain.
