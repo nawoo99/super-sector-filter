@@ -3326,3 +3326,76 @@ about 2.0-2.27 m. There is no same-binary default-off n=10 control, so this is
 not causal evidence that centering improved path quality and the candidate
 remains unadopted. Raw/summary paths are
 `results/passage_center_exp_w2e4_seed7_three_mode_n10_cgroup_{raw,summary}_20260831.csv`.
+
+### 8.45 Pre-filter raw witness enforce and final n=10 (2026-09-01)
+
+The Map7 Sector run7 forensic localized the earlier near-contact to a lateral
+obstacle approximately +92.2 degrees from velocity; the live candidate was
+about +70.1 degrees, outside the +/-60 degree sector. Passage balance could
+shape only faces already represented in CIRI and Backup was not costed in that
+campaign, so the missing pre-filter witness was the primary issue.
+
+A configurable `fsm/trajectory_guard/raw_cloud/source_topic` now lets an
+experimental filtered profile keep ROG-Map on `/cloud_sector` while a dedicated
+callback feeds `/cloud_registered` only to the asynchronous recent-hit worker.
+Empty/default source retains the existing map observer and no standard
+`tight_v7` profile changed. Raw CIRI remains false and passage balance remains
+off. The new profile is
+`static_seedmaps_guard_viability_tight_v7_filtered_reliable_nearfield_enforce.yaml`.
+
+Before promotion, Map7 Full enforce n=20 completed and was source-static-PCD
+safe on 20/20 rows, with retry and speed violation zero. It processed 8,152
+NO_HIT results, made no near-field brake, and had mean/p95/max worker time
+8.367/15.314/52.291 ms. A pre-filter Adaptive smoke confirmed
+`source=dedicated_pre_filter_subscription`. The maps7/9/10 three-mode n=3 gate
+was 27/27 complete and safe with retry zero; Sector consumed 18 OCCUPIED
+results and still completed all nine rows safely.
+
+The rotating-order maps1-10 x three-mode x n=10 final campaign then produced
+Full/Sector/Adaptive completion 100/99/100 and source-static-PCD safety
+100/98/100. All 300 final rows were speed-valid. Sector made completed contacts
+on map7 run10 (-0.168 m clearance) and map10 run4 (-0.051 m), plus a contact-free
+map8 run8 timeout at waypoint 1/5. Full and Adaptive had no completion or safety
+failure. Mean times were 78.640/77.061/81.769 s and worst clearances were
++0.101/-0.168/+0.117 m.
+
+Mean Full/Sector/Adaptive algorithm CPU was 0.929/0.856/0.846 cores and mean
+algorithm core-seconds 73.338/65.817/69.608. End-to-end means were
+1.112/1.041/1.032 cores and 88.209/80.586/85.323 core-seconds. Adaptive reduced
+Full's ROG-Map processed payload 45.746%, FSM CPU 12.172%, algorithm core use
+8.962%, algorithm core-seconds 5.086%, end-to-end core use 7.215% and
+end-to-end core-seconds 3.271%, while mission time rose 3.979%. Algorithm peak
+PSS mean increased 1.028%, so this is not a memory reduction. Adaptive made
+999 effective Full opens (9.99/run), 546 trajectory-guard opens and 5,101
+slowdown refresh triggers.
+
+Accepted Full/Sector/Adaptive logs contained 2/147/6 near-field OCCUPIED
+results and the same numbers of enforce brakes. Worker mean/p95/max was
+4.091/8.511/38.632, 3.831/8.049/60.550 and 3.776/8.173/31.380 ms. Sector's
+remaining two contacts show that an observed-hit hard gate is useful but not a
+formal collision-freedom mechanism.
+
+One map5 Adaptive first attempt was killed by the global Linux OOM killer and
+then succeeded in 79.77 s on automatic retry. At kill time FSM anon RSS was
+about 6.60 GiB, sampled PSS 6.42 GiB, host swap was full and an unrelated host
+Node process used about 4.9 GiB RSS. Final planner rows are 300, but
+infrastructure first-attempt stability is therefore 299/300. The causal split
+between transient FSM growth, raw witness retention and host co-tenancy is not
+resolved.
+
+The bandwidth claim is deliberately narrower than prior processed-payload
+tables: `map_payload_mib_s` covers only the ROG-Map input. The experimental FSM
+also directly subscribes to full `/cloud_registered`, which adds DDS delivery
+and deserialization not counted there. Thus this establishes lower ROG-Map
+input and CPU, not lower total communication bandwidth. The next architecture
+should replace the full raw subscription with a small bounded near-field
+witness side-channel (or an in-filter verdict) and meter total source and
+subscriber bytes.
+
+Full/Adaptive 100/100 has a Wilson 95% lower bound near 96.30%. The two paired
+Sector-unsafe/Adaptive-safe rows give exact two-sided McNemar p=0.5; the single
+Sector-incomplete/Adaptive-complete row gives p=1.0. This is observed goal
+alignment, not a population guarantee or statistically significant safety
+advantage. Detailed map tables, claim boundaries and evidence paths are in
+`docs/nearfield_prefilter_raw_final_20260901.md`; raw/summary are
+`results/nearfield_prefilter_raw_final_seed1_10_three_mode_n10_cgroup_{raw,summary}_20260901.csv`.

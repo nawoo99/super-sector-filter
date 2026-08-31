@@ -1,6 +1,39 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-01 pre-filter raw witness enforce와 최종 n=10 완료.**
+> Map7 Sector run7 포렌식에서 장애물 방향이 속도 기준 약 +92.2도, live
+> candidate가 +70.1도로 ±60도 sector 밖임을 확인했다. Passage soft cost가
+> 아니라 lateral raw witness 누락이 우선 원인이었다.
+>
+> 새 `fsm/trajectory_guard/raw_cloud/source_topic`으로 실험용 filtered profile의
+> ROG-Map은 `/cloud_sector`, 비동기 recent-hit worker는 `/cloud_registered`를
+> 받는다. 표준 tight_v7은 그대로고 raw CIRI/passage cost는 off다. Map7 Full
+> enforce n=20은 20/20 완주·safe, brake 0이었고 maps7/9/10 3모드 n=3은
+> 27/27 완주·safe, retry 0이었다. Sector는 OCCUPIED 18건을 brake했다.
+>
+> 최종 rotating Map1-10 × Full/Sector/Adaptive × n=10은 completion
+> 100/99/100, source-static-PCD safety 100/98/100이다. Full/Adaptive는 각
+> 100/100 완주·충돌 0이다. Sector는 Map7/10 접촉 각 1회와 Map8 timeout
+> 1회가 나왔다. 평균시간은 78.640/77.061/81.769초, worst clearance는
+> +0.101/-0.168/+0.117m다. Adaptive는 Full 대비 ROG payload 45.746%,
+> 평균 algorithm CPU core 8.962%, algorithm core·s 5.086%를 줄였고 시간은
+> 3.979% 늘었다. Effective Full-open은 999회다.
+>
+> Map5 Adaptive 첫 attempt는 global OOM으로 종료 후 retry 성공했다(FSM anon
+> RSS 약 6.60GiB, swap 포화, 외부 Node 약 4.9GiB). 따라서 최종 planner 행은
+> 300개지만 infrastructure first-attempt 안정성은 299/300이다.
+>
+> **대역폭 주의:** 위 payload는 ROG-Map 입력만 포함한다. FSM이 full raw를
+> 별도 구독하므로 전체 통신량 감소는 아직 주장할 수 없다. 다음은 bounded
+> witness side-channel/in-filter verdict로 중복 raw 구독을 제거하고 total
+> subscriber bytes를 계측하는 것이다. 100/100 Wilson 하한은 96.30%,
+> Sector-unsafe/Adaptive-safe 2건의 exact McNemar p=0.5라 population 보장이나
+> 유의한 안전 우위도 아니다. 상세는 viability §8.45와
+> `docs/nearfield_prefilter_raw_final_20260901.md`, raw/summary는
+> `results/nearfield_prefilter_raw_final_seed1_10_three_mode_n10_cgroup_{raw,summary}_20260901.csv`다.
+
+> [!IMPORTANT]
 > **2026-08-31 near-field hard gate 4단계와 passage 계측 완료.**
 > Long-lived trajectory도 새 accepted raw scan을 0.10초 cadence로 latest-only
 > 검사한다. Map7 Full smoke에서 331건(NEW_SCAN 183, NEW_GENERATION 148)을

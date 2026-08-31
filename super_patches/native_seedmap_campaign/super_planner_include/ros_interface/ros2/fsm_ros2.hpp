@@ -2849,10 +2849,21 @@ namespace fsm {
             if (cfg_.trajectory_guard_raw_cloud_en ||
                 cfg_.trajectory_guard_raw_cloud_ciri_shadow_en ||
                 cfg_.trajectory_guard_raw_cloud_near_field_shadow_en) {
+                const std::string map_cloud_topic =
+                        map_ptr_->getMapConfig().cloud_topic;
+                const std::string guard_cloud_topic =
+                        cfg_.trajectory_guard_raw_cloud_source_topic.empty()
+                                ? map_cloud_topic
+                                : cfg_.trajectory_guard_raw_cloud_source_topic;
+                const bool needs_dedicated_subscription =
+                        cfg_.trajectory_guard_raw_cloud_en ||
+                        guard_cloud_topic != map_cloud_topic;
                 const char *cloud_source = "map_observer";
-                if (cfg_.trajectory_guard_raw_cloud_en) {
+                if (needs_dedicated_subscription) {
                     // The live raw-cloud guard owns a KD-tree snapshot and
-                    // retains its existing independent callback group.
+                    // retains its existing independent callback group. A
+                    // shadow/enforce witness may also select a pre-filter
+                    // topic while ROG-Map continues to consume /cloud_sector.
                     guard_cloud_cbk_group_ = nh_->create_callback_group(
                             rclcpp::CallbackGroupType::MutuallyExclusive);
                     rclcpp::SubscriptionOptions guard_cloud_options;
@@ -2860,11 +2871,13 @@ namespace fsm {
                             guard_cloud_cbk_group_;
                     guard_cloud_sub_ = nh_->create_subscription<
                             sensor_msgs::msg::PointCloud2>(
-                            map_ptr_->getMapConfig().cloud_topic, qos,
+                            guard_cloud_topic, qos,
                             std::bind(&FsmRos2::guardCloudCallback, this,
                                       std::placeholders::_1),
                             guard_cloud_options);
-                    cloud_source = "dedicated_subscription";
+                    cloud_source = guard_cloud_topic == map_cloud_topic
+                                           ? "dedicated_map_subscription"
+                                           : "dedicated_pre_filter_subscription";
                 } else {
                     // Shadow-only must not deserialize the same large scan a
                     // second time. ROG-Map hands off the SharedPtr for each
@@ -2883,7 +2896,7 @@ namespace fsm {
                         " -- [TRAJ_GUARD_RAW] enabled topic={} max_age={:.3f}s "
                         "clearance={:.3f}m ciri_shadow={} "
                         "near_field_shadow={} accum_window={:.3f}s source={}",
-                        map_ptr_->getMapConfig().cloud_topic,
+                        guard_cloud_topic,
                         cfg_.trajectory_guard_raw_cloud_max_age_s,
                         cfg_.trajectory_guard_raw_cloud_clearance_m,
                         cfg_.trajectory_guard_raw_cloud_ciri_shadow_en,

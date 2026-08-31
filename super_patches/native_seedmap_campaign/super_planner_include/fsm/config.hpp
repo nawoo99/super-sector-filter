@@ -96,6 +96,11 @@ namespace fsm {
         // It checks the registered sensor cloud without waiting for a full
         // ROG-map update and is disabled for legacy profiles.
         bool trajectory_guard_raw_cloud_en{false};
+        // Optional source for raw-cloud safety witnesses. Empty preserves the
+        // legacy behaviour of observing the same cloud topic consumed by
+        // ROG-Map. Filtered experiments can opt into the pre-filter sensor
+        // topic without changing the planner/map input.
+        string trajectory_guard_raw_cloud_source_topic{""};
         double trajectory_guard_raw_cloud_max_age_s{0.3};
         double trajectory_guard_raw_cloud_clearance_m{0.3};
         double trajectory_guard_validation_sample_dt_s{0.01};
@@ -256,6 +261,9 @@ namespace fsm {
                     0.0, trajectory_guard_full_refresh_ack_sla_s);
             loader.LoadParam("fsm/trajectory_guard/raw_cloud/enable",
                              trajectory_guard_raw_cloud_en, false);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/source_topic",
+                    trajectory_guard_raw_cloud_source_topic, string(""));
             loader.LoadParam("fsm/trajectory_guard/raw_cloud/max_age_s",
                              trajectory_guard_raw_cloud_max_age_s, 0.3);
             loader.LoadParam("fsm/trajectory_guard/raw_cloud/clearance_m",
