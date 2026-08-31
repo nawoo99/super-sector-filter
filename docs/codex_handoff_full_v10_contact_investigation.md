@@ -1,6 +1,29 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-31 Map7 recent-hit near-field shadow 구현·n=20 완료.**
+> Full Map7 blind-footprint 반례를 겨냥해 최근 1.5초 raw hit와 committed
+> body+1초 tail을 0.01초 간격, 반경 0.20m로 비교하는 default-off shadow를
+> 추가했다. Raw window는 commit enqueue 시점으로 고정되고, 누적·변환·AABB
+> crop·KD-tree는 별도 latest-only worker에서만 돈다. 실사용 tight_v7과 비행
+> 결정은 바뀌지 않았고 최종 상태명도 known-free 오해를 막기 위해 `NO_HIT`다.
+>
+> Full Map7 n=20은 20/20 완주·static-safe, 속도 위반 0이었다. Shadow는
+> 2,305건을 skip 없이 처리했고 평균/최대 9.979/42.228ms, 평균 source/crop
+> point는 442,259/3,597개였다. 그러나 실제 접촉이 재현되지 않아 r=0.20
+> 검출 성공은 아직 미증명이다. r=0.40 sensitivity n=1에서는 7건 OCCUPIED를
+> 검출하면서 비행은 78.49초 안전 완주해 wiring과 비권위성을 확인했다.
+>
+> RViz의 왼쪽 장애물 치우침도 별도 원인으로 확인했다. Full은 전체 관측일
+> 뿐 passage centre 목적이 아니다. 현재 clearance 비용은 v<=1.5 full,
+> 1.5~2.0 fade, v>=2.0 zero라 순항 중에는 A*/CIRI의 한쪽 seed와 시간·smooth
+> 목적이 그대로 남는다. 다음은 bilateral clearance 계측 후 실제 양면 통로에
+> 한정한 face-balance/medial-axis 후보이며, ungated clearance 재도입은 아니다.
+> 상세는 viability §8.43과
+> `docs/near_field_shadow_map7_n20_and_path_bias_20260831.md`다. Hard gate 전에는
+> new-scan cadence shadow와 실제 contact-correlated/deterministic replay가 먼저다.
+
+> [!IMPORTANT]
 > **2026-08-31 cgroup-accounted 최종 n=10 완료, Full blind-footprint 반례 발견.**
 > Speed-gated nearest-face 후보의 Map1-10 x Full/Sector/Adaptive x n=10은
 > 300/300 first-attempt·run/speed/perf/cgroup-valid, retry/OOM 0이다.

@@ -147,6 +147,20 @@ namespace fsm {
         // necessary -- an undownsampled 1.5s window held 30k-80k points and
         // caused 15-40ms decomposition spikes on a shared executor thread.
         double trajectory_guard_raw_cloud_ciri_voxel_m{0.1};
+        // Shadow-only recent-hit witness for the currently committed body and
+        // short trajectory tail. Unlike the CIRI experiment above, this asks
+        // only whether an actually observed raw point intersects the body
+        // radius. It remains non-authoritative until the blind-footprint
+        // failure campaign has established both detection and liveness.
+        bool trajectory_guard_raw_cloud_near_field_shadow_en{false};
+        double trajectory_guard_raw_cloud_near_field_clearance_m{0.2};
+        double trajectory_guard_raw_cloud_near_field_horizon_s{1.0};
+        double trajectory_guard_raw_cloud_near_field_sample_dt_s{0.01};
+        int trajectory_guard_raw_cloud_near_field_min_points{200};
+        // Zero retains every accumulated hit. A positive value keeps one hit
+        // per voxel and is intended only for performance experiments because
+        // arbitrary voxel representatives can hide a threshold-near hit.
+        double trajectory_guard_raw_cloud_near_field_voxel_m{0.0};
 
         Config() = default;
 
@@ -273,6 +287,35 @@ namespace fsm {
                              trajectory_guard_raw_cloud_ciri_min_points, 200);
             loader.LoadParam("fsm/trajectory_guard/raw_cloud/ciri_voxel_m",
                              trajectory_guard_raw_cloud_ciri_voxel_m, 0.1);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_shadow_en",
+                    trajectory_guard_raw_cloud_near_field_shadow_en, false);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_clearance_m",
+                    trajectory_guard_raw_cloud_near_field_clearance_m, 0.2);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_horizon_s",
+                    trajectory_guard_raw_cloud_near_field_horizon_s, 1.0);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_sample_dt_s",
+                    trajectory_guard_raw_cloud_near_field_sample_dt_s, 0.01);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_min_points",
+                    trajectory_guard_raw_cloud_near_field_min_points, 200);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_voxel_m",
+                    trajectory_guard_raw_cloud_near_field_voxel_m, 0.0);
+            trajectory_guard_raw_cloud_near_field_clearance_m = std::max(
+                    0.01, trajectory_guard_raw_cloud_near_field_clearance_m);
+            trajectory_guard_raw_cloud_near_field_horizon_s = std::max(
+                    0.0, trajectory_guard_raw_cloud_near_field_horizon_s);
+            trajectory_guard_raw_cloud_near_field_sample_dt_s = std::max(
+                    0.005,
+                    trajectory_guard_raw_cloud_near_field_sample_dt_s);
+            trajectory_guard_raw_cloud_near_field_min_points = std::max(
+                    1, trajectory_guard_raw_cloud_near_field_min_points);
+            trajectory_guard_raw_cloud_near_field_voxel_m = std::max(
+                    0.0, trajectory_guard_raw_cloud_near_field_voxel_m);
 
 
             loader.LoadParam("super_planner/yaw_dot_max", yaw_dot_max, 1.0, true);

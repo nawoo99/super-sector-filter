@@ -1,0 +1,398 @@
+# EXPERIMENTAL ONLY, UNTESTED: pre-commit viability guard (horizon_s=2.0)
+# plus a shrunk topology-reroute avoidance zone (max_radius_m 1.8->1.0,
+# growth_m 0.25->0.2; widening to 3.5 m was tried first and made things
+# worse -- it swallowed a whole cluster of small obstacles including the
+# ~1.5 m passable gap between them, instead of routing around one large
+# obstacle). Both of those 5-run gates got 0/5 pass, 0/5 contact, but capped
+# around 2-4/5 waypoints at 120s.
+#
+# certifiedStopExistsFrom() was then instrumented (TRAJ_GUARD_VIABILITY_STOP_FAIL,
+# env VIABILITY_DEBUG=1) and showed ~80% of stop-viability failures were
+# CLEARANCE_MARGIN, not OCCUPIED, across speeds from 2.9 to 6.7 m/s -- i.e.
+# not a speed problem. rog_map's isOccupiedInflate (inflation_step=3 *
+# inflation_resolution=0.1 = 0.3 m) is 0.1 m more conservative than the true
+# physical robot_r=0.2 m used for OCCUPIED, and the independent straight-line
+# brake trajectory routinely grazed that extra buffer without ever touching a
+# real obstacle. super_planner.cpp's certifiedStopExistsFrom() now accepts a
+# CLEARANCE_MARGIN result (not just SAFE) as a viable stop, on the reasoning
+# that an emergency stop should trade the extra conservative buffer for
+# having a certified fallback at all; only true physical contact or map
+# problems still fail it. A quick single-run diagnostic after this fix
+# dropped STOP_FAIL occurrences from 21 to 4 (the remaining 4 were pure
+# dynamics infeasibility, not margin). Do not use as a flight-ready
+# configuration or cite its results until a gate run is recorded.
+fsm:
+  click_goal_en: true
+  click_goal_topic: "/planning/click_goal"
+  click_height: 1.5
+  click_yaw_en: true
+  replan_rate: 15.0
+  cmd_topic: "/planning/pos_cmd"
+  mpc_cmd_topic: "/planning_cmd/poly_traj"
+  timer_en: true
+  # The guard can enter GENERATE_TRAJ after a freshness-triggered stop. Do
+  # not run the expensive PlanFromRest loop against that same stale snapshot:
+  # it can starve the cloud callback and repeatedly commit trajectories that
+  # are rejected immediately as MAP_STALE. Hold the certified stop until a
+  # fresh processed scan is visible, then reroute once.
+  map_readiness:
+    enable: true
+    min_accepted_scans: 5
+    min_committed_scans: 5
+    max_commit_lag_scans: 5
+    min_scan_span_s: 1.0
+    max_cloud_age_s: 0.75
+    max_map_age_s: 0.55
+  trajectory_guard:
+    enable: true
+    shadow: false
+    # At v=7, a fixed 0.55 s trigger allowed one seed8 scan-to-map commit gap
+    # to carry the vehicle into a live-cloud contact before fail-closed
+    # engaged.  A fixed 0.35 s trigger removed contact in 5/5 seed8 runs but
+    # caused 96 brakes and a timeout in seed9. Preserve the original deadline
+    # at low speed, use 0.45 s at >=3.5 m/s, and interpolate only across the
+    # 2.5-3.5 m/s band. A later seed10 physical-contact replay showed that the
+    # independent command/FSM timers could temporarily age the command cache
+    # past 0.1 s and silently select the 0.55 s low-speed budget while moving.
+    # The runtime now retains the last published velocity for the bounded
+    # freshness window and then falls back to the committed polynomial. Keep
+    # a 0.50 s high-speed deadline. The 0.35 s diagnostic was contact-free
+    # but produced 72 brakes; 0.45 s still produced 78 brakes and timed out at
+    # waypoint 4/5 because the map cadence itself is approximately 0.5 s.
+    # The 0.50 s boundary starts braking about 0.05 s earlier than the prior
+    # physical-contact run without forcing a stop on every nominal scan gap.
+    # The low-speed deadline remains 0.55 s for stopped recovery liveness.
+    # The optional raw-cloud supplement remains disabled:
+    # step34 proved that a fresh hazard can still have an empty certified-brake
+    # set at v=7, so it must not be presented as a completed recovery policy.
+    max_map_age_s: 0.75
+    brake_trigger_map_age_s: 0.55
+    brake_trigger_high_speed_map_age_s: 0.50
+    brake_trigger_low_speed_mps: 2.5
+    brake_trigger_high_speed_mps: 3.5
+    raw_cloud:
+      # 2026-08-18: briefly turned this on to feed a raw-scan-accumulation
+      # window into a CIRI-based brake corridor (see docs/
+      # viability_guard_ciri_avoidance_2026-08-15.md for the full attempt
+      # and why it was reverted -- correlated with map commits freezing
+      # for 8+ seconds and the raw cloud subscription itself never
+      # receiving a message, cause not found). Back to disabled, matching
+      # the last validated-good state.
+      enable: false
+      max_age_s: 0.75
+      clearance_m: 0.30
+      # Diagnostic-only recent-hit witness. This never participates in an
+      # accept/reject or emergency-brake decision.
+      near_field_shadow_en: true
+      accum_window_s: 1.5
+      near_field_clearance_m: 0.40
+      near_field_horizon_s: 1.0
+      near_field_sample_dt_s: 0.01
+      near_field_min_points: 200
+      # Preserve exact observed hits for the threshold comparison.
+      near_field_voxel_m: 0.0
+    validation_sample_dt_s: 0.005
+    shadow_min_interval_s: 0.0
+    additional_clearance_m: 0.0
+    brake_max_duration_s: 3.0
+    brake_max_acc_mps2: 20.0
+    brake_max_jerk_mps3: 120.0
+    # A cached command is a brake start state only while it is recent and
+    # agrees with measured odometry. This prevents fail-closed publication
+    # suppression from freezing one brake candidate indefinitely.
+    brake_command_max_age_s: 0.10
+    brake_command_max_position_error_m: 0.50
+    brake_command_max_velocity_error_mps: 2.0
+    # A rejected certification remains fail-closed in EMER_STOP. Retry only
+    # after map/odom callbacks have had time to advance; never enter
+    # PlanFromRest merely because the first brake attempt saw a stale map.
+    brake_retry_interval_s: 0.10
+    escape_max_duration_s: 1.0
+    # Only active for a stopped PlanFromRest attempt after a raw EXP guard
+    # rejection, while using the inflated recovery corridor.
+    escape_entry_grace_s: 0.0
+    # Occupancy-only mapping never clears old hits inside the moving robot's
+    # blind footprint. Permit a stopped, bounded candidate to egress voxel
+    # centres already inside its initial body; outside/terminal occupancy is
+    # still rejected by the unchanged certificate.
+    initial_footprint_egress_enable: true
+    # 2026-08-17: reject guard points that fall in never-observed raw-grid
+    # space (not just confirmed-occupied). See rog_map's known_pages fix --
+    # isOccupiedInflate alone can't tell "confirmed empty" from "LiDAR never
+    # swept this", and a seed9 sweep run made contact during an already-
+    # certified brake for exactly that reason.
+    unknown_as_occupied: true
+
+super_planner:
+  backup_traj_en: true
+  # Campaign runs retain scalar/timing records only. Full SFC point clouds are
+  # a debug artifact and previously accumulated without bound in replan_logs_.
+  detailed_log_en: false
+  detailed_log_max_entries: 64
+  visualization_en: false
+  use_fov_cut: false
+  print_log: false
+  visual_process: false
+  frontend_in_known_free: false
+  goal_yaw_en: false
+  goal_vel_en: false
+  corridor_bound_dis: 0.8
+  corridor_line_max_length: 1.0
+  safe_corridor_line_max_length: 6.0
+  iris_iter_num: 2
+  obs_skip_num: 2
+  replan_forward_dt: 0.1
+  planning_horizon: 7.0
+  sensing_horizon: -1
+  receding_dis: 1.0
+  robot_r: 0.2
+  # Raw-point CIRI remains the candidate generator; the composite inflated-map
+  # certificate below remains the operational hard gate.
+  corridor_use_inflated_obstacles: false
+  # step13 showed that inflated seed-line LOS harmed recovery (0/5); retain raw
+  # line visibility while keeping the option available for isolated studies.
+  corridor_use_inflated_seed_lines: false
+  corridor_guard_retry_inflated: true
+  # 2026-08-19: once guard-corridor retry mode is entered it previously
+  # stayed on until a candidate committed, so a persistent CLEARANCE_MARGIN
+  # rejection retried the same tight-margin generator forever (seed7/9/10
+  # stall analysis). Every 4th consecutive retry-mode attempt now falls
+  # back to the normal generator instead. See super_planner.cpp's
+  # GenerateExpTrajectory corridor-selection comment.
+  guard_corridor_retry_alternate_every: 4
+  # Certified-stop recovery: repeated rejection after a certified stop lays
+  # vertical XY cylinders along the rejected route. A* and CIRI see the same
+  # barrier, forcing a horizontal topology change instead of an altitude-only
+  # variation or another submission of the same local corridor.
+  guard_topology_reroute:
+    enable: true
+    radius_m: 0.8
+    # The validated v7 profile uses a chain of equal 0.8 m cylinders. The
+    # generic implementation can grow later cylinders when growth_m > 0.
+    growth_m: 0.0
+    max_radius_m: 0.8
+    max_zones: 6
+    max_stop_speed_mps: 0.2
+    # Start-aware route blocking: never centre the virtual obstacle on the
+    # stopped pose. Extend the cylinder chain every three identical
+    # same-generation rejects so A* must abandon the rejected passage.
+    escalate_every_rejects: 3
+    # Topology is classified in XY. Vertical optimizer jitter at the same
+    # forest passage must not reset the stalled-route counter.
+    collision_merge_m: 0.5
+    # Keep one full guard margin between the certified stop and the first
+    # route blocker; a 0.05 m gap made the seed10 CIRI overlap nearly tangent.
+    start_clearance_m: 0.30
+    block_spacing_m: 1.0
+    # Different outgoing directions are separate route branches. Each new
+    # branch receives a near-start blocker before its own chain is extended.
+    direction_merge_angle_deg: 30.0
+    # Never let temporary route blockers create a permanent A* deadlock.
+    no_path_reset_attempts: 3
+    # A saturated horizontal blocker set cannot repair a floor-margin
+    # rejection immediately below a certified stop, nor a boundary-state
+    # optimizer failure shared by every bounded XY route. In either case,
+    # commit one guard+viability-certified 0.6 m lift and then rebuild the
+    # horizontal route from the higher stopped pose.
+    vertical_recovery_enable: true
+    vertical_recovery_lift_m: 0.60
+    vertical_recovery_trigger_distance_m: 0.75
+    # If a rejected first segment lies inside the 0.30 m blocker-free start
+    # margin, a blocker cannot change those first centimetres. From the
+    # certified stop, try at most four 0.60 m moves from the eight horizontal
+    # alternatives, ordered by progress toward the current waypoint. Each is
+    # committed only through the unchanged guard + viability checks, and the
+    # episode budget resets only after the existing 2.0 m progress threshold.
+    local_escape_enable: true
+    local_escape_distance_m: 0.60
+    local_escape_attempts: 4
+    # A short certified candidate at the same stopped pocket must not re-arm
+    # the same escape/lift budget. A new recovery episode begins only after
+    # material XY progress toward the current waypoint.
+    episode_progress_reset_m: 2.0
+    saturation_vertical_attempts: 1
+    base_no_path_vertical_attempts: 1
+  # Pre-commit viability guard (new, untested): mirrors the runtime brake's
+  # dynamics limits so the prediction matches what activateEmergencyBrake()
+  # could actually certify.
+  guard_viability:
+    enable: true
+    horizon_s: 2.0
+    sample_dt_s: 0.3
+    brake_max_acc_mps2: 20.0
+    brake_max_jerk_mps3: 120.0
+    brake_min_duration_s: 0.4
+    brake_max_duration_s: 3.0
+    brake_attempts: 12
+    speed_scale_step: 1.25
+    speed_scale_max: 3.0
+    max_retries: 4
+  # Bounded final-connection recovery: only from an FSM-certified stop, only
+  # within 3 m, and still subject to the full guard + stop-viability commit.
+  guard_direct_goal_fallback:
+    enable: true
+    max_distance_m: 3.0
+    min_duration_s: 1.0
+  corridor_min_margin: 0.2
+  corridor_pref_margin: 0.3
+  yaw_dot_max: 3.0
+  # Yaw mode: 1 heading to velocity, 2 heading to goal
+  yaw_mode: 1
+  mpc_horizon: 15
+
+traj_opt:
+  switch:
+    save_log_en: false
+    print_optimizer_log: false
+
+  boundary:
+    max_vel: 7.0
+    max_acc: 20.0
+    max_jerk: 120.0
+    max_omg: 2.5
+    max_acc_thr: 17.0
+    min_acc_thr: 6.0
+    penna_margin: 0.05
+
+  exp_traj:
+    # 1 for xi 2 for pos
+    pos_constraint_type: 1
+    energy_cost_type: 4
+    block_energy_cost: false
+    opt_accuracy: 5.0e-6
+    scale_factor: 1.0
+    integral_reso: 15
+    smooth_eps: 0.01
+    penna_t: 1.0e+7
+    penna_pos: 5.0e+9
+    penna_vel: 5.0e+8
+    penna_acc: 5.0e+8
+    penna_jerk: -5.0e+8
+    penna_attract: 5.0e+8
+    penna_omg: -1
+    penna_thr: -1
+    # Soft, nearest-face corridor-centering preference. The trajectory guard
+    # remains the hard safety authority.
+    penna_clr: 1.0e+6
+    clearance_margin: 0.10
+    clearance_speed_gate: 1.50
+    clearance_speed_transition: 0.50
+
+  backup_traj:
+    uniform_time_en: true
+    pos_constraint_type: 2
+    piece_num: 2
+    energy_cost_type: 4
+    block_energy_cost: true
+    opt_accuracy: 1.0e-5
+    scale_factor: 1.0
+    integral_reso: 12
+    smooth_eps: 0.01
+    penna_t: 100.0
+    penna_ts: 1.0e+7
+    penna_pos: 1.0e+10
+    penna_vel: 1.0e+8
+    penna_acc: 1.0e+8
+    penna_jerk: -1.0e+6
+    penna_omg: -1
+    penna_thr: -1
+    penna_clr: 1.0e+6
+    clearance_margin: 0.10
+    clearance_speed_gate: 1.50
+    clearance_speed_transition: 0.50
+
+  flatness:
+    mass: 1.64
+    dh: 0.35
+    dv: 0.35
+    cp: 0.001
+    v_eps: 0.0001
+    grav: 9.81
+
+
+astar:
+  map_voxel_num: [ 500, 500, 100 ]
+  visual_process: false
+  allow_diag: true
+  # 0 DIAG; 1 MANHATTAN; 2 EUCLIDEAN
+  heu_type: 2
+  debug_visualization_en: false
+
+
+rog_map:
+  resolution: 0.05
+  inflation_resolution: 0.1
+  inflation_step: 3
+  unk_inflation_en: false
+  unk_inflation_step: 1
+  map_size: [ 70,70,6 ]
+  # If the map rolling is disable, the map origin [m] should be set.
+  fix_map_origin: [ 0,0,1.5 ]
+  frontier_extraction_en: false
+
+  # Virtual ceil and ground
+  virtual_ceil_height: 3.5
+  virtual_ground_height: -0.1
+
+  load_pcd_en: false
+
+  map_sliding:
+    enable: false
+    # The minimum distance [m] to slide the map.
+    threshold: 3.0
+
+  esdf:
+    enable: false
+    resolution: 0.1
+    # The range of esdf around the odom [m].
+    local_update_box: [ 5,5,3 ]
+
+  # If [enable = true], the ROG-Map will actively take ros topic as input.
+  #  else user should call function [updateMap] to update the map.
+  ros_callback:
+    enable: true
+    # Guarded full mode does not filter points. Subscribe to the simulator
+    # directly instead of adding a Python/DDS passthrough hop.
+    cloud_topic: "/cloud_registered"
+    odom_topic: "/lidar_slam/odom"
+    odom_timeout: 2.0
+
+
+  visualization:
+    enable: false
+    # when enabled, use rqt_reconfigure to change the visualization parameters.
+    use_dynamic_reconfigure: false
+    # The rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.
+    time_rate: 2
+    # The frame rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.
+    frame_rate: 0
+    # visualization range along the odom [m].
+    range: [ 15, 15,4 ]
+    frame_id: "world"
+    pub_unknown_map_en: false
+
+  # Intensity filter for input point cloud. If the point intensity is less than this value,
+  # it will be ignored (to avoid noise like dusk).
+  intensity_thresh: -10
+  # The temporal downsample rate for input point cloud.
+  #  e.g. if set to k, the point cloud will be downsampled to 1/k.
+  point_filt_num: 1
+
+  # Probabilistc update
+  raycasting:
+    # if disable, the map will only maintain occupied information, and all other grid
+    # will be considered as unknown.
+    enable: false
+    batch_update_size: 1
+    local_update_box: [ 100,100,5 ]
+    # The range of raycasting [m].
+    ray_range: [0.5, 100 ]
+
+    p_min: 0.12
+    p_miss: 0.49
+    p_free: 0.499
+    p_occ: 0.85
+    p_hit: 0.9
+    p_max: 0.98
+    # The threshold of a non-occupied inf map grid to be considered as free. [0.0-1.0]
+    unk_thresh: 1.0

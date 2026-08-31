@@ -3179,3 +3179,58 @@ summary files are
 `results/final_speedgated_cgroup_3mode_seed1_10_n10_{raw,summary}_20260831.csv`.
 Raw-cloud CIRI remains default false/non-authoritative. The separate NaN bug,
 `obs_skip_num` no-op and `DRONE_R=robot_r` metric limitation remain.
+
+### 8.43 Recent-hit near-field shadow, Map7 n=20 and RViz path bias (2026-08-31)
+
+The Full Map7 blind-footprint counterexample motivated a separate default-off
+raw-hit witness. Accepted raw scans are retained for 1.5 s through ROG-Map's
+existing in-process observer. Each newly committed trajectory queues one
+latest-only asynchronous job with an as-of-enqueue cutoff. The worker checks
+the current body plus a 1.0 s tail at 0.01 s spacing and an exact 0.20 m
+radius. It never participates in accept/reject, braking or recovery. A clear
+query is called `NO_HIT`, not `SAFE`, because observed-hit absence is not a
+known-free certificate.
+
+The first worker version converted the whole 300,000-660,000-point window
+into a KD-tree, completing 102 jobs, replacing 35 and costing mean/max
+154.96/291.49 ms. Exact AABB cropping around the sampled body spheres retains
+every point capable of intersecting the test. A crop smoke completed 93/93
+without replacement at 10.56/25.20 ms mean/max.
+
+Map7 Full n=20 then completed and was source-static-PCD safe on 20/20 runs,
+with no speed violation. Mean time was 80.463 s and worst static clearance was
++0.200003 m. The shadow completed 2,305 jobs, all no-hit, with zero replacement;
+mean/max work was 9.979/42.228 ms, mean queue delay 0.046 ms, and mean
+source/cropped point counts 442,259/3,597. Its smallest raw-hit distance was
+0.2976 m, so the old stochastic contact did not recur and actual r=0.20
+contact detection is not yet established.
+
+A shadow-only r=0.40 sensitivity run completed safely in 78.49 s while
+reporting 7 OCCUPIED and 97 no-hit results with zero replacement. This proves
+the end-to-end witness path and confirms it is non-authoritative, but cannot
+substitute for a contact-correlated r=0.20 run. A same-host shadow-off smoke
+reported FSM CPU 144.44% and PSS 3,225.93 MiB versus shadow n=20 means
+145.50% and 3,289.25 MiB; the one-run control is diagnostic, not a paired
+performance claim.
+
+The user's RViz observation that the vehicle passes close to the left obstacle
+despite right-side free space is a separate path-quality issue. Full sensing
+does not impose a passage-centre objective. The retained nearest-face cost has
+full weight only at <=1.5 m/s, fades through 2.0 m/s and is zero above it.
+A*/JPS chooses one guide seed, CIRI builds a corridor around it, and the back
+end then prioritizes time, dynamics and smoothness. Cruise-speed right-side
+slack therefore has no reward. Generic ungated clearance is not the answer:
+earlier variants caused 9.3/15.5% Map9/10 time inflation, a 141 s tail, or hard
+gate liveness traps. Bilateral left/right clearance should be instrumented
+first, followed only if confirmed by a bounded face-balance/medial-axis term
+inside genuine two-sided passages.
+
+Before hard promotion, the witness must also run at a bounded new-scan cadence
+for long-lived trajectories and capture either an actual r=0.20
+contact-correlated result or a deterministic raw replay. Only then should a
+generation-matched fresh OCCUPIED result hard-gate body/tail entry, with
+distance-monotonic egress for an already-inside body. Detailed evidence and
+paths are in
+`docs/near_field_shadow_map7_n20_and_path_bias_20260831.md` and
+`results/near_field_shadow_map7_summary_20260831.csv`. Raw-cloud CIRI remains
+false/non-authoritative; static PCD remains evaluation-only.
