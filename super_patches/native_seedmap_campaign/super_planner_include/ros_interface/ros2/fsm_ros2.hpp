@@ -718,6 +718,7 @@ namespace fsm {
             INSUFFICIENT_DATA,
             EMPTY_TRAJECTORY,
             NO_HIT,
+            EGRESS,
             OCCUPIED
         };
 
@@ -731,6 +732,7 @@ namespace fsm {
                 case NearFieldShadowStatus::EMPTY_TRAJECTORY:
                     return "EMPTY_TRAJECTORY";
                 case NearFieldShadowStatus::NO_HIT: return "NO_HIT";
+                case NearFieldShadowStatus::EGRESS: return "EGRESS";
                 case NearFieldShadowStatus::OCCUPIED: return "OCCUPIED";
             }
             return "UNKNOWN";
@@ -739,20 +741,29 @@ namespace fsm {
         struct NearFieldShadowJob {
             std::uint64_t request_id{0};
             std::uint64_t generation{0};
+            std::uint64_t cloud_sequence{0};
             std::string trigger;
             Trajectory candidate;
             double checked_from_tt{0.0};
+            double checked_to_tt{0.0};
             rog_map::MapHealthClock::time_point enqueue_time{};
         };
 
         struct NearFieldShadowResult {
             std::uint64_t request_id{0};
             std::uint64_t generation{0};
+            std::uint64_t cloud_sequence{0};
             NearFieldShadowStatus status{NearFieldShadowStatus::DISABLED};
             Vec3f witness_position{Vec3f::Zero()};
             double witness_tt{-1.0};
             double minimum_distance_m{
                     std::numeric_limits<double>::infinity()};
+            double body_distance_m{
+                    std::numeric_limits<double>::infinity()};
+            double end_distance_m{
+                    std::numeric_limits<double>::infinity()};
+            double checked_from_tt{0.0};
+            double checked_to_tt{0.0};
             rog_map::MapHealthClock::time_point completion_time{};
         };
 
@@ -760,21 +771,34 @@ namespace fsm {
         std::condition_variable near_field_shadow_worker_cv_;
         std::optional<NearFieldShadowJob> pending_near_field_shadow_job_;
         std::optional<NearFieldShadowResult> latest_near_field_shadow_result_;
+        std::optional<NearFieldShadowResult>
+                pending_near_field_shadow_occupied_result_;
         bool stop_near_field_shadow_worker_{false};
         std::thread near_field_shadow_worker_;
         std::uint64_t next_near_field_shadow_request_id_{1};
         std::uint64_t near_field_shadow_last_enqueued_generation_{0};
+        std::uint64_t near_field_shadow_last_enqueued_cloud_sequence_{0};
+        rog_map::MapHealthClock::time_point
+                near_field_shadow_last_enqueue_time_{};
         std::atomic_uint64_t near_field_shadow_no_hit_total_{0};
         std::atomic_uint64_t near_field_shadow_occupied_total_{0};
+        std::atomic_uint64_t near_field_shadow_egress_total_{0};
         std::atomic_uint64_t near_field_shadow_unavailable_total_{0};
+        std::atomic_bool near_field_shadow_test_replay_injected_{false};
 
         std::uint64_t enqueueNearFieldShadowCheck(
                 const std::string &trigger, const std::uint64_t generation,
-                Trajectory candidate, const double checked_from_tt) {
+                const std::uint64_t cloud_sequence, Trajectory candidate,
+                const double checked_from_tt,
+                const rog_map::MapHealthClock::time_point enqueue_time) {
             if (!cfg_.trajectory_guard_raw_cloud_near_field_shadow_en ||
                 candidate.empty() || generation == 0) {
                 return 0;
             }
+            const double checked_to_tt = std::min(
+                    candidate.getTotalDuration(),
+                    checked_from_tt +
+                            cfg_.trajectory_guard_raw_cloud_near_field_horizon_s);
             std::optional<std::uint64_t> replaced_request;
             std::uint64_t request_id;
             {
@@ -786,9 +810,10 @@ namespace fsm {
                             pending_near_field_shadow_job_->request_id;
                 }
                 pending_near_field_shadow_job_ = NearFieldShadowJob{
-                        request_id, generation, trigger,
+                        request_id, generation, cloud_sequence, trigger,
                         std::move(candidate), checked_from_tt,
-                        rog_map::MapHealthClock::now()};
+                        checked_to_tt,
+                        enqueue_time};
             }
             if (replaced_request) {
                 ros_ptr_->info(
@@ -800,26 +825,52 @@ namespace fsm {
             return request_id;
         }
 
-        void enqueueCommittedNearFieldShadowIfNew(const char *trigger) {
+        void enqueueCommittedNearFieldShadowIfNeeded() {
             if (!cfg_.trajectory_guard_raw_cloud_near_field_shadow_en) {
                 return;
             }
             const auto snapshot =
                     planner_ptr_->getCommittedTrajectorySnapshot();
             if (snapshot.empty || snapshot.pos_traj.empty() ||
-                snapshot.generation == 0 ||
-                snapshot.generation ==
-                        near_field_shadow_last_enqueued_generation_) {
+                snapshot.generation == 0) {
+                return;
+            }
+            std::uint64_t cloud_sequence = 0;
+            {
+                std::lock_guard<std::mutex> lock(raw_cloud_mutex_);
+                cloud_sequence = raw_cloud_snapshot_.sequence;
+            }
+            const auto now = rog_map::MapHealthClock::now();
+            const bool new_generation = snapshot.generation !=
+                    near_field_shadow_last_enqueued_generation_;
+            const bool new_scan = cloud_sequence != 0 &&
+                    cloud_sequence !=
+                            near_field_shadow_last_enqueued_cloud_sequence_;
+            const double since_last_enqueue_s =
+                    near_field_shadow_last_enqueue_time_.time_since_epoch()
+                                    .count() == 0
+                            ? std::numeric_limits<double>::infinity()
+                            : std::chrono::duration<double>(
+                                      now - near_field_shadow_last_enqueue_time_)
+                                      .count();
+            if (!new_generation &&
+                (!new_scan || since_last_enqueue_s <
+                         cfg_.trajectory_guard_raw_cloud_near_field_min_interval_s)) {
+                return;
+            }
+            const double checked_from_tt = std::clamp(
+                    ros_ptr_->getSimTime() - snapshot.start_wt,
+                    0.0, snapshot.pos_traj.getTotalDuration());
+            if (enqueueNearFieldShadowCheck(
+                        new_generation ? "NEW_GENERATION" : "NEW_SCAN",
+                        snapshot.generation, cloud_sequence,
+                        snapshot.pos_traj, checked_from_tt, now) == 0) {
                 return;
             }
             near_field_shadow_last_enqueued_generation_ =
                     snapshot.generation;
-            const double checked_from_tt = std::clamp(
-                    ros_ptr_->getSimTime() - snapshot.start_wt,
-                    0.0, snapshot.pos_traj.getTotalDuration());
-            enqueueNearFieldShadowCheck(
-                    trigger ? trigger : "UNKNOWN", snapshot.generation,
-                    snapshot.pos_traj, checked_from_tt);
+            near_field_shadow_last_enqueued_cloud_sequence_ = cloud_sequence;
+            near_field_shadow_last_enqueue_time_ = now;
         }
 
         NearFieldShadowStatus checkCandidateAgainstNearFieldCloud(
@@ -827,11 +878,14 @@ namespace fsm {
                 const std::size_t source_point_count,
                 const Trajectory &candidate, const double checked_from_tt,
                 Vec3f &witness_position, double &witness_tt,
-                double &minimum_distance_m, double &tree_ms,
+                double &minimum_distance_m, double &body_distance_m,
+                double &end_distance_m, double &tree_ms,
                 double &query_ms) const {
             tree_ms = 0.0;
             query_ms = 0.0;
             minimum_distance_m = std::numeric_limits<double>::infinity();
+            body_distance_m = std::numeric_limits<double>::infinity();
+            end_distance_m = std::numeric_limits<double>::infinity();
             witness_tt = -1.0;
             if (!cfg_.trajectory_guard_raw_cloud_near_field_shadow_en) {
                 return NearFieldShadowStatus::DISABLED;
@@ -890,6 +944,11 @@ namespace fsm {
             std::vector<int> indices(1);
             std::vector<float> squared_distances(1);
             const auto query_start = rog_map::MapHealthClock::now();
+            bool first_sample = true;
+            bool body_starts_inside = false;
+            bool egress_exited_clearance = false;
+            double previous_distance_m =
+                    std::numeric_limits<double>::infinity();
             for (double tt = from_tt;;
                  tt = std::min(to_tt, tt + sample_dt)) {
                 const Vec3f position = candidate.getPos(tt);
@@ -912,7 +971,44 @@ namespace fsm {
                             0.0F, squared_distances.front()));
                     minimum_distance_m = std::min(
                             minimum_distance_m, distance);
-                    if (distance <= clearance) {
+                    end_distance_m = distance;
+                    if (first_sample) {
+                        body_distance_m = distance;
+                        body_starts_inside = distance <= clearance;
+                        if (body_starts_inside) {
+                            witness_position = position;
+                            witness_tt = tt;
+                        }
+                    } else if (body_starts_inside &&
+                               !egress_exited_clearance &&
+                               distance +
+                                       cfg_.trajectory_guard_raw_cloud_near_field_egress_tolerance_m <
+                                       previous_distance_m) {
+                        // Once the body sphere already contains a hit, only
+                        // a distance-monotonic escape is allowed. Moving
+                        // closer again (including toward a different nearest
+                        // hit) is conservatively blocked.
+                        witness_position = position;
+                        witness_tt = tt;
+                        query_ms =
+                                std::chrono::duration<double, std::milli>(
+                                        rog_map::MapHealthClock::now() -
+                                        query_start).count();
+                        return NearFieldShadowStatus::OCCUPIED;
+                    } else if (body_starts_inside &&
+                               egress_exited_clearance &&
+                               distance <= clearance) {
+                        // A path may curve after it has cleared the witness;
+                        // only an actual re-entry into the body radius is a
+                        // new hazard beyond that point.
+                        witness_position = position;
+                        witness_tt = tt;
+                        query_ms =
+                                std::chrono::duration<double, std::milli>(
+                                        rog_map::MapHealthClock::now() -
+                                        query_start).count();
+                        return NearFieldShadowStatus::OCCUPIED;
+                    } else if (!body_starts_inside && distance <= clearance) {
                         witness_position = position;
                         witness_tt = tt;
                         query_ms =
@@ -921,13 +1017,30 @@ namespace fsm {
                                         query_start).count();
                         return NearFieldShadowStatus::OCCUPIED;
                     }
+                    if (body_starts_inside &&
+                        !egress_exited_clearance &&
+                        distance > clearance +
+                                cfg_.trajectory_guard_raw_cloud_near_field_egress_tolerance_m) {
+                        egress_exited_clearance = true;
+                    }
+                    previous_distance_m = distance;
                 }
+                first_sample = false;
                 if (tt >= to_tt) {
                     break;
                 }
             }
             query_ms = std::chrono::duration<double, std::milli>(
                     rog_map::MapHealthClock::now() - query_start).count();
+            if (body_starts_inside) {
+                const bool made_progress = std::isfinite(body_distance_m) &&
+                        std::isfinite(end_distance_m) &&
+                        end_distance_m - body_distance_m >=
+                                cfg_.trajectory_guard_raw_cloud_near_field_egress_min_progress_m;
+                return made_progress && egress_exited_clearance
+                        ? NearFieldShadowStatus::EGRESS
+                        : NearFieldShadowStatus::OCCUPIED;
+            }
             return NearFieldShadowStatus::NO_HIT;
         }
 
@@ -991,9 +1104,33 @@ namespace fsm {
                         std::chrono::duration<double, std::milli>(
                                 rog_map::MapHealthClock::now() -
                                 accumulation_start).count();
+                const int replay_mode =
+                        cfg_.trajectory_guard_raw_cloud_near_field_test_replay_mode;
+                if (replay_mode != 0 &&
+                    !near_field_shadow_test_replay_injected_.exchange(
+                            true, std::memory_order_acq_rel)) {
+                    const double replay_tt = replay_mode == 1
+                            ? std::min(crop_to_tt, crop_from_tt + 0.25)
+                            : crop_from_tt;
+                    const Vec3f replay_point = job.candidate.getPos(replay_tt);
+                    cloud.push_back(replay_point);
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_NEAR_FIELD_TEST_REPLAY] "
+                            "request={} gen={} cloud_seq={} mode={} tt={:.3f} "
+                            "p=[{:.3f},{:.3f},{:.3f}]",
+                            job.request_id, job.generation,
+                            job.cloud_sequence,
+                            replay_mode == 1 ? "FUTURE_TAIL" : "BODY",
+                            replay_tt, replay_point.x(), replay_point.y(),
+                            replay_point.z());
+                }
                 Vec3f witness_position = Vec3f::Zero();
                 double witness_tt = -1.0;
                 double minimum_distance_m =
+                        std::numeric_limits<double>::infinity();
+                double body_distance_m =
+                        std::numeric_limits<double>::infinity();
+                double end_distance_m =
                         std::numeric_limits<double>::infinity();
                 double tree_ms = 0.0;
                 double query_ms = 0.0;
@@ -1001,7 +1138,8 @@ namespace fsm {
                         cloud, latest_cloud_age_s, source_point_count,
                         job.candidate,
                         job.checked_from_tt, witness_position, witness_tt,
-                        minimum_distance_m, tree_ms, query_ms);
+                        minimum_distance_m, body_distance_m,
+                        end_distance_m, tree_ms, query_ms);
                 const auto completion_time =
                         rog_map::MapHealthClock::now();
                 const double total_ms =
@@ -1013,10 +1151,21 @@ namespace fsm {
                 {
                     std::lock_guard<std::mutex> lock(
                             near_field_shadow_worker_mutex_);
-                    latest_near_field_shadow_result_ = NearFieldShadowResult{
-                            job.request_id, job.generation, status,
+                    const NearFieldShadowResult result{
+                            job.request_id, job.generation,
+                            job.cloud_sequence, status,
                             witness_position, witness_tt,
-                            minimum_distance_m, completion_time};
+                            minimum_distance_m, body_distance_m,
+                            end_distance_m, job.checked_from_tt,
+                            job.checked_to_tt, completion_time};
+                    latest_near_field_shadow_result_ = result;
+                    // Preserve an OCCUPIED event until the 100 Hz FSM has
+                    // consumed it. A later NO_HIT must not erase a hazard
+                    // merely because the worker completed twice in one tick.
+                    if (status == NearFieldShadowStatus::OCCUPIED &&
+                        !pending_near_field_shadow_occupied_result_) {
+                        pending_near_field_shadow_occupied_result_ = result;
+                    }
                 }
                 if (status == NearFieldShadowStatus::NO_HIT) {
                     near_field_shadow_no_hit_total_.fetch_add(
@@ -1024,28 +1173,108 @@ namespace fsm {
                 } else if (status == NearFieldShadowStatus::OCCUPIED) {
                     near_field_shadow_occupied_total_.fetch_add(
                             1, std::memory_order_relaxed);
+                } else if (status == NearFieldShadowStatus::EGRESS) {
+                    near_field_shadow_egress_total_.fetch_add(
+                            1, std::memory_order_relaxed);
                 } else {
                     near_field_shadow_unavailable_total_.fetch_add(
                             1, std::memory_order_relaxed);
                 }
                 ros_ptr_->warn(
                         " -- [TRAJ_GUARD_NEAR_FIELD_SHADOW_RESULT] "
-                        "request={} gen={} trigger={} status={} crop_pts={} "
+                        "request={} gen={} cloud_seq={} trigger={} status={} crop_pts={} "
                         "source_pts={} batches={} cloud_age={:.3f}s from_tt={:.3f} "
-                        "horizon={:.3f}s min_dist={:.4f}m witness_tt={:.3f} "
+                        "to_tt={:.3f} min_dist={:.4f}m body_dist={:.4f}m "
+                        "end_dist={:.4f}m witness_tt={:.3f} "
                         "p=[{:.3f},{:.3f},{:.3f}] queue_ms={:.3f} "
                         "accum_ms={:.3f} tree_ms={:.3f} query_ms={:.3f} "
                         "total_ms={:.3f}",
-                        job.request_id, job.generation, job.trigger,
+                        job.request_id, job.generation, job.cloud_sequence,
+                        job.trigger,
                         nearFieldShadowStatusName(status), cloud.size(),
                         source_point_count, batch_count, latest_cloud_age_s,
-                        job.checked_from_tt,
-                        cfg_.trajectory_guard_raw_cloud_near_field_horizon_s,
-                        minimum_distance_m, witness_tt,
+                        job.checked_from_tt, job.checked_to_tt,
+                        minimum_distance_m, body_distance_m,
+                        end_distance_m, witness_tt,
                         witness_position.x(), witness_position.y(),
                         witness_position.z(), queue_ms, accumulation_ms,
                         tree_ms, query_ms, total_ms);
             }
+        }
+
+        bool consumeFreshNearFieldOccupiedResult() {
+            if (!cfg_.trajectory_guard_raw_cloud_near_field_enforce_en) {
+                return false;
+            }
+            std::optional<NearFieldShadowResult> result;
+            {
+                std::lock_guard<std::mutex> lock(
+                        near_field_shadow_worker_mutex_);
+                if (!pending_near_field_shadow_occupied_result_) {
+                    return false;
+                }
+                result = *pending_near_field_shadow_occupied_result_;
+                pending_near_field_shadow_occupied_result_.reset();
+            }
+            const auto snapshot =
+                    planner_ptr_->getCommittedTrajectorySnapshot();
+            std::uint64_t current_cloud_sequence = 0;
+            {
+                std::lock_guard<std::mutex> lock(raw_cloud_mutex_);
+                current_cloud_sequence = raw_cloud_snapshot_.sequence;
+            }
+            const auto now = rog_map::MapHealthClock::now();
+            const double result_age_s = std::chrono::duration<double>(
+                    now - result->completion_time).count();
+            const double current_tt = snapshot.empty ||
+                                              snapshot.pos_traj.empty()
+                    ? std::numeric_limits<double>::infinity()
+                    : std::clamp(
+                              ros_ptr_->getSimTime() - snapshot.start_wt,
+                              0.0, snapshot.pos_traj.getTotalDuration());
+            const bool generation_matches = !snapshot.empty &&
+                    snapshot.generation == result->generation;
+            const bool result_is_fresh = std::isfinite(result_age_s) &&
+                    result_age_s >= 0.0 &&
+                    result_age_s <=
+                            cfg_.trajectory_guard_raw_cloud_near_field_result_max_age_s;
+            const bool sequence_is_current = result->cloud_sequence != 0 &&
+                    current_cloud_sequence >= result->cloud_sequence &&
+                    current_cloud_sequence - result->cloud_sequence <=
+                            static_cast<std::uint64_t>(
+                                    cfg_.trajectory_guard_raw_cloud_near_field_max_sequence_lag);
+            const double tt_tolerance = 2.0 *
+                    cfg_.trajectory_guard_raw_cloud_near_field_sample_dt_s;
+            const bool time_is_covered = std::isfinite(current_tt) &&
+                    current_tt + tt_tolerance >= result->checked_from_tt &&
+                    current_tt <= result->checked_to_tt + tt_tolerance;
+            if (!generation_matches || !result_is_fresh ||
+                !sequence_is_current || !time_is_covered) {
+                ros_ptr_->warn(
+                        " -- [TRAJ_GUARD_NEAR_FIELD_ENFORCE] action=IGNORE "
+                        "request={} result_gen={} current_gen={} "
+                        "result_seq={} current_seq={} age={:.3f}s "
+                        "result_tt=[{:.3f},{:.3f}] current_tt={:.3f} "
+                        "generation_match={} fresh={} sequence_current={} "
+                        "time_covered={}",
+                        result->request_id, result->generation,
+                        snapshot.generation, result->cloud_sequence,
+                        current_cloud_sequence, result_age_s,
+                        result->checked_from_tt, result->checked_to_tt,
+                        current_tt, generation_matches, result_is_fresh,
+                        sequence_is_current, time_is_covered);
+                return false;
+            }
+            ros_ptr_->error(
+                    " -- [TRAJ_GUARD_NEAR_FIELD_ENFORCE] action=BRAKE "
+                    "request={} gen={} cloud_seq={} age={:.3f}s "
+                    "current_tt={:.3f} witness_tt={:.3f} "
+                    "min_dist={:.4f}m body_dist={:.4f}m end_dist={:.4f}m",
+                    result->request_id, result->generation,
+                    result->cloud_sequence, result_age_s, current_tt,
+                    result->witness_tt, result->minimum_distance_m,
+                    result->body_distance_m, result->end_distance_m);
+            return true;
         }
 
         void stopNearFieldShadowWorker() {
@@ -1054,6 +1283,7 @@ namespace fsm {
                         near_field_shadow_worker_mutex_);
                 stop_near_field_shadow_worker_ = true;
                 pending_near_field_shadow_job_.reset();
+                pending_near_field_shadow_occupied_result_.reset();
             }
             near_field_shadow_worker_cv_.notify_all();
             if (near_field_shadow_worker_.joinable()) {
@@ -1130,17 +1360,6 @@ namespace fsm {
                         pcl::KdTreeFLANN<rog_map::PointType>>();
                 tree->setInputCloud(cloud);
             }
-            {
-                std::lock_guard<std::mutex> lock(raw_cloud_mutex_);
-                // Sequence/age are also the cheap reception diagnostics for
-                // CIRI-shadow-only mode. The KD-tree is built solely when
-                // the live raw-cloud guard can consume it.
-                if (tree) {
-                    raw_cloud_snapshot_.tree = std::move(tree);
-                }
-                raw_cloud_snapshot_.receive_time = receive_time;
-                ++raw_cloud_snapshot_.sequence;
-            }
             if (cfg_.trajectory_guard_raw_cloud_ciri_shadow_en ||
                 cfg_.trajectory_guard_raw_cloud_near_field_shadow_en) {
                 std::lock_guard<std::mutex> lock(raw_cloud_window_mutex_);
@@ -1154,6 +1373,18 @@ namespace fsm {
                                        .count() > kRawCloudWindowMaxRetainS) {
                     raw_cloud_window_.pop_front();
                 }
+            }
+            {
+                std::lock_guard<std::mutex> lock(raw_cloud_mutex_);
+                // Publish the accepted sequence only after the corresponding
+                // batch is visible in the accumulation window. A scan-driven
+                // job tagged with this sequence therefore cannot race ahead
+                // of its own source data.
+                if (tree) {
+                    raw_cloud_snapshot_.tree = std::move(tree);
+                }
+                raw_cloud_snapshot_.receive_time = receive_time;
+                ++raw_cloud_snapshot_.sequence;
             }
         }
 
@@ -2434,8 +2665,10 @@ namespace fsm {
                 ros_ptr_) {
                 ros_ptr_->info(
                         " -- [TRAJ_GUARD_NEAR_FIELD_SHADOW_SUMMARY] "
-                        "no_hit={} occupied={} unavailable={}",
+                        "no_hit={} egress={} occupied={} unavailable={}",
                         near_field_shadow_no_hit_total_.load(
+                                std::memory_order_relaxed),
+                        near_field_shadow_egress_total_.load(
                                 std::memory_order_relaxed),
                         near_field_shadow_occupied_total_.load(
                                 std::memory_order_relaxed),
@@ -2671,11 +2904,21 @@ namespace fsm {
                 ros_ptr_->info(
                         " -- [TRAJ_GUARD_NEAR_FIELD_SHADOW] latest-only "
                         "worker started clearance={:.3f}m horizon={:.3f}s "
-                        "sample_dt={:.3f}s voxel={:.3f}m",
+                        "sample_dt={:.3f}s min_interval={:.3f}s voxel={:.3f}m "
+                        "enforce={}",
                         cfg_.trajectory_guard_raw_cloud_near_field_clearance_m,
                         cfg_.trajectory_guard_raw_cloud_near_field_horizon_s,
                         cfg_.trajectory_guard_raw_cloud_near_field_sample_dt_s,
-                        cfg_.trajectory_guard_raw_cloud_near_field_voxel_m);
+                        cfg_.trajectory_guard_raw_cloud_near_field_min_interval_s,
+                        cfg_.trajectory_guard_raw_cloud_near_field_voxel_m,
+                        cfg_.trajectory_guard_raw_cloud_near_field_enforce_en);
+                if (cfg_.trajectory_guard_raw_cloud_near_field_test_replay_mode !=
+                    0) {
+                    ros_ptr_->warn(
+                            " -- [TRAJ_GUARD_NEAR_FIELD_TEST_REPLAY] armed "
+                            "mode={} TEST_ONLY",
+                            cfg_.trajectory_guard_raw_cloud_near_field_test_replay_mode);
+                }
             }
             cmd_pub_ = nh_->create_publisher<mars_quadrotor_msgs::msg::PositionCommand>(cfg_.cmd_topic, qos);
             mpc_cmd_pub_ = nh_->create_publisher<mars_quadrotor_msgs::msg::PolynomialTrajectory>(cfg_.mpc_cmd_topic,
@@ -2994,7 +3237,12 @@ namespace fsm {
                 }
             }
             if (machine_state_ == FOLLOW_TRAJ) {
-                enqueueCommittedNearFieldShadowIfNew("COMMITTED");
+                enqueueCommittedNearFieldShadowIfNeeded();
+            }
+            if (machine_state_ == FOLLOW_TRAJ &&
+                consumeFreshNearFieldOccupiedResult()) {
+                activateEmergencyBrake("near_field_occupied");
+                return;
             }
             if (cfg_.trajectory_guard_en && machine_state_ == FOLLOW_TRAJ &&
                 !rawCloudCommittedTrajectorySafe()) {

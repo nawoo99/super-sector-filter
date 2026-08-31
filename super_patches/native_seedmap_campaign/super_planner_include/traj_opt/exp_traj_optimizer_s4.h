@@ -29,6 +29,7 @@
 
 #include <traj_opt/config.hpp>
 #include <traj_opt/minco.h>
+#include <traj_opt/passage_centering.hpp>
 
 
 #include <data_structure/base/polytope.h>
@@ -78,9 +79,16 @@ namespace traj_opt {
             VecDf magnitudeBounds, penaltyWeights;
             double weightClr{0}, clearanceMargin{0};
             double clearanceSpeedGate{0}, clearanceSpeedTransition{0};
+            double weightPassageCenter{0};
+            double passageCenterMaxWidth{0};
+            double passageCenterMinOppositionCos{0.9};
+            double passageCenterMinHorizontalNormal{0.8};
+            double passageCenterDeadband{0.15};
 
             PolyhedraV vPolytopes; // the original sfc and intersecting sfc
             PolyhedraH hPolytopes; // the original sfc
+            std::vector<std::vector<uint8_t>> hPolyObstacleFlags;
+            std::vector<PassageFaceCandidates> hPolyPassageCandidates;
             PolyhedraH hOverlapPolytopes;
             Mat3Df init_path;
             VecDf init_ts;
@@ -112,6 +120,7 @@ namespace traj_opt {
                                           const MatD3f &coeffs,
                                           const VecDi &hIdx,
                                           const PolyhedraH &hPolys,
+                                          const std::vector<PassageFaceCandidates> &hPolyPassageCandidates,
                                           const Mat3Df &waypoint_attractor,
                                           const VecDf &waypoint_attractor_dead_d,
                                           const double &smoothFactor,
@@ -122,6 +131,9 @@ namespace traj_opt {
                                           const double &clearanceMargin,
                                           const double &clearanceSpeedGate,
                                           const double &clearanceSpeedTransition,
+                                          const double &weightPassageCenter,
+                                          const double &passageCenterMaxWidth,
+                                          const double &passageCenterDeadband,
                                           flatness::FlatnessMap &flatMap,
                                           double &cost,
                                           VecDf &gradT,
@@ -135,6 +147,9 @@ namespace traj_opt {
         void defaultInitialization();
 
         bool setupProblemAndCheck();
+
+        void logPassageBalance(
+                const Trajectory &trajectory, const char *trajectory_type) const;
 
         bool processCorridorWithGuideTraj2() {
             using namespace traj_opt;

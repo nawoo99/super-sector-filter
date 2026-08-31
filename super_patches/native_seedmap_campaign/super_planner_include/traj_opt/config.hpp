@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <string>
 #include <utils/geometry/quadrotor_flatness.hpp>
 #include <utils/header/yaml_loader.hpp>
@@ -76,6 +77,15 @@ namespace traj_opt {
         // positive gate leaves the term ungated. Above gate+transition the
         // term is zero; a cubic smoothstep avoids a hard optimizer boundary.
         double clearance_speed_gate{0}, clearance_speed_transition{0};
+        // Passage-only centering: balances clearance between a pair of
+        // opposing horizontal SFC faces. Unlike nearest-face clearance, this
+        // remains inactive in open space and beside a single wall.
+        double penna_passage_center{0};
+        double passage_center_max_width{0};
+        double passage_center_min_opposition_cos{0.9};
+        double passage_center_min_horizontal_normal{0.8};
+        double passage_center_deadband{0.15};
+        bool passage_center_log_en{false};
 
         double smooth_eps{0};
         int integral_reso{0};
@@ -125,6 +135,12 @@ namespace traj_opt {
             loader.LoadParam("traj_opt" + ns + "clearance_margin", clearance_margin, 0.0);
             loader.LoadParam("traj_opt" + ns + "clearance_speed_gate", clearance_speed_gate, -1.0);
             loader.LoadParam("traj_opt" + ns + "clearance_speed_transition", clearance_speed_transition, 0.0);
+            loader.LoadParam("traj_opt" + ns + "penna_passage_center", penna_passage_center, -1.0);
+            loader.LoadParam("traj_opt" + ns + "passage_center_max_width", passage_center_max_width, 0.0);
+            loader.LoadParam("traj_opt" + ns + "passage_center_min_opposition_cos", passage_center_min_opposition_cos, 0.9);
+            loader.LoadParam("traj_opt" + ns + "passage_center_min_horizontal_normal", passage_center_min_horizontal_normal, 0.8);
+            loader.LoadParam("traj_opt" + ns + "passage_center_deadband", passage_center_deadband, 0.15);
+            loader.LoadParam("traj_opt" + ns + "passage_center_log_en", passage_center_log_en, false);
             loader.LoadParam("traj_opt" + ns + "penna_vel", penna_vel, -1.0);
             loader.LoadParam("traj_opt" + ns + "penna_acc", penna_acc, -1.0);
             loader.LoadParam("traj_opt" + ns + "penna_jerk", penna_jerk, -1.0);
@@ -137,6 +153,7 @@ namespace traj_opt {
                 penna_ts = penna_ts * penna_scale;
                 penna_pos = penna_pos * penna_scale;
                 penna_clr = penna_clr * penna_scale;
+                penna_passage_center = penna_passage_center * penna_scale;
                 penna_vel = penna_vel * penna_scale;
                 penna_acc = penna_acc * penna_scale;
                 penna_jerk = penna_jerk * penna_scale;
@@ -144,6 +161,13 @@ namespace traj_opt {
                 penna_omg = penna_omg * penna_scale;
                 penna_thr = penna_thr * penna_scale;
             }
+
+            passage_center_max_width = std::max(0.0, passage_center_max_width);
+            passage_center_min_opposition_cos = std::clamp(
+                    passage_center_min_opposition_cos, 0.0, 1.0);
+            passage_center_min_horizontal_normal = std::clamp(
+                    passage_center_min_horizontal_normal, 0.0, 1.0);
+            passage_center_deadband = std::max(0.0, passage_center_deadband);
 
             quadrotot_flatness.reset(mass, grav, dh, dv, cp, v_eps);
         }

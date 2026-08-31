@@ -27,6 +27,7 @@
 
 #include <traj_opt/config.hpp>
 #include <traj_opt/minco.h>
+#include <traj_opt/passage_centering.hpp>
 
 #include <data_structure/base/polytope.h>
 #include <data_structure/base/trajectory.h>
@@ -82,12 +83,19 @@ namespace traj_opt {
             double clearanceMargin{0.0};
             double clearanceSpeedGate{0.0};
             double clearanceSpeedTransition{0.0};
+            double weightPassageCenter{0.0};
+            double passageCenterMaxWidth{0.0};
+            double passageCenterMinOppositionCos{0.9};
+            double passageCenterMinHorizontalNormal{0.8};
+            double passageCenterDeadband{0.15};
 
             Eigen::Matrix3Xd init_path;
             Eigen::Matrix3Xd waypoint_attractor;
             Eigen::VectorXd waypoint_attractor_dead_d;
 
             PolyhedronH hPolytope;
+            std::vector<uint8_t> hPolyObstacleFlags;
+            PassageFaceCandidates hPolyPassageCandidates;
             PolyhedronV vPolytope;
 
             MINCO_S4NU minco;
@@ -130,6 +138,7 @@ namespace traj_opt {
         static void constraintsFunctional(const Eigen::VectorXd &T,
                                           const Eigen::MatrixX3d &coeffs,
                                           const PolyhedronH &hPoly,
+                                          const PassageFaceCandidates &hPolyPassageCandidates,
                                           const double &smoothFactor,
                                           const int &integralResolution,
                                           const Eigen::VectorXd &magnitudeBounds,
@@ -138,6 +147,9 @@ namespace traj_opt {
                                           const double &clearanceMargin,
                                           const double &clearanceSpeedGate,
                                           const double &clearanceSpeedTransition,
+                                          const double &weightPassageCenter,
+                                          const double &passageCenterMaxWidth,
+                                          const double &passageCenterDeadband,
                                           flatness::FlatnessMap &flatMap,
                                           double &cost,
                                           Eigen::VectorXd &gradT,
@@ -145,6 +157,9 @@ namespace traj_opt {
                                           VecDf &pena_log);
 
         bool processCorridor();
+
+        void logPassageBalance(
+                const Trajectory &trajectory, const char *trajectory_type) const;
 
         static int
         visualizeProgress(void *instance, const Eigen::VectorXd &x, const Eigen::VectorXd &g, const double fx,

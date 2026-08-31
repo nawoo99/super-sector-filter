@@ -1,0 +1,12 @@
+stage,case,map,mode,runs,completed,safety_safe,mission_time_s,static_clearance_m,near_field_results,no_hit,occupied,egress,near_field_hard_brakes,passage_active_pct,passage_mean_abs_imbalance_m,guard_brakes,effective_full_open,decision,raw_result
+1,scan_cadence_shadow,seed7,full,1,1,1,99.81,0.212,331,331,0,0,0,,,,,retain_default_off,near_field_scan_cadence_seed7_smoke_raw_20260831.csv
+2,deterministic_future_tail_shadow,seed7,full,1,1,1,98.44,0.261,394,393,1,0,0,,,,,detection_proved_shadow_only,near_field_replay_entry_seed7_smoke_raw_20260831.csv
+3,fresh_matched_entry_hard_gate,seed7,full,1,1,1,106.17,0.195,306,305,1,0,1,,,,,hard_brake_proved_test_only,near_field_enforce_entry_seed7_smoke_v2_raw_20260831.csv
+3,monotonic_body_egress,seed7,full,1,1,1,72.90,0.270,446,445,0,1,0,,,,,egress_without_brake_proved_test_only,near_field_enforce_egress_seed7_smoke_v2_raw_20260831.csv
+3,real_cloud_hard_gate_smoke,seed7,full,1,1,1,113.93,0.263,308,308,0,0,0,,,,,no_false_brake_in_one_smoke,near_field_enforce_real_seed7_smoke_raw_20260831.csv
+4,obstacle_face_provenance_baseline,seed7,full,1,1,1,71.99,0.263,,,,,,11.89,0.3508,17,,measurement_baseline,passage_provenance_baseline_seed7_full_raw_20260831.csv
+4,exp_and_backup_weight_2e5_precomputed,seed7,full,1,0,1,180.00,0.252,,,,,,15.52,0.3579,26,,reject_liveness_regression,passage_center_w2e5_precomputed_seed7_full_raw_20260831.csv
+4,exp_only_weight_2e4_smoke,seed7,full,1,1,1,76.79,0.198,,,,,,14.05,0.3051,23,,experimental_only_not_adopted,passage_center_exp_w2e4_seed7_full_raw_20260831.csv
+4,exp_only_weight_2e4_three_mode,seed7,full,1,1,1,99.06,0.268,,,,,,15.78,0.3195,37,,experimental_only_not_adopted,passage_center_exp_w2e4_seed7_three_mode_raw_20260831.csv
+4,exp_only_weight_2e4_three_mode,seed7,sector,1,1,0,81.31,-0.094,,,,,,12.78,0.3546,37,,sector_contact_observed,passage_center_exp_w2e4_seed7_three_mode_raw_20260831.csv
+4,exp_only_weight_2e4_three_mode,seed7,adaptive,1,1,1,103.72,0.264,,,,,,14.60,0.3281,53,4,experimental_only_not_adopted,passage_center_exp_w2e4_seed7_three_mode_raw_20260831.csv

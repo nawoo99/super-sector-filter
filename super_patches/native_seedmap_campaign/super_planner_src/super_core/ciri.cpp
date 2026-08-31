@@ -83,6 +83,7 @@ namespace super_planner {
         }
 
         vector<Eigen::Vector4d> planes;
+        std::vector<uint8_t> face_obstacle_flags;
         MatD4f hPoly;
 
 //        bool infeasible_problem{false};
@@ -116,10 +117,13 @@ namespace super_planner {
 
             planes.clear();
             planes.reserve(30);
+            face_obstacle_flags.clear();
+            face_obstacle_flags.reserve(30);
             Vec3f tmp_nn_pt;
             Vec4f plan_before_ab;
 
             for (int i = 0; !completed && i < (M + N); ++i) {
+                bool obstacle_plane = false;
                 if (minSqrD < minSqrR) {
                     /// Case [Bd closer than ob]  enable the boundary constrain.
                     Vec4f p_e = bd_e.row(bdMinId);
@@ -127,6 +131,7 @@ namespace super_planner {
                     bdFlags(bdMinId) = 0;
                 }
                 else {
+                    obstacle_plane = true;
                     /// Case [Ob closer than Bd] enable the obstacle point constarin.
                     ///     Compute the tangent plane of sphere
                     ///
@@ -226,6 +231,7 @@ namespace super_planner {
                     }
                 }
                 planes.push_back(temp_plane_w);
+                face_obstacle_flags.push_back(obstacle_plane ? 1 : 0);
             }
 
             hPoly.resize(planes.size(), 4);
@@ -274,6 +280,7 @@ namespace super_planner {
         }
         optimized_polytope_.Reset();
         optimized_polytope_.SetPlanes(hPoly);
+        optimized_polytope_.SetFaceObstacleFlags(face_obstacle_flags);
         optimized_polytope_.SetSeedLine(std::make_pair(a, b));
         optimized_polytope_.SetEllipsoid(E);
 

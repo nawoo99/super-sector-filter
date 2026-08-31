@@ -156,11 +156,26 @@ namespace fsm {
         double trajectory_guard_raw_cloud_near_field_clearance_m{0.2};
         double trajectory_guard_raw_cloud_near_field_horizon_s{1.0};
         double trajectory_guard_raw_cloud_near_field_sample_dt_s{0.01};
+        // Bound scan-driven shadow work independently of the 100 Hz FSM.
+        // A new committed generation bypasses this interval; otherwise the
+        // latest accepted cloud sequence is sampled at this cadence.
+        double trajectory_guard_raw_cloud_near_field_min_interval_s{0.1};
         int trajectory_guard_raw_cloud_near_field_min_points{200};
         // Zero retains every accumulated hit. A positive value keeps one hit
         // per voxel and is intended only for performance experiments because
         // arbitrary voxel representatives can hide a threshold-near hit.
         double trajectory_guard_raw_cloud_near_field_voxel_m{0.0};
+        // Test-only one-shot witness injection into the private worker copy:
+        // 0=off, 1=future tail, 2=current body. It never modifies ROG-Map or
+        // the subscribed PointCloud2 and must remain zero in real profiles.
+        int trajectory_guard_raw_cloud_near_field_test_replay_mode{0};
+        // Promotion gate for a fresh, generation-matched OCCUPIED witness.
+        // Default-off: the normal tight_v7 profile remains unchanged.
+        bool trajectory_guard_raw_cloud_near_field_enforce_en{false};
+        double trajectory_guard_raw_cloud_near_field_result_max_age_s{0.2};
+        int trajectory_guard_raw_cloud_near_field_max_sequence_lag{1};
+        double trajectory_guard_raw_cloud_near_field_egress_tolerance_m{0.005};
+        double trajectory_guard_raw_cloud_near_field_egress_min_progress_m{0.02};
 
         Config() = default;
 
@@ -300,11 +315,34 @@ namespace fsm {
                     "fsm/trajectory_guard/raw_cloud/near_field_sample_dt_s",
                     trajectory_guard_raw_cloud_near_field_sample_dt_s, 0.01);
             loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_min_interval_s",
+                    trajectory_guard_raw_cloud_near_field_min_interval_s, 0.1);
+            loader.LoadParam(
                     "fsm/trajectory_guard/raw_cloud/near_field_min_points",
                     trajectory_guard_raw_cloud_near_field_min_points, 200);
             loader.LoadParam(
                     "fsm/trajectory_guard/raw_cloud/near_field_voxel_m",
                     trajectory_guard_raw_cloud_near_field_voxel_m, 0.0);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_test_replay_mode",
+                    trajectory_guard_raw_cloud_near_field_test_replay_mode, 0);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_enforce_en",
+                    trajectory_guard_raw_cloud_near_field_enforce_en, false);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_result_max_age_s",
+                    trajectory_guard_raw_cloud_near_field_result_max_age_s, 0.2);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_max_sequence_lag",
+                    trajectory_guard_raw_cloud_near_field_max_sequence_lag, 1);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_egress_tolerance_m",
+                    trajectory_guard_raw_cloud_near_field_egress_tolerance_m,
+                    0.005);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/raw_cloud/near_field_egress_min_progress_m",
+                    trajectory_guard_raw_cloud_near_field_egress_min_progress_m,
+                    0.02);
             trajectory_guard_raw_cloud_near_field_clearance_m = std::max(
                     0.01, trajectory_guard_raw_cloud_near_field_clearance_m);
             trajectory_guard_raw_cloud_near_field_horizon_s = std::max(
@@ -312,10 +350,32 @@ namespace fsm {
             trajectory_guard_raw_cloud_near_field_sample_dt_s = std::max(
                     0.005,
                     trajectory_guard_raw_cloud_near_field_sample_dt_s);
+            trajectory_guard_raw_cloud_near_field_min_interval_s = std::max(
+                    0.02,
+                    trajectory_guard_raw_cloud_near_field_min_interval_s);
             trajectory_guard_raw_cloud_near_field_min_points = std::max(
                     1, trajectory_guard_raw_cloud_near_field_min_points);
             trajectory_guard_raw_cloud_near_field_voxel_m = std::max(
                     0.0, trajectory_guard_raw_cloud_near_field_voxel_m);
+            trajectory_guard_raw_cloud_near_field_test_replay_mode =
+                    std::clamp(
+                            trajectory_guard_raw_cloud_near_field_test_replay_mode,
+                            0, 2);
+            trajectory_guard_raw_cloud_near_field_result_max_age_s = std::max(
+                    0.02,
+                    trajectory_guard_raw_cloud_near_field_result_max_age_s);
+            trajectory_guard_raw_cloud_near_field_max_sequence_lag = std::max(
+                    0, trajectory_guard_raw_cloud_near_field_max_sequence_lag);
+            trajectory_guard_raw_cloud_near_field_egress_tolerance_m = std::max(
+                    0.0,
+                    trajectory_guard_raw_cloud_near_field_egress_tolerance_m);
+            trajectory_guard_raw_cloud_near_field_egress_min_progress_m =
+                    std::max(
+                            0.0,
+                            trajectory_guard_raw_cloud_near_field_egress_min_progress_m);
+            if (trajectory_guard_raw_cloud_near_field_enforce_en) {
+                trajectory_guard_raw_cloud_near_field_shadow_en = true;
+            }
 
 
             loader.LoadParam("super_planner/yaw_dot_max", yaw_dot_max, 1.0, true);

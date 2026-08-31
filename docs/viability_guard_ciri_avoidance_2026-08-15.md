@@ -3234,3 +3234,68 @@ paths are in
 `docs/near_field_shadow_map7_n20_and_path_bias_20260831.md` and
 `results/near_field_shadow_map7_summary_20260831.csv`. Raw-cloud CIRI remains
 false/non-authoritative; static PCD remains evaluation-only.
+
+### 8.44 Scan-cadence near-field hard gate and obstacle-provenance passage balance (2026-08-31)
+
+The recent-hit worker now rechecks a long-lived committed trajectory on new
+accepted raw-cloud sequences at a bounded 0.10 s cadence as well as on every
+new trajectory generation. A new generation bypasses the cadence limit. The
+raw sequence becomes visible only after its batch is present in the window;
+jobs and results carry both generation and cloud sequence. Map7 Full completed
+safely in 99.81 s while processing 331 results: 183 new-scan and 148
+new-generation triggers, zero skip, with mean/max worker time 5.601/23.933 ms.
+
+A test-only one-shot replay inserts a witness into the worker-private cropped
+cloud after real freshness and density checks. It never changes the subscribed
+cloud, ROG-Map or flight decision. The future-tail replay produced exactly one
+r=0.20 OCCUPIED result at minimum KD distance 0.1904 m and then 393 NO_HIT
+results while the shadow-only flight completed safely. This establishes the
+detection path deterministically, not an actual stochastic contact capture.
+
+The default-off enforce path consumes only an OCCUPIED result whose committed
+generation matches, age is at most 0.20 s, cloud-sequence lag is at most one,
+and checked trajectory-time range covers the current time. An OCCUPIED result
+is latched until the FSM can consume it. A future-tail replay triggered exactly
+one hard brake and recovered to generation 2; the run completed safely in
+106.17 s. If the current body begins inside the witness sphere, the accepted
+path must increase distance while inside, make at least 0.02 m progress, exit
+clearance+0.005 m and never re-enter. The corrected body replay was classified
+EGRESS, made zero near-field brake and completed safely in 72.90 s. A no-replay
+real-cloud enforce smoke completed safely in 113.93 s with 308 NO_HIT and no
+false brake. These are functional n=1 proofs, not population safety evidence.
+
+The RViz left-hugging investigation added bilateral passage instrumentation.
+CIRI now tags each final polytope face as boundary-derived or obstacle-derived,
+and `Polytope` preserves that provenance. Passage candidates require two
+obstacle-derived predominantly horizontal faces with opposing normals and a
+combined width at most 3.0 m. Pair candidates are precomputed once per
+polytope. ExpTrajOpt and BackupTrajOpt both implement a deadbanded squared
+left/right-clearance balance cost and emit sampled/active, imbalance, width,
+minimum-side and directional left/right statistics.
+
+Without provenance, ordinary corridor bounding faces were mislabeled as
+passages and many trajectories were active on 100% of samples; that design was
+rejected. With provenance, the Map7 Full baseline had 11.89% active Exp samples
+and mean absolute imbalance 0.3508 m. Strong Exp+Backup weights of 2e6 and 2e5
+timed out at waypoint 3/5 and 2/5; precomputing pairs did not rescue the 2e5
+candidate, which still timed out at 3/5. This demonstrates an objective/liveness
+interaction rather than only pair-search overhead.
+
+A conservative Exp-only 2e4 candidate (Backup cost disabled, although code
+coverage remains) completed one Full smoke in 76.79 s with no contact. Its
+diagnostic mean imbalance was 0.3051 m, 13.0% below the independent baseline,
+but guard-brake logs rose 17 to 23 and physical minimum clearance fell +0.263
+to +0.198 m. It is therefore not adopted. A final Map7 three-mode smoke with
+the same experimental profile produced Full/Sector/Adaptive completion 1/1
+each, static contacts 0/1/0, times 99.06/81.31/103.72 s, clearances
++0.268/-0.094/+0.264 m and processed payload 5.563/1.907/2.795 MiB/s. Adaptive
+made four effective Full opens. This n=1 result is functional only and cannot
+support a mode-level safety claim.
+
+All new near-field and passage options remain default-off; standard tight_v7
+and its live filtered profile are unchanged, and raw-cloud CIRI remains false.
+Release build and 23 campaign tests pass. Detailed implementation, rejection
+history and claim boundaries are in
+`docs/near_field_hard_gate_and_passage_centering_20260831.md`; the compact
+result index is
+`results/near_field_hard_gate_and_passage_centering_summary_20260831.csv`.

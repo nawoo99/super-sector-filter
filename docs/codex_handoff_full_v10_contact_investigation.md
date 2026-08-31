@@ -1,6 +1,34 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-08-31 near-field hard gate 4단계와 passage 계측 완료.**
+> Long-lived trajectory도 새 accepted raw scan을 0.10초 cadence로 latest-only
+> 검사한다. Map7 Full smoke에서 331건(NEW_SCAN 183, NEW_GENERATION 148)을
+> skip 없이 처리했고 worker 평균/최대는 5.601/23.933ms였다.
+>
+> Worker-private deterministic replay로 r=0.20 future-tail OCCUPIED를 정확히
+> 1건 검출했다. Default-off hard gate는 committed generation 일치,
+> result age<=0.20초, cloud-seq lag<=1, checked time-range 포함을 모두 요구한다.
+> Entry replay는 brake 1회 뒤 안전 완주했고, current-body replay는 내부 거리
+> 증가·0.02m progress·exit·no-reentry 조건을 만족해 EGRESS로 brake 없이
+> 완주했다. Replay 없는 enforce smoke도 NO_HIT 308, false brake 0이었다.
+> 이는 Map7 n=1 기능 증명이지 실제 contact-correlated 검출이나 population
+> 안전 보장이 아니다.
+>
+> RViz 왼쪽 치우침은 CIRI face의 obstacle/boundary provenance를 추가해 실제
+> obstacle-derived 양측 통로만 계측하도록 고쳤다. Exp/Backup 양쪽에 passage
+> balance를 구현했지만 Exp+Backup 2e6/2e5는 180초 timeout으로 기각했다.
+> Exp-only 2e4는 기능상 완주하고 독립 baseline 대비 평균 imbalance가 약
+> 13% 줄었으나 guard brake 증가와 physical clearance 저하가 함께 보여 채택하지
+> 않았다. Map7 3모드 smoke는 Full/Sector/Adaptive 모두 완주, static contact
+> 0/1/0, Adaptive Full-open 4회였다.
+>
+> 모든 새 기능은 default off이고 표준/실사용 tight_v7 profile은 그대로다.
+> Raw-cloud CIRI도 계속 false/non-authoritative다. 상세는 viability §8.44,
+> `docs/near_field_hard_gate_and_passage_centering_20260831.md`, 요약 CSV는
+> `results/near_field_hard_gate_and_passage_centering_summary_20260831.csv`다.
+
+> [!IMPORTANT]
 > **2026-08-31 Map7 recent-hit near-field shadow 구현·n=20 완료.**
 > Full Map7 blind-footprint 반례를 겨냥해 최근 1.5초 raw hit와 committed
 > body+1초 tail을 0.01초 간격, 반경 0.20m로 비교하는 default-off shadow를

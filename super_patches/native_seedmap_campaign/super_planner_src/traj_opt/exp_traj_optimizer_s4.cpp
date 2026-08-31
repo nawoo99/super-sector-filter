@@ -22,6 +22,7 @@
 */
 
 #include <traj_opt/exp_traj_optimizer_s4.h>
+#include <traj_opt/passage_centering.hpp>
 #include <utils/optimization/lbfgs.h>
 #include <ros_interface/ros_interface.hpp>
 
@@ -46,6 +47,7 @@ void ExpTrajOpt::constraintsFunctional(const VecDf &T,
                                        const MatD3f &coeffs,
                                        const VecDi &hIdx,
                                        const PolyhedraH &hPolys,
+                                       const std::vector<PassageFaceCandidates> &hPolyPassageCandidates,
                                        const Mat3Df &waypoint_attractor,
                                        const VecDf &waypoint_attractor_dead_d,
                                        const double &smoothFactor,
@@ -56,6 +58,9 @@ void ExpTrajOpt::constraintsFunctional(const VecDf &T,
                                        const double &clearanceMargin,
                                        const double &clearanceSpeedGate,
                                        const double &clearanceSpeedTransition,
+                                       const double &weightPassageCenter,
+                                       const double &passageCenterMaxWidth,
+                                       const double &passageCenterDeadband,
                                        flatness::FlatnessMap &flatMap,
         // outputs
                                        double &cost,
@@ -193,6 +198,25 @@ void ExpTrajOpt::constraintsFunctional(const VecDf &T,
                     tmp_cost += weightClr * clearanceGate * violaClrPena;
                 }
             }
+            if (weightPassageCenter > 0.0 &&
+                passageCenterMaxWidth > 0.0 && K > 1) {
+                const auto passage = findPassageFacePair(
+                        hPolys[L], hPolyPassageCandidates[L], pos,
+                        passageCenterMaxWidth);
+                if (passage.valid) {
+                    const double absolute_imbalance =
+                            std::abs(passage.imbalance_m);
+                    const double excess = absolute_imbalance -
+                            passageCenterDeadband;
+                    if (excess > 0.0) {
+                        const double direction = passage.imbalance_m >= 0.0
+                                ? 1.0 : -1.0;
+                        gradPos += weightPassageCenter * 2.0 * excess *
+                                direction * passage.imbalance_gradient;
+                        tmp_cost += weightPassageCenter * excess * excess;
+                    }
+                }
+            }
 
             /* 2.2  For attract point cost  */
             if (weightAtt > 0.0) {
@@ -319,6 +343,7 @@ double ExpTrajOpt::costFunctional(void *ptr,
     const auto &vPolytopes = obj.vPolytopes;
     const auto &hPolyIdx = obj.hPolyIdx;
     const auto &hPolytopes = obj.hPolytopes;
+    const auto &hPolyPassageCandidates = obj.hPolyPassageCandidates;
     const auto &waypoint_attractor = obj.waypoint_attractor;
     const auto &waypoint_attractor_dead_d = obj.waypoint_attractor_dead_d;
     const auto &smooth_eps = obj.smooth_eps;
@@ -329,6 +354,9 @@ double ExpTrajOpt::costFunctional(void *ptr,
     const auto &clearanceMargin = obj.clearanceMargin;
     const auto &clearanceSpeedGate = obj.clearanceSpeedGate;
     const auto &clearanceSpeedTransition = obj.clearanceSpeedTransition;
+    const auto &weightPassageCenter = obj.weightPassageCenter;
+    const auto &passageCenterMaxWidth = obj.passageCenterMaxWidth;
+    const auto &passageCenterDeadband = obj.passageCenterDeadband;
     const auto &block_energy_cost = obj.block_energy_cost;
 
     auto &quadrotor_flatness = obj.quadrotor_flatness;
@@ -374,12 +402,14 @@ double ExpTrajOpt::costFunctional(void *ptr,
 
     /* 4) Compute the constrain cost and gradient  */
     constraintsFunctional(times, obj.minco.getCoeffs(),
-                          hPolyIdx, hPolytopes,
+                          hPolyIdx, hPolytopes, hPolyPassageCandidates,
                           waypoint_attractor, waypoint_attractor_dead_d,
                           smooth_eps, integral_res,
                           magnitudeBounds, penaltyWeights,
                           weightClr, clearanceMargin,
                           clearanceSpeedGate, clearanceSpeedTransition,
+                          weightPassageCenter, passageCenterMaxWidth,
+                          passageCenterDeadband,
                           quadrotor_flatness,
                           cost, partialGradByTimes, partialGradByCoeffs, obj.penalty_log);
 
@@ -824,6 +854,93 @@ double ExpTrajOpt::optimize(Trajectory &traj, const double &relCostTol) {
     return minCostFunctional + ret;
 }
 
+void ExpTrajOpt::logPassageBalance(
+        const Trajectory &trajectory, const char *trajectory_type) const {
+    if (!cfg_.passage_center_log_en || trajectory.empty() ||
+        cfg_.passage_center_max_width <= 0.0) {
+        return;
+    }
+    std::size_t sampled = 0;
+    std::size_t active = 0;
+    std::size_t directional = 0;
+    double sum_abs_imbalance = 0.0;
+    double max_abs_imbalance = 0.0;
+    double sum_width = 0.0;
+    double min_side_clearance = std::numeric_limits<double>::infinity();
+    double sum_left_clearance = 0.0;
+    double sum_right_clearance = 0.0;
+    const int piece_count = std::min(
+            trajectory.getPieceNum(),
+            static_cast<int>(opt_vars.hPolyIdx.size()));
+    const int resolution = std::max(1, cfg_.integral_reso);
+    for (int i = 0; i < piece_count; ++i) {
+        const int poly_index = opt_vars.hPolyIdx(i);
+        if (poly_index < 0 ||
+            poly_index >= static_cast<int>(opt_vars.hPolytopes.size())) {
+            continue;
+        }
+        const auto &piece = trajectory[i];
+        for (int j = 0; j <= resolution; ++j) {
+            ++sampled;
+            const double local_t = piece.getDuration() *
+                    static_cast<double>(j) / resolution;
+            const Vec3f position = piece.getPos(local_t);
+            const auto passage = findPassageFacePair(
+                    opt_vars.hPolytopes[poly_index],
+                    opt_vars.hPolyPassageCandidates[poly_index], position,
+                    cfg_.passage_center_max_width);
+            if (!passage.valid) {
+                continue;
+            }
+            ++active;
+            const double absolute_imbalance =
+                    std::abs(passage.imbalance_m);
+            sum_abs_imbalance += absolute_imbalance;
+            max_abs_imbalance = std::max(
+                    max_abs_imbalance, absolute_imbalance);
+            sum_width += passage.width_m;
+            min_side_clearance = std::min(
+                    min_side_clearance,
+                    std::min(passage.first_clearance_m,
+                             passage.second_clearance_m));
+            const Vec3f velocity = piece.getVel(local_t);
+            const double horizontal_speed = velocity.head<2>().norm();
+            if (horizontal_speed <= 0.2) {
+                continue;
+            }
+            Vec3f left = Vec3f::Zero();
+            left.x() = -velocity.y() / horizontal_speed;
+            left.y() = velocity.x() / horizontal_speed;
+            if (passage.first_normal.dot(left) >=
+                passage.second_normal.dot(left)) {
+                sum_left_clearance += passage.first_clearance_m;
+                sum_right_clearance += passage.second_clearance_m;
+            } else {
+                sum_left_clearance += passage.second_clearance_m;
+                sum_right_clearance += passage.first_clearance_m;
+            }
+            ++directional;
+        }
+    }
+    ros_ptr_->info(
+            " -- [PASSAGE_BALANCE] type={} sampled={} active={} "
+            "active_pct={:.2f} mean_abs_imbalance={:.4f}m "
+            "max_abs_imbalance={:.4f}m mean_width={:.4f}m "
+            "min_side={:.4f}m directional={} mean_left={:.4f}m "
+            "mean_right={:.4f}m weight={:.3e}",
+            trajectory_type ? trajectory_type : "EXP", sampled, active,
+            sampled > 0 ? 100.0 * static_cast<double>(active) / sampled : 0.0,
+            active > 0 ? sum_abs_imbalance / active : 0.0,
+            max_abs_imbalance,
+            active > 0 ? sum_width / active : 0.0,
+            active > 0 ? min_side_clearance :
+                    std::numeric_limits<double>::infinity(),
+            directional,
+            directional > 0 ? sum_left_clearance / directional : 0.0,
+            directional > 0 ? sum_right_clearance / directional : 0.0,
+            cfg_.penna_passage_center);
+}
+
 ExpTrajOpt::ExpTrajOpt(const traj_opt::Config &cfg, const ros_interface::RosInterface::Ptr &ros_ptr) :
         cfg_(cfg),
         ros_ptr_(ros_ptr) {
@@ -852,6 +969,13 @@ ExpTrajOpt::ExpTrajOpt(const traj_opt::Config &cfg, const ros_interface::RosInte
     opt_vars.clearanceMargin = cfg_.clearance_margin;
     opt_vars.clearanceSpeedGate = cfg_.clearance_speed_gate;
     opt_vars.clearanceSpeedTransition = cfg_.clearance_speed_transition;
+    opt_vars.weightPassageCenter = cfg_.penna_passage_center;
+    opt_vars.passageCenterMaxWidth = cfg_.passage_center_max_width;
+    opt_vars.passageCenterMinOppositionCos =
+            cfg_.passage_center_min_opposition_cos;
+    opt_vars.passageCenterMinHorizontalNormal =
+            cfg_.passage_center_min_horizontal_normal;
+    opt_vars.passageCenterDeadband = cfg_.passage_center_deadband;
     opt_vars.rho = cfg_.penna_t;
     opt_vars.pos_constraint_type = cfg_.pos_constraint_type;
     opt_vars.block_energy_cost = cfg_.block_energy_cost;
@@ -965,11 +1089,21 @@ bool ExpTrajOpt::optimize(const StatePVAJ &headPVAJ, const StatePVAJ &tailPVAJ,
     opt_vars.guide_path = guide_path;
     opt_vars.guide_t = guide_t;
     opt_vars.hPolytopes.resize(sfcs.size());
+    opt_vars.hPolyObstacleFlags.resize(sfcs.size());
+    opt_vars.hPolyPassageCandidates.resize(sfcs.size());
 
     for (long i = 0; i < sfcs.size(); i++) {
         opt_vars.hPolytopes[i] = sfcs[i].GetPlanes();
+        opt_vars.hPolyObstacleFlags[i] =
+                sfcs[i].GetFaceObstacleFlags();
         const Eigen::ArrayXd norms = opt_vars.hPolytopes[i].leftCols<3>().rowwise().norm();
         opt_vars.hPolytopes[i].array().colwise() /= norms;
+        opt_vars.hPolyPassageCandidates[i] =
+                buildPassageFaceCandidates(
+                        opt_vars.hPolytopes[i],
+                        opt_vars.hPolyObstacleFlags[i],
+                        cfg_.passage_center_min_opposition_cos,
+                        cfg_.passage_center_min_horizontal_normal);
     }
 
     if (!setupProblemAndCheck()) {
@@ -989,6 +1123,7 @@ bool ExpTrajOpt::optimize(const StatePVAJ &headPVAJ, const StatePVAJ &tailPVAJ,
 
     if (success) {
         out_traj.start_WT = ros_ptr_->getSimTime();
+        logPassageBalance(out_traj, "EXP");
     }
 
     if (!success && cfg_.save_log_en) {
@@ -1058,11 +1193,21 @@ bool ExpTrajOpt::optimize(const StatePVAJ &headPVAJ, const StatePVAJ &tailPVAJ,
     opt_vars.guide_path = guide_path;
     opt_vars.guide_t = guide_t;
     opt_vars.hPolytopes.resize(sfcs.size());
+    opt_vars.hPolyObstacleFlags.resize(sfcs.size());
+    opt_vars.hPolyPassageCandidates.resize(sfcs.size());
 
     for (long i = 0; i < sfcs.size(); i++) {
         opt_vars.hPolytopes[i] = sfcs[i].GetPlanes();
+        opt_vars.hPolyObstacleFlags[i] =
+                sfcs[i].GetFaceObstacleFlags();
         const Eigen::ArrayXd norms = opt_vars.hPolytopes[i].leftCols<3>().rowwise().norm();
         opt_vars.hPolytopes[i].array().colwise() /= norms;
+        opt_vars.hPolyPassageCandidates[i] =
+                buildPassageFaceCandidates(
+                        opt_vars.hPolytopes[i],
+                        opt_vars.hPolyObstacleFlags[i],
+                        cfg_.passage_center_min_opposition_cos,
+                        cfg_.passage_center_min_horizontal_normal);
     }
 
     if (!setupProblemAndCheck()) {
@@ -1080,6 +1225,7 @@ bool ExpTrajOpt::optimize(const StatePVAJ &headPVAJ, const StatePVAJ &tailPVAJ,
 
     if (success) {
         out_traj.start_WT = ros_ptr_->getSimTime();
+        logPassageBalance(out_traj, "EXP_INIT");
     }
 
 
