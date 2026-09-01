@@ -2,7 +2,31 @@ import os
 import tempfile
 import unittest
 
-from native_campaign import parse_full_refresh_ack_log, parse_shadow_guard_log
+from native_campaign import (
+    parse_full_refresh_ack_log,
+    parse_sensor_cadence_log,
+    parse_shadow_guard_log,
+)
+
+
+class SensorCadenceLogTest(unittest.TestCase):
+    def test_reads_last_complete_summary(self):
+        lines = """\
+[INFO] [SENSOR_CADENCE_SUMMARY] frames=3 span_s=0.200000 hz=10.000000 raw_published=3 direct_handoffs=0 payload_bytes=1200
+[INFO] [SENSOR_CADENCE_SUMMARY] frames=101 span_s=10.000000 hz=10.000000 raw_published=0 direct_handoffs=101 payload_bytes=40400
+"""
+        handle, path = tempfile.mkstemp(text=True)
+        try:
+            with os.fdopen(handle, "w") as stream:
+                stream.write(lines)
+            result = parse_sensor_cadence_log(path)
+        finally:
+            os.unlink(path)
+
+        self.assertEqual(result["sensor_frames"], 101)
+        self.assertEqual(result["sensor_raw_published"], 0)
+        self.assertEqual(result["sensor_direct_handoffs"], 101)
+        self.assertAlmostEqual(result["sensor_hz"], 10.0)
 
 
 class ShadowGuardLogTest(unittest.TestCase):
@@ -38,6 +62,69 @@ class ShadowGuardLogTest(unittest.TestCase):
 
 
 class RecoveryBranchLogTest(unittest.TestCase):
+    def test_extracts_unique_trajectory_commit_cadence(self):
+        lines = """\
+[INFO] [100.000000] -- [TRAJ_GUARD_COMMIT] phase=x gen=10 map=3
+[INFO] [100.200000] -- [TRAJ_GUARD_COMMIT] phase=x gen=11 map=4
+[INFO] [100.200000] -- [TRAJ_GUARD_COMMIT] phase=x gen=11 map=4
+[INFO] [100.500000] -- [TRAJ_GUARD_COMMIT] phase=x gen=12 map=5
+"""
+        handle, path = tempfile.mkstemp(text=True)
+        try:
+            with os.fdopen(handle, "w") as stream:
+                stream.write(lines)
+            result = parse_full_refresh_ack_log(path)
+        finally:
+            os.unlink(path)
+
+        self.assertEqual(result["trajectory_commit_unique_generations"], 3)
+        self.assertEqual(result["trajectory_commit_last_generation"], 12)
+        self.assertAlmostEqual(result["trajectory_commit_span_s"], 0.5)
+        self.assertAlmostEqual(result["trajectory_commit_hz"], 4.0)
+
+    def test_counts_frontend_risk_enforcement(self):
+        lines = """\
+[FRONTEND_RISK_ENFORCE] action=IGNORE request=1 generation_match=false fresh=true source_fresh=true time_covered=true
+[FRONTEND_RISK_ENFORCE] action=IGNORE request=2 generation_match=true fresh=false source_fresh=false time_covered=false
+[FRONTEND_RISK_ENFORCE] action=BRAKE request=3
+[FRONTEND_RISK_SUMMARY] received=10 occupied=3 ignored=2 enforced=1
+"""
+        handle, path = tempfile.mkstemp(text=True)
+        try:
+            with os.fdopen(handle, "w") as stream:
+                stream.write(lines)
+            result = parse_full_refresh_ack_log(path)
+        finally:
+            os.unlink(path)
+
+        self.assertEqual(result["frontend_risk_received"], 10)
+        self.assertEqual(result["frontend_risk_occupied"], 3)
+        self.assertEqual(result["frontend_risk_ignored"], 2)
+        self.assertEqual(result["frontend_risk_enforced"], 1)
+        self.assertEqual(result["frontend_risk_ignore_events"], 2)
+        self.assertEqual(result["frontend_risk_brake_events"], 1)
+        self.assertEqual(
+            result["frontend_risk_generation_mismatch_ignores"], 1
+        )
+        self.assertEqual(result["frontend_risk_stale_result_ignores"], 1)
+        self.assertEqual(result["frontend_risk_stale_source_ignores"], 1)
+        self.assertEqual(result["frontend_risk_time_uncovered_ignores"], 1)
+
+    def test_counts_optimizer_iteration_caps(self):
+        lines = """\
+[fsm_node] L-BFGS reaches the maximum number of iterations.
+[fsm_node] unrelated optimizer warning
+[fsm_node] L-BFGS reaches the maximum number of iterations.
+"""
+        handle, path = tempfile.mkstemp(text=True)
+        try:
+            with os.fdopen(handle, "w") as stream:
+                stream.write(lines)
+            result = parse_full_refresh_ack_log(path)
+        finally:
+            os.unlink(path)
+        self.assertEqual(result["optimizer_iteration_cap_hits"], 2)
+
     def test_extracts_latest_dedicated_guard_payload_counters(self):
         lines = """\
 [WARN] -- [TRAJ_GUARD_RAW_DEBUG] sequence=3 latest_age_s=0.040 dedicated_messages=3 dedicated_payload_bytes=1200

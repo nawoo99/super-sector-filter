@@ -561,6 +561,31 @@ def parse_shadow_guard_log(path):
     }
 
 
+def parse_sensor_cadence_log(path):
+    """Read the simulator's final source-generation cadence summary."""
+    pattern = re.compile(
+        r"\[SENSOR_CADENCE_SUMMARY\]\s+"
+        r"frames=(\d+)\s+span_s=([0-9.]+)\s+hz=([0-9.]+)\s+"
+        r"raw_published=(\d+)\s+direct_handoffs=(\d+)\s+"
+        r"payload_bytes=(\d+)"
+    )
+    result = {}
+    with open(path, errors="replace") as stream:
+        for line in stream:
+            match = pattern.search(line)
+            if not match:
+                continue
+            result = {
+                "sensor_frames": int(match.group(1)),
+                "sensor_span_s": float(match.group(2)),
+                "sensor_hz": float(match.group(3)),
+                "sensor_raw_published": int(match.group(4)),
+                "sensor_direct_handoffs": int(match.group(5)),
+                "sensor_payload_bytes": int(match.group(6)),
+            }
+    return result
+
+
 def parse_full_refresh_ack_log(path):
     """Count generation-ACK safety transitions from the planner log."""
     counts = {
@@ -597,6 +622,21 @@ def parse_full_refresh_ack_log(path):
         "guard_recovery_active_duration_max_s": None,
         "guard_dedicated_messages": 0,
         "guard_dedicated_payload_bytes": 0,
+        "trajectory_commit_unique_generations": 0,
+        "trajectory_commit_last_generation": 0,
+        "trajectory_commit_span_s": 0.0,
+        "trajectory_commit_hz": 0.0,
+        "frontend_risk_received": 0,
+        "frontend_risk_occupied": 0,
+        "frontend_risk_ignored": 0,
+        "frontend_risk_enforced": 0,
+        "frontend_risk_ignore_events": 0,
+        "frontend_risk_brake_events": 0,
+        "frontend_risk_generation_mismatch_ignores": 0,
+        "frontend_risk_stale_result_ignores": 0,
+        "frontend_risk_stale_source_ignores": 0,
+        "frontend_risk_time_uncovered_ignores": 0,
+        "optimizer_iteration_cap_hits": 0,
     }
     markers = {
         "FULL_REFRESH_ACK_TIMEOUT": "full_refresh_ack_timeouts",
@@ -611,6 +651,8 @@ def parse_full_refresh_ack_log(path):
     }
     active_since = None
     active_durations = []
+    committed_generations = set()
+    committed_generation_times = []
     stamp_pattern = re.compile(r"\[(\d+(?:\.\d+)?)\]")
     same_map_replan_summary_pattern = re.compile(
         r"\[REPLAN_SAME_MAP_COALESCE_SUMMARY\]\s+skipped=(\d+)"
@@ -619,8 +661,54 @@ def parse_full_refresh_ack_log(path):
         r"\[TRAJ_GUARD_RAW_DEBUG\].*dedicated_messages=(\d+)\s+"
         r"dedicated_payload_bytes=(\d+)"
     )
+    frontend_risk_summary_pattern = re.compile(
+        r"\[FRONTEND_RISK_SUMMARY\]\s+received=(\d+)\s+occupied=(\d+)\s+"
+        r"ignored=(\d+)\s+enforced=(\d+)"
+    )
     with open(path, errors="replace") as stream:
         for line in stream:
+            if "[TRAJ_GUARD_COMMIT]" in line:
+                generation_match = re.search(r"\bgen=(\d+)", line)
+                generation_stamp_match = stamp_pattern.search(line)
+                if generation_match:
+                    generation = int(generation_match.group(1))
+                    counts["trajectory_commit_last_generation"] = max(
+                        counts["trajectory_commit_last_generation"], generation
+                    )
+                    if generation not in committed_generations:
+                        committed_generations.add(generation)
+                        if generation_stamp_match:
+                            committed_generation_times.append(
+                                float(generation_stamp_match.group(1))
+                            )
+            frontend_summary = frontend_risk_summary_pattern.search(line)
+            if frontend_summary:
+                counts["frontend_risk_received"] = int(
+                    frontend_summary.group(1)
+                )
+                counts["frontend_risk_occupied"] = int(
+                    frontend_summary.group(2)
+                )
+                counts["frontend_risk_ignored"] = int(
+                    frontend_summary.group(3)
+                )
+                counts["frontend_risk_enforced"] = int(
+                    frontend_summary.group(4)
+                )
+            if "[FRONTEND_RISK_ENFORCE] action=IGNORE" in line:
+                counts["frontend_risk_ignore_events"] += 1
+                if "generation_match=false" in line:
+                    counts["frontend_risk_generation_mismatch_ignores"] += 1
+                if " fresh=false" in line:
+                    counts["frontend_risk_stale_result_ignores"] += 1
+                if "source_fresh=false" in line:
+                    counts["frontend_risk_stale_source_ignores"] += 1
+                if "time_covered=false" in line:
+                    counts["frontend_risk_time_uncovered_ignores"] += 1
+            if "[FRONTEND_RISK_ENFORCE] action=BRAKE" in line:
+                counts["frontend_risk_brake_events"] += 1
+            if "maximum number of iterations" in line:
+                counts["optimizer_iteration_cap_hits"] += 1
             raw_debug = raw_debug_pattern.search(line)
             if raw_debug:
                 counts["guard_dedicated_messages"] = max(
@@ -705,6 +793,19 @@ def parse_full_refresh_ack_log(path):
         )
         counts["guard_recovery_active_duration_max_s"] = max(
             active_durations
+        )
+    counts["trajectory_commit_unique_generations"] = len(
+        committed_generations
+    )
+    if len(committed_generation_times) > 1:
+        span_s = max(
+            0.0,
+            committed_generation_times[-1] - committed_generation_times[0],
+        )
+        counts["trajectory_commit_span_s"] = span_s
+        counts["trajectory_commit_hz"] = (
+            (len(committed_generation_times) - 1) / span_s
+            if span_s > 0.0 else 0.0
         )
     return counts
 
@@ -965,6 +1066,17 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "guard_recovery_active_duration_s",
           "guard_recovery_active_duration_mean_s",
           "guard_recovery_active_duration_max_s",
+          "trajectory_commit_unique_generations",
+          "trajectory_commit_last_generation",
+          "trajectory_commit_span_s", "trajectory_commit_hz",
+          "frontend_risk_received", "frontend_risk_occupied",
+          "frontend_risk_ignored", "frontend_risk_enforced",
+          "frontend_risk_ignore_events", "frontend_risk_brake_events",
+          "frontend_risk_generation_mismatch_ignores",
+          "frontend_risk_stale_result_ignores",
+          "frontend_risk_stale_source_ignores",
+          "frontend_risk_time_uncovered_ignores",
+          "optimizer_iteration_cap_hits",
           "shadow_safe_candidates", "shadow_unsafe_candidates",
           "shadow_skipped_candidates", "shadow_validated_candidates",
           "shadow_geometric_unsafe", "shadow_map_race",
@@ -1065,7 +1177,11 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_slowdown_full_refresh_superseded_count",
           "filter_slowdown_full_refresh_ack_latency_mean_s",
           "filter_slowdown_full_refresh_ack_latency_max_s",
+          "sensor_frames", "sensor_span_s", "sensor_hz",
+          "sensor_raw_published", "sensor_direct_handoffs",
+          "sensor_payload_bytes", "sensor_payload_mib_s",
           "filter_frames", "filter_cloud_input_callbacks",
+          "filter_cloud_input_span_s", "filter_cloud_input_hz",
           "filter_cloud_worker_overwrites", "filter_cloud_input_payload_bytes",
           "filter_cloud_compute_ms_mean", "filter_cloud_compute_ms_max",
           "filter_in_process_guard_handoffs",
@@ -1074,10 +1190,16 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_risk_accum_window_s", "filter_risk_clearance_m",
           "filter_risk_horizon_s", "filter_risk_sample_dt_s",
           "filter_risk_min_points", "filter_risk_voxel_m",
-          "filter_risk_max_cloud_age_s", "filter_risk_worker_overwrites",
+          "filter_risk_max_cloud_age_s", "filter_risk_max_eval_hz",
+          "filter_risk_worker_overwrites", "filter_risk_rate_limited_jobs",
           "filter_risk_trajectory_messages",
+          "filter_risk_trajectory_unique_generations",
+          "filter_risk_trajectory_last_generation",
+          "filter_risk_trajectory_generation_span_s",
+          "filter_risk_trajectory_generation_hz",
           "filter_risk_invalid_trajectory_messages",
           "filter_risk_verdict_messages",
+          "filter_risk_verdict_span_s", "filter_risk_verdict_hz",
           "filter_risk_verdict_payload_bytes",
           "filter_risk_occupied_verdicts",
           "filter_risk_compute_ms_mean", "filter_risk_compute_ms_max",
@@ -1085,6 +1207,8 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_risk_compute_core_equivalent",
           "filter_frontend_compute_core_equivalent",
           "filter_processed_input_payload_bytes", "filter_published_frames",
+          "filter_cloud_publish_events", "filter_cloud_publish_span_s",
+          "filter_cloud_publish_hz",
           "filter_published_payload_bytes",
           "filter_rate_limited_frames", "filter_max_publish_hz",
           "filter_guard_witness_topic", "filter_guard_witness_radius_m",
@@ -1102,6 +1226,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_map_process_ack_topic",
           "filter_full_refresh_request_topic",
           "filter_map_commit_status_count", "filter_map_commit_version",
+          "filter_map_commit_span_s", "filter_map_commit_hz",
           "filter_commit_refresh_frames",
           "filter_pre_stale_full_refresh_frames",
           "filter_pre_stale_full_refresh_ack_count",
@@ -1405,6 +1530,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             filter_profile="legacy",
             filter_backend="python",
             adaptive_max_publish_hz=5.0,
+            adaptive_map_commit_refresh_age_s=0.12,
+            adaptive_map_commit_refresh_min_interval_s=0.10,
+            adaptive_risk_max_eval_hz=0.0,
             adaptive_slowdown_full_refresh_v=0.0,
             adaptive_slowdown_full_refresh_rearm_v=0.0,
             adaptive_trajectory_guard_hold_s=2.5,
@@ -1648,6 +1776,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     " --replan-open-burst-s 0.6"
                     " --replan-open-cooldown-s 1.4"
                     f" --max-publish-hz {adaptive_max_publish_hz}"
+                    f" --map-commit-refresh-age-s "
+                    f"{adaptive_map_commit_refresh_age_s}"
+                    f" --map-commit-refresh-min-interval-s "
+                    f"{adaptive_map_commit_refresh_min_interval_s}"
                     f" --trajectory-guard-hold-s "
                     f"{adaptive_trajectory_guard_hold_s}"
                     f" --trajectory-guard-active-max-publish-hz "
@@ -1702,6 +1834,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 " --risk-min-points 200"
                 " --risk-voxel-m 0.0"
                 " --risk-max-cloud-age-s 0.75"
+                f" --risk-max-eval-hz {adaptive_risk_max_eval_hz}"
             )
         filt_proc = None
         if (not raw_direct and not integrated_filter_active
@@ -2241,6 +2374,18 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             if filter_stats.get("kept_pct") is not None:
                 rec["kept_pct"] = filter_stats["kept_pct"]
                 kept_pct = filter_stats["kept_pct"]
+        if os.path.exists(reference_stack_log):
+            sensor_cadence = parse_sensor_cadence_log(reference_stack_log)
+            rec.update(sensor_cadence)
+            if (
+                sensor_cadence.get("sensor_payload_bytes") is not None
+                and (sensor_cadence.get("sensor_span_s") or 0.0) > 0.0
+            ):
+                rec["sensor_payload_mib_s"] = (
+                    sensor_cadence["sensor_payload_bytes"]
+                    / sensor_cadence["sensor_span_s"]
+                    / (1024.0 * 1024.0)
+                )
         if is_seedmap_shadow and os.path.exists(reference_stack_log):
             rec.update(parse_shadow_guard_log(reference_stack_log))
             if os.path.exists(out_json):
@@ -2608,6 +2753,32 @@ def main():
         help="strict-burst Adaptive publication cap (default: 5.0 Hz)",
     )
     ap.add_argument(
+        "--adaptive-map-commit-refresh-age-s",
+        type=float,
+        default=0.12,
+        help=(
+            "allow one Adaptive sector heartbeat after this ROG commit age; "
+            "set above the publication period for cadence-matched sweeps"
+        ),
+    )
+    ap.add_argument(
+        "--adaptive-map-commit-refresh-min-interval-s",
+        type=float,
+        default=0.10,
+        help=(
+            "minimum interval between Adaptive commit-refresh heartbeats"
+        ),
+    )
+    ap.add_argument(
+        "--adaptive-risk-max-eval-hz",
+        type=float,
+        default=0.0,
+        help=(
+            "latest-only front-end risk evaluation cap; 0 evaluates every "
+            "sensor frame"
+        ),
+    )
+    ap.add_argument(
         "--adaptive-slowdown-full-refresh-v",
         type=float,
         default=0.0,
@@ -2744,6 +2915,15 @@ def main():
         ap.error("--loop-timeout must be positive")
     if args.adaptive_max_publish_hz < 0.0:
         ap.error("--adaptive-max-publish-hz must be non-negative")
+    if args.adaptive_map_commit_refresh_age_s < 0.0:
+        ap.error("--adaptive-map-commit-refresh-age-s must be non-negative")
+    if args.adaptive_map_commit_refresh_min_interval_s < 0.0:
+        ap.error(
+            "--adaptive-map-commit-refresh-min-interval-s must be "
+            "non-negative"
+        )
+    if args.adaptive_risk_max_eval_hz < 0.0:
+        ap.error("--adaptive-risk-max-eval-hz must be non-negative")
     if args.adaptive_slowdown_full_refresh_v < 0.0:
         ap.error("--adaptive-slowdown-full-refresh-v must be non-negative")
     if args.adaptive_slowdown_full_refresh_v > 0.0 and not (
@@ -3038,6 +3218,15 @@ def main():
                         filter_profile=args.filter_profile,
                         filter_backend=args.filter_backend,
                         adaptive_max_publish_hz=args.adaptive_max_publish_hz,
+                        adaptive_map_commit_refresh_age_s=(
+                            args.adaptive_map_commit_refresh_age_s
+                        ),
+                        adaptive_map_commit_refresh_min_interval_s=(
+                            args.adaptive_map_commit_refresh_min_interval_s
+                        ),
+                        adaptive_risk_max_eval_hz=(
+                            args.adaptive_risk_max_eval_hz
+                        ),
                         adaptive_slowdown_full_refresh_v=(
                             args.adaptive_slowdown_full_refresh_v
                         ),

@@ -101,6 +101,7 @@ int main(int argc, char **argv) {
 
   side_executor.cancel();
   side_thread.join();
+  simulator->reportSensorCadence();
   filter.node.reset();
   simulator.reset();
   configuration_node.reset();

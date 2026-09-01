@@ -90,6 +90,13 @@ namespace traj_opt {
         double smooth_eps{0};
         int integral_reso{0};
         double opt_accuracy{0};
+        // A real-time planner must never leave L-BFGS unbounded. The
+        // upstream solver default (0) means unlimited iterations; one rare
+        // non-converging replan can therefore retain a planner thread and
+        // grow its allocation high-water mark until the process is OOM
+        // killed. Keep a generous per-optimization bound that normal solves
+        // do not reach, while making the failure mode finite.
+        int max_iterations{2048};
 
         Config() = default;
 
@@ -117,6 +124,8 @@ namespace traj_opt {
             loader.LoadParam("traj_opt" + ns + "uniform_time_en", uniform_time_en, false);
             loader.LoadParam("traj_opt" + ns + "block_energy_cost", block_energy_cost, false);
             loader.LoadParam("traj_opt" + ns + "opt_accuracy", opt_accuracy, 1.0e-5);
+            loader.LoadParam("traj_opt" + ns + "max_iterations", max_iterations, 2048);
+            max_iterations = std::max(1, max_iterations);
             loader.LoadParam("traj_opt" + ns + "integral_reso", integral_reso, 10);
             loader.LoadParam("traj_opt" + ns + "smooth_eps", smooth_eps, 0.01);
             loader.LoadParam("traj_opt/boundary/max_vel", max_vel, -1.0);

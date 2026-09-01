@@ -758,6 +758,7 @@ double ExpTrajOpt::optimize(Trajectory &traj, const double &relCostTol) {
     lbfgs_params.min_step = 1.0e-32;
     lbfgs_params.g_epsilon = 0.0;
     lbfgs_params.delta = relCostTol;
+    lbfgs_params.max_iterations = cfg_.max_iterations;
     VecDf times_init = opt_vars.times;
 
     opt_vars.init_ts = opt_vars.times;

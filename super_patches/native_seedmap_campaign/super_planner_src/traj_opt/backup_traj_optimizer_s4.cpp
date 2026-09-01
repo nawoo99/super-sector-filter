@@ -579,6 +579,7 @@ double BackupTrajOpt::optimize(Trajectory &traj, const double &relCostTol) {
     lbfgs_params.min_step = 1.0e-32;
     lbfgs_params.g_epsilon = 0.0;
     lbfgs_params.delta = relCostTol;
+    lbfgs_params.max_iterations = cfg_.max_iterations;
     int ret;
     opt_vars.penalty_log.resize(8);
     opt_vars.penalty_log.setZero();

@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
 
     side_executor.cancel();
     side_thread.join();
+    node->reportSensorCadence();
     rclcpp::shutdown();
     return 0;
 }

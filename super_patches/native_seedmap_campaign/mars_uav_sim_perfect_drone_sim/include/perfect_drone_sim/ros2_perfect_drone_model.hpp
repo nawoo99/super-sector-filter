@@ -14,7 +14,10 @@
 #include "pcl_conversions/pcl_conversions.h"
 #include "perfect_drone_sim/config.hpp"
 #include "tf2_ros/transform_broadcaster.h"
+#include <chrono>
+#include <cstdint>
 #include <functional>
+#include <optional>
 
 
 typedef Eigen::Matrix<double, 3, 1> Vec3;
@@ -56,6 +59,13 @@ namespace perfect_drone {
         std::string mesh_resource_;
         SensorCloudObserver local_cloud_observer_;
         bool publish_raw_cloud_{true};
+        using SensorCadenceClock = std::chrono::steady_clock;
+        std::optional<SensorCadenceClock::time_point> first_sensor_frame_time_;
+        std::optional<SensorCadenceClock::time_point> last_sensor_frame_time_;
+        std::uint64_t sensor_frame_count_{0};
+        std::uint64_t raw_cloud_publish_count_{0};
+        std::uint64_t direct_cloud_handoff_count_{0};
+        std::uint64_t sensor_payload_bytes_{0};
 
         nav_msgs::msg::Odometry odom_;
         nav_msgs::msg::Path path_;
@@ -195,6 +205,28 @@ namespace perfect_drone {
             return global_pc_pub_cbk_group;
         }
 
+        void reportSensorCadence() const {
+            double span_s = 0.0;
+            if (first_sensor_frame_time_ && last_sensor_frame_time_) {
+                span_s = std::chrono::duration<double>(
+                        *last_sensor_frame_time_ - *first_sensor_frame_time_)
+                                 .count();
+            }
+            const double rate_hz = span_s > 0.0 && sensor_frame_count_ > 1
+                    ? static_cast<double>(sensor_frame_count_ - 1) / span_s
+                    : 0.0;
+            RCLCPP_INFO(
+                    this->get_logger(),
+                    "[SENSOR_CADENCE_SUMMARY] frames=%lu span_s=%.6f "
+                    "hz=%.6f raw_published=%lu direct_handoffs=%lu "
+                    "payload_bytes=%lu",
+                    static_cast<unsigned long>(sensor_frame_count_), span_s,
+                    rate_hz,
+                    static_cast<unsigned long>(raw_cloud_publish_count_),
+                    static_cast<unsigned long>(direct_cloud_handoff_count_),
+                    static_cast<unsigned long>(sensor_payload_bytes_));
+        }
+
 
         void publishPC() {
             pcl::PointCloud<marsim::PointType>::Ptr local_map(new pcl::PointCloud<marsim::PointType>);
@@ -204,12 +236,28 @@ namespace perfect_drone {
             pcl::toROSMsg(*local_map, *pc_msg);
             pc_msg->header.frame_id = "world";
             pc_msg->header.stamp = this->get_clock()->now();
+            const auto sensor_frame_time = SensorCadenceClock::now();
+            if (!first_sensor_frame_time_) {
+                first_sensor_frame_time_ = sensor_frame_time;
+            }
+            last_sensor_frame_time_ = sensor_frame_time;
+            ++sensor_frame_count_;
+            sensor_payload_bytes_ += pc_msg->data.size();
             std::cout << "Publish local map size: " << local_map->size() << std::endl;
             if (local_cloud_observer_) {
                 local_cloud_observer_(pc_msg);
+                ++direct_cloud_handoff_count_;
             }
             if (publish_raw_cloud_ && local_pc_pub_) {
                 local_pc_pub_->publish(*pc_msg);
+                ++raw_cloud_publish_count_;
+            }
+            // Campaign runners terminate the launch tree after mission
+            // completion, so destructor-time output is not guaranteed to
+            // flush. Emit a compact checkpoint every 50 sensor frames; the
+            // parser takes the latest complete summary.
+            if (sensor_frame_count_ % 50 == 0) {
+                reportSensorCadence();
             }
         }
 

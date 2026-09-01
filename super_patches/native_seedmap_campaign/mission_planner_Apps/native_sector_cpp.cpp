@@ -96,6 +96,7 @@ struct Options {
   int risk_min_points{200};
   double risk_voxel_m{0.0};
   double risk_max_cloud_age_s{0.75};
+  double risk_max_eval_hz{0.0};
   double risk_egress_tolerance_m{0.005};
   double risk_egress_min_progress_m{0.02};
 };
@@ -267,6 +268,8 @@ Options parseArgs(int argc, char **argv) {
       options.risk_voxel_m = parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--risk-max-cloud-age-s") {
       options.risk_max_cloud_age_s = parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--risk-max-eval-hz") {
+      options.risk_max_eval_hz = parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--risk-egress-tolerance-m") {
       options.risk_egress_tolerance_m =
           parseDouble(arg, requireValue(i, arg));
@@ -321,6 +324,7 @@ Options parseArgs(int argc, char **argv) {
       options.risk_clearance_m <= 0.0 || options.risk_horizon_s < 0.0 ||
       options.risk_sample_dt_s <= 0.0 || options.risk_min_points <= 0 ||
       options.risk_voxel_m < 0.0 || options.risk_max_cloud_age_s <= 0.0 ||
+      options.risk_max_eval_hz < 0.0 ||
       options.risk_egress_tolerance_m < 0.0 ||
       options.risk_egress_min_progress_m < 0.0 ||
       near_max < options.near_field_radius_m || guard_burst < 0.0 ||
@@ -821,6 +825,7 @@ private:
     last_map_commit_rx_s_ = now;
     last_map_commit_version_ = msg->data;
     ++map_commit_status_count_;
+    recordCadence(map_commit_first_ns_, map_commit_last_ns_);
   }
 
   struct PendingFullRefresh {
@@ -1264,6 +1269,39 @@ private:
 
   using RiskClock = std::chrono::steady_clock;
 
+  static int64_t cadenceTimestampNs(const RiskClock::time_point time) {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(
+               time.time_since_epoch())
+        .count();
+  }
+
+  static void recordCadence(
+      std::atomic<int64_t> &first_ns, std::atomic<int64_t> &last_ns,
+      const RiskClock::time_point time = RiskClock::now()) {
+    const int64_t timestamp_ns = cadenceTimestampNs(time);
+    int64_t unset = 0;
+    first_ns.compare_exchange_strong(unset, timestamp_ns,
+                                     std::memory_order_relaxed);
+    last_ns.store(timestamp_ns, std::memory_order_relaxed);
+  }
+
+  static double cadenceSpanSeconds(
+      const std::atomic<int64_t> &first_ns,
+      const std::atomic<int64_t> &last_ns) {
+    const int64_t first = first_ns.load(std::memory_order_relaxed);
+    const int64_t last = last_ns.load(std::memory_order_relaxed);
+    return first > 0 && last >= first ? 1e-9 * (last - first) : 0.0;
+  }
+
+  static double cadenceRateHz(
+      const uint64_t count, const std::atomic<int64_t> &first_ns,
+      const std::atomic<int64_t> &last_ns) {
+    const double span_s = cadenceSpanSeconds(first_ns, last_ns);
+    return count > 1 && span_s > 0.0
+        ? static_cast<double>(count - 1) / span_s
+        : 0.0;
+  }
+
   struct PolynomialSnapshot {
     uint64_t generation{0};
     double start_wt{0.0};
@@ -1378,13 +1416,22 @@ private:
     snapshot.coef_x = msg->coef_pos_x;
     snapshot.coef_y = msg->coef_pos_y;
     snapshot.coef_z = msg->coef_pos_z;
+    bool new_generation = false;
     {
       std::lock_guard<std::mutex> lock(risk_trajectory_mutex_);
       if (snapshot.generation < latest_risk_trajectory_.generation)
         return;
+      new_generation =
+          snapshot.generation > latest_risk_trajectory_.generation;
       latest_risk_trajectory_ = std::move(snapshot);
     }
     ++risk_trajectory_messages_;
+    if (new_generation) {
+      ++risk_trajectory_unique_generations_;
+      risk_trajectory_last_generation_.store(
+          msg->trajectory_generation, std::memory_order_relaxed);
+      recordCadence(risk_trajectory_first_ns_, risk_trajectory_last_ns_);
+    }
   }
 
   void enqueueRiskCloud(
@@ -1392,6 +1439,7 @@ private:
       const RiskClock::time_point receive_time, const uint64_t sequence) {
     if (!risk_verdict_pub_)
       return;
+    bool evaluation_due = true;
     {
       std::lock_guard<std::mutex> lock(risk_worker_mutex_);
       risk_cloud_window_.push_back(RiskCloudBatch{msg, receive_time, sequence});
@@ -1403,11 +1451,33 @@ private:
                      .count() > retain_s) {
         risk_cloud_window_.pop_front();
       }
-      if (pending_risk_job_)
-        ++risk_worker_overwrites_;
-      pending_risk_job_ = RiskJob{sequence, cloudStampNs(*msg), receive_time};
+      if (options_.risk_max_eval_hz > 0.0) {
+        const auto period = std::chrono::duration<double>(
+            1.0 / options_.risk_max_eval_hz);
+        if (!risk_next_eval_time_) {
+          risk_next_eval_time_ = receive_time +
+              std::chrono::duration_cast<RiskClock::duration>(period);
+        } else if (receive_time >= *risk_next_eval_time_) {
+          do {
+            *risk_next_eval_time_ +=
+                std::chrono::duration_cast<RiskClock::duration>(period);
+          } while (receive_time >= *risk_next_eval_time_);
+        } else {
+          evaluation_due = false;
+        }
+      }
+      if (evaluation_due) {
+        if (pending_risk_job_)
+          ++risk_worker_overwrites_;
+        pending_risk_job_ =
+            RiskJob{sequence, cloudStampNs(*msg), receive_time};
+      } else {
+        ++risk_rate_limited_jobs_;
+      }
     }
-    risk_worker_cv_.notify_one();
+    if (evaluation_due) {
+      risk_worker_cv_.notify_one();
+    }
   }
 
   mars_quadrotor_msgs::msg::TrajectoryRiskVerdict calculateRiskVerdict(
@@ -1644,6 +1714,7 @@ private:
       }
       auto verdict = calculateRiskVerdict(job);
       ++risk_verdict_messages_;
+      recordCadence(risk_verdict_first_ns_, risk_verdict_last_ns_);
       rclcpp::SerializedMessage serialized_verdict;
       risk_verdict_serializer_.serialize_message(
           &verdict, &serialized_verdict);
@@ -1708,10 +1779,12 @@ private:
   }
 
   void cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+    const auto receive_time = RiskClock::now();
     const uint64_t cloud_sequence = ++cloud_input_callbacks_;
+    recordCadence(cloud_input_first_ns_, cloud_input_last_ns_, receive_time);
     cloud_input_payload_bytes_.fetch_add(msg->data.size(),
                                          std::memory_order_relaxed);
-    enqueueRiskCloud(msg, RiskClock::now(), cloud_sequence);
+    enqueueRiskCloud(msg, receive_time, cloud_sequence);
     if (guard_cloud_observer_) {
       guard_cloud_observer_(msg);
       ++in_process_guard_handoffs_;
@@ -1848,6 +1921,12 @@ private:
     guard_witness_pub_->publish(witness);
   }
 
+  void publishFilteredCloud(const sensor_msgs::msg::PointCloud2 &msg) {
+    cloud_pub_->publish(msg);
+    ++cloud_publish_events_;
+    recordCadence(cloud_publish_first_ns_, cloud_publish_last_ns_);
+  }
+
   void processCloud(const sensor_msgs::msg::PointCloud2::SharedPtr &msg) {
     const double now = nowSeconds();
     const bool state_changed =
@@ -1932,7 +2011,7 @@ private:
     if (passthrough) {
       kept_points_ += input_points;
       published_payload_bytes_ += msg->data.size();
-      cloud_pub_->publish(*msg);
+      publishFilteredCloud(*msg);
       return;
     }
 
@@ -1943,7 +2022,7 @@ private:
           "cloud lacks float x/y/z fields; passing it through");
       kept_points_ += input_points;
       published_payload_bytes_ += msg->data.size();
-      cloud_pub_->publish(*msg);
+      publishFilteredCloud(*msg);
       return;
     }
     const bool swap_bytes = msg->is_bigendian != hostIsBigEndian();
@@ -2029,7 +2108,7 @@ private:
     output.row_step = output.width * output.point_step;
     kept_points_ += kept_this_frame;
     published_payload_bytes_ += output.data.size();
-    cloud_pub_->publish(output);
+    publishFilteredCloud(output);
   }
 
   void publishState() {
@@ -2124,7 +2203,14 @@ private:
                ? options_.resume_v
                : 0.2);
     integer("frames", frames_);
-    integer("cloud_input_callbacks", cloud_input_callbacks_.load());
+    const uint64_t cloud_input_count =
+        cloud_input_callbacks_.load(std::memory_order_relaxed);
+    integer("cloud_input_callbacks", cloud_input_count);
+    number("cloud_input_span_s",
+           cadenceSpanSeconds(cloud_input_first_ns_, cloud_input_last_ns_));
+    number("cloud_input_hz",
+           cadenceRateHz(cloud_input_count, cloud_input_first_ns_,
+                         cloud_input_last_ns_));
     integer("cloud_worker_overwrites", cloud_worker_overwrites_.load());
     integer("cloud_input_payload_bytes",
             cloud_input_payload_bytes_.load(std::memory_order_relaxed));
@@ -2148,16 +2234,39 @@ private:
             static_cast<uint64_t>(options_.risk_min_points));
     number("risk_voxel_m", options_.risk_voxel_m);
     number("risk_max_cloud_age_s", options_.risk_max_cloud_age_s);
+    number("risk_max_eval_hz", options_.risk_max_eval_hz);
     integer("risk_worker_overwrites",
             risk_worker_overwrites_.load(std::memory_order_relaxed));
+    integer("risk_rate_limited_jobs",
+            risk_rate_limited_jobs_.load(std::memory_order_relaxed));
     integer("risk_trajectory_messages",
             risk_trajectory_messages_.load(std::memory_order_relaxed));
+    const uint64_t risk_trajectory_generation_count =
+        risk_trajectory_unique_generations_.load(std::memory_order_relaxed);
+    integer("risk_trajectory_unique_generations",
+            risk_trajectory_generation_count);
+    integer("risk_trajectory_last_generation",
+            risk_trajectory_last_generation_.load(
+                std::memory_order_relaxed));
+    number("risk_trajectory_generation_span_s",
+           cadenceSpanSeconds(risk_trajectory_first_ns_,
+                              risk_trajectory_last_ns_));
+    number("risk_trajectory_generation_hz",
+           cadenceRateHz(risk_trajectory_generation_count,
+                         risk_trajectory_first_ns_,
+                         risk_trajectory_last_ns_));
     integer("risk_invalid_trajectory_messages",
             risk_invalid_trajectory_messages_.load(
                 std::memory_order_relaxed));
     const uint64_t risk_verdict_count =
         risk_verdict_messages_.load(std::memory_order_relaxed);
     integer("risk_verdict_messages", risk_verdict_count);
+    number("risk_verdict_span_s",
+           cadenceSpanSeconds(risk_verdict_first_ns_,
+                              risk_verdict_last_ns_));
+    number("risk_verdict_hz",
+           cadenceRateHz(risk_verdict_count, risk_verdict_first_ns_,
+                         risk_verdict_last_ns_));
     integer("risk_verdict_payload_bytes",
             risk_verdict_payload_bytes_.load(std::memory_order_relaxed));
     integer("risk_occupied_verdicts",
@@ -2171,6 +2280,15 @@ private:
            risk_compute_us_max_.load(std::memory_order_relaxed) / 1000.0);
     integer("processed_input_payload_bytes", processed_input_payload_bytes_);
     integer("published_frames", published_frames_);
+    const uint64_t cloud_publish_count =
+        cloud_publish_events_.load(std::memory_order_relaxed);
+    integer("cloud_publish_events", cloud_publish_count);
+    number("cloud_publish_span_s",
+           cadenceSpanSeconds(cloud_publish_first_ns_,
+                              cloud_publish_last_ns_));
+    number("cloud_publish_hz",
+           cadenceRateHz(cloud_publish_count, cloud_publish_first_ns_,
+                         cloud_publish_last_ns_));
     integer("published_payload_bytes", published_payload_bytes_);
     integer("rate_limited_frames", rate_limited_frames_);
     string("guard_witness_topic", options_.guard_witness_topic);
@@ -2201,6 +2319,11 @@ private:
            options_.full_refresh_request_topic);
     integer("map_commit_status_count", map_commit_status_count_);
     integer("map_commit_version", last_map_commit_version_);
+    number("map_commit_span_s",
+           cadenceSpanSeconds(map_commit_first_ns_, map_commit_last_ns_));
+    number("map_commit_hz",
+           cadenceRateHz(map_commit_status_count_, map_commit_first_ns_,
+                         map_commit_last_ns_));
     integer("commit_refresh_frames", commit_refresh_frames_);
     integer("pre_stale_full_refresh_frames",
             pre_stale_full_refresh_frames_);
@@ -2465,6 +2588,8 @@ private:
   std::thread cloud_worker_;
   bool cloud_worker_stop_{false};
   std::atomic<uint64_t> cloud_input_callbacks_{0};
+  std::atomic<int64_t> cloud_input_first_ns_{0};
+  std::atomic<int64_t> cloud_input_last_ns_{0};
   std::atomic<uint64_t> cloud_worker_overwrites_{0};
   std::atomic<uint64_t> cloud_input_payload_bytes_{0};
   std::atomic<uint64_t> filter_compute_us_sum_{0};
@@ -2478,13 +2603,21 @@ private:
   std::condition_variable risk_worker_cv_;
   std::deque<RiskCloudBatch> risk_cloud_window_;
   std::optional<RiskJob> pending_risk_job_;
+  std::optional<RiskClock::time_point> risk_next_eval_time_;
   std::thread risk_worker_;
   bool risk_worker_stop_{false};
   std::atomic<uint64_t> risk_worker_overwrites_{0};
+  std::atomic<uint64_t> risk_rate_limited_jobs_{0};
   std::atomic<uint64_t> risk_trajectory_messages_{0};
+  std::atomic<uint64_t> risk_trajectory_unique_generations_{0};
+  std::atomic<uint64_t> risk_trajectory_last_generation_{0};
+  std::atomic<int64_t> risk_trajectory_first_ns_{0};
+  std::atomic<int64_t> risk_trajectory_last_ns_{0};
   std::atomic<uint64_t> risk_invalid_trajectory_messages_{0};
   std::atomic<uint64_t> risk_request_sequence_{0};
   std::atomic<uint64_t> risk_verdict_messages_{0};
+  std::atomic<int64_t> risk_verdict_first_ns_{0};
+  std::atomic<int64_t> risk_verdict_last_ns_{0};
   std::atomic<uint64_t> risk_verdict_payload_bytes_{0};
   std::atomic<uint64_t> risk_occupied_verdicts_{0};
   rclcpp::Serialization<
@@ -2501,6 +2634,9 @@ private:
   uint64_t total_points_{0};
   uint64_t frames_{0};
   uint64_t published_frames_{0};
+  std::atomic<uint64_t> cloud_publish_events_{0};
+  std::atomic<int64_t> cloud_publish_first_ns_{0};
+  std::atomic<int64_t> cloud_publish_last_ns_{0};
   uint64_t rate_limited_frames_{0};
   uint64_t input_points_{0};
   uint64_t processed_input_payload_bytes_{0};
@@ -2522,6 +2658,8 @@ private:
       pre_stale_pending_exact_ack_;
   uint64_t map_commit_status_count_{0};
   uint64_t last_map_commit_version_{0};
+  std::atomic<int64_t> map_commit_first_ns_{0};
+  std::atomic<int64_t> map_commit_last_ns_{0};
   uint64_t commit_refresh_frames_{0};
   uint64_t pre_stale_full_refresh_frames_{0};
   uint64_t pre_stale_full_refresh_ack_count_{0};
