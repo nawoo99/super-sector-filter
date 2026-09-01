@@ -3399,3 +3399,65 @@ alignment, not a population guarantee or statistically significant safety
 advantage. Detailed map tables, claim boundaries and evidence paths are in
 `docs/nearfield_prefilter_raw_final_20260901.md`; raw/summary are
 `results/nearfield_prefilter_raw_final_seed1_10_three_mode_n10_cgroup_{raw,summary}_20260901.csv`.
+
+### 8.46 In-process zero-copy raw guard handoff and maps7/9/10 n=3 (2026-09-01)
+
+The bounded witness follow-up first implemented an optional 360-degree radius
+crop in the native C++ filter. It was functionally safe, but an 8 m witness
+retained about 93.5% of points and a 5 m witness about 80.7%; the latter still
+added roughly 3.0-3.4 MiB/s in Adaptive smokes. Moving that witness into a
+composed process removed its DDS hop but not the large logical cloud. The
+external bounded-witness design was therefore rejected.
+
+The final architecture composes the native filter and FSM with intra-process
+communications and hands the exact raw `PointCloud2::SharedPtr` received by the
+filter directly to the FSM raw-window ingest path. Adaptive alone enables this
+observer; Sector remains a pure angular-cut ablation. The FSM creates no
+dedicated raw subscriber in injection mode, no cropped witness is repacked or
+published, and the existing asynchronous latest-only worker still performs all
+window accumulation, crop and KD-tree work. Standard tight_v7 profiles remain
+unchanged and all experimental options remain explicit/default-off.
+
+The runner now supports separate Full, Sector and Adaptive configs plus
+`cpp-intra`, and reports source/filter/witness, DDS, intra-process and logical
+planner payloads separately. Release build, 24 campaign pytest cases and the
+standalone C++ equivalence test passed.
+
+The first rotating campaign exposed four accidentally omitted tail parameters
+in the new witness YAML (`p_hit`, `p_max`, `unk_thresh` and its comment). Full
+and Sector used separate complete profiles and were unaffected. After restoring
+the file, Adaptive was rerun three times per map with the established complete
+raw-enforce profile and the same in-process injection. The final comparison is
+the original Full/Sector 18 rows plus the corrected Adaptive nine rows. All 27
+were first-attempt, run/performance/cgroup-valid with no retry, OOM or speed
+violation. Full/Sector/Adaptive completion was 9/9, 9/9, 9/9 and source-static-
+PCD safety was 9/9, 8/9, 9/9. Sector Map10 run3 completed but contacted the
+source map at clearance -0.065 m; Full and Adaptive had zero contact. Adaptive
+made 42 effective Full opens and 31 trajectory-guard opens. It passed 3,764 raw
+SharedPtrs in process and externally published zero witness frames.
+
+Mean Full/Sector/Adaptive times were 93.802/93.427/104.551 s and worst
+clearances +0.189/-0.065/+0.123 m. Adaptive versus Full reduced ROG-Map payload
+48.107%, algorithm mean cores 22.492%, algorithm core-seconds 13.003%,
+end-to-end mean cores 17.642% and end-to-end core-seconds 7.842%, while time
+rose 11.459%. Mean algorithm peak PSS changed only -0.122%, so there is no
+material memory-reduction claim.
+
+Measured DDS cloud rate was 16.575% below Full in this sample, but source bytes
+per scan were nearly equal and the rate includes simulator cadence variation.
+The defensible architecture claim is removal of the second full-raw DDS hop,
+not fewer raw sensor bytes per scan. Logical planner ingress is 35.465% higher
+because it counts both the zero-copy safety consumption and filtered ROG input;
+it must not be presented as wire traffic.
+
+The corrected Map9 Adaptive 127.39 s tail had 73 guard recoveries and 83.615 s
+of recovery-active time. Across nine Adaptive rows, mission time and accumulated
+recovery-active time correlated at 0.978, pointing to repeated certified
+stop-and-reroute rather than CPU starvation. The next efficiency work should
+coalesce same-obstacle/generation recovery or reuse bounded topology results
+without weakening the safety gate. Population claims still require the planned
+Map1-10 n=10 regression. Full details are in
+`docs/inprocess_raw_guard_handoff_20260901.md`; Full/Sector raw and the combined
+summary are `results/inprocess_raw_handoff_seed7_9_10_three_mode_n3_{raw,summary}_20260901.csv`,
+and corrected Adaptive raw is
+`results/inprocess_raw_handoff_corrected_adaptive_seed7_9_10_n3_raw_20260901.csv`.

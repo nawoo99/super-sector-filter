@@ -38,6 +38,22 @@ class ShadowGuardLogTest(unittest.TestCase):
 
 
 class RecoveryBranchLogTest(unittest.TestCase):
+    def test_extracts_latest_dedicated_guard_payload_counters(self):
+        lines = """\
+[WARN] -- [TRAJ_GUARD_RAW_DEBUG] sequence=3 latest_age_s=0.040 dedicated_messages=3 dedicated_payload_bytes=1200
+[WARN] -- [TRAJ_GUARD_RAW_DEBUG] sequence=9 latest_age_s=0.020 dedicated_messages=9 dedicated_payload_bytes=4800
+"""
+        handle, path = tempfile.mkstemp(text=True)
+        try:
+            with os.fdopen(handle, "w") as stream:
+                stream.write(lines)
+            result = parse_full_refresh_ack_log(path)
+        finally:
+            os.unlink(path)
+
+        self.assertEqual(result["guard_dedicated_messages"], 9)
+        self.assertEqual(result["guard_dedicated_payload_bytes"], 4800)
+
     def test_counts_fault_injection_and_bounded_egress_markers(self):
         lines = """\
 [WARN] -- [TEST_FAULT_LOCAL_ESCAPE_ARM] direction=[1,0,0]

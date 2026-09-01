@@ -1,5 +1,7 @@
 #include <rclcpp/rclcpp.hpp>
 
+#include <mission_planner/native_sector_cpp.hpp>
+
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/msg/point_field.hpp>
@@ -67,6 +69,8 @@ struct Options {
   double near_field_radius_m{1.5};
   double near_field_speed_gain_s{0.0};
   std::optional<double> near_field_max_radius_m;
+  std::string guard_witness_topic;
+  double guard_witness_radius_m{0.0};
   double open_burst_s{0.0};
   double open_cooldown_s{0.0};
   std::string trajectory_guard_topic{
@@ -201,6 +205,11 @@ Options parseArgs(int argc, char **argv) {
       options.near_field_speed_gain_s = parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--near-field-max-radius-m") {
       options.near_field_max_radius_m = parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--guard-witness-topic") {
+      options.guard_witness_topic = requireValue(i, arg);
+    } else if (arg == "--guard-witness-radius-m") {
+      options.guard_witness_radius_m =
+          parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--open-burst-s") {
       options.open_burst_s = parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--open-cooldown-s") {
@@ -262,12 +271,18 @@ Options parseArgs(int argc, char **argv) {
       options.trajectory_guard_ack_retry_age_s < 0.0 ||
       options.near_field_radius_m < 0.0 ||
       options.near_field_speed_gain_s < 0.0 ||
+      options.guard_witness_radius_m < 0.0 ||
       near_max < options.near_field_radius_m || guard_burst < 0.0 ||
       guard_cooldown < 0.0) {
     throw std::runtime_error("invalid negative/range-limited filter setting");
   }
   if (options.resume_v <= options.stall_v) {
     throw std::runtime_error("resume-v must be greater than stall-v");
+  }
+  if (options.guard_witness_topic.empty() !=
+      (options.guard_witness_radius_m <= 0.0)) {
+    throw std::runtime_error(
+        "guard witness requires both a non-empty topic and a positive radius");
   }
   if (options.slowdown_full_refresh_v > 0.0 &&
       options.slowdown_full_refresh_rearm_v <=
@@ -364,8 +379,11 @@ double rounded(double value, double scale = 1e6) {
 
 class NativeSectorCpp final : public rclcpp::Node {
 public:
-  explicit NativeSectorCpp(Options options)
-      : Node("native_sector_cpp"), options_(std::move(options)),
+  explicit NativeSectorCpp(
+      Options options,
+      const rclcpp::NodeOptions &node_options = rclcpp::NodeOptions(),
+      native_sector::GuardCloudObserver guard_cloud_observer = {})
+      : Node("native_sector_cpp", node_options), options_(std::move(options)),
         half_angle_rad_(options_.half_angle_deg * kPi / 180.0),
         half_angle_cos_(std::cos(half_angle_rad_)),
         near_field_max_radius_m_(options_.near_field_max_radius_m.value_or(
@@ -374,6 +392,7 @@ public:
             options_.replan_open_burst_s.value_or(options_.open_burst_s)),
         replan_guard_cooldown_s_(
             options_.replan_open_cooldown_s.value_or(options_.open_cooldown_s)),
+        guard_cloud_observer_(std::move(guard_cloud_observer)),
         armed_(options_.mode == "legacy-trigger") {
     const auto sensor_qos =
         rclcpp::QoS(rclcpp::KeepLast(1)).best_effort().durability_volatile();
@@ -393,10 +412,14 @@ public:
     if (options_.mode == "adaptive") {
       const auto guard_qos =
           rclcpp::QoS(rclcpp::KeepLast(1)).reliable().transient_local();
+      rclcpp::SubscriptionOptions guard_options;
+      guard_options.use_intra_process_comm =
+          rclcpp::IntraProcessSetting::Disable;
       trajectory_guard_sub_ = create_subscription<std_msgs::msg::Bool>(
           options_.trajectory_guard_topic, guard_qos,
           std::bind(&NativeSectorCpp::trajectoryGuardCallback, this,
-                    std::placeholders::_1));
+                    std::placeholders::_1),
+          guard_options);
     }
     if (options_.mode == "adaptive" && options_.max_publish_hz > 0.0 &&
         (options_.map_commit_refresh_age_s > 0.0 ||
@@ -419,15 +442,28 @@ public:
       const auto request_qos = rclcpp::QoS(rclcpp::KeepLast(16))
                                    .reliable()
                                    .transient_local();
+      rclcpp::PublisherOptions request_options;
+      request_options.use_intra_process_comm =
+          rclcpp::IntraProcessSetting::Disable;
       full_refresh_request_pub_ =
           create_publisher<std_msgs::msg::UInt64MultiArray>(
-              options_.full_refresh_request_topic, request_qos);
+              options_.full_refresh_request_topic, request_qos,
+              request_options);
     }
     const auto output_qos = options_.reliable_output
         ? rclcpp::QoS(rclcpp::KeepLast(1)).reliable().durability_volatile()
         : sensor_qos;
     cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
         options_.output_topic, output_qos);
+    if (!options_.guard_witness_topic.empty()) {
+      // The witness is latest-only evidence, just like the simulator's raw
+      // sensor stream. Keep this hop best-effort depth-1 even when the map
+      // output is reliable, so an unavailable guard subscriber cannot block
+      // filtering or map delivery.
+      guard_witness_pub_ =
+          create_publisher<sensor_msgs::msg::PointCloud2>(
+              options_.guard_witness_topic, sensor_qos);
+    }
     full_open_pub_ =
         create_publisher<std_msgs::msg::Bool>("/sector/full_open", 1);
     armed_pub_ =
@@ -450,12 +486,17 @@ public:
 
     RCLCPP_INFO(get_logger(),
                 "%s mode, half-angle %.1f deg, input %s, publish cap %.2f Hz, "
-                "commit refresh %.3f s, full-open extra budget %lu",
+                "commit refresh %.3f s, full-open extra budget %lu, "
+                "guard witness %s radius %.2f m",
                 options_.mode.c_str(), options_.half_angle_deg,
                 options_.input_topic.c_str(), options_.max_publish_hz,
                 options_.map_commit_refresh_age_s,
                 static_cast<unsigned long>(
-                    options_.full_open_extra_max_points));
+                    options_.full_open_extra_max_points),
+                options_.guard_witness_topic.empty()
+                    ? "disabled"
+                    : options_.guard_witness_topic.c_str(),
+                options_.guard_witness_radius_m);
     publishState();
     writeStats();
     cloud_worker_ = std::thread(&NativeSectorCpp::cloudWorkerLoop, this);
@@ -1161,6 +1202,12 @@ private:
 
   void cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
     ++cloud_input_callbacks_;
+    cloud_input_payload_bytes_.fetch_add(msg->data.size(),
+                                         std::memory_order_relaxed);
+    if (guard_cloud_observer_) {
+      guard_cloud_observer_(msg);
+      ++in_process_guard_handoffs_;
+    }
     {
       std::lock_guard<std::mutex> lock(cloud_queue_mutex_);
       if (pending_cloud_)
@@ -1188,6 +1235,96 @@ private:
     }
   }
 
+  static sensor_msgs::msg::PointCloud2 packedCloudLike(
+      const sensor_msgs::msg::PointCloud2 &msg) {
+    sensor_msgs::msg::PointCloud2 output;
+    output.header = msg.header;
+    output.height = 1;
+    output.fields = msg.fields;
+    output.is_bigendian = msg.is_bigendian;
+    // Match sensor_msgs_py.create_cloud(), which the prototype used: retain
+    // declared field offsets but remove trailing transport padding.
+    output.point_step = packedPointStep(msg);
+    output.is_dense = true;
+    return output;
+  }
+
+  static void appendPackedPoint(sensor_msgs::msg::PointCloud2 &output,
+                                const sensor_msgs::msg::PointCloud2 &input,
+                                const uint8_t *point) {
+    const size_t output_offset = output.data.size();
+    output.data.resize(output_offset + output.point_step, 0);
+    uint8_t *destination = output.data.data() + output_offset;
+    for (const auto &field : input.fields) {
+      const size_t byte_count = fieldByteSize(field.datatype) * field.count;
+      if (byte_count == 0 || field.offset + byte_count > input.point_step ||
+          field.offset + byte_count > output.point_step) {
+        continue;
+      }
+      std::memcpy(destination + field.offset, point + field.offset,
+                  byte_count);
+    }
+  }
+
+  void publishGuardWitness(
+      const sensor_msgs::msg::PointCloud2::SharedPtr &msg) {
+    if (!guard_witness_pub_)
+      return;
+    ++guard_witness_source_frames_;
+    if (!drone_) {
+      ++guard_witness_missing_odom_frames_;
+      return;
+    }
+    const CloudFields fields = findCloudFields(*msg);
+    if (!fields.x || !fields.y || !fields.z || msg->point_step == 0) {
+      ++guard_witness_invalid_cloud_frames_;
+      RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), 5000,
+          "guard witness source lacks float x/y/z fields; skipping it");
+      return;
+    }
+
+    const bool swap_bytes = msg->is_bigendian != hostIsBigEndian();
+    const double radius_sq = options_.guard_witness_radius_m *
+                             options_.guard_witness_radius_m;
+    const uint64_t input_points =
+        static_cast<uint64_t>(msg->width) * msg->height;
+    sensor_msgs::msg::PointCloud2 witness = packedCloudLike(*msg);
+    witness.data.reserve(
+        static_cast<size_t>(input_points / 2) * witness.point_step);
+    uint64_t witness_points = 0;
+    for (uint32_t row = 0; row < msg->height; ++row) {
+      const size_t row_base = static_cast<size_t>(row) * msg->row_step;
+      for (uint32_t column = 0; column < msg->width; ++column) {
+        const size_t offset =
+            row_base + static_cast<size_t>(column) * msg->point_step;
+        if (offset + msg->point_step > msg->data.size())
+          continue;
+        const uint8_t *point = msg->data.data() + offset;
+        double x, y, z;
+        if (!readField(point, *fields.x, swap_bytes, x) ||
+            !readField(point, *fields.y, swap_bytes, y) ||
+            !readField(point, *fields.z, swap_bytes, z) || !std::isfinite(x) ||
+            !std::isfinite(y) || !std::isfinite(z)) {
+          continue;
+        }
+        const double dx = x - (*drone_)[0];
+        const double dy = y - (*drone_)[1];
+        const double dz = z - (*drone_)[2];
+        if (dx * dx + dy * dy + dz * dz > radius_sq)
+          continue;
+        appendPackedPoint(witness, *msg, point);
+        ++witness_points;
+      }
+    }
+    witness.width = static_cast<uint32_t>(witness_points);
+    witness.row_step = witness.width * witness.point_step;
+    guard_witness_points_ += witness_points;
+    guard_witness_payload_bytes_ += witness.data.size();
+    ++guard_witness_published_frames_;
+    guard_witness_pub_->publish(witness);
+  }
+
   void processCloud(const sensor_msgs::msg::PointCloud2::SharedPtr &msg) {
     const double now = nowSeconds();
     const bool state_changed =
@@ -1198,8 +1335,13 @@ private:
     ++frames_;
     const uint64_t input_points =
         static_cast<uint64_t>(msg->width) * msg->height;
+    processed_input_payload_bytes_ += msg->data.size();
     input_points_ += input_points;
     total_points_ += input_points;
+    // This bounded 360-degree stream is independent of the angular/map
+    // publication decision below. In particular, Adaptive rate limiting or a
+    // fixed Sector crop must never make the guard witness disappear.
+    publishGuardWitness(msg);
     if (statefulMode() && armed_)
       ++armed_frames_;
     const bool effective_open = effectiveFullOpen();
@@ -1266,6 +1408,7 @@ private:
     }
     if (passthrough) {
       kept_points_ += input_points;
+      published_payload_bytes_ += msg->data.size();
       cloud_pub_->publish(*msg);
       return;
     }
@@ -1276,6 +1419,7 @@ private:
           get_logger(), *get_clock(), 5000,
           "cloud lacks float x/y/z fields; passing it through");
       kept_points_ += input_points;
+      published_payload_bytes_ += msg->data.size();
       cloud_pub_->publish(*msg);
       return;
     }
@@ -1295,34 +1439,13 @@ private:
         std::max(max_effective_near_field_radius_m_, near_radius);
     const double near_radius_sq = near_radius * near_radius;
 
-    sensor_msgs::msg::PointCloud2 output;
-    output.header = msg->header;
-    output.height = 1;
-    output.fields = msg->fields;
-    output.is_bigendian = msg->is_bigendian;
+    sensor_msgs::msg::PointCloud2 output = packedCloudLike(*msg);
     // Match sensor_msgs_py.create_cloud(), which the prototype used: retain
     // the declared field offsets but remove any trailing transport padding.
     // MARSIM's input records are 32 bytes while x/y/z/intensity end at byte
     // 20.  Keeping the raw 32-byte stride made the nominally equivalent C++
     // path observably different at the ROG-Map subscription boundary.
-    output.point_step = packedPointStep(*msg);
-    output.is_dense = true;
     output.data.reserve(static_cast<size_t>(input_points) * output.point_step);
-
-    const auto appendPoint = [&output, &msg](const uint8_t *point) {
-      const size_t output_offset = output.data.size();
-      output.data.resize(output_offset + output.point_step, 0);
-      uint8_t *destination = output.data.data() + output_offset;
-      for (const auto &field : msg->fields) {
-        const size_t byte_count = fieldByteSize(field.datatype) * field.count;
-        if (byte_count == 0 || field.offset + byte_count > msg->point_step ||
-            field.offset + byte_count > output.point_step) {
-          continue;
-        }
-        std::memcpy(destination + field.offset, point + field.offset,
-                    byte_count);
-      }
-    };
 
     uint64_t kept_this_frame = 0;
     std::vector<size_t> full_open_extra_offsets;
@@ -1357,7 +1480,7 @@ private:
             full_open_extra_offsets.push_back(offset);
           continue;
         }
-        appendPoint(point);
+        appendPackedPoint(output, *msg, point);
         ++kept_this_frame;
       }
     }
@@ -1372,7 +1495,9 @@ private:
             static_cast<size_t>((static_cast<long double>(i) + 0.5L) *
                                 full_open_extra_offsets.size() /
                                 extra_to_keep));
-        appendPoint(msg->data.data() + full_open_extra_offsets[selected]);
+        appendPackedPoint(
+            output, *msg,
+            msg->data.data() + full_open_extra_offsets[selected]);
       }
       kept_this_frame += extra_to_keep;
       full_open_extra_kept_ += extra_to_keep;
@@ -1380,6 +1505,7 @@ private:
     output.width = static_cast<uint32_t>(kept_this_frame);
     output.row_step = output.width * output.point_step;
     kept_points_ += kept_this_frame;
+    published_payload_bytes_ += output.data.size();
     cloud_pub_->publish(output);
   }
 
@@ -1477,8 +1603,25 @@ private:
     integer("frames", frames_);
     integer("cloud_input_callbacks", cloud_input_callbacks_.load());
     integer("cloud_worker_overwrites", cloud_worker_overwrites_.load());
+    integer("cloud_input_payload_bytes",
+            cloud_input_payload_bytes_.load(std::memory_order_relaxed));
+    integer("in_process_guard_handoffs",
+            in_process_guard_handoffs_.load(std::memory_order_relaxed));
+    integer("processed_input_payload_bytes", processed_input_payload_bytes_);
     integer("published_frames", published_frames_);
+    integer("published_payload_bytes", published_payload_bytes_);
     integer("rate_limited_frames", rate_limited_frames_);
+    string("guard_witness_topic", options_.guard_witness_topic);
+    number("guard_witness_radius_m", options_.guard_witness_radius_m);
+    integer("guard_witness_source_frames", guard_witness_source_frames_);
+    integer("guard_witness_missing_odom_frames",
+            guard_witness_missing_odom_frames_);
+    integer("guard_witness_invalid_cloud_frames",
+            guard_witness_invalid_cloud_frames_);
+    integer("guard_witness_published_frames",
+            guard_witness_published_frames_);
+    integer("guard_witness_points", guard_witness_points_);
+    integer("guard_witness_payload_bytes", guard_witness_payload_bytes_);
     number("max_publish_hz", options_.max_publish_hz);
     string("map_commit_topic", options_.map_commit_topic);
     number("map_commit_refresh_age_s",
@@ -1734,6 +1877,8 @@ private:
   rclcpp::Subscription<std_msgs::msg::UInt64MultiArray>::SharedPtr
       map_process_ack_sub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
+      guard_witness_pub_;
   rclcpp::Publisher<std_msgs::msg::UInt64MultiArray>::SharedPtr
       full_refresh_request_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr full_open_pub_;
@@ -1755,6 +1900,9 @@ private:
   bool cloud_worker_stop_{false};
   std::atomic<uint64_t> cloud_input_callbacks_{0};
   std::atomic<uint64_t> cloud_worker_overwrites_{0};
+  std::atomic<uint64_t> cloud_input_payload_bytes_{0};
+  std::atomic<uint64_t> in_process_guard_handoffs_{0};
+  native_sector::GuardCloudObserver guard_cloud_observer_;
 
   std::optional<std::array<double, 3>> drone_;
   double yaw_{0.0};
@@ -1766,6 +1914,14 @@ private:
   uint64_t published_frames_{0};
   uint64_t rate_limited_frames_{0};
   uint64_t input_points_{0};
+  uint64_t processed_input_payload_bytes_{0};
+  uint64_t published_payload_bytes_{0};
+  uint64_t guard_witness_source_frames_{0};
+  uint64_t guard_witness_missing_odom_frames_{0};
+  uint64_t guard_witness_invalid_cloud_frames_{0};
+  uint64_t guard_witness_published_frames_{0};
+  uint64_t guard_witness_points_{0};
+  uint64_t guard_witness_payload_bytes_{0};
   std::optional<double> next_publish_time_s_;
   std::optional<double> last_map_commit_rx_s_;
   std::optional<double> last_commit_refresh_publish_s_;
@@ -1894,6 +2050,28 @@ private:
   std::optional<double> first_trajectory_guard_open_time_s_;
 };
 
+namespace native_sector {
+
+std::shared_ptr<rclcpp::Node> createNode(
+    const std::vector<std::string> &arguments,
+    const rclcpp::NodeOptions &node_options,
+    GuardCloudObserver guard_cloud_observer) {
+  std::vector<std::string> storage;
+  storage.reserve(arguments.size() + 1);
+  storage.emplace_back("native_sector_cpp");
+  storage.insert(storage.end(), arguments.begin(), arguments.end());
+  std::vector<char *> argv;
+  argv.reserve(storage.size());
+  for (auto &argument : storage)
+    argv.push_back(argument.data());
+  Options options = parseArgs(static_cast<int>(argv.size()), argv.data());
+  return std::make_shared<NativeSectorCpp>(
+      std::move(options), node_options, std::move(guard_cloud_observer));
+}
+
+} // namespace native_sector
+
+#ifndef NATIVE_SECTOR_CPP_NO_MAIN
 int main(int argc, char **argv) {
   try {
     Options options = parseArgs(argc, argv);
@@ -1909,3 +2087,4 @@ int main(int argc, char **argv) {
     return 2;
   }
 }
+#endif

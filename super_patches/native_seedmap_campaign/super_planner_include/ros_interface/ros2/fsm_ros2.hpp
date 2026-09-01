@@ -75,6 +75,7 @@ namespace fsm {
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
                 guard_cloud_sub_;
         bool raw_cloud_shadow_uses_map_cloud_observer_{false};
+        bool raw_cloud_in_process_injection_en_{false};
 
         rclcpp::TimerBase::SharedPtr execution_timer_, replan_timer_, cmd_timer_;
         rclcpp::CallbackGroup::SharedPtr exec_cbk_group_, map_cbk_group_, replan_cbk_group_, cmd_cbk_group_, goal_cbk_group_;
@@ -398,6 +399,8 @@ namespace fsm {
         mutable std::mutex raw_cloud_window_mutex_;
         std::deque<RawCloudWindowBatch> raw_cloud_window_;
         std::uint64_t raw_cloud_window_messages_total_{0};
+        std::atomic_uint64_t raw_cloud_received_messages_total_{0};
+        std::atomic_uint64_t raw_cloud_received_payload_bytes_total_{0};
 
         // Pulls the current window (pruned to accumulation_window_s) plus
         // health info the caller must check before trusting an empty
@@ -1390,7 +1393,7 @@ namespace fsm {
 
         void guardCloudCallback(
                 const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
-            cacheGuardCloud(cloud_msg, rog_map::MapHealthClock::now());
+            injectGuardCloud(cloud_msg);
         }
 
         RawCloudSafetyStatus validateTrajectoryAgainstRawCloud(
@@ -2644,6 +2647,24 @@ namespace fsm {
         }
 
     public:
+        // Experimental same-process source handoff. The C++ filter already
+        // owns the sole DDS raw-cloud subscription, so pass its received
+        // SharedPtr directly into the guard window without republishing a
+        // second PointCloud2. Call enable before init().
+        void enableInProcessGuardCloudInjection() {
+            raw_cloud_in_process_injection_en_ = true;
+        }
+
+        void injectGuardCloud(
+                const sensor_msgs::msg::PointCloud2::SharedPtr &cloud_msg) {
+            raw_cloud_received_messages_total_.fetch_add(
+                    1, std::memory_order_relaxed);
+            raw_cloud_received_payload_bytes_total_.fetch_add(
+                    cloud_msg ? cloud_msg->data.size() : 0,
+                    std::memory_order_relaxed);
+            cacheGuardCloud(cloud_msg, rog_map::MapHealthClock::now());
+        }
+
         FsmRos2() = default;
 
         ~FsmRos2() {
@@ -2806,10 +2827,14 @@ namespace fsm {
                 const rclcpp::QoS guard_recovery_qos(
                         rclcpp::QoS(1).reliable().keep_last(1)
                                 .transient_local());
+                rclcpp::PublisherOptions guard_recovery_options;
+                guard_recovery_options.use_intra_process_comm =
+                        rclcpp::IntraProcessSetting::Disable;
                 trajectory_guard_recovery_pub_ =
                         nh_->create_publisher<std_msgs::msg::Bool>(
                                 "/planning/trajectory_guard_recovery_active",
-                                guard_recovery_qos);
+                                guard_recovery_qos,
+                                guard_recovery_options);
                 // Give a late-starting Adaptive filter an explicit initial
                 // state through the transient-local publisher.
                 std_msgs::msg::Bool inactive;
@@ -2820,6 +2845,8 @@ namespace fsm {
                             rclcpp::CallbackGroupType::MutuallyExclusive);
                     rclcpp::SubscriptionOptions refresh_options;
                     refresh_options.callback_group = refresh_ack_cbk_group_;
+                    refresh_options.use_intra_process_comm =
+                            rclcpp::IntraProcessSetting::Disable;
                     const auto request_qos = rclcpp::QoS(
                             rclcpp::KeepLast(16)).reliable()
                                     .transient_local();
@@ -2859,7 +2886,9 @@ namespace fsm {
                         cfg_.trajectory_guard_raw_cloud_en ||
                         guard_cloud_topic != map_cloud_topic;
                 const char *cloud_source = "map_observer";
-                if (needs_dedicated_subscription) {
+                if (raw_cloud_in_process_injection_en_) {
+                    cloud_source = "in_process_filter_handoff";
+                } else if (needs_dedicated_subscription) {
                     // The live raw-cloud guard owns a KD-tree snapshot and
                     // retains its existing independent callback group. A
                     // shadow/enforce witness may also select a pre-filter
@@ -3171,7 +3200,8 @@ namespace fsm {
             // does not read or affect). Purely observational -- see the
             // raw_cloud_debug_last_log_ comment above.
             if (guard_cloud_sub_ ||
-                raw_cloud_shadow_uses_map_cloud_observer_) {
+                raw_cloud_shadow_uses_map_cloud_observer_ ||
+                raw_cloud_in_process_injection_en_) {
                 const double since_log_s = std::chrono::duration<double>(
                         rog_map::MapHealthClock::now() -
                         raw_cloud_debug_last_log_).count();
@@ -3191,8 +3221,13 @@ namespace fsm {
                     }
                     ros_ptr_->warn(
                             " -- [TRAJ_GUARD_RAW_DEBUG] sequence={} "
-                            "latest_age_s={:.3f}",
-                            seq, age_s);
+                            "latest_age_s={:.3f} dedicated_messages={} "
+                            "dedicated_payload_bytes={}",
+                            seq, age_s,
+                            raw_cloud_received_messages_total_.load(
+                                    std::memory_order_relaxed),
+                            raw_cloud_received_payload_bytes_total_.load(
+                                    std::memory_order_relaxed));
                 }
             }
             if (!safety_brake_active_.load(std::memory_order_acquire)) {

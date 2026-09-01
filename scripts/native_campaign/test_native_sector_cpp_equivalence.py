@@ -32,7 +32,7 @@ class Harness(Node):
         self.odom_pub = self.create_publisher(
             Odometry, "/lidar_slam/odom", qos_profile_sensor_data
         )
-        self.outputs = {"python": None, "cpp": None}
+        self.outputs = {"python": None, "cpp": None, "witness": None}
         self.create_subscription(
             PointCloud2,
             "/equivalence/python",
@@ -43,6 +43,12 @@ class Harness(Node):
             PointCloud2,
             "/equivalence/cpp",
             lambda msg: self.outputs.__setitem__("cpp", msg),
+            qos_profile_sensor_data,
+        )
+        self.create_subscription(
+            PointCloud2,
+            "/equivalence/witness",
+            lambda msg: self.outputs.__setitem__("witness", msg),
             qos_profile_sensor_data,
         )
 
@@ -83,6 +89,8 @@ def main():
             subprocess.Popen(
                 ["ros2", "run", "mission_planner", "native_sector_cpp", *common,
                  "--output-topic", "/equivalence/cpp",
+                 "--guard-witness-topic", "/equivalence/witness",
+                 "--guard-witness-radius-m", "3.1",
                  "--stats-json", cpp_stats],
                 preexec_fn=os.setsid,
             ),
@@ -128,7 +136,7 @@ def main():
                 if all(harness.outputs.values()):
                     break
             if not all(harness.outputs.values()):
-                raise RuntimeError("did not receive both filter outputs")
+                raise RuntimeError("did not receive both filters and guard witness")
             python_points = points_of(harness.outputs["python"])
             cpp_points = points_of(harness.outputs["cpp"])
             if python_points != cpp_points:
@@ -137,6 +145,16 @@ def main():
                 )
             if not harness.outputs["python"].is_dense or not harness.outputs["cpp"].is_dense:
                 raise AssertionError("filtered outputs must both be marked dense")
+            witness_points = points_of(harness.outputs["witness"])
+            expected_witness = sorted(
+                tuple(round(float(value), 5) for value in point)
+                for point in (points[3], points[4], points[5])
+            )
+            if witness_points != expected_witness:
+                raise AssertionError(
+                    f"bounded witness differs:\n"
+                    f"expected={expected_witness}\nactual={witness_points}"
+                )
 
             time.sleep(1.2)
             python_snapshot = json.load(open(python_stats))
@@ -146,9 +164,15 @@ def main():
                     raise AssertionError(
                         f"stats mismatch {key}: {python_snapshot[key]} != {cpp_snapshot[key]}"
                     )
+            if cpp_snapshot["guard_witness_published_frames"] != 1:
+                raise AssertionError("C++ witness publication count must be one")
+            if cpp_snapshot["guard_witness_points"] != len(expected_witness):
+                raise AssertionError("C++ witness point count does not match output")
+            if cpp_snapshot["guard_witness_payload_bytes"] != len(expected_witness) * 16:
+                raise AssertionError("C++ witness payload counter does not match packed data")
             print(
                 "PASS native sector geometry/stats equivalence: "
-                f"{len(cpp_points)} retained points"
+                f"{len(cpp_points)} retained, {len(witness_points)} witness points"
             )
         finally:
             if rclpy.ok():

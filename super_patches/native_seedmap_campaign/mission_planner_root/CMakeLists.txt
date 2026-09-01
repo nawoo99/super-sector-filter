@@ -69,10 +69,23 @@ add_executable(native_sector_cpp
         Apps/native_sector_cpp.cpp
 )
 
+add_library(native_sector_cpp_component SHARED
+        Apps/native_sector_cpp.cpp
+)
+target_compile_definitions(native_sector_cpp_component PRIVATE
+        NATIVE_SECTOR_CPP_NO_MAIN
+)
+
 ament_target_dependencies(waypoint_mission PUBLIC
         ${dependencies}
 )
 ament_target_dependencies(native_sector_cpp PUBLIC
+        rclcpp
+        sensor_msgs
+        nav_msgs
+        std_msgs
+)
+ament_target_dependencies(native_sector_cpp_component PUBLIC
         rclcpp
         sensor_msgs
         nav_msgs
@@ -92,6 +105,14 @@ target_include_directories(waypoint_mission PUBLIC
 install(
         DIRECTORY include/
         DESTINATION include
+)
+install(
+        TARGETS native_sector_cpp_component
+        EXPORT native_sector_cpp_component_targets
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include
 )
 
 
@@ -114,5 +135,7 @@ install(DIRECTORY
         DESTINATION share/${PROJECT_NAME}/
         )
 
+ament_export_targets(native_sector_cpp_component_targets HAS_LIBRARY_TARGET)
+ament_export_dependencies(rclcpp sensor_msgs nav_msgs std_msgs)
 
 ament_package()

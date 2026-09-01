@@ -595,6 +595,8 @@ def parse_full_refresh_ack_log(path):
         "guard_recovery_active_duration_s": 0.0,
         "guard_recovery_active_duration_mean_s": None,
         "guard_recovery_active_duration_max_s": None,
+        "guard_dedicated_messages": 0,
+        "guard_dedicated_payload_bytes": 0,
     }
     markers = {
         "FULL_REFRESH_ACK_TIMEOUT": "full_refresh_ack_timeouts",
@@ -613,8 +615,21 @@ def parse_full_refresh_ack_log(path):
     same_map_replan_summary_pattern = re.compile(
         r"\[REPLAN_SAME_MAP_COALESCE_SUMMARY\]\s+skipped=(\d+)"
     )
+    raw_debug_pattern = re.compile(
+        r"\[TRAJ_GUARD_RAW_DEBUG\].*dedicated_messages=(\d+)\s+"
+        r"dedicated_payload_bytes=(\d+)"
+    )
     with open(path, errors="replace") as stream:
         for line in stream:
+            raw_debug = raw_debug_pattern.search(line)
+            if raw_debug:
+                counts["guard_dedicated_messages"] = max(
+                    counts["guard_dedicated_messages"], int(raw_debug.group(1))
+                )
+                counts["guard_dedicated_payload_bytes"] = max(
+                    counts["guard_dedicated_payload_bytes"],
+                    int(raw_debug.group(2)),
+                )
             same_map_summary = same_map_replan_summary_pattern.search(line)
             if same_map_summary:
                 counts["guard_same_map_replan_skips"] = int(
@@ -913,6 +928,7 @@ RAW_DIRECT_REF_MODES = frozenset(
 FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "mode_order_position", "experiment_profile", "filter_profile",
           "filter_backend",
+          "filter_intra_process",
           "success", "run_valid",
           "monitor_type", "monitor_flight_cpu_pct", "live_cloud_enabled", "preflight_ready",
           "preflight_cloud_messages", "preflight_odom_messages", "goal_messages",
@@ -1049,8 +1065,18 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_slowdown_full_refresh_ack_latency_mean_s",
           "filter_slowdown_full_refresh_ack_latency_max_s",
           "filter_frames", "filter_cloud_input_callbacks",
-          "filter_cloud_worker_overwrites", "filter_published_frames",
+          "filter_cloud_worker_overwrites", "filter_cloud_input_payload_bytes",
+          "filter_in_process_guard_handoffs",
+          "filter_processed_input_payload_bytes", "filter_published_frames",
+          "filter_published_payload_bytes",
           "filter_rate_limited_frames", "filter_max_publish_hz",
+          "filter_guard_witness_topic", "filter_guard_witness_radius_m",
+          "filter_guard_witness_source_frames",
+          "filter_guard_witness_missing_odom_frames",
+          "filter_guard_witness_invalid_cloud_frames",
+          "filter_guard_witness_published_frames",
+          "filter_guard_witness_points",
+          "filter_guard_witness_payload_bytes",
           "filter_map_commit_topic", "filter_map_commit_refresh_age_s",
           "filter_map_commit_refresh_min_interval_s",
           "filter_map_commit_pre_stale_full_age_s",
@@ -1169,6 +1195,16 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "pts_mean", "map_perf_frames", "map_frames_s", "map_points_s",
           "map_payload_bytes_mean", "map_payload_bytes_total",
           "map_payload_mib_s", "map_payload_mbps", "map_point_step_mean",
+          "guard_dedicated_messages", "guard_dedicated_payload_bytes",
+          "guard_dedicated_payload_mib_s",
+          "filter_cloud_input_payload_mib_s",
+          "filter_processed_input_payload_mib_s",
+          "filter_published_payload_mib_s",
+          "filter_guard_witness_payload_mib_s",
+          "planner_published_payload_mib_s",
+          "planner_ingress_payload_mib_s",
+          "algorithm_delivery_payload_mib_s",
+          "dds_cloud_payload_mib_s", "intra_process_cloud_payload_mib_s",
           "total_ms_mean", "raycast_ms_mean", "update_ms_mean",
           "inflation_ms_mean", "kept_pct", "fsm_cpu_pct", "filter_cpu_pct",
           "monitor_cpu_pct",
@@ -1357,6 +1393,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             adaptive_pre_stale_ack_retry_age_s=0.0,
             adaptive_full_refresh_generation_ack=True,
             filtered_reliable_map_link=False,
+            filter_guard_witness_radius_m=0.0,
             adaptive_full_open_extra_max_points=6000,
             test_force_local_escape_once=False,
             test_force_initial_footprint_egress_once=False,
@@ -1568,6 +1605,15 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             override_cloud_topic == "/cloud_registered"
         )
         filter_options = f" --stats-json {filt_stats_json}"
+        if (
+            filter_guard_witness_radius_m > 0.0
+            and base_mode == "adaptive"
+            and filter_backend != "cpp-intra"
+        ):
+            filter_options += (
+                " --guard-witness-topic /cloud_guard_witness"
+                f" --guard-witness-radius-m {filter_guard_witness_radius_m}"
+            )
         if filter_profile == "strict-burst" and base_mode != "full":
             # A fixed-sector ablation must remain a fixed sector.  Adaptive
             # keeps velocity alignment and stall recovery, but recovery uses
@@ -1597,7 +1643,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     " --near-field-speed-gain-s 0.2"
                     " --near-field-max-radius-m 3.0"
                 )
-                if filter_backend == "cpp":
+                if filter_backend in ("cpp", "cpp-intra"):
                     filter_options += (
                         f" --slowdown-full-refresh-v "
                         f"{adaptive_slowdown_full_refresh_v}"
@@ -1617,8 +1663,11 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 filter_options += " --sector-until-trap"
         elif is_recovery:
             filter_options += " --input-topic /cloud_recovery"
+        integrated_filter_active = (
+            filter_backend == "cpp-intra" and not raw_direct
+        )
         filt_proc = None
-        if not raw_direct:
+        if not raw_direct and not integrated_filter_active:
             filter_command = (
                 f"python3 {SECTOR}"
                 if filter_backend == "python"
@@ -1716,6 +1765,14 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             )
             if is_seedmap_observed or seedmap_super_config_override:
                 launch_cmd += f" > {reference_stack_log} 2>&1"
+            if integrated_filter_active:
+                encoded_filter_arguments = ";".join(
+                    [base_mode, *filter_options.strip().split()]
+                )
+                launch_cmd += (
+                    " use_integrated_filter:=true"
+                    f" filter_arguments:='{encoded_filter_arguments}'"
+                )
         if test_force_local_escape_once:
             launch_cmd = "SUPER_TEST_FORCE_LOCAL_ESCAPE_ONCE=1 " + launch_cmd
         if test_force_initial_footprint_egress_once:
@@ -1978,7 +2035,12 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         rec = {"map": map_name, "run": run, "mode": mode,
                "experiment_profile": mode if is_reference_ablation else None,
                "filter_profile": filter_profile,
-               "filter_backend": filter_backend if filt_proc is not None else "direct",
+               "filter_backend": (
+                   filter_backend
+                   if filt_proc is not None or integrated_filter_active
+                   else "direct"
+               ),
+               "filter_intra_process": integrated_filter_active,
                "perf_log_generation_ready": perf_log_generation_ready,
                "perf_window_valid": perf_window_valid,
                "perf_trace_csv": perf_trace_csv if os.path.exists(perf_trace_csv) else None,
@@ -2142,6 +2204,60 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                         stream.write("\n")
         if os.path.exists(reference_stack_log):
             rec.update(parse_full_refresh_ack_log(reference_stack_log))
+        payload_duration_s = rec.get("mission_time_s")
+        if payload_duration_s is not None and payload_duration_s > 0.0:
+            mib = 1024.0 * 1024.0
+            payload_rate_sources = {
+                "filter_cloud_input_payload_mib_s":
+                    rec.get("filter_cloud_input_payload_bytes"),
+                "filter_processed_input_payload_mib_s":
+                    rec.get("filter_processed_input_payload_bytes"),
+                "filter_published_payload_mib_s":
+                    rec.get("filter_published_payload_bytes"),
+                "filter_guard_witness_payload_mib_s":
+                    rec.get("filter_guard_witness_payload_bytes"),
+                "guard_dedicated_payload_mib_s":
+                    rec.get("guard_dedicated_payload_bytes"),
+            }
+            for rate_key, byte_count in payload_rate_sources.items():
+                if byte_count is not None:
+                    rec[rate_key] = byte_count / payload_duration_s / mib
+
+            map_bytes = rec.get("map_payload_bytes_total")
+            if map_bytes is not None:
+                witness_published_bytes = (
+                    rec.get("filter_guard_witness_payload_bytes") or 0
+                )
+                witness_received_bytes = (
+                    rec.get("guard_dedicated_payload_bytes") or 0
+                )
+                planner_published_bytes = map_bytes + witness_published_bytes
+                planner_ingress_bytes = map_bytes + witness_received_bytes
+                rec["planner_published_payload_mib_s"] = (
+                    planner_published_bytes / payload_duration_s / mib
+                )
+                rec["planner_ingress_payload_mib_s"] = (
+                    planner_ingress_bytes / payload_duration_s / mib
+                )
+                filter_input_bytes = (
+                    rec.get("filter_cloud_input_payload_bytes") or 0
+                )
+                rec["algorithm_delivery_payload_mib_s"] = (
+                    (planner_ingress_bytes + filter_input_bytes)
+                    / payload_duration_s / mib
+                )
+                if integrated_filter_active:
+                    rec["dds_cloud_payload_mib_s"] = (
+                        filter_input_bytes / payload_duration_s / mib
+                    )
+                    rec["intra_process_cloud_payload_mib_s"] = (
+                        planner_ingress_bytes / payload_duration_s / mib
+                    )
+                else:
+                    rec["dds_cloud_payload_mib_s"] = rec[
+                        "algorithm_delivery_payload_mib_s"
+                    ]
+                    rec["intra_process_cloud_payload_mib_s"] = 0.0
         if is_recovery:
             base_recovery_success = bool(
                 rec.get("success")
@@ -2334,6 +2450,14 @@ def main():
         ),
     )
     ap.add_argument(
+        "--seedmap-adaptive-super-config",
+        help=(
+            "optional Adaptive-only SUPER config used with the split Full/"
+            "filtered routing; this keeps a fixed Sector ablation free of "
+            "Adaptive-only safety side channels"
+        ),
+    )
+    ap.add_argument(
         "--seedmap-adaptive-baseline-super-config",
         help=(
             "optional /cloud_sector SUPER config used only by the "
@@ -2362,11 +2486,12 @@ def main():
     )
     ap.add_argument(
         "--filter-backend",
-        choices=("python", "cpp"),
+        choices=("python", "cpp", "cpp-intra"),
         default="python",
         help=(
-            "implementation of /cloud_registered -> /cloud_sector; the C++ "
-            "backend currently supports static seed1..10 campaigns"
+            "implementation of /cloud_registered -> /cloud_sector; cpp-intra "
+            "composes that same C++ filter with the FSM so large outputs avoid "
+            "a second DDS hop (static seed1..10 only)"
         ),
     )
     ap.add_argument(
@@ -2469,6 +2594,15 @@ def main():
         ),
     )
     ap.add_argument(
+        "--filter-guard-witness-radius-m",
+        type=float,
+        default=0.0,
+        help=(
+            "publish a bounded 360-degree /cloud_guard_witness from the C++ "
+            "filter at this radius; 0 disables the experimental side channel"
+        ),
+    )
+    ap.add_argument(
         "--cgroup-cpu-accounting",
         action="store_true",
         help=(
@@ -2523,7 +2657,7 @@ def main():
         )
     if (
         args.adaptive_slowdown_full_refresh_v > 0.0
-        and args.filter_backend != "cpp"
+        and args.filter_backend not in ("cpp", "cpp-intra")
     ):
         ap.error("Adaptive slowdown full refresh requires --filter-backend cpp")
     if args.adaptive_trajectory_guard_hold_s < 0.0:
@@ -2546,10 +2680,23 @@ def main():
         ap.error(
             "--adaptive-pre-stale-ack-retry-age-s must be non-negative"
         )
-    if args.filtered_reliable_map_link and args.filter_backend != "cpp":
-        ap.error("--filtered-reliable-map-link requires --filter-backend cpp")
-    if args.adaptive_test_drop_first_trajectory_guard_full_cloud:
+    if (
+        args.filtered_reliable_map_link
+        and args.filter_backend not in ("cpp", "cpp-intra")
+    ):
+        ap.error("--filtered-reliable-map-link requires a C++ filter backend")
+    if args.filter_guard_witness_radius_m < 0.0:
+        ap.error("--filter-guard-witness-radius-m must be non-negative")
+    if args.filter_guard_witness_radius_m > 0.0:
         if args.filter_backend != "cpp":
+            ap.error(
+                "guard witness side channel requires the external cpp backend; "
+                "cpp-intra uses direct raw SharedPtr injection instead"
+            )
+        if "adaptive" not in args.modes:
+            ap.error("guard witness side channel requires adaptive mode")
+    if args.adaptive_test_drop_first_trajectory_guard_full_cloud:
+        if args.filter_backend not in ("cpp", "cpp-intra"):
             ap.error(
                 "--adaptive-test-drop-first-trajectory-guard-full-cloud "
                 "requires --filter-backend cpp"
@@ -2586,6 +2733,7 @@ def main():
         args.seedmap_full_super_config,
         args.seedmap_filtered_super_config,
     )
+    adaptive_mode_config = args.seedmap_adaptive_super_config
     adaptive_baseline_config = args.seedmap_adaptive_baseline_super_config
     if args.seedmap_super_config and any(split_configs):
         ap.error(
@@ -2596,6 +2744,11 @@ def main():
         ap.error(
             "mode-specific routing requires both --seedmap-full-super-config "
             "and --seedmap-filtered-super-config"
+        )
+    if adaptive_mode_config and not all(split_configs):
+        ap.error(
+            "--seedmap-adaptive-super-config requires the split Full/filtered "
+            "config pair"
         )
     if all(split_configs):
         unsupported_modes = [
@@ -2624,6 +2777,18 @@ def main():
                 f"{args.seedmap_filtered_super_config} uses "
                 f"{filtered_topic or 'an unknown topic'}"
             )
+        if adaptive_mode_config:
+            if "adaptive" not in args.modes:
+                ap.error(
+                    "--seedmap-adaptive-super-config requires adaptive mode"
+                )
+            adaptive_topic = super_config_cloud_topic(adaptive_mode_config)
+            if adaptive_topic != "/cloud_sector":
+                ap.error(
+                    "--seedmap-adaptive-super-config must use /cloud_sector; "
+                    f"{adaptive_mode_config} uses "
+                    f"{adaptive_topic or 'an unknown topic'}"
+                )
     if "adaptive_baseline" in args.modes and not adaptive_baseline_config:
         ap.error(
             "adaptive_baseline mode requires "
@@ -2647,6 +2812,7 @@ def main():
         args.seedmap_super_config
         or any(split_configs)
         or adaptive_baseline_config
+        or adaptive_mode_config
         or args.seedmap_static_pcd
     ):
         invalid_maps = [
@@ -2659,7 +2825,7 @@ def main():
                 f"unsupported maps: {', '.join(invalid_maps)}"
             )
 
-    if args.filter_backend == "cpp":
+    if args.filter_backend in ("cpp", "cpp-intra"):
         unsupported_maps = [
             map_name for map_name in args.maps
             if map_name in ("seed12", "seed13", "seed14", "seed15")
@@ -2748,6 +2914,8 @@ def main():
                             if mode == "full"
                             else args.seedmap_filtered_super_config
                         )
+                        if mode == "adaptive" and adaptive_mode_config:
+                            mode_config = adaptive_mode_config
                     rec = run_one(
                         map_name,
                         mode,
@@ -2792,6 +2960,9 @@ def main():
                         ),
                         filtered_reliable_map_link=(
                             args.filtered_reliable_map_link
+                        ),
+                        filter_guard_witness_radius_m=(
+                            args.filter_guard_witness_radius_m
                         ),
                         adaptive_full_open_extra_max_points=(
                             args.adaptive_full_open_extra_max_points

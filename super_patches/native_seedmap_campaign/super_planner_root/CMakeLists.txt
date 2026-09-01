@@ -46,6 +46,7 @@ find_package(nav_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(PCL REQUIRED)
 find_package(pcl_conversions REQUIRED)
+find_package(mission_planner REQUIRED)
 
 
 set(includes
@@ -106,11 +107,25 @@ ament_target_dependencies(fsm_node PUBLIC
         ${ros_libs}
 )
 
+add_executable(fsm_node_with_sector
+        Apps/fsm_node_with_sector_ros2.cpp
+)
+target_link_libraries(fsm_node_with_sector PUBLIC
+        super
+        mission_planner::native_sector_cpp_component
+        ${third_party_libs}
+)
+ament_target_dependencies(fsm_node_with_sector PUBLIC
+        ${ros_libs}
+        mission_planner
+)
+
 #=================INSTALL all targets ============================#
 
 install(
         TARGETS
         fsm_node
+        fsm_node_with_sector
         RUNTIME DESTINATION lib/${PROJECT_NAME}
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib

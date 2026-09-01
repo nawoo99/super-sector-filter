@@ -1,6 +1,41 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-01 C++ 동일 프로세스 zero-copy raw guard handoff 완료.**
+> 외부 bounded witness는 8m에서 점 약 93.5%, 5m에서도 약 80.7%를 남겨
+> 대용량 side-channel을 충분히 줄이지 못했다. 최종 구조는 native filter와
+> FSM을 compose하고, filter가 받은 raw `PointCloud2::SharedPtr` 자체를 Adaptive
+> FSM raw-window ingest에 직접 넘긴다. Injection mode에서는 FSM의 별도 full-raw
+> subscriber를 만들지 않고, 외부 witness도 publish하지 않는다. 무거운 검사는
+> 기존 async latest-only worker에 남는다. Sector에는 observer를 연결하지 않아
+> 순수 angular-cut ablation을 유지한다.
+>
+> 최초 rotating campaign 뒤 witness YAML 끝의 `p_hit/p_max/unk_thresh` 누락을
+> 발견해 복원했다. Full/Sector 18행은 영향이 없고, Adaptive는 완전한 기존
+> raw-enforce profile+동일 injection으로 Map7/9/10 각 3회를 다시 실행했다.
+> 결합한 최종 27행은 모두 first-attempt, run/perf/cgroup-valid이고
+> retry/OOM/speed violation 0이었다. Completion은 모두
+> 9/9, source-static-PCD safety는 9/9, 8/9, 9/9이다. Sector Map10 run3만
+> clearance -0.065m 접촉 1회였고 Full/Adaptive는 충돌 0이다. 평균시간은
+> 93.802/93.427/104.551초다. Adaptive는 Full 대비 ROG payload 48.107%, algorithm
+> mean core 22.492%, core·s 13.003%, end-to-end core·s 7.842% 감소했고 시간은
+> 11.459% 늘었다. Effective Full-open 42회, direct SharedPtr handoff 3,764회,
+> external witness publish 0회다.
+>
+> DDS cloud rate는 표본상 16.575% 낮지만 raw bytes/scan은 거의 같고 simulator
+> cadence 영향을 받는다. 주장 가능한 것은 두 번째 full-raw DDS hop 제거와
+> ROG/CPU 감소이지 sensor wire bytes/scan 감소가 아니다. Logical planner
+> ingress는 zero-copy 소비까지 합산해 오히려 35.465% 높으므로 wire bandwidth로
+> 해석하면 안 된다. Adaptive 127.39초 tail은 recovery 73회·active 83.615초였고,
+> n=9에서 시간과 recovery-active 누적의 상관은 0.978이었다. 다음은 안전 gate를
+> 약화하지 않는 same-obstacle/generation recovery coalescing과 Map1-10 n=10이다.
+> 상세는 viability §8.46 및
+> `docs/inprocess_raw_guard_handoff_20260901.md`다. Full/Sector raw와 combined
+> summary는 `results/inprocess_raw_handoff_seed7_9_10_three_mode_n3_{raw,summary}_20260901.csv`,
+> corrected Adaptive raw는
+> `results/inprocess_raw_handoff_corrected_adaptive_seed7_9_10_n3_raw_20260901.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-01 pre-filter raw witness enforce와 최종 n=10 완료.**
 > Map7 Sector run7 포렌식에서 장애물 방향이 속도 기준 약 +92.2도, live
 > candidate가 +70.1도로 ±60도 sector 밖임을 확인했다. Passage soft cost가
