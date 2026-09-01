@@ -37,6 +37,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "mars_quadrotor_msgs/msg/position_command.hpp"
 #include "mars_quadrotor_msgs/msg/polynomial_trajectory.hpp"
+#include "mars_quadrotor_msgs/msg/trajectory_risk_verdict.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/u_int64_multi_array.hpp"
 #include <pcl/kdtree/kdtree_flann.h>
@@ -74,12 +75,16 @@ namespace fsm {
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub_;
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
                 guard_cloud_sub_;
+        rclcpp::Subscription<
+                mars_quadrotor_msgs::msg::TrajectoryRiskVerdict>::SharedPtr
+                frontend_risk_verdict_sub_;
         bool raw_cloud_shadow_uses_map_cloud_observer_{false};
         bool raw_cloud_in_process_injection_en_{false};
 
         rclcpp::TimerBase::SharedPtr execution_timer_, replan_timer_, cmd_timer_;
         rclcpp::CallbackGroup::SharedPtr exec_cbk_group_, map_cbk_group_, replan_cbk_group_, cmd_cbk_group_, goal_cbk_group_;
         rclcpp::CallbackGroup::SharedPtr guard_cloud_cbk_group_;
+        rclcpp::CallbackGroup::SharedPtr frontend_risk_cbk_group_;
         rclcpp::CallbackGroup::SharedPtr refresh_ack_cbk_group_;
 
         mars_quadrotor_msgs::msg::PositionCommand pid_cmd_;
@@ -1280,6 +1285,119 @@ namespace fsm {
             return true;
         }
 
+        mutable std::mutex frontend_risk_mutex_;
+        mars_quadrotor_msgs::msg::TrajectoryRiskVerdict::SharedPtr
+                pending_frontend_occupied_verdict_;
+        std::atomic_uint64_t frontend_risk_received_total_{0};
+        std::atomic_uint64_t frontend_risk_occupied_total_{0};
+        std::atomic_uint64_t frontend_risk_ignored_total_{0};
+        std::atomic_uint64_t frontend_risk_enforced_total_{0};
+
+        void frontendRiskVerdictCallback(
+                const mars_quadrotor_msgs::msg::TrajectoryRiskVerdict::SharedPtr
+                        msg) {
+            using Verdict =
+                    mars_quadrotor_msgs::msg::TrajectoryRiskVerdict;
+            frontend_risk_received_total_.fetch_add(
+                    1, std::memory_order_relaxed);
+            if (msg->status != Verdict::OCCUPIED) {
+                return;
+            }
+            frontend_risk_occupied_total_.fetch_add(
+                    1, std::memory_order_relaxed);
+            if (cfg_.trajectory_guard_frontend_risk_enforce_en) {
+                std::lock_guard<std::mutex> lock(frontend_risk_mutex_);
+                // Preserve one hazard until the 100 Hz FSM consumes it. A
+                // later NO_HIT verdict cannot erase an OCCUPIED edge.
+                if (!pending_frontend_occupied_verdict_ ||
+                    msg->request_id >
+                            pending_frontend_occupied_verdict_->request_id) {
+                    pending_frontend_occupied_verdict_ = msg;
+                }
+            }
+            ros_ptr_->warn(
+                    " -- [FRONTEND_RISK_VERDICT] request={} gen={} cloud={} "
+                    "status=OCCUPIED source_age={:.3f}s compute={:.3f}ms "
+                    "min_dist={:.4f}m witness_tt={:.3f}",
+                    msg->request_id, msg->trajectory_generation,
+                    msg->cloud_sequence, msg->source_cloud_age_s,
+                    msg->compute_ms, msg->minimum_distance_m,
+                    msg->witness_tt);
+        }
+
+        bool consumeFreshFrontendOccupiedVerdict() {
+            if (!cfg_.trajectory_guard_frontend_risk_enforce_en) {
+                return false;
+            }
+            mars_quadrotor_msgs::msg::TrajectoryRiskVerdict::SharedPtr result;
+            {
+                std::lock_guard<std::mutex> lock(frontend_risk_mutex_);
+                if (!pending_frontend_occupied_verdict_) {
+                    return false;
+                }
+                result = std::move(pending_frontend_occupied_verdict_);
+            }
+            const auto snapshot =
+                    planner_ptr_->getCommittedTrajectorySnapshot();
+            const double now_wt = ros_ptr_->getSimTime();
+            const double result_wt =
+                    static_cast<double>(result->header.stamp.sec) +
+                    1e-9 * static_cast<double>(result->header.stamp.nanosec);
+            const double result_age_s = now_wt - result_wt;
+            const double effective_source_age_s =
+                    result->source_cloud_age_s + std::max(0.0, result_age_s);
+            const double current_tt = snapshot.empty ||
+                                              snapshot.pos_traj.empty()
+                    ? std::numeric_limits<double>::infinity()
+                    : std::clamp(now_wt - snapshot.start_wt, 0.0,
+                                 snapshot.pos_traj.getTotalDuration());
+            const bool generation_matches = !snapshot.empty &&
+                    snapshot.generation == result->trajectory_generation;
+            const bool result_is_fresh = std::isfinite(result_age_s) &&
+                    result_age_s >= 0.0 &&
+                    result_age_s <=
+                            cfg_.trajectory_guard_frontend_risk_result_max_age_s;
+            const bool source_is_fresh =
+                    result->source_cloud_stamp_ns != 0 &&
+                    std::isfinite(effective_source_age_s) &&
+                    effective_source_age_s >= 0.0 &&
+                    effective_source_age_s <=
+                            cfg_.trajectory_guard_frontend_risk_source_max_age_s;
+            const double tt_tolerance = 0.02;
+            const bool time_is_covered = std::isfinite(current_tt) &&
+                    current_tt + tt_tolerance >= result->checked_from_tt &&
+                    current_tt <= result->checked_to_tt + tt_tolerance;
+            if (!generation_matches || !result_is_fresh ||
+                !source_is_fresh || !time_is_covered) {
+                frontend_risk_ignored_total_.fetch_add(
+                        1, std::memory_order_relaxed);
+                ros_ptr_->warn(
+                        " -- [FRONTEND_RISK_ENFORCE] action=IGNORE "
+                        "request={} result_gen={} current_gen={} age={:.3f}s "
+                        "source_age={:.3f}s result_tt=[{:.3f},{:.3f}] "
+                        "current_tt={:.3f} generation_match={} fresh={} "
+                        "source_fresh={} time_covered={}",
+                        result->request_id, result->trajectory_generation,
+                        snapshot.generation, result_age_s,
+                        effective_source_age_s, result->checked_from_tt,
+                        result->checked_to_tt, current_tt,
+                        generation_matches, result_is_fresh,
+                        source_is_fresh, time_is_covered);
+                return false;
+            }
+            frontend_risk_enforced_total_.fetch_add(
+                    1, std::memory_order_relaxed);
+            ros_ptr_->error(
+                    " -- [FRONTEND_RISK_ENFORCE] action=BRAKE request={} "
+                    "gen={} cloud={} age={:.3f}s source_age={:.3f}s "
+                    "current_tt={:.3f} witness_tt={:.3f} min_dist={:.4f}m",
+                    result->request_id, result->trajectory_generation,
+                    result->cloud_sequence, result_age_s,
+                    effective_source_age_s, current_tt,
+                    result->witness_tt, result->minimum_distance_m);
+            return true;
+        }
+
         void stopNearFieldShadowWorker() {
             {
                 std::lock_guard<std::mutex> lock(
@@ -1548,11 +1666,16 @@ namespace fsm {
                 const Trajectory &pos_traj,
                 const Trajectory &yaw_traj,
                 mars_quadrotor_msgs::msg::PolynomialTrajectory &cmd_traj,
-                const bool emergency = false) {
+                const bool emergency = false,
+                const std::uint64_t trajectory_generation = 0) {
             cmd_traj = mars_quadrotor_msgs::msg::PolynomialTrajectory{};
             ros_ptr_->getSimTime(cmd_traj.header.stamp.sec,
                                  cmd_traj.header.stamp.nanosec);
             cmd_traj.header.frame_id = "world";
+            cmd_traj.trajectory_generation = trajectory_generation;
+            cmd_traj.trajectory_id = static_cast<std::uint32_t>(
+                    trajectory_generation &
+                    std::numeric_limits<std::uint32_t>::max());
             cmd_traj.type = mars_quadrotor_msgs::msg::PolynomialTrajectory::POSITION_TRAJ |
                             mars_quadrotor_msgs::msg::PolynomialTrajectory::HEART_BEAT;
             if (emergency) {
@@ -1638,7 +1761,9 @@ namespace fsm {
                 }
             }
             mars_quadrotor_msgs::msg::PolynomialTrajectory cmd_traj;
-            fillPolynomialTrajectory(snapshot.pos_traj, snapshot.yaw_traj, cmd_traj);
+            fillPolynomialTrajectory(snapshot.pos_traj, snapshot.yaw_traj,
+                                     cmd_traj, false,
+                                     snapshot.generation);
             mpc_cmd_pub_->publish(cmd_traj);
         }
 
@@ -1656,6 +1781,10 @@ namespace fsm {
                 const CmdTraj::Sample &sample,
                 const bool emergency = false) {
             heartbeat = mars_quadrotor_msgs::msg::PolynomialTrajectory{};
+            heartbeat.trajectory_generation = sample.generation;
+            heartbeat.trajectory_id = static_cast<std::uint32_t>(
+                    sample.generation &
+                    std::numeric_limits<std::uint32_t>::max());
             heartbeat.type = mars_quadrotor_msgs::msg::PolynomialTrajectory::HEART_BEAT;
             if (emergency) {
                 heartbeat.type |= mars_quadrotor_msgs::msg::PolynomialTrajectory::EMER_STOP;
@@ -1668,7 +1797,9 @@ namespace fsm {
 
         void getCommittedTrajectory(mars_quadrotor_msgs::msg::PolynomialTrajectory &cmd_traj) {
             const auto snapshot = planner_ptr_->getCommittedTrajectorySnapshot();
-            fillPolynomialTrajectory(snapshot.pos_traj, snapshot.yaw_traj, cmd_traj);
+            fillPolynomialTrajectory(snapshot.pos_traj, snapshot.yaw_traj,
+                                     cmd_traj, false,
+                                     snapshot.generation);
         }
 
         void fillPositionCommand(mars_quadrotor_msgs::msg::PositionCommand &pos_cmd,
@@ -2485,7 +2616,8 @@ namespace fsm {
                             stop_position.x(), stop_position.y(), stop_position.z());
             mars_quadrotor_msgs::msg::PolynomialTrajectory brake_message;
             fillPolynomialTrajectory(brake_trajectory, yaw_trajectory,
-                                     brake_message, true);
+                                     brake_message, true,
+                                     brake_source_generation_);
             mpc_cmd_pub_->publish(brake_message);
             ChangeState("TrajectoryGuard", EMER_STOP);
             return true;
@@ -2694,6 +2826,19 @@ namespace fsm {
                         near_field_shadow_occupied_total_.load(
                                 std::memory_order_relaxed),
                         near_field_shadow_unavailable_total_.load(
+                                std::memory_order_relaxed));
+            }
+            if (cfg_.trajectory_guard_frontend_risk_shadow_en && ros_ptr_) {
+                ros_ptr_->info(
+                        " -- [FRONTEND_RISK_SUMMARY] received={} occupied={} "
+                        "ignored={} enforced={}",
+                        frontend_risk_received_total_.load(
+                                std::memory_order_relaxed),
+                        frontend_risk_occupied_total_.load(
+                                std::memory_order_relaxed),
+                        frontend_risk_ignored_total_.load(
+                                std::memory_order_relaxed),
+                        frontend_risk_enforced_total_.load(
                                 std::memory_order_relaxed));
             }
             saveReplanLogToFile();
@@ -2961,6 +3106,31 @@ namespace fsm {
                             "mode={} TEST_ONLY",
                             cfg_.trajectory_guard_raw_cloud_near_field_test_replay_mode);
                 }
+            }
+            if (cfg_.trajectory_guard_frontend_risk_shadow_en) {
+                frontend_risk_cbk_group_ = nh_->create_callback_group(
+                        rclcpp::CallbackGroupType::MutuallyExclusive);
+                rclcpp::SubscriptionOptions verdict_options;
+                verdict_options.callback_group = frontend_risk_cbk_group_;
+                const auto verdict_qos = rclcpp::QoS(
+                        rclcpp::KeepLast(4)).reliable()
+                                .durability_volatile();
+                frontend_risk_verdict_sub_ = nh_->create_subscription<
+                        mars_quadrotor_msgs::msg::TrajectoryRiskVerdict>(
+                                cfg_.trajectory_guard_frontend_risk_topic,
+                                verdict_qos,
+                                std::bind(
+                                        &FsmRos2::frontendRiskVerdictCallback,
+                                        this, std::placeholders::_1),
+                                verdict_options);
+                ros_ptr_->info(
+                        " -- [FRONTEND_RISK] listening topic={} "
+                        "result_max_age={:.3f}s source_max_age={:.3f}s "
+                        "enforce={}",
+                        cfg_.trajectory_guard_frontend_risk_topic,
+                        cfg_.trajectory_guard_frontend_risk_result_max_age_s,
+                        cfg_.trajectory_guard_frontend_risk_source_max_age_s,
+                        cfg_.trajectory_guard_frontend_risk_enforce_en);
             }
             cmd_pub_ = nh_->create_publisher<mars_quadrotor_msgs::msg::PositionCommand>(cfg_.cmd_topic, qos);
             mpc_cmd_pub_ = nh_->create_publisher<mars_quadrotor_msgs::msg::PolynomialTrajectory>(cfg_.mpc_cmd_topic,
@@ -3290,6 +3460,11 @@ namespace fsm {
             if (machine_state_ == FOLLOW_TRAJ &&
                 consumeFreshNearFieldOccupiedResult()) {
                 activateEmergencyBrake("near_field_occupied");
+                return;
+            }
+            if (machine_state_ == FOLLOW_TRAJ &&
+                consumeFreshFrontendOccupiedVerdict()) {
+                activateEmergencyBrake("frontend_risk_occupied");
                 return;
             }
             if (cfg_.trajectory_guard_en && machine_state_ == FOLLOW_TRAJ &&

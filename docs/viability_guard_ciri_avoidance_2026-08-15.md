@@ -3461,3 +3461,61 @@ Map1-10 n=10 regression. Full details are in
 summary are `results/inprocess_raw_handoff_seed7_9_10_three_mode_n3_{raw,summary}_20260901.csv`,
 and corrected Adaptive raw is
 `results/inprocess_raw_handoff_corrected_adaptive_seed7_9_10_n3_raw_20260901.csv`.
+
+### 8.47 Sensor-front-end filtering and compact risk verdict (2026-09-01)
+
+The filter was moved across the remaining sensor DDS boundary. A new composed
+`perfect_drone_frontend_node` passes the renderer's raw `PointCloud2::SharedPtr`
+directly to the native filter and does not create a `/cloud_registered`
+publisher in Sector or Adaptive mode. Sector publishes only the filtered map
+cloud. Adaptive additionally publishes a compact trajectory-risk verdict. Full
+retains the original raw cloud publisher and serves as the reference mode.
+
+This is more than relocating the angular crop. `PolynomialTrajectory` now
+carries an exact 64-bit generation in addition to the legacy controller ID.
+`TrajectoryRiskVerdict` returns that generation, raw-cloud sequence and stamp,
+checked trajectory-time interval, result/source ages, witness data and status.
+The FSM accepts an OCCUPIED result for enforcement only when generation,
+freshness and checked-range gates all pass. Shadow logging is enabled only in a
+new experimental profile; enforcement and all standard `tight_v7` profiles
+remain off and unchanged.
+
+The raw callback only stores SharedPtrs/latest jobs. Angular filtering and risk
+evaluation run in independent latest-only workers. The risk worker uses a 1.5 s
+raw window, trajectory-tail AABB crop and KD-tree nearest-hit/egress test. A
+planner-free runtime contract smoke observed no `/cloud_registered` publisher,
+one filtered-cloud publisher, one verdict publisher, and 203/203/203 raw input,
+filtered output and verdict events with zero worker overwrite. Actual RMW CDR
+serialization was measured rather than estimated: each verdict is 180 bytes.
+
+Release build, 24 campaign pytest cases and the standalone native geometry/
+stats/witness equivalence test passed. The v=7 Map7/9/10 three-mode n=1 rotating
+gate produced nine first-attempt completions, nine source-static-PCD-safe rows,
+and no retry, OOM or speed invalidation. Mean Full/Sector/Adaptive mission times
+were 97.927/69.343/66.097 s. Adaptive versus Full reduced mean DDS map-cloud
+rate by 18.085%; verdict traffic averaged 0.001815 MiB/s, about 0.044% of total
+algorithm DDS. Adaptive emitted 2,096 verdicts (377,280 bytes), with 5.201 ms
+mean risk compute time, 16.924 ms worst run maximum and zero overwrite. It made
+71 effective Full openings.
+
+This gate does **not** establish a computation reduction. Mean Adaptive FSM
+load was 1.112 cores versus Full 0.679, and FSM core-seconds were 73.496 versus
+66.406 (+10.677%). A separate Map7 CPU boundary run measured simulator/front-
+end mean cores of 0.140/0.165/0.270 for Full/Sector/Adaptive; Adaptive front-end
+cloud and risk workers accounted for about 0.0118 and 0.0529 cores. The primary
+confound is cadence: Full ROG processing ran at 3.82--4.49 Hz while front-end
+Sector reached 10.20--10.34 Hz. Removing raw DDS restored callback throughput,
+so the planner processed more generations. The result supports a communication
+architecture contribution, but CPU savings must not yet be claimed.
+
+The next optimization must meter and match source-publish, accepted-generation
+and ROG-commit cadence, then cap front-end cloud publication at the lowest rate
+that preserves completion and contact safety. Only after a cadence-matched CPU
+gate should verdict enforcement receive separate fault-replay and repeated
+Map7/9/10 testing; Map1--10 n=10 remains the final regression rather than the
+next debugging step. Full tables and claim boundaries are in
+`docs/sensor_frontend_risk_verdict_20260901.md`. Raw evidence is in
+`results/frontend_risk_shadow_map7_n1_raw_20260901.csv`,
+`results/frontend_risk_shadow_maps7_9_10_three_mode_n1_raw_20260901.csv`, and
+`results/frontend_risk_cpu_map7_three_mode_n1_raw_20260901.csv`, with matching
+artifact directories.

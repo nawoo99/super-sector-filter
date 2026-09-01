@@ -181,6 +181,16 @@ namespace fsm {
         int trajectory_guard_raw_cloud_near_field_max_sequence_lag{1};
         double trajectory_guard_raw_cloud_near_field_egress_tolerance_m{0.005};
         double trajectory_guard_raw_cloud_near_field_egress_min_progress_m{0.02};
+        // Compact result produced before angular filtering. This is separate
+        // from raw_cloud so the planner never needs the full raw PointCloud2.
+        // Shadow remains the default; enforcement must be opted into by an
+        // experimental profile after generation/freshness validation.
+        bool trajectory_guard_frontend_risk_shadow_en{false};
+        bool trajectory_guard_frontend_risk_enforce_en{false};
+        string trajectory_guard_frontend_risk_topic{
+                "/planning/trajectory_risk_verdict"};
+        double trajectory_guard_frontend_risk_result_max_age_s{0.2};
+        double trajectory_guard_frontend_risk_source_max_age_s{0.75};
 
         Config() = default;
 
@@ -383,6 +393,31 @@ namespace fsm {
                             trajectory_guard_raw_cloud_near_field_egress_min_progress_m);
             if (trajectory_guard_raw_cloud_near_field_enforce_en) {
                 trajectory_guard_raw_cloud_near_field_shadow_en = true;
+            }
+            loader.LoadParam(
+                    "fsm/trajectory_guard/frontend_risk/shadow_en",
+                    trajectory_guard_frontend_risk_shadow_en, false);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/frontend_risk/enforce_en",
+                    trajectory_guard_frontend_risk_enforce_en, false);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/frontend_risk/topic",
+                    trajectory_guard_frontend_risk_topic,
+                    string("/planning/trajectory_risk_verdict"));
+            loader.LoadParam(
+                    "fsm/trajectory_guard/frontend_risk/result_max_age_s",
+                    trajectory_guard_frontend_risk_result_max_age_s, 0.2);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/frontend_risk/source_max_age_s",
+                    trajectory_guard_frontend_risk_source_max_age_s, 0.75);
+            trajectory_guard_frontend_risk_result_max_age_s = std::max(
+                    0.02,
+                    trajectory_guard_frontend_risk_result_max_age_s);
+            trajectory_guard_frontend_risk_source_max_age_s = std::max(
+                    trajectory_guard_frontend_risk_result_max_age_s,
+                    trajectory_guard_frontend_risk_source_max_age_s);
+            if (trajectory_guard_frontend_risk_enforce_en) {
+                trajectory_guard_frontend_risk_shadow_en = true;
             }
 
 

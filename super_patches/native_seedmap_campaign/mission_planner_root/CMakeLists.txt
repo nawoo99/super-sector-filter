@@ -31,6 +31,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(mavros_msgs REQUIRED)
+find_package(mars_quadrotor_msgs REQUIRED)
 
 # Other packages
 find_package(Eigen3 REQUIRED)
@@ -59,6 +60,7 @@ set(dependencies
         geometry_msgs
         nav_msgs
         visualization_msgs
+        mars_quadrotor_msgs
 )
 
 add_executable(waypoint_mission
@@ -84,13 +86,17 @@ ament_target_dependencies(native_sector_cpp PUBLIC
         sensor_msgs
         nav_msgs
         std_msgs
+        mars_quadrotor_msgs
 )
 ament_target_dependencies(native_sector_cpp_component PUBLIC
         rclcpp
         sensor_msgs
         nav_msgs
         std_msgs
+        mars_quadrotor_msgs
 )
+target_link_libraries(native_sector_cpp PUBLIC ${PCL_LIBRARIES})
+target_link_libraries(native_sector_cpp_component PUBLIC ${PCL_LIBRARIES})
 target_link_libraries(waypoint_mission PUBLIC
         ${THIRD_PARTY}
 )
@@ -136,6 +142,7 @@ install(DIRECTORY
         )
 
 ament_export_targets(native_sector_cpp_component_targets HAS_LIBRARY_TARGET)
-ament_export_dependencies(rclcpp sensor_msgs nav_msgs std_msgs)
+ament_export_dependencies(rclcpp sensor_msgs nav_msgs std_msgs
+        mars_quadrotor_msgs)
 
 ament_package()

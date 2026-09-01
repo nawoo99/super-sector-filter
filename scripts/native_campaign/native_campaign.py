@@ -929,6 +929,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "mode_order_position", "experiment_profile", "filter_profile",
           "filter_backend",
           "filter_intra_process",
+          "filter_sensor_frontend",
           "success", "run_valid",
           "monitor_type", "monitor_flight_cpu_pct", "live_cloud_enabled", "preflight_ready",
           "preflight_cloud_messages", "preflight_odom_messages", "goal_messages",
@@ -1066,7 +1067,23 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_slowdown_full_refresh_ack_latency_max_s",
           "filter_frames", "filter_cloud_input_callbacks",
           "filter_cloud_worker_overwrites", "filter_cloud_input_payload_bytes",
+          "filter_cloud_compute_ms_mean", "filter_cloud_compute_ms_max",
           "filter_in_process_guard_handoffs",
+          "filter_direct_input",
+          "filter_risk_verdict_topic", "filter_risk_trajectory_topic",
+          "filter_risk_accum_window_s", "filter_risk_clearance_m",
+          "filter_risk_horizon_s", "filter_risk_sample_dt_s",
+          "filter_risk_min_points", "filter_risk_voxel_m",
+          "filter_risk_max_cloud_age_s", "filter_risk_worker_overwrites",
+          "filter_risk_trajectory_messages",
+          "filter_risk_invalid_trajectory_messages",
+          "filter_risk_verdict_messages",
+          "filter_risk_verdict_payload_bytes",
+          "filter_risk_occupied_verdicts",
+          "filter_risk_compute_ms_mean", "filter_risk_compute_ms_max",
+          "filter_cloud_compute_core_equivalent",
+          "filter_risk_compute_core_equivalent",
+          "filter_frontend_compute_core_equivalent",
           "filter_processed_input_payload_bytes", "filter_published_frames",
           "filter_published_payload_bytes",
           "filter_rate_limited_frames", "filter_max_publish_hz",
@@ -1201,12 +1218,16 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_processed_input_payload_mib_s",
           "filter_published_payload_mib_s",
           "filter_guard_witness_payload_mib_s",
+          "filter_risk_verdict_payload_mib_s",
           "planner_published_payload_mib_s",
           "planner_ingress_payload_mib_s",
           "algorithm_delivery_payload_mib_s",
-          "dds_cloud_payload_mib_s", "intra_process_cloud_payload_mib_s",
+          "dds_cloud_payload_mib_s", "dds_risk_verdict_payload_mib_s",
+          "dds_total_algorithm_payload_mib_s",
+          "intra_process_cloud_payload_mib_s",
           "total_ms_mean", "raycast_ms_mean", "update_ms_mean",
           "inflation_ms_mean", "kept_pct", "fsm_cpu_pct", "filter_cpu_pct",
+          "sim_cpu_pct",
           "monitor_cpu_pct",
           "cgroup_cpu_accounting", "cgroup_cpu_duration_s",
           "cgroup_memory_source", "cgroup_accounting_error",
@@ -1236,7 +1257,8 @@ def log(msg):
 
 
 def kill_all():
-    for n in ("perfect_drone_node", "fsm_node", "waypoint_mission", "native_sector.py",
+    for n in ("perfect_drone_node", "perfect_drone_frontend_node",
+              "fsm_node", "waypoint_mission", "native_sector.py",
               "native_sector_cpp",
               "native_loop_monitor.py", "native_reference_monitor.py",
               "native_seed12_scenario.py",
@@ -1608,7 +1630,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         if (
             filter_guard_witness_radius_m > 0.0
             and base_mode == "adaptive"
-            and filter_backend != "cpp-intra"
+            and filter_backend not in ("cpp-intra", "cpp-frontend")
         ):
             filter_options += (
                 " --guard-witness-topic /cloud_guard_witness"
@@ -1643,7 +1665,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     " --near-field-speed-gain-s 0.2"
                     " --near-field-max-radius-m 3.0"
                 )
-                if filter_backend in ("cpp", "cpp-intra"):
+                if filter_backend in ("cpp", "cpp-intra", "cpp-frontend"):
                     filter_options += (
                         f" --slowdown-full-refresh-v "
                         f"{adaptive_slowdown_full_refresh_v}"
@@ -1666,8 +1688,24 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         integrated_filter_active = (
             filter_backend == "cpp-intra" and not raw_direct
         )
+        sensor_frontend_active = (
+            filter_backend == "cpp-frontend" and not raw_direct
+        )
+        if sensor_frontend_active and base_mode == "adaptive":
+            filter_options += (
+                " --risk-verdict-topic /planning/trajectory_risk_verdict"
+                " --risk-trajectory-topic /planning_cmd/poly_traj"
+                " --risk-accum-window-s 1.5"
+                " --risk-clearance-m 0.20"
+                " --risk-horizon-s 1.0"
+                " --risk-sample-dt-s 0.01"
+                " --risk-min-points 200"
+                " --risk-voxel-m 0.0"
+                " --risk-max-cloud-age-s 0.75"
+            )
         filt_proc = None
-        if not raw_direct and not integrated_filter_active:
+        if (not raw_direct and not integrated_filter_active
+                and not sensor_frontend_active):
             filter_command = (
                 f"python3 {SECTOR}"
                 if filter_backend == "python"
@@ -1773,6 +1811,14 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     " use_integrated_filter:=true"
                     f" filter_arguments:='{encoded_filter_arguments}'"
                 )
+            elif sensor_frontend_active:
+                encoded_filter_arguments = ";".join(
+                    [base_mode, *filter_options.strip().split()]
+                )
+                launch_cmd += (
+                    " use_sensor_frontend:=true"
+                    f" filter_arguments:='{encoded_filter_arguments}'"
+                )
         if test_force_local_escape_once:
             launch_cmd = "SUPER_TEST_FORCE_LOCAL_ESCAPE_ONCE=1 " + launch_cmd
         if test_force_initial_footprint_egress_once:
@@ -1862,11 +1908,17 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
 
         row_start = perf_row_count()
         fsm_cpu = CpuMeter("fsm_node")
+        sim_executable = (
+            "perfect_drone_frontend_node"
+            if sensor_frontend_active else "perfect_drone_node"
+        )
+        sim_cpu = CpuMeter(sim_executable)
         filt_cpu = CpuMeter(
             "native_sector.py"
             if filter_backend == "python" else SECTOR_CPP_EXECUTABLE
         )
         fsm_cpu.start()
+        sim_cpu.start_executable(sim_executable)
         memory_meter = MemoryMeter(fsm_cpu.pid, memory_trace_csv)
         memory_trace_paths.append(memory_trace_csv)
         memory_meter.sample()
@@ -1964,6 +2016,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         while mon_proc.poll() is None and time.monotonic() < monitor_deadline:
             time.sleep(1.0)
             monitor_cpu.sample()
+            sim_cpu.sample()
             memory_meter.sample()
             if cgroup_meter is not None:
                 cgroup_meter.sample()
@@ -2001,6 +2054,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             cgroup_summary = cgroup_meter.summary()
 
         fsm_cpu_pct = fsm_cpu.stop()
+        sim_cpu_pct = sim_cpu.stop()
         filter_cpu_pct = filt_cpu.stop() if filt_proc is not None else None
         monitor_cpu_pct = monitor_cpu.stop()
         row_end = perf_row_count()
@@ -2037,15 +2091,21 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                "filter_profile": filter_profile,
                "filter_backend": (
                    filter_backend
-                   if filt_proc is not None or integrated_filter_active
+                   if (filt_proc is not None or integrated_filter_active
+                       or sensor_frontend_active)
                    else "direct"
                ),
-               "filter_intra_process": integrated_filter_active,
+               "filter_intra_process": (
+                   integrated_filter_active or sensor_frontend_active
+               ),
+               "filter_sensor_frontend": sensor_frontend_active,
                "perf_log_generation_ready": perf_log_generation_ready,
                "perf_window_valid": perf_window_valid,
                "perf_trace_csv": perf_trace_csv if os.path.exists(perf_trace_csv) else None,
                "perf_row_start": row_start, "perf_row_end": row_end, "kept_pct": kept_pct,
-               "fsm_cpu_pct": fsm_cpu_pct, "filter_cpu_pct": filter_cpu_pct,
+               "fsm_cpu_pct": fsm_cpu_pct,
+               "filter_cpu_pct": filter_cpu_pct,
+               "sim_cpu_pct": sim_cpu_pct,
                "monitor_cpu_pct": monitor_cpu_pct,
                "attempt_count": attempt,
                "retry_count": attempt - 1,
@@ -2218,10 +2278,35 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     rec.get("filter_guard_witness_payload_bytes"),
                 "guard_dedicated_payload_mib_s":
                     rec.get("guard_dedicated_payload_bytes"),
+                "filter_risk_verdict_payload_mib_s":
+                    rec.get("filter_risk_verdict_payload_bytes"),
             }
             for rate_key, byte_count in payload_rate_sources.items():
                 if byte_count is not None:
                     rec[rate_key] = byte_count / payload_duration_s / mib
+
+            cloud_compute_ms = rec.get("filter_cloud_compute_ms_mean")
+            cloud_compute_count = rec.get("filter_frames")
+            risk_compute_ms = rec.get("filter_risk_compute_ms_mean")
+            risk_compute_count = rec.get("filter_risk_verdict_messages")
+            if cloud_compute_ms is not None and cloud_compute_count is not None:
+                rec["filter_cloud_compute_core_equivalent"] = (
+                    cloud_compute_ms * cloud_compute_count
+                    / (1000.0 * payload_duration_s)
+                )
+            if risk_compute_ms is not None and risk_compute_count is not None:
+                rec["filter_risk_compute_core_equivalent"] = (
+                    risk_compute_ms * risk_compute_count
+                    / (1000.0 * payload_duration_s)
+                )
+            frontend_compute_parts = [
+                rec.get("filter_cloud_compute_core_equivalent"),
+                rec.get("filter_risk_compute_core_equivalent"),
+            ]
+            if any(value is not None for value in frontend_compute_parts):
+                rec["filter_frontend_compute_core_equivalent"] = sum(
+                    value or 0.0 for value in frontend_compute_parts
+                )
 
             map_bytes = rec.get("map_payload_bytes_total")
             if map_bytes is not None:
@@ -2246,7 +2331,27 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     (planner_ingress_bytes + filter_input_bytes)
                     / payload_duration_s / mib
                 )
-                if integrated_filter_active:
+                if sensor_frontend_active:
+                    verdict_bytes = (
+                        rec.get("filter_risk_verdict_payload_bytes") or 0
+                    )
+                    # Raw sensor data stays inside the simulator/front-end
+                    # process. DDS carries only the filtered map cloud and
+                    # compact verdict; retain logical raw bytes separately.
+                    rec["dds_cloud_payload_mib_s"] = (
+                        planner_ingress_bytes / payload_duration_s / mib
+                    )
+                    rec["dds_risk_verdict_payload_mib_s"] = (
+                        verdict_bytes / payload_duration_s / mib
+                    )
+                    rec["dds_total_algorithm_payload_mib_s"] = (
+                        (planner_ingress_bytes + verdict_bytes)
+                        / payload_duration_s / mib
+                    )
+                    rec["intra_process_cloud_payload_mib_s"] = (
+                        filter_input_bytes / payload_duration_s / mib
+                    )
+                elif integrated_filter_active:
                     rec["dds_cloud_payload_mib_s"] = (
                         filter_input_bytes / payload_duration_s / mib
                     )
@@ -2486,12 +2591,14 @@ def main():
     )
     ap.add_argument(
         "--filter-backend",
-        choices=("python", "cpp", "cpp-intra"),
+        choices=("python", "cpp", "cpp-intra", "cpp-frontend"),
         default="python",
         help=(
             "implementation of /cloud_registered -> /cloud_sector; cpp-intra "
             "composes that same C++ filter with the FSM so large outputs avoid "
-            "a second DDS hop (static seed1..10 only)"
+            "a second DDS hop; cpp-frontend composes simulator+filter, "
+            "suppresses raw DDS, and emits filtered cloud plus compact risk "
+            "verdict (static seed1..10 only)"
         ),
     )
     ap.add_argument(
@@ -2657,7 +2764,7 @@ def main():
         )
     if (
         args.adaptive_slowdown_full_refresh_v > 0.0
-        and args.filter_backend not in ("cpp", "cpp-intra")
+        and args.filter_backend not in ("cpp", "cpp-intra", "cpp-frontend")
     ):
         ap.error("Adaptive slowdown full refresh requires --filter-backend cpp")
     if args.adaptive_trajectory_guard_hold_s < 0.0:
@@ -2682,7 +2789,7 @@ def main():
         )
     if (
         args.filtered_reliable_map_link
-        and args.filter_backend not in ("cpp", "cpp-intra")
+        and args.filter_backend not in ("cpp", "cpp-intra", "cpp-frontend")
     ):
         ap.error("--filtered-reliable-map-link requires a C++ filter backend")
     if args.filter_guard_witness_radius_m < 0.0:
@@ -2696,7 +2803,7 @@ def main():
         if "adaptive" not in args.modes:
             ap.error("guard witness side channel requires adaptive mode")
     if args.adaptive_test_drop_first_trajectory_guard_full_cloud:
-        if args.filter_backend not in ("cpp", "cpp-intra"):
+        if args.filter_backend not in ("cpp", "cpp-intra", "cpp-frontend"):
             ap.error(
                 "--adaptive-test-drop-first-trajectory-guard-full-cloud "
                 "requires --filter-backend cpp"
@@ -2825,7 +2932,7 @@ def main():
                 f"unsupported maps: {', '.join(invalid_maps)}"
             )
 
-    if args.filter_backend in ("cpp", "cpp-intra"):
+    if args.filter_backend in ("cpp", "cpp-intra", "cpp-frontend"):
         unsupported_maps = [
             map_name for map_name in args.maps
             if map_name in ("seed12", "seed13", "seed14", "seed15")

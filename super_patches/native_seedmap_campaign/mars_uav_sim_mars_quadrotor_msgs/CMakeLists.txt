@@ -27,6 +27,7 @@ set(msg_files
         "ros2_msg/TrakingPerformance.msg"
         "ros2_msg/PositionCommand.msg"
         "ros2_msg/PolynomialTrajectory.msg"
+        "ros2_msg/TrajectoryRiskVerdict.msg"
         "ros2_msg/MpcPositionCommand.msg"
 )
 # Generate interfaces

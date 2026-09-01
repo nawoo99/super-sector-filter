@@ -1,6 +1,32 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-01 sensor-front-end raw DDS 제거와 compact risk verdict gate 완료.**
+> `perfect_drone_frontend_node`가 simulator와 native filter를 compose해 renderer의
+> raw `PointCloud2::SharedPtr`를 직접 넘긴다. Sector/Adaptive에서는
+> `/cloud_registered` publisher 자체를 만들지 않고, Sector는 filtered cloud만,
+> Adaptive는 filtered cloud와 generation/freshness가 포함된 compact trajectory-
+> risk verdict만 DDS로 보낸다. 실제 직렬화 verdict는 정확히 180 bytes/message다.
+> Angular filter와 risk check는 각각 독립 latest-only worker라 sensor callback과
+> planner callback을 동기적으로 막지 않는다.
+>
+> v=7 Map7/9/10 × Full/Sector/Adaptive × n=1 architecture gate의 9행은 모두
+> first-attempt 완주, source-static-PCD collision 0, retry/OOM 0이었다. 세 map
+> 평균에서 Adaptive의 DDS cloud rate는 Full보다 18.085% 낮고 verdict를 포함해도
+> 약 0.044%만 추가됐다. 다만 **연산량 감소는 아직 성립하지 않는다.** 이 gate의
+> Adaptive FSM core-seconds는 Full보다 10.677% 높았고, Full ROG 처리율
+> 3.82~4.49 Hz와 front-end Sector 약 10.20~10.34 Hz의 cadence 차이가 confound다.
+> 따라서 현재 contribution은 raw sensor DDS의 구조적 제거와 작은 검증 계약이며,
+> computation 절감은 동일 accepted-generation/sensor cadence에서 재검증해야 한다.
+>
+> 표준 `tight_v7` profile은 변경하지 않았고 verdict enforcement는 default false다.
+> 다음은 안전 threshold가 아니라 front-end publish/ROG commit cadence를 정합한 뒤
+> completion/contact를 유지하는 최소 callback rate를 찾는 단계다. 상세는 viability
+> §8.47과 `docs/sensor_frontend_risk_verdict_20260901.md`, 원자료는
+> `results/frontend_risk_shadow_maps7_9_10_three_mode_n1_raw_20260901.csv` 및
+> `results/frontend_risk_cpu_map7_three_mode_n1_raw_20260901.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-01 C++ 동일 프로세스 zero-copy raw guard handoff 완료.**
 > 외부 bounded witness는 8m에서 점 약 93.5%, 5m에서도 약 80.7%를 남겨
 > 대용량 side-channel을 충분히 줄이지 못했다. 최종 구조는 native filter와

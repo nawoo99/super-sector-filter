@@ -31,12 +31,18 @@ def generate_launch_description():
         'filter_arguments', default_value='',
         description='semicolon-delimited native sector filter arguments'
     )
+    declare_sensor_frontend_cmd = DeclareLaunchArgument(
+        'use_sensor_frontend', default_value='false',
+        description=('compose simulator and native filter, disable raw cloud '
+                     'DDS, and emit only filtered cloud plus risk verdict')
+    )
 
     waypoint_data = LaunchConfiguration('waypoint_data')
     drone_config = LaunchConfiguration('drone_config')
     super_config = LaunchConfiguration('super_config')
     use_integrated_filter = LaunchConfiguration('use_integrated_filter')
     filter_arguments = LaunchConfiguration('filter_arguments')
+    use_sensor_frontend = LaunchConfiguration('use_sensor_frontend')
 
     ld = LaunchDescription()
     ld.add_action(declare_waypoint_data_cmd)
@@ -44,6 +50,7 @@ def generate_launch_description():
     ld.add_action(declare_super_config_cmd)
     ld.add_action(declare_integrated_filter_cmd)
     ld.add_action(declare_filter_arguments_cmd)
+    ld.add_action(declare_sensor_frontend_cmd)
 
     mission_planner = Node(
         package='mission_planner',
@@ -60,11 +67,24 @@ def generate_launch_description():
         package='perfect_drone_sim',
         executable='perfect_drone_node',
         output='log',
+        condition=UnlessCondition(use_sensor_frontend),
         parameters=[{
             'config_name': drone_config,
         }]
     )
     ld.add_action(perfect_drone_sim)
+
+    perfect_drone_frontend = Node(
+        package='perfect_drone_sim',
+        executable='perfect_drone_frontend_node',
+        output='log',
+        condition=IfCondition(use_sensor_frontend),
+        parameters=[{
+            'config_name': drone_config,
+            'filter_arguments': filter_arguments,
+        }]
+    )
+    ld.add_action(perfect_drone_frontend)
 
     SUPER = Node(
         package='super_planner',

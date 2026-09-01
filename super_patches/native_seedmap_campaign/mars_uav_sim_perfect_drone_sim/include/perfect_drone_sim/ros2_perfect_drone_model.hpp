@@ -14,6 +14,7 @@
 #include "pcl_conversions/pcl_conversions.h"
 #include "perfect_drone_sim/config.hpp"
 #include "tf2_ros/transform_broadcaster.h"
+#include <functional>
 
 
 typedef Eigen::Matrix<double, 3, 1> Vec3;
@@ -26,6 +27,9 @@ typedef Eigen::MatrixX4d MatX4;
 typedef std::pair<double, Vec3> TimePosPair;
 
 namespace perfect_drone {
+    using SensorCloudObserver = std::function<void(
+            const sensor_msgs::msg::PointCloud2::SharedPtr &)>;
+
     class PerfectDrone : public rclcpp::Node {
         std::shared_ptr<tf2_ros::TransformBroadcaster> br_map_ego_;
 
@@ -50,13 +54,22 @@ namespace perfect_drone {
         double yaw_;
         Eigen::Quaterniond q_;
         std::string mesh_resource_;
+        SensorCloudObserver local_cloud_observer_;
+        bool publish_raw_cloud_{true};
 
         nav_msgs::msg::Odometry odom_;
         nav_msgs::msg::Path path_;
 
 
     public:
-        PerfectDrone(): Node("perfect_tracking") {
+        explicit PerfectDrone(
+                SensorCloudObserver local_cloud_observer = {},
+                const bool publish_raw_cloud = true,
+                const rclcpp::NodeOptions &node_options =
+                        rclcpp::NodeOptions())
+                : Node("perfect_tracking", node_options),
+                  local_cloud_observer_(std::move(local_cloud_observer)),
+                  publish_raw_cloud_(publish_raw_cloud) {
             // TODO: The current implementation uses a lenient QoS configuration for message transmission.
             const rclcpp::QoS qos(rclcpp::QoS(100)
                                           .best_effort()
@@ -114,7 +127,9 @@ namespace perfect_drone {
             path_pub_ = this->create_publisher<nav_msgs::msg::Path>("path", qos);
 
             // 发布 PointCloud2 消息
-            local_pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_registered", qos);
+            if (publish_raw_cloud_) {
+                local_pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_registered", qos);
+            }
 
             global_pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/global_pc", qos);
 
@@ -185,12 +200,17 @@ namespace perfect_drone {
             pcl::PointCloud<marsim::PointType>::Ptr local_map(new pcl::PointCloud<marsim::PointType>);
             const auto cur_t = this->get_clock()->now().seconds();
             render_ptr_->renderOnceInWorld(position_.cast<float>(), q_.cast<float>(), cur_t, local_map);
-            sensor_msgs::msg::PointCloud2 pc_msg;
-            pcl::toROSMsg(*local_map, pc_msg);
-            pc_msg.header.frame_id = "world";
-            pc_msg.header.stamp = this->get_clock()->now();
+            auto pc_msg = std::make_shared<sensor_msgs::msg::PointCloud2>();
+            pcl::toROSMsg(*local_map, *pc_msg);
+            pc_msg->header.frame_id = "world";
+            pc_msg->header.stamp = this->get_clock()->now();
             std::cout << "Publish local map size: " << local_map->size() << std::endl;
-            local_pc_pub_->publish(pc_msg);
+            if (local_cloud_observer_) {
+                local_cloud_observer_(pc_msg);
+            }
+            if (publish_raw_cloud_ && local_pc_pub_) {
+                local_pc_pub_->publish(*pc_msg);
+            }
         }
 
         ~PerfectDrone() {}
