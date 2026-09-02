@@ -45,7 +45,9 @@ confirmatory.
 The primary outcomes remain:
 
 1. mission completion;
-2. source-static-PCD collision occurrence.
+2. collision occurrence, reported separately for the source static PCD and
+   the authoritative side-entry-v1 cylinder geometry, with their run-level
+   union used as the overall safety outcome.
 
 Secondary outcomes are static-PCD clearance, mission time, DDS cloud plus
 verdict rate, ROG compute, algorithm and end-to-end CPU, and Adaptive transition
@@ -56,16 +58,68 @@ counts. A 0.20 m clearance cutoff is descriptive and is not a collision label.
 The side-entry topology will be a deterministic relative-geometry overlay on
 the existing Map7/Map9/Map10 loop, not a new random-map generalization study.
 One identical placement rule will be applied without per-map outcome tuning.
-The rule and its offline visibility/passability checks must be appended here
-before any topology flight is run. If the rule changes after a flight, it
-becomes a new explicitly versioned exploratory topology; failed rows are never
-deleted or relabelled.
+If the rule changes after a flight, it becomes a new explicitly versioned
+exploratory topology; failed rows are never deleted or relabelled.
 
 Initial screening will use one Full/Sector/Adaptive run on Map7, followed by a
 rotating Map7/Map9/Map10 n=3 campaign only if the geometry and runtime gates
 pass. The per-call optimizer phase trace will be disabled for performance
 comparisons; cgroup and ordinary memory accounting remain enabled. OOM
 reproduction is a separate diagnostic experiment.
+
+## Frozen side-entry-v1 rule (recorded before flight)
+
+The overlay is a late-appearing, stationary vertical cylinder generated at the
+simulator's common raw-sensor source. It is appended before the Full raw-DDS
+publisher and before the Sector/Adaptive in-process handoff split. Consequently
+all three modes receive the same source implementation, while Sector/Adaptive
+retain the C++ sensor-front-end architecture used in the preceding campaigns.
+The feature is disabled by default and enabled only by the three explicitly
+named `seed{7,9,10}_side_entry_v1.yaml` profiles.
+
+A purely static PCD overlay was rejected before flight. With a 15 m sensing
+horizon and a persistent occupancy map, an obstacle needed after a turn can be
+inserted during the preceding approach, so the experiment would not isolate
+the short angular-information-loss interval. The late-appearance condition is
+therefore part of the topology definition, not a result-driven parameter
+change.
+
+The single cylinder is generated only at the first loop corner `(24, 24)` when
+all of the following mode-blind geometric predicates hold continuously for
+0.02 s:
+
+1. horizontal speed is at least 2.0 m/s and the vehicle is within 2.0 m of the
+   corner;
+2. the 0.8 s PVAJ command prediction is 0.8--3.5 m from the vehicle;
+3. body-yaw/velocity-yaw mismatch is at least 50 degrees;
+4. after at most a 20 degree nudge toward the already blind side, the complete
+   cylinder has a body-relative inner edge of at least 47 degrees: the frozen
+   45 degree half-angle plus a 2 degree margin;
+5. the complete cylinder remains inside the velocity-aligned 45 degree sector;
+6. its centre is within 2.0 m of `(24, 24)`.
+
+The cylinder radius/height are 0.25/3.0 m, its surface sampling is 0.05 m
+azimuthal by 0.10 m vertical, the visibility horizon is 15 m, and tagged
+intensity is 14545. It persists after appearing. Placement uses measured
+geometry only; it does not read filter mode, full-open state, planner result,
+collision state or previous campaign outcomes.
+
+The original Map7/Map9/Map10 manifests put the nearest existing obstacle
+surface 2.581878/2.869060/2.800504 m from the first corner. The new cylinder's
+farthest possible surface is 2.25 m from that corner, giving guaranteed
+source-obstacle gaps of 0.331878/0.619060/0.550504 m respectively. Thus a
+side-entry contact cannot be attributed to overlap with an existing random
+cylinder. One small cylinder and the common clear disk also leave bypass
+topology for the Full reference; the Map7 one-run gate must still confirm that
+the implemented planner can use it.
+
+`scripts/native_campaign/validate_side_entry_v1.py` enforces equality of the
+three configuration blocks, the manifest separation, and the per-run body/
+velocity angular predicates. A row is invalid rather than safe if no valid
+spawn event is produced. Collision is computed analytically as intersection of
+the 0.20 m vehicle sphere with the solid tagged cylinder, independently of raw
+DDS publication or rendered point sampling. Static-PCD and side-entry contacts
+are both retained in the raw record.
 
 ## Source exploratory evidence
 

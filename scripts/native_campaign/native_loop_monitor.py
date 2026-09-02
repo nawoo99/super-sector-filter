@@ -2,6 +2,7 @@
 import argparse
 import itertools
 import json
+import os
 import time
 
 import numpy as np
@@ -40,6 +41,13 @@ def parse_args():
         help=(
             "optional ASCII PCD used for an auxiliary occupied-sample union; "
             "each point is inflated by the 0.20 m robot radius"
+        ),
+    )
+    parser.add_argument(
+        "--side-entry-event-json",
+        help=(
+            "authoritative side-entry-v1 spawn event; collision is computed "
+            "from cylinder geometry so cpp-frontend runs need no raw DDS topic"
         ),
     )
     args, ros_args = parser.parse_known_args()
@@ -166,12 +174,17 @@ class LoopMonitor(Node):
         self.static_pcd_min_distance = float("inf")
         self.static_pcd_min_context = None
         self.trap_min_distance = float("inf")
+        self.side_entry_event = None
+        self.side_entry_event_error = None
+        self.side_entry_min_clearance = float("inf")
+        self.side_entry_collision_episodes = 0
         self.collisions = 0
         self.static_pcd_collisions = 0
         self.trap_collisions = 0
         self.in_collision = False
         self.in_static_pcd_collision = False
         self.in_trap_collision = False
+        self.in_side_entry_collision = False
         self.contact_events = []
         self.samples = 0
         self.clearance_samples = 0
@@ -231,6 +244,87 @@ class LoopMonitor(Node):
             qos_profile_sensor_data,
         )
         self.create_subscription(Bool, "/sector/full_open", self.full_open_callback, 1)
+
+    def load_side_entry_event(self):
+        if self.side_entry_event is not None or not ARGS.side_entry_event_json:
+            return
+        if not os.path.exists(ARGS.side_entry_event_json):
+            return
+        try:
+            with open(ARGS.side_entry_event_json) as stream:
+                event = json.load(stream)
+            required = (
+                "side_entry_v1_geometry_valid",
+                "side_entry_v1_trap_x",
+                "side_entry_v1_trap_y",
+                "side_entry_v1_radius_m",
+                "side_entry_v1_height_m",
+            )
+            missing = [key for key in required if key not in event]
+            if missing:
+                raise ValueError("missing keys: " + ", ".join(missing))
+            if event["side_entry_v1_geometry_valid"] is not True:
+                raise ValueError("spawn geometry was not validated")
+            if float(event["side_entry_v1_radius_m"]) <= 0.0:
+                raise ValueError("radius must be positive")
+            if float(event["side_entry_v1_height_m"]) <= 0.0:
+                raise ValueError("height must be positive")
+            self.side_entry_event = event
+        except (OSError, ValueError, TypeError, json.JSONDecodeError) as error:
+            self.side_entry_event_error = str(error)
+
+    def update_side_entry_collision(self, position, velocity):
+        self.load_side_entry_event()
+        if self.side_entry_event is None:
+            self.in_side_entry_collision = False
+            return
+        event = self.side_entry_event
+        center = np.array(
+            [
+                float(event["side_entry_v1_trap_x"]),
+                float(event["side_entry_v1_trap_y"]),
+            ],
+            dtype=np.float64,
+        )
+        radius = float(event["side_entry_v1_radius_m"])
+        height = float(event["side_entry_v1_height_m"])
+        offset = position[:2].astype(np.float64) - center
+        radial_distance = float(np.linalg.norm(offset))
+        radial_outside = max(0.0, radial_distance - radius)
+        if position[2] < 0.0:
+            vertical_outside = float(-position[2])
+        elif position[2] > height:
+            vertical_outside = float(position[2] - height)
+        else:
+            vertical_outside = 0.0
+        solid_distance = float(np.hypot(radial_outside, vertical_outside))
+        clearance = solid_distance - DRONE_R
+        self.side_entry_min_clearance = min(
+            self.side_entry_min_clearance, clearance
+        )
+        colliding = clearance < 0.0
+        if colliding and not self.in_side_entry_collision:
+            self.side_entry_collision_episodes += 1
+            if radial_distance > 1e-9:
+                direction = offset / radial_distance
+            else:
+                direction = np.array([1.0, 0.0], dtype=np.float64)
+            nearest_point = np.array(
+                [
+                    center[0] + radius * direction[0],
+                    center[1] + radius * direction[1],
+                    min(height, max(0.0, float(position[2]))),
+                ],
+                dtype=np.float64,
+            )
+            self.record_contact_event(
+                "side_entry_v1",
+                solid_distance,
+                nearest_point,
+                position,
+                velocity,
+            )
+        self.in_side_entry_collision = colliding
 
     @staticmethod
     def vector3(value):
@@ -487,6 +581,7 @@ class LoopMonitor(Node):
         self.max_y = max(self.max_y, float(p.y))
         v = msg.twist.twist.linear
         velocity = np.array([v.x, v.y, v.z], dtype=np.float32)
+        self.update_side_entry_collision(position, velocity)
         self.max_speed = max(self.max_speed, float(np.hypot(v.x, v.y)))
         odom_speed_3d = float(np.linalg.norm(velocity))
         self.max_odom_speed_3d = max(self.max_odom_speed_3d, odom_speed_3d)
@@ -618,11 +713,21 @@ result = {
     # historical live-cloud episode count.  The raw live fields above remain
     # available and are never overwritten by this classification.
     "safety_contact_source": (
-        "static_pcd" if node.static_pcd is not None else "live_cloud"
+        "static_pcd+side_entry_v1_geometry"
+        if ARGS.side_entry_event_json and node.static_pcd is not None
+        else "side_entry_v1_geometry"
+        if ARGS.side_entry_event_json
+        else "static_pcd"
+        if node.static_pcd is not None
+        else "live_cloud"
     ),
     "safety_collisions": (
-        node.static_pcd_collisions
-        if node.static_pcd is not None else node.collisions
+        (node.static_pcd_collisions if node.static_pcd is not None else 0)
+        + node.side_entry_collision_episodes
+        if ARGS.side_entry_event_json
+        else node.static_pcd_collisions
+        if node.static_pcd is not None
+        else node.collisions
     ),
     "live_only_contact_event_count": sum(
         1 for event in node.contact_events
@@ -649,6 +754,19 @@ result = {
         round(node.trap_min_distance - DRONE_R, 3)
         if node.trap_min_distance != float("inf")
         else None
+    ),
+    "side_entry_v1_event_requested": bool(ARGS.side_entry_event_json),
+    "side_entry_v1_event_loaded": node.side_entry_event is not None,
+    "side_entry_v1_event_error": node.side_entry_event_error,
+    "side_entry_v1_geometry_valid": (
+        node.side_entry_event.get("side_entry_v1_geometry_valid")
+        if node.side_entry_event is not None else None
+    ),
+    "side_entry_v1_collision_episodes": node.side_entry_collision_episodes,
+    "side_entry_v1_collision": node.side_entry_collision_episodes > 0,
+    "side_entry_v1_min_clearance_m": (
+        round(node.side_entry_min_clearance, 3)
+        if node.side_entry_min_clearance != float("inf") else None
     ),
     "samples": node.samples,
     "clearance_samples": node.clearance_samples,

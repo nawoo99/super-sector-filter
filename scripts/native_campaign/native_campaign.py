@@ -1264,6 +1264,28 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "closest_final_goal_distance_m",
           "observed_open_time_s", "observed_open_x", "observed_open_y",
           "observed_close_time_s", "observed_close_x", "observed_close_y",
+          "side_entry_v1_enabled", "side_entry_v1_event_requested",
+          "side_entry_v1_event_loaded", "side_entry_v1_event_error",
+          "side_entry_v1_event", "side_entry_v1_geometry_valid",
+          "side_entry_v1_collision", "side_entry_v1_collision_episodes",
+          "side_entry_v1_min_clearance_m",
+          "side_entry_v1_spawn_time_s",
+          "side_entry_v1_trigger_x", "side_entry_v1_trigger_y",
+          "side_entry_v1_trigger_body_yaw_deg",
+          "side_entry_v1_trigger_velocity_yaw_deg",
+          "side_entry_v1_trigger_mismatch_deg",
+          "side_entry_v1_trigger_speed_mps",
+          "side_entry_v1_trap_x", "side_entry_v1_trap_y",
+          "side_entry_v1_trap_distance_m",
+          "side_entry_v1_trap_waypoint_distance_m",
+          "side_entry_v1_body_relative_deg",
+          "side_entry_v1_velocity_relative_deg",
+          "side_entry_v1_angular_radius_deg",
+          "side_entry_v1_inner_edge_deg", "side_entry_v1_nudge_deg",
+          "side_entry_v1_prediction_s",
+          "side_entry_v1_sector_half_angle_deg",
+          "side_entry_v1_radius_m", "side_entry_v1_height_m",
+          "side_entry_v1_intensity",
           "trap_collisions", "trap_min_surface_distance_m", "trap_clearance_m",
           "trap_x", "trap_y", "trigger_x", "trigger_y", "trigger_mismatch_deg",
           "trap_count", "trap_spacing_m", "trap_start_offset_m",
@@ -1673,6 +1695,7 @@ def build_loop_monitor_command(wps, switch, timeout, out_json, monitor_options="
 def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             seedmap_super_config_override=None,
             seedmap_static_pcd=False,
+            side_entry_v1=False,
             loop_timeout_override=None,
             filter_profile="legacy",
             filter_backend="python",
@@ -2090,9 +2113,13 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             if seedmap_super_config_override:
                 seedmap_super_config = seedmap_super_config_override
             active_super_config = seedmap_super_config
+            drone_config_name = (
+                f"{map_name}_side_entry_v1.yaml"
+                if side_entry_v1 else f"{map_name}.yaml"
+            )
             launch_cmd = (
                 "ros2 launch mission_planner benchmark_seedmap.launch.py "
-                f"waypoint_data:=loop24.txt drone_config:={map_name}.yaml "
+                f"waypoint_data:=loop24.txt drone_config:={drone_config_name} "
                 f"super_config:={seedmap_super_config}"
             )
             if is_seedmap_observed or seedmap_super_config_override:
@@ -2120,6 +2147,11 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         if test_force_initial_footprint_egress_once:
             launch_cmd = (
                 "SUPER_TEST_FORCE_INITIAL_FOOTPRINT_EGRESS_ONCE=1 "
+                + launch_cmd
+            )
+        if side_entry_v1:
+            launch_cmd = (
+                f"SUPER_SIDE_ENTRY_V1_EVENT_JSON={scenario_event_json!r} "
                 + launch_cmd
             )
         perf_log_before_launch = perf_log_signature()
@@ -2279,6 +2311,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 )
             else:
                 monitor_options = ""
+            if side_entry_v1:
+                monitor_options += (
+                    f" --side-entry-event-json {scenario_event_json}"
+                )
             if is_ref:
                 monitor_options += f" --static-pcd {REF_PCD}"
             elif is_map0:
@@ -2418,6 +2454,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                    else None
                ),
                "matched_prefix": matched_prefix if is_dynamic else None}
+        rec["side_entry_v1_enabled"] = side_entry_v1
         rec.update(cgroup_summary)
         rec.update(merge_memory_summaries(memory_summaries))
         if os.path.exists(out_json):
@@ -2429,8 +2466,18 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     and (monitor_result.get("static_pcd_point_count") or 0) > 0
                 )
                 speed_limit_valid = monitor_result.get("speed_limit_valid")
+                side_entry_valid = bool(
+                    not side_entry_v1
+                    or (
+                        monitor_result.get("side_entry_v1_event_loaded") is True
+                        and monitor_result.get("side_entry_v1_geometry_valid")
+                        is True
+                    )
+                )
                 rec["run_valid"] = bool(
-                    static_pcd_valid and speed_limit_valid is not False
+                    static_pcd_valid
+                    and speed_limit_valid is not False
+                    and side_entry_valid
                 )
             events = monitor_result.get("contact_events") or []
             if events:
@@ -2473,6 +2520,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                         "stack.log", "memory.csv", "cgroup.csv", "filt.log",
                         "filt_stats.json", "performance.csv",
                         "reference_monitor.log", "mission.log",
+                        "scenario_event.json",
                     ):
                         source = os.path.join(
                             TMPDIR, f"{evidence_prefix}.{suffix}"
@@ -2908,6 +2956,14 @@ def main():
         help="measure every seedmap mode against the same unfiltered static PCD",
     )
     ap.add_argument(
+        "--side-entry-v1",
+        action="store_true",
+        help=(
+            "use the frozen first-corner side-entry-v1 simulator profile and "
+            "authoritative analytic collision oracle (Map7/9/10 only)"
+        ),
+    )
+    ap.add_argument(
         "--loop-timeout",
         type=float,
         help="override the seedmap loop timeout in seconds",
@@ -3256,6 +3312,36 @@ def main():
     )
     adaptive_mode_config = args.seedmap_adaptive_super_config
     adaptive_baseline_config = args.seedmap_adaptive_baseline_super_config
+    if args.side_entry_v1:
+        invalid_maps = [
+            map_name for map_name in args.maps
+            if map_name not in ("seed7", "seed9", "seed10")
+        ]
+        if invalid_maps:
+            ap.error(
+                "--side-entry-v1 is frozen only for seed7/seed9/seed10; "
+                "unsupported maps: " + ", ".join(invalid_maps)
+            )
+        unsupported_modes = [
+            mode for mode in args.modes
+            if mode not in ("full", "sector", "adaptive")
+        ]
+        if unsupported_modes:
+            ap.error(
+                "--side-entry-v1 supports only full/sector/adaptive; "
+                "unsupported modes: " + ", ".join(unsupported_modes)
+            )
+        if args.filter_backend != "cpp-frontend":
+            ap.error("--side-entry-v1 requires --filter-backend cpp-frontend")
+        if not math.isclose(args.filter_half_angle_deg, 45.0, abs_tol=1e-9):
+            ap.error("--side-entry-v1 requires --filter-half-angle-deg 45")
+        if not args.seedmap_static_pcd:
+            ap.error("--side-entry-v1 requires --seedmap-static-pcd")
+        if not all(split_configs) or not adaptive_mode_config:
+            ap.error(
+                "--side-entry-v1 requires the split Full/filtered configs "
+                "and --seedmap-adaptive-super-config"
+            )
     if args.seedmap_super_config and any(split_configs):
         ap.error(
             "--seedmap-super-config cannot be combined with the mode-specific "
@@ -3448,6 +3534,7 @@ def main():
                         ),
                         seedmap_super_config_override=mode_config,
                         seedmap_static_pcd=args.seedmap_static_pcd,
+                        side_entry_v1=args.side_entry_v1,
                         loop_timeout_override=args.loop_timeout,
                         filter_profile=args.filter_profile,
                         filter_backend=args.filter_backend,
