@@ -264,6 +264,25 @@ only if all modes produce validator-passing events at the exact fixed centre.
 A later repeated campaign must use the frozen v4 implementation and report all
 rows, including failures.
 
+## v4 Map7 treatment gate
+
+The first frozen-v4 Map7 run passed the treatment gate in all three modes. All
+events used scenario version 4, exact centre `(22.5, 23.0)`, zero nudge,
+`require_velocity_inside=false`, a body inner edge above 47 degrees, and a
+centre inside the declared 2 m clear disk.
+
+| Map | Mode | Complete | overall contacts | side-entry clearance (m) | valid row | time (s) |
+|---|---|---:|---:|---:|---:|---:|
+| Map7 | Full | 1/1 | 0 | 0.727 | 1/1 | 102.63 |
+| Map7 | Sector | 1/1 | 0 | 0.676 | 1/1 | 65.31 |
+| Map7 | Adaptive | 1/1 | 0 | 0.261 | 1/1 | 61.74 |
+
+This establishes common treatment delivery, not the intended mode ordering.
+Sector also avoided the obstacle in this single run, while Adaptive had the
+smallest side-entry clearance. The result therefore does not yet show Sector
+degradation or Adaptive recovery. The predeclared Map7/Map9/Map10 rotating
+three-mode n=3 exploratory campaign may proceed without changing v4.
+
 ## Source exploratory evidence
 
 - `docs/half_angle_operating_envelope_20260902.md`
