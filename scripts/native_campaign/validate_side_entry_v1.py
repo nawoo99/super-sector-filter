@@ -40,7 +40,7 @@ def parse_args():
     parser.add_argument(
         "--version",
         type=int,
-        choices=(1, 2),
+        choices=(1, 2, 3),
         default=1,
     )
     parser.add_argument(
@@ -77,6 +77,17 @@ def load_profile(config_dir, map_number, version):
     expected_profile = dict(EXPECTED)
     if version == 2:
         expected_profile["prediction_s"] = 0.6
+    elif version == 3:
+        expected_profile.update(
+            {
+                "hold_s": 0.015,
+                "prediction_s": 0.6,
+                "fixed_center_enabled": True,
+                "fixed_center_x": 22.5,
+                "fixed_center_y": 23.0,
+                "max_nudge_deg": 0.0,
+            }
+        )
     for key, expected in expected_profile.items():
         actual = profile.get(key)
         if isinstance(expected, float):
@@ -108,10 +119,19 @@ def source_clearance(manifest_dir, map_number, profile):
         - float(row["r"])
         for row in rows
     )
-    synthetic_outer_radius = (
-        float(profile["trap_waypoint_radius_m"])
-        + float(profile["radius_m"])
-    )
+    if profile.get("fixed_center_enabled") is True:
+        synthetic_outer_radius = (
+            math.hypot(
+                float(profile["fixed_center_x"]) - waypoint[0],
+                float(profile["fixed_center_y"]) - waypoint[1],
+            )
+            + float(profile["radius_m"])
+        )
+    else:
+        synthetic_outer_radius = (
+            float(profile["trap_waypoint_radius_m"])
+            + float(profile["radius_m"])
+        )
     guaranteed_gap = source_surface_radius - synthetic_outer_radius
     if guaranteed_gap <= 0.0:
         raise ValueError(
@@ -148,6 +168,27 @@ def validate_event(path, version):
         "center_inside_2m_clear_disk": waypoint_distance <= 2.0 + 1e-6,
         "nudge_within_20_deg": nudge <= 20.0 + 1e-6,
     }
+    if version == 3:
+        checks.update(
+            {
+                "fixed_center_enabled": (
+                    event.get("side_entry_fixed_center_enabled") is True
+                ),
+                "fixed_x_matches": math.isclose(
+                    float(event["side_entry_v1_trap_x"]),
+                    22.5,
+                    rel_tol=0.0,
+                    abs_tol=1e-6,
+                ),
+                "fixed_y_matches": math.isclose(
+                    float(event["side_entry_v1_trap_y"]),
+                    23.0,
+                    rel_tol=0.0,
+                    abs_tol=1e-6,
+                ),
+                "zero_nudge": nudge <= 1e-6,
+            }
+        )
     if not all(checks.values()):
         raise ValueError(f"invalid event {path}: {checks}")
     return {"event_json": path, **checks}

@@ -48,6 +48,9 @@ namespace perfect_drone {
         double yaw_velocity_mismatch_min_deg{50.0};
         double hold_s{0.02};
         double prediction_s{0.8};
+        bool fixed_center_enabled{false};
+        double fixed_center_x{22.5};
+        double fixed_center_y{23.0};
         double trigger_distance_min_m{0.8};
         double trigger_distance_max_m{3.5};
         double trigger_waypoint_x{24.0};
@@ -68,21 +71,31 @@ namespace perfect_drone {
             yaml_loader::YamlLoader loader(path);
             bool v1_enabled = false;
             bool v2_enabled = false;
+            bool v3_enabled = false;
             loader.LoadParam("side_entry_v1/enabled", v1_enabled, false, false);
             loader.LoadParam("side_entry_v2/enabled", v2_enabled, false, false);
-            if (v1_enabled && v2_enabled) {
+            loader.LoadParam("side_entry_v3/enabled", v3_enabled, false, false);
+            if (static_cast<int>(v1_enabled) + static_cast<int>(v2_enabled) +
+                        static_cast<int>(v3_enabled) > 1) {
                 throw std::invalid_argument(
-                        "side_entry_v1 and side_entry_v2 cannot both be enabled");
+                        "only one side-entry scenario can be enabled");
             }
-            enabled = v1_enabled || v2_enabled;
-            scenario_version = v2_enabled ? 2 : v1_enabled ? 1 : 0;
-            const std::string prefix =
-                    scenario_version == 2 ? "side_entry_v2" : "side_entry_v1";
+            enabled = v1_enabled || v2_enabled || v3_enabled;
+            scenario_version =
+                    v3_enabled ? 3 : v2_enabled ? 2 : v1_enabled ? 1 : 0;
+            const std::string prefix = "side_entry_v" +
+                                       std::to_string(scenario_version);
             loader.LoadParam(prefix + "/speed_min_mps", speed_min_mps, 2.0, false);
             loader.LoadParam(prefix + "/yaw_velocity_mismatch_min_deg",
                              yaw_velocity_mismatch_min_deg, 50.0, false);
             loader.LoadParam(prefix + "/hold_s", hold_s, 0.02, false);
             loader.LoadParam(prefix + "/prediction_s", prediction_s, 0.8, false);
+            loader.LoadParam(prefix + "/fixed_center_enabled",
+                             fixed_center_enabled, false, false);
+            loader.LoadParam(prefix + "/fixed_center_x",
+                             fixed_center_x, 22.5, false);
+            loader.LoadParam(prefix + "/fixed_center_y",
+                             fixed_center_y, 23.0, false);
             loader.LoadParam(prefix + "/trigger_distance_min_m",
                              trigger_distance_min_m, 0.8, false);
             loader.LoadParam(prefix + "/trigger_distance_max_m",
@@ -490,10 +503,16 @@ namespace perfect_drone {
             ++side_entry_v1_speed_gate_samples_;
 
             const double prediction_s = side_entry_v1_cfg_.prediction_s;
-            Eigen::Vector2d candidate =
-                    position + velocity * prediction_s +
-                    0.5 * acceleration * prediction_s * prediction_s +
-                    jerk * prediction_s * prediction_s * prediction_s / 6.0;
+            Eigen::Vector2d candidate;
+            if (side_entry_v1_cfg_.fixed_center_enabled) {
+                candidate = Eigen::Vector2d(
+                        side_entry_v1_cfg_.fixed_center_x,
+                        side_entry_v1_cfg_.fixed_center_y);
+            } else {
+                candidate = position + velocity * prediction_s +
+                        0.5 * acceleration * prediction_s * prediction_s +
+                        jerk * prediction_s * prediction_s * prediction_s / 6.0;
+            }
             Eigen::Vector2d delta = candidate - position;
             double distance = delta.norm();
             side_entry_v1_prediction_distance_min_ = std::min(
@@ -764,6 +783,9 @@ namespace perfect_drone {
                    << signed_nudge * 180.0 / M_PI << ",\n"
                    << "  \"side_entry_v1_prediction_s\": "
                    << side_entry_v1_cfg_.prediction_s << ",\n"
+                   << "  \"side_entry_fixed_center_enabled\": "
+                   << (side_entry_v1_cfg_.fixed_center_enabled ? "true" : "false")
+                   << ",\n"
                    << "  \"side_entry_v1_sector_half_angle_deg\": "
                    << side_entry_v1_cfg_.sector_half_angle_deg << ",\n"
                    << "  \"side_entry_v1_radius_m\": "

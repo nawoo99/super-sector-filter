@@ -183,6 +183,40 @@ boundary. The tolerance fix is versioned in source and must be published before
 the next gate. These pre-fix invalid rows are not pooled with the post-fix v2
 sample.
 
+The post-tolerance v2 gate was also invalid in all three modes. Full produced
+three consecutive geometry-valid command samples but their measured span was
+0.019887 s, just below the exact 0.02 s wall-clock hold. Sector and Adaptive
+did not produce a joint geometry-valid sample because their mode-dependent
+PVAJ prediction centres remained outside the 2.0 m clear disk when the angular
+predicates held. No side-entry obstacle was exposed, so this remains a
+treatment-feasibility result rather than a safety outcome. The rows are kept in
+`results/side_entry_v2_map7_three_mode_n1_postfix_raw_20260903.csv`.
+
+## Frozen side-entry-v3 rule (recorded before v3 flight)
+
+V3 removes the remaining mode-dependent placement variable. Instead of making
+each mode's current PVAJ prediction the obstacle centre, every Map7/Map9/Map10
+run uses the exact world-frame centre `(22.5, 23.0)` at the first corner. The
+same body-outside, velocity-inside, speed, mismatch, trigger-distance and
+corner-region predicates must still be satisfied before the obstacle appears.
+Nudging is disabled (`0` degrees), so an event cannot alter that common centre.
+
+The hold is explicitly 0.015 s. This value requires three nominal 100 Hz
+command samples while avoiding the v2 mistake of equating a 20 ms continuous
+threshold to two real timer intervals that can total slightly under 20 ms. No
+completion or collision observation informed this change because neither v1
+nor v2 exposed an obstacle.
+
+The fixed centre is 1.802776 m from `(24, 24)` and its radius is unchanged at
+0.25 m, so its farthest surface is 2.052776 m from the corner. Relative to the
+source manifests, the guaranteed Map7/Map9/Map10 gaps are therefore
+0.529103/0.816285/0.747729 m. The 45 degree half-angle, 2 degree body margin,
+one-cylinder geometry, 15 m visibility horizon, common-source injection,
+analytic 0.20 m vehicle-body collision oracle and all performance settings are
+unchanged. The Map7 Full/Sector/Adaptive n=1 gate is still an integration gate;
+all three rows must spawn exactly at `(22.5, 23.0)` and pass the event validator
+before any Map7/Map9/Map10 n=3 expansion.
+
 ## Source exploratory evidence
 
 - `docs/half_angle_operating_envelope_20260902.md`

@@ -1284,6 +1284,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "side_entry_v1_angular_radius_deg",
           "side_entry_v1_inner_edge_deg", "side_entry_v1_nudge_deg",
           "side_entry_v1_prediction_s",
+          "side_entry_fixed_center_enabled",
           "side_entry_v1_sector_half_angle_deg",
           "side_entry_v1_radius_m", "side_entry_v1_height_m",
           "side_entry_v1_intensity",
@@ -2977,6 +2978,14 @@ def main():
         ),
     )
     ap.add_argument(
+        "--side-entry-v3",
+        action="store_true",
+        help=(
+            "use the fixed-world first-corner side-entry-v3 profile; all "
+            "paired modes receive the same obstacle centre"
+        ),
+    )
+    ap.add_argument(
         "--loop-timeout",
         type=float,
         help="override the seedmap loop timeout in seconds",
@@ -3325,9 +3334,19 @@ def main():
     )
     adaptive_mode_config = args.seedmap_adaptive_super_config
     adaptive_baseline_config = args.seedmap_adaptive_baseline_super_config
-    if args.side_entry_v1 and args.side_entry_v2:
-        ap.error("--side-entry-v1 and --side-entry-v2 are mutually exclusive")
-    side_entry_version = 2 if args.side_entry_v2 else 1 if args.side_entry_v1 else 0
+    selected_side_entry_versions = [
+        version for version, selected in (
+            (1, args.side_entry_v1),
+            (2, args.side_entry_v2),
+            (3, args.side_entry_v3),
+        )
+        if selected
+    ]
+    if len(selected_side_entry_versions) > 1:
+        ap.error("side-entry version switches are mutually exclusive")
+    side_entry_version = (
+        selected_side_entry_versions[0] if selected_side_entry_versions else 0
+    )
     if side_entry_version:
         invalid_maps = [
             map_name for map_name in args.maps
