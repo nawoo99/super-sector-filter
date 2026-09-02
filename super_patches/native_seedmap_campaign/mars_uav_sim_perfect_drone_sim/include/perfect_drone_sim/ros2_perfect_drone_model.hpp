@@ -48,6 +48,7 @@ namespace perfect_drone {
         double yaw_velocity_mismatch_min_deg{50.0};
         double hold_s{0.02};
         double prediction_s{0.8};
+        bool require_velocity_inside{true};
         bool fixed_center_enabled{false};
         double fixed_center_x{22.5};
         double fixed_center_y{23.0};
@@ -72,17 +73,21 @@ namespace perfect_drone {
             bool v1_enabled = false;
             bool v2_enabled = false;
             bool v3_enabled = false;
+            bool v4_enabled = false;
             loader.LoadParam("side_entry_v1/enabled", v1_enabled, false, false);
             loader.LoadParam("side_entry_v2/enabled", v2_enabled, false, false);
             loader.LoadParam("side_entry_v3/enabled", v3_enabled, false, false);
+            loader.LoadParam("side_entry_v4/enabled", v4_enabled, false, false);
             if (static_cast<int>(v1_enabled) + static_cast<int>(v2_enabled) +
-                        static_cast<int>(v3_enabled) > 1) {
+                        static_cast<int>(v3_enabled) +
+                        static_cast<int>(v4_enabled) > 1) {
                 throw std::invalid_argument(
                         "only one side-entry scenario can be enabled");
             }
-            enabled = v1_enabled || v2_enabled || v3_enabled;
+            enabled = v1_enabled || v2_enabled || v3_enabled || v4_enabled;
             scenario_version =
-                    v3_enabled ? 3 : v2_enabled ? 2 : v1_enabled ? 1 : 0;
+                    v4_enabled ? 4 : v3_enabled ? 3 :
+                    v2_enabled ? 2 : v1_enabled ? 1 : 0;
             const std::string prefix = "side_entry_v" +
                                        std::to_string(scenario_version);
             loader.LoadParam(prefix + "/speed_min_mps", speed_min_mps, 2.0, false);
@@ -90,6 +95,8 @@ namespace perfect_drone {
                              yaw_velocity_mismatch_min_deg, 50.0, false);
             loader.LoadParam(prefix + "/hold_s", hold_s, 0.02, false);
             loader.LoadParam(prefix + "/prediction_s", prediction_s, 0.8, false);
+            loader.LoadParam(prefix + "/require_velocity_inside",
+                             require_velocity_inside, true, false);
             loader.LoadParam(prefix + "/fixed_center_enabled",
                              fixed_center_enabled, false, false);
             loader.LoadParam(prefix + "/fixed_center_x",
@@ -578,6 +585,9 @@ namespace perfect_drone {
                     std::abs(velocity_relative) + angular_radius <=
                     side_entry_v1_cfg_.sector_half_angle_deg * M_PI / 180.0 +
                     geometry_epsilon_rad;
+            const bool velocity_requirement_met =
+                    !side_entry_v1_cfg_.require_velocity_inside ||
+                    fully_inside_velocity_sector;
             const double trap_waypoint_distance = (candidate - waypoint).norm();
             side_entry_v1_inner_edge_max_deg_ = std::max(
                     side_entry_v1_inner_edge_max_deg_,
@@ -598,7 +608,7 @@ namespace perfect_drone {
                     "velocity_relative_deg=%.6f angular_radius_deg=%.6f "
                     "inner_edge_deg=%.6f velocity_outer_edge_deg=%.6f "
                     "nudge_deg=%.6f outside_body=%d inside_velocity=%d "
-                    "inside_clear_disk=%d",
+                    "require_velocity_inside=%d inside_clear_disk=%d",
                     distance, trap_waypoint_distance,
                     body_relative * 180.0 / M_PI,
                     velocity_relative * 180.0 / M_PI,
@@ -608,8 +618,9 @@ namespace perfect_drone {
                     signed_nudge * 180.0 / M_PI,
                     fully_outside_body_sector ? 1 : 0,
                     fully_inside_velocity_sector ? 1 : 0,
+                    side_entry_v1_cfg_.require_velocity_inside ? 1 : 0,
                     inside_predeclared_clear_disk ? 1 : 0);
-            if (!fully_outside_body_sector || !fully_inside_velocity_sector ||
+            if (!fully_outside_body_sector || !velocity_requirement_met ||
                 !inside_predeclared_clear_disk) {
                 side_entry_v1_qualify_since_.reset();
                 return;
@@ -783,6 +794,10 @@ namespace perfect_drone {
                    << signed_nudge * 180.0 / M_PI << ",\n"
                    << "  \"side_entry_v1_prediction_s\": "
                    << side_entry_v1_cfg_.prediction_s << ",\n"
+                   << "  \"side_entry_require_velocity_inside\": "
+                   << (side_entry_v1_cfg_.require_velocity_inside ?
+                               "true" : "false")
+                   << ",\n"
                    << "  \"side_entry_fixed_center_enabled\": "
                    << (side_entry_v1_cfg_.fixed_center_enabled ? "true" : "false")
                    << ",\n"

@@ -40,7 +40,7 @@ def parse_args():
     parser.add_argument(
         "--version",
         type=int,
-        choices=(1, 2, 3),
+        choices=(1, 2, 3, 4),
         default=1,
     )
     parser.add_argument(
@@ -77,7 +77,7 @@ def load_profile(config_dir, map_number, version):
     expected_profile = dict(EXPECTED)
     if version == 2:
         expected_profile["prediction_s"] = 0.6
-    elif version == 3:
+    elif version in (3, 4):
         expected_profile.update(
             {
                 "hold_s": 0.015,
@@ -88,6 +88,8 @@ def load_profile(config_dir, map_number, version):
                 "max_nudge_deg": 0.0,
             }
         )
+        if version == 4:
+            expected_profile["require_velocity_inside"] = False
     for key, expected in expected_profile.items():
         actual = profile.get(key)
         if isinstance(expected, float):
@@ -164,11 +166,18 @@ def validate_event(path, version):
         ),
         "geometry_valid": event.get("side_entry_v1_geometry_valid") is True,
         "body_inner_edge_at_least_47_deg": inner_edge >= 47.0 - 1e-6,
-        "velocity_outer_edge_within_45_deg": velocity_edge <= half_angle + 1e-6,
         "center_inside_2m_clear_disk": waypoint_distance <= 2.0 + 1e-6,
         "nudge_within_20_deg": nudge <= 20.0 + 1e-6,
     }
-    if version == 3:
+    if version <= 3:
+        checks["velocity_outer_edge_within_45_deg"] = (
+            velocity_edge <= half_angle + 1e-6
+        )
+    else:
+        checks["velocity_requirement_disabled"] = (
+            event.get("side_entry_require_velocity_inside") is False
+        )
+    if version in (3, 4):
         checks.update(
             {
                 "fixed_center_enabled": (

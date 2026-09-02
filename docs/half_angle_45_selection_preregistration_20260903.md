@@ -217,6 +217,53 @@ unchanged. The Map7 Full/Sector/Adaptive n=1 gate is still an integration gate;
 all three rows must spawn exactly at `(22.5, 23.0)` and pass the event validator
 before any Map7/Map9/Map10 n=3 expansion.
 
+## v3 integration-gate result and frozen v4 correction
+
+The v3 Map7 gate showed that fixed-world placement removed most, but not all,
+mode dependence. Full and Adaptive both spawned the cylinder exactly at
+`(22.5, 23.0)`, completed, and had zero source-static-PCD and analytic
+side-entry contacts. Sector completed with zero source-static-PCD contact but
+did not spawn the cylinder, so its row is invalid as a side-entry trial.
+
+| Map | Mode | Complete | static contact | side-entry spawned | side-entry contact | valid row | time (s) |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Map7 | Full | 1/1 | 0 | 1 | 0 | 1/1 | 75.61 |
+| Map7 | Sector | 1/1 | 0 | 0 | n/a | 0/1 | 79.47 |
+| Map7 | Adaptive | 1/1 | 0 | 1 | 0 | 1/1 | 68.14 |
+
+The failure was caused by the remaining `velocity-inside` spawn predicate.
+At the common fixed centre, Sector's valid samples had the cylinder completely
+outside the body-fixed 45 degree crop, as intended, but its velocity-relative
+outer edge was about 95 degrees and therefore could not also be inside a
+velocity-aligned 45 degree sector. That predicate is not an input requirement
+of the implemented Adaptive method: Adaptive's risk worker consumes the common
+360 degree raw sensor stream and can request a full-map refresh independently
+of the body-fixed filtered cloud. Requiring velocity inclusion at obstacle
+generation therefore makes treatment assignment depend on the mode's command
+trajectory and excludes precisely the side-entry case under study.
+
+The v3 rows are retained in
+`results/side_entry_v3_map7_three_mode_n1_raw_20260903.csv` and must not be
+pooled with later versions.
+
+Side-entry-v4 is frozen before its first flight. It preserves the exact v3
+world centre `(22.5, 23.0)`, cylinder radius/height, trigger corner, speed and
+body-yaw/velocity-yaw mismatch thresholds, 0.015 s hold, 0.6 s diagnostic
+prediction field, distance bounds, 47 degree body inner-edge threshold,
+zero nudge, source separation, common-source injection and analytic collision
+oracle. It changes exactly one boolean: `require_velocity_inside: false`.
+Velocity-relative angle remains recorded for diagnosis but cannot determine
+whether the common obstacle appears. The same source obstacle can consequently
+be delivered to Full, hidden from Sector by the body-fixed crop, and observed
+by Adaptive's independent 360 degree raw-risk channel.
+
+Because Full and Adaptive have already been exposed once to this obstacle
+location under v3, the first v4 Map7 three-mode run is an exploratory treatment
+and integration gate, not confirmatory safety evidence. Expansion is allowed
+only if all modes produce validator-passing events at the exact fixed centre.
+A later repeated campaign must use the frozen v4 implementation and report all
+rows, including failures.
+
 ## Source exploratory evidence
 
 - `docs/half_angle_operating_envelope_20260902.md`

@@ -1284,6 +1284,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "side_entry_v1_angular_radius_deg",
           "side_entry_v1_inner_edge_deg", "side_entry_v1_nudge_deg",
           "side_entry_v1_prediction_s",
+          "side_entry_require_velocity_inside",
           "side_entry_fixed_center_enabled",
           "side_entry_v1_sector_half_angle_deg",
           "side_entry_v1_radius_m", "side_entry_v1_height_m",
@@ -2986,6 +2987,15 @@ def main():
         ),
     )
     ap.add_argument(
+        "--side-entry-v4",
+        action="store_true",
+        help=(
+            "use the fixed-world first-corner side-entry-v4 profile; it "
+            "preserves v3 placement but does not require the fixed obstacle "
+            "to lie in a mode-dependent velocity sector"
+        ),
+    )
+    ap.add_argument(
         "--loop-timeout",
         type=float,
         help="override the seedmap loop timeout in seconds",
@@ -3339,6 +3349,7 @@ def main():
             (1, args.side_entry_v1),
             (2, args.side_entry_v2),
             (3, args.side_entry_v3),
+            (4, args.side_entry_v4),
         )
         if selected
     ]
