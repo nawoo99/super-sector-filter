@@ -97,6 +97,9 @@ struct Options {
   double risk_voxel_m{0.0};
   double risk_max_cloud_age_s{0.75};
   double risk_max_eval_hz{0.0};
+  double risk_body_clearance_m{0.0};
+  double risk_body_horizon_s{0.15};
+  double risk_body_max_odom_age_s{0.20};
   double risk_egress_tolerance_m{0.005};
   double risk_egress_min_progress_m{0.02};
 };
@@ -270,6 +273,14 @@ Options parseArgs(int argc, char **argv) {
       options.risk_max_cloud_age_s = parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--risk-max-eval-hz") {
       options.risk_max_eval_hz = parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--risk-body-clearance-m") {
+      options.risk_body_clearance_m =
+          parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--risk-body-horizon-s") {
+      options.risk_body_horizon_s = parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--risk-body-max-odom-age-s") {
+      options.risk_body_max_odom_age_s =
+          parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--risk-egress-tolerance-m") {
       options.risk_egress_tolerance_m =
           parseDouble(arg, requireValue(i, arg));
@@ -325,6 +336,9 @@ Options parseArgs(int argc, char **argv) {
       options.risk_sample_dt_s <= 0.0 || options.risk_min_points <= 0 ||
       options.risk_voxel_m < 0.0 || options.risk_max_cloud_age_s <= 0.0 ||
       options.risk_max_eval_hz < 0.0 ||
+      options.risk_body_clearance_m < 0.0 ||
+      options.risk_body_horizon_s < 0.0 ||
+      options.risk_body_max_odom_age_s <= 0.0 ||
       options.risk_egress_tolerance_m < 0.0 ||
       options.risk_egress_min_progress_m < 0.0 ||
       near_max < options.near_field_radius_m || guard_burst < 0.0 ||
@@ -563,7 +577,7 @@ public:
                 "%s mode, half-angle %.1f deg, input %s, publish cap %.2f Hz, "
                 "commit refresh %.3f s, full-open extra budget %lu, "
                 "guard witness %s radius %.2f m, direct input %s, "
-                "risk verdict %s",
+                "risk verdict %s, body tier %.3f m/%.3f s",
                 options_.mode.c_str(), options_.half_angle_deg,
                 options_.input_topic.c_str(), options_.max_publish_hz,
                 options_.map_commit_refresh_age_s,
@@ -576,7 +590,9 @@ public:
                 options_.direct_input ? "enabled" : "disabled",
                 options_.risk_verdict_topic.empty()
                     ? "disabled"
-                    : options_.risk_verdict_topic.c_str());
+                    : options_.risk_verdict_topic.c_str(),
+                options_.risk_body_clearance_m,
+                options_.risk_body_horizon_s);
     publishState();
     writeStats();
     cloud_worker_ = std::thread(&NativeSectorCpp::cloudWorkerLoop, this);
@@ -1050,6 +1066,8 @@ private:
                       1.0 - 2.0 * (q.y * q.y + q.z * q.z));
     const auto &v = msg->twist.twist.linear;
     const double speed = std::hypot(v.x, v.y);
+    latest_velocity_ = std::array<double, 3>{v.x, v.y, v.z};
+    latest_odom_receive_time_ = RiskClock::now();
     latest_speed_mps_ = speed;
     if (options_.mode == "adaptive" &&
         options_.slowdown_full_refresh_v > 0.0) {
@@ -1365,6 +1383,12 @@ private:
     RiskClock::time_point cutoff_time{};
   };
 
+  struct InputCloudJob {
+    sensor_msgs::msg::PointCloud2::SharedPtr cloud;
+    RiskClock::time_point receive_time{};
+    uint64_t sequence{0};
+  };
+
   static int64_t riskVoxelKey(const double x, const double y,
                               const double z, const double voxel) {
     auto quantize = [voxel](const double value) -> int64_t {
@@ -1491,6 +1515,7 @@ private:
     result.cloud_sequence = job.cloud_sequence;
     result.source_cloud_stamp_ns = job.source_cloud_stamp_ns;
     result.status = Verdict::EMPTY_TRAJECTORY;
+    result.scope = Verdict::FUTURE_TRAJECTORY;
     result.witness_tt = -1.0;
     result.minimum_distance_m = std::numeric_limits<double>::infinity();
     result.body_distance_m = std::numeric_limits<double>::infinity();
@@ -1699,6 +1724,57 @@ private:
     return result;
   }
 
+  void publishRiskVerdict(
+      mars_quadrotor_msgs::msg::TrajectoryRiskVerdict verdict) {
+    using Verdict = mars_quadrotor_msgs::msg::TrajectoryRiskVerdict;
+    const bool current_body = verdict.scope == Verdict::CURRENT_BODY;
+    if (current_body) {
+      ++risk_body_verdict_messages_;
+      recordCadence(risk_body_verdict_first_ns_, risk_body_verdict_last_ns_);
+    } else {
+      ++risk_verdict_messages_;
+      recordCadence(risk_verdict_first_ns_, risk_verdict_last_ns_);
+    }
+    rclcpp::SerializedMessage serialized_verdict;
+    risk_verdict_serializer_.serialize_message(&verdict, &serialized_verdict);
+    if (current_body) {
+      risk_body_verdict_payload_bytes_.fetch_add(
+          serialized_verdict.size(), std::memory_order_relaxed);
+    } else {
+      risk_verdict_payload_bytes_.fetch_add(
+          serialized_verdict.size(), std::memory_order_relaxed);
+    }
+    if (verdict.status == Verdict::OCCUPIED) {
+      if (current_body)
+        ++risk_body_occupied_verdicts_;
+      else
+        ++risk_occupied_verdicts_;
+      RCLCPP_WARN(
+          get_logger(),
+          "[%s] request=%lu gen=%lu cloud=%lu status=OCCUPIED "
+          "age=%.3fs min=%.4fm body=%.4fm end=%.4fm compute=%.3fms",
+          current_body ? "FRONTEND_BODY_VERDICT" : "FRONTEND_RISK_VERDICT",
+          static_cast<unsigned long>(verdict.request_id),
+          static_cast<unsigned long>(verdict.trajectory_generation),
+          static_cast<unsigned long>(verdict.cloud_sequence),
+          verdict.source_cloud_age_s, verdict.minimum_distance_m,
+          verdict.body_distance_m, verdict.end_distance_m,
+          verdict.compute_ms);
+    }
+    const uint64_t compute_us = static_cast<uint64_t>(
+        std::max(0.0, verdict.compute_ms) * 1000.0);
+    auto &sum = current_body ? risk_body_compute_us_sum_ : risk_compute_us_sum_;
+    auto &maximum =
+        current_body ? risk_body_compute_us_max_ : risk_compute_us_max_;
+    sum.fetch_add(compute_us, std::memory_order_relaxed);
+    uint64_t previous_max = maximum.load(std::memory_order_relaxed);
+    while (previous_max < compute_us &&
+           !maximum.compare_exchange_weak(
+               previous_max, compute_us, std::memory_order_relaxed)) {
+    }
+    risk_verdict_pub_->publish(verdict);
+  }
+
   void riskWorkerLoop() {
     while (true) {
       RiskJob job;
@@ -1712,37 +1788,7 @@ private:
         job = *pending_risk_job_;
         pending_risk_job_.reset();
       }
-      auto verdict = calculateRiskVerdict(job);
-      ++risk_verdict_messages_;
-      recordCadence(risk_verdict_first_ns_, risk_verdict_last_ns_);
-      rclcpp::SerializedMessage serialized_verdict;
-      risk_verdict_serializer_.serialize_message(
-          &verdict, &serialized_verdict);
-      risk_verdict_payload_bytes_.fetch_add(
-          serialized_verdict.size(), std::memory_order_relaxed);
-      if (verdict.status ==
-          mars_quadrotor_msgs::msg::TrajectoryRiskVerdict::OCCUPIED) {
-        ++risk_occupied_verdicts_;
-        RCLCPP_WARN(
-            get_logger(),
-            "[FRONTEND_RISK_VERDICT] request=%lu gen=%lu cloud=%lu "
-            "status=OCCUPIED age=%.3fs min=%.4fm compute=%.3fms",
-            static_cast<unsigned long>(verdict.request_id),
-            static_cast<unsigned long>(verdict.trajectory_generation),
-            static_cast<unsigned long>(verdict.cloud_sequence),
-            verdict.source_cloud_age_s, verdict.minimum_distance_m,
-            verdict.compute_ms);
-      }
-      const uint64_t compute_us = static_cast<uint64_t>(
-          std::max(0.0, verdict.compute_ms) * 1000.0);
-      risk_compute_us_sum_.fetch_add(compute_us, std::memory_order_relaxed);
-      uint64_t previous_max =
-          risk_compute_us_max_.load(std::memory_order_relaxed);
-      while (previous_max < compute_us &&
-             !risk_compute_us_max_.compare_exchange_weak(
-                 previous_max, compute_us, std::memory_order_relaxed)) {
-      }
-      risk_verdict_pub_->publish(verdict);
+      publishRiskVerdict(calculateRiskVerdict(job));
     }
   }
 
@@ -1778,6 +1824,160 @@ private:
     return static_cast<uint32_t>(point_step);
   }
 
+  void publishCurrentBodyRiskVerdict(const InputCloudJob &job) {
+    using Verdict = mars_quadrotor_msgs::msg::TrajectoryRiskVerdict;
+    if (!risk_verdict_pub_ || options_.risk_body_clearance_m <= 0.0 ||
+        !job.cloud) {
+      return;
+    }
+
+    const auto compute_start = RiskClock::now();
+    Verdict result;
+    result.header.stamp = get_clock()->now();
+    result.header.frame_id = "world";
+    result.request_id = ++risk_request_sequence_;
+    result.trajectory_generation =
+        risk_trajectory_last_generation_.load(std::memory_order_relaxed);
+    result.cloud_sequence = job.sequence;
+    result.source_cloud_stamp_ns = cloudStampNs(*job.cloud);
+    result.status = Verdict::NO_HIT;
+    result.scope = Verdict::CURRENT_BODY;
+    result.checked_from_tt = 0.0;
+    result.checked_to_tt = options_.risk_body_horizon_s;
+    result.witness_tt = -1.0;
+    result.minimum_distance_m = std::numeric_limits<double>::infinity();
+    result.body_distance_m = std::numeric_limits<double>::infinity();
+    result.end_distance_m = std::numeric_limits<double>::infinity();
+    result.source_point_count =
+        static_cast<uint64_t>(job.cloud->width) * job.cloud->height;
+    result.source_cloud_age_s =
+        std::chrono::duration<double>(compute_start - job.receive_time).count();
+
+    const double odom_age_s = latest_odom_receive_time_
+        ? std::chrono::duration<double>(compute_start -
+                                       *latest_odom_receive_time_)
+              .count()
+        : std::numeric_limits<double>::infinity();
+    if (!drone_ || !latest_velocity_ ||
+        !std::isfinite(result.source_cloud_age_s) ||
+        result.source_cloud_age_s < 0.0 ||
+        result.source_cloud_age_s > options_.risk_max_cloud_age_s ||
+        !std::isfinite(odom_age_s) || odom_age_s < 0.0 ||
+        odom_age_s > options_.risk_body_max_odom_age_s ||
+        result.source_cloud_stamp_ns == 0) {
+      result.status = Verdict::STALE;
+    } else if (result.source_point_count <
+               static_cast<uint64_t>(options_.risk_min_points)) {
+      result.status = Verdict::INSUFFICIENT_DATA;
+    } else {
+      const CloudFields fields = findCloudFields(*job.cloud);
+      if (!fields.x || !fields.y || !fields.z || job.cloud->point_step == 0) {
+        result.status = Verdict::INSUFFICIENT_DATA;
+      } else {
+        const auto start = *drone_;
+        std::array<double, 3> delta{};
+        std::array<double, 3> end{};
+        double segment_sq = 0.0;
+        for (size_t axis = 0; axis < 3; ++axis) {
+          delta[axis] = (*latest_velocity_)[axis] *
+                        options_.risk_body_horizon_s;
+          end[axis] = start[axis] + delta[axis];
+          segment_sq += delta[axis] * delta[axis];
+        }
+        const double clearance = options_.risk_body_clearance_m;
+        std::array<double, 3> crop_min{};
+        std::array<double, 3> crop_max{};
+        for (size_t axis = 0; axis < 3; ++axis) {
+          crop_min[axis] = std::min(start[axis], end[axis]) - clearance;
+          crop_max[axis] = std::max(start[axis], end[axis]) + clearance;
+        }
+
+        const bool swap_bytes = job.cloud->is_bigendian != hostIsBigEndian();
+        double minimum_sq = std::numeric_limits<double>::infinity();
+        double body_sq = std::numeric_limits<double>::infinity();
+        double end_sq = std::numeric_limits<double>::infinity();
+        for (uint32_t row = 0; row < job.cloud->height; ++row) {
+          const size_t row_base =
+              static_cast<size_t>(row) * job.cloud->row_step;
+          for (uint32_t column = 0; column < job.cloud->width; ++column) {
+            const size_t offset =
+                row_base + static_cast<size_t>(column) * job.cloud->point_step;
+            if (offset + job.cloud->point_step > job.cloud->data.size())
+              continue;
+            const uint8_t *point = job.cloud->data.data() + offset;
+            std::array<double, 3> obstacle{};
+            if (!readField(point, *fields.x, swap_bytes, obstacle[0]) ||
+                !readField(point, *fields.y, swap_bytes, obstacle[1]) ||
+                !readField(point, *fields.z, swap_bytes, obstacle[2]) ||
+                !std::isfinite(obstacle[0]) ||
+                !std::isfinite(obstacle[1]) ||
+                !std::isfinite(obstacle[2]) || obstacle[0] < crop_min[0] ||
+                obstacle[0] > crop_max[0] || obstacle[1] < crop_min[1] ||
+                obstacle[1] > crop_max[1] || obstacle[2] < crop_min[2] ||
+                obstacle[2] > crop_max[2]) {
+              continue;
+            }
+            ++result.cropped_point_count;
+            double projection = 0.0;
+            if (segment_sq > 1e-12) {
+              for (size_t axis = 0; axis < 3; ++axis) {
+                projection +=
+                    (obstacle[axis] - start[axis]) * delta[axis];
+              }
+              projection = std::clamp(projection / segment_sq, 0.0, 1.0);
+            }
+            double point_segment_sq = 0.0;
+            double point_body_sq = 0.0;
+            double point_end_sq = 0.0;
+            for (size_t axis = 0; axis < 3; ++axis) {
+              const double projected =
+                  start[axis] + projection * delta[axis];
+              point_segment_sq +=
+                  (obstacle[axis] - projected) *
+                  (obstacle[axis] - projected);
+              point_body_sq += (obstacle[axis] - start[axis]) *
+                               (obstacle[axis] - start[axis]);
+              point_end_sq += (obstacle[axis] - end[axis]) *
+                              (obstacle[axis] - end[axis]);
+            }
+            body_sq = std::min(body_sq, point_body_sq);
+            end_sq = std::min(end_sq, point_end_sq);
+            if (point_segment_sq < minimum_sq) {
+              minimum_sq = point_segment_sq;
+              result.witness_tt =
+                  projection * options_.risk_body_horizon_s;
+              result.witness_position.x =
+                  start[0] + projection * delta[0];
+              result.witness_position.y =
+                  start[1] + projection * delta[1];
+              result.witness_position.z =
+                  start[2] + projection * delta[2];
+            }
+          }
+        }
+        result.minimum_distance_m = std::sqrt(minimum_sq);
+        result.body_distance_m = std::sqrt(body_sq);
+        result.end_distance_m = std::sqrt(end_sq);
+        if (result.minimum_distance_m <= clearance) {
+          const bool body_starts_inside =
+              result.body_distance_m <= clearance;
+          const bool egress = body_starts_inside &&
+              result.minimum_distance_m + options_.risk_egress_tolerance_m >=
+                  result.body_distance_m &&
+              result.end_distance_m >
+                  clearance + options_.risk_egress_tolerance_m &&
+              result.end_distance_m - result.body_distance_m >=
+                  options_.risk_egress_min_progress_m;
+          result.status = egress ? Verdict::EGRESS : Verdict::OCCUPIED;
+        }
+      }
+    }
+    result.compute_ms = std::chrono::duration<double, std::milli>(
+                            RiskClock::now() - compute_start)
+                            .count();
+    publishRiskVerdict(std::move(result));
+  }
+
   void cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
     const auto receive_time = RiskClock::now();
     const uint64_t cloud_sequence = ++cloud_input_callbacks_;
@@ -1793,14 +1993,14 @@ private:
       std::lock_guard<std::mutex> lock(cloud_queue_mutex_);
       if (pending_cloud_)
         ++cloud_worker_overwrites_;
-      pending_cloud_ = msg;
+      pending_cloud_ = InputCloudJob{msg, receive_time, cloud_sequence};
     }
     cloud_queue_cv_.notify_one();
   }
 
   void cloudWorkerLoop() {
     while (true) {
-      sensor_msgs::msg::PointCloud2::SharedPtr msg;
+      InputCloudJob job;
       {
         std::unique_lock<std::mutex> lock(cloud_queue_mutex_);
         cloud_queue_cv_.wait(lock, [this]() {
@@ -1808,13 +2008,13 @@ private:
         });
         if (cloud_worker_stop_)
           return;
-        msg = std::move(pending_cloud_);
+        job = std::move(*pending_cloud_);
         pending_cloud_.reset();
       }
       const auto filter_start = RiskClock::now();
       {
         std::lock_guard<std::mutex> state_lock(state_mutex_);
-        processCloud(msg);
+        processCloud(job);
       }
       const uint64_t compute_us = static_cast<uint64_t>(
           std::chrono::duration<double, std::micro>(
@@ -1927,7 +2127,10 @@ private:
     recordCadence(cloud_publish_first_ns_, cloud_publish_last_ns_);
   }
 
-  void processCloud(const sensor_msgs::msg::PointCloud2::SharedPtr &msg) {
+  void processCloud(const InputCloudJob &job) {
+    const auto &msg = job.cloud;
+    if (!msg)
+      return;
     const double now = nowSeconds();
     const bool state_changed =
         updateRecoveryBurst(now) | updateReplanGuardBurst(now) |
@@ -1940,6 +2143,7 @@ private:
     processed_input_payload_bytes_ += msg->data.size();
     input_points_ += input_points;
     total_points_ += input_points;
+    publishCurrentBodyRiskVerdict(job);
     // This bounded 360-degree stream is independent of the angular/map
     // publication decision below. In particular, Adaptive rate limiting or a
     // fixed Sector crop must never make the guard witness disappear.
@@ -2235,6 +2439,10 @@ private:
     number("risk_voxel_m", options_.risk_voxel_m);
     number("risk_max_cloud_age_s", options_.risk_max_cloud_age_s);
     number("risk_max_eval_hz", options_.risk_max_eval_hz);
+    number("risk_body_clearance_m", options_.risk_body_clearance_m);
+    number("risk_body_horizon_s", options_.risk_body_horizon_s);
+    number("risk_body_max_odom_age_s",
+           options_.risk_body_max_odom_age_s);
     integer("risk_worker_overwrites",
             risk_worker_overwrites_.load(std::memory_order_relaxed));
     integer("risk_rate_limited_jobs",
@@ -2278,6 +2486,29 @@ private:
                      (1000.0 * risk_verdict_count));
     number("risk_compute_ms_max",
            risk_compute_us_max_.load(std::memory_order_relaxed) / 1000.0);
+    const uint64_t risk_body_verdict_count =
+        risk_body_verdict_messages_.load(std::memory_order_relaxed);
+    integer("risk_body_verdict_messages", risk_body_verdict_count);
+    number("risk_body_verdict_span_s",
+           cadenceSpanSeconds(risk_body_verdict_first_ns_,
+                              risk_body_verdict_last_ns_));
+    number("risk_body_verdict_hz",
+           cadenceRateHz(risk_body_verdict_count,
+                         risk_body_verdict_first_ns_,
+                         risk_body_verdict_last_ns_));
+    integer("risk_body_verdict_payload_bytes",
+            risk_body_verdict_payload_bytes_.load(
+                std::memory_order_relaxed));
+    integer("risk_body_occupied_verdicts",
+            risk_body_occupied_verdicts_.load(std::memory_order_relaxed));
+    number("risk_body_compute_ms_mean",
+           risk_body_verdict_count == 0
+               ? 0.0
+               : risk_body_compute_us_sum_.load(std::memory_order_relaxed) /
+                     (1000.0 * risk_body_verdict_count));
+    number("risk_body_compute_ms_max",
+           risk_body_compute_us_max_.load(std::memory_order_relaxed) /
+               1000.0);
     integer("processed_input_payload_bytes", processed_input_payload_bytes_);
     integer("published_frames", published_frames_);
     const uint64_t cloud_publish_count =
@@ -2584,7 +2815,7 @@ private:
   mutable std::mutex state_mutex_;
   std::mutex cloud_queue_mutex_;
   std::condition_variable cloud_queue_cv_;
-  sensor_msgs::msg::PointCloud2::SharedPtr pending_cloud_;
+  std::optional<InputCloudJob> pending_cloud_;
   std::thread cloud_worker_;
   bool cloud_worker_stop_{false};
   std::atomic<uint64_t> cloud_input_callbacks_{0};
@@ -2625,8 +2856,17 @@ private:
       risk_verdict_serializer_;
   std::atomic<uint64_t> risk_compute_us_sum_{0};
   std::atomic<uint64_t> risk_compute_us_max_{0};
+  std::atomic<uint64_t> risk_body_verdict_messages_{0};
+  std::atomic<int64_t> risk_body_verdict_first_ns_{0};
+  std::atomic<int64_t> risk_body_verdict_last_ns_{0};
+  std::atomic<uint64_t> risk_body_verdict_payload_bytes_{0};
+  std::atomic<uint64_t> risk_body_occupied_verdicts_{0};
+  std::atomic<uint64_t> risk_body_compute_us_sum_{0};
+  std::atomic<uint64_t> risk_body_compute_us_max_{0};
 
   std::optional<std::array<double, 3>> drone_;
+  std::optional<std::array<double, 3>> latest_velocity_;
+  std::optional<RiskClock::time_point> latest_odom_receive_time_;
   double yaw_{0.0};
   std::optional<double> velocity_yaw_;
   double latest_speed_mps_{0.0};

@@ -88,6 +88,10 @@ class RecoveryBranchLogTest(unittest.TestCase):
 [FRONTEND_RISK_ENFORCE] action=IGNORE request=2 generation_match=true fresh=false source_fresh=false time_covered=false
 [FRONTEND_RISK_ENFORCE] action=BRAKE request=3
 [FRONTEND_RISK_SUMMARY] received=10 occupied=3 ignored=2 enforced=1
+[FRONTEND_BODY_ENFORCE] action=IGNORE request=4 generation_match=true fresh=false source_fresh=true time_covered=true
+[FRONTEND_BODY_ENFORCE] action=BRAKE request=5
+[TRAJ_GUARD_BRAKE] trigger=frontend_body_active_brake duration=0.500s
+[FRONTEND_BODY_SUMMARY] received=20 occupied=2 ignored=1 enforced=1 clear_while_braking=4
 """
         handle, path = tempfile.mkstemp(text=True)
         try:
@@ -109,6 +113,16 @@ class RecoveryBranchLogTest(unittest.TestCase):
         self.assertEqual(result["frontend_risk_stale_result_ignores"], 1)
         self.assertEqual(result["frontend_risk_stale_source_ignores"], 1)
         self.assertEqual(result["frontend_risk_time_uncovered_ignores"], 1)
+        self.assertEqual(result["frontend_body_received"], 20)
+        self.assertEqual(result["frontend_body_occupied"], 2)
+        self.assertEqual(result["frontend_body_ignored"], 1)
+        self.assertEqual(result["frontend_body_enforced"], 1)
+        self.assertEqual(result["frontend_body_clear_while_braking"], 4)
+        self.assertEqual(result["frontend_body_ignore_events"], 1)
+        self.assertEqual(result["frontend_body_brake_events"], 1)
+        self.assertEqual(
+            result["frontend_body_active_brake_replacements"], 1
+        )
 
     def test_counts_optimizer_iteration_caps(self):
         lines = """\

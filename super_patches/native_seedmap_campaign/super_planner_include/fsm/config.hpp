@@ -191,6 +191,12 @@ namespace fsm {
                 "/planning/trajectory_risk_verdict"};
         double trajectory_guard_frontend_risk_result_max_age_s{0.2};
         double trajectory_guard_frontend_risk_source_max_age_s{0.75};
+        // Generation-independent sensor-cadence tier.  This remains a
+        // separate opt-in from future-trajectory enforcement so existing
+        // experimental and standard profiles keep their prior semantics.
+        bool trajectory_guard_frontend_body_enforce_en{false};
+        double trajectory_guard_frontend_body_result_max_age_s{0.15};
+        double trajectory_guard_frontend_body_source_max_age_s{0.20};
 
         Config() = default;
 
@@ -410,13 +416,29 @@ namespace fsm {
             loader.LoadParam(
                     "fsm/trajectory_guard/frontend_risk/source_max_age_s",
                     trajectory_guard_frontend_risk_source_max_age_s, 0.75);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/frontend_risk/current_body_enforce_en",
+                    trajectory_guard_frontend_body_enforce_en, false);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/frontend_risk/current_body_result_max_age_s",
+                    trajectory_guard_frontend_body_result_max_age_s, 0.15);
+            loader.LoadParam(
+                    "fsm/trajectory_guard/frontend_risk/current_body_source_max_age_s",
+                    trajectory_guard_frontend_body_source_max_age_s, 0.20);
             trajectory_guard_frontend_risk_result_max_age_s = std::max(
                     0.02,
                     trajectory_guard_frontend_risk_result_max_age_s);
             trajectory_guard_frontend_risk_source_max_age_s = std::max(
                     trajectory_guard_frontend_risk_result_max_age_s,
                     trajectory_guard_frontend_risk_source_max_age_s);
-            if (trajectory_guard_frontend_risk_enforce_en) {
+            trajectory_guard_frontend_body_result_max_age_s = std::max(
+                    0.02,
+                    trajectory_guard_frontend_body_result_max_age_s);
+            trajectory_guard_frontend_body_source_max_age_s = std::max(
+                    trajectory_guard_frontend_body_result_max_age_s,
+                    trajectory_guard_frontend_body_source_max_age_s);
+            if (trajectory_guard_frontend_risk_enforce_en ||
+                trajectory_guard_frontend_body_enforce_en) {
                 trajectory_guard_frontend_risk_shadow_en = true;
             }
 

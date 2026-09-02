@@ -1,6 +1,38 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-02 current-body tier와 active-brake replacement 5단계 완료.**
+> 300회에서 나온 Map10 접촉의 5 Hz/generation coverage gap을 heavy worker
+> 증속 없이 분리했다. Future tier는 5 Hz exact-generation을 유지하고, 새
+> current-body tier는 최신 raw scan과 measured odometry의 0.15 s 선분을 sensor
+> frame마다 검사한다. source/result freshness는 필수지만 generation-independent다.
+> 활성 brake 도중 더 앞쪽 fresh body witness가 오면 episode당 한 번 brake를
+> 교체하며, duplicate request는 idempotent하게 무시한다. 모두 default-off이고
+> 표준 tight_v7 profile은 변경하지 않았다.
+>
+> 결정론적 gate에서 stale body는 무시됐고, 일부러 다른 generation의 fresh body가
+> 기존 future brake를 정확히 한 번 교체한 뒤 정상 복구했다. 자연 검증은 Map10
+> Adaptive 30/30, Map7 Full/Adaptive 각 20/20, Map1--10 × Full/Sector/Adaptive
+> 각 30/30 완주·source-static-PCD 무충돌이었다. 마지막 3모드 표본의 평균시간은
+> 77.908/63.625/63.270초, 최악 clearance는 +0.166/+0.180/+0.121m다.
+>
+> Adaptive는 Full 대비 planner DDS 49.405%, ROG input 49.464%, ROG frame compute
+> 32.474%, algorithm core·s 1.975%를 줄였다. 그러나 mean algorithm cores는
+> 17.122%, end-to-end core·s는 1.348% 증가했고 PSS는 같아 총연산량/메모리 감소는
+> 아직 주장할 수 없다. current-body tier 자체는 약 10 Hz에서 평균 0.320ms,
+> 0.00340 core, 0.001829 MiB/s였다.
+>
+> **Sector도 30/30 완주·무충돌**이라 현재 ±60°/10맵은 Adaptive 우위를 식별하지
+> 못한다. 각 모드 30/30의 Wilson 95% 하한도 88.65%뿐이다. Sector Map6 run1
+> attempt1에는 별도의 OOM 1회가 있었고 retry 후 완주했다(FSM PSS 약
+> 3.14→6.31GiB, swap 포화). Sector는 body tier를 켜지 않으므로 새 tier 원인은
+> 아니지만 planner/optimizer memory 문제는 남아 있다. 다음은 같은 맵에서
+> 사전등록 paired half-angle operating-envelope와 OOM phase별 RSS/deadline 계측이다.
+> 상세는 viability §8.49 및
+> `docs/frontend_body_active_brake_final_20260902.md`, 요약은
+> `results/frontend_body_map1_10_three_mode_n3_{summary,reductions}_20260902.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-02 cadence/enforcement 5단계와 최종 300회 완료.**
 > Sensor/filter/ROG/trajectory cadence 계측, Adaptive map+risk 5 Hz cap,
 > Map7/9/10 n=3 gate, L-BFGS 2,048 iteration 상한, compact verdict

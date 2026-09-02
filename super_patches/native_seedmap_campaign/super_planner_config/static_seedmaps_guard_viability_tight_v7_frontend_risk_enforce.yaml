@@ -2,8 +2,9 @@
 # The simulator/native-filter composition suppresses /cloud_registered DDS,
 # publishes /cloud_sector to ROG-Map, and publishes a generation/freshness-
 # validated compact verdict to the FSM. This dedicated experimental profile
-# enforces only fresh, exact-generation OCCUPIED verdicts; the shadow and
-# standard tight_v7 profiles remain unchanged/default-off.
+# enforces fresh exact-generation future-tail verdicts and the separately
+# tagged, generation-independent current-body tier; the shadow and standard
+# tight_v7 profiles remain unchanged/default-off.
 # Start with use_sensor_frontend:=true and filter arguments containing
 # --risk-verdict-topic;/planning/trajectory_risk_verdict.
 #
@@ -132,6 +133,12 @@ fsm:
       topic: "/planning/trajectory_risk_verdict"
       result_max_age_s: 0.20
       source_max_age_s: 0.75
+      # Sensor-cadence current-body verdicts use measured odometry and a fresh
+      # raw scan, not a polynomial generation.  Keep their validity window
+      # tight enough that one 10 Hz frame cannot be replayed as current.
+      current_body_enforce_en: true
+      current_body_result_max_age_s: 0.15
+      current_body_source_max_age_s: 0.20
     validation_sample_dt_s: 0.005
     shadow_min_interval_s: 0.0
     additional_clearance_m: 0.0

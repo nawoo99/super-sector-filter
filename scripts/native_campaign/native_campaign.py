@@ -636,6 +636,14 @@ def parse_full_refresh_ack_log(path):
         "frontend_risk_stale_result_ignores": 0,
         "frontend_risk_stale_source_ignores": 0,
         "frontend_risk_time_uncovered_ignores": 0,
+        "frontend_body_received": 0,
+        "frontend_body_occupied": 0,
+        "frontend_body_ignored": 0,
+        "frontend_body_enforced": 0,
+        "frontend_body_clear_while_braking": 0,
+        "frontend_body_ignore_events": 0,
+        "frontend_body_brake_events": 0,
+        "frontend_body_active_brake_replacements": 0,
         "optimizer_iteration_cap_hits": 0,
     }
     markers = {
@@ -664,6 +672,10 @@ def parse_full_refresh_ack_log(path):
     frontend_risk_summary_pattern = re.compile(
         r"\[FRONTEND_RISK_SUMMARY\]\s+received=(\d+)\s+occupied=(\d+)\s+"
         r"ignored=(\d+)\s+enforced=(\d+)"
+    )
+    frontend_body_summary_pattern = re.compile(
+        r"\[FRONTEND_BODY_SUMMARY\]\s+received=(\d+)\s+occupied=(\d+)\s+"
+        r"ignored=(\d+)\s+enforced=(\d+)\s+clear_while_braking=(\d+)"
     )
     with open(path, errors="replace") as stream:
         for line in stream:
@@ -695,6 +707,23 @@ def parse_full_refresh_ack_log(path):
                 counts["frontend_risk_enforced"] = int(
                     frontend_summary.group(4)
                 )
+            frontend_body_summary = frontend_body_summary_pattern.search(line)
+            if frontend_body_summary:
+                counts["frontend_body_received"] = int(
+                    frontend_body_summary.group(1)
+                )
+                counts["frontend_body_occupied"] = int(
+                    frontend_body_summary.group(2)
+                )
+                counts["frontend_body_ignored"] = int(
+                    frontend_body_summary.group(3)
+                )
+                counts["frontend_body_enforced"] = int(
+                    frontend_body_summary.group(4)
+                )
+                counts["frontend_body_clear_while_braking"] = int(
+                    frontend_body_summary.group(5)
+                )
             if "[FRONTEND_RISK_ENFORCE] action=IGNORE" in line:
                 counts["frontend_risk_ignore_events"] += 1
                 if "generation_match=false" in line:
@@ -707,6 +736,13 @@ def parse_full_refresh_ack_log(path):
                     counts["frontend_risk_time_uncovered_ignores"] += 1
             if "[FRONTEND_RISK_ENFORCE] action=BRAKE" in line:
                 counts["frontend_risk_brake_events"] += 1
+            if "[FRONTEND_BODY_ENFORCE] action=IGNORE" in line:
+                counts["frontend_body_ignore_events"] += 1
+            if "[FRONTEND_BODY_ENFORCE] action=BRAKE" in line:
+                counts["frontend_body_brake_events"] += 1
+            if ("[TRAJ_GUARD_BRAKE]" in line and
+                    "trigger=frontend_body_active_brake" in line):
+                counts["frontend_body_active_brake_replacements"] += 1
             if "maximum number of iterations" in line:
                 counts["optimizer_iteration_cap_hits"] += 1
             raw_debug = raw_debug_pattern.search(line)
@@ -1076,6 +1112,11 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "frontend_risk_stale_result_ignores",
           "frontend_risk_stale_source_ignores",
           "frontend_risk_time_uncovered_ignores",
+          "frontend_body_received", "frontend_body_occupied",
+          "frontend_body_ignored", "frontend_body_enforced",
+          "frontend_body_clear_while_braking",
+          "frontend_body_ignore_events", "frontend_body_brake_events",
+          "frontend_body_active_brake_replacements",
           "optimizer_iteration_cap_hits",
           "shadow_safe_candidates", "shadow_unsafe_candidates",
           "shadow_skipped_candidates", "shadow_validated_candidates",
@@ -1191,6 +1232,9 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_risk_horizon_s", "filter_risk_sample_dt_s",
           "filter_risk_min_points", "filter_risk_voxel_m",
           "filter_risk_max_cloud_age_s", "filter_risk_max_eval_hz",
+          "filter_risk_body_clearance_m",
+          "filter_risk_body_horizon_s",
+          "filter_risk_body_max_odom_age_s",
           "filter_risk_worker_overwrites", "filter_risk_rate_limited_jobs",
           "filter_risk_trajectory_messages",
           "filter_risk_trajectory_unique_generations",
@@ -1203,8 +1247,16 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_risk_verdict_payload_bytes",
           "filter_risk_occupied_verdicts",
           "filter_risk_compute_ms_mean", "filter_risk_compute_ms_max",
+          "filter_risk_body_verdict_messages",
+          "filter_risk_body_verdict_span_s",
+          "filter_risk_body_verdict_hz",
+          "filter_risk_body_verdict_payload_bytes",
+          "filter_risk_body_occupied_verdicts",
+          "filter_risk_body_compute_ms_mean",
+          "filter_risk_body_compute_ms_max",
           "filter_cloud_compute_core_equivalent",
           "filter_risk_compute_core_equivalent",
+          "filter_risk_body_compute_core_equivalent",
           "filter_frontend_compute_core_equivalent",
           "filter_processed_input_payload_bytes", "filter_published_frames",
           "filter_cloud_publish_events", "filter_cloud_publish_span_s",
@@ -1344,6 +1396,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_published_payload_mib_s",
           "filter_guard_witness_payload_mib_s",
           "filter_risk_verdict_payload_mib_s",
+          "filter_risk_body_verdict_payload_mib_s",
           "planner_published_payload_mib_s",
           "planner_ingress_payload_mib_s",
           "algorithm_delivery_payload_mib_s",
@@ -1533,6 +1586,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             adaptive_map_commit_refresh_age_s=0.12,
             adaptive_map_commit_refresh_min_interval_s=0.10,
             adaptive_risk_max_eval_hz=0.0,
+            adaptive_risk_body_clearance_m=0.0,
+            adaptive_risk_body_horizon_s=0.15,
+            adaptive_risk_body_max_odom_age_s=0.20,
             adaptive_slowdown_full_refresh_v=0.0,
             adaptive_slowdown_full_refresh_rearm_v=0.0,
             adaptive_trajectory_guard_hold_s=2.5,
@@ -1836,6 +1892,14 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 " --risk-max-cloud-age-s 0.75"
                 f" --risk-max-eval-hz {adaptive_risk_max_eval_hz}"
             )
+            if adaptive_risk_body_clearance_m > 0.0:
+                filter_options += (
+                    f" --risk-body-clearance-m "
+                    f"{adaptive_risk_body_clearance_m}"
+                    f" --risk-body-horizon-s {adaptive_risk_body_horizon_s}"
+                    f" --risk-body-max-odom-age-s "
+                    f"{adaptive_risk_body_max_odom_age_s}"
+                )
         filt_proc = None
         if (not raw_direct and not integrated_filter_active
                 and not sensor_frontend_active):
@@ -2425,6 +2489,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     rec.get("guard_dedicated_payload_bytes"),
                 "filter_risk_verdict_payload_mib_s":
                     rec.get("filter_risk_verdict_payload_bytes"),
+                "filter_risk_body_verdict_payload_mib_s":
+                    rec.get("filter_risk_body_verdict_payload_bytes"),
             }
             for rate_key, byte_count in payload_rate_sources.items():
                 if byte_count is not None:
@@ -2434,6 +2500,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             cloud_compute_count = rec.get("filter_frames")
             risk_compute_ms = rec.get("filter_risk_compute_ms_mean")
             risk_compute_count = rec.get("filter_risk_verdict_messages")
+            body_compute_ms = rec.get("filter_risk_body_compute_ms_mean")
+            body_compute_count = rec.get("filter_risk_body_verdict_messages")
             if cloud_compute_ms is not None and cloud_compute_count is not None:
                 rec["filter_cloud_compute_core_equivalent"] = (
                     cloud_compute_ms * cloud_compute_count
@@ -2444,9 +2512,15 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     risk_compute_ms * risk_compute_count
                     / (1000.0 * payload_duration_s)
                 )
+            if body_compute_ms is not None and body_compute_count is not None:
+                rec["filter_risk_body_compute_core_equivalent"] = (
+                    body_compute_ms * body_compute_count
+                    / (1000.0 * payload_duration_s)
+                )
             frontend_compute_parts = [
                 rec.get("filter_cloud_compute_core_equivalent"),
                 rec.get("filter_risk_compute_core_equivalent"),
+                rec.get("filter_risk_body_compute_core_equivalent"),
             ]
             if any(value is not None for value in frontend_compute_parts):
                 rec["filter_frontend_compute_core_equivalent"] = sum(
@@ -2479,6 +2553,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 if sensor_frontend_active:
                     verdict_bytes = (
                         rec.get("filter_risk_verdict_payload_bytes") or 0
+                    ) + (
+                        rec.get("filter_risk_body_verdict_payload_bytes") or 0
                     )
                     # Raw sensor data stays inside the simulator/front-end
                     # process. DDS carries only the filtered map cloud and
@@ -2779,6 +2855,27 @@ def main():
         ),
     )
     ap.add_argument(
+        "--adaptive-risk-body-clearance-m",
+        type=float,
+        default=0.0,
+        help=(
+            "enable the sensor-cadence generation-independent current-body "
+            "tier with this clearance; 0 disables it"
+        ),
+    )
+    ap.add_argument(
+        "--adaptive-risk-body-horizon-s",
+        type=float,
+        default=0.15,
+        help="constant-velocity horizon for the current-body tier",
+    )
+    ap.add_argument(
+        "--adaptive-risk-body-max-odom-age-s",
+        type=float,
+        default=0.20,
+        help="maximum odometry receive age for the current-body tier",
+    )
+    ap.add_argument(
         "--adaptive-slowdown-full-refresh-v",
         type=float,
         default=0.0,
@@ -2924,6 +3021,12 @@ def main():
         )
     if args.adaptive_risk_max_eval_hz < 0.0:
         ap.error("--adaptive-risk-max-eval-hz must be non-negative")
+    if args.adaptive_risk_body_clearance_m < 0.0:
+        ap.error("--adaptive-risk-body-clearance-m must be non-negative")
+    if args.adaptive_risk_body_horizon_s < 0.0:
+        ap.error("--adaptive-risk-body-horizon-s must be non-negative")
+    if args.adaptive_risk_body_max_odom_age_s <= 0.0:
+        ap.error("--adaptive-risk-body-max-odom-age-s must be positive")
     if args.adaptive_slowdown_full_refresh_v < 0.0:
         ap.error("--adaptive-slowdown-full-refresh-v must be non-negative")
     if args.adaptive_slowdown_full_refresh_v > 0.0 and not (
@@ -3226,6 +3329,15 @@ def main():
                         ),
                         adaptive_risk_max_eval_hz=(
                             args.adaptive_risk_max_eval_hz
+                        ),
+                        adaptive_risk_body_clearance_m=(
+                            args.adaptive_risk_body_clearance_m
+                        ),
+                        adaptive_risk_body_horizon_s=(
+                            args.adaptive_risk_body_horizon_s
+                        ),
+                        adaptive_risk_body_max_odom_age_s=(
+                            args.adaptive_risk_body_max_odom_age_s
                         ),
                         adaptive_slowdown_full_refresh_v=(
                             args.adaptive_slowdown_full_refresh_v

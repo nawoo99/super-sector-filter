@@ -3577,3 +3577,66 @@ does not establish population 100%, a significant safety advantage, or intended
 Sector degradation. Full tables and timestamp-level failure analysis are in
 `docs/frontend_risk_enforce_final_20260902.md`; raw and summaries are
 `results/final_frontend_enforce_map1_10_three_mode_n10_cgroup_{raw_20260901,summary_20260902,reductions_20260902}.csv`.
+
+### 8.49 Current-body tier, active-brake replacement and n=3 regression (2026-09-02)
+
+The Map10 generation/cadence coverage gap was addressed without raising the
+entire heavy risk worker back to 10 Hz. `TrajectoryRiskVerdict` now separates
+`FUTURE_TRAJECTORY` and `CURRENT_BODY` scopes. The future tier remains a 5 Hz
+raw-window/KD-tree check with exact-generation, freshness and checked-time
+gates. The current-body tier runs on every approximately 10 Hz sensor frame,
+checks a measured-position/velocity segment over 0.15 s directly against the
+fresh raw scan, and is generation-independent but has tighter result/source
+freshness limits of 0.15/0.20 s.
+
+The FSM keeps independent pending slots and request-id watermarks for the two
+scopes. Duplicate occupied messages are idempotent. A fresh predicted-ahead
+current-body result may replace an already-active brake once per episode; this
+closes the prior case in which the FSM returned early while executing an older
+brake. A deterministic Map1 fault gate first activated a future brake, then
+sent a deliberately generation-mismatched current-body result 99 ms later. It
+produced exactly one `frontend_body_active_brake` replacement, recovered and
+completed without contact. A 1.491 s stale body result was ignored. All new
+options are default-off, the standard tight_v7 profiles remain unchanged, and
+only the experimental front-end enforcement profile enables this tier.
+
+Map10 Adaptive n=30 was 30/30 complete, source-static-PCD safe, valid and
+first-attempt, with retry/OOM zero. Mean time was 72.506 s, worst clearance
++0.131 m, body OCCUPIED/brakes 7/5 and natural active-brake replacements zero.
+Body checking averaged 0.394 ms and the worst per-row maximum was 2.361 ms.
+The rare replacement path is therefore covered by the deterministic gate, not
+claimed as a common natural event.
+
+A resource-normal Map7 Full/Adaptive n=20 rerun was complete and safe 20/20 for
+both modes with no retry, OOM or PSI-full pressure. Full/Adaptive mean times
+were 86.952/67.730 s and worst clearances +0.021/+0.128 m. This does not erase
+the prior timeout rows; it supports the interpretation that real topology
+sensitivity was amplified by severe host reclaim.
+
+The final same-profile Map1--10 n=3 regression produced Full/Sector/Adaptive
+completion and source-static-PCD safety of 30/30 for every mode. Mean times
+were 77.908/63.625/63.270 s and worst clearances +0.166/+0.180/+0.121 m.
+Full/Adaptive were first-attempt 30/30. Sector was 29/30 first-attempt because
+Map6 run1 attempt1 had `oom_kill_delta=1`; it then succeeded on retry. That
+attempt's FSM PSS rose from about 3.14 to 6.31 GiB, swap was full and cgroup
+memory peaked near 10.50 GiB. Sector does not enable the new risk/body tier, so
+this is residual planner/optimizer memory instability rather than evidence of
+body-tier overhead.
+
+Adaptive versus Full reduced measured planner DDS cloud+verdict rate 49.405%,
+ROG input 49.464%, ROG per-frame compute 32.474% and algorithm core-seconds
+1.975%. It nevertheless increased mean algorithm cores 17.122% and end-to-end
+core-seconds 1.348%; PSS was effectively unchanged. The body tier itself used
+about 0.00340 core and 0.001829 MiB/s. Thus communication and ROG-work
+reductions hold, but total-computation and memory reductions do not.
+
+Sector also completed safely 30/30 and used slightly less total work than
+Adaptive. The current +/-60 degree condition is therefore not a discriminating
+ablation and cannot support an Adaptive-over-Sector safety claim. A
+pre-registered paired half-angle operating-envelope test on the same maps is
+needed; post-hoc tuning to manufacture collisions is not acceptable. Each
+mode's 30/30 result has a Wilson 95% lower bound of only 88.65%, so none is a
+population guarantee. Full implementation, per-map tables, OOM evidence and
+claim boundaries are in `docs/frontend_body_active_brake_final_20260902.md`;
+summary CSVs are
+`results/frontend_body_map1_10_three_mode_n3_{summary,reductions}_20260902.csv`.

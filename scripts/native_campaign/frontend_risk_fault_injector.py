@@ -60,7 +60,8 @@ class FaultInjector(Node):
         trajectory = self.latest_trajectory
         now = self.get_clock().now()
         stamp_ns = now.nanoseconds
-        if self.mode == "stale":
+        is_body = self.mode.startswith("body-")
+        if self.mode in ("stale", "body-stale"):
             stamp_ns -= 1_000_000_000
 
         verdict = TrajectoryRiskVerdict()
@@ -68,19 +69,26 @@ class FaultInjector(Node):
         verdict.header.stamp.nanosec = stamp_ns % 1_000_000_000
         verdict.request_id = 9_000_000_000
         verdict.trajectory_generation = trajectory.trajectory_generation
-        if self.mode == "wrong-generation":
+        if self.mode in ("wrong-generation", "body-fresh"):
             verdict.trajectory_generation += 1_000_000
         verdict.cloud_sequence = 9_000_000_000
         verdict.source_cloud_stamp_ns = now.nanoseconds
         verdict.status = TrajectoryRiskVerdict.OCCUPIED
+        verdict.scope = (
+            TrajectoryRiskVerdict.CURRENT_BODY
+            if is_body
+            else TrajectoryRiskVerdict.FUTURE_TRAJECTORY
+        )
         verdict.trajectory_start_wt = trajectory.start_wt_pos
         verdict.checked_from_tt = 0.0
         verdict.checked_to_tt = 1.0e6
-        verdict.witness_tt = max(
-            0.0, now.nanoseconds * 1.0e-9 - trajectory.start_wt_pos
+        verdict.witness_tt = (
+            0.15
+            if is_body
+            else max(0.0, now.nanoseconds * 1.0e-9 - trajectory.start_wt_pos)
         )
         verdict.minimum_distance_m = 0.0
-        verdict.body_distance_m = 0.0
+        verdict.body_distance_m = 0.50 if is_body else 0.0
         verdict.end_distance_m = 0.0
         verdict.source_point_count = 1
         verdict.cropped_point_count = 1
@@ -95,7 +103,7 @@ class FaultInjector(Node):
         print(
             "FRONTEND_RISK_FAULT_INJECTOR "
             f"mode={self.mode} request={verdict.request_id} "
-            f"generation={verdict.trajectory_generation}",
+            f"generation={verdict.trajectory_generation} scope={verdict.scope}",
             flush=True,
         )
 
@@ -103,7 +111,15 @@ class FaultInjector(Node):
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--mode", choices=("wrong-generation", "stale", "fresh"), required=True
+        "--mode",
+        choices=(
+            "wrong-generation",
+            "stale",
+            "fresh",
+            "body-stale",
+            "body-fresh",
+        ),
+        required=True,
     )
     parser.add_argument("--delay-s", type=float, default=1.0)
     parser.add_argument("--timeout-s", type=float, default=20.0)

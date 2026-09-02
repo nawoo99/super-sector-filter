@@ -120,6 +120,10 @@ namespace fsm {
         std::uint64_t brake_source_generation_{0};
         double brake_yaw_{0.0};
         std::string brake_reason_{};
+        // A fresh current-body hazard may shorten one already-active brake.
+        // Limit this to one replacement per episode to prevent 10 Hz verdicts
+        // from continually resetting the stop trajectory.
+        bool active_brake_body_replaced_{false};
         Vec3f brake_stop_position_{Vec3f::Zero()};
         Vec3f brake_stability_anchor_{Vec3f::Zero()};
         double brake_stability_start_wt_{0.0};
@@ -1288,10 +1292,20 @@ namespace fsm {
         mutable std::mutex frontend_risk_mutex_;
         mars_quadrotor_msgs::msg::TrajectoryRiskVerdict::SharedPtr
                 pending_frontend_occupied_verdict_;
+        mars_quadrotor_msgs::msg::TrajectoryRiskVerdict::SharedPtr
+                pending_frontend_body_occupied_verdict_;
+        uint64_t frontend_body_latest_clear_request_id_{0};
+        uint64_t frontend_risk_latest_occupied_request_id_{0};
+        uint64_t frontend_body_latest_occupied_request_id_{0};
         std::atomic_uint64_t frontend_risk_received_total_{0};
         std::atomic_uint64_t frontend_risk_occupied_total_{0};
         std::atomic_uint64_t frontend_risk_ignored_total_{0};
         std::atomic_uint64_t frontend_risk_enforced_total_{0};
+        std::atomic_uint64_t frontend_body_received_total_{0};
+        std::atomic_uint64_t frontend_body_occupied_total_{0};
+        std::atomic_uint64_t frontend_body_ignored_total_{0};
+        std::atomic_uint64_t frontend_body_enforced_total_{0};
+        std::atomic_uint64_t frontend_body_clear_total_{0};
 
         void frontendRiskVerdictCallback(
                 const mars_quadrotor_msgs::msg::TrajectoryRiskVerdict::SharedPtr
@@ -1300,43 +1314,94 @@ namespace fsm {
                     mars_quadrotor_msgs::msg::TrajectoryRiskVerdict;
             frontend_risk_received_total_.fetch_add(
                     1, std::memory_order_relaxed);
+            const bool current_body = msg->scope == Verdict::CURRENT_BODY;
+            if (current_body) {
+                frontend_body_received_total_.fetch_add(
+                        1, std::memory_order_relaxed);
+            }
             if (msg->status != Verdict::OCCUPIED) {
+                if (current_body &&
+                    cfg_.trajectory_guard_frontend_body_enforce_en &&
+                    (msg->status == Verdict::NO_HIT ||
+                     msg->status == Verdict::EGRESS) &&
+                    safety_brake_active_.load(std::memory_order_acquire)) {
+                    std::lock_guard<std::mutex> lock(frontend_risk_mutex_);
+                    frontend_body_latest_clear_request_id_ = std::max(
+                            frontend_body_latest_clear_request_id_,
+                            msg->request_id);
+                    if (pending_frontend_body_occupied_verdict_ &&
+                        pending_frontend_body_occupied_verdict_->request_id <
+                                frontend_body_latest_clear_request_id_) {
+                        pending_frontend_body_occupied_verdict_.reset();
+                    }
+                    frontend_body_clear_total_.fetch_add(
+                            1, std::memory_order_relaxed);
+                }
                 return;
             }
             frontend_risk_occupied_total_.fetch_add(
                     1, std::memory_order_relaxed);
-            if (cfg_.trajectory_guard_frontend_risk_enforce_en) {
+            if (current_body) {
+                frontend_body_occupied_total_.fetch_add(
+                        1, std::memory_order_relaxed);
+            }
+            const bool enforce = current_body
+                    ? cfg_.trajectory_guard_frontend_body_enforce_en
+                    : cfg_.trajectory_guard_frontend_risk_enforce_en;
+            if (enforce) {
                 std::lock_guard<std::mutex> lock(frontend_risk_mutex_);
                 // Preserve one hazard until the 100 Hz FSM consumes it. A
                 // later NO_HIT verdict cannot erase an OCCUPIED edge.
-                if (!pending_frontend_occupied_verdict_ ||
-                    msg->request_id >
-                            pending_frontend_occupied_verdict_->request_id) {
-                    pending_frontend_occupied_verdict_ = msg;
+                auto &pending = current_body
+                        ? pending_frontend_body_occupied_verdict_
+                        : pending_frontend_occupied_verdict_;
+                auto &latest_occupied_request_id = current_body
+                        ? frontend_body_latest_occupied_request_id_
+                        : frontend_risk_latest_occupied_request_id_;
+                if (msg->request_id > latest_occupied_request_id) {
+                    pending = msg;
+                    latest_occupied_request_id = msg->request_id;
                 }
             }
             ros_ptr_->warn(
-                    " -- [FRONTEND_RISK_VERDICT] request={} gen={} cloud={} "
-                    "status=OCCUPIED source_age={:.3f}s compute={:.3f}ms "
-                    "min_dist={:.4f}m witness_tt={:.3f}",
+                    " -- [{}] request={} gen={} cloud={} status=OCCUPIED "
+                    "source_age={:.3f}s compute={:.3f}ms min_dist={:.4f}m "
+                    "body_dist={:.4f}m end_dist={:.4f}m witness_tt={:.3f}",
+                    current_body ? "FRONTEND_BODY_VERDICT"
+                                 : "FRONTEND_RISK_VERDICT",
                     msg->request_id, msg->trajectory_generation,
                     msg->cloud_sequence, msg->source_cloud_age_s,
                     msg->compute_ms, msg->minimum_distance_m,
+                    msg->body_distance_m, msg->end_distance_m,
                     msg->witness_tt);
         }
 
-        bool consumeFreshFrontendOccupiedVerdict() {
-            if (!cfg_.trajectory_guard_frontend_risk_enforce_en) {
+        bool consumeFreshFrontendOccupiedVerdict(
+                bool current_body_only = false,
+                bool require_predicted_ahead = false) {
+            if ((current_body_only &&
+                 !cfg_.trajectory_guard_frontend_body_enforce_en) ||
+                (!current_body_only &&
+                 !cfg_.trajectory_guard_frontend_risk_enforce_en &&
+                 !cfg_.trajectory_guard_frontend_body_enforce_en)) {
                 return false;
             }
             mars_quadrotor_msgs::msg::TrajectoryRiskVerdict::SharedPtr result;
             {
                 std::lock_guard<std::mutex> lock(frontend_risk_mutex_);
-                if (!pending_frontend_occupied_verdict_) {
+                if (pending_frontend_body_occupied_verdict_) {
+                    result = std::move(
+                            pending_frontend_body_occupied_verdict_);
+                } else if (!current_body_only &&
+                           pending_frontend_occupied_verdict_) {
+                    result = std::move(pending_frontend_occupied_verdict_);
+                } else {
                     return false;
                 }
-                result = std::move(pending_frontend_occupied_verdict_);
             }
+            using Verdict =
+                    mars_quadrotor_msgs::msg::TrajectoryRiskVerdict;
+            const bool current_body = result->scope == Verdict::CURRENT_BODY;
             const auto snapshot =
                     planner_ptr_->getCommittedTrajectorySnapshot();
             const double now_wt = ros_ptr_->getSimTime();
@@ -1351,32 +1416,44 @@ namespace fsm {
                     ? std::numeric_limits<double>::infinity()
                     : std::clamp(now_wt - snapshot.start_wt, 0.0,
                                  snapshot.pos_traj.getTotalDuration());
-            const bool generation_matches = !snapshot.empty &&
-                    snapshot.generation == result->trajectory_generation;
+            const bool generation_matches = current_body ||
+                    (!snapshot.empty &&
+                     snapshot.generation == result->trajectory_generation);
+            const double result_max_age_s = current_body
+                    ? cfg_.trajectory_guard_frontend_body_result_max_age_s
+                    : cfg_.trajectory_guard_frontend_risk_result_max_age_s;
+            const double source_max_age_s = current_body
+                    ? cfg_.trajectory_guard_frontend_body_source_max_age_s
+                    : cfg_.trajectory_guard_frontend_risk_source_max_age_s;
             const bool result_is_fresh = std::isfinite(result_age_s) &&
                     result_age_s >= 0.0 &&
-                    result_age_s <=
-                            cfg_.trajectory_guard_frontend_risk_result_max_age_s;
+                    result_age_s <= result_max_age_s;
             const bool source_is_fresh =
                     result->source_cloud_stamp_ns != 0 &&
                     std::isfinite(effective_source_age_s) &&
                     effective_source_age_s >= 0.0 &&
-                    effective_source_age_s <=
-                            cfg_.trajectory_guard_frontend_risk_source_max_age_s;
+                    effective_source_age_s <= source_max_age_s;
             const double tt_tolerance = 0.02;
-            const bool time_is_covered = std::isfinite(current_tt) &&
-                    current_tt + tt_tolerance >= result->checked_from_tt &&
-                    current_tt <= result->checked_to_tt + tt_tolerance;
+            const bool time_is_covered = current_body ||
+                    (std::isfinite(current_tt) &&
+                     current_tt + tt_tolerance >= result->checked_from_tt &&
+                     current_tt <= result->checked_to_tt + tt_tolerance);
             if (!generation_matches || !result_is_fresh ||
                 !source_is_fresh || !time_is_covered) {
                 frontend_risk_ignored_total_.fetch_add(
                         1, std::memory_order_relaxed);
+                if (current_body) {
+                    frontend_body_ignored_total_.fetch_add(
+                            1, std::memory_order_relaxed);
+                }
                 ros_ptr_->warn(
-                        " -- [FRONTEND_RISK_ENFORCE] action=IGNORE "
+                        " -- [{}] action=IGNORE "
                         "request={} result_gen={} current_gen={} age={:.3f}s "
                         "source_age={:.3f}s result_tt=[{:.3f},{:.3f}] "
                         "current_tt={:.3f} generation_match={} fresh={} "
                         "source_fresh={} time_covered={}",
+                        current_body ? "FRONTEND_BODY_ENFORCE"
+                                     : "FRONTEND_RISK_ENFORCE",
                         result->request_id, result->trajectory_generation,
                         snapshot.generation, result_age_s,
                         effective_source_age_s, result->checked_from_tt,
@@ -1385,12 +1462,34 @@ namespace fsm {
                         source_is_fresh, time_is_covered);
                 return false;
             }
+            if (require_predicted_ahead &&
+                (!current_body || !std::isfinite(result->witness_tt) ||
+                 result->witness_tt <= 0.01 ||
+                 !std::isfinite(result->body_distance_m) ||
+                 !std::isfinite(result->minimum_distance_m) ||
+                 result->body_distance_m <=
+                         result->minimum_distance_m + 0.02)) {
+                ros_ptr_->warn(
+                        " -- [FRONTEND_BODY_ACTIVE_BRAKE] action=KEEP "
+                        "request={} witness_tt={:.3f} body_dist={:.4f}m "
+                        "min_dist={:.4f}m reason=not_ahead_of_current_body",
+                        result->request_id, result->witness_tt,
+                        result->body_distance_m,
+                        result->minimum_distance_m);
+                return false;
+            }
             frontend_risk_enforced_total_.fetch_add(
                     1, std::memory_order_relaxed);
+            if (current_body) {
+                frontend_body_enforced_total_.fetch_add(
+                        1, std::memory_order_relaxed);
+            }
             ros_ptr_->error(
-                    " -- [FRONTEND_RISK_ENFORCE] action=BRAKE request={} "
+                    " -- [{}] action=BRAKE request={} "
                     "gen={} cloud={} age={:.3f}s source_age={:.3f}s "
                     "current_tt={:.3f} witness_tt={:.3f} min_dist={:.4f}m",
+                    current_body ? "FRONTEND_BODY_ENFORCE"
+                                 : "FRONTEND_RISK_ENFORCE",
                     result->request_id, result->trajectory_generation,
                     result->cloud_sequence, result_age_s,
                     effective_source_age_s, current_tt,
@@ -2096,7 +2195,8 @@ namespace fsm {
                    max_jerk <= cfg_.brake_max_jerk_mps3 * 1.001;
         }
 
-        bool activateEmergencyBrake(const std::string &reason) {
+        bool activateEmergencyBrake(const std::string &reason,
+                                    bool replace_active_body_brake = false) {
             if (!cfg_.trajectory_guard_en) {
                 return false;
             }
@@ -2108,7 +2208,13 @@ namespace fsm {
             std::lock_guard<std::mutex> activation_lock(
                     brake_activation_mutex_);
             if (safety_brake_active_.load(std::memory_order_acquire)) {
-                return false;
+                if (!replace_active_body_brake) {
+                    return false;
+                }
+                std::lock_guard<std::mutex> lock(safety_mutex_);
+                if (active_brake_body_replaced_) {
+                    return false;
+                }
             }
             // A new brake is not a terminal hold until its trajectory has
             // finished and the stability checks in tryRecoverFromEmergencyBrake
@@ -2546,7 +2652,8 @@ namespace fsm {
 
             {
                 std::lock_guard<std::mutex> lock(safety_mutex_);
-                if (safety_brake_active_.load(std::memory_order_relaxed)) {
+                if (safety_brake_active_.load(std::memory_order_relaxed) &&
+                    !replace_active_body_brake) {
                     return false;
                 }
                 brake_pos_traj_ = brake_trajectory;
@@ -2566,6 +2673,7 @@ namespace fsm {
                         planner_ptr_->getCommittedTrajectoryGeneration();
                 brake_yaw_ = initial_yaw;
                 brake_reason_ = reason;
+                active_brake_body_replaced_ = replace_active_body_brake;
                 brake_stop_position_ = brake_trajectory.getPos(duration);
                 if (certified_stationary_hold) {
                     brake_stability_anchor_ = brake_stop_position_;
@@ -2761,6 +2869,7 @@ namespace fsm {
                 brake_stability_started_ = false;
                 safety_brake_finished_.store(false, std::memory_order_release);
                 safety_brake_active_.store(false, std::memory_order_release);
+                active_brake_body_replaced_ = false;
             }
             publishTrajectoryGuardRecoveryState(false);
             ros_ptr_->info(" -- [TRAJ_GUARD_RECOVERED] trigger={} gen={} map={}",
@@ -2839,6 +2948,19 @@ namespace fsm {
                         frontend_risk_ignored_total_.load(
                                 std::memory_order_relaxed),
                         frontend_risk_enforced_total_.load(
+                                std::memory_order_relaxed));
+                ros_ptr_->info(
+                        " -- [FRONTEND_BODY_SUMMARY] received={} occupied={} "
+                        "ignored={} enforced={} clear_while_braking={}",
+                        frontend_body_received_total_.load(
+                                std::memory_order_relaxed),
+                        frontend_body_occupied_total_.load(
+                                std::memory_order_relaxed),
+                        frontend_body_ignored_total_.load(
+                                std::memory_order_relaxed),
+                        frontend_body_enforced_total_.load(
+                                std::memory_order_relaxed),
+                        frontend_body_clear_total_.load(
                                 std::memory_order_relaxed));
             }
             saveReplanLogToFile();
@@ -3126,11 +3248,15 @@ namespace fsm {
                 ros_ptr_->info(
                         " -- [FRONTEND_RISK] listening topic={} "
                         "result_max_age={:.3f}s source_max_age={:.3f}s "
-                        "enforce={}",
+                        "enforce={} body_result_max_age={:.3f}s "
+                        "body_source_max_age={:.3f}s body_enforce={}",
                         cfg_.trajectory_guard_frontend_risk_topic,
                         cfg_.trajectory_guard_frontend_risk_result_max_age_s,
                         cfg_.trajectory_guard_frontend_risk_source_max_age_s,
-                        cfg_.trajectory_guard_frontend_risk_enforce_en);
+                        cfg_.trajectory_guard_frontend_risk_enforce_en,
+                        cfg_.trajectory_guard_frontend_body_result_max_age_s,
+                        cfg_.trajectory_guard_frontend_body_source_max_age_s,
+                        cfg_.trajectory_guard_frontend_body_enforce_en);
             }
             cmd_pub_ = nh_->create_publisher<mars_quadrotor_msgs::msg::PositionCommand>(cfg_.cmd_topic, qos);
             mpc_cmd_pub_ = nh_->create_publisher<mars_quadrotor_msgs::msg::PolynomialTrajectory>(cfg_.mpc_cmd_topic,
@@ -3418,6 +3544,11 @@ namespace fsm {
                 }
             }
             if (safety_brake_active_.load(std::memory_order_acquire)) {
+                if (consumeFreshFrontendOccupiedVerdict(true, true)) {
+                    activateEmergencyBrake(
+                            "frontend_body_active_brake", true);
+                    return;
+                }
                 tryRecoverFromEmergencyBrake();
                 return;
             }
