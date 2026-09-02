@@ -121,6 +121,52 @@ the 0.20 m vehicle sphere with the solid tagged cylinder, independently of raw
 DDS publication or rendered point sampling. Static-PCD and side-entry contacts
 are both retained in the raw record.
 
+## v1 feasibility-gate result and frozen v2 correction
+
+The first Map7 Full/Sector/Adaptive gate was run only after commit `18e092e`
+had frozen and published v1. All three modes completed without a source-static-
+PCD contact, but all three rows are invalid for the side-entry experiment
+because no spawn event occurred:
+
+| Map | Mode | Complete | static PCD contact | side-entry spawned | valid row |
+|---|---|---:|---:|---:|---:|
+| Map7 | Full | 1/1 | 0 | 0 | 0/1 |
+| Map7 | Sector | 1/1 | 0 | 0 | 0/1 |
+| Map7 | Adaptive | 1/1 | 0 | 0 | 0/1 |
+
+These rows are retained in
+`results/side_entry_v1_map7_three_mode_n1_raw_20260903.csv`; they are neither
+safe side-entry trials nor evidence of no mode difference.
+
+Two Full diagnostic reproductions left every v1 generation predicate unchanged
+and added counters/logs only. In the final trace, 17 candidates passed the
+prediction-distance, yaw-mismatch and nudge gates. All 17 were completely
+outside the body sector. The first four were also completely inside the
+velocity sector, but their corner distances were 3.096613--3.633480 m and thus
+failed the 2.0 m clear-disk condition. Later candidates approached a minimum
+2.592393 m corner distance only after their velocity-relative outer edges had
+grown beyond 45 degrees. No sample could satisfy both predicates, so v1 was
+geometrically unrealizable on the observed Map7 turn.
+The 17 candidate rows are preserved in
+`results/side_entry_v1_map7_full_candidate_geometry_20260903.csv`.
+
+`side-entry-v2` is now frozen before any v2 flight. It changes exactly one
+generation value: PVAJ prediction is reduced from 0.8 s to 0.6 s. The 45 degree
+half-angle, 2 degree margin, speed/mismatch/hold predicates, 0.8--3.5 m trigger
+distance, 2.0 m trigger and trap clear disks, maximum nudge, one-cylinder
+radius/height/sampling, common-source injection, analytic collision oracle and
+stopping rule are unchanged. This is a feasibility correction motivated by an
+empty v1 treatment, not by a completion or collision outcome after exposure.
+V1 and v2 rows must never be pooled.
+
+The 0.6 s value is not a collision-rate sweep: it is the previously implemented
+PVAJ horizon used by the old turn diagnostic and is the nearest pre-existing
+discrete value below the failed 0.8 s condition. The v2 Map7 three-mode n=1
+gate remains an integration gate. It is valid only if every mode produces an
+event satisfying the 47 degree body inner edge, 45 degree velocity outer edge,
+2.0 m clear-disk and source-gap checks. Only after that gate may the frozen v2
+rule expand to the predeclared rotating Map7/Map9/Map10 n=3 campaign.
+
 ## Source exploratory evidence
 
 - `docs/half_angle_operating_envelope_20260902.md`

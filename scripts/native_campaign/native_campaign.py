@@ -1264,6 +1264,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "closest_final_goal_distance_m",
           "observed_open_time_s", "observed_open_x", "observed_open_y",
           "observed_close_time_s", "observed_close_x", "observed_close_y",
+          "side_entry_profile", "side_entry_scenario_version",
           "side_entry_v1_enabled", "side_entry_v1_event_requested",
           "side_entry_v1_event_loaded", "side_entry_v1_event_error",
           "side_entry_v1_event", "side_entry_v1_geometry_valid",
@@ -1695,7 +1696,7 @@ def build_loop_monitor_command(wps, switch, timeout, out_json, monitor_options="
 def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             seedmap_super_config_override=None,
             seedmap_static_pcd=False,
-            side_entry_v1=False,
+            side_entry_version=0,
             loop_timeout_override=None,
             filter_profile="legacy",
             filter_backend="python",
@@ -2114,8 +2115,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 seedmap_super_config = seedmap_super_config_override
             active_super_config = seedmap_super_config
             drone_config_name = (
-                f"{map_name}_side_entry_v1.yaml"
-                if side_entry_v1 else f"{map_name}.yaml"
+                f"{map_name}_side_entry_v{side_entry_version}.yaml"
+                if side_entry_version else f"{map_name}.yaml"
             )
             launch_cmd = (
                 "ros2 launch mission_planner benchmark_seedmap.launch.py "
@@ -2149,7 +2150,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 "SUPER_TEST_FORCE_INITIAL_FOOTPRINT_EGRESS_ONCE=1 "
                 + launch_cmd
             )
-        if side_entry_v1:
+        if side_entry_version:
             launch_cmd = (
                 f"SUPER_SIDE_ENTRY_V1_EVENT_JSON={scenario_event_json!r} "
                 + launch_cmd
@@ -2311,7 +2312,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 )
             else:
                 monitor_options = ""
-            if side_entry_v1:
+            if side_entry_version:
                 monitor_options += (
                     f" --side-entry-event-json {scenario_event_json}"
                 )
@@ -2454,7 +2455,11 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                    else None
                ),
                "matched_prefix": matched_prefix if is_dynamic else None}
-        rec["side_entry_v1_enabled"] = side_entry_v1
+        rec["side_entry_profile"] = (
+            f"side_entry_v{side_entry_version}"
+            if side_entry_version else None
+        )
+        rec["side_entry_v1_enabled"] = bool(side_entry_version)
         rec.update(cgroup_summary)
         rec.update(merge_memory_summaries(memory_summaries))
         if os.path.exists(out_json):
@@ -2467,7 +2472,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 )
                 speed_limit_valid = monitor_result.get("speed_limit_valid")
                 side_entry_valid = bool(
-                    not side_entry_v1
+                    not side_entry_version
                     or (
                         monitor_result.get("side_entry_v1_event_loaded") is True
                         and monitor_result.get("side_entry_v1_geometry_valid")
@@ -2964,6 +2969,14 @@ def main():
         ),
     )
     ap.add_argument(
+        "--side-entry-v2",
+        action="store_true",
+        help=(
+            "use side-entry-v2; it preserves v1 geometry but changes the "
+            "infeasible 0.8 s PVAJ horizon to the pre-existing 0.6 s rule"
+        ),
+    )
+    ap.add_argument(
         "--loop-timeout",
         type=float,
         help="override the seedmap loop timeout in seconds",
@@ -3312,14 +3325,18 @@ def main():
     )
     adaptive_mode_config = args.seedmap_adaptive_super_config
     adaptive_baseline_config = args.seedmap_adaptive_baseline_super_config
-    if args.side_entry_v1:
+    if args.side_entry_v1 and args.side_entry_v2:
+        ap.error("--side-entry-v1 and --side-entry-v2 are mutually exclusive")
+    side_entry_version = 2 if args.side_entry_v2 else 1 if args.side_entry_v1 else 0
+    if side_entry_version:
         invalid_maps = [
             map_name for map_name in args.maps
             if map_name not in ("seed7", "seed9", "seed10")
         ]
         if invalid_maps:
             ap.error(
-                "--side-entry-v1 is frozen only for seed7/seed9/seed10; "
+                f"--side-entry-v{side_entry_version} is frozen only for "
+                "seed7/seed9/seed10; "
                 "unsupported maps: " + ", ".join(invalid_maps)
             )
         unsupported_modes = [
@@ -3328,19 +3345,33 @@ def main():
         ]
         if unsupported_modes:
             ap.error(
-                "--side-entry-v1 supports only full/sector/adaptive; "
+                f"--side-entry-v{side_entry_version} supports only "
+                "full/sector/adaptive; "
                 "unsupported modes: " + ", ".join(unsupported_modes)
             )
         if args.filter_backend != "cpp-frontend":
-            ap.error("--side-entry-v1 requires --filter-backend cpp-frontend")
-        if not math.isclose(args.filter_half_angle_deg, 45.0, abs_tol=1e-9):
-            ap.error("--side-entry-v1 requires --filter-half-angle-deg 45")
-        if not args.seedmap_static_pcd:
-            ap.error("--side-entry-v1 requires --seedmap-static-pcd")
-        if not all(split_configs) or not adaptive_mode_config:
             ap.error(
-                "--side-entry-v1 requires the split Full/filtered configs "
-                "and --seedmap-adaptive-super-config"
+                f"--side-entry-v{side_entry_version} requires "
+                "--filter-backend cpp-frontend"
+            )
+        if not math.isclose(args.filter_half_angle_deg, 45.0, abs_tol=1e-9):
+            ap.error(
+                f"--side-entry-v{side_entry_version} requires "
+                "--filter-half-angle-deg 45"
+            )
+        if not args.seedmap_static_pcd:
+            ap.error(
+                f"--side-entry-v{side_entry_version} requires "
+                "--seedmap-static-pcd"
+            )
+        if not all(split_configs) or (
+            "adaptive" in args.modes and not adaptive_mode_config
+        ):
+            ap.error(
+                f"--side-entry-v{side_entry_version} requires the split "
+                "Full/filtered configs "
+                "and, when Adaptive is selected, "
+                "--seedmap-adaptive-super-config"
             )
     if args.seedmap_super_config and any(split_configs):
         ap.error(
@@ -3534,7 +3565,7 @@ def main():
                         ),
                         seedmap_super_config_override=mode_config,
                         seedmap_static_pcd=args.seedmap_static_pcd,
-                        side_entry_v1=args.side_entry_v1,
+                        side_entry_version=side_entry_version,
                         loop_timeout_override=args.loop_timeout,
                         filter_profile=args.filter_profile,
                         filter_backend=args.filter_backend,

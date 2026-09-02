@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the frozen side-entry-v1 configuration and optional spawn events."""
+"""Validate a frozen side-entry profile and optional spawn events."""
 
 import argparse
 import csv
@@ -38,6 +38,12 @@ EXPECTED = {
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--version",
+        type=int,
+        choices=(1, 2),
+        default=1,
+    )
+    parser.add_argument(
         "--config-dir",
         default=(
             "/root/super_ws/src/SUPER/mars_uav_sim/"
@@ -57,18 +63,21 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_profile(config_dir, map_number):
+def load_profile(config_dir, map_number, version):
     path = os.path.join(
-        config_dir, f"seed{map_number}_side_entry_v1.yaml"
+        config_dir, f"seed{map_number}_side_entry_v{version}.yaml"
     )
     with open(path) as stream:
         config = yaml.safe_load(stream)
-    profile = config.get("side_entry_v1")
+    profile = config.get(f"side_entry_v{version}")
     if not isinstance(profile, dict):
-        raise ValueError(f"missing side_entry_v1 block: {path}")
+        raise ValueError(f"missing side_entry_v{version} block: {path}")
     if config.get("pcd_name") != f"seed_maps/seed{map_number}.pcd":
         raise ValueError(f"wrong source PCD in {path}")
-    for key, expected in EXPECTED.items():
+    expected_profile = dict(EXPECTED)
+    if version == 2:
+        expected_profile["prediction_s"] = 0.6
+    for key, expected in expected_profile.items():
         actual = profile.get(key)
         if isinstance(expected, float):
             valid = isinstance(actual, (int, float)) and math.isclose(
@@ -116,7 +125,7 @@ def source_clearance(manifest_dir, map_number, profile):
     }
 
 
-def validate_event(path):
+def validate_event(path, version):
     with open(path) as stream:
         event = json.load(stream)
     half_angle = float(event["side_entry_v1_sector_half_angle_deg"])
@@ -130,6 +139,9 @@ def validate_event(path):
     )
     nudge = abs(float(event["side_entry_v1_nudge_deg"]))
     checks = {
+        "scenario_version_matches": (
+            int(event.get("side_entry_scenario_version", -1)) == version
+        ),
         "geometry_valid": event.get("side_entry_v1_geometry_valid") is True,
         "body_inner_edge_at_least_47_deg": inner_edge >= 47.0 - 1e-6,
         "velocity_outer_edge_within_45_deg": velocity_edge <= half_angle + 1e-6,
@@ -143,7 +155,10 @@ def validate_event(path):
 
 def main():
     args = parse_args()
-    loaded = [load_profile(args.config_dir, number) for number in MAPS]
+    loaded = [
+        load_profile(args.config_dir, number, args.version)
+        for number in MAPS
+    ]
     reference = loaded[0][1]
     if any(profile != reference for _, profile in loaded[1:]):
         raise ValueError("side_entry_v1 blocks differ across Map7/9/10")
@@ -157,7 +172,10 @@ def main():
             float(reference["sector_half_angle_deg"])
             + float(reference["angular_margin_deg"])
         ),
-        "events": [validate_event(path) for path in args.event_json],
+        "scenario_version": args.version,
+        "events": [
+            validate_event(path, args.version) for path in args.event_json
+        ],
     }
     print(json.dumps(result, indent=2, sort_keys=True))
 

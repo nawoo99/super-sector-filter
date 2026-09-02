@@ -23,6 +23,7 @@
 #include <functional>
 #include <iomanip>
 #include <mutex>
+#include <limits>
 #include <optional>
 #include <stdexcept>
 
@@ -42,6 +43,7 @@ namespace perfect_drone {
 
     struct SideEntryV1Config {
         bool enabled{false};
+        int scenario_version{0};
         double speed_min_mps{2.0};
         double yaw_velocity_mismatch_min_deg{50.0};
         double hold_s{0.02};
@@ -64,38 +66,49 @@ namespace perfect_drone {
 
         void load(const std::string &path) {
             yaml_loader::YamlLoader loader(path);
-            loader.LoadParam("side_entry_v1/enabled", enabled, false, false);
-            loader.LoadParam("side_entry_v1/speed_min_mps", speed_min_mps, 2.0, false);
-            loader.LoadParam("side_entry_v1/yaw_velocity_mismatch_min_deg",
+            bool v1_enabled = false;
+            bool v2_enabled = false;
+            loader.LoadParam("side_entry_v1/enabled", v1_enabled, false, false);
+            loader.LoadParam("side_entry_v2/enabled", v2_enabled, false, false);
+            if (v1_enabled && v2_enabled) {
+                throw std::invalid_argument(
+                        "side_entry_v1 and side_entry_v2 cannot both be enabled");
+            }
+            enabled = v1_enabled || v2_enabled;
+            scenario_version = v2_enabled ? 2 : v1_enabled ? 1 : 0;
+            const std::string prefix =
+                    scenario_version == 2 ? "side_entry_v2" : "side_entry_v1";
+            loader.LoadParam(prefix + "/speed_min_mps", speed_min_mps, 2.0, false);
+            loader.LoadParam(prefix + "/yaw_velocity_mismatch_min_deg",
                              yaw_velocity_mismatch_min_deg, 50.0, false);
-            loader.LoadParam("side_entry_v1/hold_s", hold_s, 0.02, false);
-            loader.LoadParam("side_entry_v1/prediction_s", prediction_s, 0.8, false);
-            loader.LoadParam("side_entry_v1/trigger_distance_min_m",
+            loader.LoadParam(prefix + "/hold_s", hold_s, 0.02, false);
+            loader.LoadParam(prefix + "/prediction_s", prediction_s, 0.8, false);
+            loader.LoadParam(prefix + "/trigger_distance_min_m",
                              trigger_distance_min_m, 0.8, false);
-            loader.LoadParam("side_entry_v1/trigger_distance_max_m",
+            loader.LoadParam(prefix + "/trigger_distance_max_m",
                              trigger_distance_max_m, 3.5, false);
-            loader.LoadParam("side_entry_v1/trigger_waypoint_x",
+            loader.LoadParam(prefix + "/trigger_waypoint_x",
                              trigger_waypoint_x, 24.0, false);
-            loader.LoadParam("side_entry_v1/trigger_waypoint_y",
+            loader.LoadParam(prefix + "/trigger_waypoint_y",
                              trigger_waypoint_y, 24.0, false);
-            loader.LoadParam("side_entry_v1/trigger_waypoint_radius_m",
+            loader.LoadParam(prefix + "/trigger_waypoint_radius_m",
                              trigger_waypoint_radius_m, 2.0, false);
-            loader.LoadParam("side_entry_v1/trap_waypoint_radius_m",
+            loader.LoadParam(prefix + "/trap_waypoint_radius_m",
                              trap_waypoint_radius_m, 2.0, false);
-            loader.LoadParam("side_entry_v1/sector_half_angle_deg",
+            loader.LoadParam(prefix + "/sector_half_angle_deg",
                              sector_half_angle_deg, 45.0, false);
-            loader.LoadParam("side_entry_v1/angular_margin_deg",
+            loader.LoadParam(prefix + "/angular_margin_deg",
                              angular_margin_deg, 2.0, false);
-            loader.LoadParam("side_entry_v1/max_nudge_deg",
+            loader.LoadParam(prefix + "/max_nudge_deg",
                              max_nudge_deg, 20.0, false);
-            loader.LoadParam("side_entry_v1/radius_m", radius_m, 0.25, false);
-            loader.LoadParam("side_entry_v1/height_m", height_m, 3.0, false);
-            loader.LoadParam("side_entry_v1/point_spacing_m",
+            loader.LoadParam(prefix + "/radius_m", radius_m, 0.25, false);
+            loader.LoadParam(prefix + "/height_m", height_m, 3.0, false);
+            loader.LoadParam(prefix + "/point_spacing_m",
                              point_spacing_m, 0.05, false);
-            loader.LoadParam("side_entry_v1/z_spacing_m", z_spacing_m, 0.10, false);
-            loader.LoadParam("side_entry_v1/sensing_horizon_m",
+            loader.LoadParam(prefix + "/z_spacing_m", z_spacing_m, 0.10, false);
+            loader.LoadParam(prefix + "/sensing_horizon_m",
                              sensing_horizon_m, 15.0, false);
-            loader.LoadParam("side_entry_v1/intensity", intensity, 14545.0, false);
+            loader.LoadParam(prefix + "/intensity", intensity, 14545.0, false);
         }
 
         void validate() const {
@@ -155,6 +168,25 @@ namespace perfect_drone {
         Eigen::Vector2d side_entry_v1_center_{Eigen::Vector2d::Zero()};
         pcl::PointCloud<marsim::PointType> side_entry_v1_cloud_;
         std::uint64_t side_entry_v1_injected_frames_{0};
+        std::uint64_t side_entry_v1_command_callbacks_{0};
+        std::uint64_t side_entry_v1_near_corner_samples_{0};
+        std::uint64_t side_entry_v1_speed_gate_samples_{0};
+        std::uint64_t side_entry_v1_prediction_gate_samples_{0};
+        std::uint64_t side_entry_v1_mismatch_gate_samples_{0};
+        std::uint64_t side_entry_v1_nudge_gate_samples_{0};
+        std::uint64_t side_entry_v1_geometry_gate_samples_{0};
+        double side_entry_v1_corner_speed_max_{0.0};
+        double side_entry_v1_prediction_distance_min_{
+                std::numeric_limits<double>::infinity()};
+        double side_entry_v1_prediction_distance_max_{0.0};
+        double side_entry_v1_mismatch_max_deg_{0.0};
+        double side_entry_v1_inner_edge_max_deg_{-
+                std::numeric_limits<double>::infinity()};
+        double side_entry_v1_velocity_outer_edge_min_deg_{
+                std::numeric_limits<double>::infinity()};
+        double side_entry_v1_trap_waypoint_distance_min_{
+                std::numeric_limits<double>::infinity()};
+        double side_entry_v1_qualifying_duration_max_s_{0.0};
         std::string side_entry_v1_event_json_;
         rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr side_entry_v1_marker_pub_;
 
@@ -244,8 +276,9 @@ namespace perfect_drone {
                                 "/side_entry_v1/marker", qos);
                 RCLCPP_WARN(
                         this->get_logger(),
-                        "SIDE_ENTRY_V1 armed: first corner=(%.2f, %.2f), "
+                        "SIDE_ENTRY_V%d armed: first corner=(%.2f, %.2f), "
                         "half_angle=%.1f deg, prediction=%.2f s, radius=%.2f m",
+                        side_entry_v1_cfg_.scenario_version,
                         side_entry_v1_cfg_.trigger_waypoint_x,
                         side_entry_v1_cfg_.trigger_waypoint_y,
                         side_entry_v1_cfg_.sector_half_angle_deg,
@@ -340,6 +373,37 @@ namespace perfect_drone {
                     side_entry_v1_cfg_.enabled ? 1 : 0,
                     side_entry_v1_spawned_ ? 1 : 0,
                     static_cast<unsigned long>(side_entry_v1_injected_frames_));
+            if (side_entry_v1_cfg_.enabled) {
+                RCLCPP_INFO(
+                        this->get_logger(),
+                        "[SIDE_ENTRY_V1_DIAGNOSTICS] callbacks=%lu "
+                        "near_corner=%lu speed_gate=%lu prediction_gate=%lu "
+                        "mismatch_gate=%lu nudge_gate=%lu geometry_gate=%lu "
+                        "corner_speed_max=%.6f prediction_distance_min=%.6f "
+                        "prediction_distance_max=%.6f mismatch_max_deg=%.6f "
+                        "inner_edge_max_deg=%.6f velocity_outer_edge_min_deg=%.6f "
+                        "trap_waypoint_distance_min=%.6f "
+                        "qualifying_duration_max_s=%.6f",
+                        static_cast<unsigned long>(side_entry_v1_command_callbacks_),
+                        static_cast<unsigned long>(side_entry_v1_near_corner_samples_),
+                        static_cast<unsigned long>(side_entry_v1_speed_gate_samples_),
+                        static_cast<unsigned long>(side_entry_v1_prediction_gate_samples_),
+                        static_cast<unsigned long>(side_entry_v1_mismatch_gate_samples_),
+                        static_cast<unsigned long>(side_entry_v1_nudge_gate_samples_),
+                        static_cast<unsigned long>(side_entry_v1_geometry_gate_samples_),
+                        side_entry_v1_corner_speed_max_,
+                        std::isfinite(side_entry_v1_prediction_distance_min_)
+                                ? side_entry_v1_prediction_distance_min_ : -1.0,
+                        side_entry_v1_prediction_distance_max_,
+                        side_entry_v1_mismatch_max_deg_,
+                        std::isfinite(side_entry_v1_inner_edge_max_deg_)
+                                ? side_entry_v1_inner_edge_max_deg_ : -1.0,
+                        std::isfinite(side_entry_v1_velocity_outer_edge_min_deg_)
+                                ? side_entry_v1_velocity_outer_edge_min_deg_ : -1.0,
+                        std::isfinite(side_entry_v1_trap_waypoint_distance_min_)
+                                ? side_entry_v1_trap_waypoint_distance_min_ : -1.0,
+                        side_entry_v1_qualifying_duration_max_s_);
+            }
         }
 
 
@@ -398,6 +462,7 @@ namespace perfect_drone {
                 return;
 
             std::lock_guard<std::mutex> lock(side_entry_v1_mutex_);
+            ++side_entry_v1_command_callbacks_;
             if (side_entry_v1_spawned_)
                 return;
 
@@ -410,12 +475,19 @@ namespace perfect_drone {
                     side_entry_v1_cfg_.trigger_waypoint_x,
                     side_entry_v1_cfg_.trigger_waypoint_y);
             const double trigger_waypoint_distance = (position - waypoint).norm();
-            if (speed < side_entry_v1_cfg_.speed_min_mps ||
-                trigger_waypoint_distance >
-                        side_entry_v1_cfg_.trigger_waypoint_radius_m) {
+            if (trigger_waypoint_distance >
+                    side_entry_v1_cfg_.trigger_waypoint_radius_m) {
                 side_entry_v1_qualify_since_.reset();
                 return;
             }
+            ++side_entry_v1_near_corner_samples_;
+            side_entry_v1_corner_speed_max_ =
+                    std::max(side_entry_v1_corner_speed_max_, speed);
+            if (speed < side_entry_v1_cfg_.speed_min_mps) {
+                side_entry_v1_qualify_since_.reset();
+                return;
+            }
+            ++side_entry_v1_speed_gate_samples_;
 
             const double prediction_s = side_entry_v1_cfg_.prediction_s;
             Eigen::Vector2d candidate =
@@ -424,22 +496,30 @@ namespace perfect_drone {
                     jerk * prediction_s * prediction_s * prediction_s / 6.0;
             Eigen::Vector2d delta = candidate - position;
             double distance = delta.norm();
+            side_entry_v1_prediction_distance_min_ = std::min(
+                    side_entry_v1_prediction_distance_min_, distance);
+            side_entry_v1_prediction_distance_max_ = std::max(
+                    side_entry_v1_prediction_distance_max_, distance);
             if (distance < side_entry_v1_cfg_.trigger_distance_min_m ||
                 distance > side_entry_v1_cfg_.trigger_distance_max_m ||
                 distance <= side_entry_v1_cfg_.radius_m) {
                 side_entry_v1_qualify_since_.reset();
                 return;
             }
+            ++side_entry_v1_prediction_gate_samples_;
 
             const double velocity_yaw = std::atan2(velocity.y(), velocity.x());
             const double body_yaw = yawFromQuaternion(q_);
             const double signed_mismatch = wrapAngle(velocity_yaw - body_yaw);
             const double mismatch = std::abs(signed_mismatch);
+            side_entry_v1_mismatch_max_deg_ = std::max(
+                    side_entry_v1_mismatch_max_deg_, mismatch * 180.0 / M_PI);
             if (mismatch < side_entry_v1_cfg_.yaw_velocity_mismatch_min_deg *
                                    M_PI / 180.0) {
                 side_entry_v1_qualify_since_.reset();
                 return;
             }
+            ++side_entry_v1_mismatch_gate_samples_;
 
             double bearing = std::atan2(delta.y(), delta.x());
             double body_relative = wrapAngle(bearing - body_yaw);
@@ -456,6 +536,7 @@ namespace perfect_drone {
                 side_entry_v1_qualify_since_.reset();
                 return;
             }
+            ++side_entry_v1_nudge_gate_samples_;
             double signed_nudge = 0.0;
             if (required_nudge > 0.0) {
                 const double direction =
@@ -476,14 +557,42 @@ namespace perfect_drone {
                     std::abs(velocity_relative) + angular_radius <=
                     side_entry_v1_cfg_.sector_half_angle_deg * M_PI / 180.0;
             const double trap_waypoint_distance = (candidate - waypoint).norm();
+            side_entry_v1_inner_edge_max_deg_ = std::max(
+                    side_entry_v1_inner_edge_max_deg_,
+                    (std::abs(body_relative) - angular_radius) * 180.0 / M_PI);
+            side_entry_v1_velocity_outer_edge_min_deg_ = std::min(
+                    side_entry_v1_velocity_outer_edge_min_deg_,
+                    (std::abs(velocity_relative) + angular_radius) * 180.0 / M_PI);
+            side_entry_v1_trap_waypoint_distance_min_ = std::min(
+                    side_entry_v1_trap_waypoint_distance_min_,
+                    trap_waypoint_distance);
             const bool inside_predeclared_clear_disk =
                     trap_waypoint_distance <=
                     side_entry_v1_cfg_.trap_waypoint_radius_m;
+            RCLCPP_INFO(
+                    this->get_logger(),
+                    "[SIDE_ENTRY_V1_CANDIDATE] distance=%.6f "
+                    "trap_waypoint_distance=%.6f body_relative_deg=%.6f "
+                    "velocity_relative_deg=%.6f angular_radius_deg=%.6f "
+                    "inner_edge_deg=%.6f velocity_outer_edge_deg=%.6f "
+                    "nudge_deg=%.6f outside_body=%d inside_velocity=%d "
+                    "inside_clear_disk=%d",
+                    distance, trap_waypoint_distance,
+                    body_relative * 180.0 / M_PI,
+                    velocity_relative * 180.0 / M_PI,
+                    angular_radius * 180.0 / M_PI,
+                    (std::abs(body_relative) - angular_radius) * 180.0 / M_PI,
+                    (std::abs(velocity_relative) + angular_radius) * 180.0 / M_PI,
+                    signed_nudge * 180.0 / M_PI,
+                    fully_outside_body_sector ? 1 : 0,
+                    fully_inside_velocity_sector ? 1 : 0,
+                    inside_predeclared_clear_disk ? 1 : 0);
             if (!fully_outside_body_sector || !fully_inside_velocity_sector ||
                 !inside_predeclared_clear_disk) {
                 side_entry_v1_qualify_since_.reset();
                 return;
             }
+            ++side_entry_v1_geometry_gate_samples_;
 
             const auto now = SensorCadenceClock::now();
             if (!side_entry_v1_qualify_since_) {
@@ -492,6 +601,8 @@ namespace perfect_drone {
             }
             const double qualifying_s = std::chrono::duration<double>(
                     now - *side_entry_v1_qualify_since_).count();
+            side_entry_v1_qualifying_duration_max_s_ = std::max(
+                    side_entry_v1_qualifying_duration_max_s_, qualifying_s);
             if (qualifying_s < side_entry_v1_cfg_.hold_s)
                 return;
 
@@ -619,6 +730,8 @@ namespace perfect_drone {
                    << "{\n"
                    << "  \"side_entry_v1_event\": \"spawn\",\n"
                    << "  \"side_entry_v1_enabled\": true,\n"
+                   << "  \"side_entry_scenario_version\": "
+                   << side_entry_v1_cfg_.scenario_version << ",\n"
                    << "  \"side_entry_v1_geometry_valid\": true,\n"
                    << "  \"side_entry_v1_spawn_time_s\": " << spawn_time_s << ",\n"
                    << "  \"side_entry_v1_trigger_x\": " << position.x() << ",\n"
