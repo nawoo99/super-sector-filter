@@ -551,11 +551,14 @@ namespace perfect_drone {
                 body_relative = wrapAngle(bearing - body_yaw);
             }
             const double velocity_relative = wrapAngle(bearing - velocity_yaw);
+            constexpr double geometry_epsilon_rad = 1e-9;
             const bool fully_outside_body_sector =
-                    std::abs(body_relative) - angular_radius >= required_inner_edge;
+                    std::abs(body_relative) - angular_radius >=
+                    required_inner_edge - geometry_epsilon_rad;
             const bool fully_inside_velocity_sector =
                     std::abs(velocity_relative) + angular_radius <=
-                    side_entry_v1_cfg_.sector_half_angle_deg * M_PI / 180.0;
+                    side_entry_v1_cfg_.sector_half_angle_deg * M_PI / 180.0 +
+                    geometry_epsilon_rad;
             const double trap_waypoint_distance = (candidate - waypoint).norm();
             side_entry_v1_inner_edge_max_deg_ = std::max(
                     side_entry_v1_inner_edge_max_deg_,
@@ -568,7 +571,7 @@ namespace perfect_drone {
                     trap_waypoint_distance);
             const bool inside_predeclared_clear_disk =
                     trap_waypoint_distance <=
-                    side_entry_v1_cfg_.trap_waypoint_radius_m;
+                    side_entry_v1_cfg_.trap_waypoint_radius_m + 1e-9;
             RCLCPP_INFO(
                     this->get_logger(),
                     "[SIDE_ENTRY_V1_CANDIDATE] distance=%.6f "

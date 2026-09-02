@@ -167,6 +167,22 @@ event satisfying the 47 degree body inner edge, 45 degree velocity outer edge,
 2.0 m clear-disk and source-gap checks. Only after that gate may the frozen v2
 rule expand to the predeclared rotating Map7/Map9/Map10 n=3 campaign.
 
+The first pre-fix v2 Map7 gate also remains an invalid three-row integration
+attempt. A candidate had body inner edge printed as exactly 47.000000 degrees,
+velocity outer edge 6.702704 degrees and corner distance 0.904123 m, yet the
+body predicate returned false because the constructed angle differed from its
+boundary by floating-point roundoff. No v2 obstacle was exposed in any of the
+three modes. The raw rows are retained in
+`results/side_entry_v2_map7_three_mode_n1_raw_20260903.csv`.
+
+Before the next v2 flight, the implementation comparison was fixed with a
+`1e-9` radian tolerance (and `1e-9` m for the clear-disk comparison). This does
+not change the declared 47/45 degree or 2.0 m geometry at reportable precision;
+it only makes a value constructed on the declared boundary satisfy that same
+boundary. The tolerance fix is versioned in source and must be published before
+the next gate. These pre-fix invalid rows are not pooled with the post-fix v2
+sample.
+
 ## Source exploratory evidence
 
 - `docs/half_angle_operating_envelope_20260902.md`
