@@ -283,6 +283,72 @@ smallest side-entry clearance. The result therefore does not yet show Sector
 degradation or Adaptive recovery. The predeclared Map7/Map9/Map10 rotating
 three-mode n=3 exploratory campaign may proceed without changing v4.
 
+## v4 Map7/Map9/Map10 n=3 result
+
+The frozen-v4 rotating campaign produced 27 raw rows. Twenty-six spawn events
+were emitted and every emitted event passed the independent validator. Map10
+Full run 1 completed but produced no event, so it is retained as an invalid
+side-entry row. The cause was narrow trigger duration: two geometry-valid
+samples spanned only 0.009911 s and did not satisfy the frozen 0.015 s hold.
+This is not a collision-free v4 exposure and is excluded from side-entry
+outcomes.
+
+| Map | Mode | valid | complete among valid | contact runs | mean side clearance (m) | min side clearance (m) | mean time, all rows (s) | Adaptive effective opens |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Map7 | Full | 3/3 | 3/3 | 0 | 0.863 | 0.621 | 89.64 | 0 |
+| Map7 | Sector | 3/3 | 3/3 | 0 | 0.428 | 0.305 | 65.94 | 0 |
+| Map7 | Adaptive | 3/3 | 3/3 | 0 | 0.590 | 0.549 | 67.07 | 62 |
+| Map9 | Full | 3/3 | 2/3 | 0 | 0.378 | 0.048 | 131.83 | 0 |
+| Map9 | Sector | 3/3 | 3/3 | 0 | 0.759 | 0.500 | 79.34 | 0 |
+| Map9 | Adaptive | 3/3 | 3/3 | 0 | 0.621 | 0.441 | 78.63 | 44 |
+| Map10 | Full | 2/3 | 2/2 | 0 | 0.602 | 0.433 | 113.67 | 0 |
+| Map10 | Sector | 3/3 | 3/3 | 0 | 0.472 | 0.175 | 79.96 | 0 |
+| Map10 | Adaptive | 3/3 | 3/3 | 0 | 0.579 | 0.517 | 77.40 | 69 |
+
+Across valid rows, Full completed 7/8, Sector 9/9 and Adaptive 9/9; all had
+zero analytic side-entry and source-static-PCD contacts. The sole completion
+failure was Map9 Full run 2, which stopped at waypoint 3/5 and timed out at
+180 s. Its synthetic obstacle clearance was +0.720 m and its stopped position
+near `(0.15, -20.16)` was far from the first-corner cylinder. It is therefore
+a planner liveness failure, not a side-entry contact. The log contains 218
+`PlanFromRest failed` messages, 193 `GeneratePolytopeFromLine failed` messages
+and 190 failed backup-generation messages. The current reroute zones and one
+vertical recovery attempt repeatedly returned to a start-adjacent CIRI-
+infeasible segment with approximately 0.166 m obstacle distance. There was no
+OOM kill, cgroup swap growth or PSI pressure during the row.
+
+Sector and Adaptive themselves form nine valid paired rows. Their aggregate
+mean side-entry clearances were 0.553 and 0.597 m, a +0.044 m Adaptive change,
+but the map-level changes were +0.162/-0.138/+0.108 m on Map7/Map9/Map10.
+Sector completed every row and had no contact. Thus v4 still does not establish
+the intended Sector degradation or an Adaptive completion/contact advantage;
+the small clearance signal is inconsistent across maps.
+
+Resource comparisons against Full use only the seven map/run triples for which
+all three modes both received the obstacle and completed. On that comparable
+subset, Adaptive reduced external DDS cloud+verdict rate by 29.983%, ROG
+per-frame time by 26.009% and delivered point count by 22.093%. It increased
+mean algorithm CPU cores by 57.465% and end-to-end CPU cores by 55.166%, so
+this campaign supports communication and ROG-work savings, not total CPU
+savings. Adaptive effective-Full-open/trajectory-guard-open totals over all
+nine runs were 175/60; these are overlapping transition counters, not unique
+obstacle episodes.
+
+The v4 campaign should not be expanded to n=10 in its present form. The next
+engineering priority is the independent Map9 Full certified-stop liveness
+failure. The next topology iteration must also be explicitly versioned: first
+add closest-approach context logging, then use the completed v4 trajectories as
+declared exploratory design data for one fixed, non-per-run obstacle location,
+replace the fragile wall-clock hold with a predeclared sample-count rule, and
+freeze a fresh validation cohort. Repositioning the cylinder or changing its
+trigger after viewing each new result is prohibited.
+
+Raw and compact evidence are:
+
+- `results/side_entry_v4_maps7_9_10_three_mode_n3_raw_20260903.csv`
+- `results/side_entry_v4_maps7_9_10_three_mode_n3_summary_20260903.csv`
+- `results/side_entry_v4_maps7_9_10_three_mode_n3_paired_reductions_20260903.csv`
+
 ## Source exploratory evidence
 
 - `docs/half_angle_operating_envelope_20260902.md`

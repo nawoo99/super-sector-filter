@@ -3694,3 +3694,68 @@ not more tuning of these same angles. Full details and map-labelled tables are
 in `docs/half_angle_operating_envelope_20260902.md`; compact evidence is in
 `results/half_angle_sweep_maps7_9_10_sector_adaptive_n3_{summary,reductions}_20260902.csv`
 and the three angle-specific raw CSVs.
+
+### 8.51 Frozen 45-degree side-entry topology v1--v4 and n=3 gate (2026-09-03)
+
+The 45-degree half-angle was fixed from the prior exploratory screen because
+it gave the best secondary balance, not because it proved a safety-rate
+advantage. At 45 degrees, Sector/Adaptive low-clearance rows below the
+descriptive 0.20 m cutoff were 2/9 versus 0/9, Adaptive improved worst
+clearance by 0.053 m and time by 5.450%, and reduced DDS by 21.313%. The
+separate preregistration record is
+`docs/half_angle_45_selection_preregistration_20260903.md`.
+
+A default-off common-source side-entry cylinder and an analytic solid-cylinder
+collision oracle were implemented. The cylinder is appended inside
+PerfectDrone before the Full DDS versus Sector/Adaptive in-process split, and
+the monitor checks a 0.20 m body sphere independently of rendered points or
+raw DDS. V1 and v2 used mode-dependent PVAJ centres and proved infeasible. V3
+fixed the centre at `(22.5, 23.0)` but retained a mode-dependent velocity-
+sector spawn predicate, so Sector did not receive the treatment. All failed
+and invalid rows were retained.
+
+V4 preserved the v3 centre, radius 0.25 m, height 3.0 m, 47-degree body inner-
+edge requirement, zero nudge, trigger thresholds and 0.015 s hold, changing
+only `require_velocity_inside` to false. This matches the architecture:
+Sector loses the body-fixed cropped cloud while Adaptive's safety worker has
+an independent 360-degree raw input. Release build, 19 campaign unit tests,
+profile/source-separation validation and source/mirror byte comparison passed
+before flight. All standard tight_v7 profiles remain unchanged.
+
+The Map7 treatment gate was valid and complete with zero contact in all three
+modes. The rotating Map7/Map9/Map10 n=3 campaign then produced 27 rows and 26
+validator-passing events. Map10 Full run 1 completed without a spawn because
+its two geometry-valid samples spanned 0.009911 s, shorter than the frozen
+0.015 s hold; that row is invalid for side-entry inference. Among valid rows,
+Full/Sector/Adaptive completion was 7/8, 9/9 and 9/9, with zero static-PCD or
+side-entry contacts in every mode. Sector therefore still did not exhibit the
+intended primary degradation.
+
+Full's Map9 run 2 failure was a real 180 s liveness timeout at waypoint 3/5,
+not infrastructure or side-entry contact. It stopped near `(0.15, -20.16)`
+with +0.720 m side-entry clearance. The trace contained 218 PlanFromRest
+failures, 193 polytope-line failures and 190 failed backup generations. Reroute
+zones and one certified vertical recovery kept proposing start-adjacent CIRI-
+infeasible segments; no OOM kill, swap growth or PSI pressure occurred.
+
+Across the nine valid Sector/Adaptive pairs, mean side-entry clearance was
+0.553/0.597 m. The Adaptive minus Sector map changes were +0.162, -0.138 and
++0.108 m on Map7/Map9/Map10, so the margin direction was not map-consistent.
+Adaptive completed every row but cannot claim a completion/contact improvement
+when Sector also completed every row without contact.
+
+On the seven valid-complete three-mode triples, Adaptive versus Full reduced
+external DDS cloud+verdict rate 29.983%, ROG per-frame compute 26.009% and
+delivered point count 22.093%. Mean algorithm and end-to-end CPU cores instead
+increased 57.465% and 55.166%; total CPU savings are not supported. Adaptive
+effective-Full-open and trajectory-guard-open totals over all nine runs were
+175 and 60.
+
+V4 should not be expanded to n=10. The next priority is the independent Full
+certified-stop liveness loop. A later side-entry version must first add closest-
+approach context, declare one fixed location from the v4 exploratory paths,
+replace the fragile time hold with a fixed sample-count rule, freeze, and then
+use new repetitions. Detailed tables and raw paths are in the 45-degree record
+and `results/side_entry_v4_maps7_9_10_three_mode_n3_{raw,summary}_20260903.csv`
+plus
+`results/side_entry_v4_maps7_9_10_three_mode_n3_paired_reductions_20260903.csv`.

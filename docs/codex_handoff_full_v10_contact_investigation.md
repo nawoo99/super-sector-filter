@@ -1,6 +1,40 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-03 45° 선정 근거 고정 및 common-source side-entry v4 n=3 완료.**
+> 45°는 안전률 우위가 아니라 이전 탐색 실험의 secondary balance로 선택했다.
+> Sector/Adaptive의 clearance 0.20 m 미만은 2/9 대 0/9, worst-clearance 차이는
+> Adaptive +0.053 m, 시간 감소 5.450%, DDS 감소 21.313%였다. 별도 기록은
+> `docs/half_angle_45_selection_preregistration_20260903.md`다.
+>
+> PerfectDrone 공통 raw source에 late stationary cylinder와 0.20 m body-sphere
+> analytic collision oracle를 구현했다. V1/v2는 PVAJ centre가 mode-dependent라
+> 처치가 비었고, v3는 centre `(22.5,23.0)`을 고정했지만 velocity-sector 조건
+> 때문에 Sector가 no-spawn이었다. V4는 위치·크기·47° body blind 조건을 그대로
+> 두고 `require_velocity_inside=false`만 적용했다. 표준 tight_v7은 변경하지
+> 않았고 Release build, unit test 19개, config/source-gap 및 event validator가
+> 통과했다.
+>
+> Map7/9/10 × Full/Sector/Adaptive × n=3에서 raw 27행, validator-passing spawn
+> 26행을 얻었다. Map10 Full run1은 두 valid sample 간격 0.009911 s가 frozen
+> hold 0.015 s보다 짧아 no-spawn이며 invalid다. Valid 행 기준 완주는
+> Full/Sector/Adaptive 7/8, 9/9, 9/9이고 세 모드 모두 collision 0이다. Sector도
+> 9/9 완주·무접촉이므로 intended primary degradation은 여전히 없다.
+>
+> Map9 Full run2는 waypoint 3/5에서 180 s timeout했다. side-entry clearance
+> +0.720 m, OOM/PSI 없음이라 cylinder나 infrastructure 실패가 아니다. 로그는
+> PlanFromRest 218회, GeneratePolytopeFromLine 193회, backup generation 190회
+> 실패를 보이며 reroute/vertical recovery가 start-adjacent CIRI-infeasible
+> segment를 벗어나지 못했다. 다음 우선순위는 이 certified-stop liveness loop다.
+>
+> 7개 valid-complete 3모드 pair에서 Adaptive는 Full 대비 DDS 29.983%, ROG
+> frame compute 26.009%, 전달 point 22.093%를 줄였지만 algorithm/end-to-end
+> mean CPU cores는 57.465/55.166% 증가했다. 통신/ROG 감소만 주장 가능하다.
+> 상세는 viability §8.51, compact 결과는
+> `results/side_entry_v4_maps7_9_10_three_mode_n3_{summary,raw}_20260903.csv`와
+> `results/side_entry_v4_maps7_9_10_three_mode_n3_paired_reductions_20260903.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-02 paired half-angle screen과 optimizer phase 계측 완료.**
 > `native_campaign.py`에 Sector/Adaptive 공통 `--filter-half-angle-deg`
 > (기본 60°)와 default-off `--optimizer-phase-memory-trace`를 추가했다. 후자는
