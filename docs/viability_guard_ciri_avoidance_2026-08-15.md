@@ -3519,3 +3519,61 @@ next debugging step. Full tables and claim boundaries are in
 `results/frontend_risk_shadow_maps7_9_10_three_mode_n1_raw_20260901.csv`, and
 `results/frontend_risk_cpu_map7_three_mode_n1_raw_20260901.csv`, with matching
 artifact directories.
+
+### 8.48 Cadence cap, bounded optimizer, verdict enforcement and final n=10 (2026-09-02)
+
+Source/filter publish, ROG commit and trajectory cadence were added to the
+simulator, native front end and campaign CSV. Adaptive filtered-cloud publication
+and heavy future-tail risk evaluation were capped independently at 5 Hz while the
+source remained about 10 Hz. A 4.5 Hz candidate was rejected. Map7/9/10 three-mode
+n=3 then completed 27/27 with collision, retry and OOM zero.
+
+The remaining rare memory growth was traced to upstream L-BFGS having no
+iteration limit when `max_iterations=0`. A 256 candidate interrupted ordinary
+plans and was rejected; 2,048 bounded the pathological path while preserving
+smoke completion. The final 300 rows had average algorithm PSS about 3.18--3.19
+GiB, optimizer-cap hits Full/Sector/Adaptive 348/339/290, and OOM/retry zero.
+
+A new experimental enforcement profile kept every standard `tight_v7` profile
+unchanged. Wrong-generation and stale injected OCCUPIED results were ignored;
+a fresh injected result published a 0.680 s certified brake and recovered. A
+Map7/9/10 natural n=1 gate completed 3/3 safely. This proved gate wiring, not
+universal timely detection.
+
+The rotating Map1--10 × Full/Sector/Adaptive × n=10 campaign contains exactly
+300 unique, run/speed/performance/cgroup-valid rows. Completion was 99/100/99 and
+source-static-PCD collisions were 0/0/1. Mean times were 79.951/63.135/64.054 s,
+algorithm core-seconds 72.073/69.934/70.473, end-to-end core-seconds
+88.973/83.895/90.664 and planner ingress 4.558/3.131/2.300 MiB/s. Adaptive versus
+Full reduced mission time 19.883%, planner ingress 49.547% and algorithm
+core-seconds 2.219%, but increased end-to-end core-seconds 1.900%. Effective
+Full-open and trajectory-guard-open totals were 1,900 and 320. Therefore the
+communication reduction is strong, the algorithm-work reduction is small and
+the end-to-end computation claim still does not hold.
+
+Map7 run1 Full/Adaptive timed out at waypoint 2/5 under host available memory
+230.75/289.13 MiB and PSI-full 53.55/64.20%, with an external VS Code extension
+host near 8 GiB and swap full. Logs show a real stationary topology trap
+(optimizer overtime, exclusion zones, A* NO_PATH and epoch resets) amplified by
+memory reclaim. After the extension host restarted and available memory returned
+to about 3.5 GiB, Map7 run2--10 completed Full/Sector/Adaptive 9/9 each. The raw
+failures remain failures; this is only a resource-sensitivity split.
+
+Map10 run6 Adaptive completed but contacted the static PCD at first clearance
+-0.119 m and worst -0.149 m. The first OCCUPIED verdict arrived 99 ms after the
+contact. It belonged to gen36, but gen37 committed before consumption so exact-
+generation enforcement ignored it; gen37 OCCUPIED braked only after contact.
+Host PSI was zero, so this is a genuine coverage gap between 5 Hz heavy-risk
+cadence and endpoint generation churn. The next fix is a cheap current-body/very-
+short-horizon tier at every approximately 10 Hz sensor frame, with a source-fresh
+generation-independent certified hold, while retaining the existing 5 Hz exact-
+generation future-tail tier. Raising the whole heavy worker back to 10 Hz is not
+the preferred fix.
+
+Full and Adaptive completion/safety 99/100 have Wilson 95% lower bounds about
+94.55%; Sector 100/100 has a lower bound about 96.30%. The one-sided paired
+discordances against Sector have exact two-sided McNemar p=1.0. This campaign
+does not establish population 100%, a significant safety advantage, or intended
+Sector degradation. Full tables and timestamp-level failure analysis are in
+`docs/frontend_risk_enforce_final_20260902.md`; raw and summaries are
+`results/final_frontend_enforce_map1_10_three_mode_n10_cgroup_{raw_20260901,summary_20260902,reductions_20260902}.csv`.

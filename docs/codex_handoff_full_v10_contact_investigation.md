@@ -1,6 +1,37 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-02 cadence/enforcement 5단계와 최종 300회 완료.**
+> Sensor/filter/ROG/trajectory cadence 계측, Adaptive map+risk 5 Hz cap,
+> Map7/9/10 n=3 gate, L-BFGS 2,048 iteration 상한, compact verdict
+> wrong-generation/stale/fresh fault gate를 순서대로 완료했다. 표준 `tight_v7`은
+> 그대로고 enforcement는 별도 실험 profile에서만 켰다. 최종 raw는 정확히
+> Map1--10 × 3 modes × n=10의 300개 고유 행이며 run/speed/performance/cgroup
+> validity 300/300, retry/OOM 0이다.
+>
+> **목표는 아직 달성되지 않았다.** Completion은 Full/Sector/Adaptive
+> 99/100/99, source-static-PCD collision은 0/0/1이다. Adaptive는 Full 대비
+> mission time 19.883%, planner ingress 49.547%, algorithm core·s 2.219%를
+> 줄였지만 end-to-end core·s는 1.900% 늘었다. Sector도 100/100·충돌 0이라
+> intended ablation degradation은 이번 표본에서 관찰되지 않았다.
+>
+> Map7 run1 Full/Adaptive timeout은 동일 정지점의 topology trap이 외부 VS Code
+> extension host 약 8 GiB, swap 포화, PSI full 53.55/64.20%에서 증폭된 복합
+> 실패다. 환경 회복 뒤 run2--10은 두 모드 모두 9/9 완주했지만 raw 실패는
+> 삭제하지 않는다. Optimizer cap은 300행 OOM 0과 PSS 약 3.2 GiB를 만들었으나
+> liveness 자체를 보장하지 않는다.
+>
+> Map10 run6 Adaptive 접촉은 infrastructure가 아니라 실제 coverage gap이다.
+> 첫 접촉 99 ms 뒤 gen36 OCCUPIED가 도착했고 그 사이 gen37이 commit되어 exact-
+> generation gate가 무시했다. Gen37 brake는 접촉 뒤였다. 다음 구현은 heavy
+> worker 전체를 10 Hz로 되돌리는 것이 아니라, current body/very-short horizon만
+> 매 sensor frame에서 검사해 source-fresh generation-independent certified hold를
+> 거는 저비용 tier를 추가하고 기존 5 Hz future-tail exact-generation tier는
+> 유지하는 것이다. 상세는 viability §8.48 및
+> `docs/frontend_risk_enforce_final_20260902.md`, raw/summary는
+> `results/final_frontend_enforce_map1_10_three_mode_n10_cgroup_{raw_20260901,summary_20260902,reductions_20260902}.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-01 sensor-front-end raw DDS 제거와 compact risk verdict gate 완료.**
 > `perfect_drone_frontend_node`가 simulator와 native filter를 compose해 renderer의
 > raw `PointCloud2::SharedPtr`를 직접 넘긴다. Sector/Adaptive에서는
