@@ -3640,3 +3640,57 @@ population guarantee. Full implementation, per-map tables, OOM evidence and
 claim boundaries are in `docs/frontend_body_active_brake_final_20260902.md`;
 summary CSVs are
 `results/frontend_body_map1_10_three_mode_n3_{summary,reductions}_20260902.csv`.
+
+### 8.50 Paired half-angle screen and optimizer phase memory trace (2026-09-02)
+
+The planned operating-envelope screen parameterized one common nominal
+half-angle for Sector and Adaptive. `native_campaign.py` now accepts
+`--filter-half-angle-deg` for every native-filter backend; its default remains
+60 degrees. An independent `--optimizer-phase-memory-trace` switch exports a
+default-off environment flag. When enabled, ExpTrajOpt and BackupTrajOpt log
+begin/end, duration, iteration count, process RSS/swap and RSS delta around
+each L-BFGS call. The runner aggregates every attempt and preserves an
+unmatched begin marker if an OOM kills the process inside an optimizer. No
+standard `tight_v7` profile changed.
+
+Release build, eight campaign parser tests and a Map1 45-degree Sector/Adaptive
+gate passed. The pre-declared reduced screen then ran 60, 45 and 30 degree
+half-angles on Map7/9/10, Sector/Adaptive, n=3 with rotating order. All 54 rows
+completed on their first attempt with source-static-PCD collision, speed
+invalidation, retry and OOM all zero. Sector/Adaptive mean times were
+73.280/71.323 s at 60 degrees, 76.611/72.436 s at 45 degrees and
+73.750/70.831 s at 30 degrees. Corresponding measured DDS rates were
+4.536/3.364, 4.145/3.262 and 3.623/3.074 MiB/s.
+
+There was a secondary clearance signal but no primary safety-rate separation.
+At 60 degrees both modes had zero rows below descriptive clearance 0.20 m. At
+45 degrees Sector had 2/9 (worst +0.173 m) and Adaptive 0/9 (worst +0.226 m).
+At 30 degrees Sector again had 2/9 (worst +0.186 m) and Adaptive 0/9 (worst
++0.226 m). Adaptive's same-angle DDS reduction versus Sector was
+25.852/21.313/15.133%, but algorithm and end-to-end CPU reductions were not
+consistent. The 0.20 m cutoff is descriptive, not a collision or certification
+threshold.
+
+Adaptive main-open/trajectory-guard-open/effective-Full-open totals were
+5/55/169 at 60 degrees, 2/54/178 at 45 degrees and 4/52/157 at 30 degrees.
+These are overlapping state counters, not unique episodes. Only one natural
+current-body brake occurred and no active-brake replacement occurred.
+
+All Exp begin/end markers matched 23,847/23,847 and all Backup markers matched
+41,100/41,100. Maximum optimizer-observed process RSS was 3,282.7 MiB,
+end-to-end sampled RSS 3,723.9 MiB and whole-benchmark cgroup memory
+9,597.2 MiB. The largest one-call RSS deltas were 7.766 MiB Exp and 8.871 MiB
+Backup, although latency tails reached 803.407 and 944.891 ms. This campaign did
+not reproduce the earlier Map6 OOM, so it does not identify that failure's
+cause; it makes the phase of a future recurrence observable.
+
+The decision is that no tested angle is a completion/contact discriminator:
+Sector and Adaptive were both 27/27 complete and collision-free. With no
+discordant primary pairs, no McNemar test was performed. The 45-degree result
+is the strongest descriptive margin/time condition, but selecting it as proof
+of an Adaptive safety-rate advantage would be post-hoc overclaiming. Further
+discrimination should use a pre-declared topology or sensor-latency condition,
+not more tuning of these same angles. Full details and map-labelled tables are
+in `docs/half_angle_operating_envelope_20260902.md`; compact evidence is in
+`results/half_angle_sweep_maps7_9_10_sector_adaptive_n3_{summary,reductions}_20260902.csv`
+and the three angle-specific raw CSVs.

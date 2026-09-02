@@ -1,6 +1,32 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-02 paired half-angle screen과 optimizer phase 계측 완료.**
+> `native_campaign.py`에 Sector/Adaptive 공통 `--filter-half-angle-deg`
+> (기본 60°)와 default-off `--optimizer-phase-memory-trace`를 추가했다. 후자는
+> Exp/Backup L-BFGS의 begin/end, 시간, RSS/swap 및 RSS delta를 모든 attempt에서
+> 수집하며 OOM 중단 시 unmatched begin을 남긴다. 표준 tight_v7 profile은
+> 변경하지 않았다. Release build, parser pytest 8개, Map1 45° 기능 gate가
+> 통과했다.
+>
+> 사전 고정한 60/45/30° × Map7/9/10 × Sector/Adaptive × n=3의 54행은 전부
+> first-attempt 완주, source-static-PCD 충돌 0, retry/OOM 0이었다. 따라서 어느
+> 각도도 완주/충돌 기준 판별 조건이 아니며 discordant primary pair가 없어
+> McNemar 검정도 하지 않았다. 45°에서만 설명적 차이가 가장 컸다: Sector는
+> clearance 0.20m 미만 2/9(최저 +0.173m), Adaptive는 0/9(최저 +0.226m),
+> Adaptive 평균시간 5.450%, DDS 21.313% 감소. 이는 안전률 우위 증명이 아니다.
+>
+> 54행의 Exp begin/end는 23,847/23,847, Backup은 41,100/41,100이었다. 최고
+> optimizer RSS 3,282.7MiB, end-to-end RSS 3,723.9MiB, cgroup memory
+> 9,597.2MiB이며 단일 호출 RSS 증가는 Exp 7.766MiB, Backup 8.871MiB였다.
+> 이전 Map6 OOM은 재현되지 않아 원인은 확정할 수 없고, 다음 재현 때 어느
+> optimizer 내부인지 구분할 준비만 완료됐다. 다음 safety-ablation은 같은
+> 각도를 더 튜닝하지 말고 topology 또는 sensor-latency 조건을 사전 고정해야
+> 한다. 상세는 viability §8.50 및
+> `docs/half_angle_operating_envelope_20260902.md`, 결과는
+> `results/half_angle_sweep_maps7_9_10_sector_adaptive_n3_{summary,reductions}_20260902.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-02 current-body tier와 active-brake replacement 5단계 완료.**
 > 300회에서 나온 Map10 접촉의 5 Hz/generation coverage gap을 heavy worker
 > 증속 없이 분리했다. Future tier는 5 Hz exact-generation을 유지하고, 새

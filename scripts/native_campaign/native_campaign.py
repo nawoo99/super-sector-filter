@@ -586,6 +586,88 @@ def parse_sensor_cadence_log(path):
     return result
 
 
+def parse_optimizer_phase_memory_logs(paths):
+    """Aggregate default-off optimizer phase RSS/timing markers by attempt."""
+    pattern = re.compile(
+        r"\[OPTIMIZER_PHASE_MEMORY\]\s+optimizer=(exp|backup)\s+"
+        r"event=(begin|end)\s+call=(\d+)\s+(.*)"
+    )
+    number_pattern = re.compile(r"([a-z_]+)=(-?[0-9]+(?:\.[0-9]+)?)")
+    per_phase = {
+        phase: {"started": 0, "completed": 0, "durations": [],
+                "rss_values": [], "rss_deltas": [], "open": {}}
+        for phase in ("exp", "backup")
+    }
+    incomplete = []
+    for attempt_index, path in enumerate(paths, start=1):
+        if not os.path.exists(path):
+            continue
+        attempt_open = {"exp": {}, "backup": {}}
+        with open(path, errors="replace") as stream:
+            for line in stream:
+                match = pattern.search(line)
+                if not match:
+                    continue
+                phase, event, call_text, remainder = match.groups()
+                call = int(call_text)
+                values = {
+                    key: float(value)
+                    for key, value in number_pattern.findall(remainder)
+                }
+                state = per_phase[phase]
+                rss = values.get("rss_mib")
+                if rss is not None:
+                    state["rss_values"].append(rss)
+                if event == "begin":
+                    state["started"] += 1
+                    attempt_open[phase][call] = rss
+                else:
+                    state["completed"] += 1
+                    duration = values.get("duration_ms")
+                    if duration is not None:
+                        state["durations"].append(duration)
+                    rss_delta = values.get("rss_delta_mib")
+                    if rss_delta is not None:
+                        state["rss_deltas"].append(rss_delta)
+                    attempt_open[phase].pop(call, None)
+        for phase, calls in attempt_open.items():
+            incomplete.extend(
+                f"attempt{attempt_index}:{phase}:{call}"
+                for call in sorted(calls)
+            )
+
+    result = {
+        "optimizer_phase_trace_enabled": any(
+            state["started"] for state in per_phase.values()
+        ),
+        "optimizer_phase_incomplete_events": len(incomplete),
+        "optimizer_phase_last_incomplete": (
+            incomplete[-1] if incomplete else None
+        ),
+    }
+    for phase, state in per_phase.items():
+        durations = state["durations"]
+        rss_values = state["rss_values"]
+        rss_deltas = state["rss_deltas"]
+        result.update({
+            f"optimizer_{phase}_phase_started": state["started"],
+            f"optimizer_{phase}_phase_completed": state["completed"],
+            f"optimizer_{phase}_duration_ms_mean": (
+                sum(durations) / len(durations) if durations else None
+            ),
+            f"optimizer_{phase}_duration_ms_max": (
+                max(durations) if durations else None
+            ),
+            f"optimizer_{phase}_rss_mib_max": (
+                max(rss_values) if rss_values else None
+            ),
+            f"optimizer_{phase}_rss_delta_mib_max": (
+                max(rss_deltas) if rss_deltas else None
+            ),
+        })
+    return result
+
+
 def parse_full_refresh_ack_log(path):
     """Count generation-ACK safety transitions from the planner log."""
     counts = {
@@ -1118,6 +1200,18 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "frontend_body_ignore_events", "frontend_body_brake_events",
           "frontend_body_active_brake_replacements",
           "optimizer_iteration_cap_hits",
+          "optimizer_phase_trace_enabled",
+          "optimizer_phase_incomplete_events",
+          "optimizer_phase_last_incomplete",
+          "optimizer_exp_phase_started", "optimizer_exp_phase_completed",
+          "optimizer_exp_duration_ms_mean", "optimizer_exp_duration_ms_max",
+          "optimizer_exp_rss_mib_max", "optimizer_exp_rss_delta_mib_max",
+          "optimizer_backup_phase_started",
+          "optimizer_backup_phase_completed",
+          "optimizer_backup_duration_ms_mean",
+          "optimizer_backup_duration_ms_max",
+          "optimizer_backup_rss_mib_max",
+          "optimizer_backup_rss_delta_mib_max",
           "shadow_safe_candidates", "shadow_unsafe_candidates",
           "shadow_skipped_candidates", "shadow_validated_candidates",
           "shadow_geometric_unsafe", "shadow_map_race",
@@ -1582,6 +1676,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             loop_timeout_override=None,
             filter_profile="legacy",
             filter_backend="python",
+            filter_half_angle_deg=60.0,
             adaptive_max_publish_hz=5.0,
             adaptive_map_commit_refresh_age_s=0.12,
             adaptive_map_commit_refresh_min_interval_s=0.10,
@@ -1603,7 +1698,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             adaptive_full_open_extra_max_points=6000,
             test_force_local_escape_once=False,
             test_force_initial_footprint_egress_once=False,
-            cgroup_cpu_accounting=False):
+            cgroup_cpu_accounting=False,
+            optimizer_phase_memory_trace=False):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
     is_seed12 = (map_name == "seed12")
@@ -1912,7 +2008,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 [
                     "bash",
                     "-c",
-                    f"{ROS_ENV} && {filter_command} {base_mode}{filter_options} "
+                    f"{ROS_ENV} && {filter_command} {base_mode} "
+                    f"{filter_half_angle_deg:.9g}{filter_options} "
                     f"> {filt_log} 2>&1",
                 ],
                 preexec_fn=os.setsid,
@@ -2002,7 +2099,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 launch_cmd += f" > {reference_stack_log} 2>&1"
             if integrated_filter_active:
                 encoded_filter_arguments = ";".join(
-                    [base_mode, *filter_options.strip().split()]
+                    [base_mode, f"{filter_half_angle_deg:.9g}",
+                     *filter_options.strip().split()]
                 )
                 launch_cmd += (
                     " use_integrated_filter:=true"
@@ -2010,7 +2108,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 )
             elif sensor_frontend_active:
                 encoded_filter_arguments = ";".join(
-                    [base_mode, *filter_options.strip().split()]
+                    [base_mode, f"{filter_half_angle_deg:.9g}",
+                     *filter_options.strip().split()]
                 )
                 launch_cmd += (
                     " use_sensor_frontend:=true"
@@ -2024,8 +2123,12 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 + launch_cmd
             )
         perf_log_before_launch = perf_log_signature()
+        trace_environment = (
+            "export SUPER_OPTIMIZER_PHASE_MEMORY_TRACE=1 && "
+            if optimizer_phase_memory_trace else ""
+        )
         launch_proc = subprocess.Popen(
-            ["bash", "-c", f"{ROS_ENV} && {launch_cmd}"],
+            ["bash", "-c", f"{ROS_ENV} && {trace_environment}{launch_cmd}"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
         time.sleep(4)
 
@@ -2473,6 +2576,11 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                         stream.write("\n")
         if os.path.exists(reference_stack_log):
             rec.update(parse_full_refresh_ack_log(reference_stack_log))
+        optimizer_phase_logs = [
+            os.path.join(TMPDIR, f"{tag}.attempt{attempt_index}.stack.log")
+            for attempt_index in range(1, attempt + 1)
+        ]
+        rec.update(parse_optimizer_phase_memory_logs(optimizer_phase_logs))
         payload_duration_s = rec.get("mission_time_s")
         if payload_duration_s is not None and payload_duration_s > 0.0:
             mib = 1024.0 * 1024.0
@@ -2725,6 +2833,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             ),
             "memory_trace_csv": ";".join(memory_trace_paths)}
     failed_rec.update(merge_memory_summaries(memory_summaries))
+    failed_rec.update(parse_optimizer_phase_memory_logs([
+        os.path.join(TMPDIR, f"{tag}.attempt{attempt_index}.stack.log")
+        for attempt_index in range(1, attempt_max + 1)
+    ]))
     return failed_rec
 
 
@@ -2820,6 +2932,15 @@ def main():
             "a second DDS hop; cpp-frontend composes simulator+filter, "
             "suppresses raw DDS, and emits filtered cloud plus compact risk "
             "verdict (static seed1..10 only)"
+        ),
+    )
+    ap.add_argument(
+        "--filter-half-angle-deg",
+        type=float,
+        default=60.0,
+        help=(
+            "common angular half-width for Sector and Adaptive "
+            "(default: 60 degrees)"
         ),
     )
     ap.add_argument(
@@ -2986,6 +3107,14 @@ def main():
         ),
     )
     ap.add_argument(
+        "--optimizer-phase-memory-trace",
+        action="store_true",
+        help=(
+            "enable default-off Exp/Backup optimizer begin/end RSS and "
+            "duration markers; incomplete begin markers survive OOM kills"
+        ),
+    )
+    ap.add_argument(
         "--test-force-local-escape-once",
         action="store_true",
         help=(
@@ -3010,6 +3139,8 @@ def main():
 
     if args.loop_timeout is not None and args.loop_timeout <= 0.0:
         ap.error("--loop-timeout must be positive")
+    if not 0.0 <= args.filter_half_angle_deg <= 180.0:
+        ap.error("--filter-half-angle-deg must be in [0, 180]")
     if args.adaptive_max_publish_hz < 0.0:
         ap.error("--adaptive-max-publish-hz must be non-negative")
     if args.adaptive_map_commit_refresh_age_s < 0.0:
@@ -3320,6 +3451,7 @@ def main():
                         loop_timeout_override=args.loop_timeout,
                         filter_profile=args.filter_profile,
                         filter_backend=args.filter_backend,
+                        filter_half_angle_deg=args.filter_half_angle_deg,
                         adaptive_max_publish_hz=args.adaptive_max_publish_hz,
                         adaptive_map_commit_refresh_age_s=(
                             args.adaptive_map_commit_refresh_age_s
@@ -3382,6 +3514,9 @@ def main():
                             args.test_force_initial_footprint_egress_once
                         ),
                         cgroup_cpu_accounting=args.cgroup_cpu_accounting,
+                        optimizer_phase_memory_trace=(
+                            args.optimizer_phase_memory_trace
+                        ),
                     )
                     rec["campaign_sequence_index"] = (
                         max_existing_sequence + done + 1

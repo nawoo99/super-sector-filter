@@ -24,6 +24,10 @@
 #include <traj_opt/backup_traj_optimizer_s4.h>
 #include <traj_opt/passage_centering.hpp>
 #include <utils/header/color_msg_utils.hpp>
+#include <utils/header/optimizer_phase_memory.hpp>
+
+#include <atomic>
+#include <chrono>
 
 using namespace traj_opt;
 using namespace color_text;
@@ -596,6 +600,24 @@ double BackupTrajOpt::optimize(Trajectory &traj, const double &relCostTol) {
     if (opt_vars.debug_en) {
         throw std::runtime_error(" -- [BackupTrajOpt] Debug mode is not supported yet.");
     } else {
+        const bool phase_trace = optimizerPhaseMemoryTraceEnabled();
+        static std::atomic_uint64_t phase_call_counter{0};
+        const uint64_t phase_call = phase_trace
+                ? phase_call_counter.fetch_add(
+                        1, std::memory_order_relaxed) + 1
+                : 0;
+        const auto phase_start = std::chrono::steady_clock::now();
+        ProcessResidentMemory phase_begin_memory;
+        if (phase_trace) {
+            phase_begin_memory = readProcessResidentMemory();
+            ros_ptr_->info(
+                    " -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup "
+                    "event=begin call={} rss_mib={:.3f} swap_mib={:.3f} "
+                    "variables={} pieces={}",
+                    phase_call, phase_begin_memory.rss_mib,
+                    phase_begin_memory.swap_mib, x.size(),
+                    opt_vars.piece_num);
+        }
         ret = lbfgs::lbfgs_optimize(x,
                                     minCostFunctional,
                                     &BackupTrajOpt::costFunctional,
@@ -603,6 +625,21 @@ double BackupTrajOpt::optimize(Trajectory &traj, const double &relCostTol) {
                                     nullptr,
                                     &this->opt_vars,
                                     lbfgs_params);
+        if (phase_trace) {
+            const auto phase_end = std::chrono::steady_clock::now();
+            const auto phase_end_memory = readProcessResidentMemory();
+            const double phase_duration_ms =
+                    std::chrono::duration<double, std::milli>(
+                            phase_end - phase_start).count();
+            ros_ptr_->info(
+                    " -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end "
+                    "call={} duration_ms={:.3f} iterations={} ret={} "
+                    "rss_mib={:.3f} swap_mib={:.3f} "
+                    "rss_delta_mib={:.3f}",
+                    phase_call, phase_duration_ms, opt_vars.iter_num, ret,
+                    phase_end_memory.rss_mib, phase_end_memory.swap_mib,
+                    phase_end_memory.rss_mib - phase_begin_memory.rss_mib);
+        }
 
     }
     using namespace std;

@@ -4,6 +4,7 @@ import unittest
 
 from native_campaign import (
     parse_full_refresh_ack_log,
+    parse_optimizer_phase_memory_logs,
     parse_sensor_cadence_log,
     parse_shadow_guard_log,
 )
@@ -27,6 +28,48 @@ class SensorCadenceLogTest(unittest.TestCase):
         self.assertEqual(result["sensor_raw_published"], 0)
         self.assertEqual(result["sensor_direct_handoffs"], 101)
         self.assertAlmostEqual(result["sensor_hz"], 10.0)
+
+
+class OptimizerPhaseMemoryLogTest(unittest.TestCase):
+    def test_aggregates_completed_and_oom_interrupted_phases(self):
+        attempts = [
+            """\
+[OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=1 rss_mib=3100.000 swap_mib=0.000 variables=12 pieces=4
+[OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=1 duration_ms=10.000 iterations=4 ret=0 rss_mib=3110.000 swap_mib=0.000 rss_delta_mib=10.000
+[OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=1 rss_mib=3110.000 swap_mib=0.000 variables=8 pieces=3
+""",
+            """\
+[OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=1 rss_mib=3050.000 swap_mib=0.000 variables=12 pieces=4
+[OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=1 duration_ms=30.000 iterations=8 ret=-1000 rss_mib=3070.000 swap_mib=0.000 rss_delta_mib=20.000
+[OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=1 rss_mib=3070.000 swap_mib=0.000 variables=8 pieces=3
+[OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=1 duration_ms=12.000 iterations=5 ret=0 rss_mib=3075.000 swap_mib=0.000 rss_delta_mib=5.000
+""",
+        ]
+        paths = []
+        try:
+            for lines in attempts:
+                handle, path = tempfile.mkstemp(text=True)
+                paths.append(path)
+                with os.fdopen(handle, "w") as stream:
+                    stream.write(lines)
+            result = parse_optimizer_phase_memory_logs(paths)
+        finally:
+            for path in paths:
+                os.unlink(path)
+
+        self.assertTrue(result["optimizer_phase_trace_enabled"])
+        self.assertEqual(result["optimizer_exp_phase_started"], 2)
+        self.assertEqual(result["optimizer_exp_phase_completed"], 2)
+        self.assertAlmostEqual(result["optimizer_exp_duration_ms_mean"], 20.0)
+        self.assertAlmostEqual(result["optimizer_exp_duration_ms_max"], 30.0)
+        self.assertAlmostEqual(result["optimizer_exp_rss_mib_max"], 3110.0)
+        self.assertAlmostEqual(result["optimizer_exp_rss_delta_mib_max"], 20.0)
+        self.assertEqual(result["optimizer_backup_phase_started"], 2)
+        self.assertEqual(result["optimizer_backup_phase_completed"], 1)
+        self.assertEqual(result["optimizer_phase_incomplete_events"], 1)
+        self.assertEqual(
+            result["optimizer_phase_last_incomplete"], "attempt1:backup:1"
+        )
 
 
 class ShadowGuardLogTest(unittest.TestCase):
