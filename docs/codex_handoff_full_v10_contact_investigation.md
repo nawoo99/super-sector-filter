@@ -1,6 +1,22 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-03 frozen profile 10맵 3모드 paired n=5 체크포인트.**
+> run 4--5 60행을 추가해 고유 150행을 완성했다. Full/Adaptive는
+> 50/50 완주, Sector는 49/50 완주, 전 모드 충돌 0이고 retry/OOM은 0이다.
+> Map10 run4에서 Sector는 180초 timeout, 같은 run의 Adaptive는
+> 68.96초 완주해 첫 paired Sector 열화→Adaptive 회복 사례가 되었다.
+>
+> 실패 Sector는 certified stop 근처에서 exclusion zone 6개를 포화시킨 뒤
+> 거의 같은 짧은 후보를 반복해 CIRI에서 100회 이상 거절됐다. PSI/OOM/
+> retry가 0이므로 infrastructure가 아닌 Sector topology/liveness trap이다.
+> Adaptive는 Full 대비 ingress 76.220%, map-compute core equivalent 67.734%,
+> mean cores 13.378%, core·s 16.323%를 줄였고 effective-open은 1,031회다.
+> 현재 설정은 동결한 채 run 6--10을 추가하는 n=10 단계다. 상세는 viability
+> §8.55와 `docs/full_inprocess_control_20260903.md`, 체크포인트 자료는
+> `results/full_control_three_mode_map1_10_n5_{raw,summary,reductions}_20260903.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-03 frozen Full 10맵 3모드 paired n=3 완료.**
 > 동일 profile/accounting으로 Map1--6/8 63행을 추가하고 앞선 hard-map 27행과
 > 합쳐 고유 90행을 완성했다. Full/Sector/Adaptive 모두 30/30 완주·충돌 0,

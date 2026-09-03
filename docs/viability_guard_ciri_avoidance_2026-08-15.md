@@ -3899,3 +3899,35 @@ was 30/30 and contact-free. The combined raw preserves the two execution
 cohorts explicitly. Full remains frozen. Detailed results are in
 `docs/full_inprocess_control_20260903.md` and
 `results/full_control_three_mode_map1_10_n3_{raw,summary,reductions}_20260903.csv`.
+
+### 8.55 Frozen-profile paired n=5 checkpoint (2026-09-03)
+
+Runs 4--5 added 60 rows without changing any profile. The resulting 150-key
+cohort is run/speed/performance/cgroup-valid throughout, with zero retry, OOM
+or static-PCD contact. Full and Adaptive completed 50/50; Sector completed
+49/50. Map10 run4 is the first paired degradation/recovery observation:
+Sector reached four waypoints and timed out at 180 s, while Full and Adaptive
+completed in 86.70 and 68.96 s.
+
+The Sector failure is a planner liveness event rather than infrastructure
+noise. It retained a certified stop near `[19.525,-19.425,1.925]`, saturated
+six exclusion zones and retried near-identical short candidates that CIRI
+immediately rejected more than 100 times. The row had retry/OOM/PSI all zero
+and 2.12 GiB system-available memory. Adaptive's corresponding run used 19
+effective Full opens and completed without contact, although its minimum
+clearance was only +0.178 m.
+
+Across 50 Adaptive runs, effective Full-open totaled 1,031 (20.62/run), with
+11 runs entering the stall-open condition, 1,266 replan-guard opens, 198
+trajectory-guard opens and 21/3 future-tail/current-body OCCUPIED verdicts.
+Against Full, Adaptive reduced logical planner ingress 76.220%, map-compute
+core equivalent 67.734%, end-to-end mean cores 13.378% and core-seconds
+16.323%. Against Sector it reduced ingress/DDS by about 21.4/21.3%, while
+using 5.483% more mean cores and 0.742% more core-seconds.
+
+Zero failures in 50 Full and Adaptive trials gives a Wilson 95% completion
+lower bound of 92.87%, not a population-level 100% guarantee. Sector 49/50
+has a lower bound of 89.50%. The profiles remain frozen and the next step is
+to add runs 6--10. Detailed tables are in
+`docs/full_inprocess_control_20260903.md`; checkpoint data are
+`results/full_control_three_mode_map1_10_n5_{raw,summary,reductions}_20260903.csv`.

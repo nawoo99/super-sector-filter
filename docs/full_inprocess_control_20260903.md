@@ -237,3 +237,69 @@ Sector 대비 CPU는 개선되지 않았다. 따라서 현재 10개 static map�
 - `results/full_control_three_mode_map1_10_n3_reductions_20260903.csv`
 - 원래 두 실행 cohort는 combined raw의 `source_cohort`와
   `source_campaign_sequence_index`로 보존했다.
+
+## 10맵 paired n=5 반복 확대
+
+동일한 frozen profile과 mode rotation을 유지하고 run 4--5만 추가했다. 추가
+60행은 76.7분에 끝났고, 전체 자료는 Map 1--10 × 3모드 × 5회인 고유 150행이다.
+모든 행이 run/speed/performance/cgroup-valid이고 retry/OOM은 0이다. Full과
+Adaptive는 50/50 완주, Sector는 49/50 완주였으며 세 모드 모두 static-PCD
+충돌은 0이다.
+
+| Map | Full 완주 / 시간 / 최저 clearance | Sector 완주 / 시간 / 최저 clearance | Adaptive 완주 / 시간 / 최저 clearance | Adaptive effective-open |
+|---:|---:|---:|---:|---:|
+| 1 | 5/5 / 57.92 s / 0.244 m | 5/5 / 59.27 s / 0.235 m | 5/5 / 58.51 s / 0.196 m | 89 |
+| 2 | 5/5 / 57.21 s / 0.259 m | 5/5 / 54.96 s / 0.299 m | 5/5 / 55.01 s / 0.208 m | 106 |
+| 3 | 5/5 / 58.70 s / 0.256 m | 5/5 / 56.93 s / 0.236 m | 5/5 / 57.18 s / 0.216 m | 110 |
+| 4 | 5/5 / 62.87 s / 0.233 m | 5/5 / 62.88 s / 0.212 m | 5/5 / 61.43 s / 0.227 m | 103 |
+| 5 | 5/5 / 61.58 s / 0.273 m | 5/5 / 64.00 s / 0.199 m | 5/5 / 58.17 s / 0.216 m | 98 |
+| 6 | 5/5 / 67.46 s / 0.179 m | 5/5 / 67.26 s / 0.282 m | 5/5 / 65.30 s / 0.173 m | 111 |
+| 7 | 5/5 / 75.39 s / 0.187 m | 5/5 / 66.81 s / 0.183 m | 5/5 / 68.63 s / 0.186 m | 98 |
+| 8 | 5/5 / 62.78 s / 0.213 m | 5/5 / 65.19 s / 0.194 m | 5/5 / 63.34 s / 0.194 m | 110 |
+| 9 | 5/5 / 74.62 s / 0.183 m | 5/5 / 79.33 s / 0.174 m | 5/5 / 72.85 s / 0.214 m | 107 |
+| 10 | 5/5 / 76.66 s / 0.182 m | 4/5 / 94.94 s / 0.021 m | 5/5 / 71.06 s / 0.178 m | 99 |
+
+시간은 timeout을 포함한 맵별 5회 평균이다. Map 10 Sector 성공 4행만의 평균은
+73.67초다. 이 모드의 run 4는 waypoint 4까지 간 뒤 180초 timeout으로 끝났고,
+동일 paired run의 Full은 86.70초, Adaptive는 68.96초에 완주했다.
+
+| 지표 | Full | Sector | Adaptive | Adaptive vs Full | Adaptive vs Sector |
+|---|---:|---:|---:|---:|---:|
+| 완주 / 충돌 | 50/50 / 0 | 49/50 / 0 | 50/50 / 0 | 완주 동률 | +1 완주 |
+| 종료시간 평균±SD, s | 65.52±7.99 | 67.16±17.99 | 63.15±6.31 | 3.617% 감소 | 5.966% 감소 |
+| 성공행 시간 평균, s | 65.52 | 64.85 | 63.15 | 3.617% 감소 | 2.627% 감소 |
+| clearance 평균/최저, m | 0.265/0.179 | 0.259/0.021 | 0.254/0.173 | 평균 0.011 m 낮음 | 평균 0.005 m 낮음 |
+| logical planner ingress, MiB/s | 9.407 | 2.846 | 2.237 | 76.220% 감소 | 21.404% 감소 |
+| external DDS, MiB/s | 0 | 2.846 | 2.240 | 비교 불가 | 21.308% 감소 |
+| map update, Hz | 10.124 | 10.256 | 5.415 | 46.512% 감소 | 47.198% 감소 |
+| ROG ms/frame | 36.452 | 10.369 | 21.956 | 39.769% 감소 | 111.747% 증가 |
+| map-compute core equivalent | 0.369 | 0.106 | 0.119 | 67.734% 감소 | 11.929% 증가 |
+| end-to-end mean cores | 1.530 | 1.256 | 1.325 | 13.378% 감소 | 5.483% 증가 |
+| end-to-end core·s | 103.180 | 85.703 | 86.339 | 16.323% 감소 | 0.742% 증가 |
+| peak E2E PSS 평균, MiB | 3476.82 | 3432.68 | 3472.32 | 0.129% 감소 | 1.155% 증가 |
+
+Map 10 run 4 Sector 실패는 infrastructure failure가 아니다. 실패 행은 retry 0,
+OOM 0, memory PSI 0이었고 system available 2.12 GiB였다. 로그에서는
+`[19.525,-19.425,1.925]` 부근 certified stop 뒤 exclusion zone 6개가 포화되고,
+거의 같은 짧은 후보가 CIRI에서 즉시 OCCUPIED로 100회 이상 반복 거절됐다.
+`TRAJ_GUARD_REROUTE_STALL`은 saturated/hold를 반복했으므로, 원인은 안전 정지는
+유지하지만 새로운 topology로 빠져나오지 못하는 Sector liveness trap이다.
+동일 run Adaptive는 effective-open 19회, replan-guard 27회, trajectory-guard 8회와
+future-tail/current-body OCCUPIED 각 1회를 기록하고 완주했다.
+
+Adaptive effective-open은 총 1,031회(20.62회/run)다. 겹칠 수 있는 원인 계수는
+stall-open 발생 run 11개, replan-guard 1,266회, trajectory-guard 198회이고,
+future-tail/current-body OCCUPIED verdict는 21/3회다. 0.20 m 미만 clearance는
+여러 모드에서 관측됐으므로 여전히 contact-free와 clearance contract를 분리한다.
+
+전체 150행에서 system available 최저는 2.06 GiB, swap 최고는 1.87 GiB였지만
+OOM은 0이고 새 실패의 PSI는 0이다. 완주 50/50의 Wilson 95% 하한은 92.87%,
+Sector 49/50은 89.50%다. 이 체크포인트는 Full/Adaptive 안정성과 첫 paired
+Sector 열화→Adaptive 회복 사례를 제공하지만, 단일 discordant pair이므로 설정을
+동결한 채 run 6--10을 추가한다.
+
+체크포인트 자료:
+
+- `results/full_control_three_mode_map1_10_n5_raw_20260903.csv`
+- `results/full_control_three_mode_map1_10_n5_summary_20260903.csv`
+- `results/full_control_three_mode_map1_10_n5_reductions_20260903.csv`
