@@ -169,3 +169,71 @@ Adaptive가 Full보다 74.669% 작다.
 - `results/full_control_three_mode_map7_9_10_n3_raw_20260903.csv`
 - `results/full_control_three_mode_map7_9_10_n3_summary_20260903.csv`
 - `results/full_control_three_mode_map7_9_10_n3_reductions_20260903.csv`
+
+## 10맵 paired n=3 완성
+
+같은 frozen profile로 남은 Map 1--6/8을 세 모드 각 3회 실행했다. 새 63행은
+74.6분에 끝났고 전부 first-attempt 완주·무접촉이었다. Map 6의 과거 OOM도
+재현되지 않았다. 앞선 hard-map 27행과 합친 최종 cohort는 Map 1--10,
+Full/Sector/Adaptive, 맵·모드당 정확히 3회인 고유 90행이다. 모든 행이
+run/speed/performance/cgroup-valid이고 retry/OOM은 0이다.
+
+| Map | Full 시간 / 최저 clearance | Sector 시간 / 최저 clearance | Adaptive 시간 / 최저 clearance | Adaptive effective-open |
+|---:|---:|---:|---:|---:|
+| 1 | 58.36 s / 0.244 m | 60.24 s / 0.235 m | 59.34 s / 0.196 m | 47 |
+| 2 | 57.35 s / 0.259 m | 55.74 s / 0.320 m | 55.37 s / 0.208 m | 61 |
+| 3 | 58.30 s / 0.256 m | 57.37 s / 0.236 m | 57.60 s / 0.216 m | 63 |
+| 4 | 61.65 s / 0.233 m | 64.23 s / 0.212 m | 61.23 s / 0.233 m | 55 |
+| 5 | 59.88 s / 0.274 m | 61.96 s / 0.287 m | 59.33 s / 0.216 m | 52 |
+| 6 | 67.87 s / 0.179 m | 66.96 s / 0.282 m | 64.58 s / 0.173 m | 69 |
+| 7 | 77.71 s / 0.259 m | 66.53 s / 0.183 m | 69.79 s / 0.241 m | 64 |
+| 8 | 63.42 s / 0.250 m | 65.57 s / 0.194 m | 63.88 s / 0.194 m | 67 |
+| 9 | 75.23 s / 0.195 m | 77.39 s / 0.174 m | 72.27 s / 0.214 m | 68 |
+| 10 | 73.89 s / 0.182 m | 71.96 s / 0.205 m | 71.05 s / 0.243 m | 59 |
+
+시간은 각 맵의 3회 평균이고 clearance는 그 3회의 최솟값이다. 각 모드는
+모든 맵에서 3/3 완주·충돌 0이다. Adaptive effective-open은 전체 605회,
+평균 20.17회/run이다. 겹칠 수 있는 원인별 계수는 stall 8회, replan-guard
+762회, trajectory-guard 122회다. Future-tail/current-body OCCUPIED verdict는
+각각 12/1회였다.
+
+| 지표 | Full | Sector | Adaptive | Adaptive vs Full | Adaptive vs Sector |
+|---|---:|---:|---:|---:|---:|
+| 완주 / 충돌 | 30/30 / 0 | 30/30 / 0 | 30/30 / 0 | 동률 | 동률 |
+| 시간 평균±SD, s | 65.37±8.11 | 64.79±7.04 | 63.45±6.15 | 2.939% 감소 | 2.081% 감소 |
+| clearance 평균/최저, m | 0.260/0.179 | 0.262/0.174 | 0.249/0.173 | 평균 0.012 m 낮음 | 평균 0.014 m 낮음 |
+| logical planner ingress, MiB/s | 9.409 | 2.808 | 2.270 | 75.876% 감소 | 19.178% 감소 |
+| external DDS, MiB/s | 0 | 2.808 | 2.272 | 비교 불가 | 19.081% 감소 |
+| map update, Hz | 10.124 | 10.273 | 5.459 | 46.076% 감소 | 46.856% 감소 |
+| ROG ms/frame | 36.398 | 10.433 | 22.352 | 38.590% 감소 | 114.244% 증가 |
+| map-compute core equivalent | 0.368 | 0.107 | 0.122 | 66.862% 감소 | 13.900% 증가 |
+| end-to-end mean cores | 1.527 | 1.266 | 1.328 | 13.001% 감소 | 4.950% 증가 |
+| end-to-end core·s | 102.630 | 84.422 | 86.853 | 15.373% 감소 | 2.879% 증가 |
+| peak E2E PSS 평균, MiB | 3475.31 | 3429.10 | 3469.81 | 0.158% 감소 | 1.187% 증가 |
+
+Map 6 run 1 Adaptive의 최저 clearance +0.173 m는 속도 1.46 m/s에서 발생해
+초기 pose나 완전 정지값으로 제외할 수 없다. 이후 두 Adaptive 반복은
++0.248/+0.243 m였고 접촉은 없었으므로 현재는 단일 low-margin 관측이다.
+Full 최저 +0.179 m는 Map 6 출발 직후 0.48 m/s, Sector 최저 +0.174 m는 Map 9
+출발부 0.51 m/s였다. 최종 주장에서는 충돌 0과 0.20 m clearance contract를
+구분해야 한다.
+
+메모리 계측은 전 행 OOM 0, 전체 system available 최저 약 3.86 GiB,
+swap 최고 약 1,022 MiB였다. Map 3 run 2 Adaptive 한 행에 PSI some/full 0.69가
+짧게 기록됐지만 available 4.51 GiB, end-to-end PSS 3.40 GiB였고 재시도 없이
+완주했다. 이전의 swap 포화·수백 MiB available·높은 PSI 상황과 다르므로
+infrastructure/memory failure로 분류하지 않는다.
+
+이 표본은 Full 동결을 다시 지지하고 Adaptive의 Full 대비 처리량 및 총 CPU
+절감을 보여준다. 반면 Sector도 30/30 무접촉이고 Adaptive의 평균 clearance와
+Sector 대비 CPU는 개선되지 않았다. 따라서 현재 10개 static map은
+`Full과 같은 관측 안전을 더 적은 처리량으로 달성`하는 결과에는 적합하지만,
+`Sector의 완주/충돌 열화를 Adaptive가 회복`한다는 별도 가설에는 식별력이 없다.
+
+최종 자료:
+
+- `results/full_control_three_mode_map1_10_n3_raw_20260903.csv`
+- `results/full_control_three_mode_map1_10_n3_summary_20260903.csv`
+- `results/full_control_three_mode_map1_10_n3_reductions_20260903.csv`
+- 원래 두 실행 cohort는 combined raw의 `source_cohort`와
+  `source_campaign_sequence_index`로 보존했다.

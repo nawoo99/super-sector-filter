@@ -3857,3 +3857,45 @@ The next paired gate is Map1--6/8 n=3 with the same frozen profiles and
 accounting, completing the ten-map table without changing Full. Detailed map
 tables and raw paths are in `docs/full_inprocess_control_20260903.md` and
 `results/full_control_three_mode_map7_9_10_n3_{raw,summary,reductions}_20260903.csv`.
+
+### 8.54 Frozen-Full ten-map paired n=3 completion (2026-09-03)
+
+The remaining Map1--6/8 campaign added 63 rows under the identical frozen
+profiles and accounting. All rows completed on their first attempt without
+static-PCD contact, speed invalidation, retry or OOM. Combined with §8.53, the
+cohort has exactly 90 unique map/run/mode keys: 30/30 complete and zero contact
+for each of Full, Sector and Adaptive. Full therefore remained 30/30 in the
+new paired experiment without further tuning.
+
+Adaptive effective Full-open totals by Map1--10 were 47/61/63/55/52/69/64/
+67/68/59, or 605 total and 20.17/run. Its overlapping trigger totals were
+eight stall, 762 replan-guard and 122 trajectory-guard opens. Mission-time
+means were 65.366/64.794/63.445 s for Full/Sector/Adaptive.
+
+Using only the common end-to-end cgroup scope, Adaptive versus Full reduced
+logical planner ingress 75.876%, map-compute core equivalent 66.862%, mean CPU
+cores 13.001% and CPU core-seconds 15.373%. Against Sector it reduced logical
+ingress 19.178% and external DDS 19.081%, but increased map-compute core
+equivalent 13.900%, mean end-to-end cores 4.950% and core-seconds 2.879%.
+Peak PSS was essentially unchanged versus Full and 1.187% higher than Sector.
+
+Adaptive's mean/worst clearance was +0.249/+0.173 m, versus Sector
++0.262/+0.174 m and Full +0.260/+0.179 m. The Adaptive minimum occurred on
+Map6 run1 at 1.46 m/s and cannot be excluded as an initial-pose or stopped
+sample; the following two Map6 Adaptive repetitions were +0.248/+0.243 m and
+all were contact-free. Thus zero observed contact does not imply that a
+0.20 m clearance contract held on every run.
+
+No prior Map6 OOM recurred. The minimum system-available memory was about
+3.86 GiB, maximum swap use was about 1,022 MiB and all `oom_kill_delta` values
+were zero. One Map3 Adaptive row briefly recorded memory PSI some/full 0.69
+with 4.51 GiB available and completed first-attempt, so it is not classified
+as an infrastructure failure.
+
+These static maps support a processing-efficiency result at equal observed
+completion/contact outcomes, but still do not identify the separate claim
+that Adaptive recovers a Sector completion/contact degradation: Sector itself
+was 30/30 and contact-free. The combined raw preserves the two execution
+cohorts explicitly. Full remains frozen. Detailed results are in
+`docs/full_inprocess_control_20260903.md` and
+`results/full_control_three_mode_map1_10_n3_{raw,summary,reductions}_20260903.csv`.

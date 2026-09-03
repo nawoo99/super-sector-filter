@@ -1,6 +1,27 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-03 frozen Full 10맵 3모드 paired n=3 완료.**
+> 동일 profile/accounting으로 Map1--6/8 63행을 추가하고 앞선 hard-map 27행과
+> 합쳐 고유 90행을 완성했다. Full/Sector/Adaptive 모두 30/30 완주·충돌 0,
+> speed/performance/cgroup valid이며 retry/OOM은 0이다. Full은 추가 수정 없이
+> 새 paired cohort에서도 30/30을 유지했다.
+>
+> Adaptive effective-open은 맵별 47/61/63/55/52/69/64/67/68/59회, 총 605회다.
+> Full 대비 logical ingress 75.876%, map-compute core equivalent 66.862%,
+> end-to-end mean cores 13.001%, core·s 15.373%가 감소했다. Sector 대비 ingress와
+> external DDS는 약 19% 감소했지만 core·s는 2.879% 증가했다. Full raw DDS는
+> in-process라 0이므로 Adaptive-vs-Full DDS 감소 주장은 여전히 금지한다.
+>
+> Adaptive 평균/최저 clearance +0.249/+0.173m는 Sector +0.262/+0.174m보다
+> 좋지 않았다. Map6 Adaptive 최저는 1.46m/s 이동 중이라 0.20m margin contract를
+> 만족하지 않은 관측으로 남긴다. 접촉은 없었다. Sector도 30/30 무접촉이므로
+> 현재 static map은 Full 대비 효율 주장은 지지하지만 Adaptive가 Sector의
+> 완주율/충돌률을 회복한다는 가설에는 식별력이 없다. 상세는 viability §8.54와
+> `docs/full_inprocess_control_20260903.md`, 최종 raw/summary/reduction은
+> `results/full_control_three_mode_map1_10_n3_{raw,summary,reductions}_20260903.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-03 동결 Full 기반 3모드 hard-map gate 완료 및 CPU 범위 정정.**
 > Map7/9/10 × Full/Sector/Adaptive × n=3의 27개 고유 행이 모두 first-attempt
 > 완주·static-PCD 충돌 0·속도/성능/cgroup valid였고 retry/OOM은 0이었다.
