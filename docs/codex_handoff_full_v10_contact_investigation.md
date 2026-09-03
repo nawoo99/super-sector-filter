@@ -1,6 +1,25 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-03 동결 Full 기반 3모드 hard-map gate 완료 및 CPU 범위 정정.**
+> Map7/9/10 × Full/Sector/Adaptive × n=3의 27개 고유 행이 모두 first-attempt
+> 완주·static-PCD 충돌 0·속도/성능/cgroup valid였고 retry/OOM은 0이었다.
+> Full은 잔여 liveness tail 맵에서 9/9를 유지했다. Adaptive effective-open은
+> Map7/9/10에서 64/68/59회(합계 191회)였다. Adaptive worst clearance는
+> +0.214m, Sector는 +0.174m였지만 Sector도 9/9 완주·무접촉이라 Adaptive의
+> 성공률/충돌률 우위는 아직 주장할 수 없다.
+>
+> cgroup의 `algorithm_cpu_*`는 이제 교차모드 비교 금지다. 결합 Full은
+> simulator+planner, cpp-frontend Sector/Adaptive는 planner-only가 들어가기
+> 때문이다. 러너에 scope metadata를 추가했고 공통 parent end-to-end cgroup만
+> 총 연산량 비교에 사용한다. Adaptive는 Full 대비 logical ingress 74.669%,
+> map-compute core equivalent 64.857%, end-to-end mean cores 11.300%, core·s
+> 16.689%를 줄였다. 새 Full은 raw DDS가 0이므로 Adaptive-vs-Full DDS 감소는
+> 주장하지 않는다. 다음은 Full을 바꾸지 않고 Map1--6/8 n=3을 채우는 단계다.
+> 상세는 viability §8.53과 `docs/full_inprocess_control_20260903.md`, raw/summary는
+> `results/full_control_three_mode_map7_9_10_n3_{raw,summary,reductions}_20260903.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-03 Full 우선 통제: viability egress 결함 수정 및 in-process Full
 > raw-map 전달 gate 완료.**
 > 초기-footprint egress로 허용된 trajectory의 viability brake에 egress 문맥이

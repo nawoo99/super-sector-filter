@@ -1150,6 +1150,8 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_intra_process",
           "filter_sensor_frontend",
           "full_sensor_intra_process",
+          "algorithm_cpu_scope", "algorithm_cpu_excludes_simulator",
+          "end_to_end_cpu_scope",
           "success", "run_valid",
           "monitor_type", "monitor_flight_cpu_pct", "live_cloud_enabled", "preflight_ready",
           "preflight_cloud_messages", "preflight_odom_messages", "goal_messages",
@@ -2461,6 +2463,23 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                ),
                "filter_sensor_frontend": sensor_frontend_active,
                "full_sensor_intra_process": integrated_full_active,
+               # A Linux process cannot be split between cgroups.  The Full
+               # composition deliberately puts simulator+planner in one
+               # process, while cpp-frontend puts simulator+filter in one
+               # process and leaves the planner separate.  Preserve the raw
+               # algorithm measurement, but make its composition explicit so
+               # it is never mistaken for a cross-mode comparable metric.
+               "algorithm_cpu_scope": (
+                   "simulator+planner"
+                   if integrated_full_active else
+                   "planner+filter"
+                   if (integrated_filter_active or filt_proc is not None) else
+                   "planner_only"
+               ),
+               "algorithm_cpu_excludes_simulator": not integrated_full_active,
+               "end_to_end_cpu_scope": (
+                   "simulator+frontend+planner+mission"
+               ),
                "perf_log_generation_ready": perf_log_generation_ready,
                "perf_window_valid": perf_window_valid,
                "perf_trace_csv": perf_trace_csv if os.path.exists(perf_trace_csv) else None,

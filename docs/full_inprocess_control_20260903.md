@@ -99,3 +99,73 @@ CPU는 논리 코어 하나이므로 148%는 약 1.48개 코어이며, 이전 st
 Full/Sector/Adaptive 비교는 이 Full을 paired control로만 재실행하고, 세 모드를
 동일 cgroup 계측 경계로 재며 logical planner ingress와 external DDS를 별도 열로
 보고해야 한다. Full의 추가 튜닝은 새 Full 실패 증거가 생길 때만 재개한다.
+
+## 동결 Full을 사용한 3모드 hard-map gate
+
+동결 뒤 첫 비교는 Map 7/9/10, Full/Sector/Adaptive, 모드당 맵별 3회로
+실행했다. 모드 순서는 반복마다 회전했고, source static-PCD collision oracle,
+45도 Sector/Adaptive, C++ sensor front end, Adaptive 5 Hz cloud/risk cap 및 180초
+timeout을 유지했다. Full에만 위에서 검증한 `--full-intra-process`를 사용했다.
+
+스모크 Map 7 3행과 별도로 본 campaign은 정확히 27개 고유
+`(map, run, mode)` 행이다. 전 행이 first-attempt, run/speed/performance/cgroup-valid,
+완주 및 무접촉이었다. Retry와 OOM도 0이다.
+
+| Map | Mode | 완주 | 충돌 | 시간 평균±SD, s | clearance 평균/최저, m | logical ingress, MiB/s | E2E cores | E2E core·s | Adaptive effective-open |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 7 | Full | 3/3 | 0 | 77.71±7.27 | 0.276/0.259 | 11.727 | 1.464 | 116.457 | -- |
+| 7 | Sector | 3/3 | 0 | 66.53±2.47 | 0.249/0.183 | 3.632 | 1.272 | 87.388 | -- |
+| 7 | Adaptive | 3/3 | 0 | 69.79±3.80 | 0.254/0.241 | 2.836 | 1.304 | 93.571 | 64 (21.33/run) |
+| 9 | Full | 3/3 | 0 | 75.23±4.50 | 0.241/0.195 | 13.624 | 1.499 | 116.359 | -- |
+| 9 | Sector | 3/3 | 0 | 77.39±1.23 | 0.196/0.174 | 4.393 | 1.258 | 99.813 | -- |
+| 9 | Adaptive | 3/3 | 0 | 72.27±4.67 | 0.242/0.214 | 3.530 | 1.334 | 98.960 | 68 (22.67/run) |
+| 10 | Full | 3/3 | 0 | 73.89±4.29 | 0.207/0.182 | 13.077 | 1.529 | 116.805 | -- |
+| 10 | Sector | 3/3 | 0 | 71.96±2.73 | 0.238/0.205 | 4.304 | 1.255 | 92.662 | -- |
+| 10 | Adaptive | 3/3 | 0 | 71.05±1.32 | 0.246/0.243 | 3.368 | 1.347 | 98.743 | 59 (19.67/run) |
+
+세 맵 합계의 Adaptive effective Full-open은 191회다. 원인 계수는 stall-open
+6회, replan-guard open 250회, trajectory-guard open 54회다. 원인들이 겹치고
+cooldown 동안 재발할 수 있으므로 원인 계수의 합은 실제 effective-open 전환 수와
+같지 않다. Future-tail risk OCCUPIED는 12회, generation-independent current-body
+OCCUPIED는 1회였고 접촉은 없었다.
+
+### 동일 CPU 경계 해석
+
+Linux cgroup은 한 프로세스를 구성요소별로 나눌 수 없다. 결합 Full의
+`algorithm` child에는 simulator+planner가 함께 들어가지만, `cpp-frontend`
+Sector/Adaptive의 simulator+filter는 별도 결합 프로세스이고 `algorithm` child에는
+planner만 들어간다. 따라서 이 세 모드의 `algorithm_cpu_*`를 서로 비교하면 안 된다.
+러너는 이제 각 행에 `algorithm_cpu_scope`,
+`algorithm_cpu_excludes_simulator`, `end_to_end_cpu_scope`를 기록한다.
+
+세 모드에 동일하게 simulator+frontend+planner+mission을 포함하는 parent cgroup의
+`end_to_end_cpu_*`만 총 연산량의 직접 비교값으로 사용했다.
+
+| 지표 | Full | Sector | Adaptive | Adaptive vs Full | Adaptive vs Sector |
+|---|---:|---:|---:|---:|---:|
+| 시간, s | 75.609 | 71.959 | 71.039 | 6.044% 감소 | 1.279% 감소 |
+| logical planner ingress, MiB/s | 12.809 | 4.110 | 3.245 | 74.669% 감소 | 21.050% 감소 |
+| map update, Hz | 10.119 | 10.256 | 5.650 | 44.159% 감소 | 44.908% 감소 |
+| ROG ms/frame | 37.151 | 11.013 | 23.395 | 37.028% 감소 | 112.431% 증가 |
+| map-compute core equivalent | 0.376 | 0.113 | 0.132 | 64.857% 감소 | 16.956% 증가 |
+| end-to-end mean cores | 1.498 | 1.261 | 1.328 | 11.300% 감소 | 5.303% 증가 |
+| end-to-end core·s | 116.540 | 93.288 | 97.091 | 16.689% 감소 | 4.077% 증가 |
+| peak end-to-end PSS, MiB | 3496.91 | 3518.03 | 3557.46 | 1.732% 증가 | 1.121% 증가 |
+
+새 Full은 raw cloud DDS를 아예 통과하지 않으므로 external DDS는 0이다.
+Sector/Adaptive external DDS는 4.110/3.247 MiB/s이고 Adaptive는 Sector보다
+20.984% 낮다. 따라서 새 topology에서 Adaptive가 Full보다 DDS를 줄인다고
+표현하면 안 된다. 반면 planner가 실제 ROG 입력으로 처리하는 logical ingress는
+Adaptive가 Full보다 74.669% 작다.
+
+이 gate는 Full의 잔여 hard-map 안정성과 Adaptive의 Full 대비 처리량/총 CPU 감소를
+동시에 확인했다. Adaptive의 세 맵 worst clearance 0.214 m는 Sector의 0.174 m보다
+높았지만, Sector도 9/9 완주·무접촉이어서 이 n=3 표본만으로 Adaptive의
+완주율/충돌률 개선을 주장할 수는 없다. 다음 비교 단계는 같은 topology와 계측을
+유지한 채 나머지 Map 1--6/8의 n=3을 채워 10맵 paired table을 완성하는 것이다.
+
+추가 원자료:
+
+- `results/full_control_three_mode_map7_9_10_n3_raw_20260903.csv`
+- `results/full_control_three_mode_map7_9_10_n3_summary_20260903.csv`
+- `results/full_control_three_mode_map7_9_10_n3_reductions_20260903.csv`

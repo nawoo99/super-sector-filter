@@ -3818,3 +3818,42 @@ failure evidence appears. Detailed tables, caveats and raw-file manifest are in
 `docs/full_inprocess_control_20260903.md`; the compact table is
 `results/full_inprocess_control_map_summary_20260903.csv` and the final raw
 cohort is `results/full_intra_map1_10_n10_raw_20260903.csv`.
+
+### 8.53 Frozen-Full three-mode hard-map gate and CPU-scope correction (2026-09-03)
+
+The frozen in-process Full was used as the paired control on Map7/9/10 for
+Full/Sector/Adaptive, three rotated-order repetitions per map and mode. All 27
+unique rows completed on their first attempt, were static-PCD contact-free and
+run/speed/performance/cgroup-valid, with zero retry and OOM. Full was 9/9 on
+the maps that previously exposed its liveness tail. Sector and Adaptive were
+also 9/9 and contact-free.
+
+Adaptive effective Full-open totals were 64/68/59 on Map7/9/10, or 191 total.
+The overlapping trigger counters were six stall opens, 250 replan-guard opens
+and 54 trajectory-guard opens. Adaptive worst clearance was +0.214 m versus
+Sector's +0.174 m, but there are no discordant completion/contact pairs, so
+this gate does not establish a Sector safety-rate degradation or an Adaptive
+rate improvement.
+
+The campaign exposed a measurement-composition issue before interpretation:
+an integrated Full process cannot place its simulator and planner in separate
+cgroups, while cpp-frontend places simulator+filter together and the planner
+separately. Consequently `algorithm_cpu_*` is simulator+planner for Full but
+planner-only for Sector/Adaptive and is not cross-mode comparable. The runner
+now emits explicit CPU-scope metadata. The common parent `end_to_end` scope
+contains simulator+frontend+planner+mission for every mode and is the primary
+total-compute measure.
+
+Across nine rows per mode, Adaptive versus Full reduced logical planner
+ingress 74.669%, map-compute core equivalent 64.857%, mean end-to-end cores
+11.300% and end-to-end core-seconds 16.689%; mission time fell 6.044%.
+Adaptive versus Sector reduced logical ingress 21.050% and external DDS
+20.984%, but used 5.303% more end-to-end cores and 4.077% more core-seconds.
+Peak PSS was not reduced. Integrated Full external raw DDS is structurally
+zero, so Adaptive cannot claim a DDS reduction against this Full topology;
+logical ROG ingress is the appropriate processing-volume comparison.
+
+The next paired gate is Map1--6/8 n=3 with the same frozen profiles and
+accounting, completing the ten-map table without changing Full. Detailed map
+tables and raw paths are in `docs/full_inprocess_control_20260903.md` and
+`results/full_control_three_mode_map7_9_10_n3_{raw,summary,reductions}_20260903.csv`.
