@@ -1,6 +1,27 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-04 frozen profile 10맵 3모드 paired n=10 완료.**
+> 공식 cohort는 고유 300행이며 모든 행이 run/speed/performance/cgroup-valid,
+> retry/OOM/충돌 0이다. 명목 완주는 Full/Sector/Adaptive 모두 99/100이고
+> Map1--9는 전 모드 10/10, Map10은 각 9/10이다.
+>
+> Map10 run4 Sector는 PSI 0인 실제 topology/liveness trap이며 같은 paired
+> Full/Adaptive는 완주했다. Map10 run8은 Sector가 완주했지만 Adaptive/Full이
+> 3/5와 2/5 waypoint에서 timeout/HUNG이었다. 두 실패는 available 약 249MiB,
+> swap 2GiB 포화, PSI some 55.87/64.26인 심한 host-memory pressure와 결합됐다.
+> 자원 회복 후 Map10 Full/Adaptive 각 n=2 clean audit는 모두 PSI 0, 완주,
+> 충돌 0이었지만 공식 실패는 대체하지 않았다.
+>
+> Adaptive는 Full 대비 logical ingress 75.903%, map-compute 67.254%, 동일
+> end-to-end mean cores 13.362%, core·s 16.948%를 줄였다. effective-open은
+> 2,009회(20.09/run)다. Adaptive 대 Sector discordance는 양방향 한 건씩으로
+> exact McNemar p=1.0이며 99/100의 Wilson 95% 하한은 94.55%다. 따라서
+> population-level 100% 또는 Adaptive 성공률 우위는 주장하지 않는다.
+> 상세는 viability §8.56, `docs/full_inprocess_control_20260903.md`, 최종 자료는
+> `results/full_control_three_mode_map1_10_n10_{raw,summary,reductions}_20260903.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-03 frozen profile 10맵 3모드 paired n=5 체크포인트.**
 > run 4--5 60행을 추가해 고유 150행을 완성했다. Full/Adaptive는
 > 50/50 완주, Sector는 49/50 완주, 전 모드 충돌 0이고 retry/OOM은 0이다.

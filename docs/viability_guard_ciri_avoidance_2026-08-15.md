@@ -3931,3 +3931,58 @@ has a lower bound of 89.50%. The profiles remain frozen and the next step is
 to add runs 6--10. Detailed tables are in
 `docs/full_inprocess_control_20260903.md`; checkpoint data are
 `results/full_control_three_mode_map1_10_n5_{raw,summary,reductions}_20260903.csv`.
+
+### 8.56 Frozen-profile paired n=10 and memory-pressure audit (2026-09-04)
+
+Runs 6--10 were added without changing the frozen profiles. The final primary
+cohort contains exactly 300 unique Map1--10 by Full/Sector/Adaptive by run
+keys. Every row is run-, speed-, performance- and cgroup-valid, with zero
+retry, OOM kill or static-PCD contact. Nominal completion is 99/100 in each
+mode. Maps 1--9 are 10/10 in every mode; each mode has one Map10 failure.
+
+The original Sector Map10 run 4 failure remains the clean planner-liveness
+event: four waypoints, 180 s, +0.021 m clearance and zero PSI/OOM/retry. Full
+and Adaptive completed the paired run, so this is one observed Sector-fail /
+Adaptive-pass recovery.
+
+Map10 run 8 is confounded by severe host-memory pressure. Sector completed in
+85.50 s before the pressure spike. Adaptive stopped after three waypoints at
+187.70 s and Full after two waypoints at 201.20 s with monitor HUNG. Their
+minimum available memory was about 249 MiB with 2 GiB swap saturated. Peak
+memory PSI some/full was 55.87/52.89 for Adaptive and 64.26/60.66 for Full;
+Full already started at PSI some 28.43. There was no OOM kill. Adaptive still
+showed repeated A-star/optimizer timeout at a certified stop, while Full's
+planner log stopped advancing after roughly 90 s. The evidence supports a
+planner-liveness and host-pressure interaction, not either factor as a proven
+sole cause.
+
+After reclaiming the unrelated host load, a separate Map10 clean audit ran
+Full and Adaptive twice each. All four rows completed without contact,
+retry, OOM or PSI. This non-reproduction is supporting evidence only and does
+not replace the primary run 8 failures. A session-interrupted orphan Map10
+run 9 Adaptive attempt was also retained separately: the runner died before
+CSV/performance finalization, while its launch remained alive for more than
+three hours. The six missing primary keys were then collected using
+`--resume-existing`; all completed. The interrupted attempt is excluded as an
+incomplete infrastructure row rather than silently treated as a success.
+
+Primary all-run time for Full/Sector/Adaptive is 67.356/65.884/64.472 s;
+successful-row time is 66.004/64.731/63.227 s. Adaptive reduces Full logical
+planner ingress by 75.903%, map-compute core equivalent by 67.254%, end-to-end
+mean cores by 13.362% and end-to-end core-seconds by 16.948%. Against Sector,
+ingress and external DDS fall by 20.502% and 20.405%, while mean cores and
+core-seconds rise by 6.175% and 6.193%.
+
+Adaptive made 2,009 effective Full-open transitions (20.09/run), with 23 runs
+showing a stall-open, 2,591 replan-guard opens, 390 trajectory-guard opens and
+35/6 future-tail/current-body OCCUPIED verdicts. Clearance below 0.20 m occurs
+in 6/11/8 Full/Sector/Adaptive rows, so contact-free operation remains distinct
+from the clearance contract.
+
+Adaptive versus Sector has one discordant completion in each direction;
+two-sided exact McNemar p=1.0. The Wilson 95% completion lower bound for
+99/100 is 94.55%. The enlarged campaign therefore supports the Full-relative
+compute and ingress reductions, but not population-level 100% completion or
+an Adaptive success-rate advantage over Sector. Detailed per-map results and
+the exact resource audit are in `docs/full_inprocess_control_20260903.md` and
+`results/full_control_three_mode_map1_10_n10_{raw,summary,reductions}_20260903.csv`.
