@@ -33,6 +33,8 @@ find_package(mars_quadrotor_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(mission_planner REQUIRED)
+find_package(super_planner REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 
 # Other packages
 find_package(Eigen3 REQUIRED)
@@ -76,6 +78,15 @@ add_executable(perfect_drone_frontend_node
         src/ros2_perfect_drone_frontend_node.cpp
 )
 
+add_executable(perfect_drone_full_node
+        src/ros2_perfect_drone_full_node.cpp
+)
+target_compile_definitions(perfect_drone_full_node PRIVATE
+        USE_ROS2
+        FMT_HEADER_ONLY
+        ORIGIN_AT_CORNER
+)
+
 ament_target_dependencies(perfect_drone_node PUBLIC
         ${dependencies}
 )
@@ -90,12 +101,25 @@ target_link_libraries(perfect_drone_frontend_node PUBLIC
         mission_planner::native_sector_cpp_component
         ${THIRD_PARTY}
 )
+ament_target_dependencies(perfect_drone_full_node PUBLIC
+        ${dependencies}
+        super_planner
+        ament_index_cpp
+)
+target_link_libraries(perfect_drone_full_node PUBLIC
+        ${THIRD_PARTY}
+        dw
+)
 
 target_include_directories(perfect_drone_node PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
 target_include_directories(perfect_drone_frontend_node PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
+target_include_directories(perfect_drone_full_node PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
@@ -111,7 +135,7 @@ install(
 
 # 注册 导出库文件
 install(
-        TARGETS perfect_drone_node perfect_drone_frontend_node # 告诉ros2有这么个目标（可执行文件或者库）
+        TARGETS perfect_drone_node perfect_drone_frontend_node perfect_drone_full_node # 告诉ros2有这么个目标（可执行文件或者库）
         EXPORT perfect_drone_node
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib

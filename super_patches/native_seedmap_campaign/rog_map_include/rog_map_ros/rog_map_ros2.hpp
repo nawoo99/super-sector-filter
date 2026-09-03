@@ -473,6 +473,16 @@ namespace rog_map {
                     std::memory_order_release);
         }
 
+        // Same-process sensor front-ends use the exact ROS callback admission
+        // path, but avoid serializing a multi-megabyte PointCloud2 through
+        // DDS first. cloudCallback() is enqueue-only: it snapshots the latest
+        // pose/message and wakes the existing single map-update worker, so a
+        // fast producer cannot build an unbounded in-process backlog either.
+        void injectCloud(
+                const sensor_msgs::msg::PointCloud2::SharedPtr &cloud_msg) {
+            cloudCallback(cloud_msg);
+        }
+
         ROGMapROS(
             const rclcpp::Node::SharedPtr nh,
             const std::string& cfg_path,

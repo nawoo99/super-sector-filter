@@ -319,7 +319,8 @@ namespace super_planner {
                 bool allow_initial_clearance_escape = false,
                 bool unknown_as_occupied = false,
                 const Vec3f *hard_current_pose = nullptr,
-                bool test_force_initial_footprint_occupancy = false) const;
+                bool test_force_initial_footprint_occupancy = false,
+                const Vec3f *initial_footprint_origin = nullptr) const;
 
         TrajectorySafetyResult validateCommittedTrajectory(double now_wt) const;
 
@@ -390,14 +391,19 @@ namespace super_planner {
         // True if a dynamically-limited, map-certified stop exists from the
         // given state. Mirrors the runtime emergency-brake search so this
         // check predicts what activateEmergencyBrake() could actually do.
-        bool certifiedStopExistsFrom(const StatePVAJ &state,
-                                     std::uint64_t trajectory_generation) const;
+        bool certifiedStopExistsFrom(
+                const StatePVAJ &state,
+                std::uint64_t trajectory_generation,
+                const Vec3f *initial_footprint_origin = nullptr,
+                bool test_force_initial_footprint_occupancy = false) const;
 
         // True if a certified stop exists from every sampled state along
         // pos_traj within cfg_.guard_viability_horizon_s of checked_from_tt.
         bool candidateStopsViable(const Trajectory &pos_traj,
                                   double checked_from_tt,
-                                  std::uint64_t trajectory_generation) const;
+                                  std::uint64_t trajectory_generation,
+                                  const Vec3f *initial_footprint_origin = nullptr,
+                                  bool test_force_initial_footprint_occupancy = false) const;
 
         void enqueueShadowValidation(CmdTraj::SharedSnapshot snapshot,
                                      const char *phase);

@@ -90,9 +90,16 @@ add_library(super
         ${srcs}
 )
 target_include_directories(super PUBLIC
-        ${includes})
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        ${Eigen_INCLUDE_DIRS}
+        ${PCL_INCLUDE_DIRS}
+)
 ament_target_dependencies(super PUBLIC
         ${ros_libs}
+)
+target_link_libraries(super PUBLIC
+        ${third_party_libs}
 )
 
 #=================FOR Benchmark Node ============================#
@@ -124,6 +131,16 @@ ament_target_dependencies(fsm_node_with_sector PUBLIC
 
 install(
         TARGETS
+        super
+        EXPORT super_targets
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include
+)
+
+install(
+        TARGETS
         fsm_node
         fsm_node_with_sector
         RUNTIME DESTINATION lib/${PROJECT_NAME}
@@ -135,6 +152,9 @@ install(
 )
 
 ament_export_include_directories(${includes})
+ament_export_targets(super_targets HAS_LIBRARY_TARGET)
+ament_export_libraries(super)
+ament_export_dependencies(${ros_libs})
 
 install(DIRECTORY include/
         DESTINATION include/

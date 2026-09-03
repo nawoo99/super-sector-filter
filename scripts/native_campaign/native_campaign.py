@@ -1149,6 +1149,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_backend",
           "filter_intra_process",
           "filter_sensor_frontend",
+          "full_sensor_intra_process",
           "success", "run_valid",
           "monitor_type", "monitor_flight_cpu_pct", "live_cloud_enabled", "preflight_ready",
           "preflight_cloud_messages", "preflight_odom_messages", "goal_messages",
@@ -1555,6 +1556,7 @@ def log(msg):
 
 def kill_all():
     for n in ("perfect_drone_node", "perfect_drone_frontend_node",
+              "perfect_drone_full_node",
               "fsm_node", "waypoint_mission", "native_sector.py",
               "native_sector_cpp",
               "native_loop_monitor.py", "native_reference_monitor.py",
@@ -1724,6 +1726,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             adaptive_full_open_extra_max_points=6000,
             test_force_local_escape_once=False,
             test_force_initial_footprint_egress_once=False,
+            full_sensor_intra_process=False,
             cgroup_cpu_accounting=False,
             optimizer_phase_memory_trace=False):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
@@ -2001,6 +2004,13 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         sensor_frontend_active = (
             filter_backend == "cpp-frontend" and not raw_direct
         )
+        integrated_full_active = (
+            full_sensor_intra_process and base_mode == "full" and raw_direct
+        )
+        fsm_executable = (
+            "perfect_drone_full_node"
+            if integrated_full_active else "fsm_node"
+        )
         if sensor_frontend_active and base_mode == "adaptive":
             filter_options += (
                 " --risk-verdict-topic /planning/trajectory_risk_verdict"
@@ -2145,6 +2155,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     " use_sensor_frontend:=true"
                     f" filter_arguments:='{encoded_filter_arguments}'"
                 )
+            if integrated_full_active:
+                launch_cmd += " use_integrated_full:=true"
         if test_force_local_escape_once:
             launch_cmd = "SUPER_TEST_FORCE_LOCAL_ESCAPE_ONCE=1 " + launch_cmd
         if test_force_initial_footprint_egress_once:
@@ -2167,8 +2179,12 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
         time.sleep(4)
 
-        # confirm fsm_node actually came up
-        up = subprocess.run(["pgrep", "-f", "fsm_node"], stdout=subprocess.DEVNULL).returncode == 0
+        # Confirm the standalone FSM or the Full simulator/FSM composition
+        # actually came up before starting the mission monitor.
+        up = subprocess.run(
+            ["pgrep", "-f", fsm_executable],
+            stdout=subprocess.DEVNULL,
+        ).returncode == 0
         if not up:
             retry_reasons.append("fsm_node did not start")
             log(f"  {tag} attempt {attempt}/{attempt_max}: fsm_node did not start -> retry")
@@ -2242,7 +2258,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             time.sleep(REF_STATIONARY_WARMUP_S)
 
         row_start = perf_row_count()
-        fsm_cpu = CpuMeter("fsm_node")
+        fsm_cpu = CpuMeter(fsm_executable)
         sim_executable = (
             "perfect_drone_frontend_node"
             if sensor_frontend_active else "perfect_drone_node"
@@ -2252,8 +2268,14 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             "native_sector.py"
             if filter_backend == "python" else SECTOR_CPP_EXECUTABLE
         )
-        fsm_cpu.start()
-        sim_cpu.start_executable(sim_executable)
+        fsm_cpu.start_executable(fsm_executable)
+        if integrated_full_active:
+            # The combined process already includes simulator and planner;
+            # do not double-count the same PID as a second component.
+            sim_cpu = CpuMeter("__no_separate_integrated_full_simulator__")
+            sim_cpu.start()
+        else:
+            sim_cpu.start_executable(sim_executable)
         memory_meter = MemoryMeter(fsm_cpu.pid, memory_trace_csv)
         memory_trace_paths.append(memory_trace_csv)
         memory_meter.sample()
@@ -2359,7 +2381,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             memory_meter.sample()
             if cgroup_meter is not None:
                 cgroup_meter.sample()
-            if not pgrep("/fsm_node"):
+            if not pgrep(fsm_executable):
                 runtime_process_failure = "fsm_node exited during mission"
                 break
             if filt_proc is not None and filt_proc.poll() is not None:
@@ -2438,6 +2460,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                    integrated_filter_active or sensor_frontend_active
                ),
                "filter_sensor_frontend": sensor_frontend_active,
+               "full_sensor_intra_process": integrated_full_active,
                "perf_log_generation_ready": perf_log_generation_ready,
                "perf_window_valid": perf_window_valid,
                "perf_trace_csv": perf_trace_csv if os.path.exists(perf_trace_csv) else None,
@@ -2713,7 +2736,16 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     (planner_ingress_bytes + filter_input_bytes)
                     / payload_duration_s / mib
                 )
-                if sensor_frontend_active:
+                if integrated_full_active:
+                    # The complete Full cloud enters ROG directly in the
+                    # combined process. Keep logical algorithm input bytes in
+                    # planner/algorithm metrics while reporting zero DDS cloud
+                    # bytes for this transport.
+                    rec["dds_cloud_payload_mib_s"] = 0.0
+                    rec["intra_process_cloud_payload_mib_s"] = (
+                        planner_ingress_bytes / payload_duration_s / mib
+                    )
+                elif sensor_frontend_active:
                     verdict_bytes = (
                         rec.get("filter_risk_verdict_payload_bytes") or 0
                     ) + (
@@ -3020,6 +3052,14 @@ def main():
             "a second DDS hop; cpp-frontend composes simulator+filter, "
             "suppresses raw DDS, and emits filtered cloud plus compact risk "
             "verdict (static seed1..10 only)"
+        ),
+    )
+    ap.add_argument(
+        "--full-intra-process",
+        action="store_true",
+        help=(
+            "for static Full runs, compose simulator and SUPER and hand the "
+            "unchanged raw cloud directly to ROG's latest-only queue"
         ),
     )
     ap.add_argument(
@@ -3338,6 +3378,8 @@ def main():
             ap.error(
                 "--test-force-initial-footprint-egress-once requires --runs 1"
             )
+    if args.full_intra_process and "full" not in args.modes:
+        ap.error("--full-intra-process requires full in --modes")
     split_configs = (
         args.seedmap_full_super_config,
         args.seedmap_filtered_super_config,
@@ -3661,6 +3703,7 @@ def main():
                         test_force_initial_footprint_egress_once=(
                             args.test_force_initial_footprint_egress_once
                         ),
+                        full_sensor_intra_process=args.full_intra_process,
                         cgroup_cpu_accounting=args.cgroup_cpu_accounting,
                         optimizer_phase_memory_trace=(
                             args.optimizer_phase_memory_trace

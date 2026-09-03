@@ -216,7 +216,8 @@ namespace super_planner {
             const bool allow_initial_clearance_escape,
             const bool unknown_as_occupied,
             const Vec3f *hard_current_pose,
-            const bool test_force_initial_footprint_occupancy) const {
+            const bool test_force_initial_footprint_occupancy,
+            const Vec3f *initial_footprint_origin) const {
         TrajectorySafetyResult result;
         result.trajectory_generation = trajectory_generation;
         if (!trajectoryValidationEnabled()) {
@@ -396,8 +397,11 @@ namespace super_planner {
         // the exact mandatory-pose check while every short escape from it was
         // labelled OCCUPIED.  Compare occupied voxel centres with robot_r,
         // matching the mandatory-pose check and the static-PCD contact oracle.
+        const Vec3f *footprint_origin = initial_footprint_origin != nullptr
+                ? initial_footprint_origin
+                : hard_current_pose;
         const auto physical_body_occupied =
-                [this, &map_config, hard_current_pose,
+                [this, &map_config, hard_current_pose, footprint_origin,
                  allow_initial_clearance_escape,
                  test_force_initial_footprint_occupancy, &result](
                         const Vec3f &point,
@@ -415,15 +419,20 @@ namespace super_planner {
                                 rog_map::GridType::OCCUPIED,
                                 occupied_points);
             if (test_force_initial_footprint_occupancy &&
-                hard_current_pose != nullptr &&
-                (point - *hard_current_pose).norm() <= cfg_.robot_r) {
-                occupied_points.push_back(*hard_current_pose);
+                footprint_origin != nullptr &&
+                (point - *footprint_origin).norm() <= cfg_.robot_r) {
+                occupied_points.push_back(*footprint_origin);
             }
             for (const auto &occupied_point : occupied_points) {
                 const double candidate_distance =
                         (occupied_point - point).norm();
                 if (candidate_distance <= cfg_.robot_r + 1.0e-9) {
                     const double initial_distance =
+                            footprint_origin != nullptr
+                                    ? (occupied_point -
+                                       *footprint_origin).norm()
+                                    : std::numeric_limits<double>::infinity();
+                    const double reference_distance =
                             hard_current_pose != nullptr
                                     ? (occupied_point -
                                        *hard_current_pose).norm()
@@ -432,12 +441,16 @@ namespace super_planner {
                             allow_initial_footprint_mask &&
                             cfg_.trajectory_guard_initial_footprint_egress_en &&
                             allow_initial_clearance_escape &&
+                            footprint_origin != nullptr &&
                             hard_current_pose != nullptr &&
                             initial_distance <= cfg_.robot_r + 1.0e-9 &&
                             // Never use the mask to move farther into a real
-                            // hit.  It is only an egress exception for a cell
-                            // already intersecting the stopped footprint.
-                            candidate_distance + 1.0e-9 >= initial_distance;
+                            // hit. Membership is fixed to the footprint at
+                            // the start of the recovery episode, while the
+                            // distance baseline is the start of this exact
+                            // candidate (including a viability brake).
+                            candidate_distance + 1.0e-9 >=
+                                    reference_distance;
                     if (inside_initial_footprint) {
                         result.used_initial_footprint_egress = true;
                         continue;
@@ -1442,15 +1455,15 @@ namespace super_planner {
                     "phase={} radius={:.3f}m action=inject_once",
                     phase, cfg_.robot_r);
         }
-        const auto safety = validatePositionTrajectory(candidate.pos_traj,
-                                                       checked_from_tt,
-                                                       candidate_generation,
-                                                       allow_clearance_escape,
-                                                       false,
-                                                       hard_current_pose
-                                                               ? &*hard_current_pose
-                                                               : nullptr,
-                                                       inject_initial_footprint_occupancy);
+        auto safety = validatePositionTrajectory(candidate.pos_traj,
+                                                 checked_from_tt,
+                                                 candidate_generation,
+                                                 allow_clearance_escape,
+                                                 false,
+                                                 hard_current_pose
+                                                         ? &*hard_current_pose
+                                                         : nullptr,
+                                                 inject_initial_footprint_occupancy);
         if (!safety.safe()) {
             trajectory_guard_rejection_pending_.store(true,
                                                       std::memory_order_release);
@@ -1506,8 +1519,20 @@ namespace super_planner {
         if (cfg_.guard_viability_en) {
             double scale = 1.0;
             int retry = 0;
-            while (!candidateStopsViable(candidate.pos_traj, checked_from_tt,
-                                         candidate_generation)) {
+            const auto stops_viable = [&]() {
+                const bool propagate_footprint_egress =
+                        safety.used_initial_footprint_egress &&
+                        hard_current_pose.has_value();
+                return candidateStopsViable(
+                        candidate.pos_traj, checked_from_tt,
+                        candidate_generation,
+                        propagate_footprint_egress
+                                ? &*hard_current_pose
+                                : nullptr,
+                        propagate_footprint_egress &&
+                                inject_initial_footprint_occupancy);
+            };
+            while (!stops_viable()) {
                 const double next_scale = scale * cfg_.guard_viability_speed_scale_step;
                 if (retry >= cfg_.guard_viability_max_retries ||
                     next_scale > cfg_.guard_viability_speed_scale_max) {
@@ -1521,26 +1546,33 @@ namespace super_planner {
                 }
                 scale = next_scale;
                 ++retry;
-                candidate.pos_traj = timeScaleTrajectory(candidate.pos_traj, scale);
-                candidate.yaw_traj = timeScaleTrajectory(candidate.yaw_traj, scale);
+                const double incremental_scale =
+                        cfg_.guard_viability_speed_scale_step;
+                candidate.pos_traj = timeScaleTrajectory(
+                        candidate.pos_traj, incremental_scale);
+                candidate.yaw_traj = timeScaleTrajectory(
+                        candidate.yaw_traj, incremental_scale);
                 if (std::isfinite(candidate.backup_traj_start_tt)) {
-                    candidate.backup_traj_start_tt *= scale;
+                    candidate.backup_traj_start_tt *= incremental_scale;
                 }
                 if (candidate.carry_backup_start_tt >= 0.0) {
-                    candidate.carry_backup_start_tt *= scale;
+                    candidate.carry_backup_start_tt *= incremental_scale;
                 }
                 if (candidate.carry_backup_end_tt >= 0.0) {
-                    candidate.carry_backup_end_tt *= scale;
+                    candidate.carry_backup_end_tt *= incremental_scale;
                 }
-                checked_from_tt *= scale;
+                checked_from_tt = std::clamp(
+                        ros_ptr_->getSimTime() - candidate.pos_traj.start_WT,
+                        0.0, candidate.pos_traj.getTotalDuration());
                 // The rescaled candidate follows the exact same spatial path
                 // (time-scaling only stretches duration), so this re-check is
                 // defensive: it must remain safe, but is re-verified rather
                 // than assumed.
-                const auto rescaled_safety = validatePositionTrajectory(
+                auto rescaled_safety = validatePositionTrajectory(
                         candidate.pos_traj, checked_from_tt, candidate_generation,
                         allow_clearance_escape, false,
-                        hard_current_pose ? &*hard_current_pose : nullptr);
+                        hard_current_pose ? &*hard_current_pose : nullptr,
+                        inject_initial_footprint_occupancy);
                 if (!rescaled_safety.safe()) {
                     ros_ptr_->error(
                             " -- [TRAJ_GUARD_VIABILITY_RESCALE_UNSAFE] phase={} "
@@ -1549,6 +1581,7 @@ namespace super_planner {
                                                               std::memory_order_release);
                     return false;
                 }
+                safety = std::move(rescaled_safety);
             }
             if (retry > 0) {
                 ros_ptr_->warn(
@@ -1610,7 +1643,9 @@ namespace super_planner {
 
     bool SuperPlanner::certifiedStopExistsFrom(
             const StatePVAJ &state,
-            const std::uint64_t trajectory_generation) const {
+            const std::uint64_t trajectory_generation,
+            const Vec3f *initial_footprint_origin,
+            const bool test_force_initial_footprint_occupancy) const {
         if (!state.array().isFinite().all()) {
             return false;
         }
@@ -1661,8 +1696,15 @@ namespace super_planner {
             }
             last_dynamics_ok = dynamics_ok;
             if (dynamics_ok) {
+                const Vec3f brake_start = state.col(0);
+                const bool allow_footprint_egress =
+                        initial_footprint_origin != nullptr;
                 const auto safety = validatePositionTrajectory(
-                        candidate, 0.0, trajectory_generation, true);
+                        candidate, 0.0, trajectory_generation, true, false,
+                        allow_footprint_egress ? &brake_start : nullptr,
+                        allow_footprint_egress &&
+                                test_force_initial_footprint_occupancy,
+                        initial_footprint_origin);
                 last_status = safety.status;
                 // Diagnostic logging showed almost all stop-viability failures
                 // were CLEARANCE_MARGIN, not OCCUPIED, at speeds from 2.9 to
@@ -1701,7 +1743,9 @@ namespace super_planner {
     bool SuperPlanner::candidateStopsViable(
             const Trajectory &pos_traj,
             double checked_from_tt,
-            const std::uint64_t trajectory_generation) const {
+            const std::uint64_t trajectory_generation,
+            const Vec3f *initial_footprint_origin,
+            const bool test_force_initial_footprint_occupancy) const {
         if (pos_traj.empty()) {
             return true;
         }
@@ -1716,7 +1760,10 @@ namespace super_planner {
         while (true) {
             StatePVAJ state;
             if (pos_traj.getState(tt, state)) {
-                if (!certifiedStopExistsFrom(state, trajectory_generation)) {
+                if (!certifiedStopExistsFrom(
+                            state, trajectory_generation,
+                            initial_footprint_origin,
+                            test_force_initial_footprint_occupancy)) {
                     return false;
                 }
             }

@@ -3759,3 +3759,59 @@ use new repetitions. Detailed tables and raw paths are in the 45-degree record
 and `results/side_entry_v4_maps7_9_10_three_mode_n3_{raw,summary}_20260903.csv`
 plus
 `results/side_entry_v4_maps7_9_10_three_mode_n3_paired_reductions_20260903.csv`.
+
+### 8.52 Full viability egress fix and in-process raw-map delivery (2026-09-03)
+
+Full was isolated before any further Sector/Adaptive tuning. Two guard defects
+were corrected. A trajectory accepted through the configured initial-footprint
+egress mask did not pass that same start context into its derived viability
+brakes, so safe brakes could be rejected by points in the footprint being
+exited. The egress origin and synthetic regression hook now propagate through
+`candidateStopsViable()` and `certifiedStopExistsFrom()`. The viability
+slowdown loop also applied a cumulative scale to an already scaled trajectory;
+each retry now applies only the incremental step while retaining the cumulative
+scale for limits and diagnostics. Release build, all 29 campaign unit tests and
+a forced Map8 initial-footprint gate passed.
+
+Map9 then exposed a separate transport problem. Changing the standalone raw
+publisher to best-effort/keep-last-1 prevented a DDS backlog but did not restore
+delivery: the seven preserved valid rows averaged only 2.758 ROG frames/s,
+55.14 stale-map detections/run and 89.61 s recovery-active time. Six of seven
+completed and one low-speed static-PCD contact occurred; the scheduled ten-row
+campaign was interrupted after those seven rows, which are retained rather
+than presented as an n=10 result.
+
+An opt-in `perfect_drone_full_node` now composes PerfectDrone and SUPER. It
+passes the unchanged complete `PointCloud2::SharedPtr` through
+`FsmRos2::injectMapCloud()` to `ROGMapROS::injectCloud()`. The latter invokes
+the same enqueue-only/latest-only admission path and existing map worker. PCL
+conversion, ray casting, inflation, commits, planner and guard are unchanged;
+only the large raw-cloud DDS serialization/transport boundary is removed. The
+standard tight_v7 profile and default launch path remain unchanged. The
+campaign runner exposes this only with `--full-intra-process` and records raw
+DDS versus in-process logical bytes separately.
+
+Map9 in-process n=10 was 10/10 complete, collision-free and speed-valid. ROG
+input was 10.106 Hz, stale count was zero and recovery-active time averaged
+19.85 s; mission time averaged 76.16 s. Map compute increased from the DDS
+sample's 27.22 to 36.56 ms, consistent with processing more actual Full frames
+rather than skipping computation. `fsm_cpu_pct` is now a combined
+simulator+planner process measurement: its 145.78% means 1.46 logical cores and
+must not be compared with the old FSM-only percentage.
+
+The cross-map gate was then expanded. Map1--6 each passed 1/1 and the harder
+Map7--10 each passed 10/10, for 46/46 selected rows with zero source-static-PCD
+contacts, zero speed violations, zero stale detections and zero retry/OOM/PSI
+events. Map7/8/9/10 mean times were 70.08/65.36/76.16/76.48 s and worst
+clearances were +0.247/+0.184/+0.232/+0.185 m. The 46-row sensor/map rates were
+10.001/10.112 Hz. Full logical planner ingress remained 11.69 MiB/s; raw-cloud
+DDS was zero because delivery was in-process, not because points were removed.
+
+This is an observed regression pass, not a population-level 100% guarantee,
+and sampling is intentionally unequal. The next Full-only gate is to add nine
+runs each on Map1--6 so every map has ten final-binary observations. A fair
+later three-mode CPU comparison must use the same process/accounting boundary
+for all modes and report logical ingress separately from external DDS. Detailed
+tables, caveats and raw-file manifest are in
+`docs/full_inprocess_control_20260903.md`; the compact table is
+`results/full_inprocess_control_map_summary_20260903.csv`.

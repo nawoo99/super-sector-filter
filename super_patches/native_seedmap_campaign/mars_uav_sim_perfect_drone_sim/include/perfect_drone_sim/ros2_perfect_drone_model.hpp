@@ -228,6 +228,17 @@ namespace perfect_drone {
                                           .best_effort()
                                           .keep_last(100)
                                           .durability_volatile());
+            // ROG-Map's cloud subscription and update worker are both
+            // explicitly latest-only. Keeping 100 multi-megabyte scans in
+            // the raw writer cannot add usable map history; under sustained
+            // Full traffic it instead lets stale samples occupy the DDS
+            // writer path while the guard waits for a fresh map. Preserve
+            // the complete 360-degree point set of every published sample,
+            // but retain only the newest sample at the transport boundary.
+            const rclcpp::QoS cloud_qos(rclcpp::QoS(1)
+                                                .best_effort()
+                                                .keep_last(1)
+                                                .durability_volatile());
             // Position commands are state set-points, not a replayable event
             // stream.  Keeping a backlog can apply stale exploratory commands
             // after an emergency brake when rendering blocks the single-thread
@@ -286,7 +297,8 @@ namespace perfect_drone {
 
             // 发布 PointCloud2 消息
             if (publish_raw_cloud_) {
-                local_pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_registered", qos);
+                local_pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+                        "/cloud_registered", cloud_qos);
             }
 
             global_pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/global_pc", qos);

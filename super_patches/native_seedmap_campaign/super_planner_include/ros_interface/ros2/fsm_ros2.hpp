@@ -2906,6 +2906,17 @@ namespace fsm {
             cacheGuardCloud(cloud_msg, rog_map::MapHealthClock::now());
         }
 
+        // Experimental Full-mode transport bypass. This does not change the
+        // cloud contents or map algorithm: ROGMapROS performs the same
+        // admission checks and hands the SharedPtr to its existing
+        // latest-only update worker. Call only after init().
+        void injectMapCloud(
+                const sensor_msgs::msg::PointCloud2::SharedPtr &cloud_msg) {
+            if (map_ptr_) {
+                map_ptr_->injectCloud(cloud_msg);
+            }
+        }
+
         FsmRos2() = default;
 
         ~FsmRos2() {

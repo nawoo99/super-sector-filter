@@ -1,6 +1,32 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-03 Full 우선 통제: viability egress 결함 수정 및 in-process Full
+> raw-map 전달 gate 완료.**
+> 초기-footprint egress로 허용된 trajectory의 viability brake에 egress 문맥이
+> 빠지던 결함과, 이미 늘어난 trajectory에 누적 배율을 다시 곱하던 rescale 결함을
+> 수정했다. Release build, campaign pytest 29개, 강제 Map8 egress gate가 통과했다.
+>
+> standalone Full raw DDS를 best-effort/depth-1로 바꿔도 Map9 ROG 입력은 평균
+> 2.758 Hz에 머물렀다. 보존된 유효 7행은 완주 6/7, 충돌 1, stale 평균 55.14회,
+> recovery 89.61초였다. 따라서 점을 줄이지 않고 PerfectDrone과 SUPER를 compose해
+> 동일 Full `PointCloud2::SharedPtr`를 기존 latest-only ROG queue에 직접 넘기는
+> opt-in `perfect_drone_full_node`를 추가했다. PCL/ROG/planner/guard 계산은 그대로고
+> raw DDS 경계만 제거했다. 표준 `tight_v7`과 기본 launch 경로는 변경하지 않았다.
+>
+> Map9 in-process n=10은 10/10 완주·충돌 0, map 10.106 Hz, stale 0, 평균시간
+> 76.16초였다. 이어 Map1--6 각 1회와 Map7--10 각 10회의 선택된 46행 모두
+> 완주·충돌 0·속도위반 0·retry/OOM/PSI 0이었다. Map7/8/9/10 최저 clearance는
+> +0.247/+0.184/+0.232/+0.185m다. 결합 프로세스 CPU 약 1.48 cores는
+> simulator+planner 전체이며 예전 FSM-only CPU와 직접 비교하지 않는다. Full
+> logical ingress는 평균 11.69MiB/s로 줄지 않았고 raw DDS만 0이다.
+>
+> 이는 population guarantee가 아니다. 다음 우선순위는 Map1--6을 각 9회 추가해
+> 모든 맵을 final binary n=10으로 맞추는 Full-only freeze gate다. 상세는 viability
+> §8.52와 `docs/full_inprocess_control_20260903.md`, compact 결과는
+> `results/full_inprocess_control_map_summary_20260903.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-03 45° 선정 근거 고정 및 common-source side-entry v4 n=3 완료.**
 > 45°는 안전률 우위가 아니라 이전 탐색 실험의 secondary balance로 선택했다.
 > Sector/Adaptive의 clearance 0.20 m 미만은 2/9 대 0/9, worst-clearance 차이는
