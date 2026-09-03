@@ -15,16 +15,20 @@
 > raw DDS 경계만 제거했다. 표준 `tight_v7`과 기본 launch 경로는 변경하지 않았다.
 >
 > Map9 in-process n=10은 10/10 완주·충돌 0, map 10.106 Hz, stale 0, 평균시간
-> 76.16초였다. 이어 Map1--6 각 1회와 Map7--10 각 10회의 선택된 46행 모두
-> 완주·충돌 0·속도위반 0·retry/OOM/PSI 0이었다. Map7/8/9/10 최저 clearance는
-> +0.247/+0.184/+0.232/+0.185m다. 결합 프로세스 CPU 약 1.48 cores는
-> simulator+planner 전체이며 예전 FSM-only CPU와 직접 비교하지 않는다. Full
-> logical ingress는 평균 11.69MiB/s로 줄지 않았고 raw DDS만 0이다.
+> 76.16초였다. 이어 Map1--10을 각각 10회로 맞춘 최종 고유 100행 모두
+> 완주·충돌 0·속도위반 0·stale/retry/OOM/PSI 0이었다. Map1--10 최저
+> clearance는 +0.244/+0.217/+0.218/+0.222/+0.225/+0.175/+0.247/+0.184/
+> +0.232/+0.185m다. 결합 프로세스 CPU 약 1.48 cores는 simulator+planner
+> 전체이며 예전 FSM-only CPU와 직접 비교하지 않는다. Full logical ingress는
+> 평균 9.43MiB/s로 줄지 않았고 raw DDS만 0이다.
 >
-> 이는 population guarantee가 아니다. 다음 우선순위는 Map1--6을 각 9회 추가해
-> 모든 맵을 final binary n=10으로 맞추는 Full-only freeze gate다. 상세는 viability
-> §8.52와 `docs/full_inprocess_control_20260903.md`, compact 결과는
-> `results/full_inprocess_control_map_summary_20260903.csv`다.
+> 관측 100/100의 Wilson 95% 하한은 약 96.30%이므로 population guarantee는
+> 아니다. 현재 10맵/profile의 Full은 여기서 동결한다. 다음은 Full을 paired
+> control로만 사용해 세 모드를 동일 cgroup 경계로 비교하고, Adaptive의 잔여
+> 실패만 분석하는 단계다. 상세는 viability §8.52와
+> `docs/full_inprocess_control_20260903.md`, compact/final raw는
+> `results/full_inprocess_control_map_summary_20260903.csv`와
+> `results/full_intra_map1_10_n10_raw_20260903.csv`다.
 
 > [!IMPORTANT]
 > **2026-09-03 45° 선정 근거 고정 및 common-source side-entry v4 n=3 완료.**

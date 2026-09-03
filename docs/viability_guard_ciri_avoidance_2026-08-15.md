@@ -3799,19 +3799,22 @@ rather than skipping computation. `fsm_cpu_pct` is now a combined
 simulator+planner process measurement: its 145.78% means 1.46 logical cores and
 must not be compared with the old FSM-only percentage.
 
-The cross-map gate was then expanded. Map1--6 each passed 1/1 and the harder
-Map7--10 each passed 10/10, for 46/46 selected rows with zero source-static-PCD
-contacts, zero speed violations, zero stale detections and zero retry/OOM/PSI
-events. Map7/8/9/10 mean times were 70.08/65.36/76.16/76.48 s and worst
-clearances were +0.247/+0.184/+0.232/+0.185 m. The 46-row sensor/map rates were
-10.001/10.112 Hz. Full logical planner ingress remained 11.69 MiB/s; raw-cloud
-DDS was zero because delivery was in-process, not because points were removed.
+The cross-map gate was then expanded to ten runs per map. Its final CSV has
+exactly 100 unique `(map, run, mode)` keys, all run-valid, complete, contact-free
+and speed-valid, with zero stale detections, retries, OOM kills or PSI pressure.
+Map1--10 mean times were 59.82/55.57/58.61/64.92/64.13/65.58/70.08/65.36/
+76.16/76.48 s. Worst per-map clearances were +0.244/+0.217/+0.218/+0.222/
++0.225/+0.175/+0.247/+0.184/+0.232/+0.185 m. The overall sensor/map rates were
+10.001/10.145 Hz, map compute was 36.23 ms and Full logical planner ingress
+remained 9.43 MiB/s. Raw-cloud DDS was zero because delivery was in-process,
+not because points were removed.
 
-This is an observed regression pass, not a population-level 100% guarantee,
-and sampling is intentionally unequal. The next Full-only gate is to add nine
-runs each on Map1--6 so every map has ten final-binary observations. A fair
-later three-mode CPU comparison must use the same process/accounting boundary
-for all modes and report logical ingress separately from external DDS. Detailed
-tables, caveats and raw-file manifest are in
+This is an observed 100/100 regression pass, not a population-level 100%
+guarantee; its Wilson 95% lower bound is about 96.30%. Full is now frozen for
+the current ten maps/profile. A later three-mode CPU comparison must use the
+same cgroup accounting boundary for all modes and report logical ingress
+separately from external DDS. Full should be changed again only if new Full
+failure evidence appears. Detailed tables, caveats and raw-file manifest are in
 `docs/full_inprocess_control_20260903.md`; the compact table is
-`results/full_inprocess_control_map_summary_20260903.csv`.
+`results/full_inprocess_control_map_summary_20260903.csv` and the final raw
+cohort is `results/full_intra_map1_10_n10_raw_20260903.csv`.
