@@ -4073,3 +4073,85 @@ but n=3 in the prospective cohort is not a population-level guarantee. Any new
 headline completion estimate requires a larger cohort with the resource gate
 enabled prospectively from its first row. Raw, summary and reduction files are
 `results/map10_resource_guard_prospective_full_adaptive_n3_{raw,summary,reductions}_20260904.csv`.
+
+### 8.59 Prospective resource-gated ten-map, three-mode n=10 (2026-09-05)
+
+The three-mode Map10 gate completed first: all 30 Full/Sector/Adaptive rows
+completed on their first attempt, were run/resource/speed/performance/cgroup
+valid, and had zero static-PCD contact. The unchanged v7/45-degree profiles
+then ran prospectively across Map1--10 with the same gate enabled before the
+first row. The final cohort contains exactly 300 unique keys and no missing,
+duplicate, unexpected or CPU-scope rows. Every run completed on its first
+attempt; resource abort, infrastructure retry, OOM and static-PCD contact were
+all zero.
+
+Full and Adaptive each completed 100/100 and were protocol-valid 100/100.
+Sector also completed 100/100 without contact, but was valid 99/100 because
+Map9 run2 exceeded the v7 speed contract. The strict campaign validator
+therefore correctly reports one quality failure and overall FAIL rather than
+silently replacing the observation. Per-map completion is 10/10 for every
+mode. Mean mission time for Full/Sector/Adaptive is 65.865/63.801/63.726 s.
+Adaptive made 1,904 effective Full-open transitions, or 19.04/run.
+
+All Full and Adaptive rows are comparable under the protocol. Adaptive versus
+Full reduced map compute per frame by 38.599%, common end-to-end mean cores by
+13.709%, end-to-end core-seconds by 16.574%, p95 cores by 13.250%, and logical
+planner ingress by 75.632%; mission time was 3.247% lower. Peak end-to-end PSS
+was 0.328% higher, so no memory-saving claim is supported. Algorithm CPU is
+not compared because Full includes simulator+planner while filtered modes are
+planner-only. Full raw delivery is in-process and has no external DDS value,
+so DDS is likewise not compared with Full. Pooled reductions involving Sector
+are marked invalid because its speed-invalid row would otherwise contaminate
+the protocol comparison.
+
+The Map9 run2 Sector vehicle still reached 5/5 waypoints in 76.60 s with zero
+contact and +0.282 m static-PCD clearance, but command and odometry both
+reached 10.95563 m/s. There were 33 command and 33 odometry exceedance samples;
+the first was at 20.778471 s on trajectory 48, flag 3. The run was resource
+valid with PSI zero. The stack log shows brake rejection at
+1788535275.415668 and .416040 with zero initial speed, followed at .519595 by
+an accepted retry using position-derived `odom_motion=10.960`, command velocity
+error 6.613 m/s, and a velocity limit expanded to 10.960 m/s.
+
+The evidence identifies a common guard fail-closed contradiction rather than
+a Sector-only filtering fault. The main FSM holds guard-enabled EMER_STOP, but
+`pubCmdTimerCallback` still permits an ordinary certified trajectory command
+in EMER_STOP when no certified brake is active. The command age resetting
+between the two rejected attempts and the retry confirms such a publication.
+PerfectDrone copies each command position and velocity directly into its
+state; a generation-position discontinuity was then interpreted by the
+position-difference motion estimator as real speed. Brake construction
+deliberately uses `max(configured_limit, initial_speed)` to remain able to
+brake after a genuine disturbance, so the false 10.960 m/s estimate became an
+allowed flag-3 command. Similar over-v7 position-difference spikes occur in
+other Full/Adaptive logs but their candidate paths were rejected, showing
+that the latent issue is mode-common and only manifested here.
+
+The next isolated code change should suppress ordinary flag-1/2 publication
+in guard-enabled EMER_STOP without changing guard-disabled legacy behaviour,
+qualify position-derived velocity by command-generation and position
+continuity or prefer direct odometry twist, and add a reject-to-retry
+regression test. No independently verified external overspeed should permit a
+brake command above 7.01 m/s. Targeted Map5--10 reproductions should precede a
+new Map9 gate and any full frozen campaign.
+
+Surface clearance below 0.20 m occurred in 5/7/6 Full/Sector/Adaptive runs;
+the minima were +0.173/+0.126/+0.124 m. This remains distinct from zero contact
+and is only the current static-PCD/robot-radius metric. Observed 100/100 for
+Full and Adaptive has an exact two-sided 95% lower success-rate bound of about
+96.38%, while per-map 10/10 gives about 69.15%. No McNemar test was performed,
+and no new-map generalization is claimed.
+
+The gate also handled host variability without retry. Map2 run5 Adaptive
+waited 113.144 s for the preflight stability condition and then completed.
+During Map10 run7 Adaptive, host swap rose from 99.75 to 504.75 MiB, but the
+campaign cgroup and FSM swap stayed zero, available memory remained at least
+4085.1 MiB and PSI peaked at only 0.18/0.18. The swapped pages therefore came
+from outside the campaign cgroup; the event caused no abort, retry, OOM or
+planner failure.
+
+Detailed map tables, scope rules, failure chronology and resource audit are
+in `docs/resource_guard_campaign_final_20260905.md`. Versioned results are
+`results/allmaps_resource_guard_prospective_three_mode_n10_`
+`{raw_20260904,summary,reductions,validation}`. The 457 MiB detailed artifact
+directory remains local and is intentionally not committed.

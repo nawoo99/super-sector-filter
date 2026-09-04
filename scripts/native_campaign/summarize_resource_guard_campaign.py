@@ -233,6 +233,9 @@ def summarize_group(
         "collision_runs": len(collisions),
         "collision_events": sum(collision_count(row) for row in rows),
         "run_valid_count": sum(parse_bool(row.get("run_valid")) is True for row in rows),
+        "speed_limit_valid_count": sum(
+            parse_bool(row.get("speed_limit_valid")) is True for row in rows
+        ),
         "resource_valid_count": sum(
             parse_bool(row.get("resource_valid")) is True for row in rows
         ),
@@ -269,6 +272,14 @@ def summarize_group(
         ),
         "clearance_min_m": minimum(
             parse_float(row.get("static_pcd_clearance_m")) for row in rows
+        ),
+        "clearance_below_0p20_count": sum(
+            (
+                (clearance := parse_float(row.get("static_pcd_clearance_m")))
+                is not None
+                and clearance < 0.20
+            )
+            for row in rows
         ),
         "effective_full_open_total": int(
             sum_values(
@@ -329,6 +340,15 @@ def comparison_valid(
     baseline: Mapping[str, object],
 ) -> bool:
     if candidate.get(label) is None or baseline.get(label) is None:
+        return False
+    # A reduction is a like-for-like protocol comparison only when every run in
+    # both groups passed the campaign contract (including the v7 speed cap).
+    # Planner outcomes remain summarized separately, but an invalid run must not
+    # silently enter a compute/bandwidth reduction claim.
+    if (
+        candidate.get("run_valid_count") != candidate.get("n")
+        or baseline.get("run_valid_count") != baseline.get("n")
+    ):
         return False
     if label in ALGORITHM_SCOPE_METRICS:
         return (

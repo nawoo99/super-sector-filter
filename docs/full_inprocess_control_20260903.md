@@ -476,3 +476,27 @@ resource gate를 처음부터 적용한 더 큰 반복이 필요하다.
 - `results/map10_resource_guard_prospective_full_adaptive_n3_raw_20260904.csv`
 - `results/map10_resource_guard_prospective_full_adaptive_n3_summary_20260904.csv`
 - `results/map10_resource_guard_prospective_full_adaptive_n3_reductions_20260904.csv`
+
+## Prospective resource-gated 10맵 3모드 n=10 최종 결과 (2026-09-05)
+
+Map 10 3모드 n=10 gate 30/30 통과 후 같은 frozen profile과 gate로 Map 1--10 ×
+Full/Sector/Adaptive × n=10, 총 300개 고유 row를 새로 수집했다. 모두 첫
+attempt였고 resource abort/retry/OOM/static-PCD 충돌은 0이다. Full과 Adaptive는
+100/100 완주·유효, Sector는 100/100 완주지만 Map 9 run 2의 10.95563 m/s
+flag-3 overspeed 때문에 99/100 유효다. 따라서 전체 strict validation은 한 개의
+quality failure로 FAIL이며, 실패를 재시험 성공으로 대체하지 않았다.
+
+Adaptive는 Full 대비 평균시간 3.247%, map compute/frame 38.599%, 공통 E2E
+mean cores 13.709%, core·s 16.574%, planner ingress 75.632%를 줄였다. Peak PSS는
+0.328% 높았다. Adaptive effective-open은 1,904회(19.04/run)다. Full raw DDS는
+in-process이므로 DDS의 Full 대비 감소율을 내지 않고, algorithm CPU도 scope가
+다르므로 공통 E2E cgroup만 비교한다. Sector가 포함된 pooled reduction은 한
+invalid row 때문에 공식 비교에서 제외한다.
+
+Map 9 failure는 brake reject 뒤 EMER_STOP에서도 ordinary command를 허용하는
+`pubCmdTimerCallback`, PerfectDrone의 command-state 직접 대입, 위치 차분 속도
+추정, `max(v7, initial speed)` brake cap이 이어진 공통 guard 결함으로 분석됐다.
+다음 변경은 guard-enabled EMER_STOP ordinary command 차단과 continuity-qualified
+velocity, reject→retry 회귀시험이다. 세부 맵별 표, clearance, resource/swap 및
+통계 한계는 `docs/resource_guard_campaign_final_20260905.md`와 viability §8.59를
+기준으로 한다.

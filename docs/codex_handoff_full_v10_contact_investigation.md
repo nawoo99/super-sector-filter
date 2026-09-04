@@ -1,6 +1,31 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-05 prospective resource-gated 10맵 × 3모드 × n=10 완료.**
+> 고정 v7/45° profile로 300개 고유 run을 모두 첫 attempt에 완료했고 resource
+> abort/retry/OOM 및 static-PCD 충돌은 0이다. Full과 Adaptive는 각각 100/100
+> 완주·100/100 protocol-valid였다. Sector도 100/100 완주했지만 Map 9 run 2에서
+> guard flag-3 command/odom이 10.95563 m/s까지 올라 v7 속도 계약을 위반해
+> 99/100 valid다. 이 실패를 성공 재시험으로 대체하지 않았으므로 전체 strict
+> validation은 의도대로 FAIL이다.
+>
+> Adaptive는 Full 대비 map compute/frame 38.599%, 공통 E2E mean cores 13.709%,
+> core·s 16.574%, logical planner ingress 75.632%를 줄였고 평균시간은 3.247%
+> 짧았다. Peak PSS는 0.328% 높아 메모리 절감 주장은 하지 않는다. Adaptive
+> effective-open은 총 1,904회(19.04/run)다. Full raw cloud는 in-process라
+> external DDS가 정의되지 않으며 algorithm CPU scope도 Full과 filtered mode가
+> 달라, 두 항목의 Full 대비 비교는 금지한다.
+>
+> Map 9 속도 실패의 직접 경로는 공통 guard 결함이다. brake reject 후
+> guard-enabled EMER_STOP에서도 `pubCmdTimerCallback`이 ordinary command를
+> 발행했고, PerfectDrone position jump를 위치 차분 `odom_motion=10.960`으로
+> 오인한 뒤 brake cap을 그 값으로 확장했다. 다음 변경은 EMER_STOP ordinary
+> command 차단, continuity-qualified velocity, 회귀시험 순서다. 상세 표·자원/swap
+> audit·통계 한계는 `docs/resource_guard_campaign_final_20260905.md`, viability
+> §8.59에 있다. 원자료는 `results/allmaps_resource_guard_prospective_three_mode_`
+> `n10_{raw_20260904,summary,reductions,validation}`이다.
+
+> [!IMPORTANT]
 > **2026-09-04 resource-valid Map10 Full/Adaptive prospective n=3 완료.**
 > 시험 중 외부 VS Code extension host를 분리해 available 약 9GiB, swap/PSI 0을
 > 확보하고 새 기본 resource gate를 첫 행부터 적용했다. Planner/profile 변경 없이

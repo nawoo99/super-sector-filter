@@ -73,6 +73,16 @@ class ResourceGuardCampaignSummaryTest(unittest.TestCase):
         self.assertIsNone(result["algorithm_cores_mean"])
         self.assertAlmostEqual(result["mission_time_mean_all_s"], 60)
 
+    def test_summary_counts_speed_validity_and_clearance_margin_violations(self):
+        first = valid_row()
+        second = valid_row(run="2")
+        first["static_pcd_clearance_m"] = "0.20"
+        second["static_pcd_clearance_m"] = "0.199"
+        second["speed_limit_valid"] = "False"
+        result = summary.summarize_group("seed1", "full", [first, second])
+        self.assertEqual(result["speed_limit_valid_count"], 1)
+        self.assertEqual(result["clearance_below_0p20_count"], 1)
+
     def test_reduction_sign(self):
         self.assertAlmostEqual(summary.reduction(2.0, 10.0), 80.0)
         self.assertAlmostEqual(summary.reduction(12.0, 10.0), -20.0)
@@ -92,6 +102,23 @@ class ResourceGuardCampaignSummaryTest(unittest.TestCase):
         self.assertIsNone(algorithm["adaptive_vs_full_reduction_pct"])
         self.assertTrue(algorithm["adaptive_vs_sector_comparison_valid"])
         end_to_end = next(row for row in rows if row["metric"] == "end_to_end_cores_mean")
+        self.assertTrue(end_to_end["adaptive_vs_full_comparison_valid"])
+
+    def test_reductions_require_all_runs_to_be_protocol_valid(self):
+        full = summary.summarize_group("seed1", "full", [valid_row()])
+        sector_row = valid_row(mode="sector")
+        sector_row["algorithm_cpu_scope"] = "planner_only"
+        sector_row["run_valid"] = "False"
+        sector = summary.summarize_group("seed1", "sector", [sector_row])
+        adaptive_row = valid_row(mode="adaptive")
+        adaptive_row["algorithm_cpu_scope"] = "planner_only"
+        adaptive = summary.summarize_group("seed1", "adaptive", [adaptive_row])
+        rows = summary.build_reductions([full, sector, adaptive])
+        end_to_end = next(row for row in rows if row["metric"] == "end_to_end_cores_mean")
+        self.assertFalse(end_to_end["sector_vs_full_comparison_valid"])
+        self.assertIsNone(end_to_end["sector_vs_full_reduction_pct"])
+        self.assertFalse(end_to_end["adaptive_vs_sector_comparison_valid"])
+        self.assertIsNone(end_to_end["adaptive_vs_sector_reduction_pct"])
         self.assertTrue(end_to_end["adaptive_vs_full_comparison_valid"])
 
 
