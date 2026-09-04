@@ -1,6 +1,21 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-04 resource-valid Map10 Full/Adaptive prospective n=3 완료.**
+> 시험 중 외부 VS Code extension host를 분리해 available 약 9GiB, swap/PSI 0을
+> 확보하고 새 기본 resource gate를 첫 행부터 적용했다. Planner/profile 변경 없이
+> 6/6 모두 first-attempt 완주, static-PCD 충돌 0, run/resource/speed/performance/
+> cgroup-valid였고 abort/retry/OOM은 0이다. Full/Adaptive 평균 시간은
+> 66.82/65.43초, available 최저 5850.75/5679.31MiB, PSI 최대 0.18/0이었다.
+> Adaptive effective-open은 총 48회다.
+>
+> 이전 clean audit와 합치면 Full/Adaptive 각각 clean Map10 5/5 완주다. 이는
+> resource-confounded run8 때문에 planner를 더 튜닝하지 않는 판단을 강화하지만,
+> prospective n=3 자체는 population 100% 보장이 아니다. 상세는 viability §8.58,
+> 자료는 `results/map10_resource_guard_prospective_full_adaptive_n3_`
+> `{raw,summary,reductions}_20260904.csv`다.
+
+> [!IMPORTANT]
 > **2026-09-04 Map10 실패 재분류 및 campaign resource gate 구현.**
 > 기존 n=10 러너는 메모리/PSI를 측정만 하고 `run_valid`/retry에 쓰지 않았다.
 > 따라서 Map10 run8 Adaptive/Full의 legacy `run_valid=True`는 잘못된 유효성

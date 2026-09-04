@@ -445,3 +445,34 @@ cohort를 저자원 조건에서 계속 수집하지 않기 위한 보수적 실
 host가 약 6.3 GiB RSS를 점유해 available이 약 5.0 GiB이므로 새 기본 gate가 실제
 Map 10 launch를 의도대로 차단한다. 메모리를 회수한 뒤 Map 10 Full/Adaptive를
 동일 gate로 재시험해야 하며, 그 전에는 planner 파라미터를 추가 변경하지 않는다.
+
+## Resource-valid Map 10 prospective 재시험 (2026-09-04)
+
+VS Code extension host를 시험 동안 분리해 launch 전 available 약 9 GiB, swap 0,
+PSI 0인 상태를 만들고, 새 기본 resource gate를 첫 행부터 적용해 Map 10 Full과
+Adaptive를 모드당 3회 회전 순서로 재시험했다. Planner/config/filter parameter는
+바꾸지 않았다. 6행 모두 first-attempt, run/resource/speed/performance/cgroup-valid,
+완주 및 static-PCD 무접촉이었다. Resource abort, retry, OOM은 모두 0이다.
+
+| run | Full 시간 / clearance / available 최저 / PSI 최대 | Adaptive 시간 / clearance / available 최저 / PSI 최대 | Adaptive effective-open |
+|---:|---:|---:|---:|
+| 1 | 63.64 s / 0.284 m / 5876.75 MiB / 0.18 | 66.28 s / 0.254 m / 5765.79 MiB / 0 | 18 |
+| 2 | 69.90 s / 0.270 m / 5850.75 MiB / 0 | 63.35 s / 0.261 m / 5830.97 MiB / 0 | 17 |
+| 3 | 66.93 s / 0.270 m / 5853.91 MiB / 0 | 66.66 s / 0.254 m / 5679.31 MiB / 0 | 13 |
+| **합계/평균** | **3/3, 66.82 s, 0.275 m** | **3/3, 65.43 s, 0.256 m** | **48** |
+
+Adaptive는 Full 대비 logical planner ingress 75.175%, map-update cadence 48.526%,
+ROG map compute per frame 29.627%, 공통 end-to-end mean cores 10.799%, core-seconds
+13.431%를 줄였다. Peak PSS는 오히려 1.990% 높아 메모리 절감 주장은 하지 않는다.
+
+이 prospective 결과는 resource-invalid run 8 실패가 깨끗한 조건에서 재현되지
+않았다는 근거를 n=2 clean audit에서 n=5/mode 누적으로 강화한다. 따라서 현재
+Full/Adaptive 코드를 바꾸지 않는 판단을 유지한다. 다만 이번 새 cohort 자체는
+n=3/mode이므로 population-level 100% 보장이 아니며, 후속 공식 성공률 추정에는
+resource gate를 처음부터 적용한 더 큰 반복이 필요하다.
+
+자료:
+
+- `results/map10_resource_guard_prospective_full_adaptive_n3_raw_20260904.csv`
+- `results/map10_resource_guard_prospective_full_adaptive_n3_summary_20260904.csv`
+- `results/map10_resource_guard_prospective_full_adaptive_n3_reductions_20260904.csv`

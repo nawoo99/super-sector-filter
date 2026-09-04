@@ -4043,3 +4043,33 @@ correctly refuses to start. Freeing that unrelated load and rerunning Map10
 Full/Adaptive under the unchanged planner profiles is the next validation;
 planner tuning is justified only if a failure reproduces under a resource-valid
 run.
+
+### 8.58 Prospective resource-valid Map10 retest (2026-09-04)
+
+The unrelated VS Code extension host was detached for the test, restoring
+about 9 GiB available memory, zero swap use and zero PSI before launch. The new
+default gate was then active from the first row in a rotated-order Map10 Full
+versus Adaptive n=3 campaign. Planner, filter and profile parameters were
+unchanged.
+
+All six rows completed on their first attempt and were run-, resource-, speed-,
+performance- and cgroup-valid, with zero static-PCD contact, resource abort,
+retry and OOM. Full times were 63.64/69.90/66.93 s and Adaptive times were
+66.28/63.35/66.66 s. Full minimum available memory was 5850.75 MiB and maximum
+PSI some/full was 0.18/0.18; Adaptive minimum available was 5679.31 MiB and PSI
+remained zero. The worst static-PCD clearance was +0.270 m for Full and +0.254
+m for Adaptive. Adaptive made 18/17/13 effective Full-open transitions, 48 in
+total.
+
+Adaptive reduced Full logical ingress by 75.175%, map cadence by 48.526%, map
+compute per frame by 29.627%, common end-to-end mean cores by 10.799% and
+end-to-end core-seconds by 13.431%. Mean peak end-to-end PSS was 1.990% higher,
+so this result does not support a memory-saving claim.
+
+Together with the prior clean audit, Full and Adaptive have now each completed
+five clean Map10 reruns without contact after the confounded run-8 event. This
+strengthens the decision not to tune either planner path based on that event,
+but n=3 in the prospective cohort is not a population-level guarantee. Any new
+headline completion estimate requires a larger cohort with the resource gate
+enabled prospectively from its first row. Raw, summary and reduction files are
+`results/map10_resource_guard_prospective_full_adaptive_n3_{raw,summary,reductions}_20260904.csv`.
