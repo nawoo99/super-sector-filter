@@ -29,6 +29,14 @@ TMPDIR = "/tmp/native_campaign"
 LOCK_PATH = "/tmp/super_sector_filter_native.lock"
 os.makedirs(TMPDIR, exist_ok=True)
 CLK_TCK = os.sysconf("SC_CLK_TCK") or 100
+DEFAULT_RESOURCE_PREFLIGHT_MIN_AVAILABLE_MIB = 8192.0
+DEFAULT_RESOURCE_RUNTIME_MIN_AVAILABLE_MIB = 2048.0
+DEFAULT_RESOURCE_MAX_PSI_SOME_AVG10 = 10.0
+DEFAULT_RESOURCE_MAX_PSI_FULL_AVG10 = 5.0
+DEFAULT_RESOURCE_VIOLATION_HOLD_S = 5.0
+DEFAULT_RESOURCE_PREFLIGHT_STABLE_S = 5.0
+DEFAULT_RESOURCE_PREFLIGHT_TIMEOUT_S = 600.0
+_ACTIVE_PROCESS_GROUPS = {}
 
 
 def pgrep(pattern):
@@ -134,6 +142,126 @@ def read_memory_psi():
     return values
 
 
+def read_host_resource_snapshot():
+    """Read the host signals used to separate infrastructure from planner failures."""
+    snapshot = {
+        "system_available_mib": None,
+        "psi_some_avg10": None,
+        "psi_full_avg10": None,
+    }
+    available_kib = read_keyed_kib("/proc/meminfo", "MemAvailable")
+    if available_kib is not None:
+        snapshot["system_available_mib"] = available_kib / 1024.0
+    snapshot.update(read_memory_psi())
+    return snapshot
+
+
+def resource_violation_reasons(snapshot, min_available_mib,
+                               max_psi_some_avg10,
+                               max_psi_full_avg10):
+    """Return deterministic resource-threshold violations for one sample."""
+    reasons = []
+    available = snapshot.get("system_available_mib")
+    if available is None and snapshot.get("system_available_kib") is not None:
+        available = snapshot["system_available_kib"] / 1024.0
+    if available is None:
+        reasons.append("MemAvailable unavailable")
+    elif available < min_available_mib:
+        reasons.append(
+            f"MemAvailable {available:.1f} MiB < {min_available_mib:.1f} MiB"
+        )
+
+    psi_some = snapshot.get("psi_some_avg10")
+    if psi_some is None:
+        reasons.append("memory PSI some avg10 unavailable")
+    elif psi_some > max_psi_some_avg10:
+        reasons.append(
+            f"memory PSI some avg10 {psi_some:.2f} > "
+            f"{max_psi_some_avg10:.2f}"
+        )
+
+    psi_full = snapshot.get("psi_full_avg10")
+    if psi_full is None:
+        reasons.append("memory PSI full avg10 unavailable")
+    elif psi_full > max_psi_full_avg10:
+        reasons.append(
+            f"memory PSI full avg10 {psi_full:.2f} > "
+            f"{max_psi_full_avg10:.2f}"
+        )
+    return reasons
+
+
+class SustainedResourceViolation:
+    """Trigger only when resource pressure remains continuously unsafe."""
+
+    def __init__(self, min_available_mib, max_psi_some_avg10,
+                 max_psi_full_avg10, hold_s):
+        self.min_available_mib = min_available_mib
+        self.max_psi_some_avg10 = max_psi_some_avg10
+        self.max_psi_full_avg10 = max_psi_full_avg10
+        self.hold_s = hold_s
+        self.bad_since = None
+
+    def observe(self, snapshot, now=None):
+        now = time.monotonic() if now is None else now
+        reasons = resource_violation_reasons(
+            snapshot,
+            self.min_available_mib,
+            self.max_psi_some_avg10,
+            self.max_psi_full_avg10,
+        )
+        if not reasons:
+            self.bad_since = None
+            return None
+        if self.bad_since is None:
+            self.bad_since = now
+        if now - self.bad_since >= self.hold_s:
+            return "; ".join(reasons)
+        return None
+
+
+class ResourcePreflightTimeout(RuntimeError):
+    pass
+
+
+def wait_for_resource_preflight(min_available_mib,
+                                max_psi_some_avg10,
+                                max_psi_full_avg10,
+                                stable_s, timeout_s,
+                                sample_s=1.0,
+                                snapshot_fn=read_host_resource_snapshot,
+                                monotonic_fn=time.monotonic,
+                                sleep_fn=time.sleep):
+    """Wait for a continuously healthy host window before starting a run."""
+    started = monotonic_fn()
+    deadline = started + timeout_s
+    stable_since = None
+    last_reasons = []
+    while True:
+        now = monotonic_fn()
+        snapshot = snapshot_fn()
+        last_reasons = resource_violation_reasons(
+            snapshot,
+            min_available_mib,
+            max_psi_some_avg10,
+            max_psi_full_avg10,
+        )
+        if not last_reasons:
+            if stable_since is None:
+                stable_since = now
+            if now - stable_since >= stable_s:
+                return snapshot, now - started
+        else:
+            stable_since = None
+        if now >= deadline:
+            detail = "; ".join(last_reasons) or "stable window not reached"
+            raise ResourcePreflightTimeout(
+                f"resource preflight timed out after {now - started:.1f}s: "
+                f"{detail}"
+            )
+        sleep_fn(min(sample_s, max(0.0, deadline - now)))
+
+
 class MemoryMeter:
     """Low-rate per-attempt FSM and host memory sampler."""
 
@@ -184,6 +312,7 @@ class MemoryMeter:
             csv.DictWriter(
                 stream, fieldnames=self.FIELDNAMES, lineterminator="\n"
             ).writerow(row)
+        return row
 
     def summary(self):
         def extrema(key, fn):
@@ -1153,6 +1282,17 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "algorithm_cpu_scope", "algorithm_cpu_excludes_simulator",
           "end_to_end_cpu_scope",
           "success", "run_valid",
+          "resource_guard_enabled", "resource_valid",
+          "infrastructure_failure", "resource_guard_triggered",
+          "resource_guard_abort_count", "resource_guard_reasons",
+          "resource_guard_preflight_min_available_mib",
+          "resource_guard_runtime_min_available_mib",
+          "resource_guard_max_psi_some_avg10",
+          "resource_guard_max_psi_full_avg10",
+          "resource_guard_violation_hold_s",
+          "resource_guard_preflight_stable_s",
+          "resource_guard_preflight_timeout_s",
+          "resource_guard_preflight_wait_s",
           "monitor_type", "monitor_flight_cpu_pct", "live_cloud_enabled", "preflight_ready",
           "preflight_cloud_messages", "preflight_odom_messages", "goal_messages",
           "position_command_messages", "trajectory_flag2_messages",
@@ -1556,7 +1696,7 @@ def log(msg):
     print(f"[native_campaign {time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
 
-def kill_all():
+def kill_all(settle_s=1.5):
     for n in ("perfect_drone_node", "perfect_drone_frontend_node",
               "perfect_drone_full_node",
               "fsm_node", "waypoint_mission", "native_sector.py",
@@ -1565,16 +1705,31 @@ def kill_all():
               "native_seed12_scenario.py",
               "native_recovery_scenario.py", "native_recovery_mission.py"):
         subprocess.run(["pkill", "-9", "-f", n], stderr=subprocess.DEVNULL)
-    time.sleep(1.5)
+    if settle_s > 0.0:
+        time.sleep(settle_s)
+
+
+def spawn_process_group(*args, **kwargs):
+    """Start and register a group so interrupted campaigns cannot orphan it."""
+    kwargs.pop("preexec_fn", None)
+    kwargs["start_new_session"] = True
+    proc = subprocess.Popen(*args, **kwargs)
+    _ACTIVE_PROCESS_GROUPS[proc.pid] = proc
+    return proc
 
 
 def kill_group(proc):
     if proc is None:
         return
     try:
-        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        # start_new_session=True makes the child PID the process-group ID.
+        # Use that stable ID even if the shell leader has already exited but
+        # a ros2 child remains alive in the group.
+        os.killpg(proc.pid, signal.SIGKILL)
     except ProcessLookupError:
         pass
+    finally:
+        _ACTIVE_PROCESS_GROUPS.pop(proc.pid, None)
 
 
 def terminate_group(proc, grace_s=1.0):
@@ -1582,18 +1737,40 @@ def terminate_group(proc, grace_s=1.0):
     if proc is None:
         return
     try:
-        process_group = os.getpgid(proc.pid)
-        os.killpg(process_group, signal.SIGINT)
-    except ProcessLookupError:
-        return
-    deadline = time.monotonic() + grace_s
-    while proc.poll() is None and time.monotonic() < deadline:
-        time.sleep(0.05)
-    if proc.poll() is None:
         try:
-            os.killpg(process_group, signal.SIGKILL)
+            process_group = proc.pid
+            os.killpg(process_group, signal.SIGINT)
         except ProcessLookupError:
-            pass
+            return
+        deadline = time.monotonic() + grace_s
+        while proc.poll() is None and time.monotonic() < deadline:
+            time.sleep(0.05)
+        if proc.poll() is None:
+            try:
+                os.killpg(process_group, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+    finally:
+        _ACTIVE_PROCESS_GROUPS.pop(proc.pid, None)
+
+
+def cleanup_active_process_groups():
+    """Kill every process group started by this campaign runner."""
+    for proc in list(_ACTIVE_PROCESS_GROUPS.values()):
+        kill_group(proc)
+
+
+def campaign_signal_handler(signum, _frame):
+    """Best-effort cleanup for terminal close, cancellation, and Ctrl-C."""
+    log(f"received signal {signum}; cleaning campaign child process groups")
+    cleanup_active_process_groups()
+    kill_all(settle_s=0.0)
+    raise SystemExit(128 + signum)
+
+
+def install_campaign_signal_handlers():
+    for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signal.signal(signum, campaign_signal_handler)
 
 
 def perf_row_count():
@@ -1730,7 +1907,23 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             test_force_initial_footprint_egress_once=False,
             full_sensor_intra_process=False,
             cgroup_cpu_accounting=False,
-            optimizer_phase_memory_trace=False):
+            optimizer_phase_memory_trace=False,
+            resource_guard_enabled=True,
+            resource_preflight_min_available_mib=(
+                DEFAULT_RESOURCE_PREFLIGHT_MIN_AVAILABLE_MIB
+            ),
+            resource_runtime_min_available_mib=(
+                DEFAULT_RESOURCE_RUNTIME_MIN_AVAILABLE_MIB
+            ),
+            resource_max_psi_some_avg10=(
+                DEFAULT_RESOURCE_MAX_PSI_SOME_AVG10
+            ),
+            resource_max_psi_full_avg10=(
+                DEFAULT_RESOURCE_MAX_PSI_FULL_AVG10
+            ),
+            resource_violation_hold_s=DEFAULT_RESOURCE_VIOLATION_HOLD_S,
+            resource_preflight_stable_s=DEFAULT_RESOURCE_PREFLIGHT_STABLE_S,
+            resource_preflight_timeout_s=DEFAULT_RESOURCE_PREFLIGHT_TIMEOUT_S):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
     is_seed12 = (map_name == "seed12")
@@ -1826,9 +2019,26 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
     retry_reasons = []
     memory_summaries = []
     memory_trace_paths = []
+    resource_guard_abort_count = 0
+    resource_guard_reasons = []
+    resource_guard_preflight_wait_s = 0.0
 
     for attempt in range(1, attempt_max + 1):
         kill_all()
+        if resource_guard_enabled:
+            log(
+                f"  {tag} attempt {attempt}/{attempt_max}: waiting for "
+                f"resource preflight (MemAvailable >= "
+                f"{resource_preflight_min_available_mib:.0f} MiB)"
+            )
+            _, waited_s = wait_for_resource_preflight(
+                resource_preflight_min_available_mib,
+                resource_max_psi_some_avg10,
+                resource_max_psi_full_avg10,
+                resource_preflight_stable_s,
+                resource_preflight_timeout_s,
+            )
+            resource_guard_preflight_wait_s += waited_s
         # Every attempt gets unique evidence paths. A retry must never replace
         # the stack/memory trace that explains the first-attempt failure.
         attempt_tag = f"{tag}.attempt{attempt}"
@@ -1899,9 +2109,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 f"--trace-csv {scenario_trace_csv} "
                 f"> {scenario_log} 2>&1"
             )
-            scenario_proc = subprocess.Popen(
+            scenario_proc = spawn_process_group(
                 ["bash", "-c", f"{ROS_ENV} && {scenario_cmd}"],
-                preexec_fn=os.setsid,
             )
             time.sleep(0.5)
         elif is_recovery:
@@ -1912,9 +2121,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 f"--event-json {scenario_event_json} "
                 f"> {scenario_log} 2>&1"
             )
-            scenario_proc = subprocess.Popen(
+            scenario_proc = spawn_process_group(
                 ["bash", "-c", f"{ROS_ENV} && {scenario_cmd}"],
-                preexec_fn=os.setsid,
             )
             time.sleep(0.5)
             mission_cmd = (
@@ -1922,9 +2130,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 f"--event-json {mission_event_json} "
                 f"> {mission_log} 2>&1"
             )
-            recovery_mission_proc = subprocess.Popen(
+            recovery_mission_proc = spawn_process_group(
                 ["bash", "-c", f"{ROS_ENV} && {mission_cmd}"],
-                preexec_fn=os.setsid,
             )
 
         # The guarded full profile subscribes directly to /cloud_registered.
@@ -2042,7 +2249,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 if filter_backend == "python"
                 else f"ros2 run mission_planner {SECTOR_CPP_EXECUTABLE}"
             )
-            filt_proc = subprocess.Popen(
+            filt_proc = spawn_process_group(
                 [
                     "bash",
                     "-c",
@@ -2050,7 +2257,6 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     f"{filter_half_angle_deg:.9g}{filter_options} "
                     f"> {filt_log} 2>&1",
                 ],
-                preexec_fn=os.setsid,
             )
         # The filter must be subscribed before the recovery driver's 3 s
         # auto-start (and before waypoint_mission on the standard maps).
@@ -2176,9 +2382,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             "export SUPER_OPTIMIZER_PHASE_MEMORY_TRACE=1 && "
             if optimizer_phase_memory_trace else ""
         )
-        launch_proc = subprocess.Popen(
+        launch_proc = spawn_process_group(
             ["bash", "-c", f"{ROS_ENV} && {trace_environment}{launch_cmd}"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(4)
 
         # Confirm the standalone FSM or the Full simulator/FSM composition
@@ -2234,9 +2440,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 f"{'--stop-on-sticky-flag3-s 5.0' if mode.startswith('raw_oneway_guarded') else ''} "
                 f"> {reference_monitor_log} 2>&1"
             )
-            mon_proc = subprocess.Popen(
+            mon_proc = spawn_process_group(
                 ["bash", "-c", f"{ROS_ENV} && {mon_cmd}"],
-                preexec_fn=os.setsid,
             )
             ready_deadline = time.monotonic() + 45.0
             while (
@@ -2280,7 +2485,16 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             sim_cpu.start_executable(sim_executable)
         memory_meter = MemoryMeter(fsm_cpu.pid, memory_trace_csv)
         memory_trace_paths.append(memory_trace_csv)
-        memory_meter.sample()
+        initial_memory_sample = memory_meter.sample()
+        runtime_resource_tracker = None
+        if resource_guard_enabled:
+            runtime_resource_tracker = SustainedResourceViolation(
+                resource_runtime_min_available_mib,
+                resource_max_psi_some_avg10,
+                resource_max_psi_full_avg10,
+                resource_violation_hold_s,
+            )
+            runtime_resource_tracker.observe(initial_memory_sample)
         if filt_proc is not None:
             if filter_backend == "cpp":
                 filt_cpu.start_executable(SECTOR_CPP_EXECUTABLE)
@@ -2322,9 +2536,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 "-p data_name:=benchmark_outbound.txt "
                 f"> {mission_log} 2>&1"
             )
-            reference_mission_proc = subprocess.Popen(
+            reference_mission_proc = spawn_process_group(
                 ["bash", "-c", f"{ROS_ENV} && {reference_mission_cmd}"],
-                preexec_fn=os.setsid,
             )
             if cgroup_meter is not None:
                 cgroup_meter.assign_tree(reference_mission_proc.pid, "stack")
@@ -2364,9 +2577,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             mon_cmd = build_loop_monitor_command(
                 wps, switch, timeout, out_json, monitor_options
             )
-            mon_proc = subprocess.Popen(
+            mon_proc = spawn_process_group(
                 ["bash", "-c", f"{ROS_ENV} && {mon_cmd}"],
-                preexec_fn=os.setsid,
             )
             monitor_pattern = "native_loop_monitor.py"
 
@@ -2376,35 +2588,69 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         monitor_cpu.start()
         monitor_deadline = time.monotonic() + timeout + 30
         runtime_process_failure = None
+        runtime_resource_failure = None
         while mon_proc.poll() is None and time.monotonic() < monitor_deadline:
             time.sleep(1.0)
             monitor_cpu.sample()
             sim_cpu.sample()
-            memory_meter.sample()
+            memory_sample = memory_meter.sample()
             if cgroup_meter is not None:
                 cgroup_meter.sample()
+            if runtime_resource_tracker is not None:
+                runtime_resource_failure = runtime_resource_tracker.observe(
+                    memory_sample
+                )
+                if runtime_resource_failure is not None:
+                    break
             if not pgrep(fsm_executable):
                 runtime_process_failure = "fsm_node exited during mission"
                 break
             if filt_proc is not None and filt_proc.poll() is not None:
                 runtime_process_failure = "filter exited during mission"
                 break
-        if runtime_process_failure is not None:
+        if runtime_process_failure is not None or runtime_resource_failure is not None:
             if cgroup_meter is not None:
                 cgroup_meter.sample(force_memory=True)
                 cgroup_summary = cgroup_meter.summary()
             memory_summaries.append(memory_meter.summary())
-            retry_reasons.append(runtime_process_failure)
+            failure_reason = runtime_process_failure
+            if runtime_resource_failure is not None:
+                failure_reason = f"resource guard: {runtime_resource_failure}"
+                resource_guard_abort_count += 1
+                resource_guard_reasons.append(runtime_resource_failure)
+            retry_reasons.append(failure_reason)
             log(
                 f"  {tag} attempt {attempt}/{attempt_max}: "
-                f"{runtime_process_failure} -> retry"
+                f"{failure_reason} -> retry"
             )
             kill_group(mon_proc)
             kill_group(filt_proc)
+            kill_group(scenario_proc)
+            kill_group(recovery_mission_proc)
+            kill_group(reference_mission_proc)
             kill_group(launch_proc)
             kill_all()
             if cgroup_meter is not None:
                 cgroup_meter.cleanup()
+            if artifacts_dir:
+                os.makedirs(artifacts_dir, exist_ok=True)
+                for source in (
+                    out_json,
+                    reference_stack_log,
+                    memory_trace_csv,
+                    cgroup_trace_csv,
+                    filt_log,
+                    filt_stats_json,
+                    perf_trace_csv,
+                    reference_monitor_log,
+                    mission_log,
+                    scenario_event_json,
+                ):
+                    if os.path.exists(source):
+                        shutil.copyfile(
+                            source,
+                            os.path.join(artifacts_dir, os.path.basename(source)),
+                        )
             continue
         if mon_proc.poll() is None:
             log(f"  {tag}: monitor HUNG -> kill")
@@ -2488,6 +2734,36 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                "filter_cpu_pct": filter_cpu_pct,
                "sim_cpu_pct": sim_cpu_pct,
                "monitor_cpu_pct": monitor_cpu_pct,
+               "resource_guard_enabled": resource_guard_enabled,
+               "resource_valid": True if resource_guard_enabled else None,
+               "infrastructure_failure": False,
+               "resource_guard_triggered": resource_guard_abort_count > 0,
+               "resource_guard_abort_count": resource_guard_abort_count,
+               "resource_guard_reasons": (
+                   "; ".join(resource_guard_reasons) or None
+               ),
+               "resource_guard_preflight_min_available_mib": (
+                   resource_preflight_min_available_mib
+               ),
+               "resource_guard_runtime_min_available_mib": (
+                   resource_runtime_min_available_mib
+               ),
+               "resource_guard_max_psi_some_avg10": (
+                   resource_max_psi_some_avg10
+               ),
+               "resource_guard_max_psi_full_avg10": (
+                   resource_max_psi_full_avg10
+               ),
+               "resource_guard_violation_hold_s": resource_violation_hold_s,
+               "resource_guard_preflight_stable_s": (
+                   resource_preflight_stable_s
+               ),
+               "resource_guard_preflight_timeout_s": (
+                   resource_preflight_timeout_s
+               ),
+               "resource_guard_preflight_wait_s": (
+                   resource_guard_preflight_wait_s
+               ),
                "attempt_count": attempt,
                "retry_count": attempt - 1,
                "first_attempt_success": attempt == 1,
@@ -2527,6 +2803,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     static_pcd_valid
                     and speed_limit_valid is not False
                     and side_entry_valid
+                )
+            if resource_guard_enabled:
+                rec["run_valid"] = bool(
+                    rec.get("run_valid", True) and rec["resource_valid"]
                 )
             events = monitor_result.get("contact_events") or []
             if events:
@@ -2929,6 +3209,35 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             "experiment_profile": mode if mode in REFERENCE_ABLATION_PROFILES else None,
             "filter_profile": filter_profile, "filter_backend": filter_backend,
             "success": False, "run_valid": False,
+            "resource_guard_enabled": resource_guard_enabled,
+            "resource_valid": (
+                False if resource_guard_enabled and resource_guard_abort_count
+                else None
+            ),
+            "infrastructure_failure": bool(resource_guard_abort_count),
+            "resource_guard_triggered": resource_guard_abort_count > 0,
+            "resource_guard_abort_count": resource_guard_abort_count,
+            "resource_guard_reasons": (
+                "; ".join(resource_guard_reasons) or None
+            ),
+            "resource_guard_preflight_min_available_mib": (
+                resource_preflight_min_available_mib
+            ),
+            "resource_guard_runtime_min_available_mib": (
+                resource_runtime_min_available_mib
+            ),
+            "resource_guard_max_psi_some_avg10": (
+                resource_max_psi_some_avg10
+            ),
+            "resource_guard_max_psi_full_avg10": (
+                resource_max_psi_full_avg10
+            ),
+            "resource_guard_violation_hold_s": resource_violation_hold_s,
+            "resource_guard_preflight_stable_s": resource_preflight_stable_s,
+            "resource_guard_preflight_timeout_s": (
+                resource_preflight_timeout_s
+            ),
+            "resource_guard_preflight_wait_s": resource_guard_preflight_wait_s,
             "attempt_count": attempt_max, "retry_count": attempt_max - 1,
             "first_attempt_success": False,
             "retry_reasons": "; ".join(retry_reasons) or None,
@@ -2954,6 +3263,7 @@ def main():
         raise SystemExit(
             "another native campaign/watch process owns " + LOCK_PATH
         )
+    install_campaign_signal_handlers()
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--maps", nargs="+", choices=VALID_MAPS, default=MAPS)
@@ -3262,6 +3572,58 @@ def main():
         ),
     )
     ap.add_argument(
+        "--no-resource-guard",
+        dest="resource_guard_enabled",
+        action="store_false",
+        default=True,
+        help=(
+            "disable the default host-memory/PSI validity gate; use only to "
+            "reproduce historical campaigns"
+        ),
+    )
+    ap.add_argument(
+        "--resource-preflight-min-available-mib",
+        type=float,
+        default=DEFAULT_RESOURCE_PREFLIGHT_MIN_AVAILABLE_MIB,
+        help="minimum MemAvailable before launch (default: 8192 MiB)",
+    )
+    ap.add_argument(
+        "--resource-runtime-min-available-mib",
+        type=float,
+        default=DEFAULT_RESOURCE_RUNTIME_MIN_AVAILABLE_MIB,
+        help="sustained runtime MemAvailable floor (default: 2048 MiB)",
+    )
+    ap.add_argument(
+        "--resource-max-psi-some-avg10",
+        type=float,
+        default=DEFAULT_RESOURCE_MAX_PSI_SOME_AVG10,
+        help="sustained memory PSI some avg10 ceiling (default: 10)",
+    )
+    ap.add_argument(
+        "--resource-max-psi-full-avg10",
+        type=float,
+        default=DEFAULT_RESOURCE_MAX_PSI_FULL_AVG10,
+        help="sustained memory PSI full avg10 ceiling (default: 5)",
+    )
+    ap.add_argument(
+        "--resource-violation-hold-s",
+        type=float,
+        default=DEFAULT_RESOURCE_VIOLATION_HOLD_S,
+        help="continuous unsafe duration before abort/retry (default: 5 s)",
+    )
+    ap.add_argument(
+        "--resource-preflight-stable-s",
+        type=float,
+        default=DEFAULT_RESOURCE_PREFLIGHT_STABLE_S,
+        help="continuous healthy preflight duration (default: 5 s)",
+    )
+    ap.add_argument(
+        "--resource-preflight-timeout-s",
+        type=float,
+        default=DEFAULT_RESOURCE_PREFLIGHT_TIMEOUT_S,
+        help="maximum wait for a healthy host before stopping (default: 600 s)",
+    )
+    ap.add_argument(
         "--test-force-local-escape-once",
         action="store_true",
         help=(
@@ -3286,6 +3648,20 @@ def main():
 
     if args.loop_timeout is not None and args.loop_timeout <= 0.0:
         ap.error("--loop-timeout must be positive")
+    if args.resource_preflight_min_available_mib < 0.0:
+        ap.error("--resource-preflight-min-available-mib must be non-negative")
+    if args.resource_runtime_min_available_mib < 0.0:
+        ap.error("--resource-runtime-min-available-mib must be non-negative")
+    if args.resource_max_psi_some_avg10 < 0.0:
+        ap.error("--resource-max-psi-some-avg10 must be non-negative")
+    if args.resource_max_psi_full_avg10 < 0.0:
+        ap.error("--resource-max-psi-full-avg10 must be non-negative")
+    if args.resource_violation_hold_s < 0.0:
+        ap.error("--resource-violation-hold-s must be non-negative")
+    if args.resource_preflight_stable_s < 0.0:
+        ap.error("--resource-preflight-stable-s must be non-negative")
+    if args.resource_preflight_timeout_s <= 0.0:
+        ap.error("--resource-preflight-timeout-s must be positive")
     if not 0.0 <= args.filter_half_angle_deg <= 180.0:
         ap.error("--filter-half-angle-deg must be in [0, 180]")
     if args.adaptive_max_publish_hz < 0.0:
@@ -3727,6 +4103,28 @@ def main():
                         optimizer_phase_memory_trace=(
                             args.optimizer_phase_memory_trace
                         ),
+                        resource_guard_enabled=args.resource_guard_enabled,
+                        resource_preflight_min_available_mib=(
+                            args.resource_preflight_min_available_mib
+                        ),
+                        resource_runtime_min_available_mib=(
+                            args.resource_runtime_min_available_mib
+                        ),
+                        resource_max_psi_some_avg10=(
+                            args.resource_max_psi_some_avg10
+                        ),
+                        resource_max_psi_full_avg10=(
+                            args.resource_max_psi_full_avg10
+                        ),
+                        resource_violation_hold_s=(
+                            args.resource_violation_hold_s
+                        ),
+                        resource_preflight_stable_s=(
+                            args.resource_preflight_stable_s
+                        ),
+                        resource_preflight_timeout_s=(
+                            args.resource_preflight_timeout_s
+                        ),
                     )
                     rec["campaign_sequence_index"] = (
                         max_existing_sequence + done + 1
@@ -3738,8 +4136,15 @@ def main():
                     eta = el / done * (total - done) if done else 0
                     log(f"=== progress {done}/{total} elapsed={el/60:.1f}m "
                         f"eta={eta/60:.1f}m ===")
+    except ResourcePreflightTimeout as error:
+        log(
+            "CAMPAIGN STOPPED before recording the pending run: "
+            f"{error}. Free host memory and resume with --resume-existing."
+        )
+        raise SystemExit(str(error))
     finally:
         f.close()
+        cleanup_active_process_groups()
         kill_all()
     log(f"DONE -> {args.out}")
 

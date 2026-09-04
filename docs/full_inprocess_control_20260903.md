@@ -392,3 +392,56 @@ planner ingress/map compute/동일 end-to-end CPU 감소는 n=100에서도 유�
 - `results/full_control_three_mode_map1_10_n10_summary_20260903.csv`
 - `results/full_control_three_mode_map1_10_n10_reductions_20260903.csv`
 - `results/full_control_map10_resource_clean_audit_full_adaptive_n2_raw_20260904.csv`
+
+## 완주 실패 원인 재분류와 재발 방지 (2026-09-04)
+
+기존 n=10 러너는 메모리와 PSI를 CSV에 측정하면서도 `run_valid` 판정이나 재시도
+조건에는 사용하지 않았다. 따라서 Map 10 run 8의 두 행이 `run_valid=True`로
+기록된 것은 planner 유효성의 증거가 아니라 당시 스키마의 결함이다. 원자료는
+소급 변경하지 않고 아래처럼 해석을 정정한다.
+
+| 사건 | 직접 관측 | 분류 | 근거 |
+|---|---|---|---|
+| Map 10 run 4 Sector | 4/5 waypoint, 180 s, clearance +0.021 m | 유효한 Sector topology/liveness 실패 | available 2.12 GiB, PSI 0, OOM/retry 0; exclusion zone 6개 포화 뒤 같은 candidate/CIRI OCCUPIED를 100회 이상 반복 |
+| Map 10 run 8 Adaptive | 3/5 waypoint, 187.70 s | resource-confounded, planner 성공률 분모에서 제외해야 할 시도 | available 최저 249 MiB, swap 포화, PSI some/full 55.87/52.89; A-star timeout/optimizer overtime 반복 |
+| Map 10 run 8 Full | 2/5 waypoint, 201.20 s monitor HUNG | resource-confounded, planner 성공률 분모에서 제외해야 할 시도 | available 최저 249 MiB, swap 포화, 시작 PSI 28.43/26.79, 최대 64.26/60.66; 후반 planner 로그 정지 |
+| Map 10 run 9 Adaptive 고아 attempt | runner 없이 ROS child가 3시간 이상 잔존 | 불완전 infrastructure attempt | CPU/메모리 집계와 CSV finalize가 없으므로 공식 행이 될 수 없음 |
+
+이 사후 분류만 적용하면 비교 가능한 planner-valid 관측은 Full 99/99 완주,
+Sector 99/100, Adaptive 99/99가 된다. 그러나 제외 기준이 campaign 뒤에 도입된
+post-hoc 분석이므로 이를 새 논문 headline 성공률로 바꾸지 않는다. 새 gate를
+처음부터 켠 prospective 반복으로 확인해야 한다.
+
+Sector run 8도 available 최저 340 MiB였지만 PSI 최대는 1.89였고 완주했다. 따라서
+`MemAvailable`만을 실패의 인과 임계값으로 해석할 수는 없다. Run 8 Full/Adaptive
+실패를 구분하는 강한 동시 관측은 50%를 넘은 PSI이며, clean audit 네 행이
+available 최저 6.42--6.54 GiB, PSI 0에서 모두 완주한 점도 자원 교란 설명을
+지지한다. 다만 Adaptive 로그에 실제 recovery loop가 함께 있었으므로 자원 압박이
+유일 원인이라고 단정하지 않는다. 깨끗한 자원 조건에서 다시 재현될 때만
+Full/Adaptive planner 결함으로 승격한다.
+
+재발 방지를 위해 `scripts/native_campaign/native_campaign.py`에 다음을 기본값으로
+구현했다.
+
+1. 각 attempt 전에 `MemAvailable >= 8192 MiB`, PSI some/full avg10 `<= 10/5`가
+   5초 연속 유지돼야 launch한다.
+2. 실행 중 available 2048 MiB 미만 또는 PSI 임계 초과가 5초 지속되면 즉시
+   process group을 종료하고 infrastructure attempt로 보존한 뒤 재시도한다.
+3. 600초 안에 preflight가 회복되지 않으면 pending row를 쓰지 않고 campaign을
+   중단한다. 자원을 정리한 뒤 같은 파일에 `--resume-existing`으로 이어간다.
+4. CSV에 `resource_valid`, `infrastructure_failure`, gate 임계값/대기시간/abort
+   횟수/이유를 기록하고 `run_valid`와 결합한다.
+5. 모든 launch를 등록된 독립 process group으로 만들고 SIGINT/SIGTERM/SIGHUP 및
+   정상 종료에서 전부 정리해, runner 중단 후 고아 ROS stack이 남지 않게 했다.
+
+2 GiB runtime floor는 과거 성공/실패를 가르는 통계적 인과 경계가 아니라, 새
+cohort를 저자원 조건에서 계속 수집하지 않기 위한 보수적 실험 품질 정책이다.
+임계값을 다른 머신에서 바꿔야 한다면 첫 실험 전에 고정하고 모든 모드에 동일하게
+적용해야 한다. `--no-resource-guard`는 과거 명령 재현 전용이며 새 결과에는 쓰지
+않는다.
+
+검증은 native-campaign pytest 33개 통과, 강제 저자원 preflight 시험에서 launch
+전 non-zero 종료 및 결과 행 0개를 확인했다. 현재 작업 세션은 VS Code extension
+host가 약 6.3 GiB RSS를 점유해 available이 약 5.0 GiB이므로 새 기본 gate가 실제
+Map 10 launch를 의도대로 차단한다. 메모리를 회수한 뒤 Map 10 Full/Adaptive를
+동일 gate로 재시험해야 하며, 그 전에는 planner 파라미터를 추가 변경하지 않는다.

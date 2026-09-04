@@ -382,6 +382,24 @@ python3 scripts/native_campaign/native_campaign.py \
 See [`docs/hybrid_adaptive_recovery.md`](docs/hybrid_adaptive_recovery.md) for
 the state thresholds, validity checks, metrics, and visual watch commands.
 
+## Native campaign resource-validity gate
+
+`native_campaign.py` enables a host-memory gate by default. A run starts only
+after `MemAvailable >= 8192 MiB` and memory PSI `some/full avg10 <= 10/5` have
+remained healthy for five seconds. During a run, `MemAvailable < 2048 MiB` or
+either PSI threshold must persist for five seconds before the attempt is
+stopped and retried. A preflight that cannot recover within ten minutes stops
+the campaign without writing the pending map/run/mode row; free the unrelated
+host load and continue the same output with `--resume-existing`.
+
+The CSV records `resource_valid`, `infrastructure_failure`, threshold values,
+preflight wait, abort count, and reasons. SIGINT, SIGTERM, and SIGHUP also clean
+every registered ROS process group, preventing an interrupted runner from
+leaving a simulator/FSM attempt alive. `--no-resource-guard` exists only for
+reproducing historical commands; do not use it for a new result cohort. If the
+thresholds are changed for another machine, freeze them before the first run
+and keep them identical across all compared modes.
+
 ## Acknowledgements
 
 Built on [SUPER](https://github.com/hku-mars/SUPER) and

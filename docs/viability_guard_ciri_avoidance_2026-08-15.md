@@ -3986,3 +3986,60 @@ compute and ingress reductions, but not population-level 100% completion or
 an Adaptive success-rate advantage over Sector. Detailed per-map results and
 the exact resource audit are in `docs/full_inprocess_control_20260903.md` and
 `results/full_control_three_mode_map1_10_n10_{raw,summary,reductions}_20260903.csv`.
+
+### 8.57 Failure reclassification and default campaign resource gate (2026-09-04)
+
+The n=10 runner collected memory telemetry but did not use it in `run_valid` or
+retry decisions. The two Map10 run-8 rows therefore have legacy
+`run_valid=True` values that do not establish planner-valid trials. Adaptive
+started with only 581 MiB available, fell to 249 MiB, saturated the 2 GiB swap,
+and reached memory PSI some/full 55.87/52.89 before timing out at three
+waypoints. Full started at 842 MiB with PSI already 28.43/26.79, fell to 249
+MiB, reached PSI 64.26/60.66, and its planner log stopped advancing before the
+monitor reported HUNG at two waypoints. These are resource-confounded attempts
+and must not be used as independent planner failures in a future success-rate
+denominator.
+
+This correction does not remove the separate Map10 run-4 Sector failure. That
+row had 2.12 GiB available, zero PSI/OOM/retry, retained a certified stop,
+saturated six exclusion zones, and rejected over 100 near-identical candidates.
+It remains a valid Sector topology/liveness failure. Sector also completed run
+8 with only 340 MiB available but PSI at 1.89, showing that low
+`MemAvailable` alone is not a causal failure threshold. The strong run-8
+discriminator is severe sustained PSI. Four clean Map10 Full/Adaptive audit
+runs at 6.42--6.54 GiB minimum available and PSI zero all completed; this
+supports, but does not prove, the resource explanation because Adaptive still
+showed a genuine recovery loop during the confounded attempt.
+
+Excluding only the two resource-confounded rows yields 99/99 planner-valid
+completions for Full, 99/100 for Sector and 99/99 for Adaptive. This is a
+post-hoc diagnostic view, not a replacement headline rate: the exclusion rule
+was introduced after observing the campaign and requires prospective
+confirmation with the gate enabled from the first run.
+
+`native_campaign.py` now enables a fail-closed resource-quality policy by
+default. Before every attempt, 8192 MiB available and PSI some/full avg10 at or
+below 10/5 must remain stable for five seconds. During the attempt, available
+memory below 2048 MiB or either PSI violation must persist for five seconds
+before the stack is terminated and retried. A preflight that cannot recover
+within 600 seconds exits without writing the pending key, allowing an explicit
+`--resume-existing` after host cleanup. The 2 GiB floor is deliberately an
+experimental-quality margin, not a retroactive causal classifier.
+
+New CSV fields record resource validity, infrastructure failure, thresholds,
+preflight wait, abort count and reasons; resource validity is combined with
+`run_valid`. Every subprocess is also started through a registered independent
+process group, and SIGINT/SIGTERM/SIGHUP plus normal exit clean all groups. This
+closes the lifecycle defect that left the interrupted Map10 run-9 Adaptive ROS
+stack alive for hours. `--no-resource-guard` is retained only for historical
+reproduction; any machine-specific threshold change must be frozen before a
+new cohort and held identical across modes.
+
+All 33 native-campaign tests pass. A forced insufficient-memory preflight
+exited non-zero before launch and produced a header-only CSV. An actual Map10
+smoke is intentionally deferred: the current VS Code extension host uses about
+6.3 GiB RSS and leaves only about 5.0 GiB available, so the new 8 GiB gate
+correctly refuses to start. Freeing that unrelated load and rerunning Map10
+Full/Adaptive under the unchanged planner profiles is the next validation;
+planner tuning is justified only if a failure reproduces under a resource-valid
+run.

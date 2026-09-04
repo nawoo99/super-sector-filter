@@ -1,6 +1,24 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-04 Map10 실패 재분류 및 campaign resource gate 구현.**
+> 기존 n=10 러너는 메모리/PSI를 측정만 하고 `run_valid`/retry에 쓰지 않았다.
+> 따라서 Map10 run8 Adaptive/Full의 legacy `run_valid=True`는 잘못된 유효성
+> 해석이며, available 최저 약 249MiB, swap 포화, PSI some/full
+> 55.87/52.89와 64.26/60.66인 resource-confounded attempt로 분류한다. 반면
+> run4 Sector는 PSI 0에서 동일 후보를 100회 이상 거절한 유효 topology trap이다.
+>
+> `native_campaign.py`는 이제 기본-on으로 launch 전 available 8GiB 및 PSI
+> some/full `<=10/5`의 5초 안정 구간을 요구한다. 실행 중 available 2GiB 미만
+> 또는 PSI 초과가 5초 지속되면 infrastructure attempt로 중단·재시도하고,
+> preflight가 600초 내 회복되지 않으면 pending row 없이 종료한다. CSV resource
+> validity metadata와 SIGINT/SIGTERM/SIGHUP process-group cleanup도 추가했다.
+> pytest 33개와 강제 preflight 거부 시험은 통과했다. 현재 VS Code extension
+> host RSS 약 6.3GiB로 available 약 5GiB라 실제 Map10 smoke는 gate가 의도대로
+> 차단했다. 메모리 회수 후 동일 profile로 Full/Adaptive를 재시험하고, 유효
+> 실패가 재현될 때만 planner를 수정한다. 상세는 viability §8.57이다.
+
+> [!IMPORTANT]
 > **2026-09-04 frozen profile 10맵 3모드 paired n=10 완료.**
 > 공식 cohort는 고유 300행이며 모든 행이 run/speed/performance/cgroup-valid,
 > retry/OOM/충돌 0이다. 명목 완주는 Full/Sector/Adaptive 모두 99/100이고
