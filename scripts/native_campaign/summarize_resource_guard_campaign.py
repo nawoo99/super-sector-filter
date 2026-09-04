@@ -62,6 +62,13 @@ METRICS = (
     ("dds_total_algorithm_payload_mib_s", "dds_algorithm_mib_s"),
 )
 
+ALGORITHM_SCOPE_METRICS = {
+    "algorithm_cores_mean",
+    "algorithm_core_s",
+    "algorithm_cores_p95_1s",
+    "algorithm_peak_pss_mib",
+}
+
 
 class ValidationError(RuntimeError):
     pass
@@ -163,7 +170,40 @@ def validate(
 
     missing = sorted(expected - observed)
     unexpected = sorted(observed - expected)
-    passed = not duplicate and not missing and not unexpected and not quality
+    scope_failures = []
+    for mode in MODES:
+        mode_rows = [row for row in rows if row.get("mode") == mode]
+        algorithm_scopes = sorted(
+            {row.get("algorithm_cpu_scope", "") for row in mode_rows}
+        )
+        end_to_end_scopes = sorted(
+            {row.get("end_to_end_cpu_scope", "") for row in mode_rows}
+        )
+        if len(algorithm_scopes) != 1 or not algorithm_scopes[0]:
+            scope_failures.append(
+                {"mode": mode, "field": "algorithm_cpu_scope", "values": algorithm_scopes}
+            )
+        if len(end_to_end_scopes) != 1 or not end_to_end_scopes[0]:
+            scope_failures.append(
+                {"mode": mode, "field": "end_to_end_cpu_scope", "values": end_to_end_scopes}
+            )
+    all_e2e_scopes = sorted({row.get("end_to_end_cpu_scope", "") for row in rows})
+    if len(all_e2e_scopes) != 1 or not all_e2e_scopes[0]:
+        scope_failures.append(
+            {
+                "mode": "cross_mode",
+                "field": "end_to_end_cpu_scope",
+                "values": all_e2e_scopes,
+            }
+        )
+
+    passed = (
+        not duplicate
+        and not missing
+        and not unexpected
+        and not quality
+        and not scope_failures
+    )
     return {
         "passed": passed,
         "expected_rows": len(expected),
@@ -174,6 +214,8 @@ def validate(
         "unexpected_keys": [list(item) for item in unexpected],
         "quality_failure_count": len(quality),
         "quality_failures": quality,
+        "scope_failure_count": len(scope_failures),
+        "scope_failures": scope_failures,
     }
 
 
@@ -200,6 +242,12 @@ def summarize_group(
         "retry_total": int(sum_values(parse_float(row.get("retry_count")) for row in rows)),
         "resource_abort_total": int(
             sum_values(parse_float(row.get("resource_guard_abort_count")) for row in rows)
+        ),
+        "algorithm_cpu_scope": ";".join(
+            sorted({row.get("algorithm_cpu_scope", "") for row in rows})
+        ),
+        "end_to_end_cpu_scope": ";".join(
+            sorted({row.get("end_to_end_cpu_scope", "") for row in rows})
         ),
         "mission_time_mean_all_s": mean(
             parse_float(row.get("mission_time_s")) for row in rows
@@ -275,6 +323,28 @@ def reduction(candidate: Optional[float], baseline: Optional[float]) -> Optional
     return 100.0 * (baseline - candidate) / baseline
 
 
+def comparison_valid(
+    label: str,
+    candidate: Mapping[str, object],
+    baseline: Mapping[str, object],
+) -> bool:
+    if candidate.get(label) is None or baseline.get(label) is None:
+        return False
+    if label in ALGORITHM_SCOPE_METRICS:
+        return (
+            bool(candidate.get("algorithm_cpu_scope"))
+            and candidate.get("algorithm_cpu_scope")
+            == baseline.get("algorithm_cpu_scope")
+        )
+    if label.startswith("end_to_end_"):
+        return (
+            bool(candidate.get("end_to_end_cpu_scope"))
+            and candidate.get("end_to_end_cpu_scope")
+            == baseline.get("end_to_end_cpu_scope")
+        )
+    return True
+
+
 def build_reductions(summary: Sequence[Mapping[str, object]]) -> List[Dict[str, object]]:
     lookup = {(row["map"], row["mode"]): row for row in summary}
     maps = list(dict.fromkeys(row["map"] for row in summary))
@@ -288,6 +358,9 @@ def build_reductions(summary: Sequence[Mapping[str, object]]) -> List[Dict[str, 
             f = full[label]
             s = sector[label]
             a = adaptive[label]
+            sf_valid = comparison_valid(label, sector, full)
+            af_valid = comparison_valid(label, adaptive, full)
+            as_valid = comparison_valid(label, adaptive, sector)
             output.append(
                 {
                     "map": map_name,
@@ -295,9 +368,12 @@ def build_reductions(summary: Sequence[Mapping[str, object]]) -> List[Dict[str, 
                     "full": f,
                     "sector": s,
                     "adaptive": a,
-                    "sector_vs_full_reduction_pct": reduction(s, f),
-                    "adaptive_vs_full_reduction_pct": reduction(a, f),
-                    "adaptive_vs_sector_reduction_pct": reduction(a, s),
+                    "sector_vs_full_comparison_valid": sf_valid,
+                    "sector_vs_full_reduction_pct": reduction(s, f) if sf_valid else None,
+                    "adaptive_vs_full_comparison_valid": af_valid,
+                    "adaptive_vs_full_reduction_pct": reduction(a, f) if af_valid else None,
+                    "adaptive_vs_sector_comparison_valid": as_valid,
+                    "adaptive_vs_sector_reduction_pct": reduction(a, s) if as_valid else None,
                 }
             )
     return output
@@ -308,7 +384,9 @@ def write_csv(path: Path, rows: Sequence[Mapping[str, object]]) -> None:
         raise ValidationError(f"refusing to write empty CSV: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(
+            stream, fieldnames=list(rows[0]), lineterminator="\n"
+        )
         writer.writeheader()
         for row in rows:
             writer.writerow(
@@ -341,6 +419,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             raise ValidationError("campaign CSV has no header")
         required = {
             "map", "run", "mode", "success", "attempt_count",
+            "algorithm_cpu_scope", "algorithm_cpu_excludes_simulator",
+            "end_to_end_cpu_scope",
             *TRUE_QUALITY_FIELDS, *FALSE_QUALITY_FIELDS, *ZERO_QUALITY_FIELDS,
             *(field for field, _label in METRICS),
         }

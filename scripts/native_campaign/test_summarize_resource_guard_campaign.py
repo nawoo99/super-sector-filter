@@ -24,6 +24,9 @@ def valid_row(map_name="seed1", run="1", mode="full"):
         "static_pcd_clearance_m": "0.25",
         "safety_collisions": "0",
         "filter_effective_full_open_transitions": "",
+        "algorithm_cpu_scope": "simulator+planner",
+        "algorithm_cpu_excludes_simulator": "False",
+        "end_to_end_cpu_scope": "simulator+frontend+planner+mission",
         "system_min_available_mib": "5500",
         "system_peak_swap_used_mib": "1",
         "memory_psi_some_avg10_max": "0",
@@ -74,6 +77,22 @@ class ResourceGuardCampaignSummaryTest(unittest.TestCase):
         self.assertAlmostEqual(summary.reduction(2.0, 10.0), 80.0)
         self.assertAlmostEqual(summary.reduction(12.0, 10.0), -20.0)
         self.assertIsNone(summary.reduction(1.0, 0.0))
+
+    def test_algorithm_reductions_require_matching_scope(self):
+        full = summary.summarize_group("seed1", "full", [valid_row()])
+        sector_row = valid_row(mode="sector")
+        sector_row["algorithm_cpu_scope"] = "planner_only"
+        sector = summary.summarize_group("seed1", "sector", [sector_row])
+        adaptive_row = valid_row(mode="adaptive")
+        adaptive_row["algorithm_cpu_scope"] = "planner_only"
+        adaptive = summary.summarize_group("seed1", "adaptive", [adaptive_row])
+        rows = summary.build_reductions([full, sector, adaptive])
+        algorithm = next(row for row in rows if row["metric"] == "algorithm_cores_mean")
+        self.assertFalse(algorithm["adaptive_vs_full_comparison_valid"])
+        self.assertIsNone(algorithm["adaptive_vs_full_reduction_pct"])
+        self.assertTrue(algorithm["adaptive_vs_sector_comparison_valid"])
+        end_to_end = next(row for row in rows if row["metric"] == "end_to_end_cores_mean")
+        self.assertTrue(end_to_end["adaptive_vs_full_comparison_valid"])
 
 
 if __name__ == "__main__":
