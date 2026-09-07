@@ -40,8 +40,15 @@ def parse_args():
     parser.add_argument(
         "--version",
         type=int,
-        choices=(1, 2, 3, 4, 5, 6),
+        choices=(1, 2, 3, 4, 5, 6, 7),
         default=1,
+    )
+    parser.add_argument(
+        "--maps",
+        nargs="+",
+        type=int,
+        choices=MAPS,
+        default=list(MAPS),
     )
     parser.add_argument(
         "--config-dir",
@@ -97,13 +104,14 @@ def load_profile(config_dir, map_number, version):
                     "qualifying_samples": 3,
                 }
             )
-        if version == 6:
-            # V6's one common centre is selected reproducibly from the v5
-            # design cohort, so equality is checked across the three profile
-            # blocks and runtime events rather than against the old v3--v5
-            # literal centre.
+        if version in (6, 7):
+            # V6/V7 centres are selected reproducibly from prior design
+            # cohorts, so they are checked below and against runtime events
+            # rather than against the old v3--v5 literal centre.
             expected_profile.pop("fixed_center_x")
             expected_profile.pop("fixed_center_y")
+        if version == 7:
+            expected_profile["radius_m"] = 0.5
     for key, expected in expected_profile.items():
         actual = profile.get(key)
         if isinstance(expected, float):
@@ -116,13 +124,20 @@ def load_profile(config_dir, map_number, version):
             raise ValueError(
                 f"{path}: {key}={actual!r}, expected {expected!r}"
             )
-    if version == 6:
+    if version in (6, 7):
         center_x = float(profile.get("fixed_center_x", math.nan))
         center_y = float(profile.get("fixed_center_y", math.nan))
         if not math.isfinite(center_x) or not math.isfinite(center_y):
-            raise ValueError(f"{path}: non-finite v6 fixed centre")
-        if math.hypot(center_x - 22.5, center_y - 23.0) > 0.4 + 1e-12:
+            raise ValueError(f"{path}: non-finite v{version} fixed centre")
+        if version == 6 and (
+            math.hypot(center_x - 22.5, center_y - 23.0) > 0.4 + 1e-12
+        ):
             raise ValueError(f"{path}: v6 fixed centre exceeds design lattice")
+        if version == 7 and not (
+            math.isclose(center_x, 22.5, rel_tol=0.0, abs_tol=1e-12)
+            and math.isclose(center_y, 23.05, rel_tol=0.0, abs_tol=1e-12)
+        ):
+            raise ValueError(f"{path}: unexpected v7 smoke centre")
     return path, profile
 
 
@@ -189,6 +204,12 @@ def validate_event(path, version, profile):
         "body_inner_edge_at_least_47_deg": inner_edge >= 47.0 - 1e-6,
         "center_inside_2m_clear_disk": waypoint_distance <= 2.0 + 1e-6,
         "nudge_within_20_deg": nudge <= 20.0 + 1e-6,
+        "radius_matches": math.isclose(
+            float(event["side_entry_v1_radius_m"]),
+            float(profile["radius_m"]),
+            rel_tol=0.0,
+            abs_tol=1e-6,
+        ),
     }
     if version <= 3:
         checks["velocity_outer_edge_within_45_deg"] = (
@@ -236,6 +257,15 @@ def validate_event(path, version, profile):
                 ),
             }
         )
+    if version == 7:
+        injection_clearance = (
+            float(event["side_entry_v1_trap_distance_m"])
+            - float(event["side_entry_v1_radius_m"])
+            - 0.20
+        )
+        checks["injection_clearance_at_least_0p10_m"] = (
+            injection_clearance >= 0.10 - 1e-6
+        )
     if not all(checks.values()):
         raise ValueError(f"invalid event {path}: {checks}")
     return {"event_json": path, **checks}
@@ -245,16 +275,16 @@ def main():
     args = parse_args()
     loaded = [
         load_profile(args.config_dir, number, args.version)
-        for number in MAPS
+        for number in args.maps
     ]
     reference = loaded[0][1]
     if any(profile != reference for _, profile in loaded[1:]):
-        raise ValueError("side_entry_v1 blocks differ across Map7/9/10")
+        raise ValueError("side-entry profile blocks differ across selected maps")
     result = {
         "status": "PASS",
         "maps": [
             source_clearance(args.manifest_dir, number, reference)
-            for number in MAPS
+            for number in args.maps
         ],
         "frozen_body_inner_edge_min_deg": (
             float(reference["sector_half_angle_deg"])

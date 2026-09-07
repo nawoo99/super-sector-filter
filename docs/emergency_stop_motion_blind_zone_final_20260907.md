@@ -164,3 +164,14 @@ about 96.38%, not a population-level 100% guarantee.  These are simulation
 results on the tuned Map1--10 family.  No new-map generalization, PX4/Gazebo
 dynamics, sensor delay/dropout/noise, real LiDAR replay, or real-flight safety
 claim is made.
+
+## Post-closure v7 exploratory stress
+
+A later preregistered Map9 trajectory-intersection smoke increased the
+side-entry cylinder radius to 0.50 m at the reproducibly selected centre
+`(22.50, 23.05)`.  Full/Sector/Adaptive each completed one first-attempt valid
+run with zero source or synthetic contact; minimum synthetic clearance was
++0.305/+0.237/+0.199 m.  Because Sector did not degrade and Adaptive passed
+closest, the frozen expansion gate failed and the remaining candidates were
+not run.  Details and the explicit stop rule are in
+`docs/blind_zone_v7_stress_preregistration_20260907.md`.

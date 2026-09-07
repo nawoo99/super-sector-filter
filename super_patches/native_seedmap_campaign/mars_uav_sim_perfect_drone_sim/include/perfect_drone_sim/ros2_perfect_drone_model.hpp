@@ -78,24 +78,27 @@ namespace perfect_drone {
             bool v4_enabled = false;
             bool v5_enabled = false;
             bool v6_enabled = false;
+            bool v7_enabled = false;
             loader.LoadParam("side_entry_v1/enabled", v1_enabled, false, false);
             loader.LoadParam("side_entry_v2/enabled", v2_enabled, false, false);
             loader.LoadParam("side_entry_v3/enabled", v3_enabled, false, false);
             loader.LoadParam("side_entry_v4/enabled", v4_enabled, false, false);
             loader.LoadParam("side_entry_v5/enabled", v5_enabled, false, false);
             loader.LoadParam("side_entry_v6/enabled", v6_enabled, false, false);
+            loader.LoadParam("side_entry_v7/enabled", v7_enabled, false, false);
             if (static_cast<int>(v1_enabled) + static_cast<int>(v2_enabled) +
                         static_cast<int>(v3_enabled) +
                         static_cast<int>(v4_enabled) +
                         static_cast<int>(v5_enabled) +
-                        static_cast<int>(v6_enabled) > 1) {
+                        static_cast<int>(v6_enabled) +
+                        static_cast<int>(v7_enabled) > 1) {
                 throw std::invalid_argument(
                         "only one side-entry scenario can be enabled");
             }
             enabled = v1_enabled || v2_enabled || v3_enabled || v4_enabled ||
-                      v5_enabled || v6_enabled;
+                      v5_enabled || v6_enabled || v7_enabled;
             scenario_version =
-                    v6_enabled ? 6 : v5_enabled ? 5 :
+                    v7_enabled ? 7 : v6_enabled ? 6 : v5_enabled ? 5 :
                     v4_enabled ? 4 : v3_enabled ? 3 :
                     v2_enabled ? 2 : v1_enabled ? 1 : 0;
             const std::string prefix = "side_entry_v" +

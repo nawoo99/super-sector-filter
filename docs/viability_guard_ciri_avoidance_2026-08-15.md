@@ -4206,3 +4206,35 @@ Detailed tables, exact filenames, treatment chronology and limitations are in
 `docs/emergency_stop_motion_blind_zone_final_20260907.md`. The result remains
 simulation-only; 100/100 has an exact two-sided 95% lower bound near 96.38%,
 not a population-level guarantee.
+
+### 8.61 Time-boxed trajectory-intersection blind-zone v7 smoke (2026-09-07)
+
+The v6 confirmatory paths were declared as design data before any new flight.
+A reproducible selector evaluated 404 Map9 candidates and froze a stronger
+scenario at `(22.50, 23.05)` with radius 0.50 m.  The selected cylinder had an
+exact 0.927742 m source-obstacle gap, at least 0.118258 m conservative
+insertion clearance over the design states, a complete body-sector inner edge
+of at least 47 degrees, and one negative Sector nominal-path proxy.  Six
+separated follow-up candidates and a fail-closed expansion rule were recorded
+before the smoke.
+
+The Map9 Full/Sector/Adaptive n=1 smoke finished in about 4.5 minutes.  All
+three rows were first-attempt, run/resource/speed/performance valid, all v7
+events passed the independent validator with runtime insertion clearance over
++0.10 m, and source/synthetic contacts were zero.  Full/Sector/Adaptive
+synthetic clearances were +0.305/+0.237/+0.199 m and times were
+68.84/80.44/75.47 s.  Adaptive made 13 effective and four trajectory-guard
+Full openings, but its risk worker produced zero OCCUPIED verdicts and the
+first guard opening preceded obstacle insertion by 10.69 s.
+
+The candidate therefore did not create the required Sector degradation and
+Adaptive actually passed closest.  At Sector insertion the obstacle centre
+was 80.83 degrees from velocity direction, and the newly selected planner
+branch
+bypassed it; a closest-point proxy from a previous run was not a robust
+trajectory-intersection guarantee.  The preregistered stop rule was applied:
+follow-up scenarios 2--6 and the 18-row confirmatory campaign were not run,
+and no further position/radius tuning was performed.  This experiment does
+not support an Adaptive safety-rate advantage or a McNemar test.  Protocol,
+hashes and evidence filenames are in
+`docs/blind_zone_v7_stress_preregistration_20260907.md`.

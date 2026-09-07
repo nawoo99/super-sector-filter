@@ -1,6 +1,18 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-07 blind-zone v7 time-boxed smoke 종료.** V6 경로를 설계 데이터로
+> 선언하고 Map9 `(22.50,23.05)`, 반경 0.50 m의 trajectory-intersection
+> stress를 비행 전에 고정했다. Full/Sector/Adaptive n=1은 약 4.5분에 모두
+> first-attempt 유효 완주·source/synthetic 접촉 0이었고 synthetic clearance는
+> +0.305/+0.237/+0.199 m였다. Adaptive가 가장 가까웠고 raw-risk OCCUPIED도
+> 0건이어서 사전등록한 Sector 열화 gate를 통과하지 못했다. 따라서 후보 2--6과
+> 18행 확증시험은 실행하지 않았으며 추가 위치/반경 튜닝도 하지 않았다.
+> Adaptive 안전률 우위나 McNemar 결과는 여전히 주장할 수 없다. 상세는
+> viability §8.61과
+> `docs/blind_zone_v7_stress_preregistration_20260907.md`를 우선 참조한다.
+
+> [!IMPORTANT]
 > **2026-09-07 EMER_STOP/motion-source 수정 및 blind-zone 단계 완료.**
 > 아래 2026-09-05 배너의 300회는 수정 전 원인분석 결과이며 최신 결론은 이
 > 배너가 우선한다. Guard-enabled EMER_STOP의 ordinary command 누출을 차단했고,

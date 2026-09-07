@@ -3397,6 +3397,14 @@ def main():
         ),
     )
     ap.add_argument(
+        "--side-entry-v7",
+        action="store_true",
+        help=(
+            "use the preregistered Map9 exploratory trajectory-intersection "
+            "side-entry-v7 smoke profile"
+        ),
+    )
+    ap.add_argument(
         "--loop-timeout",
         type=float,
         help="override the seedmap loop timeout in seconds",
@@ -3829,6 +3837,7 @@ def main():
             (4, args.side_entry_v4),
             (5, args.side_entry_v5),
             (6, args.side_entry_v6),
+            (7, args.side_entry_v7),
         )
         if selected
     ]
@@ -3838,14 +3847,18 @@ def main():
         selected_side_entry_versions[0] if selected_side_entry_versions else 0
     )
     if side_entry_version:
+        supported_side_entry_maps = (
+            ("seed9",) if side_entry_version == 7
+            else ("seed7", "seed9", "seed10")
+        )
         invalid_maps = [
             map_name for map_name in args.maps
-            if map_name not in ("seed7", "seed9", "seed10")
+            if map_name not in supported_side_entry_maps
         ]
         if invalid_maps:
             ap.error(
                 f"--side-entry-v{side_entry_version} is frozen only for "
-                "seed7/seed9/seed10; "
+                f"{'/'.join(supported_side_entry_maps)}; "
                 "unsupported maps: " + ", ".join(invalid_maps)
             )
         unsupported_modes = [
