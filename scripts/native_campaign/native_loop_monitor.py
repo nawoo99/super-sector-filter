@@ -177,6 +177,7 @@ class LoopMonitor(Node):
         self.side_entry_event = None
         self.side_entry_event_error = None
         self.side_entry_min_clearance = float("inf")
+        self.side_entry_min_context = None
         self.side_entry_collision_episodes = 0
         self.collisions = 0
         self.static_pcd_collisions = 0
@@ -299,9 +300,19 @@ class LoopMonitor(Node):
             vertical_outside = 0.0
         solid_distance = float(np.hypot(radial_outside, vertical_outside))
         clearance = solid_distance - DRONE_R
-        self.side_entry_min_clearance = min(
-            self.side_entry_min_clearance, clearance
-        )
+        if clearance < self.side_entry_min_clearance:
+            self.side_entry_min_clearance = clearance
+            self.side_entry_min_context = {
+                "elapsed_s": round(time.time() - self.start_time, 6),
+                "position": np.round(position, 6).tolist(),
+                "velocity": np.round(velocity, 6).tolist(),
+                "speed_mps": round(float(np.linalg.norm(velocity)), 6),
+                "cylinder_center": np.round(center, 6).tolist(),
+                "radial_distance_m": round(radial_distance, 6),
+                "solid_distance_m": round(solid_distance, 6),
+                "clearance_m": round(clearance, 6),
+                "waypoint_index": self.waypoint_index,
+            }
         colliding = clearance < 0.0
         if colliding and not self.in_side_entry_collision:
             self.side_entry_collision_episodes += 1
@@ -768,6 +779,7 @@ result = {
         round(node.side_entry_min_clearance, 3)
         if node.side_entry_min_clearance != float("inf") else None
     ),
+    "side_entry_v1_min_context": node.side_entry_min_context,
     "samples": node.samples,
     "clearance_samples": node.clearance_samples,
     "final_x": round(float(node.final_position[0]), 3) if node.final_position is not None else None,

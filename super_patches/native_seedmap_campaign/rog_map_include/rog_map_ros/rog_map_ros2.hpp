@@ -73,6 +73,10 @@ namespace rog_map {
         mutable std::mutex accepted_cloud_observer_mutex_;
         AcceptedCloudObserver accepted_cloud_observer_;
         std::atomic_bool accepted_cloud_observer_enabled_{false};
+        mutable std::mutex odom_twist_mutex_;
+        Vec3f latest_odom_twist_{Vec3f::Zero()};
+        double latest_odom_twist_receive_time_{0.0};
+        bool latest_odom_twist_valid_{false};
 
 
         const double getSystemWalltimeNow() override {
@@ -115,6 +119,19 @@ namespace rog_map {
         } rc_;
 
         void odomCallback(const nav_msgs::msg::Odometry::SharedPtr odom_msg) {
+            const double receive_time = nh_->get_clock()->now().seconds();
+            const Vec3f odom_twist(odom_msg->twist.twist.linear.x,
+                                   odom_msg->twist.twist.linear.y,
+                                   odom_msg->twist.twist.linear.z);
+            {
+                std::lock_guard<std::mutex> lock(odom_twist_mutex_);
+                latest_odom_twist_valid_ =
+                        odom_twist.array().isFinite().all();
+                if (latest_odom_twist_valid_) {
+                    latest_odom_twist_ = odom_twist;
+                    latest_odom_twist_receive_time_ = receive_time;
+                }
+            }
             updateRobotState(std::make_pair(Vec3f(odom_msg->pose.pose.position.x,
                                                   odom_msg->pose.pose.position.y,
                                                   odom_msg->pose.pose.position.z),
@@ -481,6 +498,20 @@ namespace rog_map {
         void injectCloud(
                 const sensor_msgs::msg::PointCloud2::SharedPtr &cloud_msg) {
             cloudCallback(cloud_msg);
+        }
+
+        // Keep direct odometry twist separate from ROGMap's legacy
+        // pose-only RobotState so adding a brake sensor does not change the
+        // upstream planner's initial-state semantics.
+        bool getLatestOdomTwist(Vec3f &velocity,
+                                double &receive_time) const {
+            std::lock_guard<std::mutex> lock(odom_twist_mutex_);
+            if (!latest_odom_twist_valid_) {
+                return false;
+            }
+            velocity = latest_odom_twist_;
+            receive_time = latest_odom_twist_receive_time_;
+            return true;
         }
 
         ROGMapROS(

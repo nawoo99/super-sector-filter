@@ -29,6 +29,8 @@
 
 
 #include "fsm/fsm.h"
+#include "fsm/brake_motion_estimate_policy.hpp"
+#include "fsm/command_publication_policy.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <ros_interface/ros2/ros2_interface.hpp>
@@ -1538,6 +1540,7 @@ namespace fsm {
         Vec3f recovery_motion_last_position_{Vec3f::Zero()};
         double recovery_motion_last_wt_{-
                 std::numeric_limits<double>::infinity()};
+        std::uint64_t recovery_motion_last_generation_{0};
         Vec3f recovery_motion_velocity_{Vec3f::Zero()};
         bool recovery_motion_velocity_valid_{false};
 
@@ -2241,29 +2244,90 @@ namespace fsm {
                     robot_state_.p.array().isFinite().all();
             double recovery_motion_dt_s =
                     std::numeric_limits<double>::infinity();
+            const double configured_motion_velocity_limit = std::max(
+                    1.0e-3, planner_ptr_->getConfiguredMaxVelocity());
+            const std::uint64_t recovery_motion_generation =
+                    planner_ptr_->getCommittedTrajectoryGeneration();
+            const std::uint64_t recovery_motion_anchor_generation =
+                    recovery_motion_last_generation_;
+            const bool recovery_motion_generation_continuous =
+                    std::isfinite(recovery_motion_last_wt_) &&
+                    recovery_motion_generation ==
+                            recovery_motion_anchor_generation;
+            const char *recovery_motion_source = "none";
+            double recovery_pose_difference_speed =
+                    std::numeric_limits<double>::infinity();
+            double recovery_odom_twist_speed =
+                    std::numeric_limits<double>::infinity();
+            double recovery_pose_twist_disagreement =
+                    std::numeric_limits<double>::infinity();
+            recovery_motion_velocity_valid_ = false;
             if (odom_position_ready) {
-                recovery_motion_dt_s =
+                Vec3f odom_twist = Vec3f::Zero();
+                double odom_twist_receive_time = 0.0;
+                const bool odom_twist_ready = map_ptr_->getLatestOdomTwist(
+                        odom_twist, odom_twist_receive_time) &&
+                        std::isfinite(odom_twist_receive_time) &&
+                        selection_wt - odom_twist_receive_time >= 0.0 &&
+                        selection_wt - odom_twist_receive_time <= 0.1 &&
+                        odom_twist.array().isFinite().all();
+                const double recovery_motion_anchor_dt_s =
                         robot_state_.rcv_time - recovery_motion_last_wt_;
-                if (std::isfinite(recovery_motion_last_wt_) &&
-                    recovery_motion_dt_s >= 0.005 &&
-                    recovery_motion_dt_s <= 0.5) {
-                    const Vec3f measured_velocity =
+                Vec3f position_difference_velocity = Vec3f::Zero();
+                const bool position_difference_available =
+                        std::isfinite(recovery_motion_last_wt_) &&
+                        recovery_motion_anchor_dt_s >= 0.005 &&
+                        recovery_motion_anchor_dt_s <= 0.5 &&
+                        recovery_motion_generation_continuous;
+                if (position_difference_available) {
+                    position_difference_velocity =
                             (robot_state_.p - recovery_motion_last_position_) /
-                            recovery_motion_dt_s;
+                            recovery_motion_anchor_dt_s;
+                }
+                recovery_pose_difference_speed =
+                        position_difference_available
+                        ? position_difference_velocity.norm()
+                        : std::numeric_limits<double>::infinity();
+                recovery_odom_twist_speed = odom_twist_ready
+                        ? odom_twist.norm()
+                        : std::numeric_limits<double>::infinity();
+                recovery_pose_twist_disagreement =
+                        odom_twist_ready && position_difference_available
+                        ? (odom_twist - position_difference_velocity).norm()
+                        : std::numeric_limits<double>::infinity();
+                const bool odom_twist_corroborated = odom_twist_ready &&
+                        position_difference_available &&
+                        position_difference_velocity.array().isFinite().all() &&
+                        directOdomTwistEstimateAllowed(
+                                recovery_odom_twist_speed,
+                                recovery_pose_difference_speed,
+                                recovery_pose_twist_disagreement,
+                                cfg_.brake_command_max_velocity_error_mps,
+                                recovery_motion_generation_continuous);
+                if (odom_twist_corroborated) {
+                    recovery_motion_velocity_ = odom_twist;
+                    recovery_motion_velocity_valid_ = true;
+                    recovery_motion_dt_s =
+                            selection_wt - odom_twist_receive_time;
+                    recovery_motion_source = "odom_twist";
+                } else if (position_difference_available) {
                     recovery_motion_velocity_valid_ =
-                            measured_velocity.array().isFinite().all() &&
-                            measured_velocity.norm() <= 50.0;
+                            position_difference_velocity.array().isFinite().all() &&
+                            positionDifferenceMotionEstimateAllowed(
+                                    recovery_pose_difference_speed,
+                                    configured_motion_velocity_limit,
+                                    recovery_motion_generation_continuous);
                     if (recovery_motion_velocity_valid_) {
-                        recovery_motion_velocity_ = measured_velocity;
+                        recovery_motion_velocity_ =
+                                position_difference_velocity;
+                        recovery_motion_dt_s =
+                                recovery_motion_anchor_dt_s;
+                        recovery_motion_source = "position_difference";
                     }
-                } else if (!std::isfinite(recovery_motion_last_wt_) ||
-                           recovery_motion_dt_s > 0.5 ||
-                           recovery_motion_dt_s < 0.0) {
-                    recovery_motion_velocity_valid_ = false;
                 }
                 if (!std::isfinite(recovery_motion_last_wt_) ||
-                    recovery_motion_dt_s >= 0.005 ||
-                    recovery_motion_dt_s < 0.0) {
+                    recovery_motion_anchor_dt_s >= 0.005 ||
+                    recovery_motion_anchor_dt_s < 0.0) {
                     recovery_motion_last_position_ = robot_state_.p;
                     // These are odometry positions. Divide them by the
                     // odometry receive-time delta, not by the times at which
@@ -2273,6 +2337,8 @@ namespace fsm {
                     // only 6 ms apart, then published a brake from that false
                     // initial velocity.
                     recovery_motion_last_wt_ = robot_state_.rcv_time;
+                    recovery_motion_last_generation_ =
+                            recovery_motion_generation;
                 }
             } else {
                 recovery_motion_velocity_valid_ = false;
@@ -2347,7 +2413,7 @@ namespace fsm {
                 // jerk at this callback rate. Keep the higher derivatives at
                 // the zero value established above.
                 initial_yaw = robot_state_.yaw;
-                initial_source = "odom_motion";
+                initial_source = recovery_motion_source;
             } else {
                 CmdTraj::Sample current_sample;
                 if (!planner_ptr_->getOneCommandSample(current_sample)) {
@@ -2584,6 +2650,10 @@ namespace fsm {
                         "initial_source={} cmd_age={:.3f}s "
                         "cmd_pos_err={:.3f} cmd_vel_err={:.3f} "
                         "motion_speed={:.3f} motion_dt={:.3f}s "
+                        "motion_pose_speed={:.3f} motion_twist_speed={:.3f} "
+                        "motion_disagreement={:.3f} "
+                        "motion_source={} motion_gen={}/{} "
+                        "motion_gen_continuous={} "
                         "last_dynamics_ok={} max_vel={:.3f} "
                         "vel_limit={:.3f} max_acc={:.3f} max_jerk={:.3f} "
                             "last_path_status={} last_map={} map_age={:.3f}s "
@@ -2599,6 +2669,13 @@ namespace fsm {
                                 ? recovery_motion_velocity_.norm()
                                 : std::numeric_limits<double>::infinity(),
                         recovery_motion_dt_s,
+                        recovery_pose_difference_speed,
+                        recovery_odom_twist_speed,
+                        recovery_pose_twist_disagreement,
+                        recovery_motion_source,
+                        recovery_motion_generation,
+                        recovery_motion_anchor_generation,
+                        recovery_motion_generation_continuous,
                         dynamics_ok, max_velocity, brake_velocity_limit,
                         max_acc, max_jerk,
                         trajectorySafetyStatusName(brake_safety.status),
@@ -2622,8 +2699,14 @@ namespace fsm {
                 // ended up walling off the vehicle's own flight path.
                 // Reverted; see docs for the corridor-containment approach
                 // (buildEmergencyStopPolytope) that replaced it instead.
-                if (machine_state_ != EMER_STOP) {
-                    ChangeState("TrajectoryGuardFailClosed", EMER_STOP);
+                {
+                    // Pair with pubCmdTimerCallback's final publication
+                    // critical section.  Once this transition completes, an
+                    // already-prepared ordinary command cannot be published.
+                    std::lock_guard<std::mutex> lock(safety_mutex_);
+                    if (machine_state_ != EMER_STOP) {
+                        ChangeState("TrajectoryGuardFailClosed", EMER_STOP);
+                    }
                 }
                 return false;
             }
@@ -2696,6 +2779,10 @@ namespace fsm {
                             "speed0={:.3f} initial_source={} cmd_age={:.3f}s "
                             "cmd_pos_err={:.3f} cmd_vel_err={:.3f} "
                             "motion_speed={:.3f} motion_dt={:.3f}s "
+                            "motion_pose_speed={:.3f} motion_twist_speed={:.3f} "
+                            "motion_disagreement={:.3f} "
+                            "motion_source={} motion_gen={}/{} "
+                            "motion_gen_continuous={} "
                             "max_vel={:.3f} vel_limit={:.3f} "
                             "max_acc={:.3f} max_jerk={:.3f} "
                             "dynamics_ok={} path_status={} map={} map_age={:.3f}s "
@@ -2711,6 +2798,13 @@ namespace fsm {
                                     ? recovery_motion_velocity_.norm()
                                     : std::numeric_limits<double>::infinity(),
                             recovery_motion_dt_s,
+                            recovery_pose_difference_speed,
+                            recovery_odom_twist_speed,
+                            recovery_pose_twist_disagreement,
+                            recovery_motion_source,
+                            recovery_motion_generation,
+                            recovery_motion_anchor_generation,
+                            recovery_motion_generation_continuous,
                             max_velocity, brake_velocity_limit,
                             max_acc, max_jerk,
                             dynamics_ok, trajectorySafetyStatusName(brake_safety.status),
@@ -3363,7 +3457,18 @@ namespace fsm {
                 return;
             }
 
-            if (machine_state_ != FOLLOW_TRAJ && machine_state_ != EMER_STOP) {
+            const auto command_machine_state =
+                    machine_state_.load(std::memory_order_acquire);
+            const auto command_publication_state =
+                    command_machine_state == FOLLOW_TRAJ
+                    ? OrdinaryCommandState::FOLLOW_TRAJECTORY
+                    : command_machine_state == EMER_STOP
+                      ? OrdinaryCommandState::EMERGENCY_STOP
+                      : OrdinaryCommandState::OTHER;
+            if (!ordinaryCommandPublicationAllowed(
+                        cfg_.trajectory_guard_en,
+                        command_publication_state,
+                        false)) {
                 return;
             }
 
@@ -3406,6 +3511,26 @@ namespace fsm {
                 safety_revalidation_requested_.store(
                         true, std::memory_order_release);
                 activateEmergencyBrake("command_velocity_limit");
+                return;
+            }
+
+            // mainFsmTimerCallback and this timer use different callback
+            // groups.  Serialize the final state/brake check with brake
+            // activation so a command prepared in FOLLOW_TRAJ cannot leak
+            // after another thread has entered guarded EMER_STOP.
+            std::lock_guard<std::mutex> publication_lock(safety_mutex_);
+            const auto publish_machine_state =
+                    machine_state_.load(std::memory_order_acquire);
+            const auto publish_state = publish_machine_state == FOLLOW_TRAJ
+                    ? OrdinaryCommandState::FOLLOW_TRAJECTORY
+                    : publish_machine_state == EMER_STOP
+                      ? OrdinaryCommandState::EMERGENCY_STOP
+                      : OrdinaryCommandState::OTHER;
+            if (!ordinaryCommandPublicationAllowed(
+                        cfg_.trajectory_guard_en,
+                        publish_state,
+                        safety_brake_active_.load(
+                                std::memory_order_relaxed))) {
                 return;
             }
 

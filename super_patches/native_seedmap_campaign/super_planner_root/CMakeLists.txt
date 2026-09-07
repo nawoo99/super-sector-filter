@@ -167,5 +167,15 @@ install(DIRECTORY
         DESTINATION share/${PROJECT_NAME}/
 )
 
+if(BUILD_TESTING)
+    find_package(ament_cmake_gtest REQUIRED)
+    ament_add_gtest(command_publication_policy_test
+            test/command_publication_policy_test.cpp)
+    target_include_directories(command_publication_policy_test PRIVATE include)
+    ament_add_gtest(brake_motion_estimate_policy_test
+            test/brake_motion_estimate_policy_test.cpp)
+    target_include_directories(brake_motion_estimate_policy_test PRIVATE include)
+endif()
+
 
 ament_package()

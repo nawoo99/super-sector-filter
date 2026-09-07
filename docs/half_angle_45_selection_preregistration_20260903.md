@@ -354,3 +354,148 @@ Raw and compact evidence are:
 - `docs/half_angle_operating_envelope_20260902.md`
 - `results/half_angle_sweep_maps7_9_10_sector_adaptive_n3_summary_20260902.csv`
 - `results/half_angle_sweep_maps7_9_10_sector_adaptive_n3_reductions_20260902.csv`
+
+## Frozen v5 design-analysis protocol (2026-09-07, before v5 flights)
+
+V4 established common obstacle delivery but did not discriminate the modes,
+and one row missed treatment because a 0.015 s wall-clock hold was sensitive to
+timer jitter.  V5 is therefore a new experiment, not a continuation that may
+be pooled with v4.  No v5 flight may be launched until the following design
+procedure has produced one fixed world-frame centre and that centre has been
+written below.
+
+The design data are exactly one post-deployment rotating
+Full/Sector/Adaptive n=3 rerun on Map7, Map9 and Map10 using the unchanged v4
+centre `(22.5, 23.0)`.  Its purpose is to record each trajectory's closest
+approach position and the v4 spawn geometry after the stationary-twist fix was
+actually installed in `/root/super_ws/install`.  Completion, contact and
+clearance labels are not selection inputs.  The previously aborted two-row v4
+run was observed while diagnosing the installation mismatch; it is retained
+as exploratory evidence but excluded because it used a different deployed
+binary.  All 27 post-deployment rows are retained whether or not the mission
+completes.  A row without a valid v4 spawn makes the location-design gate fail
+rather than being silently discarded.
+
+Candidate centres are the 0.05 m world-frame lattice points that satisfy all
+of these predeclared constraints:
+
+1. the candidate is no farther than 0.40 m from the v4 centre;
+2. its centre is no farther than 2.0 m from the first corner `(24, 24)`;
+3. at every recorded v4 spawn sample its trigger distance is 0.8--3.5 m and
+   its complete 0.25 m-radius cylinder has a body-relative inner edge of at
+   least 49 degrees (the enforced 47 degrees plus a 2 degree robustness
+   reserve);
+4. the conservative corner-distance bound leaves at least 0.30 m between the
+   new cylinder surface and every Map7/Map9/Map10 source obstacle.
+
+For each candidate and row, the design proxy is Euclidean distance from the
+recorded closest-approach position to the candidate, minus the 0.25 m cylinder
+radius and 0.20 m vehicle radius.  This is explicitly a local proxy because
+the recorded point was closest to the old centre, not a reconstruction of the
+whole path.  To prevent choosing a location predicted to trap the references,
+every Full and Adaptive proxy clearance must be at least +0.10 m.  Among the
+remaining candidates, select lexicographically by:
+
+1. the smallest median Sector proxy clearance;
+2. the largest minimum Adaptive proxy clearance;
+3. the largest minimum Full proxy clearance;
+4. the smallest `x`, then the smallest `y`.
+
+If no candidate satisfies the reference-clearance constraint, v5 location
+selection fails; the constraint is not relaxed after looking at outcomes.
+Once selected, the same centre is used on all three maps and all three modes.
+
+V5 also replaces the wall-clock hold with exactly three consecutive command
+callbacks satisfying every trigger predicate.  The counter resets to zero on
+any failed predicate.  The event record must contain required and observed
+qualifying-sample counts, and the validator must require both to be at least
+three.  V1--v4 retain their original wall-clock behavior.
+
+After the centre, configuration hashes and source commit are recorded, the
+only integration gate is Map7 Full/Sector/Adaptive n=1.  Expansion is allowed
+only if all three events pass the independent validator at the exact centre.
+The frozen confirmatory cohort is then Map7/Map9/Map10, all three modes,
+rotating order, n=3 (27 rows).  Every launched row and every infrastructure
+retry is reported.  There is no centre, radius, sample-count or trigger tuning
+after the first v5 flight.  The primary endpoints remain mission completion
+and the union of source-static-PCD and analytic side-entry contact; mode-wise
+clearance and Adaptive transitions are secondary endpoints.
+
+## Post-deployment v4 design-gate result and frozen repair sequence
+
+The post-deployment v4 design cohort was run exactly as declared.  All 27
+missions completed, but the location-design gate failed because only 26/27
+rows received a valid event.  Map10 Full run 1 had 277 near-corner command
+samples but a maximum yaw/velocity mismatch of only 3.658694 degrees, so none
+passed the frozen 50 degree mismatch gate.  This was not the earlier timer-hold
+failure and moving the cylinder cannot repair it because mismatch is
+independent of cylinder position.  That row is retained as invalid treatment;
+the 26 remaining events are not used to select a new centre under the protocol
+above.
+
+All 27 missions completed.  The synthetic cylinder produced zero contacts.
+Map10 run 3 Sector had one source-static-PCD contact near `(5.75, 5.75)` at
+3.67 s, well before its first-corner side-entry exposure; Full and Adaptive in
+the same map/run had no source contact.  This is a real Sector safety outcome
+against the source map, not a side-entry-v4 contact and not an infrastructure
+failure.  It does not enter the v5 location objective, which remains based on
+trajectory geometry only.
+
+Because the declared design gate failed, the next version is split rather
+than weakening the gate or dropping the row:
+
+1. side-entry-v5 is an exploratory treatment-instrumentation repair at the
+   unchanged centre `(22.5, 23.0)`; it uses exactly three consecutive
+   qualifying callbacks, keeps the body-outside geometry gate, and makes the
+   yaw/velocity mismatch diagnostic rather than treatment-determining;
+2. a Map7 three-mode n=1 integration gate is followed, only if all events are
+   valid, by a rotating Map7/Map9/Map10 three-mode n=3 design cohort;
+3. all 27 v5 rows must emit a valid event, otherwise the blind-zone experiment
+   stops;
+4. the already frozen lattice and proxy-clearance algorithm is then applied
+   to the complete v5 design cohort, not to the incomplete v4 cohort;
+5. the selected centre is recorded before any side-entry-v6 flight.  V6 keeps
+   v5's sample-count and diagnostic-mismatch semantics and is the only version
+   eligible for the separate n=3 confirmatory cohort.
+
+This repair is based solely on treatment assignment failure.  V5 results are
+exploratory and cannot be reported as confirmatory safety evidence.
+
+## Frozen v6 centre and confirmatory boundary (2026-09-07, pre-flight)
+
+The v5 Map7 integration gate passed 3/3, and the following design cohort then
+passed its treatment gate: Map7/Map9/Map10, Full/Sector/Adaptive, n=3,
+27/27 valid spawn events, all requiring and observing exactly three
+consecutive qualifying samples.  All 27 missions completed with zero source
+or synthetic-cylinder contacts.  These rows are design data only.
+
+The preregistered selector found 13 eligible 0.05 m lattice points and selected
+the first lexicographic optimum:
+
+- fixed world centre: `(22.50, 22.95)`;
+- Sector proxy clearance: minimum 0.344687 m, median 0.500947 m;
+- Adaptive proxy clearance: minimum 0.420500 m, median 0.597339 m;
+- Full proxy clearance: minimum 0.146284 m, median 0.520011 m;
+- conservative Map7/Map9/Map10 source gaps: 0.500895/0.788077/0.719521 m.
+
+The positive Sector proxy means this frozen location is expected to be an
+angular blind-zone exposure but is not preclaimed to force a Sector contact.
+The centre will not be moved closer after viewing v6 outcomes.
+
+Pre-flight reproducibility identifiers are:
+
+- normalized common v6 profile SHA-256:
+  `81b50081dd7e8e04ee0dd805c7cba48b79f9ad389ea3e24ccb48a3937a5abc71`;
+- simulator header SHA-256:
+  `60dcb0658940fe093b53e0c1f8b6123cd558bcac3755240480c8ee201adda275`;
+- selector SHA-256:
+  `8bda93b4b56d1a78823cedccb1fd63306541dd919f71b481d717eee6e7ef9aa7`;
+- selection record SHA-256:
+  `bc6656f18fc26a8f67601053b10ea01e42cf8d6939f947d1c6d4b8ba50966061`.
+
+The evidence files are
+`results/side_entry_v5_design_maps7_9_10_three_mode_n3_raw_20260907.csv` and
+`results/side_entry_v6_center_selection_20260907.json`.  V6 first receives a
+Map7 three-mode n=1 integration gate.  Only 3/3 validated events permit the
+frozen rotating Map7/Map9/Map10 three-mode n=3 confirmatory cohort.  All
+launched rows, contacts and infrastructure retries are retained.

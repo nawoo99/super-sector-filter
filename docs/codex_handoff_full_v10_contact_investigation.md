@@ -1,6 +1,32 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-07 EMER_STOP/motion-source 수정 및 blind-zone 단계 완료.**
+> 아래 2026-09-05 배너의 300회는 수정 전 원인분석 결과이며 최신 결론은 이
+> 배너가 우선한다. Guard-enabled EMER_STOP의 ordinary command 누출을 차단했고,
+> 별도 timestamp odom twist와 same-generation pose delta가 합치할 때만 brake
+> motion으로 채택하도록 수정했다. Pose `<=0.05 m/s`, twist `>0.05 m/s` 충돌은
+> twist를 거부한다. 14/14 CTest와 올바른 `/root/super_ws/install` 배포를 확인했다.
+>
+> 배포본 최종 Map1--10 × Full/Sector/Adaptive × n=10은 300/300 고유·유효·
+> first-attempt 완주다. 권위 지표 `static_pcd_collisions` 기준 Full/Adaptive는
+> 0/100, Sector는 Map9 run3에서 1/100 접촉이다. Legacy `collisions` 열은 이
+> 접촉을 포함하지 않으므로 안전 집계에 사용하면 안 된다. Paired Adaptive는
+> 접촉 0, +0.274 m clearance, effective-open 16회였다. Adaptive는 Full 대비
+> ingress 77.139%, map compute 39.276%, algorithm mean cores 29.136%, E2E mean
+> cores 12.751%를 줄였다. 7,372개 motion log 중 stationary-pose/nonzero-twist
+> 1,160건의 잘못된 odom-twist 채택은 0건이다.
+>
+> Blind-zone은 v4 처리 누락을 버리지 않고 v5 3연속-sample 설계 코호트로
+> 교정한 뒤, 사전 고정 selector가 `(22.50,22.95)`를 선택했다. Frozen v6
+> 확증 27회는 이벤트/완주 27/27, 모든 모드 source/side-entry 접촉 0이었다.
+> 따라서 공통 blind treatment와 Full 대비 연산·통신 절감은 검증했지만
+> side-entry 안전률 우위는 입증하지 못했고 McNemar 검정도 주장하지 않는다.
+> 7,675개 Fast DDS zombie SHM(약 2 GiB)이 preflight 600초 timeout 원인이어서
+> runner teardown에 `fastdds shm clean`을 추가했다. 상세는 viability §8.60과
+> `docs/emergency_stop_motion_blind_zone_final_20260907.md`를 우선 참조한다.
+
+> [!IMPORTANT]
 > **2026-09-05 prospective resource-gated 10맵 × 3모드 × n=10 완료.**
 > 고정 v7/45° profile로 300개 고유 run을 모두 첫 attempt에 완료했고 resource
 > abort/retry/OOM 및 static-PCD 충돌은 0이다. Full과 Adaptive는 각각 100/100

@@ -1412,7 +1412,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "side_entry_v1_event_loaded", "side_entry_v1_event_error",
           "side_entry_v1_event", "side_entry_v1_geometry_valid",
           "side_entry_v1_collision", "side_entry_v1_collision_episodes",
-          "side_entry_v1_min_clearance_m",
+          "side_entry_v1_min_clearance_m", "side_entry_v1_min_context",
           "side_entry_v1_spawn_time_s",
           "side_entry_v1_trigger_x", "side_entry_v1_trigger_y",
           "side_entry_v1_trigger_body_yaw_deg",
@@ -1427,6 +1427,9 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "side_entry_v1_angular_radius_deg",
           "side_entry_v1_inner_edge_deg", "side_entry_v1_nudge_deg",
           "side_entry_v1_prediction_s",
+          "side_entry_require_yaw_velocity_mismatch",
+          "side_entry_qualifying_samples_required",
+          "side_entry_qualifying_samples_observed",
           "side_entry_require_velocity_inside",
           "side_entry_fixed_center_enabled",
           "side_entry_v1_sector_half_angle_deg",
@@ -1696,6 +1699,25 @@ def log(msg):
     print(f"[native_campaign {time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
 
+def clean_fastdds_zombies():
+    """Ask Fast DDS to remove only IPC segments whose owners have exited."""
+    executable = shutil.which("fastdds")
+    if not executable:
+        return
+    try:
+        subprocess.run(
+            [executable, "shm", "clean"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=15.0,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        # Resource preflight still prevents a dirty host from entering a run;
+        # cleanup failure is therefore non-fatal and visible as preflight wait.
+        pass
+
+
 def kill_all(settle_s=1.5):
     for n in ("perfect_drone_node", "perfect_drone_frontend_node",
               "perfect_drone_full_node",
@@ -1707,6 +1729,7 @@ def kill_all(settle_s=1.5):
         subprocess.run(["pkill", "-9", "-f", n], stderr=subprocess.DEVNULL)
     if settle_s > 0.0:
         time.sleep(settle_s)
+    clean_fastdds_zombies()
 
 
 def spawn_process_group(*args, **kwargs):
@@ -3357,6 +3380,23 @@ def main():
         ),
     )
     ap.add_argument(
+        "--side-entry-v5",
+        action="store_true",
+        help=(
+            "use the exploratory fixed-centre side-entry-v5 profile; it "
+            "uses a three-consecutive-sample trigger and records yaw/velocity "
+            "mismatch diagnostically"
+        ),
+    )
+    ap.add_argument(
+        "--side-entry-v6",
+        action="store_true",
+        help=(
+            "use the frozen selected-centre side-entry-v6 confirmatory "
+            "profile"
+        ),
+    )
+    ap.add_argument(
         "--loop-timeout",
         type=float,
         help="override the seedmap loop timeout in seconds",
@@ -3787,6 +3827,8 @@ def main():
             (2, args.side_entry_v2),
             (3, args.side_entry_v3),
             (4, args.side_entry_v4),
+            (5, args.side_entry_v5),
+            (6, args.side_entry_v6),
         )
         if selected
     ]

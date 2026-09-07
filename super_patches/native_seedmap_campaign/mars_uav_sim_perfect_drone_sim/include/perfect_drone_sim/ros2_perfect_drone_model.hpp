@@ -46,7 +46,9 @@ namespace perfect_drone {
         int scenario_version{0};
         double speed_min_mps{2.0};
         double yaw_velocity_mismatch_min_deg{50.0};
+        bool require_yaw_velocity_mismatch{true};
         double hold_s{0.02};
+        int qualifying_samples{0};
         double prediction_s{0.8};
         bool require_velocity_inside{true};
         bool fixed_center_enabled{false};
@@ -74,18 +76,26 @@ namespace perfect_drone {
             bool v2_enabled = false;
             bool v3_enabled = false;
             bool v4_enabled = false;
+            bool v5_enabled = false;
+            bool v6_enabled = false;
             loader.LoadParam("side_entry_v1/enabled", v1_enabled, false, false);
             loader.LoadParam("side_entry_v2/enabled", v2_enabled, false, false);
             loader.LoadParam("side_entry_v3/enabled", v3_enabled, false, false);
             loader.LoadParam("side_entry_v4/enabled", v4_enabled, false, false);
+            loader.LoadParam("side_entry_v5/enabled", v5_enabled, false, false);
+            loader.LoadParam("side_entry_v6/enabled", v6_enabled, false, false);
             if (static_cast<int>(v1_enabled) + static_cast<int>(v2_enabled) +
                         static_cast<int>(v3_enabled) +
-                        static_cast<int>(v4_enabled) > 1) {
+                        static_cast<int>(v4_enabled) +
+                        static_cast<int>(v5_enabled) +
+                        static_cast<int>(v6_enabled) > 1) {
                 throw std::invalid_argument(
                         "only one side-entry scenario can be enabled");
             }
-            enabled = v1_enabled || v2_enabled || v3_enabled || v4_enabled;
+            enabled = v1_enabled || v2_enabled || v3_enabled || v4_enabled ||
+                      v5_enabled || v6_enabled;
             scenario_version =
+                    v6_enabled ? 6 : v5_enabled ? 5 :
                     v4_enabled ? 4 : v3_enabled ? 3 :
                     v2_enabled ? 2 : v1_enabled ? 1 : 0;
             const std::string prefix = "side_entry_v" +
@@ -93,7 +103,12 @@ namespace perfect_drone {
             loader.LoadParam(prefix + "/speed_min_mps", speed_min_mps, 2.0, false);
             loader.LoadParam(prefix + "/yaw_velocity_mismatch_min_deg",
                              yaw_velocity_mismatch_min_deg, 50.0, false);
+            loader.LoadParam(prefix + "/require_yaw_velocity_mismatch",
+                             require_yaw_velocity_mismatch, true, false);
             loader.LoadParam(prefix + "/hold_s", hold_s, 0.02, false);
+            loader.LoadParam(prefix + "/qualifying_samples",
+                             qualifying_samples,
+                             scenario_version >= 5 ? 3 : 0, false);
             loader.LoadParam(prefix + "/prediction_s", prediction_s, 0.8, false);
             loader.LoadParam(prefix + "/require_velocity_inside",
                              require_velocity_inside, true, false);
@@ -134,7 +149,9 @@ namespace perfect_drone {
         void validate() const {
             if (!enabled)
                 return;
-            if (speed_min_mps <= 0.0 || hold_s < 0.0 || prediction_s <= 0.0 ||
+            if (speed_min_mps <= 0.0 || hold_s < 0.0 ||
+                (scenario_version >= 5 && qualifying_samples <= 0) ||
+                prediction_s <= 0.0 ||
                 trigger_distance_min_m < 0.0 ||
                 trigger_distance_max_m < trigger_distance_min_m ||
                 trigger_waypoint_radius_m <= 0.0 || trap_waypoint_radius_m <= 0.0 ||
@@ -195,6 +212,8 @@ namespace perfect_drone {
         std::uint64_t side_entry_v1_mismatch_gate_samples_{0};
         std::uint64_t side_entry_v1_nudge_gate_samples_{0};
         std::uint64_t side_entry_v1_geometry_gate_samples_{0};
+        std::uint64_t side_entry_v1_qualifying_samples_consecutive_{0};
+        std::uint64_t side_entry_v1_qualifying_samples_max_{0};
         double side_entry_v1_corner_speed_max_{0.0};
         double side_entry_v1_prediction_distance_min_{
                 std::numeric_limits<double>::infinity()};
@@ -415,7 +434,11 @@ namespace perfect_drone {
                         "prediction_distance_max=%.6f mismatch_max_deg=%.6f "
                         "inner_edge_max_deg=%.6f velocity_outer_edge_min_deg=%.6f "
                         "trap_waypoint_distance_min=%.6f "
-                        "qualifying_duration_max_s=%.6f",
+                        "qualifying_duration_max_s=%.6f "
+                        "qualifying_samples_required=%d "
+                        "qualifying_samples_consecutive=%lu "
+                        "qualifying_samples_max=%lu "
+                        "require_yaw_velocity_mismatch=%d",
                         static_cast<unsigned long>(side_entry_v1_command_callbacks_),
                         static_cast<unsigned long>(side_entry_v1_near_corner_samples_),
                         static_cast<unsigned long>(side_entry_v1_speed_gate_samples_),
@@ -434,7 +457,13 @@ namespace perfect_drone {
                                 ? side_entry_v1_velocity_outer_edge_min_deg_ : -1.0,
                         std::isfinite(side_entry_v1_trap_waypoint_distance_min_)
                                 ? side_entry_v1_trap_waypoint_distance_min_ : -1.0,
-                        side_entry_v1_qualifying_duration_max_s_);
+                        side_entry_v1_qualifying_duration_max_s_,
+                        side_entry_v1_cfg_.qualifying_samples,
+                        static_cast<unsigned long>(
+                                side_entry_v1_qualifying_samples_consecutive_),
+                        static_cast<unsigned long>(
+                                side_entry_v1_qualifying_samples_max_),
+                        side_entry_v1_cfg_.require_yaw_velocity_mismatch ? 1 : 0);
             }
         }
 
@@ -498,6 +527,11 @@ namespace perfect_drone {
             if (side_entry_v1_spawned_)
                 return;
 
+            const auto reset_qualification = [this]() {
+                side_entry_v1_qualify_since_.reset();
+                side_entry_v1_qualifying_samples_consecutive_ = 0;
+            };
+
             const Eigen::Vector2d position(msg->position.x, msg->position.y);
             const Eigen::Vector2d velocity(msg->velocity.x, msg->velocity.y);
             const Eigen::Vector2d acceleration(msg->acceleration.x, msg->acceleration.y);
@@ -509,14 +543,14 @@ namespace perfect_drone {
             const double trigger_waypoint_distance = (position - waypoint).norm();
             if (trigger_waypoint_distance >
                     side_entry_v1_cfg_.trigger_waypoint_radius_m) {
-                side_entry_v1_qualify_since_.reset();
+                reset_qualification();
                 return;
             }
             ++side_entry_v1_near_corner_samples_;
             side_entry_v1_corner_speed_max_ =
                     std::max(side_entry_v1_corner_speed_max_, speed);
             if (speed < side_entry_v1_cfg_.speed_min_mps) {
-                side_entry_v1_qualify_since_.reset();
+                reset_qualification();
                 return;
             }
             ++side_entry_v1_speed_gate_samples_;
@@ -541,7 +575,7 @@ namespace perfect_drone {
             if (distance < side_entry_v1_cfg_.trigger_distance_min_m ||
                 distance > side_entry_v1_cfg_.trigger_distance_max_m ||
                 distance <= side_entry_v1_cfg_.radius_m) {
-                side_entry_v1_qualify_since_.reset();
+                reset_qualification();
                 return;
             }
             ++side_entry_v1_prediction_gate_samples_;
@@ -552,9 +586,10 @@ namespace perfect_drone {
             const double mismatch = std::abs(signed_mismatch);
             side_entry_v1_mismatch_max_deg_ = std::max(
                     side_entry_v1_mismatch_max_deg_, mismatch * 180.0 / M_PI);
-            if (mismatch < side_entry_v1_cfg_.yaw_velocity_mismatch_min_deg *
+            if (side_entry_v1_cfg_.require_yaw_velocity_mismatch &&
+                mismatch < side_entry_v1_cfg_.yaw_velocity_mismatch_min_deg *
                                    M_PI / 180.0) {
-                side_entry_v1_qualify_since_.reset();
+                reset_qualification();
                 return;
             }
             ++side_entry_v1_mismatch_gate_samples_;
@@ -571,7 +606,7 @@ namespace perfect_drone {
                     std::max(0.0, required_center_angle - std::abs(body_relative));
             const double max_nudge = side_entry_v1_cfg_.max_nudge_deg * M_PI / 180.0;
             if (required_nudge > max_nudge) {
-                side_entry_v1_qualify_since_.reset();
+                reset_qualification();
                 return;
             }
             ++side_entry_v1_nudge_gate_samples_;
@@ -634,7 +669,7 @@ namespace perfect_drone {
                     inside_predeclared_clear_disk ? 1 : 0);
             if (!fully_outside_body_sector || !velocity_requirement_met ||
                 !inside_predeclared_clear_disk) {
-                side_entry_v1_qualify_since_.reset();
+                reset_qualification();
                 return;
             }
             ++side_entry_v1_geometry_gate_samples_;
@@ -642,14 +677,23 @@ namespace perfect_drone {
             const auto now = SensorCadenceClock::now();
             if (!side_entry_v1_qualify_since_) {
                 side_entry_v1_qualify_since_ = now;
-                return;
             }
+            ++side_entry_v1_qualifying_samples_consecutive_;
+            side_entry_v1_qualifying_samples_max_ = std::max(
+                    side_entry_v1_qualifying_samples_max_,
+                    side_entry_v1_qualifying_samples_consecutive_);
             const double qualifying_s = std::chrono::duration<double>(
                     now - *side_entry_v1_qualify_since_).count();
             side_entry_v1_qualifying_duration_max_s_ = std::max(
                     side_entry_v1_qualifying_duration_max_s_, qualifying_s);
-            if (qualifying_s < side_entry_v1_cfg_.hold_s)
-                return;
+            if (side_entry_v1_cfg_.scenario_version >= 5) {
+                if (side_entry_v1_qualifying_samples_consecutive_ <
+                    static_cast<std::uint64_t>(
+                            side_entry_v1_cfg_.qualifying_samples))
+                    return;
+            } else if (qualifying_s < side_entry_v1_cfg_.hold_s) {
+                    return;
+            }
 
             side_entry_v1_center_ = candidate;
             buildSideEntryV1Cloud();
@@ -806,6 +850,14 @@ namespace perfect_drone {
                    << signed_nudge * 180.0 / M_PI << ",\n"
                    << "  \"side_entry_v1_prediction_s\": "
                    << side_entry_v1_cfg_.prediction_s << ",\n"
+                   << "  \"side_entry_require_yaw_velocity_mismatch\": "
+                   << (side_entry_v1_cfg_.require_yaw_velocity_mismatch ?
+                               "true" : "false")
+                   << ",\n"
+                   << "  \"side_entry_qualifying_samples_required\": "
+                   << side_entry_v1_cfg_.qualifying_samples << ",\n"
+                   << "  \"side_entry_qualifying_samples_observed\": "
+                   << side_entry_v1_qualifying_samples_consecutive_ << ",\n"
                    << "  \"side_entry_require_velocity_inside\": "
                    << (side_entry_v1_cfg_.require_velocity_inside ?
                                "true" : "false")

@@ -4155,3 +4155,54 @@ in `docs/resource_guard_campaign_final_20260905.md`. Versioned results are
 `results/allmaps_resource_guard_prospective_three_mode_n10_`
 `{raw_20260904,summary,reductions,validation}`. The 457 MiB detailed artifact
 directory remains local and is intentionally not committed.
+
+### 8.60 EMER_STOP/motion-source closure and frozen blind-zone stress (2026-09-07)
+
+The guard-enabled EMER_STOP ordinary-command leak was removed and odometry
+twist is now accepted only when a same-generation pose delta corroborates it.
+A stationary pose at or below 0.05 m/s conflicting with nonzero twist rejects
+the twist and falls back to pose difference; the separate stationary
+certificate remains required. The policy tests pass in 14/14 CTest entries.
+
+After discovering that an earlier build had gone to
+`/root/super_ws/src/SUPER/install` while campaigns sourced
+`/root/super_ws/install`, all packages were rebuilt from `/root/super_ws`.
+The correctly deployed Map9 focus passed 9/9, followed by exactly 300 unique,
+first-attempt, run/resource/speed/performance-valid Map1--10 three-mode rows.
+Every mode completed 100/100. Full and Adaptive had zero source-static-PCD
+contacts; Sector had one Map9 run3 contact and still completed. The paired
+Adaptive row completed without contact with +0.274 m clearance and 16
+effective Full opens. Thus completion does not separate the modes, but one
+paired contact recovery is observed.
+
+Adaptive versus Full reduced mean logical ingress 77.139%, map compute per
+frame 39.276%, algorithm mean cores 29.136%, common end-to-end mean cores
+12.751% and core-seconds 14.448%. Against Sector it reduced ingress 20.352%
+but increased map compute 112.300% and end-to-end mean cores 3.364%. Adaptive
+made 2,068 effective Full-open and 397 trajectory-guard-open transitions.
+The deployed-log audit parsed 7,372 motion records: all 1,160 stationary-pose/
+nonzero-twist conflicts avoided `odom_twist`, and no accepted odometry twist
+used a discontinuous generation.
+
+Blind-zone treatment was then frozen transparently. V4 completed 27/27 but
+had only 26 valid events, so it was not used for location selection. V5 used
+three consecutive body-outside samples and diagnostic-only yaw/velocity
+mismatch; its Map7 gate passed 3/3 and design cohort passed 27/27 events. The
+predeclared lattice selector chose `(22.50, 22.95)` from 13 eligible centres.
+The v6 Map7 gate passed 3/3, and the frozen confirmatory cohort passed 27/27
+events and completions with zero source or side-entry contacts in every mode.
+Adaptive cut Full ingress/map-compute/end-to-end cores by
+72.041/39.030/14.666%, but the experiment produced no completion/contact
+discordance and therefore does not establish a side-entry safety-rate
+advantage. No McNemar test is claimed.
+
+A 600 s preflight timeout before the design run led to 7,675 unowned Fast DDS
+shared-memory files occupying about 2 GiB. No flight row had started. Cleaning
+the zombie IPC restored about 9.5 GiB available memory; the runner now calls
+`fastdds shm clean` after process teardown. The final 300 had no abort, retry,
+OOM, process swap or PSI event, although host swap was externally saturated.
+
+Detailed tables, exact filenames, treatment chronology and limitations are in
+`docs/emergency_stop_motion_blind_zone_final_20260907.md`. The result remains
+simulation-only; 100/100 has an exact two-sided 95% lower bound near 96.38%,
+not a population-level guarantee.

@@ -40,7 +40,7 @@ def parse_args():
     parser.add_argument(
         "--version",
         type=int,
-        choices=(1, 2, 3, 4),
+        choices=(1, 2, 3, 4, 5, 6),
         default=1,
     )
     parser.add_argument(
@@ -77,7 +77,7 @@ def load_profile(config_dir, map_number, version):
     expected_profile = dict(EXPECTED)
     if version == 2:
         expected_profile["prediction_s"] = 0.6
-    elif version in (3, 4):
+    elif version >= 3:
         expected_profile.update(
             {
                 "hold_s": 0.015,
@@ -88,8 +88,22 @@ def load_profile(config_dir, map_number, version):
                 "max_nudge_deg": 0.0,
             }
         )
-        if version == 4:
+        if version >= 4:
             expected_profile["require_velocity_inside"] = False
+        if version >= 5:
+            expected_profile.update(
+                {
+                    "require_yaw_velocity_mismatch": False,
+                    "qualifying_samples": 3,
+                }
+            )
+        if version == 6:
+            # V6's one common centre is selected reproducibly from the v5
+            # design cohort, so equality is checked across the three profile
+            # blocks and runtime events rather than against the old v3--v5
+            # literal centre.
+            expected_profile.pop("fixed_center_x")
+            expected_profile.pop("fixed_center_y")
     for key, expected in expected_profile.items():
         actual = profile.get(key)
         if isinstance(expected, float):
@@ -102,6 +116,13 @@ def load_profile(config_dir, map_number, version):
             raise ValueError(
                 f"{path}: {key}={actual!r}, expected {expected!r}"
             )
+    if version == 6:
+        center_x = float(profile.get("fixed_center_x", math.nan))
+        center_y = float(profile.get("fixed_center_y", math.nan))
+        if not math.isfinite(center_x) or not math.isfinite(center_y):
+            raise ValueError(f"{path}: non-finite v6 fixed centre")
+        if math.hypot(center_x - 22.5, center_y - 23.0) > 0.4 + 1e-12:
+            raise ValueError(f"{path}: v6 fixed centre exceeds design lattice")
     return path, profile
 
 
@@ -147,7 +168,7 @@ def source_clearance(manifest_dir, map_number, profile):
     }
 
 
-def validate_event(path, version):
+def validate_event(path, version, profile):
     with open(path) as stream:
         event = json.load(stream)
     half_angle = float(event["side_entry_v1_sector_half_angle_deg"])
@@ -177,7 +198,7 @@ def validate_event(path, version):
         checks["velocity_requirement_disabled"] = (
             event.get("side_entry_require_velocity_inside") is False
         )
-    if version in (3, 4):
+    if version >= 3:
         checks.update(
             {
                 "fixed_center_enabled": (
@@ -185,17 +206,34 @@ def validate_event(path, version):
                 ),
                 "fixed_x_matches": math.isclose(
                     float(event["side_entry_v1_trap_x"]),
-                    22.5,
+                    float(profile["fixed_center_x"]),
                     rel_tol=0.0,
                     abs_tol=1e-6,
                 ),
                 "fixed_y_matches": math.isclose(
                     float(event["side_entry_v1_trap_y"]),
-                    23.0,
+                    float(profile["fixed_center_y"]),
                     rel_tol=0.0,
                     abs_tol=1e-6,
                 ),
                 "zero_nudge": nudge <= 1e-6,
+            }
+        )
+    if version >= 5:
+        checks.update(
+            {
+                "mismatch_requirement_disabled": (
+                    event.get("side_entry_require_yaw_velocity_mismatch")
+                    is False
+                ),
+                "three_samples_required": (
+                    int(event.get("side_entry_qualifying_samples_required", -1))
+                    == 3
+                ),
+                "three_samples_observed": (
+                    int(event.get("side_entry_qualifying_samples_observed", -1))
+                    >= 3
+                ),
             }
         )
     if not all(checks.values()):
@@ -224,7 +262,8 @@ def main():
         ),
         "scenario_version": args.version,
         "events": [
-            validate_event(path, args.version) for path in args.event_json
+            validate_event(path, args.version, reference)
+            for path in args.event_json
         ],
     }
     print(json.dumps(result, indent=2, sort_keys=True))
