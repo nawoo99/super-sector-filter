@@ -128,3 +128,19 @@ Host swap was almost saturated by external historical pages, but the prior
 correct-deployment 300-row campaign established that per-campaign swap and
 memory PSI, not the persistent host swap counter alone, are the validity
 criteria.
+
+## Registered outcome (added after the campaign)
+
+The frozen 180-row cohort completed without any Full or Adaptive stop
+condition. Full and Adaptive were each 60/60 complete with zero authoritative
+static-PCD contact, so no repair or restart was required. Sector was 59/60
+complete with zero contact; Map10 run 30 timed out at 3/5 waypoints after a
+132.692 s recovery-active interval. All 180 rows were first-attempt and
+run/resource/speed/performance-valid, with zero retry, resource abort and OOM.
+The strict campaign validator passed.
+
+The Sector timeout was a safe topology/liveness outlier: minimum static
+clearance was +0.226 m, memory PSI and campaign-process swap were zero,
+topology search rose to 195 and trajectory commit rate fell to 0.600 Hz. The
+fixed Sector ablation was not changed. Full details and computation tables are
+in `docs/map9_10_static_n30_final_20260907.md`.

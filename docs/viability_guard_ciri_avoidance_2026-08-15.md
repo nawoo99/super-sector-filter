@@ -4238,3 +4238,48 @@ and no further position/radius tuning was performed.  This experiment does
 not support an Adaptive safety-rate advantage or a McNemar test.  Protocol,
 hashes and evidence filenames are in
 `docs/blind_zone_v7_stress_preregistration_20260907.md`.
+
+### 8.62 Preregistered Map9--10 static repeated-run n=30 (2026-09-07)
+
+The existing Map9 and Map10 static environments were frozen as a selected
+hard-map reliability subset, with no side-entry injection. The cohort rotated
+Full/Sector/Adaptive order exactly and completed all 180 scheduled rows in
+about 287 minutes. All rows used one attempt and were run-, resource-, speed-
+and performance-valid; retry, resource abort, infrastructure failure and OOM
+counts were zero. Strict structural and scope validation passed.
+
+Full and Adaptive each completed 60/60 with zero authoritative source-PCD
+contacts, so the preregistered protected-mode stop/repair/restart rule did not
+trigger. Map9 was 30/30 for every mode. On Map10, Full and Adaptive were 30/30
+while Sector was 29/30. Sector run 30 timed out at 180.01 s and 3/5 waypoints
+without contact; its minimum clearance was +0.226 m.
+
+The failed Sector row was a safe liveness outlier rather than a resource
+failure. Recovery remained active for 132.692 s, including one 115.321 s
+episode, versus 14.909/4.222 s medians in the other 29 Map10 Sector rows.
+Topology reroute arms/searches rose to 69/195, four certified local escapes
+were committed and trajectory commit rate fell to 0.600 Hz. The attempt log
+also contains 199 failed line-polytope generations and 93 clearance-margin
+candidate rejections. Campaign-process swap, memory PSI, retry and OOM were
+zero. The fixed Sector ablation was not tuned after observing the result.
+
+Across the 60 rows per mode, Full/Sector/Adaptive mean time was
+81.762/80.309/79.009 s. Adaptive versus Full reduced planner ingress 74.256%,
+map compute per frame 36.458%, common end-to-end mean cores 14.029% and
+end-to-end core-seconds 16.941%. Peak end-to-end PSS was 2.066% higher, so no
+memory-saving claim is supported. Adaptive made 1,306 effective Full-open and
+462 trajectory-guard-open transitions, 21.77/7.70 per run.
+
+The motion audit parsed 9,503 decisions in all 180 attempt logs. None of 1,359
+stationary-pose/nonzero-twist conflicts selected `odom_twist`, and no accepted
+odometry twist crossed a discontinuous generation. Its aggregate status is
+FAIL solely because it also counts the Sector mission timeout as a quality
+failure; both motion violation counters are zero.
+
+The run-level exact two-sided 95% interval for 60/60 completion is about
+94.04--100%, not a population guarantee. Zero contacts in all modes means this
+cohort does not establish Adaptive collision-rate superiority over Sector;
+the one completion discordance is descriptive. Detailed tables, evidence
+hashes and interpretation are in
+`docs/map9_10_static_n30_final_20260907.md`, with compact result files under
+`results/map9_10_static_three_mode_n30_*`.

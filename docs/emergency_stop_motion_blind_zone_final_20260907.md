@@ -175,3 +175,16 @@ run with zero source or synthetic contact; minimum synthetic clearance was
 closest, the frozen expansion gate failed and the remaining candidates were
 not run.  Details and the explicit stop rule are in
 `docs/blind_zone_v7_stress_preregistration_20260907.md`.
+
+## Post-closure Map9--10 repeated-run campaign
+
+A later preregistered static-only campaign increased the selected hard-map
+sample to n=30 per map and mode. Full and Adaptive each completed 60/60 with
+zero source-PCD contact. Sector completed 59/60 with zero contact; Map10 run
+30 entered a prolonged safe stop/reroute loop and timed out at 3/5 waypoints.
+No protected-mode failure occurred, so no code change or full restart was
+required. Adaptive reduced Full ingress, map compute, end-to-end mean cores
+and core-seconds by 74.256%, 36.458%, 14.029% and 16.941%, respectively, and
+made 1,306 effective Full-open transitions. See
+`docs/map9_10_static_n30_final_20260907.md` for the per-map table and timeout
+forensics.

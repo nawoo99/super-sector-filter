@@ -1,6 +1,23 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-07 Map9--10 static three-mode n=30 완료.** 사전등록한 180행을
+> 약 287분에 모두 실행했다. Full/Adaptive는 각각 60/60 완주,
+> authoritative source-PCD 접촉 0이어서 보호 모드 실패 시 중단/수정/처음부터
+> 재시험 조건은 발생하지 않았다. Sector는 접촉 0이지만 Map10 run30 한 건이
+> 180.01초에 3/5 waypoint로 timeout하여 59/60이다. 이 행은 +0.226 m
+> clearance, PSI/process swap/OOM/retry 0인 안전한 liveness 실패였고,
+> recovery 132.692초, topology search 195회, trajectory commit 0.600 Hz의
+> stop/reroute loop였다. 고정 ablation인 Sector는 사후 튜닝하지 않았다.
+>
+> 180/180행은 first-attempt 및 run/resource/speed/performance-valid이고 strict
+> validation은 PASS다. Adaptive는 Full 대비 ingress 74.256%, map compute
+> 36.458%, 공통 E2E mean cores 14.029%, core-seconds 16.941%를 줄였으며
+> effective/TG Full-open은 1,306/462회다. 모든 모드 접촉 0이므로 안전률 우위는
+> 주장할 수 없고, 60/60도 population 100% 보장이 아니다. 최신 상세는
+> `docs/map9_10_static_n30_final_20260907.md`와 viability §8.62를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-07 blind-zone v7 time-boxed smoke 종료.** V6 경로를 설계 데이터로
 > 선언하고 Map9 `(22.50,23.05)`, 반경 0.50 m의 trajectory-intersection
 > stress를 비행 전에 고정했다. Full/Sector/Adaptive n=1은 약 4.5분에 모두
