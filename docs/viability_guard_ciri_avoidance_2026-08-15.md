@@ -4388,3 +4388,59 @@ No safety-superiority or McNemar claim is supported. A future v3 must validate
 the full 3D flown visibility envelope and avoid a narrow fixed-height slit,
 then pass a new small preregistered delivery pilot before confirmation. Full
 evidence is in `docs/static_occlusion_channel_pilot_result_20260908.md`.
+
+### 8.65 Wide-bypass static blind-corner supplemental n=10 (2026-09-08)
+
+The existing Map1--10 evidence and frozen planner were preserved. A separate
+five-map supplement used source seeds 1/3/5/7/9, one per background-radius
+stratum, cleared only background cylinders within 2.0 m of loop24 and inserted
+a common full-height L corner plus a `(18.4,24.0)`, radius-0.95 m hazard. The
+final wide bypass had +0.575 m analytic body clearance. Its reveal placed the
+nearest hazard edge 55.008 degrees from velocity, outside the frozen
+45-degree crop. Geometry, runtime assets, configs and execution rules were
+frozen before flight. Earlier infeasible `occ_b`/`occ_bc` smokes remain
+separate negative design history and are not pooled.
+
+The one-per-cell smoke passed 15/15 and remained separate. The reported five
+maps x three modes x ten repetitions then completed all 150 unique rows in
+174.3 minutes. Every row was first-attempt and
+run/resource/speed/performance/cgroup-valid; retry, resource abort,
+infrastructure failure and OOM were zero. Full/Sector/Adaptive each completed
+50/50 with zero authoritative source-PCD and analytic-hazard contact. Full and
+Adaptive thus met the requested observed finite-cohort reliability target,
+but this is not a population-level 100% guarantee.
+
+All 100 filtered probes were valid. Per-map pooled first-observation medians
+were 4.377--4.441 m and Sector first saw the hazard centre outside its crop in
+50/50 rows. Adaptive trajectory-guard activity was 7/10, 9/10, 4/10, 6/10
+and 4/10 by tier, below the required 8/10 on four maps, so the physical
+delivery gate failed. Adaptive did enter effective Full mode in every row:
+1,119 transitions total (22.38/run), dominated by 1,136 replan-guard opening
+requests; trajectory-guard openings totalled 30.
+
+There were zero desired Sector-bad/Adaptive-safe and zero reverse binary
+discordances. Adaptive paired hazard clearance improved in 4/5 maps, but the
+median of the five map advantages was +0.0515 m, below the frozen +0.10 m
+threshold. The final decision is
+`SUPPLEMENT_COMPLETE_NO_SAFETY_SEPARATION`. Sector also avoided the visible
+L walls and used the deliberately feasible northern bypass before the hidden
+cylinder forced a policy-dependent conflict. Thus no safety-rate superiority
+or McNemar result is claimed. One Adaptive row was contact-free but had only
++0.184 m authoritative global clearance, the sole row below +0.20 m.
+
+Adaptive versus Full reduced planner ingress 84.141%, map compute/frame
+56.558%, common end-to-end mean cores 20.541% and core-seconds 20.906%, with
+mission-time parity (+0.22% faster). Peak PSS was 0.211% higher, so no memory
+saving is claimed. Algorithm-only Full-versus-filtered CPU remains invalid
+because its process scope differs; common end-to-end CPU is the comparison.
+Host swap-used stayed near 2 GiB, but algorithm/E2E/FSM swap and memory PSI
+were zero and minimum available memory was 4,950.52 MiB, so no resource
+confound or retry occurred.
+
+An analysis-only field-alias defect was found after collection: it left
+resource columns blank in the specialized map table. The raw CSV, gate logic
+and generic summary were unaffected. The aliases were corrected and covered
+by a regression assertion. Full tables, hashes and limitations are in
+`docs/static_blind_corner_wide_supplement_result_20260908.md`; the frozen
+design and smoke are in
+`docs/static_blind_corner_wide_supplement_preregistration_20260908.md`.

@@ -1,6 +1,31 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-08 wide-bypass blind-corner 보조 150행 완료.** 기존 Map1--10과
+> frozen v7/45° planner를 그대로 보존하고, odd seed 1/3/5/7/9의 5개 반경 층에
+> 공통 full-height L corner와 `(18.4,24.0)`, 반경 0.95 m hazard를 넣은 별도
+> `occ_bw_r1..r5` 코호트를 사전등록했다. smoke 15행과 본시험 150행은 분리했다.
+> 본시험은 약 174.3분에 150/150 unique·first-attempt·품질 유효로 종료됐고,
+> Full/Sector/Adaptive 각각 50/50 완주, authoritative/analytic contact 0이다.
+> retry/resource abort/infrastructure failure/OOM도 0이었다.
+>
+> Filtered probe 100/100 유효, Sector hazard centre crop 밖 50/50, 맵별 최초
+> 관측거리 중앙값 4.377--4.441 m로 blind-corner geometry는 전달됐다. 그러나
+> Adaptive trajectory-guard active는 맵별 7/10, 9/10, 4/10, 6/10, 4/10이라
+> 사전 기준 8/10을 네 맵에서 못 넘었다. Effective Full 전환은 총 1,119회
+> (22.38/run)였고 대부분 replan guard였다. Desired binary discordance는 0,
+> Adaptive paired clearance 우위는 4/5였지만 중앙값 +0.0515 m로 +0.10 m 기준에
+> 미달했다. 고정 판정은 `SUPPLEMENT_COMPLETE_NO_SAFETY_SEPARATION`이다.
+>
+> Adaptive는 Full 대비 ingress/map compute/common E2E mean cores/core-s를
+> 84.141/56.558/20.541/20.906% 줄였지만 peak PSS는 0.211% 높았다. Full과
+> Adaptive의 유한 코호트 신뢰도 목표는 달성했으나 Sector도 전부 안전하므로
+> Adaptive 안전률 우위나 McNemar를 주장하면 안 된다. 분석 후 발견한 map-table
+> field alias 문제만 raw 비변경 상태로 수정·회귀시험했다. 최신 상세는 viability
+> §8.65와 `docs/static_blind_corner_wide_supplement_result_20260908.md`를
+> 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-08 channelized static-occlusion v2 파일럿 종료.** v1 결과를
 > 설계 자료로만 닫고 independent even-seed 2/4/6/8/10 배경에 공통 L형 채널,
 > `(18,24)` hazard와 nominal 수평 sensor slit/occluded solid-wall 쌍을 만들었다.

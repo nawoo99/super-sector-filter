@@ -149,3 +149,37 @@ compute, common end-to-end CPU and planner-ingress bandwidth by map and mode.
   `8c06591306aeaeb64868be2d05d5ec434b8884d4fd24c67798f222fc25fb4cc2`,
   `eff53f16e543380932dbf5e8c7b1b13b76a1027c5d469300ea13d5763466310c`,
   `2a52df0ea155e50ef6df198e22d63b09f0a3cb901fb0e1016a33658f325adb62`.
+
+## Registered n=10 outcome (added after completion)
+
+The frozen 150-row campaign completed in 174.3 minutes. All 150 rows were
+unique, first-attempt and quality-valid, with zero retry, resource abort,
+infrastructure failure and OOM. Full, Sector and Adaptive each completed
+50/50 missions with zero authoritative contact. Full and Adaptive therefore
+passed the protected-mode gate.
+
+All 100 filtered probes and 150 analytic-hazard measurements were valid.
+Sector first observed the hazard centre outside the 45-degree crop in 50/50
+rows, and per-map pooled first-observation medians were 4.377--4.441 m.
+Trajectory-guard activity was only 7/10, 9/10, 4/10, 6/10 and 4/10 Adaptive
+rows by tier, so the per-map 8/10 physical-delivery requirement failed.
+
+There were zero desired and zero reverse binary discordances. Adaptive's
+paired hazard-clearance median improved in 4/5 maps, but the median map
+advantage was +0.0515 m rather than the required +0.10 m. The frozen decision
+is therefore `SUPPLEMENT_COMPLETE_NO_SAFETY_SEPARATION`. No McNemar test or
+Adaptive safety-rate advantage is claimed.
+
+Adaptive reduced Full planner ingress, map compute, common end-to-end mean
+cores and core-seconds by 84.141%, 56.558%, 20.541% and 20.906%. It produced
+1,119 effective Full transitions and 30 trajectory-guard-specific openings.
+Peak PSS was 0.211% higher than Full, so no memory-saving claim is made.
+Complete results and interpretation are in
+`docs/static_blind_corner_wide_supplement_result_20260908.md`.
+
+After the run, a field-alias error that left only the specialized map table's
+resource cells blank was fixed and regression-tested. Raw collection, gate
+logic and the generic resource summary were unaffected. The frozen pre-run
+analyzer hash above is retained for audit; the corrected analysis-only script
+hash is
+`7024e02240f2f409af56abec6a01f8424a99ff0afb2f3b53594eca0792a2eab4`.

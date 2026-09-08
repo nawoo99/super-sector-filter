@@ -57,10 +57,10 @@ def test_complete_safe_fixture_passes_quality_but_not_separation():
                         "filter_trajectory_guard_open_transitions": (
                             1 if adaptive else 0
                         ),
-                        "planner_ingress_mib_s": 1.0,
-                        "map_compute_ms_per_frame": 1.0,
-                        "end_to_end_cores_mean": 1.0,
-                        "end_to_end_core_s": 60.0,
+                        "planner_ingress_payload_mib_s": 1.0,
+                        "total_ms_mean": 1.0,
+                        "end_to_end_cpu_cores_mean": 1.0,
+                        "end_to_end_cpu_core_s": 60.0,
                         "end_to_end_peak_pss_mib": 100.0,
                     }
                 )
@@ -83,3 +83,10 @@ def test_complete_safe_fixture_passes_quality_but_not_separation():
         assert result["gates"]["physical_delivery"]
         assert not result["gates"]["safety_separation_either_route"]
         assert result["decision"] == "SUPPLEMENT_COMPLETE_NO_SAFETY_SEPARATION"
+
+        with Path(f"{prefix}_map_table.csv").open(newline="") as stream:
+            table = list(csv.DictReader(stream))
+        assert table[0]["planner_ingress_mib_s_mean"] == "1.0"
+        assert table[0]["map_compute_ms_per_frame_mean"] == "1.0"
+        assert table[0]["end_to_end_cores_mean"] == "1.0"
+        assert table[0]["end_to_end_core_s_mean"] == "60.0"

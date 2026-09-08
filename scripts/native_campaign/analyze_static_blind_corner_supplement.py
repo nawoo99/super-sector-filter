@@ -172,16 +172,16 @@ def analyze(campaign: Path, prefix: Path) -> dict:
                         for row in cell
                     ),
                     "planner_ingress_mib_s_mean": rounded(
-                        mean(cell, "planner_ingress_mib_s"), 6
+                        mean(cell, "planner_ingress_payload_mib_s"), 6
                     ),
                     "map_compute_ms_per_frame_mean": rounded(
-                        mean(cell, "map_compute_ms_per_frame"), 6
+                        mean(cell, "total_ms_mean"), 6
                     ),
                     "end_to_end_cores_mean": rounded(
-                        mean(cell, "end_to_end_cores_mean"), 6
+                        mean(cell, "end_to_end_cpu_cores_mean"), 6
                     ),
                     "end_to_end_core_s_mean": rounded(
-                        mean(cell, "end_to_end_core_s"), 6
+                        mean(cell, "end_to_end_cpu_core_s"), 6
                     ),
                     "end_to_end_peak_pss_mib_mean": rounded(
                         mean(cell, "end_to_end_peak_pss_mib"), 3
