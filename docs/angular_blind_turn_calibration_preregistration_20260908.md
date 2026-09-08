@@ -2,6 +2,14 @@
 
 Date frozen: 2026-09-08 (Asia/Seoul), before the first `abt_cal` flight
 
+> **Pre-flight infrastructure amendment (2026-09-08):** the first process
+> remained at resource preflight and was interrupted before any launch or data
+> row.  Its CSV contained only the header.  VS Code Pylance held about 2.9 GiB,
+> leaving MemAvailable stable near 7.6 GiB, below the default 8 GiB threshold.
+> To avoid killing a user process, the frozen command adds
+> `--resource-preflight-min-available-mib 7168`.  The runtime 2 GiB minimum,
+> PSI hold, resource abort, OOM and all row-validity gates are unchanged.
+
 ## Purpose and separation from prior evidence
 
 The preserved Map1--10 reliability campaign and the completed `occ_bw_r1..r5`
@@ -76,6 +84,7 @@ python3 scripts/native_campaign/native_campaign.py \
   --adaptive-risk-body-clearance-m 0.20 \
   --adaptive-risk-body-horizon-s 0.15 \
   --adaptive-risk-body-max-odom-age-s 0.20 \
+  --resource-preflight-min-available-mib 7168 \
   --cgroup-cpu-accounting --optimizer-phase-memory-trace \
   --artifacts-dir results/angular_blind_turn_calibration_three_mode_n1_artifacts_20260908 \
   --out results/angular_blind_turn_calibration_three_mode_n1_raw_20260908.csv
