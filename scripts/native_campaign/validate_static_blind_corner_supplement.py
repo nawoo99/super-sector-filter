@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import csv
 import json
 import math
 from pathlib import Path
@@ -88,6 +89,23 @@ def point_wall_surface_distance(point: tuple[float, float], wall: dict) -> float
     return math.hypot(ds, dn)
 
 
+def point_segment_distance(
+    point: tuple[float, float],
+    start: tuple[float, float],
+    end: tuple[float, float],
+) -> float:
+    dx, dy = end[0] - start[0], end[1] - start[1]
+    scale = dx * dx + dy * dy
+    if scale <= 0.0:
+        return math.dist(point, start)
+    fraction = (
+        (point[0] - start[0]) * dx + (point[1] - start[1]) * dy
+    ) / scale
+    fraction = min(1.0, max(0.0, fraction))
+    closest = (start[0] + fraction * dx, start[1] + fraction * dy)
+    return math.dist(point, closest)
+
+
 def sampled_path_clearance(
     path: list[tuple[float, float]],
     walls: list[dict],
@@ -135,7 +153,9 @@ def angle_delta_deg(value: float) -> float:
 def validate() -> dict:
     errors: list[str] = []
     manifest = json.loads(MANIFEST_PATH.read_text())
-    if manifest.get("schema") != "static-blind-corner-supplement-v3":
+    if manifest.get("schema") != (
+        "static-blind-corner-supplement-v3.1-controlled-route"
+    ):
         errors.append("unexpected schema")
     maps = manifest.get("maps") or []
     if len(maps) != 5:
@@ -145,6 +165,19 @@ def validate() -> dict:
     hazard_center = tuple(hazard["center_xy_m"])
     hazard_radius = float(hazard["radius_m"])
     body_radius = float(manifest["body_radius_m"])
+    route = [tuple(point) for point in manifest["background_route_waypoints_xy_m"]]
+    route_clearance = float(manifest["background_route_surface_clearance_m"])
+    if route != [
+        (0.0, 0.0),
+        (24.0, 24.0),
+        (-24.0, 24.0),
+        (-24.0, -24.0),
+        (24.0, -24.0),
+        (0.0, 0.0),
+    ]:
+        errors.append("unexpected controlled-route waypoint polyline")
+    if route_clearance < 2.0:
+        errors.append("background route surface clearance is below 2.0 m")
     z_min, z_max = manifest["validated_flight_z_envelope_m"]
     if z_min < 0.0 or z_max + body_radius > float(hazard["height_m"]):
         errors.append("hazard does not cover validated 3D body envelope")
@@ -160,6 +193,20 @@ def validate() -> dict:
     for expected_tier, item in enumerate(maps, start=1):
         if int(item["radius_tier"]) != expected_tier:
             errors.append(f"unexpected tier order: {item['map']}")
+        source_path = SCRIPT_DIR / f"seed{item['source_seed']}_static.csv"
+        with source_path.open(newline="") as stream:
+            source = list(csv.DictReader(stream))
+        touching_route = 0
+        for cylinder in source:
+            center = (float(cylinder["x"]), float(cylinder["y"]))
+            radius = float(cylinder["r"])
+            surface_distance = min(
+                point_segment_distance(center, start, end) - radius
+                for start, end in zip(route, route[1:])
+            )
+            touching_route += surface_distance <= route_clearance + 1e-12
+        if touching_route != int(item["base_cylinders_touching_route_corridor"]):
+            errors.append(f"route-removal count mismatch: {item['map']}")
         pcd_path = PCD_DIR / f"{item['map']}.pcd"
         config_path = CONFIG_DIR / f"{item['map']}.yaml"
         if not pcd_path.is_file() or not config_path.is_file():

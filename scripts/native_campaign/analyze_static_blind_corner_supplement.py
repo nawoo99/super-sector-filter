@@ -10,7 +10,7 @@ import statistics
 from pathlib import Path
 
 
-MAPS = tuple(f"occ_b_r{tier}" for tier in range(1, 6))
+MAPS = tuple(f"occ_bc_r{tier}" for tier in range(1, 6))
 MODES = ("full", "sector", "adaptive")
 RUNS = tuple(range(1, 11))
 

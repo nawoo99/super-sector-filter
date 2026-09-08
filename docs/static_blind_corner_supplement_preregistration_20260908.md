@@ -1,5 +1,24 @@
 # Static blind-corner supplemental n=10 preregistration
 
+> **Frozen v3 feasibility outcome (2026-09-08): stopped as specified.** The
+> `occ_b` smoke produced 10 rows before the stop: nine completed, all ten had
+> zero authoritative contact, but `occ_b_r4` Full stopped at 3/5 waypoints at
+> the 180 s timeout. It was resource-valid and infrastructure-valid. The stall
+> occurred at `(8.15,-25.35,2.65)`, outside the added north-east blind corner,
+> where repeated reroute candidates were rejected for `CLEARANCE_MARGIN`.
+> A separate non-pooled reproduction on the identical asset completed 5/5 in
+> 82.44 s with zero contact, confirming a stochastic inherited-background
+> route branch rather than an infrastructure fault. No 150-row `occ_b`
+> campaign was started. Raw files are
+> `static_blind_corner_smoke_three_mode_n1_raw_20260908.csv` and
+> `static_blind_corner_r4_full_repro_n1_raw_20260908.csv`.
+>
+> The result exposed a design confound: clearing only the intervention patch
+> left seed7's unrelated south-leg bottleneck in the supplement. It is not
+> silently replaced. The controlled-route `occ_bc` successor is separately
+> preregistered in
+> `static_blind_corner_controlled_supplement_preregistration_20260908.md`.
+
 Date frozen: 2026-09-08 (Asia/Seoul), before the first `occ_b` flight
 
 ## Role and separation from existing evidence

@@ -32,9 +32,22 @@ MANIFEST_PATH = SCRIPT_DIR / "static_blind_corner_supplement_manifest.json"
 # One retained representative background from each original radius stratum.
 SOURCE_SEEDS = (1, 3, 5, 7, 9)
 RADIUS_TIERS_M = (0.150, 0.275, 0.400, 0.525, 0.650)
-MAP_PREFIX = "occ_b"
+MAP_PREFIX = "occ_bc"
 
 CLEAR_PATCH = (5.0, 27.5, 5.0, 27.5)
+# Remove background cylinders from a common corridor around the mission
+# polyline.  The added solid-wall corner remains in that corridor: this only
+# removes inherited seed-map bottlenecks on the other four legs, so the
+# supplemental experiment isolates the intended side-reveal intervention.
+ROUTE_WAYPOINTS = (
+    (0.0, 0.0),
+    (24.0, 24.0),
+    (-24.0, 24.0),
+    (-24.0, -24.0),
+    (24.0, -24.0),
+    (0.0, 0.0),
+)
+BACKGROUND_ROUTE_CLEARANCE_M = 2.0
 HAZARD_CENTER = (18.8, 24.0)
 HAZARD_RADIUS_M = 0.95
 OBSTACLE_HEIGHT_M = 3.2
@@ -115,6 +128,35 @@ def touches_patch(cylinder: Cylinder) -> bool:
     nearest_y = min(max(cylinder.y, ymin), ymax)
     return math.hypot(cylinder.x - nearest_x, cylinder.y - nearest_y) <= (
         cylinder.radius + 1e-12
+    )
+
+
+def point_segment_distance(
+    point: tuple[float, float],
+    start: tuple[float, float],
+    end: tuple[float, float],
+) -> float:
+    dx, dy = end[0] - start[0], end[1] - start[1]
+    scale = dx * dx + dy * dy
+    if scale <= 0.0:
+        return math.dist(point, start)
+    fraction = (
+        (point[0] - start[0]) * dx + (point[1] - start[1]) * dy
+    ) / scale
+    fraction = min(1.0, max(0.0, fraction))
+    closest = (start[0] + fraction * dx, start[1] + fraction * dy)
+    return math.dist(point, closest)
+
+
+def touches_route_corridor(cylinder: Cylinder) -> bool:
+    centre_distance = min(
+        point_segment_distance(
+            (cylinder.x, cylinder.y), start, end
+        )
+        for start, end in zip(ROUTE_WAYPOINTS, ROUTE_WAYPOINTS[1:])
+    )
+    return centre_distance <= (
+        cylinder.radius + BACKGROUND_ROUTE_CLEARANCE_M + 1e-12
     )
 
 
@@ -263,8 +305,13 @@ def generate() -> dict:
             for item in source
         ):
             raise ValueError(f"{source_path}: radius tier mismatch")
-        retained = [item for item in source if not touches_patch(item)]
-        removed = [item for item in source if touches_patch(item)]
+        removed_patch = [item for item in source if touches_patch(item)]
+        removed_route = [item for item in source if touches_route_corridor(item)]
+        retained = [
+            item for item in source
+            if not touches_patch(item) and not touches_route_corridor(item)
+        ]
+        removed = [item for item in source if item not in retained]
         cylinders = retained + [
             Cylinder(HAZARD_CENTER[0], HAZARD_CENTER[1], HAZARD_RADIUS_M)
         ]
@@ -283,6 +330,8 @@ def generate() -> dict:
                 "inner_south_end_x_m": INNER_SOUTH_END_X_M,
                 "base_cylinders_retained": len(retained),
                 "base_cylinders_removed": len(removed),
+                "base_cylinders_touching_local_patch": len(removed_patch),
+                "base_cylinders_touching_route_corridor": len(removed_route),
                 "wall_point_count": wall_count,
                 "point_count": point_count,
                 "pcd_sha256": sha256(pcd_path),
@@ -301,7 +350,7 @@ def generate() -> dict:
         )
 
     manifest = {
-        "schema": "static-blind-corner-supplement-v3",
+        "schema": "static-blind-corner-supplement-v3.1-controlled-route",
         "role": (
             "supplemental static blind-corner stress; existing reliability "
             "and v1/v2 occlusion results remain unchanged"
@@ -309,6 +358,12 @@ def generate() -> dict:
         "source_seeds": list(SOURCE_SEEDS),
         "radius_tiers_m": list(RADIUS_TIERS_M),
         "clear_patch_xyxy_m": list(CLEAR_PATCH),
+        "background_route_waypoints_xy_m": [
+            list(point) for point in ROUTE_WAYPOINTS
+        ],
+        "background_route_surface_clearance_m": (
+            BACKGROUND_ROUTE_CLEARANCE_M
+        ),
         "body_radius_m": BODY_RADIUS_M,
         "channel_half_width_m": CHANNEL_HALF_WIDTH_M,
         "validated_flight_z_envelope_m": [0.5, 2.8],
