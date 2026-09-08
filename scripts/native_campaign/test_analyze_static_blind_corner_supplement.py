@@ -39,7 +39,7 @@ def test_complete_safe_fixture_passes_quality_but_not_separation():
                         "oom_kill_delta": 0,
                         "static_pcd_clearance_m": 0.2,
                         "static_hazard_enabled": True,
-                        "static_hazard_center_x": 18.8,
+                        "static_hazard_center_x": 18.4,
                         "static_hazard_center_y": 24.0,
                         "static_hazard_radius_m": 0.95,
                         "static_hazard_height_m": 3.2,

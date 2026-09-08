@@ -32,7 +32,7 @@ MANIFEST_PATH = SCRIPT_DIR / "static_blind_corner_supplement_manifest.json"
 # One retained representative background from each original radius stratum.
 SOURCE_SEEDS = (1, 3, 5, 7, 9)
 RADIUS_TIERS_M = (0.150, 0.275, 0.400, 0.525, 0.650)
-MAP_PREFIX = "occ_bc"
+MAP_PREFIX = "occ_bw"
 
 CLEAR_PATCH = (5.0, 27.5, 5.0, 27.5)
 # Remove background cylinders from a common corridor around the mission
@@ -48,14 +48,17 @@ ROUTE_WAYPOINTS = (
     (0.0, 0.0),
 )
 BACKGROUND_ROUTE_CLEARANCE_M = 2.0
-HAZARD_CENTER = (18.8, 24.0)
+HAZARD_CENTER = (18.4, 24.0)
 HAZARD_RADIUS_M = 0.95
 OBSTACLE_HEIGHT_M = 3.2
 
 BODY_RADIUS_M = 0.20
-CHANNEL_HALF_WIDTH_M = 1.80
+CHANNEL_HALF_WIDTH_M = 2.50
 WALL_THICKNESS_M = 0.30
 WALL_CENTER_OFFSET_M = CHANNEL_HALF_WIDTH_M + WALL_THICKNESS_M / 2.0
+CHANNEL_CENTER_M = 24.0
+INNER_SOUTH_Y_M = CHANNEL_CENTER_M - WALL_CENTER_OFFSET_M
+OUTER_NORTH_Y_M = CHANNEL_CENTER_M + WALL_CENTER_OFFSET_M
 INNER_SOUTH_END_X_M = 19.45
 WALL_DS_M = 0.05
 Z_STEP_M = 0.10
@@ -76,8 +79,8 @@ class Wall(NamedTuple):
 
 SQRT2 = math.sqrt(2.0)
 NORMAL_OFFSET = WALL_CENTER_OFFSET_M / SQRT2
-INNER_DIAG_END_S = 22.05 - NORMAL_OFFSET
-OUTER_DIAG_END_S = 25.95 - NORMAL_OFFSET
+INNER_DIAG_END_S = INNER_SOUTH_Y_M - NORMAL_OFFSET
+OUTER_DIAG_END_S = OUTER_NORTH_Y_M - NORMAL_OFFSET
 
 
 def walls_for_tier(tier: int) -> tuple[Wall, ...]:
@@ -100,9 +103,21 @@ def walls_for_tier(tier: int) -> tuple[Wall, ...]:
                 OUTER_DIAG_END_S - NORMAL_OFFSET,
             ),
         ),
-        Wall("inner_south", (6.0, 22.05), (INNER_SOUTH_END_X_M, 22.05)),
-        Wall("outer_north", (6.0, 25.95), (25.95, 25.95)),
-        Wall("outer_east", (25.95, 22.05), (25.95, 25.95)),
+        Wall(
+            "inner_south",
+            (6.0, INNER_SOUTH_Y_M),
+            (INNER_SOUTH_END_X_M, INNER_SOUTH_Y_M),
+        ),
+        Wall(
+            "outer_north",
+            (6.0, OUTER_NORTH_Y_M),
+            (OUTER_NORTH_Y_M, OUTER_NORTH_Y_M),
+        ),
+        Wall(
+            "outer_east",
+            (OUTER_NORTH_Y_M, INNER_SOUTH_Y_M),
+            (OUTER_NORTH_Y_M, OUTER_NORTH_Y_M),
+        ),
     )
 
 
@@ -350,7 +365,7 @@ def generate() -> dict:
         )
 
     manifest = {
-        "schema": "static-blind-corner-supplement-v3.1-controlled-route",
+        "schema": "static-blind-corner-supplement-v3.2-wide-bypass",
         "role": (
             "supplemental static blind-corner stress; existing reliability "
             "and v1/v2 occlusion results remain unchanged"

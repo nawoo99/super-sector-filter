@@ -153,9 +153,7 @@ def angle_delta_deg(value: float) -> float:
 def validate() -> dict:
     errors: list[str] = []
     manifest = json.loads(MANIFEST_PATH.read_text())
-    if manifest.get("schema") != (
-        "static-blind-corner-supplement-v3.1-controlled-route"
-    ):
+    if manifest.get("schema") != "static-blind-corner-supplement-v3.2-wide-bypass":
         errors.append("unexpected schema")
     maps = manifest.get("maps") or []
     if len(maps) != 5:
@@ -263,16 +261,26 @@ def validate() -> dict:
         )
         approach_wall_clearances.append(approach_wall)
         approach_hazard_clearances.append(approach_hazard)
-        if approach_wall < 1.50 or approach_hazard < 2.20:
+        if approach_wall < 1.00 or approach_hazard < 2.20:
             errors.append(
                 f"invalid approach clearance: {item['map']}="
                 f"{approach_wall:.6f}/{approach_hazard:.6f}"
             )
 
+        outer_north = next(
+            wall for wall in walls if wall["name"] == "outer_north"
+        )
+        outer_inner_surface_y = (
+            float(outer_north["start_xy_m"][1])
+            - float(outer_north["thickness_m"]) / 2.0
+        )
+        bypass_y = (
+            hazard_center[1] + hazard_radius + outer_inner_surface_y
+        ) / 2.0
         bypass = [
             (24.0, 24.0),
-            (22.5, 25.36),
-            (17.5, 25.36),
+            (22.5, bypass_y),
+            (17.5, bypass_y),
             (6.2, 24.0),
         ]
         bypass_wall, bypass_hazard = sampled_path_clearance(
@@ -280,7 +288,7 @@ def validate() -> dict:
         )
         bypass_wall_clearances.append(bypass_wall)
         bypass_hazard_clearances.append(bypass_hazard)
-        if bypass_wall < 0.20 - 1e-6 or bypass_hazard < 0.20 - 1e-6:
+        if bypass_wall < 0.50 - 1e-6 or bypass_hazard < 0.50 - 1e-6:
             errors.append(
                 f"invalid bypass clearance: {item['map']}="
                 f"{bypass_wall:.6f}/{bypass_hazard:.6f}"

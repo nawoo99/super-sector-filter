@@ -11,13 +11,16 @@ SPEC.loader.exec_module(MODULE)
 
 
 def test_blind_corner_supplement_is_a_separate_registered_family():
-    expected = tuple(f"occ_bc_r{tier}" for tier in range(1, 6))
+    expected = tuple(f"occ_bw_r{tier}" for tier in range(1, 6))
     pilot = tuple(f"occ_b_r{tier}" for tier in range(1, 6))
+    controlled_pilot = tuple(f"occ_bc_r{tier}" for tier in range(1, 6))
 
     assert MODULE.STATIC_BLIND_CORNER_SUPPLEMENT_MAPS == expected
     assert MODULE.STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS == pilot
+    assert MODULE.STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS == controlled_pilot
     assert set(expected).issubset(MODULE.VALID_MAPS)
     assert set(pilot).issubset(MODULE.VALID_MAPS)
+    assert set(controlled_pilot).issubset(MODULE.VALID_MAPS)
     assert not set(expected).intersection(MODULE.STATIC_OCCLUSION_CHANNEL_MAPS)
 
 

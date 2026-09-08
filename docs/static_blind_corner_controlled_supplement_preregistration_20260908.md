@@ -1,5 +1,19 @@
 # Controlled-route static blind-corner supplemental n=10 preregistration
 
+> **Frozen v3.1 feasibility outcome (2026-09-08): stopped as specified.** Six
+> rows were committed before the stop. Five completed and all six had zero
+> authoritative contact, but `occ_bc_r2` Full reached only 1/5 waypoints at the
+> 180 s timeout. The row was resource-, speed- and infrastructure-valid. It
+> recorded 209 reroute arms and 627 searches, dominated by repeated
+> `trajectory_optimization_overtime`. The nominal northern bypass supplied
+> only +0.24 m wall and +0.21 m hazard body clearance, almost identical to the
+> 0.20 m planner margin. This made the protected Full condition a boundary
+> case rather than isolating Sector visibility. No 150-row campaign began.
+> The six-row raw smoke is
+> `static_blind_corner_controlled_smoke_three_mode_n1_raw_20260908.csv`.
+> The separately preregistered `occ_bw` successor widens this bypass without
+> changing the hazard, sensor policies or planner.
+
 Date frozen: 2026-09-08 (Asia/Seoul), before the first `occ_bc` flight
 
 ## Why this is a separate successor

@@ -10,7 +10,7 @@ import statistics
 from pathlib import Path
 
 
-MAPS = tuple(f"occ_bc_r{tier}" for tier in range(1, 6))
+MAPS = tuple(f"occ_bw_r{tier}" for tier in range(1, 6))
 MODES = ("full", "sector", "adaptive")
 RUNS = tuple(range(1, 11))
 
@@ -293,7 +293,7 @@ def analyze(campaign: Path, prefix: Path) -> dict:
     hazard_rows = [
         row for row in rows
         if as_bool(row.get("static_hazard_enabled", ""))
-        and abs(as_float(row.get("static_hazard_center_x")) - 18.8) < 1e-9
+        and abs(as_float(row.get("static_hazard_center_x")) - 18.4) < 1e-9
         and abs(as_float(row.get("static_hazard_center_y")) - 24.0) < 1e-9
         and abs(as_float(row.get("static_hazard_radius_m")) - 0.95) < 1e-9
         and abs(as_float(row.get("static_hazard_height_m")) - 3.2) < 1e-9

@@ -1177,11 +1177,15 @@ STATIC_OCCLUSION_CHANNEL_MAPS = tuple(
 STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS = tuple(
     f"occ_b_r{tier}" for tier in range(1, 6)
 )
-STATIC_BLIND_CORNER_SUPPLEMENT_MAPS = tuple(
+STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS = tuple(
     f"occ_bc_r{tier}" for tier in range(1, 6)
+)
+STATIC_BLIND_CORNER_SUPPLEMENT_MAPS = tuple(
+    f"occ_bw_r{tier}" for tier in range(1, 6)
 )
 STATIC_BLIND_CORNER_ALL_MAPS = (
     STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS
+    + STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS
     + STATIC_BLIND_CORNER_SUPPLEMENT_MAPS
 )
 STATIC_OCCLUSION_EXPERIMENT_MAPS = (
@@ -2224,7 +2228,12 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             # bounded raw-input probe therefore measures when the common
             # static hazard first becomes physically visible, before either
             # the Sector crop or Adaptive recovery is applied.
-            if map_name in STATIC_BLIND_CORNER_ALL_MAPS:
+            if map_name in STATIC_BLIND_CORNER_SUPPLEMENT_MAPS:
+                probe_x, probe_y, probe_radius = 18.4, 24.0, 1.0
+            elif map_name in (
+                STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS
+                + STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS
+            ):
                 probe_x, probe_y, probe_radius = 18.8, 24.0, 1.0
             elif map_name in STATIC_OCCLUSION_CHANNEL_MAPS:
                 probe_x, probe_y, probe_radius = 18.0, 24.0, 0.9
@@ -2662,7 +2671,17 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     " --static-hazard-radius-m 0.75"
                     " --static-hazard-height-m 3.2"
                 )
-            elif map_name in STATIC_BLIND_CORNER_ALL_MAPS:
+            elif map_name in STATIC_BLIND_CORNER_SUPPLEMENT_MAPS:
+                monitor_options += (
+                    " --static-hazard-center-x 18.4"
+                    " --static-hazard-center-y 24.0"
+                    " --static-hazard-radius-m 0.95"
+                    " --static-hazard-height-m 3.2"
+                )
+            elif map_name in (
+                STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS
+                + STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS
+            ):
                 monitor_options += (
                     " --static-hazard-center-x 18.8"
                     " --static-hazard-center-y 24.0"
@@ -3933,6 +3952,7 @@ def main():
             STATIC_OCCLUSION_PILOT_MAPS,
             STATIC_OCCLUSION_CHANNEL_MAPS,
             STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS,
+            STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS,
             STATIC_BLIND_CORNER_SUPPLEMENT_MAPS,
         )
         if any(map_name in family for map_name in args.maps)
