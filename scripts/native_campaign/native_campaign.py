@@ -1164,7 +1164,16 @@ MAP0_PCD = (
 # original efficiency campaign remains seed1..seed11.
 MAPS = [f"seed{i}" for i in range(1, 11)] + ["seed11"]
 MODES = ["full", "sector", "adaptive"]
-VALID_MAPS = tuple(f"seed{i}" for i in range(1, 16)) + ("map0",)
+STATIC_OCCLUSION_PILOT_MAPS = tuple(
+    f"occ_p_r{tier}_{visibility}"
+    for tier in range(1, 6)
+    for visibility in ("nom", "occ")
+)
+VALID_MAPS = (
+    tuple(f"seed{i}" for i in range(1, 16))
+    + ("map0",)
+    + STATIC_OCCLUSION_PILOT_MAPS
+)
 VALID_MODES = (
     "raw", "upstream",
     "raw_v1", "raw_v4", "raw_v7", "raw_v10", "raw_v14", "raw_v18",
@@ -1500,6 +1509,22 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_risk_body_clearance_m",
           "filter_risk_body_horizon_s",
           "filter_risk_body_max_odom_age_s",
+          "filter_static_probe_enabled", "filter_static_probe_center_x",
+          "filter_static_probe_center_y", "filter_static_probe_radius_m",
+          "filter_static_probe_input_seen",
+          "filter_static_probe_first_point_count",
+          "filter_static_probe_first_input_elapsed_s",
+          "filter_static_probe_first_drone_x",
+          "filter_static_probe_first_drone_y",
+          "filter_static_probe_first_drone_z",
+          "filter_static_probe_first_speed_mps",
+          "filter_static_probe_first_body_yaw_deg",
+          "filter_static_probe_first_velocity_yaw_deg",
+          "filter_static_probe_first_body_relative_deg",
+          "filter_static_probe_first_velocity_relative_deg",
+          "filter_static_probe_first_horizontal_distance_m",
+          "filter_static_probe_first_center_in_sector",
+          "filter_static_probe_first_effective_full_open",
           "filter_risk_worker_overwrites", "filter_risk_rate_limited_jobs",
           "filter_risk_trajectory_messages",
           "filter_risk_trajectory_unique_generations",
@@ -2168,6 +2193,16 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             override_cloud_topic == "/cloud_registered"
         )
         filter_options = f" --stats-json {filt_stats_json}"
+        if map_name in STATIC_OCCLUSION_PILOT_MAPS and base_mode != "full":
+            # The intervention patch is clear of background cylinders.  This
+            # bounded raw-input probe therefore measures when the common
+            # static hazard at (19.5, 24.0) first becomes physically visible,
+            # before either the Sector crop or Adaptive recovery is applied.
+            filter_options += (
+                " --static-probe-center-x 19.5"
+                " --static-probe-center-y 24.0"
+                " --static-probe-radius-m 0.8"
+            )
         if (
             filter_guard_witness_radius_m > 0.0
             and base_mode == "adaptive"
@@ -3846,6 +3881,50 @@ def main():
     side_entry_version = (
         selected_side_entry_versions[0] if selected_side_entry_versions else 0
     )
+    static_occlusion_pilot = any(
+        map_name in STATIC_OCCLUSION_PILOT_MAPS for map_name in args.maps
+    )
+    if static_occlusion_pilot:
+        invalid_maps = [
+            map_name for map_name in args.maps
+            if map_name not in STATIC_OCCLUSION_PILOT_MAPS
+        ]
+        if invalid_maps:
+            ap.error(
+                "the static-occlusion pilot cannot be pooled with other "
+                "map families: " + ", ".join(invalid_maps)
+            )
+        if args.filter_backend != "cpp-frontend":
+            ap.error(
+                "the static-occlusion pilot requires --filter-backend "
+                "cpp-frontend so raw-hazard visibility is measured"
+            )
+        if args.filter_profile != "strict-burst":
+            ap.error(
+                "the static-occlusion pilot requires --filter-profile "
+                "strict-burst"
+            )
+        if not math.isclose(args.filter_half_angle_deg, 45.0, abs_tol=1e-9):
+            ap.error(
+                "the static-occlusion pilot requires "
+                "--filter-half-angle-deg 45"
+            )
+        if not args.seedmap_static_pcd:
+            ap.error(
+                "the static-occlusion pilot requires --seedmap-static-pcd"
+            )
+        if not all(split_configs) or (
+            "adaptive" in args.modes and not adaptive_mode_config
+        ):
+            ap.error(
+                "the static-occlusion pilot requires the split Full/filtered "
+                "configs and an Adaptive-only config when Adaptive is selected"
+            )
+        if "full" in args.modes and not args.full_intra_process:
+            ap.error(
+                "the static-occlusion pilot requires --full-intra-process "
+                "when Full is selected"
+            )
     if side_entry_version:
         supported_side_entry_maps = (
             ("seed9",) if side_entry_version == 7
@@ -3977,11 +4056,15 @@ def main():
     ):
         invalid_maps = [
             map_name for map_name in args.maps
-            if not re.fullmatch(r"seed(?:[1-9]|10)", map_name)
+            if not (
+                re.fullmatch(r"seed(?:[1-9]|10)", map_name)
+                or map_name in STATIC_OCCLUSION_PILOT_MAPS
+            )
         ]
         if invalid_maps:
             ap.error(
-                "seedmap config/static-PCD overrides support only seed1..10; "
+                "seedmap config/static-PCD overrides support only seed1..10 "
+                "and the frozen static-occlusion pilot; "
                 f"unsupported maps: {', '.join(invalid_maps)}"
             )
 

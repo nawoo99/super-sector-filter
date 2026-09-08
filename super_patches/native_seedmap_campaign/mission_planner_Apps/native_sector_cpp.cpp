@@ -102,6 +102,9 @@ struct Options {
   double risk_body_max_odom_age_s{0.20};
   double risk_egress_tolerance_m{0.005};
   double risk_egress_min_progress_m{0.02};
+  double static_probe_center_x{0.0};
+  double static_probe_center_y{0.0};
+  double static_probe_radius_m{0.0};
 };
 
 double parseDouble(const std::string &name, const char *value) {
@@ -287,6 +290,12 @@ Options parseArgs(int argc, char **argv) {
     } else if (arg == "--risk-egress-min-progress-m") {
       options.risk_egress_min_progress_m =
           parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--static-probe-center-x") {
+      options.static_probe_center_x = parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--static-probe-center-y") {
+      options.static_probe_center_y = parseDouble(arg, requireValue(i, arg));
+    } else if (arg == "--static-probe-radius-m") {
+      options.static_probe_radius_m = parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--help" || arg == "-h") {
       throw std::runtime_error(
           "usage: native_sector_cpp [full|sector|velocity|adaptive] "
@@ -341,6 +350,7 @@ Options parseArgs(int argc, char **argv) {
       options.risk_body_max_odom_age_s <= 0.0 ||
       options.risk_egress_tolerance_m < 0.0 ||
       options.risk_egress_min_progress_m < 0.0 ||
+      options.static_probe_radius_m < 0.0 ||
       near_max < options.near_field_radius_m || guard_burst < 0.0 ||
       guard_cooldown < 0.0) {
     throw std::runtime_error("invalid negative/range-limited filter setting");
@@ -468,6 +478,7 @@ public:
             options_.replan_open_cooldown_s.value_or(options_.open_cooldown_s)),
         guard_cloud_observer_(std::move(guard_cloud_observer)),
         armed_(options_.mode == "legacy-trigger") {
+    start_time_s_ = nowSeconds();
     const auto sensor_qos =
         rclcpp::QoS(rclcpp::KeepLast(1)).best_effort().durability_volatile();
     if (!options_.direct_input) {
@@ -2062,6 +2073,78 @@ private:
     }
   }
 
+  void observeStaticProbe(
+      const sensor_msgs::msg::PointCloud2::SharedPtr &msg, double now) {
+    if (options_.static_probe_radius_m <= 0.0 ||
+        static_probe_input_seen_ || !drone_) {
+      return;
+    }
+    const CloudFields fields = findCloudFields(*msg);
+    if (!fields.x || !fields.y || !fields.z || msg->point_step == 0)
+      return;
+    const bool swap_bytes = msg->is_bigendian != hostIsBigEndian();
+    const double radius_sq = options_.static_probe_radius_m *
+                             options_.static_probe_radius_m;
+    uint64_t matched_points = 0;
+    for (uint32_t row = 0; row < msg->height; ++row) {
+      const size_t row_base = static_cast<size_t>(row) * msg->row_step;
+      for (uint32_t column = 0; column < msg->width; ++column) {
+        const size_t offset =
+            row_base + static_cast<size_t>(column) * msg->point_step;
+        if (offset + msg->point_step > msg->data.size())
+          continue;
+        const uint8_t *point = msg->data.data() + offset;
+        double x, y, z;
+        if (!readField(point, *fields.x, swap_bytes, x) ||
+            !readField(point, *fields.y, swap_bytes, y) ||
+            !readField(point, *fields.z, swap_bytes, z) || !std::isfinite(x) ||
+            !std::isfinite(y) || !std::isfinite(z) || z < -0.05 || z > 3.05) {
+          continue;
+        }
+        const double dx = x - options_.static_probe_center_x;
+        const double dy = y - options_.static_probe_center_y;
+        if (dx * dx + dy * dy <= radius_sq)
+          ++matched_points;
+      }
+    }
+    if (matched_points == 0)
+      return;
+
+    static_probe_input_seen_ = true;
+    static_probe_first_point_count_ = matched_points;
+    static_probe_first_input_elapsed_s_ = rounded(now - start_time_s_);
+    static_probe_first_drone_x_ = rounded((*drone_)[0]);
+    static_probe_first_drone_y_ = rounded((*drone_)[1]);
+    static_probe_first_drone_z_ = rounded((*drone_)[2]);
+    static_probe_first_speed_mps_ = rounded(latest_speed_mps_);
+    static_probe_first_body_yaw_deg_ = rounded(yaw_ * 180.0 / kPi);
+    if (velocity_yaw_) {
+      static_probe_first_velocity_yaw_deg_ =
+          rounded(*velocity_yaw_ * 180.0 / kPi);
+    }
+    const double dx = options_.static_probe_center_x - (*drone_)[0];
+    const double dy = options_.static_probe_center_y - (*drone_)[1];
+    const double bearing = std::atan2(dy, dx);
+    const auto angle_delta = [](double value) {
+      return std::atan2(std::sin(value), std::cos(value));
+    };
+    static_probe_first_body_relative_deg_ =
+        rounded(angle_delta(bearing - yaw_) * 180.0 / kPi);
+    if (velocity_yaw_) {
+      static_probe_first_velocity_relative_deg_ =
+          rounded(angle_delta(bearing - *velocity_yaw_) * 180.0 / kPi);
+    }
+    static_probe_first_horizontal_distance_m_ = rounded(std::hypot(dx, dy));
+    const double filter_center =
+        ((options_.mode == "adaptive" || options_.mode == "velocity") &&
+         velocity_yaw_)
+            ? *velocity_yaw_
+            : yaw_;
+    static_probe_first_center_in_sector_ =
+        std::abs(angle_delta(bearing - filter_center)) <= half_angle_rad_;
+    static_probe_first_effective_full_open_ = effectiveFullOpen();
+  }
+
   void publishGuardWitness(
       const sensor_msgs::msg::PointCloud2::SharedPtr &msg) {
     if (!guard_witness_pub_)
@@ -2143,6 +2226,7 @@ private:
     processed_input_payload_bytes_ += msg->data.size();
     input_points_ += input_points;
     total_points_ += input_points;
+    observeStaticProbe(msg, now);
     publishCurrentBodyRiskVerdict(job);
     // This bounded 360-degree stream is independent of the angular/map
     // publication decision below. In particular, Adaptive rate limiting or a
@@ -2509,6 +2593,33 @@ private:
     number("risk_body_compute_ms_max",
            risk_body_compute_us_max_.load(std::memory_order_relaxed) /
                1000.0);
+    boolean("static_probe_enabled", options_.static_probe_radius_m > 0.0);
+    number("static_probe_center_x", options_.static_probe_center_x);
+    number("static_probe_center_y", options_.static_probe_center_y);
+    number("static_probe_radius_m", options_.static_probe_radius_m);
+    boolean("static_probe_input_seen", static_probe_input_seen_);
+    integer("static_probe_first_point_count",
+            static_probe_first_point_count_);
+    optional("static_probe_first_input_elapsed_s",
+             static_probe_first_input_elapsed_s_);
+    optional("static_probe_first_drone_x", static_probe_first_drone_x_);
+    optional("static_probe_first_drone_y", static_probe_first_drone_y_);
+    optional("static_probe_first_drone_z", static_probe_first_drone_z_);
+    optional("static_probe_first_speed_mps", static_probe_first_speed_mps_);
+    optional("static_probe_first_body_yaw_deg",
+             static_probe_first_body_yaw_deg_);
+    optional("static_probe_first_velocity_yaw_deg",
+             static_probe_first_velocity_yaw_deg_);
+    optional("static_probe_first_body_relative_deg",
+             static_probe_first_body_relative_deg_);
+    optional("static_probe_first_velocity_relative_deg",
+             static_probe_first_velocity_relative_deg_);
+    optional("static_probe_first_horizontal_distance_m",
+             static_probe_first_horizontal_distance_m_);
+    boolean("static_probe_first_center_in_sector",
+            static_probe_first_center_in_sector_);
+    boolean("static_probe_first_effective_full_open",
+            static_probe_first_effective_full_open_);
     integer("processed_input_payload_bytes", processed_input_payload_bytes_);
     integer("published_frames", published_frames_);
     const uint64_t cloud_publish_count =
@@ -2870,6 +2981,21 @@ private:
   double yaw_{0.0};
   std::optional<double> velocity_yaw_;
   double latest_speed_mps_{0.0};
+  double start_time_s_{0.0};
+  bool static_probe_input_seen_{false};
+  uint64_t static_probe_first_point_count_{0};
+  std::optional<double> static_probe_first_input_elapsed_s_;
+  std::optional<double> static_probe_first_drone_x_;
+  std::optional<double> static_probe_first_drone_y_;
+  std::optional<double> static_probe_first_drone_z_;
+  std::optional<double> static_probe_first_speed_mps_;
+  std::optional<double> static_probe_first_body_yaw_deg_;
+  std::optional<double> static_probe_first_velocity_yaw_deg_;
+  std::optional<double> static_probe_first_body_relative_deg_;
+  std::optional<double> static_probe_first_velocity_relative_deg_;
+  std::optional<double> static_probe_first_horizontal_distance_m_;
+  bool static_probe_first_center_in_sector_{false};
+  bool static_probe_first_effective_full_open_{false};
   uint64_t kept_points_{0};
   uint64_t total_points_{0};
   uint64_t frames_{0};

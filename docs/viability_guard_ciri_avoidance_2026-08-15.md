@@ -4283,3 +4283,53 @@ the one completion discordance is descriptive. Detailed tables, evidence
 hashes and interpretation are in
 `docs/map9_10_static_n30_final_20260907.md`, with compact result files under
 `results/map9_10_static_three_mode_n30_*`.
+
+### 8.63 Balanced static-occlusion pilot and stopped expansion (2026-09-08)
+
+Map1--10 were retained as the development/reliability cohort rather than
+relabelled as occlusion tests. A separate exploratory pilot paired nominal and
+occluded variants within five existing background-radius strata. Both pair
+members shared a cleared local patch and a static hazard at `(19.50,24.00)`;
+the occluded member alone added a physically rendered wall. A measurement-only
+C++ raw-cloud probe recorded the first hazard observation without changing any
+publication or planning decision. Geometry, execution and expansion gates
+were frozen before flight.
+
+All 30 requested Full/Sector/Adaptive rows completed in about 41 minutes and
+were unique, first-attempt, run/resource/speed/performance/cgroup-valid. Every
+mode completed 10/10 with zero authoritative source-PCD contact. The 20/20
+filtered probes were valid; retry, resource abort, infrastructure failure and
+OOM counts were zero.
+
+The wall delivered aggregate physical occlusion in all five strata. Mean
+first-observation progress across Sector and Adaptive was delayed by
+4.416--9.665 m relative to the paired nominal map. It did not produce the
+frozen mode-discrimination result: binary discordances were 0, Adaptive had
+greater minimum clearance in only 3/5 occluded strata, and its median
+advantage was +0.011 m instead of the required +0.10 m. All occluded Adaptive
+rows did contain trajectory-guard openings, so the negative result was not an
+always-closed Adaptive run.
+
+The finite visible wall left a broad bypass and did not enforce a common
+pre-event route or reveal point. Sector first saw the hazard earlier than
+Adaptive in radius strata 4 and 5 by going around a wall edge, and remained
+safe even though the hazard centre was outside its crop at first observation
+in all five occluded rows. Visible-wall replanning, later body-yaw alignment
+and the approximately 2.90 m speed-dependent near field are consistent safe
+paths, but the logs do not identify one unique cause per run.
+
+The measurement probe has no publication/control path but performs a
+synchronous raw-cloud scan until first detection, so a literal zero-timing-
+perturbation claim is not supported. Its cost burdens only the filtered rows
+and makes their compute result conservative against Full; a future
+confirmatory design should measure at the simulator/source boundary or reuse
+an existing point pass.
+
+The frozen decision is `STOP_AFTER_PILOT_NO_CONFIRMATORY_EXPANSION`; the
+proposed independent 80-map/240-row confirmatory cohort was not run. A future
+attempt would require a separately preregistered, channelized L/U-corridor
+pilot rather than post-hoc tuning of this cohort. Adaptive still reduced Full
+planner ingress, map compute, end-to-end mean cores and core-seconds by
+75.396/45.450/14.199/17.891%, but no Adaptive safety-rate superiority or
+McNemar result is claimed. Full evidence is in
+`docs/static_occlusion_balanced_pilot_result_20260908.md`.

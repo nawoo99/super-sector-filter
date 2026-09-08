@@ -1,6 +1,26 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-08 balanced static-occlusion pilot 종료.** 기존 Map1--10은
+> 개발/반복 신뢰도 코호트로 유지하고, 5개 반경 층 × nominal/occluded × 3모드의
+> 별도 사전등록 파일럿 30행을 약 41분에 실행했다. 30/30 모두 고유·첫
+> attempt·품질 유효였고 Full/Sector/Adaptive 모두 10/10 완주, authoritative
+> source-PCD 접촉 0이다. C++ measurement-only raw hazard probe도 filtered
+> 20/20행에서 유효했다.
+>
+> 가림벽은 최초 위험물 관측을 모든 반경 층에서 평균 4.416--9.665 m 늦춰
+> physical-delivery gate는 통과했다. 그러나 Sector-bad/Adaptive-safe binary
+> discordance는 0이고, Adaptive clearance 우위는 3/5, 중앙값 +0.011 m로
+> 사전 기준 4/5와 +0.10 m에 못 미쳤다. 따라서 고정 규칙대로
+> `STOP_AFTER_PILOT_NO_CONFIRMATORY_EXPANSION`이며 80맵/240행 확증시험은
+> 실행하지 않았다. 이 결과를 Adaptive 안전률 우위나 McNemar 검정으로 쓰면
+> 안 된다. 원인은 유한한 가림벽과 넓은 우회로가 정책 공통 reveal point를
+> 강제하지 못한 설계다. Probe는 control 출력은 없지만 최초 관측까지 동기
+> raw-cloud scan을 하므로 문자 그대로 timing 영향 0인 계측은 아니다. 최신
+> 상세는 viability §8.63과
+> `docs/static_occlusion_balanced_pilot_result_20260908.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-07 Map9--10 static three-mode n=30 완료.** 사전등록한 180행을
 > 약 287분에 모두 실행했다. Full/Adaptive는 각각 60/60 완주,
 > authoritative source-PCD 접촉 0이어서 보호 모드 실패 시 중단/수정/처음부터
