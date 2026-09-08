@@ -4333,3 +4333,58 @@ planner ingress, map compute, end-to-end mean cores and core-seconds by
 75.396/45.450/14.199/17.891%, but no Adaptive safety-rate superiority or
 McNemar result is claimed. Full evidence is in
 `docs/static_occlusion_balanced_pilot_result_20260908.md`.
+
+### 8.64 Channelized static-occlusion v2 pilot and stopped confirmation (2026-09-08)
+
+The v1 odd-seed pilot was closed as design evidence. A separately versioned
+v2 pilot used independent even-seed source layouts 2/4/6/8/10 and retained the
+same five radius strata. Within every pair, a common cleared patch, L-shaped
+channel and hazard cylinder at `(18,24)` were identical. Nominal contained a
+0.20 m-high horizontal sensor slit in the two inner walls; Occluded retained
+solid walls. The slit was below the 0.40 m vehicle diameter. A deterministic
+1.45 m-height line-of-sight/body-clearance validator and all reproducibility
+hashes passed before the first flight, and the 30-row execution and expansion
+gates were committed in advance.
+
+All 30 Full/Sector/Adaptive rows completed in about 41 minutes. They were
+30/30 unique, first-attempt, run/resource/speed/performance/cgroup-valid, with
+zero retry, resource abort, infrastructure failure and OOM. Every mode was
+10/10 complete with zero authoritative source-PCD and analytic hazard contact;
+all 20 filtered probes and all 30 hazard measurements were valid. Thus the
+validity, protected-mode, nominal-control and no-reverse-discordance gates
+passed.
+
+The solid Occluded channel did standardize late delivery: Sector and Adaptive
+probe progress agreed within 0.255 m in every tier, reveal distances were
+3.418--4.532 m and the hazard centre was outside Sector's crop in 5/5 rows.
+However, the frozen paired delivery gate also required at least 6.0 m
+Occluded-minus-Nominal delay for both policies in every tier. Sector delays
+were +3.029/+4.231/+0.014/-0.006/+6.294 m and Adaptive delays were
++6.149/+6.422/+6.927/+10.420/+5.981 m, so the gate failed.
+
+The failure came from the Nominal control, not the solid-wall reveal. The
+validator assumed sensor height 1.45 m, but flown altitude varied with policy
+and trajectory. Tier-3/4 Nominal Sector first detection was at drone
+z=1.942/1.905 m near the late reveal, while Nominal Adaptive detected at
+z=1.462/1.491 m in the intended slit band. Early slit detections were also
+sparse, sometimes only two points. Therefore fixed-height analytic visibility
+did not guarantee policy-independent visibility through the rendered 3D
+depth buffer.
+
+There were no desired binary discordances. Adaptive hazard clearance exceeded
+Sector in only 2/5 Occluded tiers; median direct advantage was -0.070 m and
+median paired difference-in-differences was -0.087 m, versus the preregistered
+4/5 and +0.10/+0.10 m requirements. Occluded Adaptive rows contained 1--9
+trajectory-guard openings each, so the fallback was active but did not improve
+the clearance outcome. Across all ten rows, Full/Sector/Adaptive global
+clearance below +0.20 m occurred in 0/1/2 rows.
+
+The frozen decision is
+`STOP_AFTER_CHANNEL_PILOT_NO_CONFIRMATORY_EXPANSION`; the proposed independent
+80-environment/240-row cohort was not generated or run. Adaptive still reduced
+Full planner ingress, map compute, common end-to-end mean cores and
+core-seconds by 75.459/44.229/14.807/18.891%, but did not reduce peak PSS.
+No safety-superiority or McNemar claim is supported. A future v3 must validate
+the full 3D flown visibility envelope and avoid a narrow fixed-height slit,
+then pass a new small preregistered delivery pilot before confirmation. Full
+evidence is in `docs/static_occlusion_channel_pilot_result_20260908.md`.

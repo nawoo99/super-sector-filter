@@ -179,3 +179,32 @@ McNemar or safety-superiority claim is made from the n=1 pilot itself.
   `6589b7c4065aa528facecc8f0f624c4f178718933afa537af861f4eb54cee540`,
   `eafae08a239cc4409b7df0b829f7951a0d26a0ea3ec5a97c3f03ad3a2b44eb24`,
   `82c8536181b1c402330d47a23c3b17311537f91105eca71337286d0d514277a7`
+
+## Registered outcome
+
+The pilot subsequently completed all 30 rows in about 41 minutes. All rows
+were unique, first-attempt and quality-valid; Full/Sector/Adaptive were each
+10/10 complete with zero authoritative contact. Validity, protected-mode,
+nominal-control and no-reverse-discordance gates passed.
+
+The frozen delivery gate failed. Sector Occluded-minus-Nominal probe delays
+were +3.029/+4.231/+0.014/-0.006/+6.294 m and Adaptive delays were
++6.149/+6.422/+6.927/+10.420/+5.981 m. Hence neither policy met the required
+6.0 m delay in every tier, although all solid-wall Occluded reveals were
+aligned within 0.255 m, occurred 3.418--4.532 m from the hazard and had the
+hazard centre outside Sector's crop.
+
+Both discrimination routes also failed: desired binary discordances were 0,
+Adaptive hazard clearance was greater in 2/5 Occluded tiers, median direct
+advantage was -0.070 m and median paired difference-in-differences was
+-0.087 m. All Occluded Adaptive rows had trajectory-guard openings, so the
+negative result was not an inactive fallback.
+
+The registered decision is
+`STOP_AFTER_CHANNEL_PILOT_NO_CONFIRMATORY_EXPANSION`; the proposed 80-map,
+240-row confirmatory cohort was not generated or run. The fixed-height
+Nominal slit did not cover the policy-dependent 3D flight envelope: for
+example, tier-3/4 Nominal Sector first detection occurred at z=1.942/1.905 m,
+while Adaptive first detection occurred at z=1.462/1.491 m inside the intended
+slit band. Full evidence and interpretation are in
+`docs/static_occlusion_channel_pilot_result_20260908.md`.

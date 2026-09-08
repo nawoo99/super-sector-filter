@@ -1,6 +1,34 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-08 channelized static-occlusion v2 파일럿 종료.** v1 결과를
+> 설계 자료로만 닫고 independent even-seed 2/4/6/8/10 배경에 공통 L형 채널,
+> `(18,24)` hazard와 nominal 수평 sensor slit/occluded solid-wall 쌍을 만들었다.
+> 실행·게이트를 첫 비행 전에 커밋한 뒤 5개 층 × 2 visibility × 3모드=30행을
+> 약 41분에 수행했다. 전 행 unique·first-attempt·품질 유효였고 각 모드
+> 10/10 완주, authoritative/analytic hazard 접촉 0이다.
+>
+> Solid-wall occluded reveal은 두 정책 간 0.255 m 이내, hazard 거리
+> 3.418--4.532 m로 표준화됐고 Sector crop 밖 조건도 5/5였다. 그러나 paired
+> delivery gate는 실패했다. Sector의 occluded-minus-nominal delay는
+> +3.029/+4.231/+0.014/-0.006/+6.294 m, Adaptive는
+> +6.149/+6.422/+6.927/+10.420/+5.981 m라 양 정책·전 층 6 m 기준을 못
+> 만족했다. 고정 1.45 m 검증과 달리 실제 고도가 변했고, tier 3/4 nominal
+> Sector는 z=1.942/1.905 m에서 늦게 본 반면 Adaptive는 z=1.462/1.491 m로
+> slit 안에서 일찍 봤다. 즉 fixed-height slit이 3D 정책 독립 가시성을
+> 만들지 못했다.
+>
+> Desired binary discordance 0, Adaptive hazard-clearance 우위 2/5, direct
+> 중앙값 -0.070 m, difference-in-differences 중앙값 -0.087 m로 안전 차별
+> gate도 실패했다. 모든 occluded Adaptive 행에서 TG open 1--9회가 있어
+> 비활성화 문제는 아니다. 고정 판정은
+> `STOP_AFTER_CHANNEL_PILOT_NO_CONFIRMATORY_EXPANSION`이며 80환경/240행은
+> 실행하지 않았다. Adaptive의 Full 대비 ingress/map/E2E mean cores/core-s
+> 절감은 75.459/44.229/14.807/18.891%지만 안전 우위나 McNemar를 주장하면
+> 안 된다. 최신 상세는 viability §8.64와
+> `docs/static_occlusion_channel_pilot_result_20260908.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-08 balanced static-occlusion pilot 종료.** 기존 Map1--10은
 > 개발/반복 신뢰도 코호트로 유지하고, 5개 반경 층 × nominal/occluded × 3모드의
 > 별도 사전등록 파일럿 30행을 약 41분에 실행했다. 30/30 모두 고유·첫
