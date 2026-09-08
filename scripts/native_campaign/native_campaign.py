@@ -1120,6 +1120,8 @@ class CpuMeter:
 LOOP_WPS = "24,24;-24,24;-24,-24;24,-24;0,0"
 LOOP_SWITCH = 1.5
 LOOP_TIMEOUT = 300.0
+TURN90_WPS = "24,0;24,24;-24,24;-24,-24;24,-24;0,0"
+TURN90_TIMEOUT = 210.0
 SEED12_WPS = "24,24;-24,24"
 SEED12_TIMEOUT = 90.0
 # seed13 mirrors seed12's corner-obstacle layout and uses the same loop24
@@ -1183,6 +1185,13 @@ STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS = tuple(
 STATIC_BLIND_CORNER_SUPPLEMENT_MAPS = tuple(
     f"occ_bw_r{tier}" for tier in range(1, 6)
 )
+STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS = tuple(
+    f"abt_cal_s{severity}" for severity in range(1, 6)
+)
+STATIC_ANGULAR_BLIND_TURN_HAZARD_RADII_M = {
+    f"abt_cal_s{severity}": radius
+    for severity, radius in enumerate((1.10, 1.20, 1.30, 1.40, 1.50), start=1)
+}
 STATIC_BLIND_CORNER_ALL_MAPS = (
     STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS
     + STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS
@@ -1191,6 +1200,7 @@ STATIC_BLIND_CORNER_ALL_MAPS = (
 STATIC_OCCLUSION_EXPERIMENT_MAPS = (
     STATIC_OCCLUSION_PILOT_MAPS + STATIC_OCCLUSION_CHANNEL_MAPS
     + STATIC_BLIND_CORNER_ALL_MAPS
+    + STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
 )
 VALID_MAPS = (
     tuple(f"seed{i}" for i in range(1, 16))
@@ -2071,6 +2081,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             RECOVERY_SWITCH,
             RECOVERY_TIMEOUT,
         )
+    elif map_name in STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS:
+        wps, switch, timeout = TURN90_WPS, LOOP_SWITCH, TURN90_TIMEOUT
+        if loop_timeout_override is not None:
+            timeout = loop_timeout_override
     else:
         wps, switch, timeout = LOOP_WPS, LOOP_SWITCH, LOOP_TIMEOUT
         if sweep_vel is not None:
@@ -2228,7 +2242,13 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             # bounded raw-input probe therefore measures when the common
             # static hazard first becomes physically visible, before either
             # the Sector crop or Adaptive recovery is applied.
-            if map_name in STATIC_BLIND_CORNER_SUPPLEMENT_MAPS:
+            if map_name in STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS:
+                probe_x, probe_y, probe_radius = (
+                    18.5,
+                    24.0,
+                    STATIC_ANGULAR_BLIND_TURN_HAZARD_RADII_M[map_name] + 0.05,
+                )
+            elif map_name in STATIC_BLIND_CORNER_SUPPLEMENT_MAPS:
                 probe_x, probe_y, probe_radius = 18.4, 24.0, 1.0
             elif map_name in (
                 STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS
@@ -2437,9 +2457,15 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 f"{map_name}_side_entry_v{side_entry_version}.yaml"
                 if side_entry_version else f"{map_name}.yaml"
             )
+            waypoint_data_name = (
+                "turn90_loop24.txt"
+                if map_name in STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
+                else "loop24.txt"
+            )
             launch_cmd = (
                 "ros2 launch mission_planner benchmark_seedmap.launch.py "
-                f"waypoint_data:=loop24.txt drone_config:={drone_config_name} "
+                f"waypoint_data:={waypoint_data_name} "
+                f"drone_config:={drone_config_name} "
                 f"super_config:={seedmap_super_config}"
             )
             if is_seedmap_observed or seedmap_super_config_override:
@@ -2664,7 +2690,15 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     "mars_uav_sim/perfect_drone_sim/pcd/seed_maps/"
                     f"{map_name}.pcd"
                 )
-            if map_name in STATIC_OCCLUSION_CHANNEL_MAPS:
+            if map_name in STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS:
+                monitor_options += (
+                    " --static-hazard-center-x 18.5"
+                    " --static-hazard-center-y 24.0"
+                    f" --static-hazard-radius-m "
+                    f"{STATIC_ANGULAR_BLIND_TURN_HAZARD_RADII_M[map_name]:.2f}"
+                    " --static-hazard-height-m 3.2"
+                )
+            elif map_name in STATIC_OCCLUSION_CHANNEL_MAPS:
                 monitor_options += (
                     " --static-hazard-center-x 18.0"
                     " --static-hazard-center-y 24.0"
@@ -3954,6 +3988,7 @@ def main():
             STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS,
             STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS,
             STATIC_BLIND_CORNER_SUPPLEMENT_MAPS,
+            STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS,
         )
         if any(map_name in family for map_name in args.maps)
     ]

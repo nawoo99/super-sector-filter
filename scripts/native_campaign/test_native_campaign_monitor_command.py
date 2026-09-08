@@ -24,6 +24,26 @@ def test_blind_corner_supplement_is_a_separate_registered_family():
     assert not set(expected).intersection(MODULE.STATIC_OCCLUSION_CHANNEL_MAPS)
 
 
+def test_angular_blind_turn_calibration_is_separate_and_uses_90deg_route():
+    expected = tuple(f"abt_cal_s{severity}" for severity in range(1, 6))
+
+    assert MODULE.STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS == expected
+    assert set(expected).issubset(MODULE.VALID_MAPS)
+    assert not set(expected).intersection(
+        MODULE.STATIC_BLIND_CORNER_SUPPLEMENT_MAPS
+    )
+    assert MODULE.TURN90_WPS.split(";")[:3] == [
+        "24,0", "24,24", "-24,24"
+    ]
+    assert MODULE.STATIC_ANGULAR_BLIND_TURN_HAZARD_RADII_M == {
+        "abt_cal_s1": 1.10,
+        "abt_cal_s2": 1.20,
+        "abt_cal_s3": 1.30,
+        "abt_cal_s4": 1.40,
+        "abt_cal_s5": 1.50,
+    }
+
+
 def test_monitor_options_precede_positional_delimiter():
     pcd = "/tmp/seed map.pcd"
     command = MODULE.build_loop_monitor_command(
