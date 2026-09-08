@@ -1,5 +1,16 @@
 # Wide-bypass static blind-corner supplemental n=10 preregistration
 
+> **Frozen smoke outcome (2026-09-08): proceed.** All 15 rows completed on
+> their first attempt with zero authoritative contact; all 15 were resource-,
+> speed-, performance-, cgroup- and infrastructure-valid. Mission time ranged
+> from 51.89 to 55.95 s. Full and Adaptive therefore passed the preregistered
+> 10/10 protected smoke condition. Raw-probe first-observation distances were
+> mixed (roughly 3.91--10.32 m), and Adaptive trajectory-guard opening occurred
+> in 3/5 smoke rows. Thus the later physical-delivery gate may fail; this is
+> not a stopping condition and no asset, planner or profile is changed before
+> the 150-row run. The smoke remains separate at
+> `results/static_blind_corner_wide_smoke_three_mode_n1_raw_20260908.csv`.
+
 Date frozen: 2026-09-08 (Asia/Seoul), before the first `occ_bw` flight
 
 ## Scope and design history
