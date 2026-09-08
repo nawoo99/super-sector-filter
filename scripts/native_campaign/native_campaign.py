@@ -1169,10 +1169,18 @@ STATIC_OCCLUSION_PILOT_MAPS = tuple(
     for tier in range(1, 6)
     for visibility in ("nom", "occ")
 )
+STATIC_OCCLUSION_CHANNEL_MAPS = tuple(
+    f"occ_c_r{tier}_{visibility}"
+    for tier in range(1, 6)
+    for visibility in ("nom", "occ")
+)
+STATIC_OCCLUSION_EXPERIMENT_MAPS = (
+    STATIC_OCCLUSION_PILOT_MAPS + STATIC_OCCLUSION_CHANNEL_MAPS
+)
 VALID_MAPS = (
     tuple(f"seed{i}" for i in range(1, 16))
     + ("map0",)
-    + STATIC_OCCLUSION_PILOT_MAPS
+    + STATIC_OCCLUSION_EXPERIMENT_MAPS
 )
 VALID_MODES = (
     "raw", "upstream",
@@ -1386,6 +1394,10 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "static_pcd_enabled", "static_pcd_point_count",
           "static_pcd_collisions", "static_pcd_min_distance_m",
           "static_pcd_clearance_m", "static_pcd_min_context",
+          "static_hazard_enabled", "static_hazard_center_x",
+          "static_hazard_center_y", "static_hazard_radius_m",
+          "static_hazard_height_m", "static_hazard_collisions",
+          "static_hazard_min_clearance_m", "static_hazard_min_context",
           "static_pcd_contact_r015",
           "static_pcd_contact_r020", "static_pcd_contact_r025",
           "static_pcd_episodes_r015", "static_pcd_episodes_r020",
@@ -2193,15 +2205,22 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             override_cloud_topic == "/cloud_registered"
         )
         filter_options = f" --stats-json {filt_stats_json}"
-        if map_name in STATIC_OCCLUSION_PILOT_MAPS and base_mode != "full":
+        if (
+            map_name in STATIC_OCCLUSION_EXPERIMENT_MAPS
+            and base_mode != "full"
+        ):
             # The intervention patch is clear of background cylinders.  This
             # bounded raw-input probe therefore measures when the common
-            # static hazard at (19.5, 24.0) first becomes physically visible,
-            # before either the Sector crop or Adaptive recovery is applied.
+            # static hazard first becomes physically visible, before either
+            # the Sector crop or Adaptive recovery is applied.
+            if map_name in STATIC_OCCLUSION_CHANNEL_MAPS:
+                probe_x, probe_y, probe_radius = 18.0, 24.0, 0.9
+            else:
+                probe_x, probe_y, probe_radius = 19.5, 24.0, 0.8
             filter_options += (
-                " --static-probe-center-x 19.5"
-                " --static-probe-center-y 24.0"
-                " --static-probe-radius-m 0.8"
+                f" --static-probe-center-x {probe_x}"
+                f" --static-probe-center-y {probe_y}"
+                f" --static-probe-radius-m {probe_radius}"
             )
         if (
             filter_guard_witness_radius_m > 0.0
@@ -2622,6 +2641,13 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     " --static-pcd /root/super_ws/src/SUPER/"
                     "mars_uav_sim/perfect_drone_sim/pcd/seed_maps/"
                     f"{map_name}.pcd"
+                )
+            if map_name in STATIC_OCCLUSION_CHANNEL_MAPS:
+                monitor_options += (
+                    " --static-hazard-center-x 18.0"
+                    " --static-hazard-center-y 24.0"
+                    " --static-hazard-radius-m 0.75"
+                    " --static-hazard-height-m 3.2"
                 )
             speed_limit_mps = super_config_max_velocity(active_super_config)
             if speed_limit_mps is not None:
@@ -3881,17 +3907,28 @@ def main():
     side_entry_version = (
         selected_side_entry_versions[0] if selected_side_entry_versions else 0
     )
-    static_occlusion_pilot = any(
-        map_name in STATIC_OCCLUSION_PILOT_MAPS for map_name in args.maps
-    )
-    if static_occlusion_pilot:
+    static_occlusion_families = [
+        family
+        for family in (
+            STATIC_OCCLUSION_PILOT_MAPS,
+            STATIC_OCCLUSION_CHANNEL_MAPS,
+        )
+        if any(map_name in family for map_name in args.maps)
+    ]
+    if static_occlusion_families:
+        if len(static_occlusion_families) != 1:
+            ap.error(
+                "separately versioned static-occlusion families cannot be "
+                "pooled in one campaign"
+            )
+        static_occlusion_family = static_occlusion_families[0]
         invalid_maps = [
             map_name for map_name in args.maps
-            if map_name not in STATIC_OCCLUSION_PILOT_MAPS
+            if map_name not in static_occlusion_family
         ]
         if invalid_maps:
             ap.error(
-                "the static-occlusion pilot cannot be pooled with other "
+                "a static-occlusion pilot cannot be pooled with other "
                 "map families: " + ", ".join(invalid_maps)
             )
         if args.filter_backend != "cpp-frontend":
@@ -4058,7 +4095,7 @@ def main():
             map_name for map_name in args.maps
             if not (
                 re.fullmatch(r"seed(?:[1-9]|10)", map_name)
-                or map_name in STATIC_OCCLUSION_PILOT_MAPS
+                or map_name in STATIC_OCCLUSION_EXPERIMENT_MAPS
             )
         ]
         if invalid_maps:

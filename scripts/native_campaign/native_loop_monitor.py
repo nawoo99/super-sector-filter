@@ -43,6 +43,10 @@ def parse_args():
             "each point is inflated by the 0.20 m robot radius"
         ),
     )
+    parser.add_argument("--static-hazard-center-x", type=float)
+    parser.add_argument("--static-hazard-center-y", type=float)
+    parser.add_argument("--static-hazard-radius-m", type=float)
+    parser.add_argument("--static-hazard-height-m", type=float)
     parser.add_argument(
         "--side-entry-event-json",
         help=(
@@ -55,6 +59,19 @@ def parse_args():
         parser.error("--speed-limit-mps must be positive")
     if args.speed_tolerance_mps < 0.0:
         parser.error("--speed-tolerance-mps must be non-negative")
+    static_hazard_values = (
+        args.static_hazard_center_x,
+        args.static_hazard_center_y,
+        args.static_hazard_radius_m,
+        args.static_hazard_height_m,
+    )
+    if any(value is not None for value in static_hazard_values):
+        if not all(value is not None for value in static_hazard_values):
+            parser.error("all four --static-hazard-* values are required")
+        if args.static_hazard_radius_m <= 0.0:
+            parser.error("--static-hazard-radius-m must be positive")
+        if args.static_hazard_height_m <= 0.0:
+            parser.error("--static-hazard-height-m must be positive")
     return args, ros_args
 
 
@@ -173,6 +190,9 @@ class LoopMonitor(Node):
         self.min_distance = float("inf")
         self.static_pcd_min_distance = float("inf")
         self.static_pcd_min_context = None
+        self.static_hazard_min_clearance = float("inf")
+        self.static_hazard_min_context = None
+        self.static_hazard_collisions = 0
         self.trap_min_distance = float("inf")
         self.side_entry_event = None
         self.side_entry_event_error = None
@@ -184,6 +204,7 @@ class LoopMonitor(Node):
         self.trap_collisions = 0
         self.in_collision = False
         self.in_static_pcd_collision = False
+        self.in_static_hazard_collision = False
         self.in_trap_collision = False
         self.in_side_entry_collision = False
         self.contact_events = []
@@ -336,6 +357,45 @@ class LoopMonitor(Node):
                 velocity,
             )
         self.in_side_entry_collision = colliding
+
+    def update_static_hazard_clearance(self, position, velocity):
+        if ARGS.static_hazard_center_x is None:
+            self.in_static_hazard_collision = False
+            return
+        center = np.array(
+            [ARGS.static_hazard_center_x, ARGS.static_hazard_center_y],
+            dtype=np.float64,
+        )
+        offset = position[:2].astype(np.float64) - center
+        radial_distance = float(np.linalg.norm(offset))
+        radial_outside = max(0.0, radial_distance - ARGS.static_hazard_radius_m)
+        if position[2] < 0.0:
+            vertical_outside = float(-position[2])
+        elif position[2] > ARGS.static_hazard_height_m:
+            vertical_outside = float(
+                position[2] - ARGS.static_hazard_height_m
+            )
+        else:
+            vertical_outside = 0.0
+        solid_distance = float(np.hypot(radial_outside, vertical_outside))
+        clearance = solid_distance - DRONE_R
+        if clearance < self.static_hazard_min_clearance:
+            self.static_hazard_min_clearance = clearance
+            self.static_hazard_min_context = {
+                "elapsed_s": round(time.time() - self.start_time, 6),
+                "position": np.round(position, 6).tolist(),
+                "velocity": np.round(velocity, 6).tolist(),
+                "speed_mps": round(float(np.linalg.norm(velocity)), 6),
+                "cylinder_center": np.round(center, 6).tolist(),
+                "radial_distance_m": round(radial_distance, 6),
+                "solid_distance_m": round(solid_distance, 6),
+                "clearance_m": round(clearance, 6),
+                "waypoint_index": self.waypoint_index,
+            }
+        colliding = clearance < 0.0
+        if colliding and not self.in_static_hazard_collision:
+            self.static_hazard_collisions += 1
+        self.in_static_hazard_collision = colliding
 
     @staticmethod
     def vector3(value):
@@ -592,6 +652,7 @@ class LoopMonitor(Node):
         self.max_y = max(self.max_y, float(p.y))
         v = msg.twist.twist.linear
         velocity = np.array([v.x, v.y, v.z], dtype=np.float32)
+        self.update_static_hazard_clearance(position, velocity)
         self.update_side_entry_collision(position, velocity)
         self.max_speed = max(self.max_speed, float(np.hypot(v.x, v.y)))
         odom_speed_3d = float(np.linalg.norm(velocity))
@@ -718,6 +779,17 @@ result = {
         else None
     ),
     "static_pcd_min_context": node.static_pcd_min_context,
+    "static_hazard_enabled": ARGS.static_hazard_center_x is not None,
+    "static_hazard_center_x": ARGS.static_hazard_center_x,
+    "static_hazard_center_y": ARGS.static_hazard_center_y,
+    "static_hazard_radius_m": ARGS.static_hazard_radius_m,
+    "static_hazard_height_m": ARGS.static_hazard_height_m,
+    "static_hazard_collisions": node.static_hazard_collisions,
+    "static_hazard_min_clearance_m": (
+        round(node.static_hazard_min_clearance, 3)
+        if node.static_hazard_min_clearance != float("inf") else None
+    ),
+    "static_hazard_min_context": node.static_hazard_min_context,
     "contact_event_count": len(node.contact_events),
     # Protocol safety authority is explicit.  Static seed-map campaigns use
     # the same source PCD for every mode; runs without that oracle retain the
