@@ -10,6 +10,14 @@ MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
+def test_blind_corner_supplement_is_a_separate_registered_family():
+    expected = tuple(f"occ_b_r{tier}" for tier in range(1, 6))
+
+    assert MODULE.STATIC_BLIND_CORNER_SUPPLEMENT_MAPS == expected
+    assert set(expected).issubset(MODULE.VALID_MAPS)
+    assert not set(expected).intersection(MODULE.STATIC_OCCLUSION_CHANNEL_MAPS)
+
+
 def test_monitor_options_precede_positional_delimiter():
     pcd = "/tmp/seed map.pcd"
     command = MODULE.build_loop_monitor_command(
