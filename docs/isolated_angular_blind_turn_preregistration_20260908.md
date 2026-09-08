@@ -133,3 +133,14 @@ mode (150 rows).
   `27d965f0384f68afd7c91f11dca26251c4a983a2e21fa3a9f40532ded447aec8`,
   `ed57c2dbc860022c6d102cd769f683485b6b43a4cd4cf9b74b6fc22d11e84f56`,
   `ca885cecc345008dd5660b7f92991531cf3c6d2bd6a1c7981e7071f2239b0709`.
+
+## Registered outcome
+
+The 15 rows completed across midnight in 20.8 minutes.  All were unique,
+first-attempt and quality-valid with zero contact.  Full/Sector/Adaptive safe
+completion was 3/5, 0/5 and 3/5.  Sector degradation after the target was 5/5,
+but Adaptive exact frontend risk braking was 0/5 and the surface probe was
+outside the actual filter sector in only 6/10 filtered rows.  The frozen
+decision is `STOP_CALIBRATION_GATE_FAILED`; no independent maps or 150-row
+campaign were launched.  See
+`docs/isolated_angular_blind_turn_result_20260909.md`.

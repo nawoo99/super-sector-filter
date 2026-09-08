@@ -4489,3 +4489,61 @@ background, probe an isolated hazard-surface patch and guarantee at least
 0.4 s from raw reveal to waypoint switch.  Complete results are in
 `docs/angular_blind_turn_calibration_result_20260908.md` and the frozen design
 is in `docs/angular_blind_turn_calibration_preregistration_20260908.md`.
+
+### 8.67 Isolated angular blind-turn v2 calibration (2026-09-09)
+
+The v1 failure was preserved and a newly named `abt2_cal_t1..t5` family was
+preregistered without changing the planner.  All maps start at `(24,0,1.5)`
+facing north and use only `(24,24)->(0,24)`, so the first waypoint switch is
+the sole 90-degree hazard turn.  The background, guide posts, walls and
+`(16.2,24.4)`, radius-1.20 m hazard are common.  Only a full-height optical
+aperture centre changes from x=19.50 to 19.80 m; its width 0.38 m is below the
+0.40 m body diameter.  Per-map 0.12 m probes lie on isolated hazard surface
+patches and do not overlap a wall.
+
+The fail-closed structural check used the actual 151-point horizontal hazard
+lattice and finite 0.30 m walls.  It predicted first visibility at
+y=18.800--19.545, 47.145--50.596 degrees from a northbound centre and
+0.422--0.529 s before the nominal switch boundary at 7 m/s.  A northern
+bypass had +0.450 m analytic body clearance.  The generator, hashes, runner,
+gate and stop rule were committed and pushed before flight.
+
+The 15-row calibration finished in 20.8 minutes.  All rows were unique,
+first-attempt and run/resource/speed/performance/cgroup-valid; retry,
+infrastructure failure, resource abort, OOM and contact were zero.  Safe
+completion for Full/Sector/Adaptive was 3/5, 0/5 and 3/5.  All Sector failures
+reached `(24,24)`, so its after-target degradation gate passed 5/5.  Full and
+Adaptive both failed their 5/5 conditions.
+
+More importantly, the C++ frontend emitted 117--472 trajectory-risk verdicts
+per Adaptive row near 5 Hz but `risk_occupied_verdicts` and exact frontend
+risk brakes were zero in every row.  The 124 Adaptive effective-Full
+transitions came from replan/ordinary trajectory-guard recovery and are not
+evidence for the raw future-trajectory mechanism.  The isolated probe was
+seen in all ten filtered rows but was outside the filter's realised sector in
+only 6/10.
+
+The geometry-to-flight transfer failed for identifiable reasons.  Actual
+probe poses drifted to x=24.28--25.46 and arrived around y=22.71--23.26, while
+SUPER curved and rotated before the nominal waypoint switch.  The aperture
+exposed a northern hazard surface around `(17.0,25.3)`, not the surface that
+intersects the westbound path near y=24.  Thus raw visibility did not imply an
+occupied 1 s future trajectory.  A static line segment also did not model the
+0.4-degree simulated LiDAR beam lattice.
+
+The fixture was not Full-feasible in closed loop despite its analytic bypass.
+Full t2/t3 and Adaptive t2/t5 accumulated 105/107 and 125/126 topology reroute
+arms, with repeated A* `NO_PATH`, CIRI infeasibility and optimisation overtime.
+The +0.45 m body-clearance calculation omitted ROG inflation, local search
+bounds, dynamics and accumulated reroute zones.  Mixed Full outcomes across
+centimetre-scale aperture shifts show timing sensitivity rather than a robust
+mechanism fixture.
+
+The frozen decision is `STOP_CALIBRATION_GATE_FAILED`.  No evaluation maps,
+150-row campaign, McNemar test or safety-superiority claim followed.  A future
+v3 must first pass a deterministic kinematic replay using the actual simulator
+raycast and C++ frontend: a trajectory-conflicting raw patch must be absent
+from Sector, yield fresh OCCUPIED for at least two 5 Hz periods, and retain an
+inflation-aware feasible Full corridor.  Complete evidence is in
+`docs/isolated_angular_blind_turn_result_20260909.md` and the frozen design is
+in `docs/isolated_angular_blind_turn_preregistration_20260908.md`.

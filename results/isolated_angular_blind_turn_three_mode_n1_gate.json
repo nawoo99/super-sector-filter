@@ -1,0 +1,29 @@
+{
+  "checks": {
+    "adaptive_exact_fresh_frontend_risk_brake_at_least_4_of_5": false,
+    "adaptive_safe_5_of_5": false,
+    "all_rows_quality_valid": true,
+    "exact_15_unique_rows": true,
+    "full_safe_5_of_5": false,
+    "isolated_surface_probe_seen_and_outside_sector_10_of_10": false,
+    "sector_degraded_at_or_after_target_at_least_2_of_5": true
+  },
+  "counts": {
+    "adaptive_exact_fresh_frontend_risk_brake_rows": 0,
+    "adaptive_safe": 3,
+    "duplicates": 0,
+    "full_safe": 3,
+    "isolated_surface_probe_outside_sector_rows": 6,
+    "isolated_surface_probe_seen_rows": 10,
+    "rows": 15,
+    "sector_degraded_at_or_after_target": 5,
+    "sector_safe": 0
+  },
+  "decision": "STOP_CALIBRATION_GATE_FAILED",
+  "diagnostics": {
+    "critical_waypoints_reached_threshold": 1,
+    "no_mcnemar_test": true,
+    "reason": "calibration n=1 is a mechanism gate, not inferential evidence",
+    "static_probe_isolation_valid_by_construction": true
+  }
+}

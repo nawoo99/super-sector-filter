@@ -1,6 +1,33 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-09 isolated angular blind-turn v2도 calibration gate에서 중단.**
+> 이전 실패를 덮어쓰지 않고 `abt2_cal_t1..t5`를 새로 사전등록했다. `(24,0)`
+> north-facing 시작, 첫 turn=목표 turn, 공통 controlled background/hazard,
+> 기체 직경 0.40m보다 좁은 full-height aperture 0.38m, 벽과 분리된 surface
+> probe를 사용했고 planner는 바꾸지 않았다. 실제 PCD 격자를 쓴 구조 validator는
+> first ray 47.145--50.596°, 7m/s reveal lead 0.422--0.529s를 확인했다.
+>
+> 15행은 20.8분에 전부 unique·first-attempt·품질 유효, retry/resource abort/
+> infrastructure failure/OOM/접촉 0으로 끝났다. 그러나 Full/Sector/Adaptive
+> 완주는 3/5, 0/5, 3/5였다. Sector 5/5가 목표 turn 이후 timeout이라 분리
+> 조건 하나는 충족했지만, Adaptive exact fresh frontend risk brake는 0/5였다.
+> Raw worker 자체는 정상(약 5Hz, 행당 117--472 verdict)이지만 OCCUPIED가 단 한
+> 번도 없었다. Adaptive effective-Full 124회는 replan/ordinary trajectory guard
+> 계열이지 future-risk 개입이 아니다. Surface probe는 10/10 관측됐지만 실제
+> 자세/경로에서 sector 밖은 6/10뿐이었다.
+>
+> 원인은 static line-of-sight가 실제 raycast+closed-loop state를 보장하지 못한
+> 것이다. 조기 aperture가 본 것은 outgoing trajectory와 충돌하지 않는 hazard
+> 북쪽 표면이었고, 실제 x 편차·선행 yaw 회전 때문에 일부 probe가 45° 안으로
+> 들어왔다. Full/Adaptive timeout은 +0.45m 해석 우회가 inflation/search horizon/
+> dynamics/누적 reroute zone까지 보장하지 못해 A* NO_PATH와 optimizer overtime이
+> 반복된 결과다. 판정은 `STOP_CALIBRATION_GATE_FAILED`; 독립 맵/150행은 실행하지
+> 않았다. 다음은 맵을 또 미세조정하기 전에 실제 simulator raycast와 C++ crop/risk를
+> 쓰는 deterministic replay witness를 만들어야 한다. 최신 상세는 viability
+> §8.67과 `docs/isolated_angular_blind_turn_result_20260909.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-08 90° angular blind-turn calibration gate 실패.** 기존 planner와
 > Map1--10/`occ_bw` 결과를 보존한 채 별도 `abt_cal_s1..s5` 15행을 사전등록해
 > 실행했다. 모든 행은 unique·first-attempt·품질 유효이고 접촉은 0이었다.
