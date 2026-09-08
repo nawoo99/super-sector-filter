@@ -44,6 +44,23 @@ def test_angular_blind_turn_calibration_is_separate_and_uses_90deg_route():
     }
 
 
+def test_isolated_angular_blind_turn_is_a_separate_first_turn_family():
+    expected = tuple(f"abt2_cal_t{tier}" for tier in range(1, 6))
+
+    assert MODULE.STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS == expected
+    assert set(expected).issubset(MODULE.VALID_MAPS)
+    assert not set(expected).intersection(
+        MODULE.STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
+    )
+    assert MODULE.TURN90_ISOLATED_WPS == "24,24;0,24"
+    assert MODULE.TURN90_ISOLATED_TIMEOUT == 90.0
+    assert set(MODULE.STATIC_ISOLATED_ANGULAR_BLIND_TURN_PROBES) == set(expected)
+    assert all(
+        probe[2] == 0.12
+        for probe in MODULE.STATIC_ISOLATED_ANGULAR_BLIND_TURN_PROBES.values()
+    )
+
+
 def test_monitor_options_precede_positional_delimiter():
     pcd = "/tmp/seed map.pcd"
     command = MODULE.build_loop_monitor_command(
