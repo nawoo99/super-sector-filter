@@ -1,0 +1,29 @@
+{
+  "checks": {
+    "adaptive_frontend_risk_brake_at_least_4_of_5": false,
+    "adaptive_safe_5_of_5": true,
+    "all_rows_quality_valid": true,
+    "exact_15_unique_rows": true,
+    "full_safe_5_of_5": true,
+    "sector_degraded_at_least_2_of_5": false
+  },
+  "counts": {
+    "adaptive_frontend_risk_brake_rows": 2,
+    "adaptive_safe": 5,
+    "duplicates": 0,
+    "full_safe": 5,
+    "rows": 15,
+    "sector_degraded": 1,
+    "sector_degraded_at_or_after_critical_turn": 0,
+    "sector_safe": 4
+  },
+  "decision": "STOP_CALIBRATION_GATE_FAILED",
+  "diagnostics": {
+    "no_mcnemar_test": true,
+    "reason": "calibration n=1 and preregistered delivery gate failed",
+    "sector_s2_failure_before_critical_turn": true,
+    "sector_s2_failure_waypoints_reached": 1,
+    "static_probe_isolation_valid": false,
+    "static_probe_issue": "probe radius overlaps upper wall; visibility fields cannot be attributed uniquely to the hazard"
+  }
+}

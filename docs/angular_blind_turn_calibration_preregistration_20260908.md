@@ -127,3 +127,17 @@ first evaluation flight, then run Full/Sector/Adaptive n=10 per map (150 rows).
   `29dcb80bc6c3367dda7cc5e2e560dd79f0bf8cda92c837046105fca2868c46a4`,
   `677b5cd7ab44518d34f0a3b214e7434e6579d57560657554d9892dcb4004d61b`,
   `08954c91966bd83a27c56b721b2ea268cc345420cda560f97374635c8a72ecf3`.
+
+## Registered calibration outcome
+
+The frozen 15-row smoke completed in 21.6 minutes.  All rows were unique,
+first-attempt and quality-valid, with zero authoritative contact.  Full and
+Adaptive were 5/5 safe; Sector was 4/5 safe.  The sole Sector timeout occurred
+before the critical hazard turn.  Adaptive future-trajectory risk braking was
+present in only 2/5 rows.  Both the 4/5 Adaptive-delivery condition and the
+2/5 Sector-degradation condition failed, so the registered decision is
+`STOP_CALIBRATION_GATE_FAILED`.  No independent maps or 150-row evaluation
+were launched.  The probe also overlapped the upper wall and is excluded from
+visibility conclusions.  See
+`docs/angular_blind_turn_calibration_result_20260908.md` for the audit and
+root-cause analysis.

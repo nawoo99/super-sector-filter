@@ -4444,3 +4444,48 @@ by a regression assertion. Full tables, hashes and limitations are in
 `docs/static_blind_corner_wide_supplement_result_20260908.md`; the frozen
 design and smoke are in
 `docs/static_blind_corner_wide_supplement_preregistration_20260908.md`.
+
+### 8.66 Static 90-degree angular blind-turn calibration (2026-09-08)
+
+The frozen planner and all earlier cohorts were preserved.  A separately
+named `abt_cal_s1..s5` calibration used a northbound-to-westbound 90-degree
+turn, two full-height channel walls and a static hazard on the outgoing path.
+Five hazard radii (1.10--1.50 m) were paired with the odd-seed point-load
+strata.  A fail-closed validator confirmed a direct-route intersection, a
++0.450 m northern body-clearance bypass and first visible hazard surface
+51.449--55.943 degrees outside the incoming direction.  The generator,
+assets, hashes, 15-row smoke and a 4/5 Adaptive-risk plus 2/5 Sector-bad gate
+were committed before flight.  An 8 GiB preflight could not start while a
+user Pylance process held 2.9 GiB, so before any flight the threshold was
+transparently amended to 7 GiB; runtime 2 GiB/PSI/OOM gates were unchanged.
+
+The 15 rows completed in 21.6 minutes and were all unique, first-attempt and
+quality-valid. Full and Adaptive were each 5/5 complete and contact-free.
+Sector was 4/5 complete and all five were contact-free.  Adaptive raw-window
+future-trajectory braking occurred only on s3/s4 (2/5), below the required
+4/5, while Sector degradation was 1/5 rather than 2/5.  Moreover, the sole
+Sector timeout stopped at `(24.269,6.596)` with only 1/6 waypoints, before the
+critical hazard.  Thus the mechanism-specific Sector degradation count was
+0/5 and the frozen decision is `STOP_CALIBRATION_GATE_FAILED`.  No independent
+evaluation maps or 150-row campaign were launched, and no McNemar test is
+reported.
+
+The Sector timeout was a real but confounded angular/map-readiness failure.
+The frontend still ran near 10 Hz but retained only 1.386% of points; the
+planner began receiving empty/non-dense clouds, map version froze at 85, and
+the guard entered fail-closed EMER_STOP when age reached 0.558 s against its
+0.550 s limit.  In Adaptive s2 the raw worker did calculate OCCUPIED, but the
+ordinary guard had already entered emergency handling, so the verdict became
+stale/generation-mismatched rather than causal.  s1/s5 used ordinary
+candidate/topology handling.  The reveal-to-switch window was only around one
+5 Hz risk period, explaining the inconsistent delivery.
+
+A measurement-only defect was also retained: the hazard-centred raw probe
+radius overlapped the upper wall, so first-probe fields cannot be uniquely
+attributed to the hazard.  It did not affect planning or the formal gate.  A
+future, newly versioned calibration should start at `(24,0)` facing north,
+make the hazard turn the first evaluated turn, use a common controlled
+background, probe an isolated hazard-surface patch and guarantee at least
+0.4 s from raw reveal to waypoint switch.  Complete results are in
+`docs/angular_blind_turn_calibration_result_20260908.md` and the frozen design
+is in `docs/angular_blind_turn_calibration_preregistration_20260908.md`.

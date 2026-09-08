@@ -1,6 +1,26 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-08 90° angular blind-turn calibration gate 실패.** 기존 planner와
+> Map1--10/`occ_bw` 결과를 보존한 채 별도 `abt_cal_s1..s5` 15행을 사전등록해
+> 실행했다. 모든 행은 unique·first-attempt·품질 유효이고 접촉은 0이었다.
+> Full/Adaptive는 5/5 완주, Sector는 4/5 완주했지만 Adaptive의 causal
+> frontend future-trajectory brake는 s3/s4의 2/5뿐이라 4/5 기준에 실패했고,
+> Sector degraded도 1/5라 2/5 기준에 실패했다. 유일한 Sector timeout도
+> `(24.269,6.596)`, waypoint 1/6에서 발생해 목표 hazard 이전의 confound다.
+> 판정은 `STOP_CALIBRATION_GATE_FAILED`; 독립 맵과 150행은 만들거나 실행하지
+> 않았다.
+>
+> Sector 실패 원인은 약 10Hz 입력이 계속되는 중 45° crop이 1.386%만 남겨
+> empty/non-dense cloud가 되고, map version 85에서 commit이 끊겨 0.558s
+> MAP_STALE fail-closed가 영구화된 것이다. 또한 raw probe가 upper wall과 겹쳐
+> first-visibility 측정은 무효지만 flight decision/gate에는 영향이 없다. 다음
+> 버전은 `(24,0)` north-facing start, 첫 turn=hazard, 공통 controlled background,
+> isolated surface probe, reveal-to-switch >=0.4s로 설계해야 한다. 최신 상세는
+> viability §8.66과
+> `docs/angular_blind_turn_calibration_result_20260908.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-08 wide-bypass blind-corner 보조 150행 완료.** 기존 Map1--10과
 > frozen v7/45° planner를 그대로 보존하고, odd seed 1/3/5/7/9의 5개 반경 층에
 > 공통 full-height L corner와 `(18.4,24.0)`, 반경 0.95 m hazard를 넣은 별도
