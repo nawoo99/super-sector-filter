@@ -85,6 +85,25 @@ def test_v4_gate_is_a_separate_observed_exit_family():
     }
 
 
+def test_static_blind_doorway_candidates_are_separate_families():
+    assert MODULE.STATIC_BLIND_DOORWAY_C1_MAPS == (
+        "sbd1_c1_clear", "sbd1_c1_hazard"
+    )
+    assert MODULE.STATIC_BLIND_DOORWAY_C2_MAPS == (
+        "sbd1_c2_clear", "sbd1_c2_hazard"
+    )
+    assert MODULE.STATIC_BLIND_DOORWAY_C3_MAPS == (
+        "sbd1_c3_clear", "sbd1_c3_hazard"
+    )
+    assert not set(MODULE.STATIC_BLIND_DOORWAY_C1_MAPS).intersection(
+        MODULE.STATIC_BLIND_DOORWAY_C2_MAPS
+    )
+    assert MODULE.STATIC_BLIND_DOORWAY_EXPLORATION_HAZARDS[
+        "sbd1_c2_hazard"
+    ] == (19.8, 23.0, 0.9, 3.2)
+    assert MODULE.BLIND_DOORWAY_DIRECT_WPS == "0,24"
+
+
 def test_monitor_options_precede_positional_delimiter():
     pcd = "/tmp/seed map.pcd"
     command = MODULE.build_loop_monitor_command(

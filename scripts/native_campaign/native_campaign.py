@@ -1124,6 +1124,8 @@ TURN90_WPS = "24,0;24,24;-24,24;-24,-24;24,-24;0,0"
 TURN90_TIMEOUT = 210.0
 TURN90_ISOLATED_WPS = "24,24;0,24"
 TURN90_ISOLATED_TIMEOUT = 90.0
+BLIND_DOORWAY_DIRECT_WPS = "0,24"
+BLIND_DOORWAY_DIRECT_TIMEOUT = 90.0
 SEED12_WPS = "24,24;-24,24"
 SEED12_TIMEOUT = 90.0
 # seed13 mirrors seed12's corner-obstacle layout and uses the same loop24
@@ -1218,6 +1220,35 @@ STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS = ("abt4_observed_exit",)
 STATIC_ANGULAR_BLIND_TURN_V4_GATE_PROBES = {
     "abt4_observed_exit": (17.4, 24.4, 0.12),
 }
+STATIC_BLIND_DOORWAY_C1_MAPS = (
+    "sbd1_c1_clear", "sbd1_c1_hazard",
+)
+STATIC_BLIND_DOORWAY_C2_MAPS = (
+    "sbd1_c2_clear", "sbd1_c2_hazard",
+)
+STATIC_BLIND_DOORWAY_C3_MAPS = (
+    "sbd1_c3_clear", "sbd1_c3_hazard",
+)
+STATIC_BLIND_DOORWAY_EXPLORATION_MAPS = (
+    STATIC_BLIND_DOORWAY_C1_MAPS
+    + STATIC_BLIND_DOORWAY_C2_MAPS
+    + STATIC_BLIND_DOORWAY_C3_MAPS
+)
+STATIC_BLIND_DOORWAY_EXPLORATION_PROBES = {
+    **{map_name: (19.374679, 24.0, 0.12)
+       for map_name in STATIC_BLIND_DOORWAY_C1_MAPS},
+    **{map_name: (19.8, 23.9, 0.10)
+       for map_name in STATIC_BLIND_DOORWAY_C2_MAPS},
+    **{map_name: (19.8, 23.0, 0.95)
+       for map_name in STATIC_BLIND_DOORWAY_C3_MAPS},
+}
+STATIC_BLIND_DOORWAY_EXPLORATION_HAZARDS = {
+    **{map_name: (18.4, 23.3, 1.2, 3.2)
+       for map_name in STATIC_BLIND_DOORWAY_C1_MAPS},
+    **{map_name: (19.8, 23.0, 0.9, 3.2)
+       for map_name in STATIC_BLIND_DOORWAY_C2_MAPS
+       + STATIC_BLIND_DOORWAY_C3_MAPS},
+}
 STATIC_BLIND_CORNER_ALL_MAPS = (
     STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS
     + STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS
@@ -1230,6 +1261,7 @@ STATIC_OCCLUSION_EXPERIMENT_MAPS = (
     + STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
     + STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS
     + STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS
+    + STATIC_BLIND_DOORWAY_EXPLORATION_MAPS
 )
 VALID_MAPS = (
     tuple(f"seed{i}" for i in range(1, 16))
@@ -1452,6 +1484,19 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "static_hazard_center_y", "static_hazard_radius_m",
           "static_hazard_height_m", "static_hazard_collisions",
           "static_hazard_min_clearance_m", "static_hazard_min_context",
+          "first_static_hazard_contact_context",
+          "trajectory_risk_audit_enabled",
+          "trajectory_audit_min_clearance_m",
+          "trajectory_audit_min_context",
+          "trajectory_audit_first_conflict_context",
+          "trajectory_audit_future_verdicts",
+          "trajectory_audit_occupied_verdicts",
+          "trajectory_audit_exact_fresh_occupied_verdicts",
+          "trajectory_audit_first_exact_fresh_occupied_context",
+          "trajectory_audit_hazard_matched_exact_occupied_verdicts",
+          "trajectory_audit_first_hazard_matched_exact_context",
+          "trajectory_audit_first_hazard_matched_exact_precedes_contact",
+          "trajectory_audit_first_exact_occupied_precedes_contact",
           "static_pcd_contact_r015",
           "static_pcd_contact_r020", "static_pcd_contact_r025",
           "static_pcd_episodes_r015", "static_pcd_episodes_r020",
@@ -2110,10 +2155,20 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             RECOVERY_SWITCH,
             RECOVERY_TIMEOUT,
         )
+    elif map_name in STATIC_BLIND_DOORWAY_C3_MAPS:
+        wps, switch, timeout = (
+            BLIND_DOORWAY_DIRECT_WPS,
+            LOOP_SWITCH,
+            BLIND_DOORWAY_DIRECT_TIMEOUT,
+        )
+        if loop_timeout_override is not None:
+            timeout = loop_timeout_override
     elif map_name in (
         STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
         + STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS
         + STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS
+        + STATIC_BLIND_DOORWAY_C1_MAPS
+        + STATIC_BLIND_DOORWAY_C2_MAPS
     ):
         wps, switch, timeout = (
             TURN90_ISOLATED_WPS, LOOP_SWITCH, TURN90_ISOLATED_TIMEOUT
@@ -2284,6 +2339,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             if map_name in STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS:
                 probe_x, probe_y, probe_radius = (
                     STATIC_ANGULAR_BLIND_TURN_V4_GATE_PROBES[map_name]
+                )
+            elif map_name in STATIC_BLIND_DOORWAY_EXPLORATION_MAPS:
+                probe_x, probe_y, probe_radius = (
+                    STATIC_BLIND_DOORWAY_EXPLORATION_PROBES[map_name]
                 )
             elif map_name in STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS:
                 probe_x, probe_y, probe_radius = (
@@ -2508,19 +2567,20 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 f"{map_name}_side_entry_v{side_entry_version}.yaml"
                 if side_entry_version else f"{map_name}.yaml"
             )
-            waypoint_data_name = (
-                "turn90_isolated.txt"
-                if map_name in (
+            if map_name in STATIC_BLIND_DOORWAY_C3_MAPS:
+                waypoint_data_name = "blind_doorway_direct.txt"
+            elif map_name in (
                     STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
                     + STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS
                     + STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS
-                )
-                else (
-                    "turn90_loop24.txt"
-                    if map_name in STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
-                    else "loop24.txt"
-                )
-            )
+                    + STATIC_BLIND_DOORWAY_C1_MAPS
+                    + STATIC_BLIND_DOORWAY_C2_MAPS
+            ):
+                waypoint_data_name = "turn90_isolated.txt"
+            elif map_name in STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS:
+                waypoint_data_name = "turn90_loop24.txt"
+            else:
+                waypoint_data_name = "loop24.txt"
             launch_cmd = (
                 "ros2 launch mission_planner benchmark_seedmap.launch.py "
                 f"waypoint_data:={waypoint_data_name} "
@@ -2749,7 +2809,25 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     "mars_uav_sim/perfect_drone_sim/pcd/seed_maps/"
                     f"{map_name}.pcd"
                 )
-            if map_name in (
+            if map_name in STATIC_BLIND_DOORWAY_EXPLORATION_MAPS:
+                hazard_x, hazard_y, hazard_radius, hazard_height = (
+                    STATIC_BLIND_DOORWAY_EXPLORATION_HAZARDS[map_name]
+                )
+                monitor_options += (
+                    " --trajectory-risk-audit"
+                    f" --trajectory-audit-center-x {hazard_x}"
+                    f" --trajectory-audit-center-y {hazard_y}"
+                    f" --trajectory-audit-radius-m {hazard_radius}"
+                    f" --trajectory-audit-height-m {hazard_height}"
+                )
+                if map_name.endswith("_hazard"):
+                    monitor_options += (
+                        f" --static-hazard-center-x {hazard_x}"
+                        f" --static-hazard-center-y {hazard_y}"
+                        f" --static-hazard-radius-m {hazard_radius}"
+                        f" --static-hazard-height-m {hazard_height}"
+                    )
+            elif map_name in (
                 STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
                 + STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS
                 + STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS
@@ -4062,6 +4140,9 @@ def main():
             STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS,
             STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS,
             STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS,
+            STATIC_BLIND_DOORWAY_C1_MAPS,
+            STATIC_BLIND_DOORWAY_C2_MAPS,
+            STATIC_BLIND_DOORWAY_C3_MAPS,
         )
         if any(map_name in family for map_name in args.maps)
     ]

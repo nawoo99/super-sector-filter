@@ -7,7 +7,11 @@ import time
 
 import numpy as np
 import rclpy
-from mars_quadrotor_msgs.msg import PositionCommand
+from mars_quadrotor_msgs.msg import (
+    PolynomialTrajectory,
+    PositionCommand,
+    TrajectoryRiskVerdict,
+)
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
@@ -15,6 +19,8 @@ from sensor_msgs.msg import PointCloud2
 from sensor_msgs_py import point_cloud2 as pc2
 from std_msgs.msg import Bool
 from visualization_msgs.msg import MarkerArray
+
+from trajectory_audit_math import sample_future_positions
 
 
 def parse_args():
@@ -48,6 +54,21 @@ def parse_args():
     parser.add_argument("--static-hazard-radius-m", type=float)
     parser.add_argument("--static-hazard-height-m", type=float)
     parser.add_argument(
+        "--trajectory-risk-audit",
+        action="store_true",
+        help=(
+            "measurement-only audit of committed markers and compact risk "
+            "verdicts; never publishes a planner input"
+        ),
+    )
+    parser.add_argument("--trajectory-audit-center-x", type=float)
+    parser.add_argument("--trajectory-audit-center-y", type=float)
+    parser.add_argument("--trajectory-audit-radius-m", type=float)
+    parser.add_argument("--trajectory-audit-height-m", type=float)
+    parser.add_argument(
+        "--trajectory-audit-fresh-age-s", type=float, default=0.75
+    )
+    parser.add_argument(
         "--side-entry-event-json",
         help=(
             "authoritative side-entry-v1 spawn event; collision is computed "
@@ -72,6 +93,28 @@ def parse_args():
             parser.error("--static-hazard-radius-m must be positive")
         if args.static_hazard_height_m <= 0.0:
             parser.error("--static-hazard-height-m must be positive")
+    trajectory_audit_values = (
+        args.trajectory_audit_center_x,
+        args.trajectory_audit_center_y,
+        args.trajectory_audit_radius_m,
+        args.trajectory_audit_height_m,
+    )
+    if args.trajectory_risk_audit:
+        if not all(value is not None for value in trajectory_audit_values):
+            parser.error(
+                "--trajectory-risk-audit requires all four "
+                "--trajectory-audit-* geometry values"
+            )
+        if args.trajectory_audit_radius_m <= 0.0:
+            parser.error("--trajectory-audit-radius-m must be positive")
+        if args.trajectory_audit_height_m <= 0.0:
+            parser.error("--trajectory-audit-height-m must be positive")
+        if args.trajectory_audit_fresh_age_s <= 0.0:
+            parser.error("--trajectory-audit-fresh-age-s must be positive")
+    elif any(value is not None for value in trajectory_audit_values):
+        parser.error(
+            "--trajectory-audit-* geometry requires --trajectory-risk-audit"
+        )
     return args, ros_args
 
 
@@ -185,13 +228,25 @@ class LoopMonitor(Node):
         self.occupancy_messages = 0
         self.trap_cloud = None
         self.latest_command = None
+        self.latest_odom_audit = None
+        self.latest_trajectory_generation = 0
         self.latest_frontend_path = []
         self.latest_committed_trajectory = []
+        self.trajectory_audit_min_clearance = float("inf")
+        self.trajectory_audit_min_context = None
+        self.trajectory_audit_first_conflict_context = None
+        self.trajectory_audit_future_verdicts = 0
+        self.trajectory_audit_occupied_verdicts = 0
+        self.trajectory_audit_exact_fresh_occupied_verdicts = 0
+        self.trajectory_audit_first_exact_fresh_occupied_context = None
+        self.trajectory_audit_hazard_matched_exact_occupied_verdicts = 0
+        self.trajectory_audit_first_hazard_matched_exact_context = None
         self.min_distance = float("inf")
         self.static_pcd_min_distance = float("inf")
         self.static_pcd_min_context = None
         self.static_hazard_min_clearance = float("inf")
         self.static_hazard_min_context = None
+        self.first_static_hazard_contact_context = None
         self.static_hazard_collisions = 0
         self.trap_min_distance = float("inf")
         self.side_entry_event = None
@@ -266,6 +321,19 @@ class LoopMonitor(Node):
             qos_profile_sensor_data,
         )
         self.create_subscription(Bool, "/sector/full_open", self.full_open_callback, 1)
+        if ARGS.trajectory_risk_audit:
+            self.create_subscription(
+                PolynomialTrajectory,
+                "/planning_cmd/poly_traj",
+                self.trajectory_message_callback,
+                qos_profile_sensor_data,
+            )
+            self.create_subscription(
+                TrajectoryRiskVerdict,
+                "/planning/trajectory_risk_verdict",
+                self.risk_verdict_callback,
+                4,
+            )
 
     def load_side_entry_event(self):
         if self.side_entry_event is not None or not ARGS.side_entry_event_json:
@@ -395,7 +463,118 @@ class LoopMonitor(Node):
         colliding = clearance < 0.0
         if colliding and not self.in_static_hazard_collision:
             self.static_hazard_collisions += 1
+            if self.first_static_hazard_contact_context is None:
+                self.first_static_hazard_contact_context = {
+                    "epoch_s": round(time.time(), 6),
+                    "elapsed_s": round(time.time() - self.start_time, 6),
+                    "position": np.round(position, 6).tolist(),
+                    "velocity": np.round(velocity, 6).tolist(),
+                    "speed_mps": round(float(np.linalg.norm(velocity)), 6),
+                    "clearance_m": round(clearance, 6),
+                    "waypoint_index": self.waypoint_index,
+                }
         self.in_static_hazard_collision = colliding
+
+    def trajectory_message_callback(self, msg):
+        if msg.type & PolynomialTrajectory.POSITION_TRAJ:
+            self.latest_trajectory_generation = int(msg.trajectory_generation)
+            try:
+                points = sample_future_positions(
+                    msg,
+                    self.get_clock().now().nanoseconds * 1e-9,
+                    horizon_s=1.0,
+                    sample_dt_s=0.01,
+                )
+            except (AttributeError, TypeError, ValueError, OverflowError):
+                return
+            self.audit_committed_trajectory(points)
+
+    def risk_verdict_callback(self, msg):
+        if msg.scope != TrajectoryRiskVerdict.FUTURE_TRAJECTORY:
+            return
+        self.trajectory_audit_future_verdicts += 1
+        if msg.status != TrajectoryRiskVerdict.OCCUPIED:
+            return
+        self.trajectory_audit_occupied_verdicts += 1
+        source_age = float(msg.source_cloud_age_s)
+        exact_fresh = (
+            int(msg.trajectory_generation) > 0
+            and int(msg.trajectory_generation) == self.latest_trajectory_generation
+            and int(msg.source_cloud_stamp_ns) > 0
+            and np.isfinite(source_age)
+            and 0.0 <= source_age <= ARGS.trajectory_audit_fresh_age_s
+        )
+        if not exact_fresh:
+            return
+        self.trajectory_audit_exact_fresh_occupied_verdicts += 1
+        witness = msg.witness_position
+        context = {
+            "epoch_s": round(time.time(), 6),
+            "elapsed_s": round(time.time() - self.start_time, 6),
+            "trajectory_generation": int(msg.trajectory_generation),
+            "source_cloud_age_s": round(source_age, 6),
+            "minimum_distance_m": round(float(msg.minimum_distance_m), 6),
+            "body_distance_m": round(float(msg.body_distance_m), 6),
+            "end_distance_m": round(float(msg.end_distance_m), 6),
+            "witness_tt": round(float(msg.witness_tt), 6),
+            "witness_position": self.vector3(witness),
+            "odom": self.latest_odom_audit,
+        }
+        if self.trajectory_audit_first_exact_fresh_occupied_context is None:
+            self.trajectory_audit_first_exact_fresh_occupied_context = context
+
+        witness_clearance, _ = self.cylinder_clearance(
+            [[witness.x, witness.y, witness.z]],
+            ARGS.trajectory_audit_center_x,
+            ARGS.trajectory_audit_center_y,
+            ARGS.trajectory_audit_radius_m,
+            ARGS.trajectory_audit_height_m,
+        )
+        if witness_clearance >= 0.0:
+            return
+        self.trajectory_audit_hazard_matched_exact_occupied_verdicts += 1
+        if self.trajectory_audit_first_hazard_matched_exact_context is None:
+            context = dict(context)
+            context["hazard_clearance_at_witness_m"] = round(
+                witness_clearance, 6
+            )
+            self.trajectory_audit_first_hazard_matched_exact_context = context
+
+    @staticmethod
+    def cylinder_clearance(points, center_x, center_y, radius_m, height_m):
+        points = np.asarray(points, dtype=np.float64).reshape(-1, 3)
+        radial = np.hypot(points[:, 0] - center_x, points[:, 1] - center_y)
+        radial_outside = np.maximum(0.0, radial - radius_m)
+        vertical_outside = np.maximum(
+            0.0, np.maximum(-points[:, 2], points[:, 2] - height_m)
+        )
+        clearances = np.hypot(radial_outside, vertical_outside) - DRONE_R
+        index = int(np.argmin(clearances))
+        return float(clearances[index]), points[index]
+
+    def audit_committed_trajectory(self, points):
+        if not ARGS.trajectory_risk_audit or not points:
+            return
+        clearance, nearest = self.cylinder_clearance(
+            points,
+            ARGS.trajectory_audit_center_x,
+            ARGS.trajectory_audit_center_y,
+            ARGS.trajectory_audit_radius_m,
+            ARGS.trajectory_audit_height_m,
+        )
+        context = {
+            "epoch_s": round(time.time(), 6),
+            "elapsed_s": round(time.time() - self.start_time, 6),
+            "clearance_m": round(clearance, 6),
+            "trajectory_generation": self.latest_trajectory_generation,
+            "nearest_trajectory_point": np.round(nearest, 6).tolist(),
+            "odom": self.latest_odom_audit,
+        }
+        if clearance < self.trajectory_audit_min_clearance:
+            self.trajectory_audit_min_clearance = clearance
+            self.trajectory_audit_min_context = context
+        if clearance < 0.0 and self.trajectory_audit_first_conflict_context is None:
+            self.trajectory_audit_first_conflict_context = context
 
     @staticmethod
     def vector3(value):
@@ -488,6 +667,7 @@ class LoopMonitor(Node):
         points = self.marker_points(msg)
         if points:
             self.latest_committed_trajectory = points
+            self.audit_committed_trajectory(points)
 
     def occupancy_callback(self, msg):
         try:
@@ -652,6 +832,13 @@ class LoopMonitor(Node):
         self.max_y = max(self.max_y, float(p.y))
         v = msg.twist.twist.linear
         velocity = np.array([v.x, v.y, v.z], dtype=np.float32)
+        self.latest_odom_audit = {
+            "elapsed_s": round(time.time() - self.start_time, 6),
+            "position": np.round(position, 6).tolist(),
+            "velocity": np.round(velocity, 6).tolist(),
+            "speed_mps": round(float(np.linalg.norm(velocity)), 6),
+            "waypoint_index": self.waypoint_index,
+        }
         self.update_static_hazard_clearance(position, velocity)
         self.update_side_entry_collision(position, velocity)
         self.max_speed = max(self.max_speed, float(np.hypot(v.x, v.y)))
@@ -790,6 +977,50 @@ result = {
         if node.static_hazard_min_clearance != float("inf") else None
     ),
     "static_hazard_min_context": node.static_hazard_min_context,
+    "first_static_hazard_contact_context": (
+        node.first_static_hazard_contact_context
+    ),
+    "trajectory_risk_audit_enabled": ARGS.trajectory_risk_audit,
+    "trajectory_audit_min_clearance_m": (
+        round(node.trajectory_audit_min_clearance, 6)
+        if node.trajectory_audit_min_clearance != float("inf") else None
+    ),
+    "trajectory_audit_min_context": node.trajectory_audit_min_context,
+    "trajectory_audit_first_conflict_context": (
+        node.trajectory_audit_first_conflict_context
+    ),
+    "trajectory_audit_future_verdicts": (
+        node.trajectory_audit_future_verdicts
+    ),
+    "trajectory_audit_occupied_verdicts": (
+        node.trajectory_audit_occupied_verdicts
+    ),
+    "trajectory_audit_exact_fresh_occupied_verdicts": (
+        node.trajectory_audit_exact_fresh_occupied_verdicts
+    ),
+    "trajectory_audit_first_exact_fresh_occupied_context": (
+        node.trajectory_audit_first_exact_fresh_occupied_context
+    ),
+    "trajectory_audit_hazard_matched_exact_occupied_verdicts": (
+        node.trajectory_audit_hazard_matched_exact_occupied_verdicts
+    ),
+    "trajectory_audit_first_hazard_matched_exact_context": (
+        node.trajectory_audit_first_hazard_matched_exact_context
+    ),
+    "trajectory_audit_first_hazard_matched_exact_precedes_contact": (
+        node.trajectory_audit_first_hazard_matched_exact_context["epoch_s"]
+        < node.first_static_hazard_contact_context["epoch_s"]
+        if node.trajectory_audit_first_hazard_matched_exact_context is not None
+        and node.first_static_hazard_contact_context is not None
+        else None
+    ),
+    "trajectory_audit_first_exact_occupied_precedes_contact": (
+        node.trajectory_audit_first_exact_fresh_occupied_context["epoch_s"]
+        < node.first_static_hazard_contact_context["epoch_s"]
+        if node.trajectory_audit_first_exact_fresh_occupied_context is not None
+        and node.first_static_hazard_contact_context is not None
+        else None
+    ),
     "contact_event_count": len(node.contact_events),
     # Protocol safety authority is explicit.  Static seed-map campaigns use
     # the same source PCD for every mode; runs without that oracle retain the

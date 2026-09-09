@@ -4701,3 +4701,37 @@ continuous background observation, frozen planner/policies, actual-PCD route
 feasibility and a closed-loop audit proving raw visibility, Sector exclusion
 and committed-trajectory conflict before any flight comparison. Full results
 are in `docs/angular_blind_turn_v4_gate_result_20260909.md`.
+
+### 8.73 Static blind-doorway c1--c3 exploratory stop (2026-09-09)
+
+A separately named L-corridor family was explored without changing SUPER or
+the three policy implementations. Clear/hazard pairs differed only by one
+full-height static cylinder. All actual-PCD structure gates passed, retained
+outgoing fixed-Sector background support and provided a ROG-inflation-aware
+bypass. A measurement-only polynomial evaluator replaced dependence on
+disabled trajectory visualisation, and a second counter now requires the
+exact verdict witness itself to body-intersect the declared cylinder.
+
+The c2 actual-MARSIM/C++ component replay passed all 13 checks with raw
+hazard/path conflict in every measured frame, zero filtered hazard/conflict
+points and 26 consecutive fresh Adaptive OCCUPIED verdicts at the deployed
+200-point threshold. All c1/c2/c3 clear Sector controls also naturally
+committed a hypothetical cylinder conflict (minimum -0.200 m).
+
+The closed-loop safety gate did not transfer. Hazard fixed Sector completed
+contact-free in all three candidates with physical cylinder clearances
++0.592/+0.780/+0.704 m. C3 removed the synthetic corner waypoint and fixed
+Sector transiently committed a -0.190 m conflicting trajectory at 5.63 m/s,
+but its ordinary map/replan path replaced it before contact. C3 Adaptive
+reported two generic exact OCCUPIED verdicts, yet the first witness lay on the
+long inner wall near mission start; the new hazard-matched count was zero. C1
+had only one hazard-matched verdict and earlier ordinary replan Full openings.
+
+Decision: `STOP_C1_C3_NO_STATIC_SAFETY_SEPARATION`. No Full/protected-Adaptive
+flight, repeated campaign, held-out confirmation or McNemar test followed.
+Further cylinder movement on this topology would be outcome-directed tuning.
+The next admissible decision is a preregistered two-route static topology with
+independent replicas, a new velocity-aligned fixed-Sector ablation, or a paper
+claim limited to Full-level empirical non-inferiority plus efficiency. Full
+tables and evidence are in
+`docs/static_blind_doorway_exploration_result_20260909.md`.

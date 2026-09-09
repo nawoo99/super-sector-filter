@@ -1,6 +1,27 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-09 static blind-doorway c1--c3 탐색은 안전성 분리 없이 중단.**
+> Planner/정책은 동결하고 실제 L-corridor, 지속 배경 관측, 정적 원통,
+> actual-PCD inflation 우회 gate, MARSIM/C++ replay와 closed-loop polynomial
+> audit를 추가했다. C2 component replay는 raw conflict 50--51/50--51,
+> Sector leak 0, Adaptive fresh OCCUPIED 26회로 13/13 PASS했다.
+>
+> 그러나 closed loop에서 c1/c2/c3 hazard Sector는 모두 첫 시도 완주·접촉 0,
+> 물리 clearance +0.592/+0.780/+0.704m였다. C3 Sector는 일시적으로
+> committed clearance -0.190m trajectory를 만들었지만 일반 재계획이 접촉 전
+> 대체했다. C3 Adaptive의 generic exact OCCUPIED 2회는 벽 때문이었고 새
+> hazard-matched count는 0회였다(c1은 단 1회). 판정은
+> `STOP_C1_C3_NO_STATIC_SAFETY_SEPARATION`; 추가 원통 미세조정, Full/protected
+> Adaptive 비행, 반복시험, McNemar는 금지한다.
+>
+> 다음 선택은 (1) 독립 replica를 둔 two-route static doorway topology를 새로
+> 사전등록, (2) velocity-aligned fixed Sector baseline을 새 ablation으로 정의,
+> (3) 안전성 우위 주장을 빼고 효율+비열등성으로 한정 중 하나다. 최신 상세는
+> viability §8.73 및
+> `docs/static_blind_doorway_exploration_result_20260909.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-09 v4 observed-exit 비행 gate 실패로 종료.** Full-only는 첫 시도
 > 14.06s·접촉 0으로 통과했고, 이어진 3모드 n=3은 Full/Sector/Adaptive 모두
 > 3/3 완주·접촉 0이었다. Observation wall이 Sector MAP_STALE를 0/3으로
