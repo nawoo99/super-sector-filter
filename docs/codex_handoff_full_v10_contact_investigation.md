@@ -1,6 +1,21 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-09 v4 observed-exit 비행 gate 실패로 종료.** Full-only는 첫 시도
+> 14.06s·접촉 0으로 통과했고, 이어진 3모드 n=3은 Full/Sector/Adaptive 모두
+> 3/3 완주·접촉 0이었다. Observation wall이 Sector MAP_STALE를 0/3으로
+> 제거했지만 Sector 저하도 0/3이 됐다. 따라서 v3 Sector timeout은 hidden
+> hazard 안전성 차이가 아니라 empty-cloud liveness 교란이었다.
+>
+> Adaptive exact future-risk verdict 248회는 모두 FREE였고 exact brake는
+> 0/3이다. 5/4/4 effective Full-open은 replan/ordinary guard 경로다. 고정
+> 판정은 `STOP_V4_THREE_MODE_GATE_FAILED`; v4 재시도·튜닝·held-out 확장은
+> 금지한다. 다음 탐색은 planner/알고리즘을 동결한 별도 static blind-doorway
+> 계열이며, 비행 전에 closed-loop committed-trajectory audit를 통과시켜야 한다.
+> 최신 근거는 viability §8.72와
+> `docs/angular_blind_turn_v4_gate_result_20260909.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-09 v4 observed-exit 비행 전 gate 통과 및 사전등록.** v3 Sector
 > MAP_STALE를 nominal outgoing replay에서 15/15 frame·총 0점으로 재현한 뒤,
 > 새 `abt4_observed_exit`에는 y=29m north observation wall 하나만 추가했다.

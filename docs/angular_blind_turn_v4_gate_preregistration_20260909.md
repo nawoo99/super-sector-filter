@@ -113,3 +113,16 @@ McNemar or population-level claim is allowed.
 
 The generator plus manifest are the versioned source for the large PCD. The
 runtime PCD is reproducibly generated and is not committed.
+
+## Registered outcome
+
+Phase 1 passed on its unique first attempt: Full completed 2/2 waypoints in
+14.06 s without contact and all quality gates were valid. Phase 2 therefore
+ran exactly nine frozen rows. Full, Sector and Adaptive each completed 3/3
+without contact; no Sector row had MAP_STALE, but Sector degradation was 0/3.
+Adaptive exact fresh risk brakes were 0/3, and the fixed-Sector probe was
+outside the realised sector in only 2/3 rows.
+
+The registered decision is `STOP_V4_THREE_MODE_GATE_FAILED`. No retry,
+replacement, v4 tuning or held-out expansion followed. Complete results are
+in `docs/angular_blind_turn_v4_gate_result_20260909.md`.

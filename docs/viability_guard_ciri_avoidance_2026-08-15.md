@@ -4670,3 +4670,34 @@ Sector degradation accompanied by `guard_main_pre_map_stale`; it also requires
 Full/Adaptive safe completion 3/3 and exact Adaptive risk brakes in at least
 2/3. All 58 campaign tests passed. Commands, hashes and stop rules are in
 `docs/angular_blind_turn_v4_gate_preregistration_20260909.md`.
+
+### 8.72 v4 observed-exit flight outcome and stop decision (2026-09-09)
+
+The preregistered Full-only row passed on its unique first attempt: 2/2
+waypoints in 14.06 s, contact zero, 0.324 m static-PCD clearance and all
+quality gates valid. The contingent three-mode n=3 pilot was then run without
+retry or replacement. Full, fixed Sector and Adaptive each completed 3/3
+contact-free. Their mean times were 12.57, 13.11 and 12.18 s, respectively.
+
+The added observation wall eliminated the targeted confound. All Sector rows
+kept a live map and `guard_main_pre_map_stale` was zero. Consequently the v3
+Sector timeout is identified as an empty-cloud liveness artifact rather than
+a hidden-hazard safety failure. With that artifact removed, Sector degradation
+was 0/3, below the frozen 2/3 condition.
+
+The closed-loop mechanism condition also failed. Adaptive published 82, 78 and
+88 exact future-trajectory verdicts, all FREE, with zero exact risk brake. Its
+5/4/4 effective Full openings arose from existing replan/ordinary guard paths.
+The surface probe was seen in all six filtered rows but was outside the
+realised fixed Sector in only 2/3 Sector rows. Thus the deterministic replay
+component witness did not transfer to a naturally committed collision
+trajectory in v4 flight.
+
+The frozen decision is `STOP_V4_THREE_MODE_GATE_FAILED`. No larger campaign,
+held-out maps or McNemar test followed. V4 will not be tuned further. If
+collision-safety superiority remains a required claim, the next exploratory
+work must be a separately named realistic static blind-doorway family with
+continuous background observation, frozen planner/policies, actual-PCD route
+feasibility and a closed-loop audit proving raw visibility, Sector exclusion
+and committed-trajectory conflict before any flight comparison. Full results
+are in `docs/angular_blind_turn_v4_gate_result_20260909.md`.
