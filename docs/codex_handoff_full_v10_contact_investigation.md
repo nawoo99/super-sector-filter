@@ -1,6 +1,32 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-09 deterministic actual-raycast/frontend witness 통과, 단 Full
+> fixture 승격은 보류.** 더 이상 aperture를 비행으로 미세 튜닝하지
+> 않고 `perfect_drone_sim/frontend_replay_witness`를 추가했다. SUPER는 실행·
+> 변경하지 않고, PerfectDrone을 고정 pose/yaw/velocity에 둔 채 실제
+> MARSIM raycast → direct SharedPtr → 운영 C++ frontend crop/risk 경로를
+> 그대로 사용했다.
+>
+> `abt2_cal_t3`, pose `(24,23.5,1.5)`, yaw 90°, velocity `(0,7,0)`,
+> 1.15s trajectory/운영 1.0s horizon에서 동일 raw 입력은 50/50 frame에
+> hazard와 trajectory-conflict 점을 포함했다. Fixed Sector 출력은
+> hazard/conflict 0점이고, Adaptive raw risk worker는 fresh OCCUPIED를 25회
+> 연속 발행했다. Fail-closed gate 13/13 PASS, package build와 campaign test
+> 47개도 통과했다. 반면 예전 가정 pose `(24,20)`에서는 실제 raycast
+> target-cylinder point가 0이어서, 기존 비행의 risk 0회 원인을 직접
+> 확인했다.
+>
+> 이것은 frontend mechanism 증거이지 안전성 우위나 완주 증거가 아니다.
+> 기존 `abt2_cal_t3` Full은 90.01s timeout(107 reroute arm, 336 search)이므로
+> evaluation fixture로 승격시키지 않았고 추가 flight/150행도 실행하지
+> 않았다. 다음은 새 이름 v3에서 upper channel wall을 넓히거나 제거해
+> local horizon 안의 inflation-aware forward bypass를 먼저 검증한 뒤,
+> replay/route gate → 사전등록 Full-only smoke 순서로 간다. 최신 상세는
+> viability §8.68과 `docs/frontend_replay_witness_result_20260909.md`를
+> 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-09 isolated angular blind-turn v2도 calibration gate에서 중단.**
 > 이전 실패를 덮어쓰지 않고 `abt2_cal_t1..t5`를 새로 사전등록했다. `(24,0)`
 > north-facing 시작, 첫 turn=목표 turn, 공통 controlled background/hazard,

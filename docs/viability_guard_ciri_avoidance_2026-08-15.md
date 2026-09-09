@@ -4547,3 +4547,45 @@ from Sector, yield fresh OCCUPIED for at least two 5 Hz periods, and retain an
 inflation-aware feasible Full corridor.  Complete evidence is in
 `docs/isolated_angular_blind_turn_result_20260909.md` and the frozen design is
 in `docs/isolated_angular_blind_turn_preregistration_20260908.md`.
+
+### 8.68 Deterministic actual-raycast/frontend witness (2026-09-09)
+
+Before changing another map, a standalone `frontend_replay_witness` was added
+to `perfect_drone_sim`. It does not run or modify SUPER. PerfectDrone is held
+at a deterministic command state while the existing MARSIM renderer raycasts
+the selected PCD. Each fresh PointCloud2 is passed by the same direct SharedPtr
+path into the production `native_sector_cpp` frontend. The harness publishes
+a generation-bound first-order PolynomialTrajectory and independently counts
+raw/filtered hazard points, points within the evaluated risk-horizon segment,
+and exact future-trajectory verdicts. A fail-closed analyzer rejects malformed
+rows, mismatched replay contracts, missing raw evidence, leaked Sector
+conflict points or fewer than two consecutive fresh OCCUPIED verdicts.
+
+The preserved `abt2_cal_t3` PCD was replayed at `(24.0,23.5,1.5)`, yaw 90
+degrees and velocity `(0,7,0)` m/s. A 1.15 s trajectory ended at
+`(16.2,24.4,1.5)`; the unchanged 1.0 s risk horizon ended at
+`(17.217391,24.282609,1.5)`. Both modes received exactly the same post-warm-up raw
+evidence: 50/50 hazard-visible and path-conflicting frames, 23,093 hazard
+points and 819 horizon-conflict points. Fixed Sector produced 50 filtered
+frames with zero hazard and zero conflict points. Adaptive produced 25
+filtered frames with the same zero points but its raw risk worker emitted 25
+fresh OCCUPIED verdicts consecutively; the last source age was 0.001900 s and
+minimum distance 0.147124 m. All 13 automated checks passed.
+
+This resolves the missing mechanism evidence but not map feasibility. At the
+old assumed `(24,20)` reveal pose, actual MARSIM produced zero target-cylinder
+points, directly confirming the analytic-to-raycast gap. Conversely the new
+near-corner pose proves that production raw accumulation and risk evaluation
+work when the conflicting surface is truly rendered. The result is a
+component witness, not a flight sample or safety-superiority result.
+
+The old `abt2_cal_t3` map cannot be promoted: its preserved Full row timed out
+after 107 topology-reroute arms and 336 searches with A* NO_PATH, CIRI
+infeasibility and optimiser overtime. No repeat or 150-row evaluation was
+started. A newly named v3 must first provide an inflation-aware forward bypass
+inside the local planning horizon, pass the replay and route gates, and then
+pass a preregistered Full-only feasibility smoke before Sector/Adaptive are
+compared. Full evidence and commands are in
+`docs/frontend_replay_witness_result_20260909.md`; gate data are in
+`results/frontend_replay_witness_abt2_t3_gate_20260909.json`. The package
+built successfully and all 47 campaign tests passed.

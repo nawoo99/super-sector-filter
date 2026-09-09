@@ -78,6 +78,10 @@ add_executable(perfect_drone_frontend_node
         src/ros2_perfect_drone_frontend_node.cpp
 )
 
+add_executable(frontend_replay_witness
+        src/ros2_frontend_replay_witness.cpp
+)
+
 add_executable(perfect_drone_full_node
         src/ros2_perfect_drone_full_node.cpp
 )
@@ -101,6 +105,14 @@ target_link_libraries(perfect_drone_frontend_node PUBLIC
         mission_planner::native_sector_cpp_component
         ${THIRD_PARTY}
 )
+ament_target_dependencies(frontend_replay_witness PUBLIC
+        ${dependencies}
+        mission_planner
+)
+target_link_libraries(frontend_replay_witness PUBLIC
+        mission_planner::native_sector_cpp_component
+        ${THIRD_PARTY}
+)
 ament_target_dependencies(perfect_drone_full_node PUBLIC
         ${dependencies}
         super_planner
@@ -116,6 +128,10 @@ target_include_directories(perfect_drone_node PUBLIC
         $<INSTALL_INTERFACE:include>
 )
 target_include_directories(perfect_drone_frontend_node PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
+target_include_directories(frontend_replay_witness PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
@@ -135,7 +151,7 @@ install(
 
 # 注册 导出库文件
 install(
-        TARGETS perfect_drone_node perfect_drone_frontend_node perfect_drone_full_node # 告诉ros2有这么个目标（可执行文件或者库）
+        TARGETS perfect_drone_node perfect_drone_frontend_node frontend_replay_witness perfect_drone_full_node # 告诉ros2有这么个目标（可执行文件或者库）
         EXPORT perfect_drone_node
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
