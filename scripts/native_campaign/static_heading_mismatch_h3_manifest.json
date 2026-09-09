@@ -1,0 +1,156 @@
+{
+  "body_radius_m": 0.2,
+  "generator_sha256": "44a1cf73e90fbc9b6cbfe0a477bc681a1c601f0b4d467823741ee75a49cfa302",
+  "hazard": {
+    "audit_center_xy_m": [
+      24.2,
+      2.5
+    ],
+    "audit_radius_m": 0.8,
+    "end_xy_m": [
+      27.85,
+      2.5
+    ],
+    "height_m": 3.2,
+    "shape": "full_height_wall",
+    "start_xy_m": [
+      23.0,
+      2.5
+    ],
+    "thickness_m": 0.3
+  },
+  "initial_position_xyz_m": [
+    24.0,
+    0.0,
+    1.5
+  ],
+  "initial_yaw_rad": 3.141592653589793,
+  "maps": [
+    {
+      "config_sha256": "6e6a5829055a28176b90d4368b41f64e0161942d4ed5ed30f2d28ade7f1d69dc",
+      "include_hazard": false,
+      "map": "shm1_h3_clear",
+      "pcd_sha256": "74087aeff3364a413dea83f16bbdb2468533d9e85c1282660f5d3b01d7769fc2",
+      "point_count": 84284,
+      "wall_point_count": 84284
+    },
+    {
+      "config_sha256": "5d547b924581286b77b28286fc935c4d1d6aee3f3c1d427c7dc67ba63324d81e",
+      "include_hazard": true,
+      "map": "shm1_h3_hazard",
+      "pcd_sha256": "61bf80d5e6e24733d31a538b8cc3a300363449c76a72eac7a0f5e451f6fc7bdf",
+      "point_count": 92666,
+      "wall_point_count": 92666
+    }
+  ],
+  "mission_waypoints_xy_m": [
+    [
+      24.0,
+      20.0
+    ]
+  ],
+  "mission_yaw_rad": 3.141592653589793,
+  "predecessor": "shm1_h2",
+  "replay": {
+    "position_xyz_m": [
+      24.0,
+      0.0,
+      1.5
+    ],
+    "risk_horizon_s": 1.0,
+    "risk_min_points": 200,
+    "trajectory_duration_s": 1.0,
+    "trajectory_end_xyz_m": [
+      24.0,
+      4.0,
+      1.5
+    ],
+    "velocity_xyz_mps": [
+      0.0,
+      7.0,
+      0.0
+    ],
+    "yaw_deg": 180.0
+  },
+  "role": "exploratory persistent-yaw transverse-wall topology",
+  "route_check": {
+    "bounds_xy_m": [
+      19.0,
+      29.0,
+      -4.0,
+      24.0
+    ],
+    "bypass_anchors_xy_m": [
+      [
+        24.0,
+        0.0
+      ],
+      [
+        21.5,
+        1.5
+      ],
+      [
+        21.5,
+        3.5
+      ],
+      [
+        24.0,
+        20.0
+      ]
+    ],
+    "direct_route_segment_xy_m": [
+      [
+        24.0,
+        0.0
+      ],
+      [
+        24.0,
+        20.0
+      ]
+    ],
+    "flight_z_m": 1.5,
+    "inflation_step": 3,
+    "resolution_m": 0.1
+  },
+  "runtime_root": "/root/super_ws/src/SUPER",
+  "schema": "static-heading-mismatch-v3",
+  "visibility_check": {
+    "body_yaw_deg": 180.0,
+    "position_xyz_m": [
+      24.0,
+      0.0,
+      1.5
+    ],
+    "sector_half_angle_deg": 45.0,
+    "sensing_horizon_m": 15.0,
+    "velocity_yaw_deg": 90.0
+  },
+  "walls": [
+    {
+      "end_xy_m": [
+        20.0,
+        23.0
+      ],
+      "height_m": 3.2,
+      "name": "west_wall",
+      "start_xy_m": [
+        20.0,
+        -3.0
+      ],
+      "thickness_m": 0.3
+    },
+    {
+      "end_xy_m": [
+        28.0,
+        23.0
+      ],
+      "height_m": 3.2,
+      "name": "east_wall",
+      "start_xy_m": [
+        28.0,
+        -3.0
+      ],
+      "thickness_m": 0.3
+    }
+  ]
+}

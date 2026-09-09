@@ -104,6 +104,66 @@ def test_static_blind_doorway_candidates_are_separate_families():
     assert MODULE.BLIND_DOORWAY_DIRECT_WPS == "0,24"
 
 
+def test_two_route_blind_hazard_is_a_separate_preregistered_family():
+    expected = ("sbd2_t1_clear", "sbd2_t1_hazard")
+    expected_t2 = ("sbd2_t2_clear", "sbd2_t2_hazard")
+    expected_t3 = ("sbd2_t3_clear", "sbd2_t3_hazard")
+
+    assert MODULE.STATIC_TWO_ROUTE_BLIND_HAZARD_T1_MAPS == expected
+    assert MODULE.STATIC_TWO_ROUTE_BLIND_HAZARD_T2_MAPS == expected_t2
+    assert MODULE.STATIC_TWO_ROUTE_BLIND_HAZARD_T3_MAPS == expected_t3
+    assert MODULE.STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS == (
+        expected + expected_t2 + expected_t3
+    )
+    assert set(expected).issubset(MODULE.VALID_MAPS)
+    assert set(expected_t2).issubset(MODULE.VALID_MAPS)
+    assert set(expected_t3).issubset(MODULE.VALID_MAPS)
+    assert not set(expected).intersection(
+        MODULE.STATIC_BLIND_DOORWAY_EXPLORATION_MAPS
+    )
+    assert MODULE.STATIC_TWO_ROUTE_BLIND_HAZARDS["sbd2_t1_hazard"] == (
+        15.0, 20.5, 2.10, 3.20
+    )
+    assert MODULE.TWO_ROUTE_BLIND_HAZARD_WPS == "0,20.5"
+    assert MODULE.TWO_ROUTE_BLIND_HAZARD_TIMEOUT == 90.0
+
+
+def test_static_heading_mismatch_is_a_separate_preregistered_family():
+    expected = ("shm1_h1_clear", "shm1_h1_hazard")
+    expected_h2 = ("shm1_h2_clear", "shm1_h2_hazard")
+    later_families = (
+        MODULE.STATIC_HEADING_MISMATCH_H3_MAPS
+        + MODULE.STATIC_HEADING_MISMATCH_H4_MAPS
+        + MODULE.STATIC_HEADING_MISMATCH_H5_MAPS
+        + MODULE.STATIC_HEADING_MISMATCH_H6_MAPS
+        + MODULE.STATIC_HEADING_MISMATCH_H7_MAPS
+        + MODULE.STATIC_HEADING_MISMATCH_H8_MAPS
+        + MODULE.STATIC_HEADING_MISMATCH_H9_MAPS
+    )
+
+    assert MODULE.STATIC_HEADING_MISMATCH_H1_MAPS == expected
+    assert MODULE.STATIC_HEADING_MISMATCH_H2_MAPS == expected_h2
+    assert MODULE.STATIC_HEADING_MISMATCH_MAPS == (
+        expected + expected_h2 + later_families
+    )
+    assert set(expected).issubset(MODULE.VALID_MAPS)
+    assert set(expected_h2).issubset(MODULE.VALID_MAPS)
+    assert set(later_families).issubset(MODULE.VALID_MAPS)
+    assert not set(expected).intersection(
+        MODULE.STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS
+    )
+    assert MODULE.STATIC_HEADING_MISMATCH_AUDIT_WITNESSES["shm1_h1_hazard"] == (
+        24.0, 5.0, 1.20, 3.20
+    )
+    assert MODULE.STATIC_HEADING_MISMATCH_WPS == "24,20"
+    assert MODULE.STATIC_HEADING_MISMATCH_AUDIT_WITNESSES["shm1_h2_hazard"] == (
+        24.75, 3.40, 0.12, 3.20
+    )
+    assert MODULE.STATIC_HEADING_MISMATCH_AUDIT_WITNESSES["shm1_h9_hazard"] == (
+        25.0, 4.0, 1.0, 3.20
+    )
+
+
 def test_monitor_options_precede_positional_delimiter():
     pcd = "/tmp/seed map.pcd"
     command = MODULE.build_loop_monitor_command(

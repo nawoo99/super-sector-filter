@@ -4735,3 +4735,58 @@ independent replicas, a new velocity-aligned fixed-Sector ablation, or a paper
 claim limited to Full-level empirical non-inferiority plus efficiency. Full
 tables and evidence are in
 `docs/static_blind_doorway_exploration_result_20260909.md`.
+
+### 8.74 Static heading-mismatch blind-fork separation (2026-09-09)
+
+The intervening `sbd2` two-route cylinder family was also stopped without
+repetition. T1/t2 passed structure/replay but failed mandatory Full feasibility;
+t3 made Full feasible, yet realised Fixed Sector saw the cylinder near its body
+heading and both filtered modes completed safely. This preserved failure led
+to a separately named heading-mismatch family instead of another cylinder
+translation.
+
+Planner and deployed Full/Sector/Adaptive policies were frozen while the new
+static heading-mismatch family was developed under explicit stop rules. H1--h4
+showed why a broad obstacle, narrow pole, attempted yaw lock and transverse
+wall did not transfer to contact: body yaw rotated, trajectory dispersion was
+larger than the pole, and the retained 1.5 m omnidirectional near-field bubble
+stopped Fixed Sector. H5 introduced a two-branch topology but failed Full at a
+y=8 closure. H6 moved only that closure to y=4; Full/Adaptive selected the west
+route while Sector backtracked and recovered. H7/h8 changed only common LiDAR
+cadence from 10→5→4 Hz and produced time/clearance degradation without contact.
+All failed rows were retained.
+
+The preregistered h9 single change was 4→2 Hz, labelled severe
+dropout-equivalent stress. Its actual-PCD gate found an inflation-feasible west
+bypass and -0.1886 m direct-route body clearance. Actual MARSIM raycast through
+the production C++ frontend gave identical 10-frame raw evidence in both
+modes: 23,167 hazard points and 499 trajectory-conflict points. Fixed Sector
+removed all of them; Adaptive retained all of them and emitted ten consecutive
+fresh OCCUPIED verdicts. Clear Sector and hazard Full then passed before the
+paired smoke, which showed one Sector contact and safe Adaptive completion.
+
+Ten new rotating-order runs per mode were therefore executed. All 30 rows were
+unique first attempts with valid resource/speed/static-PCD gates. Full and
+Adaptive achieved 10/10 safe completions; Fixed Sector completed but contacted
+the closure in 9/10, giving safe completion 1/10. The nine-versus-zero paired
+discordance gives exact two-sided McNemar p=0.00390625. The one safe Sector row
+took 17.85 s to stop, backtrack and use the west branch. Other contacts
+clustered at `(25.03,4.15)` with clearance -0.182..-0.198 m.
+
+Adaptive recovery was not falsely attributed to exact-risk alone. Natural
+closed-loop rows usually chose a safe route before an exact occupied brake.
+At 2 Hz, the deployed pre-stale/trajectory-guard recovery paths supplied a
+mean 15.9 one-frame Full refreshes, 15.8 committed ACKs, one sustained
+effective Full-open transition and 2.1 replan openings per row. Adaptive kept
+91.1% of points and was Full-open 61.4% of the time. It still reduced mean
+algorithm cgroup CPU from Full's 0.543 to 0.412 core (24.1%), but planner
+ingress rose from 2.473 to 2.628 MiB/s (+6.3%). Thus h9 supports a narrowly
+labelled static severe-cadence safety result; nominal Map1--10 data must remain
+the bandwidth evidence.
+
+The machine decision is `EXPLORATORY_SEPARATION_OBSERVED`, not a population
+guarantee. Wilson intervals remain 0.722..1.000 for Full/Adaptive and
+0.0179..0.404 for Sector. Held-out geometry or SITL/real dropout validation is
+still required for confirmatory wording. Full tables, causal qualifications
+and evidence paths are in
+`docs/static_heading_mismatch_result_20260909.md`.

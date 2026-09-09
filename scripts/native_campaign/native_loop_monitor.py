@@ -2,6 +2,7 @@
 import argparse
 import itertools
 import json
+import math
 import os
 import time
 
@@ -283,6 +284,8 @@ class LoopMonitor(Node):
         self.min_y = float("inf")
         self.max_y = float("-inf")
         self.closest_final_goal_distance = float("inf")
+        self.heading_trace = []
+        self.next_heading_trace_elapsed_s = 0.0
         self.full_open_state = None
         self.observed_open_time = None
         self.observed_open_position = None
@@ -832,8 +835,31 @@ class LoopMonitor(Node):
         self.max_y = max(self.max_y, float(p.y))
         v = msg.twist.twist.linear
         velocity = np.array([v.x, v.y, v.z], dtype=np.float32)
+        elapsed_s = time.time() - self.start_time
+        if ARGS.trajectory_risk_audit and elapsed_s >= self.next_heading_trace_elapsed_s:
+            q = msg.pose.pose.orientation
+            body_yaw_deg = math.degrees(math.atan2(
+                2.0 * (q.w * q.z + q.x * q.y),
+                1.0 - 2.0 * (q.y * q.y + q.z * q.z),
+            ))
+            horizontal_speed = math.hypot(float(v.x), float(v.y))
+            velocity_yaw_deg = (
+                math.degrees(math.atan2(float(v.y), float(v.x)))
+                if horizontal_speed >= 0.2 else None
+            )
+            self.heading_trace.append({
+                "elapsed_s": round(elapsed_s, 3),
+                "position_xy_m": [round(float(p.x), 3), round(float(p.y), 3)],
+                "body_yaw_deg": round(body_yaw_deg, 3),
+                "velocity_yaw_deg": (
+                    round(velocity_yaw_deg, 3)
+                    if velocity_yaw_deg is not None else None
+                ),
+                "horizontal_speed_mps": round(horizontal_speed, 3),
+            })
+            self.next_heading_trace_elapsed_s = elapsed_s + 0.25
         self.latest_odom_audit = {
-            "elapsed_s": round(time.time() - self.start_time, 6),
+            "elapsed_s": round(elapsed_s, 6),
             "position": np.round(position, 6).tolist(),
             "velocity": np.round(velocity, 6).tolist(),
             "speed_mps": round(float(np.linalg.norm(velocity)), 6),
@@ -1021,6 +1047,7 @@ result = {
         and node.first_static_hazard_contact_context is not None
         else None
     ),
+    "heading_trace": node.heading_trace,
     "contact_event_count": len(node.contact_events),
     # Protocol safety authority is explicit.  Static seed-map campaigns use
     # the same source PCD for every mode; runs without that oracle retain the

@@ -1,0 +1,119 @@
+{
+  "adaptive_vs_full": {
+    "algorithm_cpu_mean_reduction_pct": 24.128909406308246,
+    "planner_ingress_payload_change_pct": 6.288659380594766
+  },
+  "checks": {
+    "adaptive_all_safe_complete": true,
+    "all_rows_first_attempt_resource_and_speed_valid": true,
+    "complete_paired_matrix": true,
+    "full_all_safe_complete": true,
+    "only_expected_map": true,
+    "only_expected_modes": true,
+    "paired_adaptive_vs_sector_exact_p_below_0_05": true,
+    "replay_component_gate_passed": true,
+    "sector_has_safety_degradation": true
+  },
+  "decision": "EXPLORATORY_SEPARATION_OBSERVED",
+  "failure_reasons": [],
+  "interpretation": "This is a frozen exploratory severe 2 Hz dropout-equivalent stress. It establishes a mechanism-specific separation, not a nominal-rate population guarantee or a replacement for held-out confirmation.",
+  "map": "shm1_h9_hazard",
+  "modes": {
+    "adaptive": {
+      "algorithm_cpu_cores_mean_mean": 0.41217407386196336,
+      "algorithm_delivery_payload_mib_s_mean": 5.562616737993517,
+      "completion_count": 10,
+      "contact_run_count": 0,
+      "contact_run_rate": 0.0,
+      "end_to_end_cpu_cores_mean_mean": 0.6244454641635184,
+      "filter_effective_full_open_transitions_mean": 1.0,
+      "filter_full_refresh_request_count_mean": 21.4,
+      "filter_kept_pct_mean": 91.08409999999999,
+      "filter_open_duty_pct_mean": 61.4242,
+      "filter_open_point_duty_pct_mean": 74.2603,
+      "filter_pre_stale_full_refresh_ack_committed_count_mean": 15.8,
+      "filter_pre_stale_full_refresh_frames_mean": 15.9,
+      "filter_replan_guard_open_transitions_mean": 2.1,
+      "filter_trajectory_guard_open_transitions_mean": 1.0,
+      "first_attempt_success_count": 10,
+      "fsm_cpu_pct_mean": 41.05295239370295,
+      "map_points_s_mean": 86125.9380432835,
+      "mission_time_s_mean": 9.366,
+      "planner_ingress_payload_mib_s_mean": 2.6283544510934247,
+      "runs": 10,
+      "safe_completion_count": 10,
+      "safe_completion_rate": 1.0,
+      "safe_completion_wilson_95": [
+        0.7224672001371107,
+        0.9999999999999999
+      ],
+      "static_pcd_clearance_m_mean": 0.5381
+    },
+    "full": {
+      "algorithm_cpu_cores_mean_mean": 0.5432557653207548,
+      "algorithm_delivery_payload_mib_s_mean": 2.4728456134552452,
+      "completion_count": 10,
+      "contact_run_count": 0,
+      "contact_run_rate": 0.0,
+      "end_to_end_cpu_cores_mean_mean": 0.5817656758463191,
+      "filter_effective_full_open_transitions_mean": null,
+      "filter_full_refresh_request_count_mean": null,
+      "filter_kept_pct_mean": null,
+      "filter_open_duty_pct_mean": null,
+      "filter_open_point_duty_pct_mean": null,
+      "filter_pre_stale_full_refresh_ack_committed_count_mean": null,
+      "filter_pre_stale_full_refresh_frames_mean": null,
+      "filter_replan_guard_open_transitions_mean": null,
+      "filter_trajectory_guard_open_transitions_mean": null,
+      "first_attempt_success_count": 10,
+      "fsm_cpu_pct_mean": 54.14132351074486,
+      "map_points_s_mean": 81030.20862963403,
+      "mission_time_s_mean": 8.923,
+      "planner_ingress_payload_mib_s_mean": 2.4728456134552452,
+      "runs": 10,
+      "safe_completion_count": 10,
+      "safe_completion_rate": 1.0,
+      "safe_completion_wilson_95": [
+        0.7224672001371107,
+        0.9999999999999999
+      ],
+      "static_pcd_clearance_m_mean": 0.5258
+    },
+    "sector": {
+      "algorithm_cpu_cores_mean_mean": 0.49584166550676684,
+      "algorithm_delivery_payload_mib_s_mean": 4.120951901431596,
+      "completion_count": 10,
+      "contact_run_count": 9,
+      "contact_run_rate": 0.9,
+      "end_to_end_cpu_cores_mean_mean": 0.6879483635775607,
+      "filter_effective_full_open_transitions_mean": 0.0,
+      "filter_full_refresh_request_count_mean": 0.0,
+      "filter_kept_pct_mean": 37.2599,
+      "filter_open_duty_pct_mean": 0.0,
+      "filter_open_point_duty_pct_mean": 0.0,
+      "filter_pre_stale_full_refresh_ack_committed_count_mean": 0.0,
+      "filter_pre_stale_full_refresh_frames_mean": 0.0,
+      "filter_replan_guard_open_transitions_mean": 0.0,
+      "filter_trajectory_guard_open_transitions_mean": 0.0,
+      "first_attempt_success_count": 10,
+      "fsm_cpu_pct_mean": 49.31025205532368,
+      "map_points_s_mean": 36945.68262240032,
+      "mission_time_s_mean": 6.534000000000001,
+      "planner_ingress_payload_mib_s_mean": 0.7046829723815978,
+      "runs": 10,
+      "safe_completion_count": 1,
+      "safe_completion_rate": 0.1,
+      "safe_completion_wilson_95": [
+        0.017876213095072896,
+        0.4041500267952385
+      ],
+      "static_pcd_clearance_m_mean": -0.14079999999999998
+    }
+  },
+  "paired_adaptive_vs_sector": {
+    "exact_mcnemar_two_sided_p": 0.00390625,
+    "sector_safe_adaptive_unsafe": 0,
+    "sector_unsafe_adaptive_safe": 9
+  },
+  "schema": "static-heading-mismatch-campaign-result-v1"
+}

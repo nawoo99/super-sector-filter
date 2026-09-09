@@ -1,0 +1,242 @@
+{
+  "body_radius_m": 0.2,
+  "closed_loop_gate": {
+    "adaptive_complete_contact_free_required": true,
+    "adaptive_effective_full_open_min": 1,
+    "adaptive_hazard_matched_exact_min": 2,
+    "clear_sector_hypothetical_committed_conflict_required": true,
+    "common_timeout_s": 90.0,
+    "full_complete_contact_free_required": true,
+    "sector_degradation_required": true
+  },
+  "generator_sha256": "58a476c8961481dd0687c08e79a5a9b880a0d4791707240856dba30e9bf05ed7",
+  "hazard": {
+    "center_xy_m": [
+      15.0,
+      20.5
+    ],
+    "height_m": 3.2,
+    "probe_center_xy_m": [
+      17.1,
+      20.5
+    ],
+    "probe_radius_m": 0.12,
+    "radius_m": 2.1,
+    "shape": "vertical_cylinder"
+  },
+  "initial_position_xyz_m": [
+    24.0,
+    0.0,
+    1.5
+  ],
+  "initial_yaw_rad": 1.5707963267948966,
+  "liveness_check": {
+    "minimum_geometric_support_points": 10,
+    "sector_half_angle_deg": 45.0,
+    "sensing_horizon_m": 15.0,
+    "stations": [
+      {
+        "name": "incoming",
+        "position_xyz_m": [
+          24.0,
+          12.0,
+          1.5
+        ],
+        "yaw_deg": 90.0
+      },
+      {
+        "name": "junction",
+        "position_xyz_m": [
+          24.0,
+          20.0,
+          1.5
+        ],
+        "yaw_deg": 90.0
+      },
+      {
+        "name": "upper",
+        "position_xyz_m": [
+          12.0,
+          25.5,
+          1.5
+        ],
+        "yaw_deg": 180.0
+      }
+    ]
+  },
+  "maps": [
+    {
+      "config_sha256": "7e1694887696f655ac99c7c005bda2edd838ec45670fc5328aae4a8ed1c38275",
+      "include_hazard": false,
+      "map": "sbd2_t1_clear",
+      "pcd_sha256": "777036e369204949c9324bab48ddc1c8417342a94946117da34bb3be1d068db2",
+      "point_count": 199510,
+      "wall_point_count": 199510
+    },
+    {
+      "config_sha256": "f884b470195ded56e587bc9016f3d3951b87ae2f0483431a5fa095b6070c3d8d",
+      "include_hazard": true,
+      "map": "sbd2_t1_hazard",
+      "pcd_sha256": "34186d508b1164d63ce995f5fd247dfd9c38caae4e21a2147ca56e4e5f1e19f2",
+      "point_count": 208222,
+      "wall_point_count": 199510
+    }
+  ],
+  "mission_waypoints_xy_m": [
+    [
+      0.0,
+      20.5
+    ]
+  ],
+  "preregistration": "docs/static_two_route_preregistration_20260909.md",
+  "replay": {
+    "position_xyz_m": [
+      24.0,
+      19.0,
+      1.5
+    ],
+    "risk_horizon_s": 1.0,
+    "risk_min_points": 200,
+    "trajectory_duration_s": 1.0,
+    "trajectory_end_xyz_m": [
+      16.8,
+      20.5,
+      1.5
+    ],
+    "velocity_xyz_mps": [
+      0.0,
+      7.0,
+      0.0
+    ],
+    "yaw_deg": 90.0
+  },
+  "role": "preregistered exploratory sbd2 topology; never pool candidate selection with confirmatory or Map1-10 results",
+  "route_check": {
+    "bounds_xy_m": [
+      -3.0,
+      29.0,
+      -3.0,
+      29.0
+    ],
+    "divider_east_endpoint_xy_m": [
+      21.5,
+      23.0
+    ],
+    "flight_z_m": 1.5,
+    "inflation_radius_m": 0.3,
+    "inflation_step": 3,
+    "lower_route_segment_xy_m": [
+      [
+        24.0,
+        20.5
+      ],
+      [
+        0.0,
+        20.5
+      ]
+    ],
+    "planning_horizon_m": 7.0,
+    "resolution_m": 0.1,
+    "upper_route_anchors_xy_m": [
+      [
+        24.0,
+        0.0
+      ],
+      [
+        24.0,
+        20.5
+      ],
+      [
+        24.0,
+        25.5
+      ],
+      [
+        0.0,
+        25.5
+      ],
+      [
+        0.0,
+        20.5
+      ]
+    ]
+  },
+  "runtime_root": "/root/super_ws/src/SUPER",
+  "schema": "static-two-route-blind-hazard-v1",
+  "visibility_check": {
+    "decision_position_xyz_m": [
+      24.0,
+      19.0,
+      1.5
+    ],
+    "sector_half_angle_deg": 45.0,
+    "sensing_horizon_m": 15.0,
+    "yaw_deg": 90.0
+  },
+  "walls": [
+    {
+      "end_xy_m": [
+        21.5,
+        18.0
+      ],
+      "height_m": 3.2,
+      "name": "incoming_inner",
+      "start_xy_m": [
+        21.5,
+        -2.0
+      ],
+      "thickness_m": 0.3
+    },
+    {
+      "end_xy_m": [
+        21.5,
+        18.0
+      ],
+      "height_m": 3.2,
+      "name": "lower_south",
+      "start_xy_m": [
+        -2.0,
+        18.0
+      ],
+      "thickness_m": 0.3
+    },
+    {
+      "end_xy_m": [
+        21.5,
+        23.0
+      ],
+      "height_m": 3.2,
+      "name": "route_divider",
+      "start_xy_m": [
+        2.0,
+        23.0
+      ],
+      "thickness_m": 0.3
+    },
+    {
+      "end_xy_m": [
+        28.0,
+        28.0
+      ],
+      "height_m": 3.2,
+      "name": "upper_north",
+      "start_xy_m": [
+        -2.0,
+        28.0
+      ],
+      "thickness_m": 0.3
+    },
+    {
+      "end_xy_m": [
+        28.0,
+        28.0
+      ],
+      "height_m": 3.2,
+      "name": "outer_east",
+      "start_xy_m": [
+        28.0,
+        -2.0
+      ],
+      "thickness_m": 0.3
+    }
+  ]
+}

@@ -1126,6 +1126,11 @@ TURN90_ISOLATED_WPS = "24,24;0,24"
 TURN90_ISOLATED_TIMEOUT = 90.0
 BLIND_DOORWAY_DIRECT_WPS = "0,24"
 BLIND_DOORWAY_DIRECT_TIMEOUT = 90.0
+TWO_ROUTE_BLIND_HAZARD_WPS = "0,20.5"
+TWO_ROUTE_BLIND_HAZARD_TIMEOUT = 90.0
+STATIC_HEADING_MISMATCH_WPS = "24,20"
+STATIC_HEADING_MISMATCH_TIMEOUT = 60.0
+STATIC_HEADING_FORK_WPS = "24.5,20"
 SEED12_WPS = "24,24;-24,24"
 SEED12_TIMEOUT = 90.0
 # seed13 mirrors seed12's corner-obstacle layout and uses the same loop24
@@ -1229,6 +1234,58 @@ STATIC_BLIND_DOORWAY_C2_MAPS = (
 STATIC_BLIND_DOORWAY_C3_MAPS = (
     "sbd1_c3_clear", "sbd1_c3_hazard",
 )
+STATIC_TWO_ROUTE_BLIND_HAZARD_T1_MAPS = (
+    "sbd2_t1_clear", "sbd2_t1_hazard",
+)
+STATIC_TWO_ROUTE_BLIND_HAZARD_T2_MAPS = (
+    "sbd2_t2_clear", "sbd2_t2_hazard",
+)
+STATIC_TWO_ROUTE_BLIND_HAZARD_T3_MAPS = (
+    "sbd2_t3_clear", "sbd2_t3_hazard",
+)
+STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS = (
+    STATIC_TWO_ROUTE_BLIND_HAZARD_T1_MAPS
+    + STATIC_TWO_ROUTE_BLIND_HAZARD_T2_MAPS
+    + STATIC_TWO_ROUTE_BLIND_HAZARD_T3_MAPS
+)
+STATIC_HEADING_MISMATCH_H1_MAPS = (
+    "shm1_h1_clear", "shm1_h1_hazard",
+)
+STATIC_HEADING_MISMATCH_H2_MAPS = (
+    "shm1_h2_clear", "shm1_h2_hazard",
+)
+STATIC_HEADING_MISMATCH_H3_MAPS = (
+    "shm1_h3_clear", "shm1_h3_hazard",
+)
+STATIC_HEADING_MISMATCH_H4_MAPS = (
+    "shm1_h4_clear", "shm1_h4_hazard",
+)
+STATIC_HEADING_MISMATCH_H5_MAPS = (
+    "shm1_h5_clear", "shm1_h5_hazard",
+)
+STATIC_HEADING_MISMATCH_H6_MAPS = (
+    "shm1_h6_clear", "shm1_h6_hazard",
+)
+STATIC_HEADING_MISMATCH_H7_MAPS = (
+    "shm1_h7_clear", "shm1_h7_hazard",
+)
+STATIC_HEADING_MISMATCH_H8_MAPS = (
+    "shm1_h8_clear", "shm1_h8_hazard",
+)
+STATIC_HEADING_MISMATCH_H9_MAPS = (
+    "shm1_h9_clear", "shm1_h9_hazard",
+)
+STATIC_HEADING_MISMATCH_MAPS = (
+    STATIC_HEADING_MISMATCH_H1_MAPS
+    + STATIC_HEADING_MISMATCH_H2_MAPS
+    + STATIC_HEADING_MISMATCH_H3_MAPS
+    + STATIC_HEADING_MISMATCH_H4_MAPS
+    + STATIC_HEADING_MISMATCH_H5_MAPS
+    + STATIC_HEADING_MISMATCH_H6_MAPS
+    + STATIC_HEADING_MISMATCH_H7_MAPS
+    + STATIC_HEADING_MISMATCH_H8_MAPS
+    + STATIC_HEADING_MISMATCH_H9_MAPS
+)
 STATIC_BLIND_DOORWAY_EXPLORATION_MAPS = (
     STATIC_BLIND_DOORWAY_C1_MAPS
     + STATIC_BLIND_DOORWAY_C2_MAPS
@@ -1249,6 +1306,59 @@ STATIC_BLIND_DOORWAY_EXPLORATION_HAZARDS = {
        for map_name in STATIC_BLIND_DOORWAY_C2_MAPS
        + STATIC_BLIND_DOORWAY_C3_MAPS},
 }
+STATIC_TWO_ROUTE_BLIND_HAZARD_PROBES = {
+    map_name: (15.0, 20.5, 2.15)
+    for map_name in STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS
+}
+STATIC_TWO_ROUTE_BLIND_HAZARDS = {
+    map_name: (15.0, 20.5, 2.10, 3.20)
+    for map_name in STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS
+}
+STATIC_HEADING_MISMATCH_PROBES = {
+    **{map_name: (24.0, 5.0, 1.25)
+       for map_name in STATIC_HEADING_MISMATCH_H1_MAPS},
+    **{map_name: (24.75, 3.40, 0.17)
+       for map_name in STATIC_HEADING_MISMATCH_H2_MAPS},
+    **{map_name: (24.2, 2.50, 0.80)
+       for map_name in STATIC_HEADING_MISMATCH_H3_MAPS},
+    **{map_name: (24.5, 2.50, 0.60)
+       for map_name in STATIC_HEADING_MISMATCH_H4_MAPS},
+    **{map_name: (25.0, 8.0, 1.0)
+       for map_name in STATIC_HEADING_MISMATCH_H5_MAPS},
+    **{map_name: (25.0, 4.0, 1.0)
+       for map_name in STATIC_HEADING_MISMATCH_H6_MAPS},
+    **{map_name: (25.0, 4.0, 1.0)
+       for map_name in STATIC_HEADING_MISMATCH_H7_MAPS},
+    **{map_name: (25.0, 4.0, 1.0)
+       for map_name in STATIC_HEADING_MISMATCH_H8_MAPS},
+    **{map_name: (25.0, 4.0, 1.0)
+       for map_name in STATIC_HEADING_MISMATCH_H9_MAPS},
+}
+STATIC_HEADING_MISMATCH_AUDIT_WITNESSES = {
+    **{map_name: (24.0, 5.0, 1.20, 3.20)
+       for map_name in STATIC_HEADING_MISMATCH_H1_MAPS},
+    **{map_name: (24.75, 3.40, 0.12, 3.20)
+       for map_name in STATIC_HEADING_MISMATCH_H2_MAPS},
+    **{map_name: (24.2, 2.50, 0.80, 3.20)
+       for map_name in STATIC_HEADING_MISMATCH_H3_MAPS},
+    **{map_name: (24.5, 2.50, 0.60, 3.20)
+       for map_name in STATIC_HEADING_MISMATCH_H4_MAPS},
+    **{map_name: (25.0, 8.0, 1.0, 3.20)
+       for map_name in STATIC_HEADING_MISMATCH_H5_MAPS},
+    **{map_name: (25.0, 4.0, 1.0, 3.20)
+       for map_name in STATIC_HEADING_MISMATCH_H6_MAPS},
+    **{map_name: (25.0, 4.0, 1.0, 3.20)
+       for map_name in STATIC_HEADING_MISMATCH_H7_MAPS},
+    **{map_name: (25.0, 4.0, 1.0, 3.20)
+       for map_name in STATIC_HEADING_MISMATCH_H8_MAPS},
+    **{map_name: (25.0, 4.0, 1.0, 3.20)
+       for map_name in STATIC_HEADING_MISMATCH_H9_MAPS},
+}
+STATIC_HEADING_MISMATCH_CYLINDER_HAZARDS = {
+    map_name: STATIC_HEADING_MISMATCH_AUDIT_WITNESSES[map_name]
+    for map_name in STATIC_HEADING_MISMATCH_H1_MAPS
+    + STATIC_HEADING_MISMATCH_H2_MAPS
+}
 STATIC_BLIND_CORNER_ALL_MAPS = (
     STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS
     + STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS
@@ -1262,6 +1372,8 @@ STATIC_OCCLUSION_EXPERIMENT_MAPS = (
     + STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS
     + STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS
     + STATIC_BLIND_DOORWAY_EXPLORATION_MAPS
+    + STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS
+    + STATIC_HEADING_MISMATCH_MAPS
 )
 VALID_MAPS = (
     tuple(f"seed{i}" for i in range(1, 16))
@@ -2163,6 +2275,36 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         )
         if loop_timeout_override is not None:
             timeout = loop_timeout_override
+    elif map_name in STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS:
+        wps, switch, timeout = (
+            TWO_ROUTE_BLIND_HAZARD_WPS,
+            LOOP_SWITCH,
+            TWO_ROUTE_BLIND_HAZARD_TIMEOUT,
+        )
+        if loop_timeout_override is not None:
+            timeout = loop_timeout_override
+    elif map_name in (
+        STATIC_HEADING_MISMATCH_H5_MAPS
+        + STATIC_HEADING_MISMATCH_H6_MAPS
+        + STATIC_HEADING_MISMATCH_H7_MAPS
+        + STATIC_HEADING_MISMATCH_H8_MAPS
+        + STATIC_HEADING_MISMATCH_H9_MAPS
+    ):
+        wps, switch, timeout = (
+            STATIC_HEADING_FORK_WPS,
+            LOOP_SWITCH,
+            STATIC_HEADING_MISMATCH_TIMEOUT,
+        )
+        if loop_timeout_override is not None:
+            timeout = loop_timeout_override
+    elif map_name in STATIC_HEADING_MISMATCH_MAPS:
+        wps, switch, timeout = (
+            STATIC_HEADING_MISMATCH_WPS,
+            LOOP_SWITCH,
+            STATIC_HEADING_MISMATCH_TIMEOUT,
+        )
+        if loop_timeout_override is not None:
+            timeout = loop_timeout_override
     elif map_name in (
         STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
         + STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS
@@ -2343,6 +2485,14 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             elif map_name in STATIC_BLIND_DOORWAY_EXPLORATION_MAPS:
                 probe_x, probe_y, probe_radius = (
                     STATIC_BLIND_DOORWAY_EXPLORATION_PROBES[map_name]
+                )
+            elif map_name in STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS:
+                probe_x, probe_y, probe_radius = (
+                    STATIC_TWO_ROUTE_BLIND_HAZARD_PROBES[map_name]
+                )
+            elif map_name in STATIC_HEADING_MISMATCH_MAPS:
+                probe_x, probe_y, probe_radius = (
+                    STATIC_HEADING_MISMATCH_PROBES[map_name]
                 )
             elif map_name in STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS:
                 probe_x, probe_y, probe_radius = (
@@ -2567,7 +2717,24 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 f"{map_name}_side_entry_v{side_entry_version}.yaml"
                 if side_entry_version else f"{map_name}.yaml"
             )
-            if map_name in STATIC_BLIND_DOORWAY_C3_MAPS:
+            if map_name in STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS:
+                waypoint_data_name = "blind_two_route.txt"
+            elif map_name in (
+                STATIC_HEADING_MISMATCH_H5_MAPS
+                + STATIC_HEADING_MISMATCH_H6_MAPS
+                + STATIC_HEADING_MISMATCH_H7_MAPS
+                + STATIC_HEADING_MISMATCH_H8_MAPS
+                + STATIC_HEADING_MISMATCH_H9_MAPS
+            ):
+                waypoint_data_name = "blind_heading_fork.txt"
+            elif map_name in (
+                STATIC_HEADING_MISMATCH_H3_MAPS
+                + STATIC_HEADING_MISMATCH_H4_MAPS
+            ):
+                waypoint_data_name = "blind_heading_mismatch_west.txt"
+            elif map_name in STATIC_HEADING_MISMATCH_MAPS:
+                waypoint_data_name = "blind_heading_mismatch.txt"
+            elif map_name in STATIC_BLIND_DOORWAY_C3_MAPS:
                 waypoint_data_name = "blind_doorway_direct.txt"
             elif map_name in (
                     STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
@@ -2809,7 +2976,46 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     "mars_uav_sim/perfect_drone_sim/pcd/seed_maps/"
                     f"{map_name}.pcd"
                 )
-            if map_name in STATIC_BLIND_DOORWAY_EXPLORATION_MAPS:
+            if map_name in STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS:
+                hazard_x, hazard_y, hazard_radius, hazard_height = (
+                    STATIC_TWO_ROUTE_BLIND_HAZARDS[map_name]
+                )
+                monitor_options += (
+                    " --trajectory-risk-audit"
+                    f" --trajectory-audit-center-x {hazard_x}"
+                    f" --trajectory-audit-center-y {hazard_y}"
+                    f" --trajectory-audit-radius-m {hazard_radius}"
+                    f" --trajectory-audit-height-m {hazard_height}"
+                )
+                if map_name.endswith("_hazard"):
+                    monitor_options += (
+                        f" --static-hazard-center-x {hazard_x}"
+                        f" --static-hazard-center-y {hazard_y}"
+                        f" --static-hazard-radius-m {hazard_radius}"
+                        f" --static-hazard-height-m {hazard_height}"
+                    )
+            elif map_name in STATIC_HEADING_MISMATCH_MAPS:
+                hazard_x, hazard_y, hazard_radius, hazard_height = (
+                    STATIC_HEADING_MISMATCH_AUDIT_WITNESSES[map_name]
+                )
+                monitor_options += (
+                    " --trajectory-risk-audit"
+                    f" --trajectory-audit-center-x {hazard_x}"
+                    f" --trajectory-audit-center-y {hazard_y}"
+                    f" --trajectory-audit-radius-m {hazard_radius}"
+                    f" --trajectory-audit-height-m {hazard_height}"
+                )
+                if (
+                    map_name.endswith("_hazard")
+                    and map_name in STATIC_HEADING_MISMATCH_CYLINDER_HAZARDS
+                ):
+                    monitor_options += (
+                        f" --static-hazard-center-x {hazard_x}"
+                        f" --static-hazard-center-y {hazard_y}"
+                        f" --static-hazard-radius-m {hazard_radius}"
+                        f" --static-hazard-height-m {hazard_height}"
+                    )
+            elif map_name in STATIC_BLIND_DOORWAY_EXPLORATION_MAPS:
                 hazard_x, hazard_y, hazard_radius, hazard_height = (
                     STATIC_BLIND_DOORWAY_EXPLORATION_HAZARDS[map_name]
                 )
@@ -4143,6 +4349,18 @@ def main():
             STATIC_BLIND_DOORWAY_C1_MAPS,
             STATIC_BLIND_DOORWAY_C2_MAPS,
             STATIC_BLIND_DOORWAY_C3_MAPS,
+            STATIC_TWO_ROUTE_BLIND_HAZARD_T1_MAPS,
+            STATIC_TWO_ROUTE_BLIND_HAZARD_T2_MAPS,
+            STATIC_TWO_ROUTE_BLIND_HAZARD_T3_MAPS,
+            STATIC_HEADING_MISMATCH_H1_MAPS,
+            STATIC_HEADING_MISMATCH_H2_MAPS,
+            STATIC_HEADING_MISMATCH_H3_MAPS,
+            STATIC_HEADING_MISMATCH_H4_MAPS,
+            STATIC_HEADING_MISMATCH_H5_MAPS,
+            STATIC_HEADING_MISMATCH_H6_MAPS,
+            STATIC_HEADING_MISMATCH_H7_MAPS,
+            STATIC_HEADING_MISMATCH_H8_MAPS,
+            STATIC_HEADING_MISMATCH_H9_MAPS,
         )
         if any(map_name in family for map_name in args.maps)
     ]

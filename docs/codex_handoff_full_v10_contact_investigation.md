@@ -1,6 +1,22 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-09 static heading-mismatch h9에서 첫 안전성 분리 확인.** Planner와
+> 정책은 동결했고, 정적 two-branch 맵에서 공통 LiDAR만 2 Hz로 낮춘 severe
+> dropout-equivalent stress다. Actual MARSIM/C++ replay에서 동일 raw hazard
+> 23,167점/conflict 499점 중 Fixed Sector는 전부 제거, Adaptive는 전부 보존하고
+> fresh OCCUPIED 10회 연속을 냈다.
+>
+> 새 rotating-order n=10에서 Full/Adaptive는 각각 10/10 안전 완주, Sector는
+> 9/10 접촉(안전 완주 1/10), exact paired McNemar p=0.00390625였다. Adaptive는
+> 행당 effective Full-open 1회와 pre-stale Full refresh 평균 15.9회를 사용했고
+> Full 대비 algorithm CPU를 24.1% 줄였으나 planner ingress는 6.3% 증가했다.
+> 따라서 이 결과는 nominal bandwidth 우위가 아니라 **severe-cadence 안전성
+> stress**로만 사용한다. Population 100%나 exact-risk 단독 효과로 과장하지
+> 말 것. 최신 상세는 viability §8.74 및
+> `docs/static_heading_mismatch_result_20260909.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-09 static blind-doorway c1--c3 탐색은 안전성 분리 없이 중단.**
 > Planner/정책은 동결하고 실제 L-corridor, 지속 배경 관측, 정적 원통,
 > actual-PCD inflation 우회 gate, MARSIM/C++ replay와 closed-loop polynomial
