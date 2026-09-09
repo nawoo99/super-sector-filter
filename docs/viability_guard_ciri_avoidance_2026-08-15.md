@@ -4617,3 +4617,33 @@ degradation, contact-free Adaptive completion and an exact fresh enforced
 frontend risk brake. Neither phase is inferential evidence. Frozen commands,
 hashes and stop rules are in
 `docs/angular_blind_turn_v3_gate_preregistration_20260909.md`.
+
+### 8.70 v3 staged flight outcome and stop decision (2026-09-09)
+
+The preregistered Full-only row passed on its first attempt: 2/2 waypoints in
+11.40 s, zero live/static/hazard contact, 0.473 m static-PCD clearance and all
+quality gates valid. This confirms that removing the upper channel wall fixed
+the v2 Full-feasibility confound. The contingent Sector/Adaptive rows were then
+run once each without retry. Sector was contact-free but timed out at 1/2
+waypoints after 90.01 s; Adaptive completed contact-free in 11.66 s.
+
+Sector's failure was an observability/liveness stop after passing the target:
+at `(11.191,26.322,1.004)` its forward crop became repeatedly empty/non-dense,
+map version froze at 85, map age crossed 0.500 s at 0.507 s, and fail-closed
+`EMER_STOP` remained stationary through timeout. Adaptive avoided this state
+through five bounded replan-guard Full openings (19.231% duty). It saw 115
+replan statuses, 67 failures and a maximum failure streak of 11.
+
+The frozen mechanism gate nevertheless failed. Adaptive's raw worker was
+healthy—48 unique trajectories and 78 verdicts at 4.968 Hz, 1.108 ms mean
+compute—but every future verdict was FREE and there were zero exact enforced
+risk brakes. Its first probe observation occurred during an early replan Full
+opening, 12.641 m away, when the probe was only 9.466 degrees from velocity
+heading. This early perception let the planner select the northern bypass, so
+the later closed-loop trajectory did not reproduce the replay-forced conflict.
+
+Decision: `STOP_PAIRED_MECHANISM_GATE_FAILED`. No repeat or larger calibration
+was run. The Adaptive-over-Sector completion separation is attributable to the
+existing replan-triggered opening and is liveness evidence, not collision-
+safety or exact trajectory-risk evidence. Full tables and diagnostics are in
+`docs/angular_blind_turn_v3_gate_result_20260909.md`.

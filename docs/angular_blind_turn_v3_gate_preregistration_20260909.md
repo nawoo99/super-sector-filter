@@ -113,3 +113,14 @@ a safety-superiority claim.
 
 The generator plus manifest are the versioned source for the large PCD; the
 runtime PCD itself is reproducibly generated and is not committed.
+
+## Registered outcome
+
+Phase 1 passed: Full completed 2/2 waypoints in 11.40 s with zero contact and
+all quality gates valid. The contingent Phase 2 was therefore run exactly once
+per filtered mode. Sector remained contact-free but timed out at 1/2 waypoints
+after 90.01 s; Adaptive completed contact-free in 11.66 s. However Adaptive
+recorded zero exact future-risk brakes, and the surface probe was not outside
+the counterfactual sector in both filtered rows. The frozen decision is
+`STOP_PAIRED_MECHANISM_GATE_FAILED`; no retry or larger calibration followed.
+See `docs/angular_blind_turn_v3_gate_result_20260909.md`.

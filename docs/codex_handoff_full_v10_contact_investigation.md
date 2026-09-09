@@ -1,6 +1,24 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-09 v3 staged flight 종료: Full/Adaptive 완주, Sector timeout,
+> exact-risk gate 실패로 중단.** 사전등록 Full은 첫 시도 11.40s·2/2 waypoint·
+> 접촉 0·static clearance 0.473m로 통과했다. 조건부 Sector는 target 이후
+> 90.01s timeout(접촉 0), Adaptive는 11.66s 완주(접촉 0)했다.
+>
+> Sector는 hazard collision이 아니라 forward crop empty/non-dense → map
+> version 85 정지 → age 0.507s > 0.500s → fail-closed EMER_STOP liveness
+> 실패였다. Adaptive는 replan status 115/실패 67/max streak 11에 따른 bounded
+> Full-open 5회(19.231% duty)로 완주했다. 그러나 raw future verdict 78회는 전부
+> FREE, exact frontend risk brake는 0이었다. Probe도 early open 때 velocity
+> heading 기준 9.466° 안이었다. 즉 Adaptive 개선은 replan-triggered opening
+> 효과이지 exact trajectory-risk/collision-safety 증거가 아니다.
+>
+> 사전등록대로 `STOP_PAIRED_MECHANISM_GATE_FAILED`; 재시도나 확대시험은 하지
+> 않았다. 결과를 성공으로 선택해 반복하지 말 것. 최신 근거는 viability §8.70,
+> `docs/angular_blind_turn_v3_gate_result_20260909.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-09 v3 open-bypass route/replay gate 통과, Full-only flight
 > 사전등록 완료.** 이전 실패를 덮지 않고 새 이름 `abt3_gate_open`으로 만들었고
 > planner/policy는 바꾸지 않았다. v2 lower occluder/aperture/hazard는 유지하되
