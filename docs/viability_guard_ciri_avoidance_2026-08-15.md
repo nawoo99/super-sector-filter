@@ -4647,3 +4647,26 @@ was run. The Adaptive-over-Sector completion separation is attributable to the
 existing replan-triggered opening and is liveness evidence, not collision-
 safety or exact trajectory-risk evidence. Full tables and diagnostics are in
 `docs/angular_blind_turn_v3_gate_result_20260909.md`.
+
+### 8.71 v4 observed-exit prerequisite gates and flight freeze (2026-09-09)
+
+V3's exact failure mechanism was first replayed: at a nominal westbound
+outgoing pose `(12,26.3,1.2)`, fixed Sector produced 15/15 filtered frames but
+zero total points. A new `abt4_observed_exit` fixture therefore keeps the v3
+hazard, lower occluder, aperture, route and planner policies unchanged and adds
+only a distant north observation wall at y=29 m. It remains 2.75 m from the
+frozen y=26.1 bypass even before ROG inflation.
+
+All pre-flight gates passed. Actual-PCD ROG validation retained the v3
+6.539113 m local anchor, all inflated A* segments and 0.550744 m minimum
+sampled-surface distance. Actual MARSIM fixed-Sector station replays at x=20,
+12 and 4 retained 5847.07, 2216.07 and 2206.40 points/frame, eliminating the
+empty-output confound. Near-corner actual-raycast replay retained raw conflict,
+zero Sector leak and 25 consecutive fresh Adaptive OCCUPIED verdicts.
+
+The staged flight is frozen before its first row: one Full-only feasibility
+smoke, followed only on pass by one three-mode n=3 pilot. The pilot rejects any
+Sector degradation accompanied by `guard_main_pre_map_stale`; it also requires
+Full/Adaptive safe completion 3/3 and exact Adaptive risk brakes in at least
+2/3. All 58 campaign tests passed. Commands, hashes and stop rules are in
+`docs/angular_blind_turn_v4_gate_preregistration_20260909.md`.

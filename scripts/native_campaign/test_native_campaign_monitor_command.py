@@ -74,6 +74,17 @@ def test_v3_gate_is_a_separate_first_turn_family():
     }
 
 
+def test_v4_gate_is_a_separate_observed_exit_family():
+    expected = ("abt4_observed_exit",)
+
+    assert MODULE.STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS == expected
+    assert set(expected).issubset(MODULE.VALID_MAPS)
+    assert not set(expected).intersection(MODULE.STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS)
+    assert MODULE.STATIC_ANGULAR_BLIND_TURN_V4_GATE_PROBES == {
+        "abt4_observed_exit": (17.4, 24.4, 0.12),
+    }
+
+
 def test_monitor_options_precede_positional_delimiter():
     pcd = "/tmp/seed map.pcd"
     command = MODULE.build_loop_monitor_command(

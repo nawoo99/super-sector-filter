@@ -1214,6 +1214,10 @@ STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS = ("abt3_gate_open",)
 STATIC_ANGULAR_BLIND_TURN_V3_GATE_PROBES = {
     "abt3_gate_open": (17.4, 24.4, 0.12),
 }
+STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS = ("abt4_observed_exit",)
+STATIC_ANGULAR_BLIND_TURN_V4_GATE_PROBES = {
+    "abt4_observed_exit": (17.4, 24.4, 0.12),
+}
 STATIC_BLIND_CORNER_ALL_MAPS = (
     STATIC_BLIND_CORNER_SUPPLEMENT_PILOT_MAPS
     + STATIC_BLIND_CORNER_CONTROLLED_PILOT_MAPS
@@ -1225,6 +1229,7 @@ STATIC_OCCLUSION_EXPERIMENT_MAPS = (
     + STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
     + STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
     + STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS
+    + STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS
 )
 VALID_MAPS = (
     tuple(f"seed{i}" for i in range(1, 16))
@@ -2108,6 +2113,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
     elif map_name in (
         STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
         + STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS
+        + STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS
     ):
         wps, switch, timeout = (
             TURN90_ISOLATED_WPS, LOOP_SWITCH, TURN90_ISOLATED_TIMEOUT
@@ -2275,7 +2281,11 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             # bounded raw-input probe therefore measures when the common
             # static hazard first becomes physically visible, before either
             # the Sector crop or Adaptive recovery is applied.
-            if map_name in STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS:
+            if map_name in STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS:
+                probe_x, probe_y, probe_radius = (
+                    STATIC_ANGULAR_BLIND_TURN_V4_GATE_PROBES[map_name]
+                )
+            elif map_name in STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS:
                 probe_x, probe_y, probe_radius = (
                     STATIC_ANGULAR_BLIND_TURN_V3_GATE_PROBES[map_name]
                 )
@@ -2503,6 +2513,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 if map_name in (
                     STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
                     + STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS
+                    + STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS
                 )
                 else (
                     "turn90_loop24.txt"
@@ -2741,6 +2752,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             if map_name in (
                 STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
                 + STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS
+                + STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS
             ):
                 monitor_options += (
                     " --static-hazard-center-x 16.2"
@@ -4049,6 +4061,7 @@ def main():
             STATIC_ANGULAR_BLIND_TURN_CALIBRATION_MAPS,
             STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS,
             STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS,
+            STATIC_ANGULAR_BLIND_TURN_V4_GATE_MAPS,
         )
         if any(map_name in family for map_name in args.maps)
     ]

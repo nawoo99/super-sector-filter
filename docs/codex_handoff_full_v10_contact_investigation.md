@@ -1,6 +1,23 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-09 v4 observed-exit 비행 전 gate 통과 및 사전등록.** v3 Sector
+> MAP_STALE를 nominal outgoing replay에서 15/15 frame·총 0점으로 재현한 뒤,
+> 새 `abt4_observed_exit`에는 y=29m north observation wall 하나만 추가했다.
+> hazard/lower occluder/aperture/route/planner는 바꾸지 않았다.
+>
+> Actual-PCD ROG route gate는 최소 0.551m, local anchor 6.539m로 PASS했다.
+> Actual MARSIM Sector는 outgoing x=20/12/4에서 frame당 5847/2216/2206점을
+> 유지했고, corner replay도 raw conflict/Sector leak 0/Adaptive fresh OCCUPIED
+> 25회로 PASS했다. 자동 test 58개도 PASS다.
+>
+> 다음은 사전등록 Full 1행만 실행한다. 통과할 때만 3모드 n=3이며, Sector
+> 실패에 MAP_STALE가 하나라도 있으면 성과로 인정하지 않는다. Full/Adaptive
+> 3/3 safe completion과 exact Adaptive risk brake 2/3도 필수다. 최신 상세는
+> viability §8.71 및
+> `docs/angular_blind_turn_v4_gate_preregistration_20260909.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-09 v3 staged flight 종료: Full/Adaptive 완주, Sector timeout,
 > exact-risk gate 실패로 중단.** 사전등록 Full은 첫 시도 11.40s·2/2 waypoint·
 > 접촉 0·static clearance 0.473m로 통과했다. 조건부 Sector는 target 이후
