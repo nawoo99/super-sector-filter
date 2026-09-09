@@ -1,6 +1,21 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-09 v3 open-bypass route/replay gate 통과, Full-only flight
+> 사전등록 완료.** 이전 실패를 덮지 않고 새 이름 `abt3_gate_open`으로 만들었고
+> planner/policy는 바꾸지 않았다. v2 lower occluder/aperture/hazard는 유지하되
+> local dead end의 원인이던 upper wall만 제거했다. 실제 PCD에 ROG와 같은
+> 0.1m/3-cell inflation을 적용한 우회 경로 gate가 PASS했고, 첫 anchor는
+> 6.539m로 7m horizon 안, sampled-surface 최소거리는 0.551m였다.
+>
+> 실제 MARSIM/C++ replay에서도 raw conflict 50/50, Sector leak 0,
+> Adaptive fresh OCCUPIED 25회 연속으로 PASS했다. 테스트는 53개 PASS다.
+> 다음 실행은 사전등록된 Full 1행뿐이다. unique first-attempt·모든 품질 gate
+> 유효·접촉 0·완주일 때만 Sector/Adaptive 각 1행으로 넘어간다. 실패하면 즉시
+> 중단한다. 상세 명령·hash·판정 규칙은 viability §8.69와
+> `docs/angular_blind_turn_v3_gate_preregistration_20260909.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-09 deterministic actual-raycast/frontend witness 통과, 단 Full
 > fixture 승격은 보류.** 더 이상 aperture를 비행으로 미세 튜닝하지
 > 않고 `perfect_drone_sim/frontend_replay_witness`를 추가했다. SUPER는 실행·

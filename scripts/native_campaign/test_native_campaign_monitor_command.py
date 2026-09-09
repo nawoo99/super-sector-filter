@@ -61,6 +61,19 @@ def test_isolated_angular_blind_turn_is_a_separate_first_turn_family():
     )
 
 
+def test_v3_gate_is_a_separate_first_turn_family():
+    expected = ("abt3_gate_open",)
+
+    assert MODULE.STATIC_ANGULAR_BLIND_TURN_V3_GATE_MAPS == expected
+    assert set(expected).issubset(MODULE.VALID_MAPS)
+    assert not set(expected).intersection(
+        MODULE.STATIC_ISOLATED_ANGULAR_BLIND_TURN_CALIBRATION_MAPS
+    )
+    assert MODULE.STATIC_ANGULAR_BLIND_TURN_V3_GATE_PROBES == {
+        "abt3_gate_open": (17.4, 24.4, 0.12),
+    }
+
+
 def test_monitor_options_precede_positional_delimiter():
     pcd = "/tmp/seed map.pcd"
     command = MODULE.build_loop_monitor_command(

@@ -4589,3 +4589,31 @@ compared. Full evidence and commands are in
 `docs/frontend_replay_witness_result_20260909.md`; gate data are in
 `results/frontend_replay_witness_abt2_t3_gate_20260909.json`. The package
 built successfully and all 47 campaign tests passed.
+
+### 8.69 v3 open-bypass route/replay gates and flight preregistration (2026-09-09)
+
+The failed v2 rows were preserved. A single newly named development fixture,
+`abt3_gate_open`, keeps the v2 lower occluder, aperture, hazard and first-turn
+route but removes the upper channel wall. The planner and three policies were
+not changed. A fail-closed validator reads the actual generated PCD at flight
+height, applies the same 0.10 m grid and three-cell spherical XY inflation as
+ROG, forbids diagonal corner cutting and checks a northern forward bypass.
+All segments existed; the first anchor was 6.539113 m from the replay state
+inside the 7 m horizon, and minimum path-to-sampled-surface distance was
+0.550744 m. The direct route still crossed the hazard.
+
+The actual-MARSIM/C++ replay gate also passed before flight. Both modes saw
+raw hazard and path-conflict evidence in 50/50 frames, fixed Sector leaked zero
+such points, and Adaptive produced 25 consecutive fresh OCCUPIED verdicts
+(last minimum distance 0.194958 m, source age 0.001151 s). Campaign runner
+support, a staged fail-closed flight analyzer and tests were added; all 53
+campaign tests passed.
+
+The first flight is preregistered as exactly one Full-only feasibility row.
+Only a unique, first-attempt, quality-valid, contact-free completion permits
+one Sector/Adaptive paired mechanism smoke. Full failure stops the experiment
+without filtered flight. The contingent n=1 gate requires target-turn Sector
+degradation, contact-free Adaptive completion and an exact fresh enforced
+frontend risk brake. Neither phase is inferential evidence. Frozen commands,
+hashes and stop rules are in
+`docs/angular_blind_turn_v3_gate_preregistration_20260909.md`.
