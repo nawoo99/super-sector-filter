@@ -4839,3 +4839,45 @@ remained valid. This confirmation is simulation-only and deliberately
 stressful. Nominal Map1--10 remains the efficiency source; SITL/real sensor
 validation remains external evidence. Full methods, tables and evidence paths
 are in `docs/static_burst_dropout_confirmation_result_20260910.md`.
+
+### 8.76 Eight-condition n=20 table and independent stress replication (2026-09-10)
+
+The compact paper table was extended without deleting either member of the
+five paired normal layouts. Seed1--10 were grouped into five pre-existing
+radius tiers R1--R5, each containing two physical layouts and ten runs per
+layout. C1--C3 retained their original preregistered ten-run block and received
+one independently frozen run-11--20 phase-balanced replication block. This
+gives eight reporting conditions with 20 observations per mode, 480 rows in
+total. It does not turn the eight conditions into eight independent physical
+maps, and normal and stress measurements are not pooled.
+
+The 90 new stress rows were all unique first attempts. Attempt count was one,
+retry/infrastructure/OOM counts were zero, and every phase/cadence, speed,
+resource, static-PCD and run gate passed. Block 2 reproduced Full and Adaptive
+10/10 safe completion on each C map. Fixed Sector was safe 3/10, 5/10 and
+6/10 on C1/C2/C3, giving aggregate safe completion 14/30. The paired
+Sector-unsafe/Adaptive-safe discordance was 16:0, exact two-sided McNemar
+p=3.0517578125e-05. The frozen decision is
+`STRESS_REPLICATION_OBSERVED`.
+
+The secondary combined C table has Full/Adaptive 60/60 safe, Fixed Sector
+27/60 safe and 33:0 paired discordance (p=2.3283064365386963e-10). C1/C2/C3
+combined safe counts were 7/20, 9/20 and 11/20 for Sector while Full and
+Adaptive were 20/20 on every map. A 20/20 cell still has Wilson 95% lower
+bound 0.8389; even the combined 60/60 lower bound is 0.9398, so neither is a
+population-level 100% guarantee.
+
+The normal R1--R5 source remains the efficiency result: Full/Sector/Adaptive
+were 100/99/100 safe out of 100, with Adaptive reducing Full planner ingress
+77.14%, map compute 39.28%, end-to-end CPU 12.75% and core-seconds 14.45%.
+The stress C1--C3 aggregate gave reductions of 70.70%, 29.35%, 6.01% and
+2.12%, respectively, while Adaptive took 5.30% longer. Adaptive averaged
+20.68 effective Full-open transitions per normal run and 1.23 per short stress
+run. Only 26/60 stress rows emitted an exact fresh OCCUPIED verdict, so the
+safety outcome is attributed to the full deployed bounded policy bundle.
+
+Block-2 host swap peaked at 2007.86 MiB and runtime available memory reached
+5842.50 MiB, but the 7168 MiB preflight gate delayed launches, memory PSI was
+zero and no row was retried. All 83 native campaign tests passed. The machine
+decision is `EIGHT_CONDITION_N20_COMPLETE`; the full table and claim boundary
+are in `docs/eight_condition_n20_result_20260910.md`.

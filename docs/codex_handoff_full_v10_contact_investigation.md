@@ -1,6 +1,29 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-10 8조건 n=20 표와 독립 stress 복제 완료.** 기존 Map1--10의
+> paired layout을 절반 폐기하지 않고 장애물 반경 tier R1--R5로 묶었다(각각
+> 2개 물리 맵 x 10회). Held-out C1--C3은 기존 block 1을 그대로 보존하고,
+> 결과 관측 뒤 별도로 사전등록한 run11--20 block 2를 추가했다. 따라서
+> 8개 reporting condition x 3모드 x 20행 = 480행이며, 8개 독립 물리 맵이라는
+> 뜻은 아니다.
+>
+> 새 90행은 전부 unique first attempt이고 retry/infrastructure/OOM 0,
+> phase/cadence/speed/resource/static-PCD gate가 모두 유효하다. Block 2에서
+> Full/Adaptive는 C1/C2/C3 각각 10/10 안전, Sector는 3/10, 5/10, 6/10
+> 안전이었다. Paired discordance 16:0, exact McNemar
+> p=3.0517578125e-05로 `STRESS_REPLICATION_OBSERVED`. 합산 stress n=20은
+> Full/Adaptive 60/60, Sector 27/60 안전이며 합산 검정은 사후 선택 때문에
+> secondary다.
+>
+> 정상 R1--R5에서 Adaptive는 Full 대비 planner ingress 77.14%, map compute
+> 39.28%, 공정한 end-to-end CPU 12.75%, core-seconds 14.45% 감소했다. Stress
+> C1--C3에서는 70.70%/29.35%/6.01%/2.12% 감소하고 시간은 5.30% 늘었다.
+> 정상과 stress 지표를 합치지 말고, 20/20도 population 100%로 쓰지 말 것.
+> 최신 근거는 viability §8.76 및
+> `docs/eight_condition_n20_result_20260910.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-10 사전등록 held-out 10 Hz burst-dropout 확인시험 통과.** H9
 > 탐색 결과와 분리해, 결과 관측 전에 정적 blind-fork 3개(C1 mirror, C2
 > wide-offset, C3 near-short)와 공통 10 Hz 센서의 0.5 s/2.0 s burst loss,

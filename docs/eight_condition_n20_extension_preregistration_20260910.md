@@ -126,3 +126,26 @@ bandwidth or a single overall success rate. R1--R5 remain the primary
 normal-condition efficiency evidence. C1--C3 remain a bounded static
 burst-dropout safety-robustness result. No observed 20/20 cell is a
 population-level 100% guarantee.
+
+## Post-freeze outcome addendum
+
+Added after all block-2 flights; the frozen specification above is unchanged.
+
+The 90 new run-11--20 rows completed on unique first attempts with no retry,
+infrastructure failure or OOM kill. All registered phase/cadence, speed,
+resource, static-PCD and run-integrity checks passed. Full and Adaptive were
+10/10 safe on each of C1--C3. Fixed Sector was safe 3/10, 5/10 and 6/10,
+respectively, and therefore unsafe at least once on every map.
+
+Block-2 paired discordance was 16 Sector-unsafe/Adaptive-safe versus zero in
+the reverse direction; exact two-sided McNemar
+p=`3.0517578125e-05`. The preregistered replication decision is therefore
+`STRESS_REPLICATION_OBSERVED`. The complete eight-condition matrix contains
+20 rows per mode and condition and receives decision
+`EIGHT_CONDITION_N20_COMPLETE`.
+
+The combined C1--C3 n=20 table is secondary: Full/Adaptive were each 60/60
+safe, Sector was 27/60 safe, and paired discordance was 33:0 with
+p=`2.3283064365386963e-10`. Normal and stress metrics remain separate. Full
+tables, efficiency results, limitations and evidence hashes are recorded in
+`docs/eight_condition_n20_result_20260910.md`.
