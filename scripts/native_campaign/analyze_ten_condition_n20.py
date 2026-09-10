@@ -20,6 +20,9 @@ EXTENSION_STRESS_CONDITIONS = {
     "C4_deep_mirror": ("shc4_deep_mirror_hazard",),
     "C5_asymmetric_offset": ("shc5_asymmetric_offset_hazard",),
 }
+EXTENSION_MAPS = tuple(
+    maps[0] for maps in EXTENSION_STRESS_CONDITIONS.values()
+)
 FROZEN_HASHES = {
     "normal_campaign": (
         "b40f880271a52f4b3332bfe67afe3d489cf8c6d444ac0c72ed30d9e9cd445ec5"
@@ -44,21 +47,61 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def prerequisite_gate_checks(
+    structure_gate: dict[str, object],
+    replay_gates: list[dict[str, object]],
+    full_gate_rows: list[dict[str, str]],
+) -> dict[str, bool]:
+    variants = structure_gate.get("variants", {})
+    structure_variants_pass = (
+        isinstance(variants, dict)
+        and set(variants) == {"c4_deep_mirror", "c5_asymmetric_offset"}
+        and all(
+            isinstance(payload, dict) and payload.get("status") == "PASS"
+            for payload in variants.values()
+        )
+    )
+    full_keys = {
+        (row.get("map"), row.get("run"), row.get("mode"))
+        for row in full_gate_rows
+    }
+    expected_full_keys = {
+        (map_name, "1", "full") for map_name in EXTENSION_MAPS
+    }
+    return {
+        "C4_C5_structure_gate_passed": (
+            structure_gate.get("status") == "PASS"
+            and structure_variants_pass
+        ),
+        "C4_C5_paired_cpp_replay_gates_passed": (
+            len(replay_gates) == len(EXTENSION_MAPS)
+            and all(gate.get("decision") == "PASS" for gate in replay_gates)
+        ),
+        "C4_C5_full_feasibility_gate_passed": (
+            len(full_gate_rows) == len(expected_full_keys)
+            and full_keys == expected_full_keys
+            and all(
+                base.dropout_integrity(row) and base.safe_complete(row)
+                for row in full_gate_rows
+            )
+        ),
+    }
+
+
 def analyze(normal_rows: list[dict[str, str]],
             normal_validation: dict[str, object],
             legacy_stress_rows: list[dict[str, str]],
             extension_rows: list[dict[str, str]],
             eight_condition_result: dict[str, object],
-            source_hashes_valid: bool = True) -> dict[str, object]:
+            source_hashes_valid: bool = True,
+            prerequisite_gates: dict[str, bool] | None = None) -> dict[str, object]:
     normal_maps = tuple(
         map_name for maps in NORMAL_CONDITIONS.values() for map_name in maps
     )
     legacy_maps = tuple(
         maps[0] for maps in LEGACY_STRESS_CONDITIONS.values()
     )
-    extension_maps = tuple(
-        maps[0] for maps in EXTENSION_STRESS_CONDITIONS.values()
-    )
+    extension_maps = EXTENSION_MAPS
     all_stress_rows = legacy_stress_rows + extension_rows
 
     normal_matrix = base.expected_matrix(normal_rows, normal_maps, 1, 10)
@@ -148,6 +191,11 @@ def analyze(normal_rows: list[dict[str, str]],
         condition["modes"][mode]["runs"] == 20
         for condition in conditions.values() for mode in MODES
     )
+    gate_checks = prerequisite_gates or {
+        "C4_C5_structure_gate_passed": True,
+        "C4_C5_paired_cpp_replay_gates_passed": True,
+        "C4_C5_full_feasibility_gate_passed": True,
+    }
     checks = {
         "frozen_source_hashes_match": source_hashes_valid,
         "normal_source_validation_passed": normal_validation.get("passed") is True,
@@ -161,6 +209,7 @@ def analyze(normal_rows: list[dict[str, str]],
             extension_decision == "C4_C5_EXTENSION_OBSERVED"
         ),
         "ten_conditions_have_20_rows_per_mode": complete_conditions,
+        **gate_checks,
     }
     decision = (
         "TEN_CONDITION_N20_COMPLETE"
@@ -173,6 +222,7 @@ def analyze(normal_rows: list[dict[str, str]],
         "failure_reasons": [name for name, passed in checks.items() if not passed],
         "extension_decision": extension_decision,
         "extension_checks": extension_checks,
+        "prerequisite_gates": gate_checks,
         "conditions": conditions,
         "groups": {
             "normal_R1_R5": base.summarize_group(
@@ -214,6 +264,9 @@ def main() -> int:
     parser.add_argument("--legacy-stress-campaign", type=Path, required=True)
     parser.add_argument("--extension-stress-campaign", type=Path, required=True)
     parser.add_argument("--eight-condition-result", type=Path, required=True)
+    parser.add_argument("--structure-gate", type=Path, required=True)
+    parser.add_argument("--replay-gates", type=Path, nargs=2, required=True)
+    parser.add_argument("--full-gate-campaign", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     source_paths = {
@@ -226,6 +279,11 @@ def main() -> int:
         name: file_sha256(path) for name, path in source_paths.items()
     }
     source_hashes_valid = observed_hashes == FROZEN_HASHES
+    prerequisite_gates = prerequisite_gate_checks(
+        json.loads(args.structure_gate.read_text()),
+        [json.loads(path.read_text()) for path in args.replay_gates],
+        read_csv(args.full_gate_campaign),
+    )
     result = analyze(
         read_csv(args.normal_campaign),
         json.loads(args.normal_validation.read_text()),
@@ -233,6 +291,7 @@ def main() -> int:
         read_csv(args.extension_stress_campaign),
         json.loads(args.eight_condition_result.read_text()),
         source_hashes_valid=source_hashes_valid,
+        prerequisite_gates=prerequisite_gates,
     )
     result["source_hashes"] = {
         "expected": FROZEN_HASHES,

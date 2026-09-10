@@ -97,3 +97,40 @@ def test_invalid_extension_and_changed_source_hash_fail():
     assert result["decision"] == "TEN_CONDITION_N20_INCOMPLETE"
     assert result["extension_decision"] == "C4_C5_EXTENSION_FAILED"
     assert not result["checks"]["frozen_source_hashes_match"]
+
+
+def test_failed_prerequisite_gate_fails_closed():
+    normal, legacy, extension = matrices()
+    gates = {
+        "C4_C5_structure_gate_passed": True,
+        "C4_C5_paired_cpp_replay_gates_passed": False,
+        "C4_C5_full_feasibility_gate_passed": True,
+    }
+    result = analyzer.analyze(
+        normal, {"passed": True}, legacy, extension,
+        {"decision": "EIGHT_CONDITION_N20_COMPLETE"},
+        prerequisite_gates=gates,
+    )
+    assert result["decision"] == "TEN_CONDITION_N20_INCOMPLETE"
+    assert result["prerequisite_gates"] == gates
+
+
+def test_prerequisite_gate_checks_require_exact_full_rows():
+    full_rows = [
+        row(map_name, 1, "full")
+        for map_name in analyzer.EXTENSION_MAPS
+    ]
+    structure = {
+        "status": "PASS",
+        "variants": {
+            "c4_deep_mirror": {"status": "PASS"},
+            "c5_asymmetric_offset": {"status": "PASS"},
+        },
+    }
+    replay = [{"decision": "PASS"}, {"decision": "PASS"}]
+    checks = analyzer.prerequisite_gate_checks(structure, replay, full_rows)
+    assert all(checks.values())
+
+    duplicated = full_rows + [copy.deepcopy(full_rows[0])]
+    checks = analyzer.prerequisite_gate_checks(structure, replay, duplicated)
+    assert not checks["C4_C5_full_feasibility_gate_passed"]
