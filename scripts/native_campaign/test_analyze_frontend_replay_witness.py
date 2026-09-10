@@ -71,3 +71,18 @@ def test_gate_fails_when_replay_contract_differs() -> None:
     result = analyze(sector, adaptive)
     assert result["decision"] == "FAIL"
     assert "identical_replay_contract" in result["failure_reasons"]
+
+
+def test_strict_gate_requires_and_compares_raw_stream_hash() -> None:
+    sector = witness("sector")
+    sector["filtered"]["hazard_points"] = 0
+    sector["filtered"]["conflict_points"] = 0
+    adaptive = witness("adaptive")
+    missing = analyze(sector, adaptive, require_identical_raw_stream=True)
+    assert missing["decision"] == "FAIL"
+    assert "identical_raw_stream" in missing["failure_reasons"]
+
+    sector["raw"]["stream_hash_fnv1a64"] = "0123456789abcdef"
+    adaptive["raw"]["stream_hash_fnv1a64"] = "0123456789abcdef"
+    passed = analyze(sector, adaptive, require_identical_raw_stream=True)
+    assert passed["decision"] == "PASS"

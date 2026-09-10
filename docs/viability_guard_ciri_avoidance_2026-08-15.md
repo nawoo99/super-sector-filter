@@ -4790,3 +4790,52 @@ guarantee. Wilson intervals remain 0.722..1.000 for Full/Adaptive and
 still required for confirmatory wording. Full tables, causal qualifications
 and evidence paths are in
 `docs/static_heading_mismatch_result_20260909.md`.
+
+### 8.75 Held-out 10 Hz burst-dropout confirmation (2026-09-10)
+
+The exploratory h9 result was not reused as confirmation. Before asset
+generation or flight, three independent static blind-fork variants and a
+common sensor-output fault were frozen: nominal 10 Hz rendering, 1.0 s
+warm-up, recurrent 0.5 s output loss every 2.0 s, and paired run phases
+0.0..1.8 s. Planner, v7 dynamics, 45-degree Sector, near-field bubble and all
+Adaptive policy parameters remained unchanged. The new fault injector is
+disabled by default and suppresses a completed cloud before DDS, direct Full
+and direct filtered-frontend delivery.
+
+All three actual-PCD structure gates found a negative direct-route clearance,
+zero body-Sector closure samples, thousands of velocity-Sector samples and an
+inflation-feasible bypass. A new paired production replay fed one actual
+MARSIM stream to both C++ frontends and required identical FNV stream hashes.
+For C1/C2/C3, raw hazard/conflict was present in all ten frames, Sector retained
+zero, and Adaptive produced 5/6/5 consecutive fresh OCCUPIED verdicts. The
+default-off/fault smoke and all three one-row Full feasibility gates passed.
+
+The frozen rotating-order matrix contained ten new rows per map and mode.
+Full and Adaptive achieved 10/10 safe completion on each map. Sector safe
+completion was 4/10, 4/10 and 5/10, with 6/10, 6/10 and 5/10 contact runs.
+One C1 Sector contact also timed out; it was retained as a valid outcome. All
+90 rows were unique first attempts with valid phase/cadence, speed, resource
+and static-PCD checks; there were no retries, infrastructure failures or OOM
+kills.
+
+Across the 30 paired rows, Sector-unsafe/Adaptive-safe versus the reverse was
+17:0, giving exact two-sided McNemar p=1.52587890625e-05. Per-map p-values were
+0.03125/0.03125/0.0625, so C3 alone is not claimed significant. The frozen
+decision is `CONFIRMATORY_TRANSFER_OBSERVED` for this finite stress suite.
+Aggregate 30/30 Wilson lower bound is still 0.8865, so this is not a
+population-level 100% guarantee.
+
+The fair end-to-end cgroup CPU mean was 0.974/0.841/0.902 cores for
+Full/Sector/Adaptive. Planner ingress was 10.995/4.175/3.187 MiB/s. Thus
+Adaptive reduced end-to-end CPU 7.44% and planner ingress 71.02% relative to
+Full while adding 0.446 s mean flight time. Adaptive averaged 1.20 effective
+Full-open transitions, was open 54.24% of time and kept 38.22% of points.
+Only 16/30 rows had an exact fresh OCCUPIED audit verdict, so safety recovery
+is attributed to the deployed bounded policy bundle, not exact-risk alone.
+
+Late host swap pressure reached about 2 GiB and minimum available memory
+reached 5.2 GiB; the 7 GiB preflight guard delayed launches and every row
+remained valid. This confirmation is simulation-only and deliberately
+stressful. Nominal Map1--10 remains the efficiency source; SITL/real sensor
+validation remains external evidence. Full methods, tables and evidence paths
+are in `docs/static_burst_dropout_confirmation_result_20260910.md`.

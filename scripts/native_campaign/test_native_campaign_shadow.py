@@ -29,6 +29,31 @@ class SensorCadenceLogTest(unittest.TestCase):
         self.assertEqual(result["sensor_direct_handoffs"], 101)
         self.assertAlmostEqual(result["sensor_hz"], 10.0)
 
+    def test_reads_burst_dropout_integrity_summary(self):
+        lines = """\
+[INFO] [SENSOR_CADENCE_SUMMARY] frames=51 span_s=5.000000 hz=10.000000 raw_published=0 direct_handoffs=36 payload_bytes=14400
+[INFO] [SENSOR_BURST_DROPOUT_SUMMARY] enabled=1 warmup_s=1.000000 period_s=2.000000 duration_s=0.500000 phase_s=0.600000 phase_env_override=1 rendered=51 delivered=36 dropped=15 bursts=3 max_consecutive_dropped=5 max_delivered_gap_s=0.600000 dropped_payload_bytes=6000
+"""
+        handle, path = tempfile.mkstemp(text=True)
+        try:
+            with os.fdopen(handle, "w") as stream:
+                stream.write(lines)
+            result = parse_sensor_cadence_log(path)
+        finally:
+            os.unlink(path)
+
+        self.assertTrue(result["sensor_dropout_enabled"])
+        self.assertTrue(result["sensor_dropout_phase_env_override"])
+        self.assertAlmostEqual(result["sensor_dropout_phase_s"], 0.6)
+        self.assertEqual(result["sensor_rendered_frames"], 51)
+        self.assertEqual(result["sensor_delivered_frames"], 36)
+        self.assertEqual(result["sensor_dropped_frames"], 15)
+        self.assertEqual(result["sensor_dropout_bursts"], 3)
+        self.assertEqual(result["sensor_dropout_max_consecutive_dropped"], 5)
+        self.assertAlmostEqual(
+            result["sensor_dropout_max_delivered_gap_s"], 0.6
+        )
+
 
 class OptimizerPhaseMemoryLogTest(unittest.TestCase):
     def test_aggregates_completed_and_oom_interrupted_phases(self):

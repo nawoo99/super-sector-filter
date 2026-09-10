@@ -167,6 +167,63 @@ namespace perfect_drone {
         }
     };
 
+    struct SensorBurstDropoutConfig {
+        bool enabled{false};
+        double warmup_s{1.0};
+        double period_s{2.0};
+        double duration_s{0.5};
+        double phase_s{0.0};
+        bool phase_overridden_by_environment{false};
+
+        void load(const std::string &path) {
+            yaml_loader::YamlLoader loader(path);
+            loader.LoadParam("sensor_burst_dropout/enabled", enabled, false,
+                             false);
+            loader.LoadParam("sensor_burst_dropout/warmup_s", warmup_s, 1.0,
+                             false);
+            loader.LoadParam("sensor_burst_dropout/period_s", period_s, 2.0,
+                             false);
+            loader.LoadParam("sensor_burst_dropout/duration_s", duration_s,
+                             0.5, false);
+            loader.LoadParam("sensor_burst_dropout/phase_s", phase_s, 0.0,
+                             false);
+            if (const char *override_value =
+                        std::getenv("SUPER_SENSOR_BURST_DROPOUT_PHASE_S")) {
+                char *end = nullptr;
+                const double parsed = std::strtod(override_value, &end);
+                if (end == override_value || *end != '\0' ||
+                    !std::isfinite(parsed)) {
+                    throw std::invalid_argument(
+                            "invalid SUPER_SENSOR_BURST_DROPOUT_PHASE_S");
+                }
+                phase_s = parsed;
+                phase_overridden_by_environment = true;
+            }
+        }
+
+        void validate() const {
+            if (!std::isfinite(warmup_s) || warmup_s < 0.0 ||
+                !std::isfinite(period_s) || period_s <= 0.0 ||
+                !std::isfinite(duration_s) || duration_s <= 0.0 ||
+                duration_s >= period_s || !std::isfinite(phase_s) ||
+                phase_s < 0.0 || phase_s >= period_s) {
+                throw std::invalid_argument(
+                        "invalid sensor_burst_dropout configuration");
+            }
+        }
+
+        bool shouldDrop(const double elapsed_s) const {
+            if (!enabled || !std::isfinite(elapsed_s))
+                return false;
+            const double first_start_s = warmup_s + phase_s;
+            if (elapsed_s < first_start_s)
+                return false;
+            const double cycle_s = std::fmod(elapsed_s - first_start_s,
+                                             period_s);
+            return cycle_s >= 0.0 && cycle_s < duration_s;
+        }
+    };
+
     class PerfectDrone : public rclcpp::Node {
         std::shared_ptr<tf2_ros::TransformBroadcaster> br_map_ego_;
 
@@ -200,6 +257,21 @@ namespace perfect_drone {
         std::uint64_t raw_cloud_publish_count_{0};
         std::uint64_t direct_cloud_handoff_count_{0};
         std::uint64_t sensor_payload_bytes_{0};
+
+        SensorBurstDropoutConfig sensor_burst_dropout_cfg_;
+        std::optional<SensorCadenceClock::time_point>
+                first_delivered_sensor_frame_time_;
+        std::optional<SensorCadenceClock::time_point>
+                last_delivered_sensor_frame_time_;
+        std::uint64_t sensor_delivered_frame_count_{0};
+        std::uint64_t sensor_dropped_frame_count_{0};
+        std::uint64_t sensor_dropped_payload_bytes_{0};
+        std::uint64_t sensor_dropout_burst_count_{0};
+        std::uint64_t sensor_dropout_consecutive_frames_{0};
+        std::uint64_t sensor_dropout_max_consecutive_frames_{0};
+        double sensor_delivered_max_gap_s_{0.0};
+        bool sensor_dropout_active_{false};
+        std::optional<double> sensor_fixed_render_time_s_;
 
         SideEntryV1Config side_entry_v1_cfg_;
         mutable std::mutex side_entry_v1_mutex_;
@@ -283,6 +355,19 @@ namespace perfect_drone {
             cfg_ = Config(cfg_path);
             side_entry_v1_cfg_.load(cfg_path);
             side_entry_v1_cfg_.validate();
+            sensor_burst_dropout_cfg_.load(cfg_path);
+            sensor_burst_dropout_cfg_.validate();
+            if (const char *fixed_render_time =
+                        std::getenv("SUPER_SENSOR_FIXED_RENDER_TIME_S")) {
+                char *end = nullptr;
+                const double parsed = std::strtod(fixed_render_time, &end);
+                if (end == fixed_render_time || *end != '\0' ||
+                    !std::isfinite(parsed)) {
+                    throw std::invalid_argument(
+                            "invalid SUPER_SENSOR_FIXED_RENDER_TIME_S");
+                }
+                sensor_fixed_render_time_s_ = parsed;
+            }
             if (const char *event_path = std::getenv("SUPER_SIDE_ENTRY_V1_EVENT_JSON")) {
                 side_entry_v1_event_json_ = event_path;
             }
@@ -338,6 +423,26 @@ namespace perfect_drone {
                         side_entry_v1_cfg_.sector_half_angle_deg,
                         side_entry_v1_cfg_.prediction_s,
                         side_entry_v1_cfg_.radius_m);
+            }
+            if (sensor_burst_dropout_cfg_.enabled) {
+                RCLCPP_WARN(
+                        this->get_logger(),
+                        "SENSOR_BURST_DROPOUT armed before every cloud "
+                        "transport: warmup=%.3fs period=%.3fs duration=%.3fs "
+                        "phase=%.3fs env_override=%d",
+                        sensor_burst_dropout_cfg_.warmup_s,
+                        sensor_burst_dropout_cfg_.period_s,
+                        sensor_burst_dropout_cfg_.duration_s,
+                        sensor_burst_dropout_cfg_.phase_s,
+                        sensor_burst_dropout_cfg_.phase_overridden_by_environment
+                                ? 1 : 0);
+            }
+            if (sensor_fixed_render_time_s_) {
+                RCLCPP_WARN(
+                        this->get_logger(),
+                        "SENSOR_FIXED_RENDER_TIME enabled for deterministic "
+                        "replay only: t=%.6f",
+                        *sensor_fixed_render_time_s_);
             }
 
 
@@ -427,6 +532,29 @@ namespace perfect_drone {
                     side_entry_v1_cfg_.enabled ? 1 : 0,
                     side_entry_v1_spawned_ ? 1 : 0,
                     static_cast<unsigned long>(side_entry_v1_injected_frames_));
+            RCLCPP_INFO(
+                    this->get_logger(),
+                    "[SENSOR_BURST_DROPOUT_SUMMARY] enabled=%d "
+                    "warmup_s=%.6f period_s=%.6f duration_s=%.6f "
+                    "phase_s=%.6f phase_env_override=%d rendered=%lu "
+                    "delivered=%lu dropped=%lu bursts=%lu "
+                    "max_consecutive_dropped=%lu max_delivered_gap_s=%.6f "
+                    "dropped_payload_bytes=%lu",
+                    sensor_burst_dropout_cfg_.enabled ? 1 : 0,
+                    sensor_burst_dropout_cfg_.warmup_s,
+                    sensor_burst_dropout_cfg_.period_s,
+                    sensor_burst_dropout_cfg_.duration_s,
+                    sensor_burst_dropout_cfg_.phase_s,
+                    sensor_burst_dropout_cfg_.phase_overridden_by_environment
+                            ? 1 : 0,
+                    static_cast<unsigned long>(sensor_frame_count_),
+                    static_cast<unsigned long>(sensor_delivered_frame_count_),
+                    static_cast<unsigned long>(sensor_dropped_frame_count_),
+                    static_cast<unsigned long>(sensor_dropout_burst_count_),
+                    static_cast<unsigned long>(
+                            sensor_dropout_max_consecutive_frames_),
+                    sensor_delivered_max_gap_s_,
+                    static_cast<unsigned long>(sensor_dropped_payload_bytes_));
             if (side_entry_v1_cfg_.enabled) {
                 RCLCPP_INFO(
                         this->get_logger(),
@@ -473,7 +601,8 @@ namespace perfect_drone {
 
         void publishPC() {
             pcl::PointCloud<marsim::PointType>::Ptr local_map(new pcl::PointCloud<marsim::PointType>);
-            const auto cur_t = this->get_clock()->now().seconds();
+            const auto cur_t = sensor_fixed_render_time_s_.value_or(
+                    this->get_clock()->now().seconds());
             render_ptr_->renderOnceInWorld(position_.cast<float>(), q_.cast<float>(), cur_t, local_map);
             appendSideEntryV1(position_, local_map);
             auto pc_msg = std::make_shared<sensor_msgs::msg::PointCloud2>();
@@ -486,8 +615,37 @@ namespace perfect_drone {
             }
             last_sensor_frame_time_ = sensor_frame_time;
             ++sensor_frame_count_;
-            sensor_payload_bytes_ += pc_msg->data.size();
             std::cout << "Publish local map size: " << local_map->size() << std::endl;
+            const double sensor_elapsed_s = std::chrono::duration<double>(
+                    sensor_frame_time - *first_sensor_frame_time_).count();
+            if (sensor_burst_dropout_cfg_.shouldDrop(sensor_elapsed_s)) {
+                if (!sensor_dropout_active_)
+                    ++sensor_dropout_burst_count_;
+                sensor_dropout_active_ = true;
+                ++sensor_dropped_frame_count_;
+                ++sensor_dropout_consecutive_frames_;
+                sensor_dropout_max_consecutive_frames_ = std::max(
+                        sensor_dropout_max_consecutive_frames_,
+                        sensor_dropout_consecutive_frames_);
+                sensor_dropped_payload_bytes_ += pc_msg->data.size();
+                if (sensor_frame_count_ % 50 == 0)
+                    reportSensorCadence();
+                return;
+            }
+            sensor_dropout_active_ = false;
+            sensor_dropout_consecutive_frames_ = 0;
+            if (!first_delivered_sensor_frame_time_)
+                first_delivered_sensor_frame_time_ = sensor_frame_time;
+            if (last_delivered_sensor_frame_time_) {
+                sensor_delivered_max_gap_s_ = std::max(
+                        sensor_delivered_max_gap_s_,
+                        std::chrono::duration<double>(
+                                sensor_frame_time -
+                                *last_delivered_sensor_frame_time_).count());
+            }
+            last_delivered_sensor_frame_time_ = sensor_frame_time;
+            ++sensor_delivered_frame_count_;
+            sensor_payload_bytes_ += pc_msg->data.size();
             if (local_cloud_observer_) {
                 local_cloud_observer_(pc_msg);
                 ++direct_cloud_handoff_count_;

@@ -1,0 +1,28 @@
+#############| For UAV simulation |#################################
+pcd_name: "seed_maps/shc1_mirror_clear.pcd"
+mesh_resource: "package://perfect_drone_sim/meshes/yunque-M.dae"
+init_position:
+  x: 24.50
+  y: 0.00
+  z: 1.50
+init_yaw: 0.000000000000
+
+#############|For LiDAR perception simulation |###############################
+is_360lidar: true
+polar_resolution: 0.4
+downsample_res: 0.1
+vertical_fov: 178.0
+sensing_blind: 0.1
+sensing_horizon: 15
+sensing_rate: 10
+print_time_consumption: false
+lidar_type: 2
+depth_image_en: false
+
+#############| Held-out common sensor fault (default-off in code) |###########
+sensor_burst_dropout:
+  enabled: true
+  warmup_s: 1.0
+  period_s: 2.0
+  duration_s: 0.5
+  phase_s: 0.0

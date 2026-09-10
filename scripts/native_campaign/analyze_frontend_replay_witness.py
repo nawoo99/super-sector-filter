@@ -102,10 +102,29 @@ def _same_value(left: Any, right: Any, *, tolerance: float = 1e-9) -> bool:
     return left == right
 
 
-def analyze(sector: dict[str, Any], adaptive: dict[str, Any]) -> dict[str, Any]:
+def analyze(sector: dict[str, Any], adaptive: dict[str, Any],
+            require_identical_raw_stream: bool = False) -> dict[str, Any]:
     checks: dict[str, bool] = {}
     checks["identical_replay_contract"] = all(
         _same_value(sector[field], adaptive[field]) for field in FROZEN_FIELDS
+    )
+    raw_metric_fields = (
+        "frames", "points", "hazard_frames", "hazard_points",
+        "conflict_frames", "conflict_points", "max_conflict_points_per_frame",
+    )
+    sector_hash = sector["raw"].get("stream_hash_fnv1a64")
+    adaptive_hash = adaptive["raw"].get("stream_hash_fnv1a64")
+    hashes_present = (
+        isinstance(sector_hash, str) and isinstance(adaptive_hash, str)
+        and bool(sector_hash) and bool(adaptive_hash)
+    )
+    checks["identical_raw_stream"] = (
+        all(_same_value(sector["raw"][field], adaptive["raw"][field])
+            for field in raw_metric_fields)
+        and (
+            sector_hash == adaptive_hash
+            if hashes_present else not require_identical_raw_stream
+        )
     )
     checks["sector_raw_hazard_visible"] = (
         sector["raw"]["hazard_frames"] >= 2
@@ -171,6 +190,9 @@ def analyze(sector: dict[str, Any], adaptive: dict[str, Any]) -> dict[str, Any]:
             "adaptive_last_minimum_distance_m": adaptive.get(
                 "last_verdict_minimum_distance_m"
             ),
+            "sector_raw_stream_hash_fnv1a64": sector_hash,
+            "adaptive_raw_stream_hash_fnv1a64": adaptive_hash,
+            "identical_raw_hash_required": require_identical_raw_stream,
         },
     }
 
@@ -187,11 +209,15 @@ def main() -> int:
     parser.add_argument("--sector", type=Path, required=True)
     parser.add_argument("--adaptive", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--require-identical-raw-stream", action="store_true")
     arguments = parser.parse_args()
     try:
         sector = _load(arguments.sector, "sector")
         adaptive = _load(arguments.adaptive, "adaptive")
-        result = analyze(sector, adaptive)
+        result = analyze(
+            sector, adaptive,
+            require_identical_raw_stream=arguments.require_identical_raw_stream,
+        )
     except InvalidWitness as error:
         result = {
             "schema": "frontend-replay-witness-gate-v1",

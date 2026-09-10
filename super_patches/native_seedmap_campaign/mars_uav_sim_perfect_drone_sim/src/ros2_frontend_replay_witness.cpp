@@ -103,12 +103,15 @@ struct CloudObservation {
   std::uint64_t conflict_frames{0};
   std::uint64_t conflict_points{0};
   std::uint64_t max_conflict_points_per_frame{0};
+  std::uint64_t stream_hash{1469598103934665603ULL};
 };
 
 class ReplayWitness final : public rclcpp::Node {
 public:
-  explicit ReplayWitness(const rclcpp::NodeOptions &options)
-      : Node("frontend_replay_witness", options), start_(SteadyClock::now()) {
+  explicit ReplayWitness(
+      const std::string &node_name, const rclcpp::NodeOptions &options,
+      const SteadyClock::time_point start = SteadyClock::now())
+      : Node(node_name, options), start_(start) {
     mode_ = declare_parameter<std::string>("mode", "sector");
     result_json_ = declare_parameter<std::string>("result_json", "");
     duration_s_ = declare_parameter<double>("duration_s", 6.0);
@@ -136,6 +139,18 @@ public:
     fresh_age_limit_s_ = declare_parameter<double>("fresh_age_limit_s", 0.75);
     generation_ = static_cast<std::uint64_t>(
         declare_parameter<int64_t>("trajectory_generation", 1));
+    const auto target_frames = declare_parameter<int64_t>("target_frames", 0);
+    if (target_frames < 0)
+      throw std::invalid_argument("target_frames must be non-negative");
+    target_frames_ = static_cast<std::uint64_t>(target_frames);
+    command_topic_ = declare_parameter<std::string>(
+        "command_topic", "/planning/pos_cmd");
+    trajectory_topic_ = declare_parameter<std::string>(
+        "trajectory_topic", "/witness/planning_cmd/poly_traj");
+    filtered_topic_ = declare_parameter<std::string>(
+        "filtered_topic", "/witness/cloud_filtered");
+    verdict_topic_ = declare_parameter<std::string>(
+        "verdict_topic", "/witness/trajectory_risk_verdict");
 
     if (duration_s_ <= 0.0 || warmup_s_ < 0.0 || warmup_s_ >= duration_s_ ||
         trajectory_duration_s_ <= 0.0 || risk_horizon_s_ <= 0.0 ||
@@ -150,26 +165,29 @@ public:
     const auto verdict_qos =
         rclcpp::QoS(rclcpp::KeepLast(4)).reliable().durability_volatile();
     command_pub_ = create_publisher<mars_quadrotor_msgs::msg::PositionCommand>(
-        "/planning/pos_cmd", sensor_qos);
+        command_topic_, sensor_qos);
     trajectory_pub_ =
         create_publisher<mars_quadrotor_msgs::msg::PolynomialTrajectory>(
-            "/witness/planning_cmd/poly_traj", sensor_qos);
+            trajectory_topic_, sensor_qos);
     filtered_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-        "/witness/cloud_filtered", sensor_qos,
+        filtered_topic_, sensor_qos,
         [this](const sensor_msgs::msg::PointCloud2::SharedPtr message) {
           observeCloud(*message, filtered_);
         });
     verdict_sub_ = create_subscription<Verdict>(
-        "/witness/trajectory_risk_verdict", verdict_qos,
+        verdict_topic_, verdict_qos,
         [this](const Verdict::SharedPtr message) { observeVerdict(*message); });
     command_timer_ = create_wall_timer(std::chrono::milliseconds(10), [this]() {
       publishCommandAndTrajectory();
     });
   }
 
-  void observeRaw(const sensor_msgs::msg::PointCloud2::SharedPtr &message) {
+  bool observeRaw(const sensor_msgs::msg::PointCloud2::SharedPtr &message) {
+    if (targetReached())
+      return false;
     if (message)
       observeCloud(*message, raw_);
+    return true;
   }
 
   bool expired() const {
@@ -177,8 +195,18 @@ public:
            duration_s_;
   }
 
+  bool targetReached() const {
+    if (target_frames_ == 0)
+      return false;
+    std::lock_guard<std::mutex> lock(mutex_);
+    return raw_.frames >= target_frames_;
+  }
+
   const std::string &mode() const { return mode_; }
   double riskHorizonSeconds() const { return risk_horizon_s_; }
+  const std::string &filteredTopic() const { return filtered_topic_; }
+  const std::string &trajectoryTopic() const { return trajectory_topic_; }
+  const std::string &verdictTopic() const { return verdict_topic_; }
 
   void writeResult() const {
     if (result_json_.empty())
@@ -191,6 +219,9 @@ public:
     const auto writeCloud = [&output](const char *name,
                                       const CloudObservation &value,
                                       const bool trailing) {
+      std::ostringstream hash;
+      hash << std::hex << std::setfill('0') << std::setw(16)
+           << value.stream_hash;
       output << "  \"" << name << "\": {\n"
              << "    \"frames\": " << value.frames << ",\n"
              << "    \"points\": " << value.points << ",\n"
@@ -199,7 +230,9 @@ public:
              << "    \"conflict_frames\": " << value.conflict_frames << ",\n"
              << "    \"conflict_points\": " << value.conflict_points << ",\n"
              << "    \"max_conflict_points_per_frame\": "
-             << value.max_conflict_points_per_frame << "\n"
+             << value.max_conflict_points_per_frame << ",\n"
+             << "    \"stream_hash_fnv1a64\": \"" << hash.str()
+             << "\"\n"
              << "  }" << (trailing ? "," : "") << "\n";
     };
     const auto jsonNumber = [](const double value) {
@@ -216,6 +249,7 @@ public:
            << "  \"mode\": \"" << jsonEscape(mode_) << "\",\n"
            << "  \"duration_s\": " << duration_s_ << ",\n"
            << "  \"warmup_s\": " << warmup_s_ << ",\n"
+           << "  \"target_frames\": " << target_frames_ << ",\n"
            << "  \"replay_position_xyz_m\": [" << x_ << ", " << y_ << ", " << z_
            << "],\n"
            << "  \"replay_yaw_deg\": " << yaw_deg_ << ",\n"
@@ -289,10 +323,10 @@ private:
     return std::sqrt(distance_squared);
   }
 
-  void observeCloud(const sensor_msgs::msg::PointCloud2 &message,
+  bool observeCloud(const sensor_msgs::msg::PointCloud2 &message,
                     CloudObservation &observation) {
     if (!afterWarmup())
-      return;
+      return false;
     pcl::PointCloud<pcl::PointXYZI> cloud;
     pcl::fromROSMsg(message, cloud);
     std::uint64_t hazard_points = 0;
@@ -321,6 +355,15 @@ private:
       }
     }
     std::lock_guard<std::mutex> lock(mutex_);
+    const auto hashByte = [&observation](const std::uint8_t value) {
+      observation.stream_hash ^= value;
+      observation.stream_hash *= 1099511628211ULL;
+    };
+    const std::uint64_t size = message.data.size();
+    for (unsigned int shift = 0; shift < 64; shift += 8)
+      hashByte(static_cast<std::uint8_t>((size >> shift) & 0xffU));
+    for (const auto value : message.data)
+      hashByte(value);
     ++observation.frames;
     observation.points += cloud.size();
     observation.hazard_points += hazard_points;
@@ -331,6 +374,7 @@ private:
       ++observation.conflict_frames;
     observation.max_conflict_points_per_frame =
         std::max(observation.max_conflict_points_per_frame, conflict_points);
+    return true;
   }
 
   void observeVerdict(const Verdict &verdict) {
@@ -433,6 +477,11 @@ private:
   double hazard_z_max_{3.2};
   double fresh_age_limit_s_{0.75};
   std::uint64_t generation_{1};
+  std::uint64_t target_frames_{0};
+  std::string command_topic_;
+  std::string trajectory_topic_;
+  std::string filtered_topic_;
+  std::string verdict_topic_;
   CloudObservation raw_;
   CloudObservation filtered_;
   std::uint64_t verdict_messages_{0};
@@ -456,6 +505,37 @@ private:
   rclcpp::TimerBase::SharedPtr command_timer_;
 };
 
+void validateFilterArguments(const ReplayWitness &witness,
+                             const std::vector<std::string> &arguments) {
+  if (arguments.empty())
+    throw std::invalid_argument("filter_arguments must not be empty");
+  if (arguments.front() != witness.mode()) {
+    throw std::invalid_argument(
+        "mode parameter and filter_arguments mode must match");
+  }
+  if (argumentValue(arguments, "--output-topic") != witness.filteredTopic()) {
+    throw std::invalid_argument(
+        "filter output topic and witness filtered topic must match");
+  }
+  if (witness.mode() == "adaptive") {
+    if (argumentValue(arguments, "--risk-verdict-topic") !=
+            witness.verdictTopic() ||
+        argumentValue(arguments, "--risk-trajectory-topic") !=
+            witness.trajectoryTopic()) {
+      throw std::invalid_argument(
+          "adaptive witness requires matching dedicated risk topics");
+    }
+    const std::string encoded_horizon =
+        argumentValue(arguments, "--risk-horizon-s");
+    if (encoded_horizon.empty() ||
+        std::abs(std::stod(encoded_horizon) -
+                 witness.riskHorizonSeconds()) > 1e-9) {
+      throw std::invalid_argument(
+          "witness and frontend risk horizons must match");
+    }
+  }
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
@@ -469,41 +549,149 @@ int main(int argc, char **argv) {
     configuration->declare_parameter<std::string>("config_name",
                                                   "abt2_cal_t3.yaml");
     configuration->declare_parameter<std::string>("filter_arguments", "");
+    configuration->declare_parameter<bool>("paired_replay", false);
+    configuration->declare_parameter<std::string>(
+        "sector_filter_arguments", "");
+    configuration->declare_parameter<std::string>(
+        "adaptive_filter_arguments", "");
+    configuration->declare_parameter<std::string>("sector_result_json", "");
+    configuration->declare_parameter<std::string>("adaptive_result_json", "");
     const std::string config_name =
         configuration->get_parameter("config_name").as_string();
+    const bool paired_replay =
+        configuration->get_parameter("paired_replay").as_bool();
+    if (paired_replay) {
+      const auto sector_arguments = splitArguments(
+          configuration->get_parameter("sector_filter_arguments").as_string());
+      const auto adaptive_arguments = splitArguments(
+          configuration->get_parameter("adaptive_filter_arguments").as_string());
+      const auto sector_result =
+          configuration->get_parameter("sector_result_json").as_string();
+      const auto adaptive_result =
+          configuration->get_parameter("adaptive_result_json").as_string();
+      if (sector_result.empty() || adaptive_result.empty())
+        throw std::invalid_argument("paired result paths must not be empty");
+
+      const auto common_start = SteadyClock::now();
+      rclcpp::NodeOptions sector_options;
+      sector_options.use_intra_process_comms(true);
+      sector_options.parameter_overrides({
+          rclcpp::Parameter("mode", "sector"),
+          rclcpp::Parameter("result_json", sector_result),
+          rclcpp::Parameter("filtered_topic",
+                            "/witness/sector/cloud_filtered"),
+          rclcpp::Parameter("trajectory_topic",
+                            "/witness/sector/planning_cmd/poly_traj"),
+          rclcpp::Parameter("verdict_topic",
+                            "/witness/sector/trajectory_risk_verdict"),
+      });
+      rclcpp::NodeOptions adaptive_options;
+      adaptive_options.use_intra_process_comms(true);
+      adaptive_options.parameter_overrides({
+          rclcpp::Parameter("mode", "adaptive"),
+          rclcpp::Parameter("result_json", adaptive_result),
+          rclcpp::Parameter("filtered_topic",
+                            "/witness/adaptive/cloud_filtered"),
+          rclcpp::Parameter("trajectory_topic",
+                            "/witness/adaptive/planning_cmd/poly_traj"),
+          rclcpp::Parameter("verdict_topic",
+                            "/witness/adaptive/trajectory_risk_verdict"),
+      });
+      auto sector_witness = std::make_shared<ReplayWitness>(
+          "frontend_replay_witness_sector", sector_options, common_start);
+      auto adaptive_witness = std::make_shared<ReplayWitness>(
+          "frontend_replay_witness_adaptive", adaptive_options, common_start);
+      validateFilterArguments(*sector_witness, sector_arguments);
+      validateFilterArguments(*adaptive_witness, adaptive_arguments);
+      auto sector_filter =
+          native_sector::createDirectInputNode(sector_arguments, options);
+      auto adaptive_filter =
+          native_sector::createDirectInputNode(adaptive_arguments, options);
+
+      rclcpp::NodeOptions simulator_options;
+      simulator_options.use_intra_process_comms(true);
+      simulator_options.parameter_overrides(
+          {rclcpp::Parameter("config_name", config_name)});
+      auto simulator = std::make_shared<perfect_drone::PerfectDrone>(
+          [sector_witness, adaptive_witness,
+           sector_submit = sector_filter.submit_cloud,
+           adaptive_submit = adaptive_filter.submit_cloud](
+              const sensor_msgs::msg::PointCloud2::SharedPtr &cloud) {
+            const bool sector_accept = sector_witness->observeRaw(cloud);
+            const bool adaptive_accept = adaptive_witness->observeRaw(cloud);
+            if (sector_accept != adaptive_accept) {
+              std::fprintf(stderr,
+                           "paired replay raw admission diverged\n");
+              rclcpp::shutdown();
+              return;
+            }
+            if (sector_accept) {
+              sector_submit(cloud);
+              adaptive_submit(cloud);
+            }
+          },
+          false, simulator_options);
+
+      rclcpp::executors::MultiThreadedExecutor side_executor(
+          rclcpp::ExecutorOptions(), 9);
+      side_executor.add_callback_group(simulator->cmdSubCbkGroup(),
+                                       simulator->get_node_base_interface());
+      side_executor.add_callback_group(simulator->odomTimerCbkGroup(),
+                                       simulator->get_node_base_interface());
+      side_executor.add_node(sector_filter.node);
+      side_executor.add_node(adaptive_filter.node);
+      side_executor.add_node(sector_witness);
+      side_executor.add_node(adaptive_witness);
+      side_executor.add_node(configuration);
+      std::thread side_thread([&side_executor]() { side_executor.spin(); });
+
+      std::atomic<bool> watchdog_stop{false};
+      std::thread watchdog([&watchdog_stop, sector_witness]() {
+        while (!watchdog_stop.load(std::memory_order_relaxed)) {
+          if (sector_witness->targetReached()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(750));
+            if (!watchdog_stop.load(std::memory_order_relaxed))
+              rclcpp::shutdown();
+            return;
+          }
+          if (sector_witness->expired()) {
+            rclcpp::shutdown();
+            return;
+          }
+          std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+      });
+
+      rclcpp::executors::SingleThreadedExecutor render_executor;
+      render_executor.add_callback_group(simulator->localPcCbkGroup(),
+                                         simulator->get_node_base_interface());
+      render_executor.spin();
+      watchdog_stop.store(true, std::memory_order_relaxed);
+      watchdog.join();
+      side_executor.cancel();
+      side_thread.join();
+      simulator->reportSensorCadence();
+      simulator.reset();
+      sector_filter.node.reset();
+      adaptive_filter.node.reset();
+      sector_filter.submit_cloud = {};
+      adaptive_filter.submit_cloud = {};
+      sector_witness->writeResult();
+      adaptive_witness->writeResult();
+      sector_witness.reset();
+      adaptive_witness.reset();
+      configuration.reset();
+      return 0;
+    }
     const std::string encoded_arguments =
         configuration->get_parameter("filter_arguments").as_string();
     auto filter_arguments = splitArguments(encoded_arguments);
     if (filter_arguments.empty())
       throw std::invalid_argument("filter_arguments must not be empty");
 
-    auto witness = std::make_shared<ReplayWitness>(options);
-    if (filter_arguments.front() != witness->mode()) {
-      throw std::invalid_argument(
-          "mode parameter and filter_arguments mode must match");
-    }
-    if (argumentValue(filter_arguments, "--output-topic") !=
-        "/witness/cloud_filtered") {
-      throw std::invalid_argument(
-          "filter_arguments must publish /witness/cloud_filtered");
-    }
-    if (witness->mode() == "adaptive") {
-      if (argumentValue(filter_arguments, "--risk-verdict-topic") !=
-              "/witness/trajectory_risk_verdict" ||
-          argumentValue(filter_arguments, "--risk-trajectory-topic") !=
-              "/witness/planning_cmd/poly_traj") {
-        throw std::invalid_argument(
-            "adaptive witness requires the dedicated risk topics");
-      }
-      const std::string encoded_horizon =
-          argumentValue(filter_arguments, "--risk-horizon-s");
-      if (encoded_horizon.empty() ||
-          std::abs(std::stod(encoded_horizon) - witness->riskHorizonSeconds()) >
-              1e-9) {
-        throw std::invalid_argument(
-            "witness and frontend risk horizons must match");
-      }
-    }
+    auto witness = std::make_shared<ReplayWitness>(
+        "frontend_replay_witness", options);
+    validateFilterArguments(*witness, filter_arguments);
     native_sector::DirectInputHandle filter =
         native_sector::createDirectInputNode(filter_arguments, options);
     rclcpp::NodeOptions simulator_options;
@@ -513,8 +701,8 @@ int main(int argc, char **argv) {
     auto simulator = std::make_shared<perfect_drone::PerfectDrone>(
         [witness, submit = filter.submit_cloud](
             const sensor_msgs::msg::PointCloud2::SharedPtr &cloud) {
-          witness->observeRaw(cloud);
-          submit(cloud);
+          if (witness->observeRaw(cloud))
+            submit(cloud);
         },
         false, simulator_options);
 
@@ -533,12 +721,22 @@ int main(int argc, char **argv) {
 
     std::atomic<bool> watchdog_stop{false};
     std::thread watchdog([&watchdog_stop, witness]() {
-      while (!watchdog_stop.load(std::memory_order_relaxed) &&
-             !witness->expired()) {
+      while (!watchdog_stop.load(std::memory_order_relaxed)) {
+        if (witness->targetReached()) {
+          // Stop accepting raw input at the exact registered count, but give
+          // the asynchronous filter/risk workers time to publish their final
+          // output before shutting the executors down.
+          std::this_thread::sleep_for(std::chrono::milliseconds(750));
+          if (!watchdog_stop.load(std::memory_order_relaxed))
+            rclcpp::shutdown();
+          return;
+        }
+        if (witness->expired()) {
+          rclcpp::shutdown();
+          return;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
       }
-      if (!watchdog_stop.load(std::memory_order_relaxed))
-        rclcpp::shutdown();
     });
 
     rclcpp::executors::SingleThreadedExecutor render_executor;

@@ -1,6 +1,26 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-10 사전등록 held-out 10 Hz burst-dropout 확인시험 통과.** H9
+> 탐색 결과와 분리해, 결과 관측 전에 정적 blind-fork 3개(C1 mirror, C2
+> wide-offset, C3 near-short)와 공통 10 Hz 센서의 0.5 s/2.0 s burst loss,
+> 10개 paired phase를 동결했다. Planner/v7/45° Sector/Adaptive 정책은 바꾸지
+> 않았고 fault injector는 기본값 false이며 DDS/direct Full/direct frontend보다
+> 앞에서 동일 frame을 억제한다.
+>
+> Actual-PCD, 동일 raw-hash paired MARSIM/C++ replay, fault integrity, Full
+> feasibility를 모두 통과했다. 새 90행에서 Full/Adaptive는 맵별 10/10,
+> 합계 30/30 안전 완주했다. Sector는 맵별 안전 완주 4/10, 4/10, 5/10이고
+> 접촉 6/10, 6/10, 5/10이었다. 대응쌍 discordance 17:0, exact McNemar
+> p=1.52587890625e-05로 판정은 `CONFIRMATORY_TRANSFER_OBSERVED`다.
+>
+> Adaptive는 Full 대비 공정한 end-to-end CPU 7.44%, planner ingress 71.02%
+> 감소했고 effective Full-open은 평균 1.20회였다. 단, 이는 3개 held-out
+> simulation stress의 유한 표본 결과다. Population 100%, 실환경 보장,
+> nominal Map1--10 효율 결과로 과장하지 말 것. 최신 근거는 viability §8.75와
+> `docs/static_burst_dropout_confirmation_result_20260910.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-09 static heading-mismatch h9에서 첫 안전성 분리 확인.** Planner와
 > 정책은 동결했고, 정적 two-branch 맵에서 공통 LiDAR만 2 Hz로 낮춘 severe
 > dropout-equivalent stress다. Actual MARSIM/C++ replay에서 동일 raw hazard

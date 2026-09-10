@@ -699,19 +699,52 @@ def parse_sensor_cadence_log(path):
         r"payload_bytes=(\d+)"
     )
     result = {}
+    dropout_pattern = re.compile(
+        r"\[SENSOR_BURST_DROPOUT_SUMMARY\]\s+"
+        r"enabled=(\d+)\s+warmup_s=([0-9.]+)\s+"
+        r"period_s=([0-9.]+)\s+duration_s=([0-9.]+)\s+"
+        r"phase_s=([0-9.]+)\s+phase_env_override=(\d+)\s+"
+        r"rendered=(\d+)\s+delivered=(\d+)\s+dropped=(\d+)\s+"
+        r"bursts=(\d+)\s+max_consecutive_dropped=(\d+)\s+"
+        r"max_delivered_gap_s=([0-9.]+)\s+dropped_payload_bytes=(\d+)"
+    )
     with open(path, errors="replace") as stream:
         for line in stream:
             match = pattern.search(line)
-            if not match:
-                continue
-            result = {
-                "sensor_frames": int(match.group(1)),
-                "sensor_span_s": float(match.group(2)),
-                "sensor_hz": float(match.group(3)),
-                "sensor_raw_published": int(match.group(4)),
-                "sensor_direct_handoffs": int(match.group(5)),
-                "sensor_payload_bytes": int(match.group(6)),
-            }
+            if match:
+                result.update({
+                    "sensor_frames": int(match.group(1)),
+                    "sensor_span_s": float(match.group(2)),
+                    "sensor_hz": float(match.group(3)),
+                    "sensor_raw_published": int(match.group(4)),
+                    "sensor_direct_handoffs": int(match.group(5)),
+                    "sensor_payload_bytes": int(match.group(6)),
+                })
+            dropout_match = dropout_pattern.search(line)
+            if dropout_match:
+                result.update({
+                    "sensor_dropout_enabled": bool(int(dropout_match.group(1))),
+                    "sensor_dropout_warmup_s": float(dropout_match.group(2)),
+                    "sensor_dropout_period_s": float(dropout_match.group(3)),
+                    "sensor_dropout_duration_s": float(dropout_match.group(4)),
+                    "sensor_dropout_phase_s": float(dropout_match.group(5)),
+                    "sensor_dropout_phase_env_override": bool(
+                        int(dropout_match.group(6))
+                    ),
+                    "sensor_rendered_frames": int(dropout_match.group(7)),
+                    "sensor_delivered_frames": int(dropout_match.group(8)),
+                    "sensor_dropped_frames": int(dropout_match.group(9)),
+                    "sensor_dropout_bursts": int(dropout_match.group(10)),
+                    "sensor_dropout_max_consecutive_dropped": int(
+                        dropout_match.group(11)
+                    ),
+                    "sensor_dropout_max_delivered_gap_s": float(
+                        dropout_match.group(12)
+                    ),
+                    "sensor_dropped_payload_bytes": int(
+                        dropout_match.group(13)
+                    ),
+                })
     return result
 
 
@@ -1275,6 +1308,20 @@ STATIC_HEADING_MISMATCH_H8_MAPS = (
 STATIC_HEADING_MISMATCH_H9_MAPS = (
     "shm1_h9_clear", "shm1_h9_hazard",
 )
+STATIC_BURST_DROPOUT_C1_MAPS = (
+    "shc1_mirror_clear", "shc1_mirror_hazard",
+)
+STATIC_BURST_DROPOUT_C2_MAPS = (
+    "shc2_wide_offset_clear", "shc2_wide_offset_hazard",
+)
+STATIC_BURST_DROPOUT_C3_MAPS = (
+    "shc3_near_short_clear", "shc3_near_short_hazard",
+)
+STATIC_BURST_DROPOUT_CONFIRMATION_MAPS = (
+    STATIC_BURST_DROPOUT_C1_MAPS
+    + STATIC_BURST_DROPOUT_C2_MAPS
+    + STATIC_BURST_DROPOUT_C3_MAPS
+)
 STATIC_HEADING_MISMATCH_MAPS = (
     STATIC_HEADING_MISMATCH_H1_MAPS
     + STATIC_HEADING_MISMATCH_H2_MAPS
@@ -1354,6 +1401,18 @@ STATIC_HEADING_MISMATCH_AUDIT_WITNESSES = {
     **{map_name: (25.0, 4.0, 1.0, 3.20)
        for map_name in STATIC_HEADING_MISMATCH_H9_MAPS},
 }
+STATIC_BURST_DROPOUT_PROBES = {
+    **{map_name: (24.0, 4.0, 1.0)
+       for map_name in STATIC_BURST_DROPOUT_C1_MAPS},
+    **{map_name: (25.0, 4.4, 1.0)
+       for map_name in STATIC_BURST_DROPOUT_C2_MAPS},
+    **{map_name: (25.0, 3.6, 1.0)
+       for map_name in STATIC_BURST_DROPOUT_C3_MAPS},
+}
+STATIC_BURST_DROPOUT_AUDIT_WITNESSES = {
+    map_name: (*probe, 3.20)
+    for map_name, probe in STATIC_BURST_DROPOUT_PROBES.items()
+}
 STATIC_HEADING_MISMATCH_CYLINDER_HAZARDS = {
     map_name: STATIC_HEADING_MISMATCH_AUDIT_WITNESSES[map_name]
     for map_name in STATIC_HEADING_MISMATCH_H1_MAPS
@@ -1374,6 +1433,7 @@ STATIC_OCCLUSION_EXPERIMENT_MAPS = (
     + STATIC_BLIND_DOORWAY_EXPLORATION_MAPS
     + STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS
     + STATIC_HEADING_MISMATCH_MAPS
+    + STATIC_BURST_DROPOUT_CONFIRMATION_MAPS
 )
 VALID_MAPS = (
     tuple(f"seed{i}" for i in range(1, 16))
@@ -1718,6 +1778,15 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "sensor_frames", "sensor_span_s", "sensor_hz",
           "sensor_raw_published", "sensor_direct_handoffs",
           "sensor_payload_bytes", "sensor_payload_mib_s",
+          "sensor_dropout_expected_phase_s", "sensor_dropout_enabled",
+          "sensor_dropout_warmup_s", "sensor_dropout_period_s",
+          "sensor_dropout_duration_s", "sensor_dropout_phase_s",
+          "sensor_dropout_phase_env_override", "sensor_rendered_frames",
+          "sensor_delivered_frames", "sensor_dropped_frames",
+          "sensor_dropout_bursts",
+          "sensor_dropout_max_consecutive_dropped",
+          "sensor_dropout_max_delivered_gap_s",
+          "sensor_dropped_payload_bytes",
           "filter_frames", "filter_cloud_input_callbacks",
           "filter_cloud_input_span_s", "filter_cloud_input_hz",
           "filter_cloud_worker_overwrites", "filter_cloud_input_payload_bytes",
@@ -2283,6 +2352,14 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         )
         if loop_timeout_override is not None:
             timeout = loop_timeout_override
+    elif map_name in STATIC_BURST_DROPOUT_CONFIRMATION_MAPS:
+        wps, switch, timeout = (
+            STATIC_HEADING_FORK_WPS,
+            LOOP_SWITCH,
+            STATIC_HEADING_MISMATCH_TIMEOUT,
+        )
+        if loop_timeout_override is not None:
+            timeout = loop_timeout_override
     elif map_name in (
         STATIC_HEADING_MISMATCH_H5_MAPS
         + STATIC_HEADING_MISMATCH_H6_MAPS
@@ -2340,6 +2417,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         if loop_timeout_override is not None:
             timeout = loop_timeout_override
     tag = f"{map_name}_run{run}_{mode}"
+    sensor_dropout_expected_phase_s = (
+        round(0.2 * ((run - 1) % 10), 9)
+        if map_name in STATIC_BURST_DROPOUT_CONFIRMATION_MAPS else None
+    )
     oom_kill_start = read_cgroup_event("oom_kill")
     retry_reasons = []
     memory_summaries = []
@@ -2489,6 +2570,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             elif map_name in STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS:
                 probe_x, probe_y, probe_radius = (
                     STATIC_TWO_ROUTE_BLIND_HAZARD_PROBES[map_name]
+                )
+            elif map_name in STATIC_BURST_DROPOUT_CONFIRMATION_MAPS:
+                probe_x, probe_y, probe_radius = (
+                    STATIC_BURST_DROPOUT_PROBES[map_name]
                 )
             elif map_name in STATIC_HEADING_MISMATCH_MAPS:
                 probe_x, probe_y, probe_radius = (
@@ -2719,6 +2804,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             )
             if map_name in STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS:
                 waypoint_data_name = "blind_two_route.txt"
+            elif map_name in STATIC_BURST_DROPOUT_CONFIRMATION_MAPS:
+                waypoint_data_name = "blind_heading_fork.txt"
             elif map_name in (
                 STATIC_HEADING_MISMATCH_H5_MAPS
                 + STATIC_HEADING_MISMATCH_H6_MAPS
@@ -2787,6 +2874,11 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             launch_cmd = (
                 f"SUPER_SIDE_ENTRY_V1_EVENT_JSON={scenario_event_json!r} "
                 + launch_cmd
+            )
+        if sensor_dropout_expected_phase_s is not None:
+            launch_cmd = (
+                "SUPER_SENSOR_BURST_DROPOUT_PHASE_S="
+                f"{sensor_dropout_expected_phase_s:.1f} " + launch_cmd
             )
         perf_log_before_launch = perf_log_signature()
         trace_environment = (
@@ -2994,6 +3086,17 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                         f" --static-hazard-radius-m {hazard_radius}"
                         f" --static-hazard-height-m {hazard_height}"
                     )
+            elif map_name in STATIC_BURST_DROPOUT_CONFIRMATION_MAPS:
+                hazard_x, hazard_y, hazard_radius, hazard_height = (
+                    STATIC_BURST_DROPOUT_AUDIT_WITNESSES[map_name]
+                )
+                monitor_options += (
+                    " --trajectory-risk-audit"
+                    f" --trajectory-audit-center-x {hazard_x}"
+                    f" --trajectory-audit-center-y {hazard_y}"
+                    f" --trajectory-audit-radius-m {hazard_radius}"
+                    f" --trajectory-audit-height-m {hazard_height}"
+                )
             elif map_name in STATIC_HEADING_MISMATCH_MAPS:
                 hazard_x, hazard_y, hazard_radius, hazard_height = (
                     STATIC_HEADING_MISMATCH_AUDIT_WITNESSES[map_name]
@@ -3279,6 +3382,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                "retry_count": attempt - 1,
                "first_attempt_success": attempt == 1,
                "retry_reasons": "; ".join(retry_reasons) or None,
+               "sensor_dropout_expected_phase_s": (
+                   sensor_dropout_expected_phase_s
+               ),
                "oom_kill_delta": (
                    max(0, current_oom - oom_kill_start)
                    if oom_kill_start is not None
@@ -3751,6 +3857,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             "resource_guard_preflight_wait_s": resource_guard_preflight_wait_s,
             "attempt_count": attempt_max, "retry_count": attempt_max - 1,
             "first_attempt_success": False,
+            "sensor_dropout_expected_phase_s": (
+                sensor_dropout_expected_phase_s
+            ),
             "retry_reasons": "; ".join(retry_reasons) or None,
             "oom_kill_delta": (
                 max(0, oom_kill_end - oom_kill_start)
@@ -4361,6 +4470,7 @@ def main():
             STATIC_HEADING_MISMATCH_H7_MAPS,
             STATIC_HEADING_MISMATCH_H8_MAPS,
             STATIC_HEADING_MISMATCH_H9_MAPS,
+            STATIC_BURST_DROPOUT_CONFIRMATION_MAPS,
         )
         if any(map_name in family for map_name in args.maps)
     ]
