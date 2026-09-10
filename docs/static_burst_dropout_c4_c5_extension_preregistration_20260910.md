@@ -3,7 +3,17 @@
 Date frozen: 2026-09-10 (Asia/Seoul), before C4/C5 asset generation, replay,
 gate flight, or campaign outcome
 
-Status: **frozen prospective extension; no C4/C5 outcome observed**
+Status at freeze: **prospective extension; no C4/C5 outcome observed**
+
+Outcome addendum (added only after all frozen flights completed): all
+structure, paired production replay and one-row Full feasibility gates passed.
+The exact 120-row matrix contained only unique first attempts and passed every
+dropout, speed, resource, static-PCD and OOM integrity check. Full and Adaptive
+were each 40/40 safe; Fixed Sector was 7/40 safe with 32 contact rows and four
+non-completions. Paired discordance was 33:0, exact two-sided McNemar
+p=`2.3283064365386963e-10`, so the frozen decision is
+**`C4_C5_EXTENSION_OBSERVED`**. Details are in
+`docs/ten_condition_n20_result_20260910.md`.
 
 ## Purpose and claim boundary
 

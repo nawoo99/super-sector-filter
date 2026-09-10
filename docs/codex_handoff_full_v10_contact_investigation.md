@@ -1,6 +1,26 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-10 C4--C5 prospective extension 및 10조건 n=20 표 완료.** 기존
+> R1--R5/C1--C3의 480행은 수정하지 않고, 결과 관측 전에 동결·push한 두 정적
+> blind-fork(C4 deep mirror, C5 asymmetric offset)를 추가했다. 두 맵은
+> actual-PCD structure, 동일 raw-hash paired MARSIM/C++ replay, Full feasibility
+> gate를 모두 통과했다.
+>
+> 새 본 실험 120행은 모두 unique first attempt이고 retry/infrastructure/OOM 0,
+> dropout phase/cadence/speed/resource/static-PCD gate가 유효하다. C4/C5에서
+> Full과 Adaptive는 각각 맵별 20/20 안전, Sector는 4/20 및 3/20 안전이었다.
+> 신규 합계는 Full/Adaptive 40/40, Sector 7/40 안전(접촉 32/40, 완주 36/40),
+> paired 33:0, exact McNemar p=2.3283064365386963e-10으로
+> `C4_C5_EXTENSION_OBSERVED`다.
+>
+> 최종 표는 10 reporting conditions x 3모드 x 20행 = 600행이다. C1--C5
+> descriptive 합계는 Full/Adaptive 100/100, Sector 34/100 안전이지만 C4/C5는
+> C1--C3 결과를 본 뒤 설계됐으므로 pooled 검정은 secondary다. 정상과 stress를
+> 합치지 말고 100/100도 population 100%로 쓰지 말 것. 최신 근거는 viability
+> §8.77 및 `docs/ten_condition_n20_result_20260910.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-10 8조건 n=20 표와 독립 stress 복제 완료.** 기존 Map1--10의
 > paired layout을 절반 폐기하지 않고 장애물 반경 tier R1--R5로 묶었다(각각
 > 2개 물리 맵 x 10회). Held-out C1--C3은 기존 block 1을 그대로 보존하고,

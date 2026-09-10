@@ -4881,3 +4881,45 @@ Block-2 host swap peaked at 2007.86 MiB and runtime available memory reached
 zero and no row was retried. All 83 native campaign tests passed. The machine
 decision is `EIGHT_CONDITION_N20_COMPLETE`; the full table and claim boundary
 are in `docs/eight_condition_n20_result_20260910.md`.
+
+### 8.77 Prospective C4--C5 extension and ten-condition table (2026-09-10)
+
+The existing R1--R5/C1--C3 rows and eight-condition decision were preserved.
+Before generating or flying new assets, two additional static blind-fork
+geometries, C4 deep mirror and C5 asymmetric offset, were frozen with the same
+v7 dynamics, 45-degree Sector, Adaptive policy, 10 Hz renderer, recurrent
+0.5 s/2.0 s output loss and 20-run paired phase grid. The preregistration and
+gate-aware analyzer were committed and pushed before closed-loop outcomes.
+
+Both actual-PCD structure gates found an inflation-feasible bypass, negative
+direct-route clearance (-0.1854/-0.1861 m), zero closure samples in the initial
+body Sector and 8,214/9,126 samples in the north-velocity Sector. Paired
+production replay used one common MARSIM stream per map. Raw hazard and path
+conflict were present in all ten frames, Fixed Sector retained zero hazard and
+conflict points, and Adaptive emitted five consecutive fresh `OCCUPIED`
+verdicts. Separate Full feasibility flights passed first-attempt safety,
+dropout, speed, resource and OOM gates with 0.406/0.396 m clearance.
+
+The frozen 120-row matrix then completed in 51.2 minutes. Every row was a
+unique first attempt with valid dropout phase/cadence, speed, resource and
+static-PCD checks, no infrastructure failure, no retry and no OOM kill. C4
+Full/Sector/Adaptive safe completions were 20/4/20 of 20; C5 results were
+20/3/20. Sector contacted in 16/20 rows on each map and completed only 19/20
+and 17/20. C4/C5 paired discordance was 16:0 and 17:0; aggregate 33:0 gives
+exact two-sided McNemar p=2.3283064365386963e-10. The frozen decision is
+`C4_C5_EXTENSION_OBSERVED`.
+
+In C4--C5, Adaptive reduced planner ingress 68.74%, map compute 28.41%, fair
+end-to-end CPU 4.26% and core-seconds 3.06% relative to Full while increasing
+mean mission time 1.74%. It averaged 1.35 effective Full-open, 2.70 replan and
+1.125 trajectory-guard opening transitions per run. Only 7/40 Adaptive rows
+had any exact fresh occupied audit verdict, so recovery is attributed to the
+deployed Adaptive bundle rather than the exact-risk brake alone.
+
+Combining immutable sources yields ten reporting conditions and 600 rows:
+normal R1--R5 remain 100/100 Full, 99/100 Sector, 100/100 Adaptive safe; stress
+C1--C5 descriptively gives 100/100, 34/100 and 100/100. C4/C5 were designed
+after C1--C3 results, so C1--C5 pooled inference is secondary. Even 100/100
+has Wilson lower bound 0.9630 and is not a population-level guarantee. The
+authoritative table, claim boundary and evidence paths are in
+`docs/ten_condition_n20_result_20260910.md`.

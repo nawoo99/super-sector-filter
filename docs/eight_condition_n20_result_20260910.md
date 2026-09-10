@@ -1,5 +1,12 @@
 # Eight-condition n=20 paper-table result
 
+> [!NOTE]
+> This frozen eight-condition result remains unchanged. A separately
+> preregistered C4--C5 prospective extension has since produced the current
+> ten-condition, 600-row table. Use
+> `docs/ten_condition_n20_result_20260910.md` for the latest result and retain
+> this document as the immutable pre-extension record.
+
 Date: 2026-09-10 (Asia/Seoul)
 
 Decision: **`EIGHT_CONDITION_N20_COMPLETE`** and independent stress block

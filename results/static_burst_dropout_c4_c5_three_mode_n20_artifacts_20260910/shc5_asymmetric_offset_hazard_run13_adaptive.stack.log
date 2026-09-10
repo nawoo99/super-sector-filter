@@ -1,0 +1,735 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-09-10-17-55-45-826987-livox-1944928
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [waypoint_mission-1]: process started with pid [1944929]
+[INFO] [perfect_drone_frontend_node-2]: process started with pid [1944931]
+[INFO] [fsm_node-3]: process started with pid [1944933]
+[waypoint_mission-1] [WARN] [1789030545.869502002] [waypoint_mission]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mission_planner/config/waypoint.yaml
+[waypoint_mission-1] [WARN] [1789030545.869585296] [waypoint_mission]:  -- [MissionPlanner] Load data by file name: /root/super_ws/src/SUPER/mission_planner/data/blind_heading_fork.txt
+[fsm_node-3]  -- [Bench] Use sim time is false, begin replay.
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_viability_tight_v7_frontend_risk_enforce.yaml
+[fsm_node-3] [0;32m Load param fsm/timer_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/detailed_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/detailed_log_max_entries success: [0;0m64
+[fsm_node-3] [0;32m Load param fsm/click_goal_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/click_yaw_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/replan_rate success: [0;0m15
+[fsm_node-3] [0;32m Load param fsm/click_height success: [0;0m1.5
+[fsm_node-3] [0;32m Load param fsm/cmd_topic success: [0;0m/planning/pos_cmd
+[fsm_node-3] [0;32m Load param fsm/mpc_cmd_topic success: [0;0m/planning_cmd/poly_traj
+[fsm_node-3] [0;32m Load param fsm/click_goal_topic success: [0;0m/planning/click_goal
+[fsm_node-3] [0;32m Load param fsm/map_readiness/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/map_readiness/min_accepted_scans success: [0;0m5
+[fsm_node-3] [0;32m Load param fsm/map_readiness/min_committed_scans success: [0;0m5
+[fsm_node-3] [0;32m Load param fsm/map_readiness/max_commit_lag_scans success: [0;0m5
+[fsm_node-3] [0;32m Load param fsm/map_readiness/min_scan_span_s success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/map_readiness/max_cloud_age_s success: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/map_readiness/max_map_age_s success: [0;0m0.55
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/same_map_replan_coalesce_enable failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/same_map_replan_min_interval_s failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/max_map_age_s success: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_trigger_map_age_s success: [0;0m0.55
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_trigger_high_speed_map_age_s success: [0;0m0.5
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_trigger_low_speed_mps success: [0;0m2.5
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_trigger_high_speed_mps success: [0;0m3.5
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/full_refresh_ack_sla_s success: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/enable success: [0;0m0
+[perfect_drone_frontend_node-2] [INFO] [1789030545.966318917] [native_sector_cpp]: adaptive mode, half-angle 45.0 deg, input /cloud_registered, publish cap 5.00 Hz, commit refresh 0.120 s, full-open extra budget 6000, guard witness disabled radius 0.00 m, direct input enabled, risk verdict /planning/trajectory_risk_verdict, body tier 0.200 m/0.150 s
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/source_topic success: [0;0m/cloud_guard_witness
+[perfect_drone_frontend_node-2] [WARN] [1789030545.968665808] [perfect_tracking]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/shc5_asymmetric_offset_hazard.yaml
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/max_age_s success: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/clearance_m success: [0;0m0.3
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/brake_min_duration_s failed, use default value: [0;0m0.4
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_max_duration_s success: [0;0m3
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_max_acc_mps2 success: [0;0m20
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_max_jerk_mps3 success: [0;0m120
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_command_max_age_s success: [0;0m0.1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_command_max_position_error_m success: [0;0m0.5
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_command_max_velocity_error_mps success: [0;0m2
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/brake_retry_interval_s success: [0;0m0.1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/unknown_as_occupied success: [0;0m1
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/raw_cloud/ciri_shadow_en failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/accum_window_s success: [0;0m1.5
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/raw_cloud/ciri_min_points failed, use default value: [0;0m200
+[fsm_node-3] [0;33m Load param fsm/trajectory_guard/raw_cloud/ciri_voxel_m failed, use default value: [0;0m0.1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_shadow_en success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_clearance_m success: [0;0m0.2
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_horizon_s success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_sample_dt_s success: [0;0m0.01
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_min_interval_s success: [0;0m0.1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_min_points success: [0;0m200
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_voxel_m success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_test_replay_mode success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_enforce_en success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_result_max_age_s success: [0;0m0.2
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_max_sequence_lag success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_egress_tolerance_m success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/raw_cloud/near_field_egress_min_progress_m success: [0;0m0.02
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/frontend_risk/shadow_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/frontend_risk/enforce_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/frontend_risk/topic success: [0;0m/planning/trajectory_risk_verdict
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/frontend_risk/result_max_age_s success: [0;0m0.2
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/frontend_risk/source_max_age_s success: [0;0m0.75
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/frontend_risk/current_body_enforce_en success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/frontend_risk/current_body_result_max_age_s success: [0;0m0.15
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/frontend_risk/current_body_source_max_age_s success: [0;0m0.2
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_viability_tight_v7_frontend_risk_enforce.yaml
+[fsm_node-3] [0;32m Load param rog_map/esdf/resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/esdf/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/esdf/local_update_box success: [0;0m[5 5 3 ]
+[fsm_node-3] [0;32m Load param rog_map/load_pcd_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/map_sliding/threshold success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/fix_map_origin success: [0;0m[0 0 1.5 ]
+[fsm_node-3] [0;32m Load param rog_map/frontier_extraction_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/cloud_topic success: [0;0m/cloud_sector
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/cloud_reliable success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_topic success: [0;0m/lidar_slam/odom
+[fsm_node-3] [0;32m Load param rog_map/ros_callback/odom_timeout success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/use_dynamic_reconfigure success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/pub_unknown_map_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_id success: [0;0mworld
+[fsm_node-3] [0;32m Load param rog_map/visualization/time_rate success: [0;0m2
+[fsm_node-3] [0;32m Load param rog_map/visualization/frame_rate success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/visualization/range success: [0;0m[15 15 4 ]
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [0;32m Load param rog_map/inflation_resolution success: [0;0m0.1
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_en success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/unk_inflation_step success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/inflation_step success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/intensity_thresh success: [0;0m-10
+[fsm_node-3] [0;32m Load param rog_map/map_size success: [0;0m[70 70 6 ]
+[fsm_node-3] [0;32m Load param rog_map/point_filt_num success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/enable success: [0;0m0
+[fsm_node-3] [0;32m Load param rog_map/raycasting/batch_update_size success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/unk_thresh success: [0;0m1
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_hit success: [0;0m0.9
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_miss success: [0;0m0.49
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_min success: [0;0m0.12
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_max success: [0;0m0.98
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_occ success: [0;0m0.85
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[fsm_node-3] [0;32m Load param rog_map/raycasting/ray_range success: [0;0m[0.5 100 ]
+[fsm_node-3] [0;33m Load param rog_map/raycasting/observed_mark_range_max failed, use default value: [0;0m10
+[fsm_node-3] [0;32m Load param rog_map/raycasting/local_update_box success: [0;0m[100 100 5 ]
+[fsm_node-3] [0;32m Load param rog_map/virtual_ground_height success: [0;0m-0.1
+[fsm_node-3] [0;32m Load param rog_map/virtual_ceil_height success: [0;0m3.5
+[fsm_node-3] [32m -- [RM-Config] inflation_resolution: 0.1[0m
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: ORIGIN_AT_CORNER.
+[fsm_node-3]  -- [ROG-Map] Init, resetMapSize: virtual_ceil_height: 3.1500000000000004, virtual_ground_height: 0.25.
+[fsm_node-3] [34m	[ROG] n_free: 1[0m
+[fsm_node-3] [34m	[ROG] n_occ: 1[0m
+[fsm_node-3] [34m	[ROG] l_hit: 2.19722[0m
+[fsm_node-3] [34m	[ROG] l_miss: -0.0400053[0m
+[fsm_node-3] [34m	[ROG] l_min: -1.99243[0m
+[fsm_node-3] [34m	[ROG] l_max: 3.89182[0m
+[fsm_node-3] [34m	[ROG] l_occ: 1.7346[0m
+[fsm_node-3] [34m	[ROG] l_free: -0.00399995[0m
+[perfect_drone_frontend_node-2] Failed to find match for field 'intensity'.
+[perfect_drone_frontend_node-2] [WARN] [1789030546.360959653] [perfect_tracking]: SENSOR_BURST_DROPOUT armed before every cloud transport: warmup=1.000s period=2.000s duration=0.500s phase=0.400s env_override=1
+[perfect_drone_frontend_node-2] [INFO] [1789030546.361022791] [perfect_drone_frontend_config]: raw DDS disabled: renderer -> native front-end uses direct SharedPtr handoff
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [CounterMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 709 709  69[0m
+[fsm_node-3] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[fsm_node-3] [33m -- [Inf-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [InfMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.1[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 709 709  69[0m
+[fsm_node-3] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[fsm_node-3] [ProbMap] virtual_ceil_height: 3.15
+[fsm_node-3] [ProbMap] virtual_ground_height: 0.25
+[fsm_node-3] [33m -- [ProbMap] Map sliding disabled, set origin to [  0   0 1.5] -- [0m
+[fsm_node-3] [33m -- [Prob-Map] Clear all local map.[0m
+[fsm_node-3] [32m -- [ProbMap] Init successfully -- .[0m
+[fsm_node-3] [32m	resolution: 0.05[0m
+[fsm_node-3] [32m	map_sliding_en: 0[0m
+[fsm_node-3] [32m	local_map_size_i: 1401 1401  121[0m
+[fsm_node-3] [32m	local_map_size_d: 70.05 70.05  6.05[0m
+[fsm_node-3] [38;2;000;128;000m -- [ROGMap] Immutable planner snapshot enabled (fixed occupancy-only map).
+[fsm_node-3] [0mLoad config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_viability_tight_v7_frontend_risk_enforce.yaml
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_viability_tight_v7_frontend_risk_enforce.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/pos_constraint_type success: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/piece_num failed, use default value: [0;0m1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/uniform_time_en failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/block_energy_cost success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/opt_accuracy success: [0;0m5e-06
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/max_iterations failed, use default value: [0;0m2048
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/integral_reso success: [0;0m15
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m7
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_t success: [0;0m1e+07
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_ts failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_pos success: [0;0m5e+09
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_clr success: [0;0m1e+06
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/clearance_margin success: [0;0m0.1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/clearance_speed_gate success: [0;0m1.5
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/clearance_speed_transition success: [0;0m0.5
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/penna_passage_center failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/passage_center_max_width failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/passage_center_min_opposition_cos failed, use default value: [0;0m0.9
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/passage_center_min_horizontal_normal failed, use default value: [0;0m0.8
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/passage_center_deadband failed, use default value: [0;0m0.15
+[fsm_node-3] [0;33m Load param traj_opt/exp_traj/passage_center_log_en failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_vel success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_acc success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_jerk success: [0;0m-5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_attract success: [0;0m5e+08
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/exp_traj/penna_thr success: [0;0m-1
+[fsm_node-3] Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_viability_tight_v7_frontend_risk_enforce.yaml
+[fsm_node-3] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[fsm_node-3] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[fsm_node-3] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[fsm_node-3] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[fsm_node-3] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/max_iterations failed, use default value: [0;0m2048
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m12
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m7
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[fsm_node-3] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[fsm_node-3] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[fsm_node-3] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_clr success: [0;0m1e+06
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/clearance_margin success: [0;0m0.1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/clearance_speed_gate success: [0;0m1.5
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/clearance_speed_transition success: [0;0m0.5
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_passage_center failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/passage_center_max_width failed, use default value: [0;0m0
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/passage_center_min_opposition_cos failed, use default value: [0;0m0.9
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/passage_center_min_horizontal_normal failed, use default value: [0;0m0.8
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/passage_center_deadband failed, use default value: [0;0m0.15
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/passage_center_log_en failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[fsm_node-3] [0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[fsm_node-3] [0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/print_log success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/detailed_log_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/backup_traj_en success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/goal_vel_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/goal_yaw_en success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/visual_process success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/use_fov_cut success: [0;0m0
+[fsm_node-3] [0;33m Load param super_planner/fov_horizontal_angle failed, use default value: [0;0m-1
+[fsm_node-3] [0;33m Load param super_planner/fov_center_heading failed, use default value: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/frontend_in_known_free success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/escape_max_duration_s success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/unknown_as_occupied success: [0;0m1
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/escape_entry_grace_s success: [0;0m0
+[fsm_node-3] [0;32m Load param fsm/trajectory_guard/initial_footprint_egress_enable success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/safe_corridor_line_max_length success: [0;0m6
+[fsm_node-3] [0;32m Load param super_planner/sensing_horizon success: [0;0m-1
+[fsm_node-3] [0;32m Load param super_planner/obs_skip_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/replan_forward_dt success: [0;0m0.1
+[fsm_node-3] [0;32m Load param super_planner/corridor_bound_dis success: [0;0m0.8
+[fsm_node-3] [0;32m Load param super_planner/corridor_line_max_length success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/planning_horizon success: [0;0m7
+[fsm_node-3] [0;32m Load param super_planner/receding_dis success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/robot_r success: [0;0m0.2
+[fsm_node-3] [0;32m Load param super_planner/corridor_use_inflated_obstacles success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/corridor_use_inflated_seed_lines success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/corridor_guard_retry_inflated success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/guard_corridor_retry_alternate_every success: [0;0m4
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/radius_m success: [0;0m0.8
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/growth_m success: [0;0m0
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/max_radius_m success: [0;0m0.8
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/max_zones success: [0;0m6
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/max_stop_speed_mps success: [0;0m0.2
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/escalate_every_rejects success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/collision_merge_m success: [0;0m0.5
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/start_clearance_m success: [0;0m0.3
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/block_spacing_m success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/direction_merge_angle_deg success: [0;0m30
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/no_path_reset_attempts success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/vertical_recovery_enable success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/vertical_recovery_lift_m success: [0;0m0.6
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/vertical_recovery_trigger_distance_m success: [0;0m0.75
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/local_escape_enable success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/local_escape_distance_m success: [0;0m0.6
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/local_escape_attempts success: [0;0m4
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/episode_progress_reset_m success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/saturation_vertical_attempts success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/guard_topology_reroute/base_no_path_vertical_attempts success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/guard_direct_goal_fallback/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/guard_direct_goal_fallback/max_distance_m success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/guard_direct_goal_fallback/min_duration_s success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/guard_viability/enable success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/guard_viability/horizon_s success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/guard_viability/sample_dt_s success: [0;0m0.3
+[fsm_node-3] [0;32m Load param super_planner/guard_viability/brake_max_acc_mps2 success: [0;0m20
+[fsm_node-3] [0;32m Load param super_planner/guard_viability/brake_max_jerk_mps3 success: [0;0m120
+[fsm_node-3] [0;32m Load param super_planner/guard_viability/brake_min_duration_s success: [0;0m0.4
+[fsm_node-3] [0;32m Load param super_planner/guard_viability/brake_max_duration_s success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/guard_viability/brake_attempts success: [0;0m12
+[fsm_node-3] [0;32m Load param super_planner/guard_viability/speed_scale_step success: [0;0m1.25
+[fsm_node-3] [0;32m Load param super_planner/guard_viability/speed_scale_max success: [0;0m3
+[fsm_node-3] [0;32m Load param super_planner/guard_viability/max_retries success: [0;0m4
+[fsm_node-3] [0;32m Load param super_planner/corridor_min_margin success: [0;0m0.2
+[fsm_node-3] [0;32m Load param super_planner/corridor_pref_margin success: [0;0m0.3
+[fsm_node-3] [0;32m Load param super_planner/iris_iter_num success: [0;0m2
+[fsm_node-3] [0;32m Load param super_planner/yaw_mode success: [0;0m1
+[fsm_node-3] [0;32m Load param super_planner/mpc_horizon success: [0;0m15
+[fsm_node-3] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[fsm_node-3] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[fsm_node-3] [INFO] [1789030547.294907224] [fsm_node]:  -- [TRAJ_GUARD] mode=enforce sample_dt=0.0050s shadow_min_interval=0.000s inflation_radius=0.300m robot_r=0.200m additional_clearance=0.000m hard_clearance=0.300m clearance_offsets=0
+[fsm_node-3] [38;2;050;205;050m -- [Viz] Set resolution_ to 0.05
+[fsm_node-3] [0m[38;2;050;205;050m -- [Viz] Set visualization_en_ to false
+[fsm_node-3] [0mLoad config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_viability_tight_v7_frontend_risk_enforce.yaml
+[fsm_node-3] [0;32m Load param astar/map_voxel_num success: [0;0m[500 500 100 ]
+[fsm_node-3] [0;32m Load param astar/allow_diag success: [0;0m1
+[fsm_node-3] [0;32m Load param astar/debug_visualization_en success: [0;0m0
+[fsm_node-3] [0;32m Load param astar/heu_type success: [0;0m2
+[fsm_node-3] [0;32m Load param astar/visual_process success: [0;0m0
+[fsm_node-3] [32m -- [RM] Init Astar-map.[0m
+[fsm_node-3] [34m	map index size: 250 250  50[0m
+[fsm_node-3] [34m	map vox_num: 501 501 101[0m
+[fsm_node-3] [INFO] [1789030548.913372563] [fsm_node]:  -- [FULL_REFRESH_ACK_GATE] listening sla=0.750s
+[fsm_node-3] [INFO] [1789030548.914252243] [fsm_node]:  -- [FRONTEND_RISK] listening topic=/planning/trajectory_risk_verdict result_max_age=0.200s source_max_age=0.750s enforce=true body_result_max_age=0.150s body_source_max_age=0.200s body_enforce=true
+[fsm_node-3] [33m -- [Fsm] CLICKGOAL ENABLE.[0m
+[fsm_node-3] [INFO] [1789030548.915207399] [fsm_node]: [32m -- [Fsm-Test] Begin.[0m
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [INIT] to [WAIT_GOAL].
+[fsm_node-3] [0m -- [Fsm] MAP_NOT_READY reason=scan_span accepted=6 committed=6 version=6 lag=0 span=0.849s cloud_age=0.140s committed_cloud_age=0.140s commit_age=0.134s in_progress=false
+[fsm_node-3] [32m -- [Fsm 1.000] Current state: WAIT_GOAL[0m
+[fsm_node-3]  -- [Fsm] MAP_READY accepted=7 committed=7 version=7 lag=0 span=1.562s cloud_age=0.038s committed_cloud_age=0.038s commit_age=0.010s in_progress=false
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.525 20.025  1.525
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.525 20.025  1.525]; goal yaw: 0.000 deg[0m
+[fsm_node-3] [INFO] [1789030550.607377929] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=1 rss_mib=3102.980 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030550.610624427] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=1 duration_ms=3.298 iterations=352 ret=1 rss_mib=3102.988 swap_mib=0.000 rss_delta_mib=0.008
+[fsm_node-3] [INFO] [1789030550.610667758] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1789030550.637637965] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=1 rss_mib=3103.008 swap_mib=0.000 variables=66 pieces=2
+[fsm_node-3] [INFO] [1789030550.645082748] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=1 duration_ms=7.450 iterations=278 ret=1 rss_mib=3103.070 swap_mib=0.000 rss_delta_mib=0.062
+[fsm_node-3] [INFO] [1789030550.645344036] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=2 rss_mib=3103.082 swap_mib=0.000 variables=66 pieces=2
+[fsm_node-3] [INFO] [1789030550.650500605] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=2 duration_ms=5.154 iterations=184 ret=1 rss_mib=3103.277 swap_mib=0.000 rss_delta_mib=0.195
+[fsm_node-3] [INFO] [1789030550.650750419] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=1 map=7 samples=190 range=[0.125,1.062] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3] [INFO] [1789030550.781787264] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=2 rss_mib=3103.723 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030550.785499386] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=2 duration_ms=3.770 iterations=396 ret=1 rss_mib=3103.797 swap_mib=0.000 rss_delta_mib=0.074
+[fsm_node-3] [INFO] [1789030550.808511285] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=3 rss_mib=3103.914 swap_mib=0.000 variables=72 pieces=2
+[fsm_node-3] [INFO] [1789030550.819079926] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=3 duration_ms=10.611 iterations=253 ret=1 rss_mib=3103.953 swap_mib=0.000 rss_delta_mib=0.039
+[fsm_node-3] [INFO] [1789030550.819611252] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=4 rss_mib=3103.973 swap_mib=0.000 variables=72 pieces=2
+[fsm_node-3] [INFO] [1789030550.846721379] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=4 duration_ms=27.097 iterations=603 ret=1 rss_mib=3104.160 swap_mib=0.000 rss_delta_mib=0.188
+[fsm_node-3] [WARN] [1789030550.847102938] [fsm_node]:  -- [TRAJ_GUARD_VIABILITY_SLOWDOWN] phase=ReplanOnce/with_backup gen=2 scale=1.250 retries=1
+[fsm_node-3] [INFO] [1789030550.847111441] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=2 map=9 samples=189 range=[0.084,1.018] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [WAIT_GOAL] to [GENERATE_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=1 map=7 map_age=0.146s map_age_limit=0.550s motion_speed=0.631mps samples=189 range=[0.126,1.062] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=1 map=8 map_age=0.007s map_age_limit=0.550s motion_speed=0.817mps samples=184 range=[0.150,1.062] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=1 map=9 map_age=0.008s map_age_limit=0.538s motion_speed=2.744mps samples=162 range=[0.260,1.062] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030550.861892005] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=3 rss_mib=3104.223 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030550.866281685] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=3 duration_ms=4.420 iterations=494 ret=1 rss_mib=3104.254 swap_mib=0.000 rss_delta_mib=0.031
+[fsm_node-3] [INFO] [1789030550.892513085] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=5 rss_mib=3104.363 swap_mib=0.000 variables=82 pieces=2
+[fsm_node-3] [INFO] [1789030550.895939928] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=5 duration_ms=3.445 iterations=58 ret=1 rss_mib=3104.387 swap_mib=0.000 rss_delta_mib=0.023
+[fsm_node-3] [INFO] [1789030550.896734291] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=6 rss_mib=3104.418 swap_mib=0.000 variables=82 pieces=2
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=2 map=9 map_age=0.070s map_age_limit=0.500s motion_speed=4.035mps samples=188 range=[0.084,1.018] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.525000000000002 20.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.525000000000002 20.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm 2.010] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [INFO] [1789030550.951612391] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=6 duration_ms=54.853 iterations=829 ret=1 rss_mib=3104.660 swap_mib=0.000 rss_delta_mib=0.242
+[fsm_node-3] [WARN] [1789030550.951668007] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.104306583.
+[perfect_drone_frontend_node-2] [INFO] [1789030550.967065570] [native_sector_cpp]: frames=35 published=19 kept 18.8% (3755/19986 pts/input-frame)
+[fsm_node-3] [INFO] [1789030550.968408411] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=4 rss_mib=3104.766 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030550.978184475] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=4 duration_ms=9.815 iterations=716 ret=1 rss_mib=3104.777 swap_mib=0.000 rss_delta_mib=0.012
+[fsm_node-3] [INFO] [1789030550.996602431] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=7 rss_mib=3104.828 swap_mib=0.000 variables=60 pieces=2
+[fsm_node-3] [INFO] [1789030551.002748110] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=7 duration_ms=6.176 iterations=216 ret=1 rss_mib=3104.875 swap_mib=0.000 rss_delta_mib=0.047
+[fsm_node-3] [INFO] [1789030551.003004053] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=8 rss_mib=3104.887 swap_mib=0.000 variables=60 pieces=2
+[fsm_node-3] [INFO] [1789030551.010114369] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=8 duration_ms=7.100 iterations=253 ret=1 rss_mib=3105.074 swap_mib=0.000 rss_delta_mib=0.188
+[fsm_node-3] [INFO] [1789030551.010324319] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=3 map=10 samples=125 range=[0.058,0.671] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=2 map=10 map_age=0.002s map_age_limit=0.500s motion_speed=4.147mps samples=163 range=[0.212,1.018] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030551.025939559] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=5 rss_mib=3105.082 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030551.037538826] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=5 duration_ms=11.600 iterations=942 ret=1 rss_mib=3105.082 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030551.057379322] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=9 rss_mib=3105.086 swap_mib=0.000 variables=78 pieces=2
+[fsm_node-3] [INFO] [1789030551.075258988] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=9 duration_ms=17.881 iterations=354 ret=1 rss_mib=3105.145 swap_mib=0.000 rss_delta_mib=0.059
+[fsm_node-3] [INFO] [1789030551.075891305] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=10 rss_mib=3105.145 swap_mib=0.000 variables=78 pieces=2
+[fsm_node-3] [INFO] [1789030551.089399308] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=10 duration_ms=13.490 iterations=272 ret=1 rss_mib=3105.227 swap_mib=0.000 rss_delta_mib=0.082
+[fsm_node-3] [INFO] [1789030551.089592446] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=4 map=10 samples=122 range=[0.079,0.678] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=3 map=10 map_age=0.038s map_age_limit=0.500s motion_speed=4.407mps samples=124 range=[0.058,0.671] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030551.105614808] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=6 rss_mib=3105.227 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030551.117562245] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=6 duration_ms=11.991 iterations=1073 ret=1 rss_mib=3105.234 swap_mib=0.000 rss_delta_mib=0.008
+[fsm_node-3] [INFO] [1789030551.142020514] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=11 rss_mib=3105.234 swap_mib=0.000 variables=68 pieces=2
+[fsm_node-3] [INFO] [1789030551.162637732] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=11 duration_ms=20.623 iterations=1031 ret=1 rss_mib=3105.234 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030551.162865355] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=12 rss_mib=3105.246 swap_mib=0.000 variables=68 pieces=2
+[fsm_node-3] [INFO] [1789030551.177930826] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=12 duration_ms=15.047 iterations=766 ret=1 rss_mib=3105.262 swap_mib=0.000 rss_delta_mib=0.016
+[fsm_node-3] [INFO] [1789030551.178203510] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=5 map=11 samples=174 range=[0.088,0.944] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=4 map=10 map_age=0.117s map_age_limit=0.500s motion_speed=4.726mps samples=121 range=[0.079,0.678] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030551.200621835] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=7 rss_mib=3105.262 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030551.219533157] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=7 duration_ms=18.942 iterations=1538 ret=1 rss_mib=3105.262 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030551.278323778] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=13 rss_mib=3105.371 swap_mib=0.000 variables=50 pieces=2
+[fsm_node-3] [INFO] [1789030551.284256729] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=13 duration_ms=5.983 iterations=444 ret=1 rss_mib=3105.371 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030551.284391498] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=14 rss_mib=3105.371 swap_mib=0.000 variables=50 pieces=2
+[fsm_node-3] [INFO] [1789030551.285408597] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=14 duration_ms=1.018 iterations=84 ret=1 rss_mib=3105.371 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030551.285438739] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.107004519.
+[fsm_node-3] [INFO] [1789030551.308567501] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=8 rss_mib=3105.371 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030551.311619778] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=8 duration_ms=3.110 iterations=372 ret=1 rss_mib=3105.371 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_frontend_node-2] [INFO] [1789030551.365022591] [perfect_tracking]: [SENSOR_CADENCE_SUMMARY] frames=50 span_s=4.898242 hz=10.003588 raw_published=0 direct_handoffs=39 payload_bytes=26059808 side_entry_v1_enabled=0 side_entry_v1_spawned=0 side_entry_v1_injected_frames=0
+[perfect_drone_frontend_node-2] [INFO] [1789030551.365133108] [perfect_tracking]: [SENSOR_BURST_DROPOUT_SUMMARY] enabled=1 warmup_s=1.000000 period_s=2.000000 duration_s=0.500000 phase_s=0.400000 phase_env_override=1 rendered=50 delivered=39 dropped=11 bursts=2 max_consecutive_dropped=6 max_delivered_gap_s=0.700152 dropped_payload_bytes=6663392
+[fsm_node-3] [INFO] [1789030551.400722013] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=15 rss_mib=3106.625 swap_mib=0.000 variables=26 pieces=2
+[fsm_node-3] [INFO] [1789030551.406352002] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=15 duration_ms=5.672 iterations=887 ret=1 rss_mib=3106.625 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030551.406480569] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=16 rss_mib=3106.625 swap_mib=0.000 variables=26 pieces=2
+[fsm_node-3] [INFO] [1789030551.407195555] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=16 duration_ms=0.712 iterations=148 ret=1 rss_mib=3106.625 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030551.407236400] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.121567398.
+[fsm_node-3] [INFO] [1789030551.434509977] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=9 rss_mib=3106.625 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030551.439733623] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=9 duration_ms=5.257 iterations=487 ret=1 rss_mib=3106.633 swap_mib=0.000 rss_delta_mib=0.008
+[fsm_node-3] [INFO] [1789030551.524041415] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=17 rss_mib=3108.203 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030551.533797004] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=17 duration_ms=9.789 iterations=1412 ret=1 rss_mib=3108.203 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030551.533889983] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=18 rss_mib=3108.215 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030551.534244591] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=18 duration_ms=0.357 iterations=93 ret=1 rss_mib=3108.215 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030551.534272064] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.126741657.
+[fsm_node-3] [INFO] [1789030551.567094109] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=10 rss_mib=3108.270 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030551.570748927] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=10 duration_ms=3.694 iterations=292 ret=1 rss_mib=3108.316 swap_mib=0.000 rss_delta_mib=0.047
+[fsm_node-3] [INFO] [1789030551.655081059] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=19 rss_mib=3108.316 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030551.657153768] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=19 duration_ms=2.115 iterations=473 ret=1 rss_mib=3108.348 swap_mib=0.000 rss_delta_mib=0.031
+[fsm_node-3] [INFO] [1789030551.657231569] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=20 rss_mib=3108.359 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030551.657626764] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=20 duration_ms=0.395 iterations=106 ret=1 rss_mib=3108.367 swap_mib=0.000 rss_delta_mib=0.008
+[fsm_node-3] [WARN] [1789030551.657655318] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.123230194.
+[fsm_node-3] [INFO] [1789030551.692400684] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=11 rss_mib=3109.352 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030551.696781290] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=11 duration_ms=4.441 iterations=368 ret=1 rss_mib=3109.352 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030551.784183604] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=21 rss_mib=3109.352 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030551.786541591] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=21 duration_ms=2.389 iterations=479 ret=1 rss_mib=3109.352 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030551.786621525] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=22 rss_mib=3109.352 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030551.787283413] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=22 duration_ms=0.662 iterations=163 ret=1 rss_mib=3109.352 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030551.787310945] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.129334889.
+[fsm_node-3] [INFO] [1789030551.817344417] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=12 rss_mib=3109.352 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030551.824535353] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=12 duration_ms=7.233 iterations=645 ret=1 rss_mib=3109.352 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=5 map=11 map_age=0.004s map_age_limit=0.500s motion_speed=5.077mps samples=173 range=[0.088,0.944] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=5 map=12 map_age=0.005s map_age_limit=0.500s motion_speed=6.074mps samples=131 range=[0.295,0.944] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=5 map=13 map_age=0.003s map_age_limit=0.500s motion_speed=5.762mps samples=109 range=[0.405,0.944] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=5 map=14 map_age=0.005s map_age_limit=0.500s motion_speed=3.898mps samples=67 range=[0.615,0.944] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=5 map=15 map_age=0.002s map_age_limit=0.550s motion_speed=1.417mps samples=31 range=[0.795,0.944] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.525000000000002 20.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.525000000000002 20.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1789030551.907186803] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=23 rss_mib=3109.758 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030551.909816677] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=23 duration_ms=2.684 iterations=489 ret=1 rss_mib=3109.758 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030551.909889473] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=24 rss_mib=3109.758 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030551.910481486] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=24 duration_ms=0.593 iterations=143 ret=1 rss_mib=3109.758 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030551.910512080] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.122956732.
+[fsm_node-3] [INFO] [1789030551.941282742] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=13 rss_mib=3109.758 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030551.944867085] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=13 duration_ms=3.639 iterations=337 ret=1 rss_mib=3109.758 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [32m -- [Fsm 3.020] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [INFO] [1789030552.023372537] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=25 rss_mib=3109.758 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030552.024231931] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=25 duration_ms=0.896 iterations=200 ret=1 rss_mib=3109.758 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030552.024296679] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=26 rss_mib=3109.758 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030552.025350595] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=26 duration_ms=1.054 iterations=239 ret=1 rss_mib=3109.758 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030552.025378286] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.114554355.
+[fsm_node-3] [32m -- [Fsm] Traj finish.[0m
+[fsm_node-3] [ERROR] [1789030552.060348202] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/no_backup segment=EXP status=CLEARANCE_MARGIN gen=6 map=15 from_tt=0.970 collision_tt=0.995 collision_p=[22.302,5.641,1.658] samples=129
+[fsm_node-3] [INFO] [1789030552.060437826] [fsm_node]:  -- [FULL_REFRESH_RECOVERY_GATE_ARM] min_request_seq=2
+[fsm_node-3] [INFO] [1789030552.060457008] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=true
+[fsm_node-3] [ERROR] [1789030552.060505264] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=candidate_rejected_without_safe_follow searched=[0.400,3.000]s speed0=0.000 initial_source=fresh_command cmd_age=0.025s cmd_pos_err=0.000 cmd_vel_err=inf motion_speed=inf motion_dt=infs motion_pose_speed=inf motion_twist_speed=0.000 motion_disagreement=inf motion_source=none motion_gen=5/0 motion_gen_continuous=false last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=SAFE last_map=15 map_age=0.177s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[fsm_node-3] [WARN] [1789030552.060513197] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_EPISODE_RESET] reason=horizontal_progress progress=4.807m threshold=2.000m prior_local=0 prior_vertical=0 prior_base=0
+[fsm_node-3] [WARN] [1789030552.074553920] [fsm_node]:  -- [SUPER] Retrying EXP with inflated guard corridor.
+[fsm_node-3] [INFO] [1789030552.075685015] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=14 rss_mib=3110.133 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030552.078849641] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=14 duration_ms=3.225 iterations=290 ret=1 rss_mib=3110.133 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030552.078889380] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1789030552.151032896] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=27 rss_mib=3110.133 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030552.154669798] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=27 duration_ms=3.657 iterations=612 ret=1 rss_mib=3110.133 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030552.154737650] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=28 rss_mib=3110.133 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030552.156852183] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=28 duration_ms=2.113 iterations=432 ret=1 rss_mib=3110.133 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030552.157149429] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=6 map=15 samples=289 range=[0.096,1.528] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3] [INFO] [1789030552.369078655] [fsm_node]:  -- [FULL_REFRESH_RECOVERY_TARGET] request_seq=2 stamp_ns=1789030552368016592 already_acked=false map=0
+[fsm_node-3] [ERROR] [1789030552.387286083] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=main_pre_uncertified searched=[0.400,3.000]s speed0=3.902 initial_source=fresh_command cmd_age=0.010s cmd_pos_err=0.000 cmd_vel_err=inf motion_speed=inf motion_dt=infs motion_pose_speed=inf motion_twist_speed=3.902 motion_disagreement=inf motion_source=none motion_gen=6/5 motion_gen_continuous=false last_dynamics_ok=false max_vel=11.503 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=UNOBSERVED last_map=15 map_age=0.504s raw_status=DISABLED raw_cloud=0 raw_age=0.000s ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[fsm_node-3] [ERROR] [1789030552.395318430] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.020s cmd_pos_err=0.000 cmd_vel_err=3.902 motion_speed=0.000 motion_dt=0.009s motion_pose_speed=0.000 motion_twist_speed=3.902 motion_disagreement=3.902 motion_source=position_difference motion_gen=6/6 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=SAFE last_map=15 map_age=0.512s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[fsm_node-3] [INFO] [1789030552.405218466] [fsm_node]:  -- [FULL_REFRESH_RECOVERY_ACK] request_seq=2 stamp_ns=1789030552368016592 map=16 committed=1
+[fsm_node-3] [ERROR] [1789030552.505252868] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.130s cmd_pos_err=0.000 cmd_vel_err=3.902 motion_speed=0.000 motion_dt=0.110s motion_pose_speed=0.000 motion_twist_speed=3.902 motion_disagreement=3.902 motion_source=position_difference motion_gen=6/6 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=SAFE last_map=17 map_age=0.017s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[fsm_node-3] [ERROR] [1789030552.605768928] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.230s cmd_pos_err=0.000 cmd_vel_err=3.902 motion_speed=0.000 motion_dt=0.100s motion_pose_speed=0.000 motion_twist_speed=3.902 motion_disagreement=3.902 motion_source=position_difference motion_gen=6/6 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=SAFE last_map=17 map_age=0.117s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[fsm_node-3] [WARN] [1789030552.715326275] [fsm_node]:  -- [TRAJ_GUARD_STATIONARY_HOLD] trigger=emergency_stop_retry stable_for=0.320s displacement=0.000m action=publish_certified_hold
+[fsm_node-3] [ERROR] [1789030552.715389914] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=emergency_stop_retry duration=0.400s speed0=0.000 initial_source=position_difference cmd_age=0.340s cmd_pos_err=0.000 cmd_vel_err=3.902 motion_speed=0.000 motion_dt=0.110s motion_pose_speed=0.000 motion_twist_speed=3.902 motion_disagreement=3.902 motion_source=position_difference motion_gen=6/6 motion_gen_continuous=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 dynamics_ok=true path_status=SAFE map=18 map_age=0.011s raw_status=DISABLED raw_cloud=0 raw_age=0.000s ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs stop=[21.471,4.016,2.052]
+[fsm_node-3] [INFO] [1789030552.756542435] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=15 rss_mib=3112.992 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030552.758393446] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=15 duration_ms=1.911 iterations=239 ret=1 rss_mib=3112.992 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030552.758435517] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1789030552.834934262] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=29 rss_mib=3113.719 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030552.835716061] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=29 duration_ms=0.832 iterations=171 ret=1 rss_mib=3113.719 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030552.835796204] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=30 rss_mib=3113.719 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030552.836866038] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=30 duration_ms=1.072 iterations=250 ret=1 rss_mib=3113.719 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030552.837259332] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=7 map=18 samples=439 range=[0.112,2.296] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3] [INFO] [1789030552.837444105] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=false
+[fsm_node-3] [INFO] [1789030552.837449494] [fsm_node]:  -- [TRAJ_GUARD_RECOVERED] trigger=emergency_stop_retry gen=7 map=18
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [PubCmdCallback] change state from [FOLLOW_TRAJ] to [GENERATE_TRAJ].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardFailClosed] change state from [GENERATE_TRAJ] to [EMER_STOP].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=6 map=15 map_age=0.274s map_age_limit=0.550s motion_speed=0.000mps samples=288 range=[0.097,1.528] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [EMER_STOP] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=6 map=15 map_age=0.502s map_age_limit=0.500s motion_speed=3.902mps samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuardFailClosed] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [EMER_STOP] to [EMER_STOP].
+[fsm_node-3] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=7 map=18 map_age=0.133s map_age_limit=0.550s motion_speed=0.000mps samples=438 range=[0.112,2.296] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=19 map_age=0.004s map_age_limit=0.550s motion_speed=0.887mps samples=429 range=[0.160,2.296] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.525000000000002 20.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.525000000000002 20.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [32m -- [Fsm 4.020] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [INFO] [1789030552.967234786] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=16 rss_mib=3114.250 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030552.972670401] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=16 duration_ms=5.481 iterations=512 ret=1 rss_mib=3114.250 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.045845778] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=31 rss_mib=3114.250 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030553.048839062] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=31 duration_ms=3.025 iterations=631 ret=1 rss_mib=3114.250 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.048900883] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=32 rss_mib=3114.250 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030553.051597492] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=32 duration_ms=2.693 iterations=563 ret=1 rss_mib=3114.250 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030553.051640108] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.110341831.
+[fsm_node-3] [INFO] [1789030553.073762618] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=17 rss_mib=3114.250 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030553.077985385] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=17 duration_ms=4.285 iterations=405 ret=1 rss_mib=3114.250 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.155234361] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=33 rss_mib=3114.250 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030553.156013846] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=33 duration_ms=0.822 iterations=193 ret=1 rss_mib=3114.250 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.156071926] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=34 rss_mib=3114.250 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030553.158135738] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=34 duration_ms=2.064 iterations=451 ret=1 rss_mib=3114.250 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030553.158159385] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.106225054.
+[fsm_node-3] [INFO] [1789030553.178935207] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=18 rss_mib=3114.711 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030553.195099201] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=18 duration_ms=16.189 iterations=1168 ret=1 rss_mib=3114.711 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.271793278] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=35 rss_mib=3115.898 swap_mib=0.000 variables=26 pieces=2
+[fsm_node-3] [INFO] [1789030553.273273524] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=35 duration_ms=1.545 iterations=287 ret=1 rss_mib=3115.898 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.273367901] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=36 rss_mib=3115.898 swap_mib=0.000 variables=26 pieces=2
+[fsm_node-3] [INFO] [1789030553.274495863] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=36 duration_ms=1.128 iterations=253 ret=1 rss_mib=3115.898 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030553.274528048] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.116099144.
+[fsm_node-3] [INFO] [1789030553.300048458] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=19 rss_mib=3116.082 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030553.307151832] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=19 duration_ms=7.149 iterations=537 ret=1 rss_mib=3116.082 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.390359468] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=37 rss_mib=3116.430 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030553.392094484] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=37 duration_ms=1.791 iterations=407 ret=1 rss_mib=3116.430 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.392160954] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=38 rss_mib=3116.430 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030553.392779126] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=38 duration_ms=0.620 iterations=152 ret=1 rss_mib=3116.430 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030553.392809281] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.11807314.
+[fsm_node-3] [INFO] [1789030553.414859862] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=20 rss_mib=3116.691 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030553.446775753] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=20 duration_ms=31.910 iterations=2414 ret=1 rss_mib=3116.691 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.538325541] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=39 rss_mib=3117.066 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030553.549912513] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=39 duration_ms=11.625 iterations=1453 ret=1 rss_mib=3117.066 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.550025324] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=40 rss_mib=3117.066 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030553.554392111] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=40 duration_ms=4.368 iterations=712 ret=1 rss_mib=3117.066 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030553.554429105] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.16138749.
+[fsm_node-3] [INFO] [1789030553.576243490] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=21 rss_mib=3117.070 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030553.580676282] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=21 duration_ms=4.495 iterations=444 ret=1 rss_mib=3117.070 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.660231225] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=41 rss_mib=3117.199 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030553.669719733] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=41 duration_ms=9.516 iterations=1302 ret=1 rss_mib=3117.199 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.669821394] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=42 rss_mib=3117.199 swap_mib=0.000 variables=18 pieces=2
+[fsm_node-3] [INFO] [1789030553.671757389] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=42 duration_ms=1.928 iterations=401 ret=1 rss_mib=3117.199 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030553.671797473] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.117098832.
+[fsm_node-3] [INFO] [1789030553.696073406] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=22 rss_mib=3117.203 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030553.697684301] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=22 duration_ms=1.672 iterations=166 ret=1 rss_mib=3117.203 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.781982945] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=43 rss_mib=3117.277 swap_mib=0.000 variables=26 pieces=2
+[fsm_node-3] [INFO] [1789030553.784162603] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=43 duration_ms=2.225 iterations=381 ret=1 rss_mib=3117.277 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.784304818] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=44 rss_mib=3117.277 swap_mib=0.000 variables=26 pieces=2
+[fsm_node-3] [INFO] [1789030553.785937399] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=44 duration_ms=1.633 iterations=334 ret=1 rss_mib=3117.277 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030553.785969865] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.113969454.
+[fsm_node-3] [INFO] [1789030553.813104162] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=23 rss_mib=3117.277 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030553.816335140] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=23 duration_ms=3.254 iterations=211 ret=1 rss_mib=3117.277 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=20 map_age=0.006s map_age_limit=0.500s motion_speed=4.697mps samples=387 range=[0.370,2.296] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=21 map_age=0.010s map_age_limit=0.500s motion_speed=6.094mps samples=365 range=[0.480,2.296] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=22 map_age=0.004s map_age_limit=0.500s motion_speed=6.669mps samples=347 range=[0.570,2.296] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=23 map_age=0.009s map_age_limit=0.500s motion_speed=7.000mps samples=305 range=[0.780,2.296] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=24 map_age=0.008s map_age_limit=0.500s motion_speed=6.789mps samples=265 range=[0.980,2.296] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=25 map_age=0.008s map_age_limit=0.500s motion_speed=4.297mps samples=225 range=[1.180,2.296] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.525000000000002 20.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.525000000000002 20.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1789030553.908302202] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=45 rss_mib=3117.281 swap_mib=0.000 variables=40 pieces=2
+[fsm_node-3] [INFO] [1789030553.909377638] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=45 duration_ms=1.113 iterations=141 ret=1 rss_mib=3117.281 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030553.909595178] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=46 rss_mib=3117.281 swap_mib=0.000 variables=40 pieces=2
+[fsm_node-3] [INFO] [1789030553.910144182] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=46 duration_ms=0.559 iterations=68 ret=1 rss_mib=3117.281 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030553.910200347] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.123950559.
+[fsm_node-3] [INFO] [1789030553.938747586] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=24 rss_mib=3117.285 swap_mib=0.000 variables=9 pieces=3
+[fsm_node-3] [INFO] [1789030553.940902993] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=24 duration_ms=2.220 iterations=267 ret=1 rss_mib=3117.285 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [32m -- [Fsm 5.030] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [INFO] [1789030554.022782650] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=47 rss_mib=3117.441 swap_mib=0.000 variables=38 pieces=2
+[fsm_node-3] [INFO] [1789030554.024020180] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=47 duration_ms=1.292 iterations=190 ret=1 rss_mib=3117.441 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.024122360] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=48 rss_mib=3117.441 swap_mib=0.000 variables=38 pieces=2
+[fsm_node-3] [INFO] [1789030554.027046789] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=48 duration_ms=2.926 iterations=383 ret=1 rss_mib=3117.441 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030554.027079478] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.116559252.
+[fsm_node-3] [INFO] [1789030554.056212440] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=25 rss_mib=3117.449 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030554.059961353] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=25 duration_ms=3.804 iterations=244 ret=1 rss_mib=3117.449 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.136486990] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=49 rss_mib=3117.668 swap_mib=0.000 variables=38 pieces=2
+[fsm_node-3] [INFO] [1789030554.137485652] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=49 duration_ms=1.070 iterations=146 ret=1 rss_mib=3117.668 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.137604363] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=50 rss_mib=3117.668 swap_mib=0.000 variables=38 pieces=2
+[fsm_node-3] [INFO] [1789030554.139050233] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=50 duration_ms=1.446 iterations=229 ret=1 rss_mib=3117.668 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030554.139120615] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.111683967.
+[fsm_node-3] [INFO] [1789030554.167689357] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=26 rss_mib=3117.668 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030554.180816966] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=26 duration_ms=13.177 iterations=1076 ret=1 rss_mib=3117.668 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.252448128] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=51 rss_mib=3117.711 swap_mib=0.000 variables=40 pieces=2
+[fsm_node-3] [INFO] [1789030554.254330570] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=51 duration_ms=1.948 iterations=265 ret=1 rss_mib=3117.711 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.254457064] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=52 rss_mib=3117.711 swap_mib=0.000 variables=40 pieces=2
+[fsm_node-3] [INFO] [1789030554.255743105] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=52 duration_ms=1.287 iterations=184 ret=1 rss_mib=3117.711 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030554.255780397] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.116472934.
+[fsm_node-3] [INFO] [1789030554.257255401] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=8 map=25 samples=22 range=[1.532,1.630] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030554.261979556] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=9 map=25 samples=21 range=[1.537,1.630] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=8 map=25 map_age=0.360s map_age_limit=0.550s motion_speed=0.445mps samples=21 range=[1.532,1.630] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=9 map=25 map_age=0.364s map_age_limit=0.550s motion_speed=0.445mps samples=20 range=[1.537,1.630] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Traj finish.[0m
+[fsm_node-3] [WARN] [1789030554.375210344] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_EPISODE_RESET] reason=horizontal_progress progress=7.230m threshold=2.000m prior_local=0 prior_vertical=0 prior_base=0
+[fsm_node-3] [INFO] [1789030554.418773836] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=27 rss_mib=3118.145 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030554.431560116] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=27 duration_ms=12.840 iterations=892 ret=1 rss_mib=3118.145 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.431609969] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[fsm_node-3] [INFO] [1789030554.487966239] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=53 rss_mib=3118.324 swap_mib=0.000 variables=34 pieces=2
+[fsm_node-3] [INFO] [1789030554.488598796] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=53 duration_ms=0.705 iterations=90 ret=1 rss_mib=3118.324 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.488700457] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=54 rss_mib=3118.324 swap_mib=0.000 variables=34 pieces=2
+[fsm_node-3] [INFO] [1789030554.493747751] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=54 duration_ms=5.047 iterations=595 ret=1 rss_mib=3118.324 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030554.494270938] [fsm_node]:  -- [TRAJ_GUARD_VIABILITY_SLOWDOWN] phase=PlanFromRest/with_backup gen=10 scale=1.250 retries=1
+[fsm_node-3] [INFO] [1789030554.494279500] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=10 map=26 samples=267 range=[0.119,1.441] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3] [INFO] [1789030554.614462536] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=28 rss_mib=3118.324 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030554.617508483] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=28 duration_ms=3.098 iterations=238 ret=1 rss_mib=3118.324 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.668026942] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=55 rss_mib=3118.324 swap_mib=0.000 variables=40 pieces=2
+[fsm_node-3] [INFO] [1789030554.670274648] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=55 duration_ms=2.296 iterations=341 ret=1 rss_mib=3118.324 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.670462348] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=56 rss_mib=3118.324 swap_mib=0.000 variables=40 pieces=2
+[fsm_node-3] [INFO] [1789030554.678880021] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=56 duration_ms=8.402 iterations=886 ret=1 rss_mib=3118.324 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.679254483] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=11 map=27 samples=221 range=[0.088,1.183] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [PubCmdCallback] change state from [FOLLOW_TRAJ] to [GENERATE_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=10 map=26 map_age=0.092s map_age_limit=0.550s motion_speed=0.000mps samples=266 range=[0.119,1.441] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[fsm_node-3] [0m -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=10 map=27 map_age=0.007s map_age_limit=0.550s motion_speed=0.707mps samples=248 range=[0.210,1.441] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030554.703088970] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=29 rss_mib=3118.324 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030554.707372769] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=29 duration_ms=4.322 iterations=406 ret=1 rss_mib=3118.324 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.801098778] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=57 rss_mib=3118.324 swap_mib=0.000 variables=30 pieces=2
+[fsm_node-3] [INFO] [1789030554.802865633] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=57 duration_ms=1.824 iterations=304 ret=1 rss_mib=3118.324 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.803002030] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=58 rss_mib=3118.324 swap_mib=0.000 variables=30 pieces=2
+[fsm_node-3] [INFO] [1789030554.803705489] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=58 duration_ms=0.703 iterations=128 ret=1 rss_mib=3118.324 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030554.803742928] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.124202832.
+[fsm_node-3] [INFO] [1789030554.831007717] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=30 rss_mib=3118.324 swap_mib=0.000 variables=17 pieces=5
+[fsm_node-3] [INFO] [1789030554.855401264] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=30 duration_ms=24.422 iterations=1590 ret=1 rss_mib=3118.324 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=11 map=27 map_age=0.101s map_age_limit=0.550s motion_speed=1.765mps samples=220 range=[0.088,1.183] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=11 map=28 map_age=0.011s map_age_limit=0.550s motion_speed=1.887mps samples=217 range=[0.104,1.183] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.525000000000002 20.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.525000000000002 20.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1789030554.917965751] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=59 rss_mib=3118.340 swap_mib=0.000 variables=36 pieces=2
+[fsm_node-3] [INFO] [1789030554.919498760] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=59 duration_ms=1.590 iterations=182 ret=1 rss_mib=3118.340 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030554.919654378] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=60 rss_mib=3118.340 swap_mib=0.000 variables=36 pieces=2
+[fsm_node-3] [INFO] [1789030554.926951426] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=60 duration_ms=7.283 iterations=707 ret=1 rss_mib=3118.340 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030554.927005257] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.122848427.
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=11 map=29 map_age=0.011s map_age_limit=0.500s motion_speed=4.973mps samples=171 range=[0.334,1.183] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm 6.030] Current state: FOLLOW_TRAJ[0m
+[fsm_node-3] [INFO] [1789030554.968912796] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=31 rss_mib=3118.340 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030554.972432817] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=31 duration_ms=3.579 iterations=330 ret=1 rss_mib=3118.340 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030555.100784001] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=61 rss_mib=3118.418 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030555.108578072] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=61 duration_ms=7.831 iterations=935 ret=1 rss_mib=3118.418 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030555.108702910] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=62 rss_mib=3118.418 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030555.115339013] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=62 duration_ms=6.632 iterations=833 ret=1 rss_mib=3118.418 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030555.115416769] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.188171984.
+[fsm_node-3] [INFO] [1789030555.159800072] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=32 rss_mib=3118.418 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030555.165625187] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=32 duration_ms=5.846 iterations=460 ret=1 rss_mib=3118.418 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030555.293196435] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=63 rss_mib=3118.422 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030555.300163981] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=63 duration_ms=7.001 iterations=901 ret=1 rss_mib=3118.422 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030555.300309654] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=64 rss_mib=3118.422 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030555.302242289] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=64 duration_ms=1.900 iterations=306 ret=1 rss_mib=3118.422 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030555.302308558] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.186571033.
+[fsm_node-3] [INFO] [1789030555.354203993] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=33 rss_mib=3118.422 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030555.358036730] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=33 duration_ms=3.892 iterations=322 ret=1 rss_mib=3118.422 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030555.486144399] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=65 rss_mib=3118.422 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030555.493704557] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=65 duration_ms=7.611 iterations=861 ret=1 rss_mib=3118.422 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030555.493816042] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=66 rss_mib=3118.422 swap_mib=0.000 variables=22 pieces=2
+[fsm_node-3] [INFO] [1789030555.496219421] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=66 duration_ms=2.391 iterations=343 ret=1 rss_mib=3118.422 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030555.496269262] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.193748485.
+[fsm_node-3] [INFO] [1789030555.546823224] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=34 rss_mib=3118.422 swap_mib=0.000 variables=13 pieces=4
+[fsm_node-3] [INFO] [1789030555.559627254] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=34 duration_ms=12.835 iterations=942 ret=1 rss_mib=3118.422 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [WARN] [1789030555.675787957] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.179287364.
+[fsm_node-3] [INFO] [1789030555.701219733] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=12 map=33 samples=109 range=[1.110,1.642] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=11 map=30 map_age=0.004s map_age_limit=0.500s motion_speed=5.504mps samples=137 range=[0.504,1.183] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=11 map=31 map_age=0.009s map_age_limit=0.500s motion_speed=5.532mps samples=93 range=[0.724,1.183] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=11 map=32 map_age=0.002s map_age_limit=0.500s motion_speed=4.239mps samples=59 range=[0.894,1.183] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_post status=SAFE gen=11 map=33 map_age=0.002s map_age_limit=0.550s motion_speed=1.028mps samples=19 range=[1.094,1.183] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030555.731509018] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=35 rss_mib=3118.422 swap_mib=0.000 variables=5 pieces=2
+[fsm_node-3] [INFO] [1789030555.732818853] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=35 duration_ms=1.375 iterations=208 ret=1 rss_mib=3118.422 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030555.792399844] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=13 map=33 samples=221 range=[0.079,1.174] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=12 map=33 map_age=0.018s map_age_limit=0.550s motion_speed=0.651mps samples=108 range=[1.110,1.642] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030555.807292680] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=36 rss_mib=3118.422 swap_mib=0.000 variables=5 pieces=2
+[fsm_node-3] [INFO] [1789030555.807644324] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=36 duration_ms=0.408 iterations=44 ret=1 rss_mib=3118.422 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030555.858078230] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=14 map=33 samples=205 range=[0.065,1.076] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=13 map=33 map_age=0.109s map_age_limit=0.500s motion_speed=5.936mps samples=220 range=[0.079,1.174] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030555.872854892] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=37 rss_mib=3118.422 swap_mib=0.000 variables=5 pieces=2
+[fsm_node-3] [INFO] [1789030555.875499488] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=37 duration_ms=2.717 iterations=392 ret=1 rss_mib=3118.422 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=14 map=33 map_age=0.175s map_age_limit=0.500s motion_speed=5.016mps samples=204 range=[0.065,1.076] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=14 map=34 map_age=0.011s map_age_limit=0.500s motion_speed=4.480mps samples=194 range=[0.112,1.076] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] Get goal at [0m24.525000000000002 20.025000000000002  1.525000000000000
+[fsm_node-3] [32m -- [Fsm] Receive click goal at: [24.525000000000002 20.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[fsm_node-3] [INFO] [1789030555.920966877] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=15 map=34 samples=196 range=[0.062,1.032] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030555.934897436] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=38 rss_mib=3119.965 swap_mib=0.000 variables=5 pieces=2
+[fsm_node-3] [INFO] [1789030555.935281912] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=38 duration_ms=0.449 iterations=52 ret=1 rss_mib=3119.965 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=15 map=34 map_age=0.027s map_age_limit=0.500s motion_speed=4.247mps samples=195 range=[0.063,1.032] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm 7.040] Current state: FOLLOW_TRAJ[0m
+[perfect_drone_frontend_node-2] [INFO] [1789030555.967008685] [native_sector_cpp]: frames=76 published=43 kept 40.8% (14535/35606 pts/input-frame)
+[fsm_node-3] [INFO] [1789030555.978453787] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=16 map=34 samples=217 range=[0.057,1.128] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030555.991678536] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=39 rss_mib=3119.965 swap_mib=0.000 variables=5 pieces=2
+[fsm_node-3] [INFO] [1789030555.992449314] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=39 duration_ms=0.830 iterations=119 ret=1 rss_mib=3119.965 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030556.031358553] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=17 map=34 samples=208 range=[0.052,1.078] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=16 map=34 map_age=0.084s map_age_limit=0.500s motion_speed=3.820mps samples=216 range=[0.057,1.128] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030556.056201524] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=40 rss_mib=3119.965 swap_mib=0.000 variables=5 pieces=2
+[fsm_node-3] [INFO] [1789030556.056980895] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=40 duration_ms=0.847 iterations=116 ret=1 rss_mib=3119.965 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030556.089256601] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=18 map=34 samples=183 range=[0.046,0.948] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=17 map=34 map_age=0.137s map_age_limit=0.500s motion_speed=3.837mps samples=207 range=[0.053,1.078] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030556.118691451] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=41 rss_mib=3119.965 swap_mib=0.000 variables=1 pieces=1
+[fsm_node-3] [INFO] [1789030556.119029318] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=41 duration_ms=0.404 iterations=90 ret=1 rss_mib=3119.965 swap_mib=0.000 rss_delta_mib=0.000
+[fsm_node-3] [INFO] [1789030556.146087651] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=19 map=34 samples=170 range=[0.037,0.873] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=18 map=34 map_age=0.195s map_age_limit=0.500s motion_speed=4.203mps samples=182 range=[0.046,0.948] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030556.199279442] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=20 map=34 samples=159 range=[0.090,0.873] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=19 map=34 map_age=0.252s map_age_limit=0.500s motion_speed=4.714mps samples=169 range=[0.037,0.873] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[fsm_node-3] [INFO] [1789030556.260630070] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=21 map=34 samples=147 range=[0.151,0.873] escape=false footprint_egress=false escape_done_tt=-1.000
+[fsm_node-3]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=20 map=34 map_age=0.305s map_age_limit=0.500s motion_speed=5.105mps samples=158 range=[0.090,0.873] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[fsm_node-3] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_frontend_node-2] [INFO] [1789030556.366406897] [perfect_tracking]: [SENSOR_CADENCE_SUMMARY] frames=100 span_s=9.899635 hz=10.000368 raw_published=0 direct_handoffs=76 payload_bytes=86595520 side_entry_v1_enabled=0 side_entry_v1_spawned=0 side_entry_v1_injected_frames=0
+[perfect_drone_frontend_node-2] [INFO] [1789030556.366490017] [perfect_tracking]: [SENSOR_BURST_DROPOUT_SUMMARY] enabled=1 warmup_s=1.000000 period_s=2.000000 duration_s=0.500000 phase_s=0.400000 phase_env_override=1 rendered=100 delivered=76 dropped=24 bursts=5 max_consecutive_dropped=6 max_delivered_gap_s=0.700152 dropped_payload_bytes=23915808
+[fsm_node-3] [INFO] [1789030556.395138578] [fsm_node]:  -- [FULL_REFRESH_RECOVERY_GATE_ARM] min_request_seq=4
+[fsm_node-3] [INFO] [1789030556.395246894] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=true
+[fsm_node-3] [ERROR] [1789030556.396178095] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=main_pre_uncertified searched=[0.400,3.000]s speed0=4.871 initial_source=fresh_command cmd_age=0.010s cmd_pos_err=0.000 cmd_vel_err=inf motion_speed=inf motion_dt=infs motion_pose_speed=inf motion_twist_speed=4.871 motion_disagreement=inf motion_source=none motion_gen=21/6 motion_gen_continuous=false last_dynamics_ok=false max_vel=8.112 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=UNOBSERVED last_map=34 map_age=0.502s raw_status=DISABLED raw_cloud=0 raw_age=0.000s ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[fsm_node-3] [ERROR] [1789030556.405190989] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.020s cmd_pos_err=0.000 cmd_vel_err=4.871 motion_speed=0.000 motion_dt=0.010s motion_pose_speed=0.000 motion_twist_speed=4.871 motion_disagreement=4.871 motion_source=position_difference motion_gen=21/21 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=UNOBSERVED last_map=34 map_age=0.511s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[fsm_node-3] [INFO] [1789030556.469167346] [fsm_node]:  -- [FULL_REFRESH_RECOVERY_TARGET] request_seq=4 stamp_ns=1789030556468479171 already_acked=false map=0
+[fsm_node-3] [INFO] [1789030556.513833552] [fsm_node]:  -- [FULL_REFRESH_RECOVERY_ACK] request_seq=4 stamp_ns=1789030556468479171 map=35 committed=1
+[fsm_node-3] [ERROR] [1789030556.515191192] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.130s cmd_pos_err=0.000 cmd_vel_err=4.871 motion_speed=0.000 motion_dt=0.110s motion_pose_speed=0.000 motion_twist_speed=4.871 motion_disagreement=4.871 motion_source=position_difference motion_gen=21/21 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=UNOBSERVED last_map=35 map_age=0.006s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published

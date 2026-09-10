@@ -1,0 +1,942 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-09-10-17-48-22-073725-livox-1937342
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [waypoint_mission-1]: process started with pid [1937346]
+[INFO] [perfect_drone_full_node-2]: process started with pid [1937348]
+[waypoint_mission-1] [WARN] [1789030102.123361135] [waypoint_mission]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mission_planner/config/waypoint.yaml
+[waypoint_mission-1] [WARN] [1789030102.123433067] [waypoint_mission]:  -- [MissionPlanner] Load data by file name: /root/super_ws/src/SUPER/mission_planner/data/blind_heading_fork.txt
+[perfect_drone_full_node-2] Load config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7.yaml
+[perfect_drone_full_node-2] [0;32m Load param fsm/timer_en success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/detailed_log_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param super_planner/detailed_log_max_entries success: [0;0m64
+[perfect_drone_full_node-2] [0;32m Load param fsm/click_goal_en success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param fsm/click_yaw_en success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param fsm/replan_rate success: [0;0m15
+[perfect_drone_full_node-2] [0;32m Load param fsm/click_height success: [0;0m1.5
+[perfect_drone_full_node-2] [0;32m Load param fsm/cmd_topic success: [0;0m/planning/pos_cmd
+[perfect_drone_full_node-2] [0;32m Load param fsm/mpc_cmd_topic success: [0;0m/planning_cmd/poly_traj
+[perfect_drone_full_node-2] [0;32m Load param fsm/click_goal_topic success: [0;0m/planning/click_goal
+[perfect_drone_full_node-2] [0;32m Load param fsm/map_readiness/enable success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param fsm/map_readiness/min_accepted_scans success: [0;0m5
+[perfect_drone_full_node-2] [0;32m Load param fsm/map_readiness/min_committed_scans success: [0;0m5
+[perfect_drone_full_node-2] [0;32m Load param fsm/map_readiness/max_commit_lag_scans success: [0;0m5
+[perfect_drone_full_node-2] [0;32m Load param fsm/map_readiness/min_scan_span_s success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param fsm/map_readiness/max_cloud_age_s success: [0;0m0.75
+[perfect_drone_full_node-2] [0;32m Load param fsm/map_readiness/max_map_age_s success: [0;0m0.55
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/same_map_replan_coalesce_enable failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/same_map_replan_min_interval_s failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/max_map_age_s success: [0;0m0.75
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/brake_trigger_map_age_s success: [0;0m0.55
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/brake_trigger_high_speed_map_age_s success: [0;0m0.5
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/brake_trigger_low_speed_mps success: [0;0m2.5
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/brake_trigger_high_speed_mps success: [0;0m3.5
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/full_refresh_ack_sla_s failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/raw_cloud/enable success: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/source_topic failed, use default value: [0;0m
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/raw_cloud/max_age_s success: [0;0m0.75
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/raw_cloud/clearance_m success: [0;0m0.3
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/brake_min_duration_s failed, use default value: [0;0m0.4
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/brake_max_duration_s success: [0;0m3
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/brake_max_acc_mps2 success: [0;0m20
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/brake_max_jerk_mps3 success: [0;0m120
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/brake_command_max_age_s success: [0;0m0.1
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/brake_command_max_position_error_m success: [0;0m0.5
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/brake_command_max_velocity_error_mps success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/brake_retry_interval_s success: [0;0m0.1
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/unknown_as_occupied success: [0;0m1
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/ciri_shadow_en failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/accum_window_s failed, use default value: [0;0m1.5
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/ciri_min_points failed, use default value: [0;0m200
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/ciri_voxel_m failed, use default value: [0;0m0.1
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_shadow_en failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_clearance_m failed, use default value: [0;0m0.2
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_horizon_s failed, use default value: [0;0m1
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_sample_dt_s failed, use default value: [0;0m0.01
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_min_interval_s failed, use default value: [0;0m0.1
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_min_points failed, use default value: [0;0m200
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_voxel_m failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_test_replay_mode failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_enforce_en failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_result_max_age_s failed, use default value: [0;0m0.2
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_max_sequence_lag failed, use default value: [0;0m1
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_egress_tolerance_m failed, use default value: [0;0m0.005
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_egress_min_progress_m failed, use default value: [0;0m0.02
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/frontend_risk/shadow_en failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/frontend_risk/enforce_en failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/frontend_risk/topic failed, use default value: [0;0m/planning/trajectory_risk_verdict
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/frontend_risk/result_max_age_s failed, use default value: [0;0m0.2
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/frontend_risk/source_max_age_s failed, use default value: [0;0m0.75
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/frontend_risk/current_body_enforce_en failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/frontend_risk/current_body_result_max_age_s failed, use default value: [0;0m0.15
+[perfect_drone_full_node-2] [0;33m Load param fsm/trajectory_guard/frontend_risk/current_body_source_max_age_s failed, use default value: [0;0m0.2
+[perfect_drone_full_node-2] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[perfect_drone_full_node-2] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[perfect_drone_full_node-2] Load config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7.yaml
+[perfect_drone_full_node-2] [0;32m Load param rog_map/esdf/resolution success: [0;0m0.1
+[perfect_drone_full_node-2] [0;32m Load param rog_map/esdf/enable success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/esdf/local_update_box success: [0;0m[5 5 3 ]
+[perfect_drone_full_node-2] [0;32m Load param rog_map/load_pcd_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/map_sliding/enable success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/map_sliding/threshold success: [0;0m3
+[perfect_drone_full_node-2] [0;32m Load param rog_map/fix_map_origin success: [0;0m[0 0 1.5 ]
+[perfect_drone_full_node-2] [0;32m Load param rog_map/frontier_extraction_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/ros_callback/enable success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param rog_map/ros_callback/cloud_topic success: [0;0m/cloud_registered
+[perfect_drone_full_node-2] [0;33m Load param rog_map/ros_callback/cloud_reliable failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/ros_callback/odom_topic success: [0;0m/lidar_slam/odom
+[perfect_drone_full_node-2] [0;32m Load param rog_map/ros_callback/odom_timeout success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param rog_map/visualization/enable success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/visualization/use_dynamic_reconfigure success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/visualization/pub_unknown_map_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/visualization/frame_id success: [0;0mworld
+[perfect_drone_full_node-2] [0;32m Load param rog_map/visualization/time_rate success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param rog_map/visualization/frame_rate success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/visualization/range success: [0;0m[15 15 4 ]
+[perfect_drone_full_node-2] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[perfect_drone_full_node-2] [0;32m Load param rog_map/inflation_resolution success: [0;0m0.1
+[perfect_drone_full_node-2] [0;32m Load param rog_map/unk_inflation_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/unk_inflation_step success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param rog_map/inflation_step success: [0;0m3
+[perfect_drone_full_node-2] [0;32m Load param rog_map/intensity_thresh success: [0;0m-10
+[perfect_drone_full_node-2] [0;32m Load param rog_map/map_size success: [0;0m[70 70 6 ]
+[perfect_drone_full_node-2] [0;32m Load param rog_map/point_filt_num success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/enable success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/batch_update_size success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/unk_thresh success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/p_hit success: [0;0m0.9
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/p_miss success: [0;0m0.49
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/p_min success: [0;0m0.12
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/p_max success: [0;0m0.98
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/p_occ success: [0;0m0.85
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/ray_range success: [0;0m[0.5 100 ]
+[perfect_drone_full_node-2] [0;33m Load param rog_map/raycasting/observed_mark_range_max failed, use default value: [0;0m10
+[perfect_drone_full_node-2] [0;32m Load param rog_map/raycasting/local_update_box success: [0;0m[100 100 5 ]
+[perfect_drone_full_node-2] [0;32m Load param rog_map/virtual_ground_height success: [0;0m-0.1
+[perfect_drone_full_node-2] [0;32m Load param rog_map/virtual_ceil_height success: [0;0m3.5
+[perfect_drone_full_node-2] [32m -- [RM-Config] inflation_resolution: 0.1[0m
+[perfect_drone_full_node-2]  -- [ROG-Map] Init, resetMapSize: ORIGIN_AT_CORNER.
+[perfect_drone_full_node-2]  -- [ROG-Map] Init, resetMapSize: virtual_ceil_height: 3.1500000000000004, virtual_ground_height: 0.25.
+[perfect_drone_full_node-2] [34m	[ROG] n_free: 1[0m
+[perfect_drone_full_node-2] [34m	[ROG] n_occ: 1[0m
+[perfect_drone_full_node-2] [34m	[ROG] l_hit: 2.19722[0m
+[perfect_drone_full_node-2] [34m	[ROG] l_miss: -0.0400053[0m
+[perfect_drone_full_node-2] [34m	[ROG] l_min: -1.99243[0m
+[perfect_drone_full_node-2] [34m	[ROG] l_max: 3.89182[0m
+[perfect_drone_full_node-2] [34m	[ROG] l_occ: 1.7346[0m
+[perfect_drone_full_node-2] [34m	[ROG] l_free: -0.00399995[0m
+[perfect_drone_full_node-2] [33m -- [Inf-Map] Clear all local map.[0m
+[perfect_drone_full_node-2] [32m -- [CounterMap] Init successfully -- .[0m
+[perfect_drone_full_node-2] [32m	resolution: 0.1[0m
+[perfect_drone_full_node-2] [32m	map_sliding_en: 0[0m
+[perfect_drone_full_node-2] [32m	local_map_size_i: 709 709  69[0m
+[perfect_drone_full_node-2] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[perfect_drone_full_node-2] [33m -- [Inf-Map] Clear all local map.[0m
+[perfect_drone_full_node-2] [32m -- [InfMap] Init successfully -- .[0m
+[perfect_drone_full_node-2] [32m	resolution: 0.1[0m
+[perfect_drone_full_node-2] [32m	map_sliding_en: 0[0m
+[perfect_drone_full_node-2] [32m	local_map_size_i: 709 709  69[0m
+[perfect_drone_full_node-2] [32m	local_map_size_d: 70.9 70.9  6.9[0m
+[perfect_drone_full_node-2] [ProbMap] virtual_ceil_height: 3.15
+[perfect_drone_full_node-2] [ProbMap] virtual_ground_height: 0.25
+[perfect_drone_full_node-2] [33m -- [ProbMap] Map sliding disabled, set origin to [  0   0 1.5] -- [0m
+[perfect_drone_full_node-2] [33m -- [Prob-Map] Clear all local map.[0m
+[perfect_drone_full_node-2] [32m -- [ProbMap] Init successfully -- .[0m
+[perfect_drone_full_node-2] [32m	resolution: 0.05[0m
+[perfect_drone_full_node-2] [32m	map_sliding_en: 0[0m
+[perfect_drone_full_node-2] [32m	local_map_size_i: 1401 1401  121[0m
+[perfect_drone_full_node-2] [32m	local_map_size_d: 70.05 70.05  6.05[0m
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [ROGMap] Immutable planner snapshot enabled (fixed occupancy-only map).
+[perfect_drone_full_node-2] [0mLoad config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7.yaml
+[perfect_drone_full_node-2] Load config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7.yaml
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/pos_constraint_type success: [0;0m1
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/exp_traj/piece_num failed, use default value: [0;0m1
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/exp_traj/uniform_time_en failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/block_energy_cost success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/opt_accuracy success: [0;0m5e-06
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/exp_traj/max_iterations failed, use default value: [0;0m2048
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/integral_reso success: [0;0m15
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/smooth_eps success: [0;0m0.01
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m7
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/exp_traj/penna_scale failed, use default value: [0;0m-1
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/penna_t success: [0;0m1e+07
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/exp_traj/penna_ts failed, use default value: [0;0m-1
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/penna_pos success: [0;0m5e+09
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/penna_clr success: [0;0m1e+06
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/clearance_margin success: [0;0m0.1
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/clearance_speed_gate success: [0;0m1.5
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/clearance_speed_transition success: [0;0m0.5
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/exp_traj/penna_passage_center failed, use default value: [0;0m-1
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/exp_traj/passage_center_max_width failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/exp_traj/passage_center_min_opposition_cos failed, use default value: [0;0m0.9
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/exp_traj/passage_center_min_horizontal_normal failed, use default value: [0;0m0.8
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/exp_traj/passage_center_deadband failed, use default value: [0;0m0.15
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/exp_traj/passage_center_log_en failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/penna_vel success: [0;0m5e+08
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/penna_acc success: [0;0m5e+08
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/penna_jerk success: [0;0m-5e+08
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/penna_attract success: [0;0m5e+08
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/penna_omg success: [0;0m-1
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/exp_traj/penna_thr success: [0;0m-1
+[perfect_drone_full_node-2] Load config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7.yaml
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/backup_traj/max_iterations failed, use default value: [0;0m2048
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m12
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/max_vel success: [0;0m7
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/penna_clr success: [0;0m1e+06
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/clearance_margin success: [0;0m0.1
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/clearance_speed_gate success: [0;0m1.5
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/clearance_speed_transition success: [0;0m0.5
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/backup_traj/penna_passage_center failed, use default value: [0;0m-1
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/backup_traj/passage_center_max_width failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/backup_traj/passage_center_min_opposition_cos failed, use default value: [0;0m0.9
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/backup_traj/passage_center_min_horizontal_normal failed, use default value: [0;0m0.8
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/backup_traj/passage_center_deadband failed, use default value: [0;0m0.15
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/backup_traj/passage_center_log_en failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[perfect_drone_full_node-2] [0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[perfect_drone_full_node-2] [0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/print_log success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param super_planner/detailed_log_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param super_planner/visualization_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param super_planner/backup_traj_en success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/goal_vel_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param super_planner/goal_yaw_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param super_planner/visual_process success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param super_planner/use_fov_cut success: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param super_planner/fov_horizontal_angle failed, use default value: [0;0m-1
+[perfect_drone_full_node-2] [0;33m Load param super_planner/fov_center_heading failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param super_planner/frontend_in_known_free success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/escape_max_duration_s success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/unknown_as_occupied success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/escape_entry_grace_s success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param fsm/trajectory_guard/initial_footprint_egress_enable success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/safe_corridor_line_max_length success: [0;0m6
+[perfect_drone_full_node-2] [0;32m Load param super_planner/sensing_horizon success: [0;0m-1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/obs_skip_num success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param super_planner/replan_forward_dt success: [0;0m0.1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/corridor_bound_dis success: [0;0m0.8
+[perfect_drone_full_node-2] [0;32m Load param super_planner/corridor_line_max_length success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/planning_horizon success: [0;0m7
+[perfect_drone_full_node-2] [0;32m Load param super_planner/receding_dis success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/robot_r success: [0;0m0.2
+[perfect_drone_full_node-2] [0;32m Load param super_planner/corridor_use_inflated_obstacles success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param super_planner/corridor_use_inflated_seed_lines success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param super_planner/corridor_guard_retry_inflated success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_corridor_retry_alternate_every success: [0;0m4
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/enable success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/radius_m success: [0;0m0.8
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/growth_m success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/max_radius_m success: [0;0m0.8
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/max_zones success: [0;0m6
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/max_stop_speed_mps success: [0;0m0.2
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/escalate_every_rejects success: [0;0m3
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/collision_merge_m success: [0;0m0.5
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/start_clearance_m success: [0;0m0.3
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/block_spacing_m success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/direction_merge_angle_deg success: [0;0m30
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/no_path_reset_attempts success: [0;0m3
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/vertical_recovery_enable success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/vertical_recovery_lift_m success: [0;0m0.6
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/vertical_recovery_trigger_distance_m success: [0;0m0.75
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/local_escape_enable success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/local_escape_distance_m success: [0;0m0.6
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/local_escape_attempts success: [0;0m4
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/episode_progress_reset_m success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/saturation_vertical_attempts success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_topology_reroute/base_no_path_vertical_attempts success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_direct_goal_fallback/enable success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_direct_goal_fallback/max_distance_m success: [0;0m3
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_direct_goal_fallback/min_duration_s success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_viability/enable success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_viability/horizon_s success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_viability/sample_dt_s success: [0;0m0.3
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_viability/brake_max_acc_mps2 success: [0;0m20
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_viability/brake_max_jerk_mps3 success: [0;0m120
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_viability/brake_min_duration_s success: [0;0m0.4
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_viability/brake_max_duration_s success: [0;0m3
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_viability/brake_attempts success: [0;0m12
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_viability/speed_scale_step success: [0;0m1.25
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_viability/speed_scale_max success: [0;0m3
+[perfect_drone_full_node-2] [0;32m Load param super_planner/guard_viability/max_retries success: [0;0m4
+[perfect_drone_full_node-2] [0;32m Load param super_planner/corridor_min_margin success: [0;0m0.2
+[perfect_drone_full_node-2] [0;32m Load param super_planner/corridor_pref_margin success: [0;0m0.3
+[perfect_drone_full_node-2] [0;32m Load param super_planner/iris_iter_num success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param super_planner/yaw_mode success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param super_planner/mpc_horizon success: [0;0m15
+[perfect_drone_full_node-2] [0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[perfect_drone_full_node-2] [0;32m Load param rog_map/resolution success: [0;0m0.05
+[perfect_drone_full_node-2] [INFO] [1789030103.568452441] [fsm_node]:  -- [TRAJ_GUARD] mode=enforce sample_dt=0.0050s shadow_min_interval=0.000s inflation_radius=0.300m robot_r=0.200m additional_clearance=0.000m hard_clearance=0.300m clearance_offsets=0
+[perfect_drone_full_node-2] [38;2;050;205;050m -- [Viz] Set resolution_ to 0.05
+[perfect_drone_full_node-2] [0m[38;2;050;205;050m -- [Viz] Set visualization_en_ to false
+[perfect_drone_full_node-2] [0mLoad config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7.yaml
+[perfect_drone_full_node-2] [0;32m Load param astar/map_voxel_num success: [0;0m[500 500 100 ]
+[perfect_drone_full_node-2] [0;32m Load param astar/allow_diag success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param astar/debug_visualization_en success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param astar/heu_type success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param astar/visual_process success: [0;0m0
+[perfect_drone_full_node-2] [32m -- [RM] Init Astar-map.[0m
+[perfect_drone_full_node-2] [34m	map index size: 250 250  50[0m
+[perfect_drone_full_node-2] [34m	map vox_num: 501 501 101[0m
+[perfect_drone_full_node-2] [33m -- [Fsm] CLICKGOAL ENABLE.[0m
+[perfect_drone_full_node-2] [WARN] [1789030105.116627190] [perfect_tracking]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/shc5_asymmetric_offset_hazard.yaml
+[perfect_drone_full_node-2] Load config file: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/shc5_asymmetric_offset_hazard.yaml
+[perfect_drone_full_node-2] [0;32m Load param mesh_resource success: [0;0mpackage://perfect_drone_sim/meshes/yunque-M.dae
+[perfect_drone_full_node-2] [0;32m Load param init_position/x success: [0;0m24.5
+[perfect_drone_full_node-2] [0;32m Load param init_position/y success: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param init_position/z success: [0;0m1.5
+[perfect_drone_full_node-2] [0;32m Load param init_yaw success: [0;0m3.14159
+[perfect_drone_full_node-2] [0;32m Load param sensing_rate success: [0;0m10
+[perfect_drone_full_node-2] Load config file: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/shc5_asymmetric_offset_hazard.yaml
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v1/enabled failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v2/enabled failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v3/enabled failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v4/enabled failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v5/enabled failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v6/enabled failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v7/enabled failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/speed_min_mps failed, use default value: [0;0m2
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/yaw_velocity_mismatch_min_deg failed, use default value: [0;0m50
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/require_yaw_velocity_mismatch failed, use default value: [0;0m1
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/hold_s failed, use default value: [0;0m0.02
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/qualifying_samples failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/prediction_s failed, use default value: [0;0m0.8
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/require_velocity_inside failed, use default value: [0;0m1
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/fixed_center_enabled failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/fixed_center_x failed, use default value: [0;0m22.5
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/fixed_center_y failed, use default value: [0;0m23
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/trigger_distance_min_m failed, use default value: [0;0m0.8
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/trigger_distance_max_m failed, use default value: [0;0m3.5
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/trigger_waypoint_x failed, use default value: [0;0m24
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/trigger_waypoint_y failed, use default value: [0;0m24
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/trigger_waypoint_radius_m failed, use default value: [0;0m2
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/trap_waypoint_radius_m failed, use default value: [0;0m2
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/sector_half_angle_deg failed, use default value: [0;0m45
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/angular_margin_deg failed, use default value: [0;0m2
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/max_nudge_deg failed, use default value: [0;0m20
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/radius_m failed, use default value: [0;0m0.25
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/height_m failed, use default value: [0;0m3
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/point_spacing_m failed, use default value: [0;0m0.05
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/z_spacing_m failed, use default value: [0;0m0.1
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/sensing_horizon_m failed, use default value: [0;0m15
+[perfect_drone_full_node-2] [0;33m Load param side_entry_v0/intensity failed, use default value: [0;0m14545
+[perfect_drone_full_node-2] Load config file: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/shc5_asymmetric_offset_hazard.yaml
+[perfect_drone_full_node-2] [0;32m Load param sensor_burst_dropout/enabled success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param sensor_burst_dropout/warmup_s success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param sensor_burst_dropout/period_s success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param sensor_burst_dropout/duration_s success: [0;0m0.5
+[perfect_drone_full_node-2] [0;32m Load param sensor_burst_dropout/phase_s success: [0;0m0
+[perfect_drone_full_node-2] Load config file: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/shc5_asymmetric_offset_hazard.yaml
+[perfect_drone_full_node-2] [0;32m Load param sensing_blind success: [0;0m0.1
+[perfect_drone_full_node-2] [0;32m Load param sensing_horizon success: [0;0m15
+[perfect_drone_full_node-2] [0;32m Load param sensing_rate success: [0;0m10
+[perfect_drone_full_node-2] [0;32m Load param lidar_type success: [0;0m2
+[perfect_drone_full_node-2] [0;32m Load param pcd_name success: [0;0mseed_maps/shc5_asymmetric_offset_hazard.pcd
+[perfect_drone_full_node-2] [0;32m Load param is_360lidar success: [0;0m1
+[perfect_drone_full_node-2] [0;32m Load param polar_resolution success: [0;0m0.4
+[perfect_drone_full_node-2] [0;33m Load param fx failed, use default value: [0;0m250
+[perfect_drone_full_node-2] [0;33m Load param fy failed, use default value: [0;0m250
+[perfect_drone_full_node-2] [0;33m Load param line_number failed, use default value: [0;0m64
+[perfect_drone_full_node-2] [0;32m Load param downsample_res success: [0;0m0.1
+[perfect_drone_full_node-2] [0;33m Load param yaw_fov failed, use default value: [0;0m360
+[perfect_drone_full_node-2] [0;32m Load param vertical_fov success: [0;0m178
+[perfect_drone_full_node-2] [0;32m Load param depth_image_en success: [0;0m0
+[perfect_drone_full_node-2] [0;33m Load param inf_point_en failed, use default value: [0;0m0
+[perfect_drone_full_node-2] [0;32m Load param print_time_consumption success: [0;0m0
+[perfect_drone_full_node-2] GLAD init success
+[perfect_drone_full_node-2] Load shader frome: /root/super_ws/src/SUPER/mars_uav_sim/marsim_render/config/pattern/360camera.vs
+[perfect_drone_full_node-2] Now initing the point cloud data: 
+[perfect_drone_full_node-2] Number of points = 11.3368X 10000
+[perfect_drone_full_node-2] Load data finish 
+[perfect_drone_full_node-2] ========== OpenGL Info ==========
+[perfect_drone_full_node-2] Vendor: NVIDIA Corporation
+[perfect_drone_full_node-2] Renderer: NVIDIA GeForce RTX 3050 Ti Laptop GPU/PCIe/SSE2
+[perfect_drone_full_node-2] OpenGL Version: 3.3.0 NVIDIA 550.144.03
+[perfect_drone_full_node-2] GLSL Version: 3.30 NVIDIA via Cg compiler
+[perfect_drone_full_node-2] ========== OpenGL Info ==========
+[perfect_drone_full_node-2] [WARN] [1789030105.443433462] [perfect_tracking]: SENSOR_BURST_DROPOUT armed before every cloud transport: warmup=1.000s period=2.000s duration=0.500s phase=1.200s env_override=1
+[perfect_drone_full_node-2] [INFO] [1789030105.443489496] [perfect_drone_full_config]: Full raw DDS disabled: renderer -> ROG-Map uses direct latest-only SharedPtr handoff
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [INIT] to [WAIT_GOAL].
+[perfect_drone_full_node-2] [0m -- [Fsm] MAP_NOT_READY reason=accepted_count,committed_count,map_version,scan_span,accepted_cloud_age,committed_cloud_age,map_age accepted=0 committed=0 version=0 lag=0 span=0.000s cloud_age=infs committed_cloud_age=infs commit_age=infs in_progress=false
+[perfect_drone_full_node-2] Publish local map size: 18877
+[perfect_drone_full_node-2] Publish local map size: 18857
+[perfect_drone_full_node-2] Publish local map size: 18863
+[perfect_drone_full_node-2] Publish local map size: 18860
+[perfect_drone_full_node-2] Publish local map size: 18998
+[perfect_drone_full_node-2] Publish local map size: 18855
+[perfect_drone_full_node-2] Publish local map size: 18853
+[perfect_drone_full_node-2] Publish local map size: 18796
+[perfect_drone_full_node-2] Publish local map size: 18879
+[perfect_drone_full_node-2] [32m -- [Fsm 1.001] Current state: WAIT_GOAL[0m
+[perfect_drone_full_node-2] Publish local map size: 18905
+[perfect_drone_full_node-2]  -- [Fsm] MAP_NOT_READY reason=scan_span accepted=10 committed=10 version=10 lag=0 span=0.884s cloud_age=0.037s committed_cloud_age=0.037s commit_age=0.017s in_progress=false
+[perfect_drone_full_node-2] Publish local map size: 18849
+[perfect_drone_full_node-2] Publish local map size: 18905
+[perfect_drone_full_node-2]  -- [Fsm] MAP_READY accepted=12 committed=11 version=11 lag=1 span=1.084s cloud_age=0.008s committed_cloud_age=0.106s commit_age=0.084s in_progress=true
+[perfect_drone_full_node-2] [32m -- [Fsm] Get goal at [0m24.525 20.025  1.525
+[perfect_drone_full_node-2] [32m -- [Fsm] Receive click goal at: [24.525 20.025  1.525]; goal yaw: 0.000 deg[0m
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [WAIT_GOAL] to [GENERATE_TRAJ].
+[perfect_drone_full_node-2] [0mPublish local map size: 18860
+[perfect_drone_full_node-2] [INFO] [1789030106.752816471] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=1 rss_mib=3213.293 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030106.758372398] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=1 duration_ms=5.611 iterations=342 ret=1 rss_mib=3213.305 swap_mib=0.000 rss_delta_mib=0.012
+[perfect_drone_full_node-2] [INFO] [1789030106.758432377] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[perfect_drone_full_node-2] [INFO] [1789030106.795829511] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=1 rss_mib=3213.418 swap_mib=0.000 variables=78 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030106.801255818] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=1 duration_ms=5.445 iterations=125 ret=1 rss_mib=3213.445 swap_mib=0.000 rss_delta_mib=0.027
+[perfect_drone_full_node-2] [INFO] [1789030106.801736668] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=2 rss_mib=3213.457 swap_mib=0.000 variables=78 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030106.806982345] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=2 duration_ms=5.243 iterations=120 ret=1 rss_mib=3213.711 swap_mib=0.000 rss_delta_mib=0.254
+[perfect_drone_full_node-2] [INFO] [1789030106.807260153] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=1 map=13 samples=209 range=[0.142,1.174] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=1 map=13 map_age=0.042s map_age_limit=0.550s motion_speed=0.894mps samples=208 range=[0.142,1.174] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[perfect_drone_full_node-2] [0mPublish local map size: 36832
+[perfect_drone_full_node-2] [INFO] [1789030106.914405465] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=2 rss_mib=3216.188 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030106.916586881] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=2 duration_ms=2.242 iterations=280 ret=1 rss_mib=3216.195 swap_mib=0.000 rss_delta_mib=0.008
+[perfect_drone_full_node-2] [INFO] [1789030106.936187302] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=3 rss_mib=3216.270 swap_mib=0.000 variables=50 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030106.938329778] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=3 duration_ms=2.154 iterations=134 ret=1 rss_mib=3216.285 swap_mib=0.000 rss_delta_mib=0.016
+[perfect_drone_full_node-2] [INFO] [1789030106.938468710] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=4 rss_mib=3216.297 swap_mib=0.000 variables=50 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030106.943279832] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=4 duration_ms=4.807 iterations=290 ret=1 rss_mib=3216.379 swap_mib=0.000 rss_delta_mib=0.082
+[perfect_drone_full_node-2] [INFO] [1789030106.943509766] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=2 map=14 samples=143 range=[0.046,0.749] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=1 map=14 map_age=0.006s map_age_limit=0.550s motion_speed=1.889mps samples=194 range=[0.210,1.174] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=2 map=14 map_age=0.074s map_age_limit=0.512s motion_speed=3.260mps samples=142 range=[0.047,0.749] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 35259
+[perfect_drone_full_node-2] [INFO] [1789030106.979580230] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=3 rss_mib=3216.879 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030106.983661933] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=3 duration_ms=4.129 iterations=464 ret=1 rss_mib=3216.887 swap_mib=0.000 rss_delta_mib=0.008
+[perfect_drone_full_node-2] [INFO] [1789030107.008598337] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=5 rss_mib=3216.934 swap_mib=0.000 variables=64 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.024738146] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=5 duration_ms=16.149 iterations=460 ret=1 rss_mib=3217.027 swap_mib=0.000 rss_delta_mib=0.094
+[perfect_drone_full_node-2] [INFO] [1789030107.025084611] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=6 rss_mib=3217.039 swap_mib=0.000 variables=64 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.036066906] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=6 duration_ms=10.973 iterations=340 ret=1 rss_mib=3217.070 swap_mib=0.000 rss_delta_mib=0.031
+[perfect_drone_full_node-2] [ERROR] [1789030107.036171309] [fsm_node]:  -- [TRAJ_GUARD_REJECT] phase=ReplanOnce/with_backup segment=APPENDED_BACKUP status=CLEARANCE_MARGIN gen=3 map=15 from_tt=0.073 collision_tt=0.463 collision_p=[22.422,1.702,1.602] samples=130
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=2 map=15 map_age=0.009s map_age_limit=0.500s motion_speed=3.812mps samples=136 range=[0.078,0.749] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 24964
+[perfect_drone_full_node-2] [INFO] [1789030107.053495955] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=4 rss_mib=3217.691 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030107.069106982] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=4 duration_ms=15.654 iterations=601 ret=1 rss_mib=3217.707 swap_mib=0.000 rss_delta_mib=0.016
+[perfect_drone_full_node-2] [INFO] [1789030107.088148060] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=7 rss_mib=3217.793 swap_mib=0.000 variables=72 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.125429274] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=7 duration_ms=37.273 iterations=903 ret=1 rss_mib=3217.793 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030107.125811089] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=8 rss_mib=3217.805 swap_mib=0.000 variables=72 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.142353877] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=8 duration_ms=16.536 iterations=458 ret=1 rss_mib=3217.805 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030107.142393399] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.106103445.
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=2 map=16 map_age=0.009s map_age_limit=0.500s motion_speed=5.147mps samples=116 range=[0.178,0.749] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 22575
+[perfect_drone_full_node-2] [INFO] [1789030107.158570627] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=5 rss_mib=3218.305 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030107.201152128] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=5 duration_ms=42.616 iterations=2363 ret=1 rss_mib=3218.320 swap_mib=0.000 rss_delta_mib=0.016
+[perfect_drone_full_node-2] [INFO] [1789030107.213133761] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=9 rss_mib=3218.414 swap_mib=0.000 variables=78 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.225885403] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=9 duration_ms=12.758 iterations=316 ret=1 rss_mib=3218.438 swap_mib=0.000 rss_delta_mib=0.023
+[perfect_drone_full_node-2] [INFO] [1789030107.226317695] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=10 rss_mib=3218.449 swap_mib=0.000 variables=78 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.237980661] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=10 duration_ms=11.658 iterations=293 ret=1 rss_mib=3218.531 swap_mib=0.000 rss_delta_mib=0.082
+[perfect_drone_full_node-2] [WARN] [1789030107.238017140] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.09548689.
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=2 map=17 map_age=0.009s map_age_limit=0.500s motion_speed=5.654mps samples=96 range=[0.278,0.749] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 25037
+[perfect_drone_full_node-2] [INFO] [1789030107.254015956] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=6 rss_mib=3219.062 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030107.266839751] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=6 duration_ms=12.862 iterations=385 ret=1 rss_mib=3219.070 swap_mib=0.000 rss_delta_mib=0.008
+[perfect_drone_full_node-2] [INFO] [1789030107.274256669] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=11 rss_mib=3219.273 swap_mib=0.000 variables=64 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.276695176] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=11 duration_ms=2.453 iterations=101 ret=1 rss_mib=3219.289 swap_mib=0.000 rss_delta_mib=0.016
+[perfect_drone_full_node-2] [INFO] [1789030107.276913749] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=12 rss_mib=3219.301 swap_mib=0.000 variables=64 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.280433256] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=12 duration_ms=3.519 iterations=150 ret=1 rss_mib=3219.309 swap_mib=0.000 rss_delta_mib=0.008
+[perfect_drone_full_node-2] [INFO] [1789030107.280588753] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=3 map=18 samples=81 range=[0.042,0.434] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=2 map=18 map_age=0.009s map_age_limit=0.500s motion_speed=5.685mps samples=76 range=[0.378,0.749] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2] [INFO] [1789030107.305747571] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=7 rss_mib=3219.309 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030107.314256145] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=7 duration_ms=8.556 iterations=578 ret=1 rss_mib=3219.309 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030107.320719321] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=13 rss_mib=3219.316 swap_mib=0.000 variables=66 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.323187247] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=13 duration_ms=2.480 iterations=285 ret=1 rss_mib=3219.316 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030107.323318979] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=14 rss_mib=3219.316 swap_mib=0.000 variables=66 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.326418563] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=14 duration_ms=3.097 iterations=377 ret=1 rss_mib=3219.316 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030107.326570444] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=4 map=18 samples=89 range=[0.033,0.467] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=3 map=18 map_age=0.015s map_age_limit=0.500s motion_speed=5.616mps samples=80 range=[0.042,0.434] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=4 map=18 map_age=0.061s map_age_limit=0.500s motion_speed=4.947mps samples=88 range=[0.034,0.467] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2]  -- [MARSIM] Running FPS: 188.689204400410972
+[perfect_drone_full_node-2] Publish local map size: 43778
+[perfect_drone_full_node-2] [INFO] [1789030107.377254936] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=8 rss_mib=3220.207 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030107.384147004] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=8 duration_ms=6.950 iterations=589 ret=1 rss_mib=3220.207 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030107.393628801] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=15 rss_mib=3220.207 swap_mib=0.000 variables=60 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.404271404] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=15 duration_ms=10.647 iterations=587 ret=1 rss_mib=3220.211 swap_mib=0.000 rss_delta_mib=0.004
+[perfect_drone_full_node-2] [INFO] [1789030107.404465567] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=16 rss_mib=3220.211 swap_mib=0.000 variables=60 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.421799042] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=16 duration_ms=17.322 iterations=860 ret=1 rss_mib=3220.211 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030107.422014855] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=5 map=19 samples=144 range=[0.063,0.771] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=4 map=19 map_age=0.006s map_age_limit=0.500s motion_speed=4.214mps samples=79 range=[0.082,0.467] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2] [INFO] [1789030107.437682325] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=9 rss_mib=3220.211 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030107.440945937] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=9 duration_ms=3.300 iterations=393 ret=1 rss_mib=3220.211 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=5 map=19 map_age=0.053s map_age_limit=0.504s motion_speed=3.421mps samples=143 range=[0.063,0.771] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 49832
+[perfect_drone_full_node-2] [32m -- [Fsm 2.011] Current state: FOLLOW_TRAJ[0m
+[perfect_drone_full_node-2] [INFO] [1789030107.474173886] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=17 rss_mib=3220.910 swap_mib=0.000 variables=54 pieces=2
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=5 map=20 map_age=0.003s map_age_limit=0.529s motion_speed=2.922mps samples=132 range=[0.116,0.771] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] Get goal at [0m24.525 20.025  1.525
+[perfect_drone_full_node-2] [32m -- [Fsm] Receive click goal at: [24.525 20.025  1.525]; goal yaw: 0.000 deg[0m
+[perfect_drone_full_node-2] [INFO] [1789030107.479080110] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=17 duration_ms=4.941 iterations=501 ret=1 rss_mib=3220.910 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030107.479224002] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=18 rss_mib=3220.910 swap_mib=0.000 variables=54 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.481230829] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=18 duration_ms=2.001 iterations=216 ret=1 rss_mib=3220.910 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030107.481683472] [fsm_node]:  -- [TRAJ_GUARD_VIABILITY_SLOWDOWN] phase=ReplanOnce/with_backup gen=6 scale=1.250 retries=1
+[perfect_drone_full_node-2] [INFO] [1789030107.481696341] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/with_backup gen=6 map=20 samples=300 range=[0.056,1.544] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2] [INFO] [1789030107.511941908] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=10 rss_mib=3221.137 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030107.514195247] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=10 duration_ms=2.298 iterations=235 ret=1 rss_mib=3221.145 swap_mib=0.000 rss_delta_mib=0.008
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=6 map=20 map_age=0.010s map_age_limit=0.529s motion_speed=2.922mps samples=299 range=[0.057,1.544] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 52380
+[perfect_drone_full_node-2] [INFO] [1789030107.605647173] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=19 rss_mib=3223.637 swap_mib=0.000 variables=22 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.609265204] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=19 duration_ms=3.674 iterations=726 ret=1 rss_mib=3223.637 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030107.609349881] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=20 rss_mib=3223.648 swap_mib=0.000 variables=22 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.612318525] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=20 duration_ms=2.968 iterations=525 ret=1 rss_mib=3223.648 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030107.612344851] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.121384104.
+[perfect_drone_full_node-2] [INFO] [1789030107.633269237] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=11 rss_mib=3223.984 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030107.637247432] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=11 duration_ms=4.023 iterations=430 ret=1 rss_mib=3223.992 swap_mib=0.000 rss_delta_mib=0.008
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=6 map=21 map_age=0.005s map_age_limit=0.550s motion_speed=2.430mps samples=280 range=[0.150,1.544] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 41017
+[perfect_drone_full_node-2] [INFO] [1789030107.731573666] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=21 rss_mib=3224.480 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.736084961] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=21 duration_ms=4.553 iterations=768 ret=1 rss_mib=3224.480 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030107.736169086] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=22 rss_mib=3224.492 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.739316708] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=22 duration_ms=3.149 iterations=620 ret=1 rss_mib=3224.492 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030107.739346076] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.126769232.
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=6 map=22 map_age=0.007s map_age_limit=0.518s motion_speed=3.148mps samples=260 range=[0.250,1.544] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 47970
+[perfect_drone_full_node-2] [INFO] [1789030107.756878703] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=12 rss_mib=3224.492 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030107.769922814] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=12 duration_ms=13.088 iterations=1267 ret=1 rss_mib=3224.492 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=6 map=23 map_age=0.011s map_age_limit=0.500s motion_speed=3.723mps samples=240 range=[0.350,1.544] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 46047
+[perfect_drone_full_node-2] [INFO] [1789030107.854551851] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=23 rss_mib=3224.492 swap_mib=0.000 variables=22 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.855060834] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=23 duration_ms=0.554 iterations=115 ret=1 rss_mib=3224.492 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030107.855129619] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=24 rss_mib=3224.492 swap_mib=0.000 variables=22 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.855506743] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=24 duration_ms=0.378 iterations=93 ret=1 rss_mib=3224.492 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030107.855537953] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.115963524.
+[perfect_drone_full_node-2] [INFO] [1789030107.873929867] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=13 rss_mib=3224.492 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030107.875758879] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=13 duration_ms=1.882 iterations=214 ret=1 rss_mib=3224.492 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] Publish local map size: 42305
+[perfect_drone_full_node-2] [INFO] [1789030107.960830572] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=25 rss_mib=3224.492 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.964696762] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=25 duration_ms=3.927 iterations=691 ret=1 rss_mib=3224.492 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030107.964767434] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=26 rss_mib=3224.492 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030107.965188921] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=26 duration_ms=0.422 iterations=111 ret=1 rss_mib=3224.492 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030107.965220816] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.109518515.
+[perfect_drone_full_node-2] [INFO] [1789030107.986316727] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=14 rss_mib=3224.492 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030107.989245922] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=14 duration_ms=2.979 iterations=292 ret=1 rss_mib=3224.492 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] Publish local map size: 46915
+[perfect_drone_full_node-2] [INFO] [1789030108.061570264] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=27 rss_mib=3224.492 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030108.063108010] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=27 duration_ms=1.605 iterations=403 ret=1 rss_mib=3224.492 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030108.063171061] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=28 rss_mib=3224.492 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030108.064272332] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=28 duration_ms=1.100 iterations=284 ret=1 rss_mib=3224.492 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030108.064298077] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.098797987.
+[perfect_drone_full_node-2] [INFO] [1789030108.082071397] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=15 rss_mib=3224.492 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030108.084963713] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=15 duration_ms=2.935 iterations=292 ret=1 rss_mib=3224.492 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] Publish local map size: 53171
+[perfect_drone_full_node-2] [INFO] [1789030108.159276948] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=29 rss_mib=3224.723 swap_mib=0.000 variables=26 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030108.165682370] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=29 duration_ms=6.464 iterations=1034 ret=1 rss_mib=3224.742 swap_mib=0.000 rss_delta_mib=0.020
+[perfect_drone_full_node-2] [INFO] [1789030108.165769250] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=30 rss_mib=3224.742 swap_mib=0.000 variables=26 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030108.168179412] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=30 duration_ms=2.410 iterations=491 ret=1 rss_mib=3224.742 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030108.168209702] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.103646052.
+[perfect_drone_full_node-2] Publish local map size: 54822
+[perfect_drone_full_node-2] [INFO] [1789030108.295003909] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=true
+[perfect_drone_full_node-2] [ERROR] [1789030108.295671293] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=main_pre_uncertified duration=0.608s speed0=3.131 initial_source=fresh_command cmd_age=0.010s cmd_pos_err=0.000 cmd_vel_err=inf motion_speed=inf motion_dt=infs motion_pose_speed=inf motion_twist_speed=3.131 motion_disagreement=inf motion_source=none motion_gen=6/0 motion_gen_continuous=false max_vel=3.453 vel_limit=7.000 max_acc=12.659 max_jerk=118.044 dynamics_ok=true path_status=SAFE map=23 map_age=0.532s raw_status=DISABLED raw_cloud=0 raw_age=0.000s ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs stop=[21.905,4.897,0.973]
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=6 map=23 map_age=0.531s map_age_limit=0.518s motion_speed=3.131mps samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[perfect_drone_full_node-2] [0mPublish local map size: 49489
+[perfect_drone_full_node-2] Publish local map size: 43769
+[perfect_drone_full_node-2] Publish local map size: 47490
+[perfect_drone_full_node-2] Publish local map size: 52742
+[perfect_drone_full_node-2] Publish local map size: 53682
+[perfect_drone_full_node-2] Publish local map size: 49100
+[perfect_drone_full_node-2] Publish local map size: 47057
+[perfect_drone_full_node-2] Publish local map size: 47109
+[perfect_drone_full_node-2] Publish local map size: 47080
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[perfect_drone_full_node-2] [0m[32m -- [Fsm 3.721] Current state: GENERATE_TRAJ[0m
+[perfect_drone_full_node-2] [32m -- [Fsm] Get goal at [0m24.525 20.025  1.525
+[perfect_drone_full_node-2] [32m -- [Fsm] Receive click goal at: [24.525 20.025  1.525]; goal yaw: 0.000 deg[0m
+[perfect_drone_full_node-2] [WARN] [1789030109.164991089] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_EPISODE_RESET] reason=horizontal_progress progress=5.542m threshold=2.000m prior_local=0 prior_vertical=0 prior_base=0
+[perfect_drone_full_node-2] [INFO] [1789030109.184520628] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=16 rss_mib=3225.508 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030109.187401564] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=16 duration_ms=2.931 iterations=285 ret=1 rss_mib=3225.508 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030109.187444729] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[perfect_drone_full_node-2] Publish local map size: 47059
+[perfect_drone_full_node-2] [INFO] [1789030109.260925496] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=31 rss_mib=3225.742 swap_mib=0.000 variables=22 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.265221462] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=31 duration_ms=4.333 iterations=824 ret=1 rss_mib=3225.742 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030109.265300500] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=32 rss_mib=3225.742 swap_mib=0.000 variables=22 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.266578026] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=32 duration_ms=1.279 iterations=307 ret=1 rss_mib=3225.742 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030109.266874064] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=7 map=33 samples=287 range=[0.102,1.525] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2] [INFO] [1789030109.267021114] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=false
+[perfect_drone_full_node-2] [INFO] [1789030109.267027003] [fsm_node]:  -- [TRAJ_GUARD_RECOVERED] trigger=main_pre_uncertified gen=7 map=31
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=7 map=33 map_age=0.007s map_age_limit=0.550s motion_speed=0.000mps samples=286 range=[0.102,1.525] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[perfect_drone_full_node-2] [0mPublish local map size: 52145
+[perfect_drone_full_node-2] [INFO] [1789030109.362625993] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=17 rss_mib=3225.758 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030109.366124342] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=17 duration_ms=3.542 iterations=346 ret=1 rss_mib=3225.758 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030109.432678442] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=33 rss_mib=3226.508 swap_mib=0.000 variables=22 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.434393009] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=33 duration_ms=1.778 iterations=451 ret=1 rss_mib=3226.508 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030109.434463749] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=34 rss_mib=3226.508 swap_mib=0.000 variables=22 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.439274521] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=34 duration_ms=4.811 iterations=857 ret=1 rss_mib=3226.508 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030109.439300246] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.100384015.
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=34 map_age=0.010s map_age_limit=0.550s motion_speed=1.713mps samples=265 range=[0.210,1.525] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 53156
+[perfect_drone_full_node-2] [INFO] [1789030109.457346944] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=18 rss_mib=3226.609 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030109.460982491] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=18 duration_ms=3.696 iterations=346 ret=1 rss_mib=3226.645 swap_mib=0.000 rss_delta_mib=0.035
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=35 map_age=0.001s map_age_limit=0.501s motion_speed=3.470mps samples=247 range=[0.300,1.525] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] Get goal at [0m24.525000000000002 20.025000000000002  1.525000000000000
+[perfect_drone_full_node-2] [32m -- [Fsm] Receive click goal at: [24.525000000000002 20.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[perfect_drone_full_node-2] [INFO] [1789030109.536963369] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=35 rss_mib=3226.668 swap_mib=0.000 variables=26 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.540645854] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=35 duration_ms=3.711 iterations=576 ret=1 rss_mib=3226.770 swap_mib=0.000 rss_delta_mib=0.102
+[perfect_drone_full_node-2] [INFO] [1789030109.540738153] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=36 rss_mib=3226.781 swap_mib=0.000 variables=26 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.541781021] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=36 duration_ms=1.043 iterations=239 ret=1 rss_mib=3226.781 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030109.541816421] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.102334442.
+[perfect_drone_full_node-2] Publish local map size: 52257
+[perfect_drone_full_node-2] [INFO] [1789030109.572799475] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=19 rss_mib=3226.781 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030109.587975455] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=19 duration_ms=15.216 iterations=1063 ret=1 rss_mib=3226.781 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=36 map_age=0.009s map_age_limit=0.500s motion_speed=5.381mps samples=225 range=[0.410,1.525] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 49913
+[perfect_drone_full_node-2] [INFO] [1789030109.662027440] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=37 rss_mib=3226.781 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.666866873] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=37 duration_ms=4.903 iterations=839 ret=1 rss_mib=3226.781 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030109.666951837] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=38 rss_mib=3226.781 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.667341187] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=38 duration_ms=0.391 iterations=101 ret=1 rss_mib=3226.781 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030109.667373801] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.125369399.
+[perfect_drone_full_node-2] [INFO] [1789030109.695283548] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=20 rss_mib=3226.781 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030109.706796619] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=20 duration_ms=11.548 iterations=1179 ret=1 rss_mib=3226.781 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=replan_post status=SAFE gen=7 map=37 map_age=0.003s map_age_limit=0.500s motion_speed=6.459mps samples=206 range=[0.502,1.525] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 48297
+[perfect_drone_full_node-2] [INFO] [1789030109.786411833] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=39 rss_mib=3227.191 swap_mib=0.000 variables=26 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.790349771] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=39 duration_ms=3.984 iterations=637 ret=1 rss_mib=3227.191 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030109.790435916] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=40 rss_mib=3227.191 swap_mib=0.000 variables=26 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.794349689] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=40 duration_ms=3.910 iterations=650 ret=1 rss_mib=3227.191 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030109.794384086] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.126715158.
+[perfect_drone_full_node-2] [INFO] [1789030109.822289265] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=21 rss_mib=3227.227 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030109.829587636] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=21 duration_ms=7.326 iterations=574 ret=1 rss_mib=3227.227 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=7 map=38 map_age=0.010s map_age_limit=0.500s motion_speed=6.920mps samples=185 range=[0.610,1.525] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2]  -- [MARSIM] Running FPS: 245.945603935318530
+[perfect_drone_full_node-2] Publish local map size: 62677
+[perfect_drone_full_node-2] [INFO] [1789030109.898260167] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=41 rss_mib=3227.711 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.910174814] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=41 duration_ms=11.945 iterations=1721 ret=1 rss_mib=3227.711 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030109.910286603] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=42 rss_mib=3227.711 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030109.910610604] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=42 duration_ms=0.328 iterations=86 ret=1 rss_mib=3227.711 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030109.910638530] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.116095444.
+[perfect_drone_full_node-2] [INFO] [1789030109.933577391] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=22 rss_mib=3227.711 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030109.938463886] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=22 duration_ms=4.939 iterations=420 ret=1 rss_mib=3227.711 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] Publish local map size: 74951
+[perfect_drone_full_node-2] [INFO] [1789030110.015962474] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=43 rss_mib=3228.598 swap_mib=0.000 variables=22 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030110.016757105] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=43 duration_ms=0.870 iterations=171 ret=1 rss_mib=3228.598 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030110.016870217] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=44 rss_mib=3228.598 swap_mib=0.000 variables=22 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030110.021028367] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=44 duration_ms=4.160 iterations=692 ret=1 rss_mib=3228.598 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030110.021056123] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.110312412.
+[perfect_drone_full_node-2] Publish local map size: 74110
+[perfect_drone_full_node-2] [INFO] [1789030110.048344255] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=23 rss_mib=3228.598 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030110.052133285] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=23 duration_ms=3.863 iterations=396 ret=1 rss_mib=3228.598 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030110.141450870] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=45 rss_mib=3228.609 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030110.144815158] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=45 duration_ms=3.384 iterations=524 ret=1 rss_mib=3228.609 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030110.144910880] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=46 rss_mib=3228.609 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] Publish local map size: 60198
+[perfect_drone_full_node-2] [INFO] [1789030110.148536501] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=46 duration_ms=3.615 iterations=618 ret=1 rss_mib=3228.609 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030110.148596365] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.127306346.
+[perfect_drone_full_node-2] [32m -- [Fsm 4.731] Current state: FOLLOW_TRAJ[0m
+[perfect_drone_full_node-2] Publish local map size: 47681
+[perfect_drone_full_node-2] [INFO] [1789030110.264896344] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=true
+[perfect_drone_full_node-2] [ERROR] [1789030110.266497660] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=main_pre_uncertified searched=[0.400,3.000]s speed0=6.619 initial_source=fresh_command cmd_age=0.010s cmd_pos_err=0.000 cmd_vel_err=inf motion_speed=inf motion_dt=infs motion_pose_speed=inf motion_twist_speed=6.619 motion_disagreement=inf motion_source=none motion_gen=7/6 motion_gen_continuous=false last_dynamics_ok=true max_vel=6.619 vel_limit=7.000 max_acc=7.692 max_jerk=6.596 last_path_status=UNOBSERVED last_map=38 map_age=0.502s raw_status=DISABLED raw_cloud=0 raw_age=0.000s ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[perfect_drone_full_node-2] [ERROR] [1789030110.274984400] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.020s cmd_pos_err=0.000 cmd_vel_err=6.619 motion_speed=0.000 motion_dt=0.010s motion_pose_speed=0.000 motion_twist_speed=6.619 motion_disagreement=6.619 motion_source=position_difference motion_gen=7/7 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=UNOBSERVED last_map=38 map_age=0.510s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=7 map=38 map_age=0.500s map_age_limit=0.500s motion_speed=6.619mps samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuardFailClosed] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[perfect_drone_full_node-2] [0mPublish local map size: 47811
+[perfect_drone_full_node-2] [ERROR] [1789030110.384898902] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.130s cmd_pos_err=0.000 cmd_vel_err=6.619 motion_speed=0.000 motion_dt=0.110s motion_pose_speed=0.000 motion_twist_speed=6.619 motion_disagreement=6.619 motion_source=position_difference motion_gen=7/7 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=UNOBSERVED last_map=39 map_age=0.013s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[perfect_drone_full_node-2] Publish local map size: 47796
+[perfect_drone_full_node-2] [INFO] [1789030110.449270298] [perfect_tracking]: [SENSOR_CADENCE_SUMMARY] frames=50 span_s=4.885518 hz=10.029643 raw_published=0 direct_handoffs=40 payload_bytes=46750496 side_entry_v1_enabled=0 side_entry_v1_spawned=0 side_entry_v1_injected_frames=0
+[perfect_drone_full_node-2] [INFO] [1789030110.449481261] [perfect_tracking]: [SENSOR_BURST_DROPOUT_SUMMARY] enabled=1 warmup_s=1.000000 period_s=2.000000 duration_s=0.500000 phase_s=1.200000 phase_env_override=1 rendered=50 delivered=40 dropped=10 bursts=2 max_consecutive_dropped=5 max_delivered_gap_s=0.602408 dropped_payload_bytes=18012064
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] [ERROR] [1789030110.484949676] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.230s cmd_pos_err=0.000 cmd_vel_err=6.619 motion_speed=0.000 motion_dt=0.100s motion_pose_speed=0.000 motion_twist_speed=6.619 motion_disagreement=6.619 motion_source=position_difference motion_gen=7/7 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=UNOBSERVED last_map=40 map_age=0.015s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish global map size: 113368
+[perfect_drone_full_node-2] Publish local map size: 47777
+[perfect_drone_full_node-2] [WARN] [1789030110.594986237] [fsm_node]:  -- [TRAJ_GUARD_STATIONARY_HOLD] trigger=emergency_stop_retry stable_for=0.320s displacement=0.000m action=publish_certified_hold
+[perfect_drone_full_node-2] [ERROR] [1789030110.595086755] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=emergency_stop_retry duration=0.400s speed0=0.000 initial_source=position_difference cmd_age=0.340s cmd_pos_err=0.000 cmd_vel_err=6.619 motion_speed=0.000 motion_dt=0.110s motion_pose_speed=0.000 motion_twist_speed=6.619 motion_disagreement=6.619 motion_source=position_difference motion_gen=7/7 motion_gen_continuous=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 dynamics_ok=true path_status=SAFE map=41 map_age=0.032s raw_status=DISABLED raw_cloud=0 raw_age=0.000s ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs stop=[21.653,10.264,1.043]
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [EMER_STOP] to [EMER_STOP].
+[perfect_drone_full_node-2] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[perfect_drone_full_node-2] [0m[32m -- [Fsm] Get goal at [0m24.525 20.025  1.525
+[perfect_drone_full_node-2] [32m -- [Fsm] Receive click goal at: [24.525 20.025  1.525]; goal yaw: 0.000 deg[0m
+[perfect_drone_full_node-2] [WARN] [1789030110.604930279] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_EPISODE_RESET] reason=horizontal_progress progress=5.372m threshold=2.000m prior_local=0 prior_vertical=0 prior_base=0
+[perfect_drone_full_node-2] [INFO] [1789030110.636726841] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=24 rss_mib=3325.855 swap_mib=0.000 variables=17 pieces=5
+[perfect_drone_full_node-2] [INFO] [1789030110.643498836] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=24 duration_ms=6.806 iterations=581 ret=1 rss_mib=3325.855 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030110.643583681] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[perfect_drone_full_node-2] Publish local map size: 45399
+[perfect_drone_full_node-2] [INFO] [1789030110.702582608] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=47 rss_mib=3325.855 swap_mib=0.000 variables=38 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030110.705198720] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=47 duration_ms=2.660 iterations=171 ret=1 rss_mib=3325.855 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030110.705419809] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=48 rss_mib=3325.855 swap_mib=0.000 variables=38 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030110.708665108] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=48 duration_ms=3.253 iterations=221 ret=1 rss_mib=3325.855 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030110.708961592] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/with_backup gen=8 map=42 samples=237 range=[0.104,1.274] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2] [INFO] [1789030110.709093807] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=false
+[perfect_drone_full_node-2] [INFO] [1789030110.709099621] [fsm_node]:  -- [TRAJ_GUARD_RECOVERED] trigger=emergency_stop_retry gen=8 map=41
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=8 map=42 map_age=0.045s map_age_limit=0.550s motion_speed=0.000mps samples=236 range=[0.104,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[perfect_drone_full_node-2] [0mPublish local map size: 49717
+[perfect_drone_full_node-2] [INFO] [1789030110.811585357] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=25 rss_mib=3325.855 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030110.815834573] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=25 duration_ms=4.291 iterations=425 ret=1 rss_mib=3325.855 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=8 map=43 map_age=0.008s map_age_limit=0.550s motion_speed=1.181mps samples=220 range=[0.180,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 52434
+[perfect_drone_full_node-2] [INFO] [1789030110.898393407] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=49 rss_mib=3325.855 swap_mib=0.000 variables=40 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030110.901517939] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=49 duration_ms=3.190 iterations=185 ret=1 rss_mib=3325.855 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030110.901688583] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=50 rss_mib=3325.867 swap_mib=0.000 variables=40 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030110.904334240] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=50 duration_ms=2.645 iterations=161 ret=1 rss_mib=3325.867 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030110.904367545] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.113510932.
+[perfect_drone_full_node-2] [INFO] [1789030110.925494886] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=26 rss_mib=3325.867 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030110.930372256] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=26 duration_ms=4.940 iterations=489 ret=1 rss_mib=3325.867 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=8 map=44 map_age=0.007s map_age_limit=0.532s motion_speed=2.852mps samples=202 range=[0.270,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 52211
+[perfect_drone_full_node-2] [INFO] [1789030110.988387610] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=51 rss_mib=3325.867 swap_mib=0.000 variables=42 pieces=2
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=8 map=45 map_age=0.007s map_age_limit=0.500s motion_speed=4.758mps samples=182 range=[0.370,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 48471
+[perfect_drone_full_node-2] [INFO] [1789030111.084602890] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=51 duration_ms=96.199 iterations=1332 ret=1 rss_mib=3325.867 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030111.085575837] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=52 rss_mib=3325.867 swap_mib=0.000 variables=42 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030111.104726576] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=52 duration_ms=19.148 iterations=280 ret=1 rss_mib=3325.867 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030111.104773577] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.200206114.
+[perfect_drone_full_node-2] [INFO] [1789030111.133293448] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=27 rss_mib=3325.867 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030111.136178375] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=27 duration_ms=2.939 iterations=288 ret=1 rss_mib=3325.867 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=8 map=46 map_age=0.008s map_age_limit=0.500s motion_speed=6.135mps samples=162 range=[0.470,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 50178
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=8 map=47 map_age=0.007s map_age_limit=0.500s motion_speed=6.839mps samples=142 range=[0.570,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm 5.731] Current state: FOLLOW_TRAJ[0m
+[perfect_drone_full_node-2] [INFO] [1789030111.191154371] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=53 rss_mib=3325.867 swap_mib=0.000 variables=44 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030111.207164100] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=53 duration_ms=16.038 iterations=187 ret=1 rss_mib=3325.867 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030111.208573292] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=54 rss_mib=3325.867 swap_mib=0.000 variables=44 pieces=2
+[perfect_drone_full_node-2] Publish local map size: 57997
+[perfect_drone_full_node-2] [INFO] [1789030111.258663893] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=54 duration_ms=50.057 iterations=560 ret=1 rss_mib=3326.129 swap_mib=0.000 rss_delta_mib=0.262
+[perfect_drone_full_node-2] [WARN] [1789030111.258745146] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.153848935.
+[perfect_drone_full_node-2] [INFO] [1789030111.296874499] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=28 rss_mib=3326.129 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030111.300284751] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=28 duration_ms=3.462 iterations=322 ret=1 rss_mib=3326.129 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=8 map=48 map_age=0.006s map_age_limit=0.500s motion_speed=6.998mps samples=122 range=[0.670,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 58091
+[perfect_drone_full_node-2] [INFO] [1789030111.416592319] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=55 rss_mib=3326.137 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030111.418223558] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=55 duration_ms=1.671 iterations=332 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030111.418301018] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=56 rss_mib=3326.137 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030111.419521721] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=56 duration_ms=1.221 iterations=256 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030111.419580463] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.160588167.
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=8 map=49 map_age=0.003s map_age_limit=0.500s motion_speed=6.885mps samples=102 range=[0.770,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 48061
+[perfect_drone_full_node-2] [INFO] [1789030111.468035977] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=29 rss_mib=3326.137 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030111.469793153] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=29 duration_ms=1.830 iterations=168 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=8 map=50 map_age=0.007s map_age_limit=0.500s motion_speed=6.433mps samples=80 range=[0.880,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] Get goal at [0m24.525000000000002 20.025000000000002  1.525000000000000
+[perfect_drone_full_node-2] [32m -- [Fsm] Receive click goal at: [24.525000000000002 20.025000000000002  1.525000000000000]; goal yaw: 0.000000000000000 deg[0m
+[perfect_drone_full_node-2] Publish local map size: 37223
+[perfect_drone_full_node-2] [INFO] [1789030111.588948399] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=57 rss_mib=3326.137 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030111.591006441] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=57 duration_ms=2.103 iterations=359 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030111.591108088] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=begin call=58 rss_mib=3326.137 swap_mib=0.000 variables=18 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030111.602867699] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=backup event=end call=58 duration_ms=11.739 iterations=1245 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030111.602928924] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.183142351.
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=replan_post status=SAFE gen=8 map=51 map_age=0.009s map_age_limit=0.500s motion_speed=4.247mps samples=57 range=[0.998,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 33584
+[perfect_drone_full_node-2] [INFO] [1789030111.651140018] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=30 rss_mib=3326.137 swap_mib=0.000 variables=9 pieces=3
+[perfect_drone_full_node-2] [INFO] [1789030111.653680644] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=30 duration_ms=2.614 iterations=302 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=8 map=52 map_age=0.010s map_age_limit=0.545s motion_speed=2.607mps samples=38 range=[1.090,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 34572
+[perfect_drone_full_node-2] [WARN] [1789030111.760388177] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.157219343.
+[perfect_drone_full_node-2] [INFO] [1789030111.809165276] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=31 rss_mib=3326.137 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030111.812544797] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=31 duration_ms=3.447 iterations=303 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=8 map=53 map_age=0.011s map_age_limit=0.550s motion_speed=0.539mps samples=16 range=[1.200,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 25884
+[perfect_drone_full_node-2] [32m -- [Fsm] Traj finish.[0m
+[perfect_drone_full_node-2] [WARN] [1789030111.915236330] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.154484144.
+[perfect_drone_full_node-2] [WARN] [1789030111.915434519] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_EPISODE_RESET] reason=horizontal_progress progress=4.936m threshold=2.000m prior_local=0 prior_vertical=0 prior_base=0
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [PubCmdCallback] change state from [FOLLOW_TRAJ] to [GENERATE_TRAJ].
+[perfect_drone_full_node-2] [0mPublish local map size: 22741
+[perfect_drone_full_node-2] [INFO] [1789030111.962614923] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=32 rss_mib=3326.137 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030111.965243499] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=32 duration_ms=2.704 iterations=228 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030111.965298923] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[perfect_drone_full_node-2] Publish local map size: 22793
+[perfect_drone_full_node-2] [INFO] [1789030112.059698064] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/no_backup gen=9 map=53 samples=247 range=[0.144,1.364] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=9 map=53 map_age=0.266s map_age_limit=0.550s motion_speed=0.000mps samples=245 range=[0.144,1.364] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[perfect_drone_full_node-2] [0mPublish local map size: 27855
+[perfect_drone_full_node-2] [32m -- [Fsm 6.740] Current state: FOLLOW_TRAJ[0m
+[perfect_drone_full_node-2] Publish local map size: 26709
+[perfect_drone_full_node-2] [INFO] [1789030112.294866939] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=true
+[perfect_drone_full_node-2] [ERROR] [1789030112.296040945] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=main_pre_uncertified searched=[0.400,3.000]s speed0=4.903 initial_source=fresh_command cmd_age=0.010s cmd_pos_err=0.000 cmd_vel_err=inf motion_speed=inf motion_dt=infs motion_pose_speed=inf motion_twist_speed=4.903 motion_disagreement=inf motion_source=none motion_gen=9/7 motion_gen_continuous=false last_dynamics_ok=false max_vel=11.107 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=UNOBSERVED last_map=53 map_age=0.502s raw_status=DISABLED raw_cloud=0 raw_age=0.000s ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[perfect_drone_full_node-2] [ERROR] [1789030112.305440923] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.020s cmd_pos_err=0.000 cmd_vel_err=4.903 motion_speed=0.000 motion_dt=0.010s motion_pose_speed=0.000 motion_twist_speed=4.903 motion_disagreement=4.903 motion_source=position_difference motion_gen=9/9 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=SAFE last_map=53 map_age=0.512s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=MAP_STALE gen=9 map=53 map_age=0.501s map_age_limit=0.500s motion_speed=4.903mps samples=0 range=[0.000,0.000] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuardFailClosed] change state from [FOLLOW_TRAJ] to [EMER_STOP].
+[perfect_drone_full_node-2] [0mPublish local map size: 25081
+[perfect_drone_full_node-2] [ERROR] [1789030112.415093635] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.130s cmd_pos_err=0.000 cmd_vel_err=4.903 motion_speed=0.000 motion_dt=0.110s motion_pose_speed=0.000 motion_twist_speed=4.903 motion_disagreement=4.903 motion_source=position_difference motion_gen=9/9 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=SAFE last_map=54 map_age=0.025s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[perfect_drone_full_node-2]  -- [MARSIM] Running FPS: 252.035
+[perfect_drone_full_node-2] Publish local map size: 25050
+[perfect_drone_full_node-2] [ERROR] [1789030112.525455545] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.240s cmd_pos_err=0.000 cmd_vel_err=4.903 motion_speed=0.000 motion_dt=0.111s motion_pose_speed=0.000 motion_twist_speed=4.903 motion_disagreement=4.903 motion_source=position_difference motion_gen=9/9 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=SAFE last_map=55 map_age=0.039s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published
+[perfect_drone_full_node-2] Publish local map size: 25042
+[perfect_drone_full_node-2] [WARN] [1789030112.635681447] [fsm_node]:  -- [TRAJ_GUARD_STATIONARY_HOLD] trigger=emergency_stop_retry stable_for=0.330s displacement=0.000m action=publish_certified_hold
+[perfect_drone_full_node-2] [ERROR] [1789030112.635806095] [fsm_node]:  -- [TRAJ_GUARD_BRAKE] trigger=emergency_stop_retry duration=0.400s speed0=0.000 initial_source=position_difference cmd_age=0.350s cmd_pos_err=0.000 cmd_vel_err=4.903 motion_speed=0.000 motion_dt=0.109s motion_pose_speed=0.000 motion_twist_speed=4.903 motion_disagreement=4.903 motion_source=position_difference motion_gen=9/9 motion_gen_continuous=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 dynamics_ok=true path_status=SAFE map=56 map_age=0.049s raw_status=DISABLED raw_cloud=0 raw_age=0.000s ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs stop=[22.940,15.709,0.960]
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [TrajectoryGuard] change state from [EMER_STOP] to [EMER_STOP].
+[perfect_drone_full_node-2] [0m[38;2;000;128;000m -- [Fsm]: [TrajectoryGuardRecovery] change state from [EMER_STOP] to [GENERATE_TRAJ].
+[perfect_drone_full_node-2] [0m[32m -- [Fsm] Get goal at [0m24.525 20.025  1.525
+[perfect_drone_full_node-2] [32m -- [Fsm] Receive click goal at: [24.525 20.025  1.525]; goal yaw: 0.000 deg[0m
+[perfect_drone_full_node-2] Publish local map size: 25051
+[perfect_drone_full_node-2] [INFO] [1789030112.677715160] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=33 rss_mib=3326.137 swap_mib=0.000 variables=13 pieces=4
+[perfect_drone_full_node-2] [INFO] [1789030112.679713738] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=33 duration_ms=2.070 iterations=209 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030112.679764512] [fsm_node]:  -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.
+[perfect_drone_full_node-2] [INFO] [1789030112.746037562] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=PlanFromRest/no_backup gen=10 map=57 samples=237 range=[0.101,1.274] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2] [INFO] [1789030112.746298450] [fsm_node]:  -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=false
+[perfect_drone_full_node-2] [INFO] [1789030112.746316477] [fsm_node]:  -- [TRAJ_GUARD_RECOVERED] trigger=emergency_stop_retry gen=10 map=56
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=10 map=57 map_age=0.064s map_age_limit=0.550s motion_speed=0.000mps samples=236 range=[0.101,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [MainFsmCallback] change state from [GENERATE_TRAJ] to [FOLLOW_TRAJ].
+[perfect_drone_full_node-2] [0mPublish local map size: 20516
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=10 map=58 map_age=0.006s map_age_limit=0.550s motion_speed=0.675mps samples=228 range=[0.140,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 25295
+[perfect_drone_full_node-2] [INFO] [1789030112.852775537] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=34 rss_mib=3326.137 swap_mib=0.000 variables=9 pieces=3
+[perfect_drone_full_node-2] [INFO] [1789030112.855715130] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=34 duration_ms=2.929 iterations=309 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030112.931883950] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.095024795.
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=10 map=59 map_age=0.005s map_age_limit=0.536s motion_speed=2.773mps samples=204 range=[0.260,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 25175
+[perfect_drone_full_node-2] [INFO] [1789030112.948481669] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=35 rss_mib=3326.137 swap_mib=0.000 variables=9 pieces=3
+[perfect_drone_full_node-2] [INFO] [1789030112.957081267] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=35 duration_ms=8.672 iterations=815 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [WARN] [1789030113.022262846] [fsm_node]:  -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = 0.090184109.
+[perfect_drone_full_node-2] [INFO] [1789030113.036056880] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=36 rss_mib=3326.137 swap_mib=0.000 variables=9 pieces=3
+[perfect_drone_full_node-2] [INFO] [1789030113.041588951] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=36 duration_ms=5.594 iterations=538 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=10 map=60 map_age=0.007s map_age_limit=0.500s motion_speed=4.495mps samples=186 range=[0.350,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 22745
+[perfect_drone_full_node-2] [INFO] [1789030113.096435891] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=11 map=61 samples=167 range=[0.074,0.897] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=10 map=61 map_age=0.007s map_age_limit=0.500s motion_speed=5.932mps samples=166 range=[0.450,1.274] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2] [INFO] [1789030113.109596683] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=37 rss_mib=3326.137 swap_mib=0.000 variables=5 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030113.110098947] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=37 duration_ms=0.552 iterations=76 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=11 map=61 map_age=0.009s map_age_limit=0.500s motion_speed=5.932mps samples=166 range=[0.074,0.897] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 20080
+[perfect_drone_full_node-2] [INFO] [1789030113.154363810] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=12 map=61 samples=157 range=[0.057,0.828] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2] [INFO] [1789030113.164379562] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=38 rss_mib=3326.137 swap_mib=0.000 variables=5 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030113.165317452] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=38 duration_ms=1.002 iterations=153 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=12 map=61 map_age=0.067s map_age_limit=0.500s motion_speed=6.492mps samples=156 range=[0.058,0.828] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=12 map=62 map_age=0.009s map_age_limit=0.500s motion_speed=6.749mps samples=147 range=[0.098,0.828] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm 7.751] Current state: FOLLOW_TRAJ[0m
+[perfect_drone_full_node-2] [INFO] [1789030113.201641303] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=13 map=62 samples=147 range=[0.047,0.769] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2] [INFO] [1789030113.212348567] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=39 rss_mib=3326.137 swap_mib=0.000 variables=5 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030113.213351832] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=39 duration_ms=1.041 iterations=140 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030113.243098543] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=14 map=62 samples=138 range=[0.041,0.719] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=13 map=62 map_age=0.016s map_age_limit=0.500s motion_speed=6.749mps samples=146 range=[0.047,0.769] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=14 map=62 map_age=0.058s map_age_limit=0.500s motion_speed=6.947mps samples=137 range=[0.041,0.719] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 18175
+[perfect_drone_full_node-2] [INFO] [1789030113.253758353] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=40 rss_mib=3326.137 swap_mib=0.000 variables=5 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030113.254934819] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=40 duration_ms=1.234 iterations=104 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030113.281714229] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=15 map=62 samples=129 range=[0.038,0.671] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2] [INFO] [1789030113.304092576] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=41 rss_mib=3326.137 swap_mib=0.000 variables=5 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030113.304417423] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=41 duration_ms=0.389 iterations=37 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030113.323034578] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=16 map=63 samples=123 range=[0.024,0.628] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=15 map=62 map_age=0.096s map_age_limit=0.500s motion_speed=7.000mps samples=128 range=[0.038,0.671] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=15 map=63 map_age=0.012s map_age_limit=0.500s motion_speed=6.997mps samples=125 range=[0.051,0.671] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=16 map=63 map_age=0.040s map_age_limit=0.500s motion_speed=6.951mps samples=122 range=[0.024,0.628] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 19105
+[perfect_drone_full_node-2] [INFO] [1789030113.369270063] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=42 rss_mib=3326.137 swap_mib=0.000 variables=5 pieces=2
+[perfect_drone_full_node-2] [INFO] [1789030113.370702423] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=42 duration_ms=1.496 iterations=224 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030113.382485443] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=17 map=63 samples=134 range=[0.017,0.676] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2] [INFO] [1789030113.433490255] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=begin call=43 rss_mib=3326.137 swap_mib=0.000 variables=1 pieces=1
+[perfect_drone_full_node-2] [INFO] [1789030113.433634047] [fsm_node]:  -- [OPTIMIZER_PHASE_MEMORY] optimizer=exp event=end call=43 duration_ms=0.186 iterations=25 ret=1 rss_mib=3326.137 swap_mib=0.000 rss_delta_mib=0.000
+[perfect_drone_full_node-2] [INFO] [1789030113.440843194] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=18 map=64 samples=103 range=[0.010,0.512] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=17 map=63 map_age=0.099s map_age_limit=0.500s motion_speed=6.692mps samples=133 range=[0.018,0.676] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=17 map=64 map_age=0.012s map_age_limit=0.500s motion_speed=6.627mps samples=131 range=[0.030,0.676] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=18 map=64 map_age=0.058s map_age_limit=0.500s motion_speed=6.217mps samples=102 range=[0.010,0.512] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 21657
+[perfect_drone_full_node-2] [INFO] [1789030113.500437297] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=19 map=65 samples=91 range=[0.069,0.512] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=18 map=65 map_age=0.011s map_age_limit=0.500s motion_speed=5.704mps samples=91 range=[0.064,0.512] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=19 map=65 map_age=0.017s map_age_limit=0.500s motion_speed=5.591mps samples=90 range=[0.070,0.512] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 20254
+[perfect_drone_full_node-2] [INFO] [1789030113.565136612] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=20 map=65 samples=78 range=[0.134,0.512] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2] [INFO] [1789030113.629881464] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=21 map=66 samples=65 range=[0.199,0.512] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=20 map=65 map_age=0.081s map_age_limit=0.500s motion_speed=4.668mps samples=77 range=[0.134,0.512] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=20 map=66 map_age=0.006s map_age_limit=0.500s motion_speed=4.349mps samples=71 range=[0.164,0.512] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=21 map=66 map_age=0.041s map_age_limit=0.500s motion_speed=3.648mps samples=64 range=[0.199,0.512] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 20795
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=21 map=67 map_age=0.011s map_age_limit=0.549s motion_speed=2.527mps samples=51 range=[0.264,0.512] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 17951
+[perfect_drone_full_node-2] [INFO] [1789030113.761213226] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=22 map=67 samples=39 range=[0.330,0.512] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2] [INFO] [1789030113.827536723] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=23 map=68 samples=26 range=[0.396,0.512] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=22 map=67 map_age=0.078s map_age_limit=0.550s motion_speed=1.334mps samples=38 range=[0.330,0.512] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=SAFE gen=22 map=68 map_age=0.003s map_age_limit=0.550s motion_speed=1.045mps samples=33 range=[0.354,0.512] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=23 map=68 map_age=0.046s map_age_limit=0.550s motion_speed=0.464mps samples=25 range=[0.397,0.512] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] Publish local map size: 16712
+[perfect_drone_full_node-2] [INFO] [1789030113.893525023] [fsm_node]:  -- [TRAJ_GUARD_COMMIT] phase=ReplanOnce/no_backup gen=24 map=68 samples=12 range=[0.462,0.512] escape=false footprint_egress=false escape_done_tt=-1.000
+[perfect_drone_full_node-2] [32m -- [Fsm] ReplanOnce succeed.[0m
+[perfect_drone_full_node-2]  -- [TRAJ_GUARD_CERT] trigger=poly_publish status=SAFE gen=24 map=68 map_age=0.112s map_age_limit=0.550s motion_speed=0.075mps samples=11 range=[0.463,0.512] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]
+[perfect_drone_full_node-2] [32m -- [Fsm] Traj finish.[0m
+[perfect_drone_full_node-2] [38;2;000;128;000m -- [Fsm]: [PubCmdCallback] change state from [FOLLOW_TRAJ] to [WAIT_GOAL].
+[perfect_drone_full_node-2] [0mPublish local map size: 14597

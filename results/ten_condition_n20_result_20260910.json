@@ -1,0 +1,1475 @@
+{
+  "checks": {
+    "C4_C5_extension_observed": true,
+    "C4_C5_full_feasibility_gate_passed": true,
+    "C4_C5_paired_cpp_replay_gates_passed": true,
+    "C4_C5_structure_gate_passed": true,
+    "eight_condition_source_complete": true,
+    "frozen_source_hashes_match": true,
+    "legacy_C1_C3_complete_and_integrity_valid": true,
+    "normal_matrix_complete_and_integrity_valid": true,
+    "normal_source_validation_passed": true,
+    "ten_conditions_have_20_rows_per_mode": true
+  },
+  "claim_boundary": "Ten reporting conditions: five normal radius tiers retain two physical layouts each; C1-C3 retain their prior two-block result; C4-C5 are a prospective post-confirmation extension. Normal and stress metrics are not pooled, and C1-C5 inference is descriptive.",
+  "conditions": {
+    "C1_mirror": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 2.1124161213849386,
+        "end_to_end_cpu_mean_reduction_pct": 3.346832201570488,
+        "map_compute_per_frame_reduction_pct": 28.57525257631926,
+        "mission_time_reduction_pct": -2.3724792408066313,
+        "planner_ingress_reduction_pct": 71.46107763617906
+      },
+      "family": "static_burst_dropout_original_extension",
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 0.6584161212294635,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 7.847022,
+          "end_to_end_cpu_cores_mean_mean": 0.9225453534363831,
+          "filter_effective_full_open_transitions_mean": 1.5,
+          "filter_kept_pct_mean": 36.54090000000001,
+          "filter_open_duty_pct_mean": 53.286249999999995,
+          "filter_replan_guard_open_transitions_mean": 2.65,
+          "filter_trajectory_guard_open_transitions_mean": 1.2,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 148265.13826967642,
+          "mission_time_s_mean": 6.904000000000001,
+          "planner_ingress_payload_mib_s_mean": 3.119775837601953,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.4796500000000001,
+          "total_ms_mean_mean": 16.574886166465767,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.15
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 0.908434456292221,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 8.016360899999999,
+          "end_to_end_cpu_cores_mean_mean": 0.9544905505429003,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 358208.3651254285,
+          "mission_time_s_mean": 6.7440000000000015,
+          "planner_ingress_payload_mib_s_mean": 10.931652561474857,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.5236000000000001,
+          "total_ms_mean_mean": 23.206082995500232,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 0.6020614109643205,
+          "completion_count": 19,
+          "contact_run_count": 13,
+          "contact_run_rate": 0.65,
+          "end_to_end_cpu_core_s_mean": 13.083370199999996,
+          "end_to_end_cpu_cores_mean_mean": 0.850490858722082,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 54.07104999999999,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 230780.7916646499,
+          "mission_time_s_mean": 14.799000000000001,
+          "planner_ingress_payload_mib_s_mean": 4.401794274609565,
+          "runs": 20,
+          "safe_completion_count": 7,
+          "safe_completion_rate": 0.35,
+          "safe_completion_wilson_95": [
+            0.18119182410108206,
+            0.5671457233147638
+          ],
+          "static_pcd_clearance_m_mean": -0.007650000000000008,
+          "total_ms_mean_mean": 6.150939604658371,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 0.000244140625,
+        "pairs": 20,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 13
+      },
+      "physical_maps": [
+        "shc1_mirror_hazard"
+      ]
+    },
+    "C2_wide_offset": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 2.43189381564921,
+        "end_to_end_cpu_mean_reduction_pct": 5.785582504424305,
+        "map_compute_per_frame_reduction_pct": 29.110731220040442,
+        "mission_time_reduction_pct": -5.934065934065936,
+        "planner_ingress_reduction_pct": 69.80658396221781
+      },
+      "family": "static_burst_dropout_original_extension",
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 0.658317095443911,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 7.656391650000001,
+          "end_to_end_cpu_cores_mean_mean": 0.9214419920986563,
+          "filter_effective_full_open_transitions_mean": 1.05,
+          "filter_kept_pct_mean": 39.943,
+          "filter_open_duty_pct_mean": 53.97410000000001,
+          "filter_replan_guard_open_transitions_mean": 2.3,
+          "filter_trajectory_guard_open_transitions_mean": 1.1,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 156919.9542274331,
+          "mission_time_s_mean": 6.748,
+          "planner_ingress_payload_mib_s_mean": 3.3088059309073543,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.4093,
+          "total_ms_mean_mean": 17.437990052467786,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.5
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 0.9303484238145963,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 7.8472279,
+          "end_to_end_cpu_cores_mean_mean": 0.9780265235327992,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 359094.68178309366,
+          "mission_time_s_mean": 6.37,
+          "planner_ingress_payload_mib_s_mean": 10.958700157567195,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.43324999999999997,
+          "total_ms_mean_mean": 24.598913703843305,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 0.6334962157972079,
+          "completion_count": 19,
+          "contact_run_count": 11,
+          "contact_run_rate": 0.55,
+          "end_to_end_cpu_core_s_mean": 16.88165335,
+          "end_to_end_cpu_cores_mean_mean": 0.8705456932470318,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 52.1225,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 203333.626928843,
+          "mission_time_s_mean": 17.132499999999997,
+          "planner_ingress_payload_mib_s_mean": 3.8782811532753563,
+          "runs": 20,
+          "safe_completion_count": 9,
+          "safe_completion_rate": 0.45,
+          "safe_completion_wilson_95": [
+            0.2581978582556243,
+            0.6579146575496577
+          ],
+          "static_pcd_clearance_m_mean": 0.05415000000000001,
+          "total_ms_mean_mean": 6.096883308631779,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 0.0009765625,
+        "pairs": 20,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 11
+      },
+      "physical_maps": [
+        "shc2_wide_offset_hazard"
+      ]
+    },
+    "C3_near_short": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 1.8206702485686868,
+        "end_to_end_cpu_mean_reduction_pct": 8.855891904038305,
+        "map_compute_per_frame_reduction_pct": 30.330896819949874,
+        "mission_time_reduction_pct": -7.766231736854439,
+        "planner_ingress_reduction_pct": 70.82094394146982
+      },
+      "family": "static_burst_dropout_original_extension",
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 0.6163833493595012,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 7.533336200000001,
+          "end_to_end_cpu_cores_mean_mean": 0.8812035539783917,
+          "filter_effective_full_open_transitions_mean": 1.15,
+          "filter_kept_pct_mean": 38.00930000000001,
+          "filter_open_duty_pct_mean": 54.86735,
+          "filter_replan_guard_open_transitions_mean": 2.25,
+          "filter_trajectory_guard_open_transitions_mean": 1.1,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 152522.44451729424,
+          "mission_time_s_mean": 6.8965000000000005,
+          "planner_ingress_payload_mib_s_mean": 3.2264254002338504,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.49034999999999995,
+          "total_ms_mean_mean": 16.81299985004772,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.65
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 0.9207541466147239,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 7.673036899999998,
+          "end_to_end_cpu_cores_mean_mean": 0.9668244852981726,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 362326.6980872076,
+          "mission_time_s_mean": 6.399500000000001,
+          "planner_ingress_payload_mib_s_mean": 11.057333019142133,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.4567999999999999,
+          "total_ms_mean_mean": 24.132648595456807,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 0.5933658142115327,
+          "completion_count": 20,
+          "contact_run_count": 9,
+          "contact_run_rate": 0.45,
+          "end_to_end_cpu_core_s_mean": 10.3035435,
+          "end_to_end_cpu_cores_mean_mean": 0.8332781591820533,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 48.998450000000005,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 198853.36479409196,
+          "mission_time_s_mean": 10.825500000000002,
+          "planner_ingress_payload_mib_s_mean": 3.7928269347017673,
+          "runs": 20,
+          "safe_completion_count": 11,
+          "safe_completion_rate": 0.55,
+          "safe_completion_wilson_95": [
+            0.34208534245034233,
+            0.7418021417443759
+          ],
+          "static_pcd_clearance_m_mean": 0.08170000000000002,
+          "total_ms_mean_mean": 6.572407764447732,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 0.00390625,
+        "pairs": 20,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 9
+      },
+      "physical_maps": [
+        "shc3_near_short_hazard"
+      ]
+    },
+    "C4_deep_mirror": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 7.016522303655357,
+        "end_to_end_cpu_mean_reduction_pct": 5.39353850122597,
+        "map_compute_per_frame_reduction_pct": 27.92024254101744,
+        "mission_time_reduction_pct": 3.4713925394928724,
+        "planner_ingress_reduction_pct": 67.85053752064883
+      },
+      "family": "static_burst_dropout_prospective_c4_c5",
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 0.6357770564193821,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 8.027370699999999,
+          "end_to_end_cpu_cores_mean_mean": 0.9075909192096804,
+          "filter_effective_full_open_transitions_mean": 1.2,
+          "filter_kept_pct_mean": 40.97425,
+          "filter_open_duty_pct_mean": 54.938250000000004,
+          "filter_replan_guard_open_transitions_mean": 2.65,
+          "filter_trajectory_guard_open_transitions_mean": 1.15,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 176892.7538998916,
+          "mission_time_s_mean": 7.271500000000001,
+          "planner_ingress_payload_mib_s_mean": 3.687387218138705,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.34975,
+          "total_ms_mean_mean": 16.245347403020364,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.2
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 0.9130239109508709,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 8.633115149999998,
+          "end_to_end_cpu_cores_mean_mean": 0.9593329090121836,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 375833.0638277546,
+          "mission_time_s_mean": 7.5329999999999995,
+          "planner_ingress_payload_mib_s_mean": 11.469514367486003,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.3922500000000001,
+          "total_ms_mean_mean": 22.538016186118387,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 0.5929004511020409,
+          "completion_count": 19,
+          "contact_run_count": 16,
+          "contact_run_rate": 0.8,
+          "end_to_end_cpu_core_s_mean": 12.835110199999999,
+          "end_to_end_cpu_cores_mean_mean": 0.8387233050990373,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 51.302350000000004,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 208853.913688681,
+          "mission_time_s_mean": 15.232499999999998,
+          "planner_ingress_payload_mib_s_mean": 3.9835722673164553,
+          "runs": 20,
+          "safe_completion_count": 4,
+          "safe_completion_rate": 0.2,
+          "safe_completion_wilson_95": [
+            0.08065766257979806,
+            0.41601743225189364
+          ],
+          "static_pcd_clearance_m_mean": -0.07724999999999999,
+          "total_ms_mean_mean": 5.994637964347072,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 3.0517578125e-05,
+        "pairs": 20,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 16
+      },
+      "physical_maps": [
+        "shc4_deep_mirror_hazard"
+      ]
+    },
+    "C5_asymmetric_offset": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": -1.1222744765996986,
+        "end_to_end_cpu_mean_reduction_pct": 3.1515255617898013,
+        "map_compute_per_frame_reduction_pct": 28.863629067746505,
+        "mission_time_reduction_pct": -7.632211538461524,
+        "planner_ingress_reduction_pct": 69.68258684338804
+      },
+      "family": "static_burst_dropout_prospective_c4_c5",
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 0.6832289676086428,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 8.243887400000002,
+          "end_to_end_cpu_cores_mean_mean": 0.9487480291385296,
+          "filter_effective_full_open_transitions_mean": 1.5,
+          "filter_kept_pct_mean": 40.316500000000005,
+          "filter_open_duty_pct_mean": 50.925200000000004,
+          "filter_replan_guard_open_transitions_mean": 2.75,
+          "filter_trajectory_guard_open_transitions_mean": 1.1,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 157069.6487453978,
+          "mission_time_s_mean": 7.164,
+          "planner_ingress_payload_mib_s_mean": 3.3151890371046546,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.42424999999999996,
+          "total_ms_mean_mean": 17.23377412476044,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.6
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 0.9333326519867908,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 8.15239515,
+          "end_to_end_cpu_cores_mean_mean": 0.979621036512904,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 358315.946292841,
+          "mission_time_s_mean": 6.656000000000001,
+          "planner_ingress_payload_mib_s_mean": 10.934933729270506,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.39614999999999995,
+          "total_ms_mean_mean": 24.226389256169636,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 0.5712773501987009,
+          "completion_count": 17,
+          "contact_run_count": 16,
+          "contact_run_rate": 0.8,
+          "end_to_end_cpu_core_s_mean": 16.2272508,
+          "end_to_end_cpu_cores_mean_mean": 0.8089867223544781,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 49.55335,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 166286.82322994876,
+          "mission_time_s_mean": 21.2485,
+          "planner_ingress_payload_mib_s_mean": 3.1716694494237663,
+          "runs": 20,
+          "safe_completion_count": 3,
+          "safe_completion_rate": 0.15,
+          "safe_completion_wilson_95": [
+            0.052368745896216595,
+            0.36041886474075696
+          ],
+          "static_pcd_clearance_m_mean": -0.05920000000000001,
+          "total_ms_mean_mean": 6.4087599358160885,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 1.52587890625e-05,
+        "pairs": 20,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 17
+      },
+      "physical_maps": [
+        "shc5_asymmetric_offset_hazard"
+      ]
+    },
+    "R1_r0p150": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 15.431890166929188,
+        "end_to_end_cpu_mean_reduction_pct": 13.455752793496321,
+        "map_compute_per_frame_reduction_pct": 43.76150274848645,
+        "mission_time_reduction_pct": 1.7931046425046426,
+        "planner_ingress_reduction_pct": 78.2501475206626
+      },
+      "family": "normal_radius_tier",
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 1.0640340069125647,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 77.94738055000002,
+          "end_to_end_cpu_cores_mean_mean": 1.3340432691079875,
+          "filter_effective_full_open_transitions_mean": 21.05,
+          "filter_kept_pct_mean": 34.376549999999995,
+          "filter_open_duty_pct_mean": 36.89175000000001,
+          "filter_replan_guard_open_transitions_mean": 23.25,
+          "filter_trajectory_guard_open_transitions_mean": 2.1,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 60550.56478084269,
+          "mission_time_s_mean": 56.713499999999996,
+          "planner_ingress_payload_mib_s_mean": 1.1631466883093935,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.3071499999999999,
+          "total_ms_mean_mean": 18.407539181436928,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 1.488574769702082,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 92.17112775000001,
+          "end_to_end_cpu_cores_mean_mean": 1.5414580543115939,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 175237.92922581724,
+          "mission_time_s_mean": 57.749,
+          "planner_ingress_payload_mib_s_mean": 5.347837137812293,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.2866,
+          "total_ms_mean_mean": 32.73120741315954,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 1.0546728425444607,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 75.93924704999999,
+          "end_to_end_cpu_cores_mean_mean": 1.2944620801810542,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 39.352999999999994,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 69522.37055351623,
+          "mission_time_s_mean": 56.982499999999995,
+          "planner_ingress_payload_mib_s_mean": 1.3260339842513311,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.2806,
+          "total_ms_mean_mean": 8.940193174681337,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 1.0,
+        "pairs": 20,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 0
+      },
+      "physical_maps": [
+        "seed1",
+        "seed2"
+      ]
+    },
+    "R2_r0p275": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 13.917524737104321,
+        "end_to_end_cpu_mean_reduction_pct": 11.239860923802635,
+        "map_compute_per_frame_reduction_pct": 39.410711006746034,
+        "mission_time_reduction_pct": 2.614704921696403,
+        "planner_ingress_reduction_pct": 78.03511850368571
+      },
+      "family": "normal_radius_tier",
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 1.052827700370287,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 76.4885345,
+          "end_to_end_cpu_cores_mean_mean": 1.3143262589513065,
+          "filter_effective_full_open_transitions_mean": 20.3,
+          "filter_kept_pct_mean": 34.289300000000004,
+          "filter_open_duty_pct_mean": 44.42824999999999,
+          "filter_replan_guard_open_transitions_mean": 23.85,
+          "filter_trajectory_guard_open_transitions_mean": 2.75,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 90508.73531581872,
+          "mission_time_s_mean": 56.65,
+          "planner_ingress_payload_mib_s_mean": 1.74241015408322,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.2601,
+          "total_ms_mean_mean": 18.808004620908406,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 1.4361601771881247,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 88.8549432,
+          "end_to_end_cpu_cores_mean_mean": 1.480761829161855,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 259939.01226951805,
+          "mission_time_s_mean": 58.171000000000014,
+          "planner_ingress_payload_mib_s_mean": 7.932709103737234,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.27909999999999996,
+          "total_ms_mean_mean": 31.041797871241727,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 1.0364791387597563,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 74.928668,
+          "end_to_end_cpu_cores_mean_mean": 1.267950202567341,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 42.72165,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 111559.7741890836,
+          "mission_time_s_mean": 57.63500000000001,
+          "planner_ingress_payload_mib_s_mean": 2.1278338277641984,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.28175000000000006,
+          "total_ms_mean_mean": 9.050687755871099,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 1.0,
+        "pairs": 20,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 0
+      },
+      "physical_maps": [
+        "seed3",
+        "seed4"
+      ]
+    },
+    "R3_r0p400": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 15.645678784992825,
+        "end_to_end_cpu_mean_reduction_pct": 14.07315100782796,
+        "map_compute_per_frame_reduction_pct": 42.327013226105485,
+        "mission_time_reduction_pct": 1.58260049471778,
+        "planner_ingress_reduction_pct": 77.68143440973967
+      },
+      "family": "normal_radius_tier",
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 1.0316308819005031,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 79.84665025,
+          "end_to_end_cpu_cores_mean_mean": 1.3055327690465732,
+          "filter_effective_full_open_transitions_mean": 21.7,
+          "filter_kept_pct_mean": 34.7131,
+          "filter_open_duty_pct_mean": 44.58305,
+          "filter_replan_guard_open_transitions_mean": 24.6,
+          "filter_trajectory_guard_open_transitions_mean": 3.6,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 109405.19829429418,
+          "mission_time_s_mean": 59.48199999999999,
+          "planner_ingress_payload_mib_s_mean": 2.117744935841663,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.26570000000000005,
+          "total_ms_mean_mean": 19.262371022325482,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 1.475288139942495,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 94.65626549999998,
+          "end_to_end_cpu_cores_mean_mean": 1.519353711161348,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 310926.1933140481,
+          "mission_time_s_mean": 60.4385,
+          "planner_ingress_payload_mib_s_mean": 9.488714349840798,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.24864999999999998,
+          "total_ms_mean_mean": 33.39929505964919,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 1.0384588537262078,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 77.39313729999999,
+          "end_to_end_cpu_cores_mean_mean": 1.2756070075981707,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 44.26365,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 137930.72151728417,
+          "mission_time_s_mean": 59.14999999999999,
+          "planner_ingress_payload_mib_s_mean": 2.630819731088336,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.27,
+          "total_ms_mean_mean": 9.401730052205753,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 1.0,
+        "pairs": 20,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 0
+      },
+      "physical_maps": [
+        "seed5",
+        "seed6"
+      ]
+    },
+    "R4_r0p525": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 15.706898511607728,
+        "end_to_end_cpu_mean_reduction_pct": 13.336736130363787,
+        "map_compute_per_frame_reduction_pct": 38.55029519311265,
+        "mission_time_reduction_pct": 2.5177701776229897,
+        "planner_ingress_reduction_pct": 77.37270152281829
+      },
+      "family": "normal_radius_tier",
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 1.0266025011092377,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 83.74010059999999,
+          "end_to_end_cpu_cores_mean_mean": 1.3162043369819671,
+          "filter_effective_full_open_transitions_mean": 21.45,
+          "filter_kept_pct_mean": 35.367399999999996,
+          "filter_open_duty_pct_mean": 51.712349999999994,
+          "filter_replan_guard_open_transitions_mean": 25.35,
+          "filter_trajectory_guard_open_transitions_mean": 4.9,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 134689.64358736674,
+          "mission_time_s_mean": 61.85149999999999,
+          "planner_ingress_payload_mib_s_mean": 2.6086570632005106,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.246,
+          "total_ms_mean_mean": 20.875711033986427,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 1.4742775105705295,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 99.34395475,
+          "end_to_end_cpu_cores_mean_mean": 1.5187569429209085,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 377775.8754691456,
+          "mission_time_s_mean": 63.449,
+          "planner_ingress_payload_mib_s_mean": 11.528804756923087,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.2734,
+          "total_ms_mean_mean": 33.97202818075483,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 1.0205700934189812,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 81.21833455000001,
+          "end_to_end_cpu_cores_mean_mean": 1.2699686385207134,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 46.0029,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 175963.46545195597,
+          "mission_time_s_mean": 62.26650000000001,
+          "planner_ingress_payload_mib_s_mean": 3.356236752547378,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.25984999999999997,
+          "total_ms_mean_mean": 9.845782682165824,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 1.0,
+        "pairs": 20,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 0
+      },
+      "physical_maps": [
+        "seed7",
+        "seed8"
+      ]
+    },
+    "R5_r0p650": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 11.850375093985548,
+        "end_to_end_cpu_mean_reduction_pct": 11.570264295136505,
+        "map_compute_per_frame_reduction_pct": 32.080873113956734,
+        "mission_time_reduction_pct": 0.44326675009964034,
+        "planner_ingress_reduction_pct": 75.60142318096796
+      },
+      "family": "normal_radius_tier",
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 1.0052555019369682,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 95.67081425,
+          "end_to_end_cpu_cores_mean_mean": 1.309948211891228,
+          "filter_effective_full_open_transitions_mean": 18.9,
+          "filter_kept_pct_mean": 38.07515000000001,
+          "filter_open_duty_pct_mean": 63.65904999999999,
+          "filter_replan_guard_open_transitions_mean": 27.55,
+          "filter_trajectory_guard_open_transitions_mean": 6.5,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 170371.45972309,
+          "mission_time_s_mean": 71.19749999999999,
+          "planner_ingress_payload_mib_s_mean": 3.315180656541145,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.2552,
+          "total_ms_mean_mean": 21.548847375710203,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 1.4359509657140315,
+          "completion_count": 20,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 108.53229875,
+          "end_to_end_cpu_cores_mean_mean": 1.48134357911372,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 445238.42270274117,
+          "mission_time_s_mean": 71.5145,
+          "planner_ingress_payload_mib_s_mean": 13.58759849449558,
+          "runs": 20,
+          "safe_completion_count": 20,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.8388748419471806,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.25135,
+          "total_ms_mean_mean": 31.727214944717268,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 0.9951554139783848,
+          "completion_count": 20,
+          "contact_run_count": 1,
+          "contact_run_rate": 0.05,
+          "end_to_end_cpu_core_s_mean": 91.02917060000001,
+          "end_to_end_cpu_cores_mean_mean": 1.257933165488726,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 50.256,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 20,
+          "map_points_s_mean": 225630.2126414152,
+          "mission_time_s_mean": 70.5835,
+          "planner_ingress_payload_mib_s_mean": 4.303554776027969,
+          "runs": 20,
+          "safe_completion_count": 19,
+          "safe_completion_rate": 0.95,
+          "safe_completion_wilson_95": [
+            0.763868806553258,
+            0.9911185511992047
+          ],
+          "static_pcd_clearance_m_mean": 0.22444999999999998,
+          "total_ms_mean_mean": 9.347778188064924,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 1.0,
+        "pairs": 20,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 1
+      },
+      "physical_maps": [
+        "seed9",
+        "seed10"
+      ]
+    }
+  },
+  "decision": "TEN_CONDITION_N20_COMPLETE",
+  "extension_checks": {
+    "adaptive_20_of_20_safe_each_map": true,
+    "all_extension_rows_integrity_valid": true,
+    "complete_unique_120_row_matrix": true,
+    "discordance_adaptive_favouring": true,
+    "exact_mcnemar_p_below_0_05": true,
+    "full_20_of_20_safe_each_map": true,
+    "sector_unsafe_at_least_once_each_map": true
+  },
+  "extension_decision": "C4_C5_EXTENSION_OBSERVED",
+  "failure_reasons": [],
+  "groups": {
+    "normal_R1_R5": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 14.448116785025789,
+        "end_to_end_cpu_mean_reduction_pct": 12.75074016477175,
+        "map_compute_per_frame_reduction_pct": 39.27578069960719,
+        "mission_time_reduction_pct": 1.7433718143915462,
+        "planner_ingress_reduction_pct": 77.13900441286277
+      },
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 1.0360701184459122,
+          "completion_count": 100,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 82.73869603000001,
+          "end_to_end_cpu_cores_mean_mean": 1.3160109691958124,
+          "filter_effective_full_open_transitions_mean": 20.68,
+          "filter_kept_pct_mean": 35.3643,
+          "filter_open_duty_pct_mean": 48.25489000000002,
+          "filter_replan_guard_open_transitions_mean": 24.92,
+          "filter_trajectory_guard_open_transitions_mean": 3.97,
+          "integrity_valid_count": 100,
+          "map_points_s_mean": 113105.12034028245,
+          "mission_time_s_mean": 61.17890000000001,
+          "planner_ingress_payload_mib_s_mean": 2.1894278995951857,
+          "runs": 100,
+          "safe_completion_count": 100,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.9630065017930143,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.2668300000000001,
+          "total_ms_mean_mean": 19.780494646873493,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 1.4620503126234525,
+          "completion_count": 100,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 96.71171799000001,
+          "end_to_end_cpu_cores_mean_mean": 1.5083348233338851,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 100,
+          "map_points_s_mean": 313823.486596254,
+          "mission_time_s_mean": 62.26440000000002,
+          "planner_ingress_payload_mib_s_mean": 9.577132768561798,
+          "runs": 100,
+          "safe_completion_count": 100,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.9630065017930143,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.26782000000000006,
+          "total_ms_mean_mean": 32.574308693904506,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 1.0290672684855584,
+          "completion_count": 100,
+          "contact_run_count": 1,
+          "contact_run_rate": 0.01,
+          "end_to_end_cpu_core_s_mean": 80.10171149999998,
+          "end_to_end_cpu_cores_mean_mean": 1.2731842188712013,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 44.51944000000001,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 100,
+          "map_points_s_mean": 144121.30887065097,
+          "mission_time_s_mean": 61.32349999999999,
+          "planner_ingress_payload_mib_s_mean": 2.748895814335843,
+          "runs": 100,
+          "safe_completion_count": 99,
+          "safe_completion_rate": 0.99,
+          "safe_completion_wilson_95": [
+            0.9455138038212946,
+            0.9982325679358593
+          ],
+          "static_pcd_clearance_m_mean": 0.26333000000000006,
+          "total_ms_mean_mean": 9.317234370597788,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": null
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 1.0,
+        "pairs": 100,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 1
+      }
+    },
+    "stress_C1_C3": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 2.1238212153749494,
+        "end_to_end_cpu_mean_reduction_pct": 6.00655894775122,
+        "map_compute_per_frame_reduction_pct": 29.347317582196442,
+        "mission_time_reduction_pct": -5.304020293642832,
+        "planner_ingress_reduction_pct": 70.69594737103601
+      },
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 0.6443721886776252,
+          "completion_count": 60,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 7.678916616666666,
+          "end_to_end_cpu_cores_mean_mean": 0.9083969665044772,
+          "filter_effective_full_open_transitions_mean": 1.2333333333333334,
+          "filter_kept_pct_mean": 38.1644,
+          "filter_open_duty_pct_mean": 54.042566666666694,
+          "filter_replan_guard_open_transitions_mean": 2.4,
+          "filter_trajectory_guard_open_transitions_mean": 1.1333333333333333,
+          "integrity_valid_count": 60,
+          "map_points_s_mean": 152569.1790048013,
+          "mission_time_s_mean": 6.849499999999997,
+          "planner_ingress_payload_mib_s_mean": 3.2183357229143854,
+          "runs": 60,
+          "safe_completion_count": 60,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.93982814785791,
+            0.9999999999999998
+          ],
+          "static_pcd_clearance_m_mean": 0.45976666666666655,
+          "total_ms_mean_mean": 16.941958689660424,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.43333333333333335
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 0.9198456755738472,
+          "completion_count": 60,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 7.845541899999997,
+          "end_to_end_cpu_cores_mean_mean": 0.9664471864579576,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 60,
+          "map_points_s_mean": 359876.58166524314,
+          "mission_time_s_mean": 6.504499999999999,
+          "planner_ingress_payload_mib_s_mean": 10.982561912728066,
+          "runs": 60,
+          "safe_completion_count": 60,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.93982814785791,
+            0.9999999999999998
+          ],
+          "static_pcd_clearance_m_mean": 0.47121666666666673,
+          "total_ms_mean_mean": 23.979215098266774,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 0.6096411469910203,
+          "completion_count": 58,
+          "contact_run_count": 33,
+          "contact_run_rate": 0.55,
+          "end_to_end_cpu_core_s_mean": 13.422855683333333,
+          "end_to_end_cpu_cores_mean_mean": 0.8514382370503891,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 51.730666666666664,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 60,
+          "map_points_s_mean": 210989.26112919505,
+          "mission_time_s_mean": 14.252333333333336,
+          "planner_ingress_payload_mib_s_mean": 4.0243007875288965,
+          "runs": 60,
+          "safe_completion_count": 27,
+          "safe_completion_rate": 0.45,
+          "safe_completion_wilson_95": [
+            0.3309365440675524,
+            0.5750806411466566
+          ],
+          "static_pcd_clearance_m_mean": 0.04273333333333332,
+          "total_ms_mean_mean": 6.273410225912627,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 2.3283064365386963e-10,
+        "pairs": 60,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 33
+      }
+    },
+    "stress_C1_C5_descriptive": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 2.515065298128063,
+        "end_to_end_cpu_mean_reduction_pct": 5.306944496824078,
+        "map_compute_per_frame_reduction_pct": 28.977640172798615,
+        "mission_time_reduction_pct": -3.8023885468436722,
+        "planner_ingress_reduction_pct": 69.90615849849765
+      },
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 0.65042451801218,
+          "completion_count": 100,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 7.861601589999997,
+          "end_to_end_cpu_cores_mean_mean": 0.916305969572328,
+          "filter_effective_full_open_transitions_mean": 1.28,
+          "filter_kept_pct_mean": 39.156789999999994,
+          "filter_open_duty_pct_mean": 53.59823,
+          "filter_replan_guard_open_transitions_mean": 2.52,
+          "filter_trajectory_guard_open_transitions_mean": 1.13,
+          "integrity_valid_count": 100,
+          "map_points_s_mean": 158333.98793193867,
+          "mission_time_s_mean": 6.996799999999999,
+          "planner_ingress_payload_mib_s_mean": 3.331516684797303,
+          "runs": 100,
+          "safe_completion_count": 100,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.9630065017930143,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.4306600000000001,
+          "total_ms_mean_mean": 16.86099951935241,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.42
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 0.921178717931841,
+          "completion_count": 100,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 8.064427199999997,
+          "end_to_end_cpu_cores_mean_mean": 0.9676591009797925,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 100,
+          "map_points_s_mean": 362755.75102326495,
+          "mission_time_s_mean": 6.740500000000001,
+          "planner_ingress_payload_mib_s_mean": 11.070426766988144,
+          "runs": 100,
+          "safe_completion_count": 100,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.9630065017930143,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.4404099999999998,
+          "total_ms_mean_mean": 23.740410147417673,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 0.5986202484547606,
+          "completion_count": 94,
+          "contact_run_count": 65,
+          "contact_run_rate": 0.65,
+          "end_to_end_cpu_core_s_mean": 13.866185610000002,
+          "end_to_end_cpu_cores_mean_mean": 0.840404947720937,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 51.209540000000004,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 100,
+          "map_points_s_mean": 201621.70406124298,
+          "mission_time_s_mean": 15.8476,
+          "planner_ingress_payload_mib_s_mean": 3.84562881586538,
+          "runs": 100,
+          "safe_completion_count": 34,
+          "safe_completion_rate": 0.34,
+          "safe_completion_wilson_95": [
+            0.25461520797348164,
+            0.43722271145275377
+          ],
+          "static_pcd_clearance_m_mean": -0.0016500000000000048,
+          "total_ms_mean_mean": 6.244725715580208,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 2.710505431213761e-20,
+        "pairs": 100,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 66
+      }
+    },
+    "stress_C4_C5": {
+      "adaptive_vs_full": {
+        "end_to_end_core_seconds_reduction_pct": 3.0636673583882725,
+        "end_to_end_cpu_mean_reduction_pct": 4.2608024480181514,
+        "map_compute_per_frame_reduction_pct": 28.40896572694072,
+        "mission_time_reduction_pct": -1.737261258721565,
+        "planner_ingress_reduction_pct": 68.7447054040259
+      },
+      "modes": {
+        "adaptive": {
+          "algorithm_cpu_cores_mean_mean": 0.6595030120140124,
+          "completion_count": 40,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 8.135629049999999,
+          "end_to_end_cpu_cores_mean_mean": 0.9281694741741052,
+          "filter_effective_full_open_transitions_mean": 1.35,
+          "filter_kept_pct_mean": 40.64537499999999,
+          "filter_open_duty_pct_mean": 52.93172499999999,
+          "filter_replan_guard_open_transitions_mean": 2.7,
+          "filter_trajectory_guard_open_transitions_mean": 1.125,
+          "integrity_valid_count": 40,
+          "map_points_s_mean": 166981.20132264472,
+          "mission_time_s_mean": 7.2177500000000006,
+          "planner_ingress_payload_mib_s_mean": 3.5012881276216796,
+          "runs": 40,
+          "safe_completion_count": 40,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.9123783988027135,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.387,
+          "total_ms_mean_mean": 16.739560763890406,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.4
+        },
+        "full": {
+          "algorithm_cpu_cores_mean_mean": 0.9231782814688307,
+          "completion_count": 40,
+          "contact_run_count": 0,
+          "contact_run_rate": 0.0,
+          "end_to_end_cpu_core_s_mean": 8.39275515,
+          "end_to_end_cpu_cores_mean_mean": 0.969476972762544,
+          "filter_effective_full_open_transitions_mean": null,
+          "filter_kept_pct_mean": null,
+          "filter_open_duty_pct_mean": null,
+          "filter_replan_guard_open_transitions_mean": null,
+          "filter_trajectory_guard_open_transitions_mean": null,
+          "integrity_valid_count": 40,
+          "map_points_s_mean": 367074.50506029784,
+          "mission_time_s_mean": 7.094499999999999,
+          "planner_ingress_payload_mib_s_mean": 11.202224048378254,
+          "runs": 40,
+          "safe_completion_count": 40,
+          "safe_completion_rate": 1.0,
+          "safe_completion_wilson_95": [
+            0.9123783988027135,
+            1.0
+          ],
+          "static_pcd_clearance_m_mean": 0.3942,
+          "total_ms_mean_mean": 23.382202721144008,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        },
+        "sector": {
+          "algorithm_cpu_cores_mean_mean": 0.5820889006503709,
+          "completion_count": 36,
+          "contact_run_count": 32,
+          "contact_run_rate": 0.8,
+          "end_to_end_cpu_core_s_mean": 14.5311805,
+          "end_to_end_cpu_cores_mean_mean": 0.8238550137267577,
+          "filter_effective_full_open_transitions_mean": 0.0,
+          "filter_kept_pct_mean": 50.42785000000001,
+          "filter_open_duty_pct_mean": 0.0,
+          "filter_replan_guard_open_transitions_mean": 0.0,
+          "filter_trajectory_guard_open_transitions_mean": 0.0,
+          "integrity_valid_count": 40,
+          "map_points_s_mean": 187570.3684593149,
+          "mission_time_s_mean": 18.240499999999997,
+          "planner_ingress_payload_mib_s_mean": 3.5776208583701106,
+          "runs": 40,
+          "safe_completion_count": 7,
+          "safe_completion_rate": 0.175,
+          "safe_completion_wilson_95": [
+            0.0874541374603592,
+            0.31949990331787714
+          ],
+          "static_pcd_clearance_m_mean": -0.06822499999999998,
+          "total_ms_mean_mean": 6.20169895008158,
+          "trajectory_audit_exact_fresh_occupied_verdicts_mean": 0.0
+        }
+      },
+      "paired_adaptive_vs_sector": {
+        "exact_mcnemar_two_sided_p": 2.3283064365386963e-10,
+        "pairs": 40,
+        "sector_safe_adaptive_unsafe": 0,
+        "sector_unsafe_adaptive_safe": 33
+      }
+    }
+  },
+  "prerequisite_gates": {
+    "C4_C5_full_feasibility_gate_passed": true,
+    "C4_C5_paired_cpp_replay_gates_passed": true,
+    "C4_C5_structure_gate_passed": true
+  },
+  "row_accounting": {
+    "all_stress_rows": 300,
+    "extension_stress_rows": 120,
+    "legacy_stress_rows": 180,
+    "normal_rows": 300,
+    "paper_table_rows": 600
+  },
+  "schema": "ten-condition-n20-result-v1",
+  "source_hashes": {
+    "expected": {
+      "eight_condition_result": "f6c20e1a5ef4dffc3c6306c3c3a5f8eec7fb24aadb8c7647dbcf306702706c80",
+      "legacy_stress_campaign": "7cc9bbaf238203bc8b9d0ec16dceb977a44fbb118dc41d5aabe7356cf30fad1a",
+      "normal_campaign": "b40f880271a52f4b3332bfe67afe3d489cf8c6d444ac0c72ed30d9e9cd445ec5",
+      "normal_validation": "ea8091c1fac455e07e153e9034a4fef913563509ccb3db4c27ae2374fae7ae0a"
+    },
+    "observed": {
+      "eight_condition_result": "f6c20e1a5ef4dffc3c6306c3c3a5f8eec7fb24aadb8c7647dbcf306702706c80",
+      "legacy_stress_campaign": "7cc9bbaf238203bc8b9d0ec16dceb977a44fbb118dc41d5aabe7356cf30fad1a",
+      "normal_campaign": "b40f880271a52f4b3332bfe67afe3d489cf8c6d444ac0c72ed30d9e9cd445ec5",
+      "normal_validation": "ea8091c1fac455e07e153e9034a4fef913563509ccb3db4c27ae2374fae7ae0a"
+    }
+  }
+}
