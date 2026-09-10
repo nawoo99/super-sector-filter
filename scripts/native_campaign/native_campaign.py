@@ -1317,10 +1317,18 @@ STATIC_BURST_DROPOUT_C2_MAPS = (
 STATIC_BURST_DROPOUT_C3_MAPS = (
     "shc3_near_short_clear", "shc3_near_short_hazard",
 )
+STATIC_BURST_DROPOUT_C4_MAPS = (
+    "shc4_deep_mirror_clear", "shc4_deep_mirror_hazard",
+)
+STATIC_BURST_DROPOUT_C5_MAPS = (
+    "shc5_asymmetric_offset_clear", "shc5_asymmetric_offset_hazard",
+)
 STATIC_BURST_DROPOUT_CONFIRMATION_MAPS = (
     STATIC_BURST_DROPOUT_C1_MAPS
     + STATIC_BURST_DROPOUT_C2_MAPS
     + STATIC_BURST_DROPOUT_C3_MAPS
+    + STATIC_BURST_DROPOUT_C4_MAPS
+    + STATIC_BURST_DROPOUT_C5_MAPS
 )
 STATIC_HEADING_MISMATCH_MAPS = (
     STATIC_HEADING_MISMATCH_H1_MAPS
@@ -1408,6 +1416,10 @@ STATIC_BURST_DROPOUT_PROBES = {
        for map_name in STATIC_BURST_DROPOUT_C2_MAPS},
     **{map_name: (25.0, 3.6, 1.0)
        for map_name in STATIC_BURST_DROPOUT_C3_MAPS},
+    **{map_name: (24.3, 5.0, 1.1)
+       for map_name in STATIC_BURST_DROPOUT_C4_MAPS},
+    **{map_name: (25.0, 4.75, 1.0)
+       for map_name in STATIC_BURST_DROPOUT_C5_MAPS},
 }
 STATIC_BURST_DROPOUT_AUDIT_WITNESSES = {
     map_name: (*probe, 3.20)
