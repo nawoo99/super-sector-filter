@@ -11,13 +11,17 @@ import numpy as np
 import gen_cylinder_only_stress as geometry
 
 
-def forest(seed, radius, count):
+def forest(seed, radius, count, clear_pockets=()):
     source_radius = .15 + ((seed-1)//2)*.125
     source = geometry.load_source(seed, source_radius)
     result = []
+    def protected(candidate):
+        return (geometry.protected_location(candidate) or any(
+            math.dist(candidate[:2],(x,y))-candidate.radius < clearance
+            for x,y,clearance in clear_pockets))
     for item in source:
         candidate = geometry.Cylinder(item.x, item.y, radius, "forest")
-        if (not geometry.protected_location(candidate)
+        if (not protected(candidate)
                 and not geometry.conflicts(candidate, result, .20)):
             result.append(candidate)
         if len(result) == count:
@@ -27,7 +31,7 @@ def forest(seed, radius, count):
         if len(result) == count:
             return result
         candidate = geometry.Cylinder(rng.uniform(-31,31), rng.uniform(-31,31), radius, "forest")
-        if (not geometry.protected_location(candidate)
+        if (not protected(candidate)
                 and not geometry.conflicts(candidate, result, .20)):
             result.append(candidate)
     raise ValueError("Forest placement cannot satisfy disjoint cylinders/count")

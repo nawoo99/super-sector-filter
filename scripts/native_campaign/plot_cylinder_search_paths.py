@@ -35,7 +35,9 @@ for name in sys.argv[1:]:
         contact=payload.get("first_static_pcd_contact_context")
         if contact and "position" in contact:
             ax.scatter(*contact["position"][:2],s=90,marker="x",color=color)
-    if manifest["parameters"].get("layout")=="slalom":
+    if manifest["parameters"].get("layout") in ("loop_slalom","forest"):
+        ax.set_xlim(-33,33);ax.set_ylim(-33,33)
+    elif manifest["parameters"].get("layout")=="slalom":
         ax.set_xlim(0,24);ax.set_ylim(0,24)
     elif manifest["parameters"].get("layout")=="ring":
         ax.set_xlim(-9,9);ax.set_ylim(-9,9)

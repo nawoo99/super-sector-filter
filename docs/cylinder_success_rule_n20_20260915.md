@@ -1,5 +1,12 @@
 # 원기둥 맵 탐색 재개와 맵별 20회 기준 — 2026-09-15
 
+> **계측 정정:** 기존 H01 Full의 '접촉 0'에서 원기둥 내부 실제 위치가
+> 확인됐다. 아래 구 탐색 표의 0은 표면-PCD 보고값이며 부피 기준 안전 인증이
+> 아니다. [정정과 새 관측 프로토콜](cylinder_solid_measurement_correction_20260915.md)을
+> 우선한다. 앞으로는 출발 전 시작하는 독립 solid-cylinder observer가 있는
+> `results/cylinder_solid_map_search_20260915/` 결과만 20회 적격 조건에 사용한다.
+> Planner/Adaptive/simulator/원래 runner와 monitor는 변경하지 않았다.
+
 사용자가 성공 조건을 다시 명시했다. **같은 맵에서 Full과 Adaptive는
 완주율 100% 및 접촉 0, Sector는 완주 실패 또는 실제 접촉(혹은 둘 다)이
 관측되어야 한다.** 제동 생성 실패, 순간 위치 고정, 작은 clearance, 시간
@@ -110,3 +117,11 @@ h01--h03은 기존 Normal과 같은 분산된 원기둥 숲 계열이다. 기존
 그 경로를 ROS에 보내거나 planner/mission을 바꾸지 않는다. 통로가 없으면
 proposal과 거절 이유를 보존하고 비행하지 않는다. 이것도 Full 실비행 gate와
 동일하지 않으며, 이 맵들은 개발 탐색용이다.
+
+f04는 f03에서 Sector만 옆으로 벗어났던 구간에 원기둥 두 개를 추가했다.
+이전 XY 경로를 그대로 고정한 기하학 counterfactual에서 새 기둥과의 최소
+body clearance는 Full +0.566 m, Sector -0.210 m, Adaptive +0.891 m다.
+이는 새 맵에서 관측한 접촉이 아니다. 새 장애물을 보고 Sector도 경로를
+바꿀 수 있고, 0.25초 XY trace 보간이 연속 3D 궤적 증명도 아니다. 따라서
+`design_counterfactual.json`을 실제 결과와 분리하며 20회 적격 조건으로
+쓰지 않는다. 개발 경로를 보고 선택한 배치라는 사실도 기록한다.

@@ -5069,3 +5069,46 @@ flight success has yet been established. The offline Python A-star supplies
 no runtime waypoints and changes no deployed planner. Twelve focused tests
 pass, including n=20 outcome validation, disjoint cylinders, and geometric
 path checks. The next five-candidate Full-first queue is running.
+
+### 8.81 Solid-cylinder contact false negative and pre-launch read-only observation (2026-09-15)
+
+The later H01 Full timeout had an actual saved final odometry pose INSIDE a
+cylinder despite `static_pcd_collisions=0`. The capped-solid-cylinder signed
+body clearance is -0.72432 m; even its saved static-PCD minimum context is
+inside at -0.56217 m, while the unsigned shell metric reported +0.165641 m.
+The old runner starts its monitor four seconds after simulator launch, and
+the monitor loads the PCD before subscribing. An interior pose can therefore
+look clear after an early surface crossing was missed. This establishes a
+measurement defect, not the causal control explanation for entering H01.
+
+All 59 legacy rows were checked using only saved ACTUAL 3D contexts and final
+odometry. H01 Full is a definite contact false negative. Positive sparse
+contexts on the other 58 trials do not certify entire flights. Original raw
+rows remain unchanged; `solid_context_audit.json` records the correction.
+Earlier "contact-free" wording means the old surface metric reported zero;
+do not elevate it to solid-volume safety certification.
+
+No deployed algorithm, simulator, sensing, mission, original runner or
+original monitor was modified. The new `cylinder_solid_campaign.py` wrapper
+starts a read-only odometry observer before launching the unchanged simulator.
+It applies the exact capped-cylinder signed-distance test to the 0.20 m body
+at observed poses and saves a full XYZ trace, contacts, initial-pose and
+sample-gap validity, and agreement with the original completion monitor.
+The initial stationary origin and <=0.15 s header-gap checks fail closed.
+This is sampled-pose measurement, not continuous dynamics certification;
+the existing command-loss pose-hold limitation remains. Runtime 275-file
+hash checks still pass. The additional observer is applied to every compared
+mode and does consume resources, although it provides no flight inputs.
+
+New rows live separately in `results/cylinder_solid_map_search_20260915/`.
+The n=20 gate now refuses legacy surface-only rows and requires valid solid
+observation with zero Full/Adaptive contact, plus actual Sector failure.
+Confirmation freezes both map/runtime and measurement script hashes before
+60 new flights. Sixteen focused tests pass including the H01 regression.
+
+F04's three fresh flights all passed with zero solid contacts: Full 65.10 s,
+Sector 69.96 s, Adaptive 72.93 s. Sector adapted its route around cylinders
+placed near its old path, disproving that counterfactual as an actual outcome.
+F04 is ineligible. H04's Full passed in 92.37 s with solid clearance +0.259 m;
+its remaining modes are in progress. No n=20 confirmation has started.
+Details: `docs/cylinder_solid_measurement_correction_20260915.md`.

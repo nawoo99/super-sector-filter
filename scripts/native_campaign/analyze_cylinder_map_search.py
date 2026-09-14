@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Descriptive map-search ledger: includes failed candidates, no p-values."""
+"""Legacy SURFACE-only ledger, not solid-volume safety or n=20 eligibility.
+
+H01 demonstrates a false negative. Keep reported metrics, but never certify
+these old rows as contact-free flights; see solid_context_audit.json.
+"""
 import csv
 import json
 import math
@@ -57,8 +61,12 @@ def main():
             combined.append(rec)
     with (OUT/"summary.csv").open("w",newline="") as stream:
         w=csv.DictWriter(stream,fieldnames=fields);w.writeheader();w.writerows(combined)
+    for decision in decisions:
+        decision.update(measurement="legacy_surface_only", eligible_for_new_n20=False,
+                        solid_volume_safety_certified=False)
     (OUT/"decisions.json").write_text(json.dumps(decisions,indent=2)+"\n")
-    print("map | run | mode | complete | contacts | time(s) | clearance(m) | E2E CPU(cores) | ingress(MiB/s) | open | valid")
+    print("LEGACY SURFACE METRIC ONLY: not solid-volume safety; see solid_context_audit.json")
+    print("map | run | mode | complete | reported surface contacts | time(s) | clearance(m) | E2E CPU(cores) | ingress(MiB/s) | open | valid")
     for r in combined:
         print(" | ".join(str(r[k]) for k in ("map","run","mode","success","static_pcd_collisions",
                          "mission_time_s","static_pcd_clearance_m","end_to_end_cpu_cores_mean",

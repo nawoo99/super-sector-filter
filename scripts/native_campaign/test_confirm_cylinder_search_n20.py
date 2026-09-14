@@ -4,6 +4,7 @@ from confirm_cylinder_search_n20 import eligible, result, MODES, RUNS
 def row(mode, run=1, success=True, contacts=0):
     return dict(map="cyl2_test", run=run, mode=mode, success=success,
                 safety_collisions=contacts, static_pcd_collisions=contacts,
+                solid_collision_episodes=contacts,solid_observer_valid=True,
                 run_valid=True, resource_valid=True, speed_limit_valid=True,
                 infrastructure_failure=False, attempt_count=1, retry_count=0)
 
@@ -45,4 +46,12 @@ def test_other_map_or_missing_outcome_does_not_create_separation():
     assert not eligible(rows)
     rows[1]["static_pcd_collisions"] = 0
     rows[1]["success"] = ""
+    assert not eligible(rows)
+
+
+def test_surface_only_rows_cannot_certify_no_contact_and_solid_contacts_count():
+    rows=[row("full"),row("sector"),row("adaptive")]
+    rows[1]["solid_collision_episodes"]=1
+    assert eligible(rows)
+    del rows[0]["solid_collision_episodes"]
     assert not eligible(rows)

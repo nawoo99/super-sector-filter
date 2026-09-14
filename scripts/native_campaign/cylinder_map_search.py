@@ -125,7 +125,12 @@ def create(args):
         custom_rest = [paths[2][0]] + [p for path in paths[2:] for p in path[1:]]
     elif args.layout=="forest":
         import cylinder_forest_geometry as forest_geometry
-        structure = forest_geometry.forest(args.source_seed, r, args.count)
+        structure = forest_geometry.forest(args.source_seed, r, args.count, args.clear_pocket)
+        if args.forest_rotation_deg:
+            angle = math.radians(args.forest_rotation_deg)
+            cosine, sine = round(math.cos(angle)), round(math.sin(angle))
+            structure = [geometry.Cylinder(c.x*cosine-c.y*sine, c.x*sine+c.y*cosine,
+                                           c.radius, c.role) for c in structure]
         try:
             paths = forest_geometry.paths(structure)
         except ValueError as error:
@@ -365,6 +370,11 @@ def main():
                      help="Prune overlapping rail posts at loop junctions; map geometry only")
     gen.add_argument("--u-half-width",type=float,default=3.)
     gen.add_argument("--source-seed",type=int,choices=range(1,11),default=9)
+    gen.add_argument("--forest-rotation-deg",type=int,choices=(0,90,180,270),default=0,
+                     help="Rotate only cylinder XY locations around origin before offline feasibility checks")
+    gen.add_argument("--clear-pocket",nargs=3,type=float,action="append",default=[],
+                     metavar=("X","Y","CLEAR_RADIUS"),
+                     help="Map-only local cylinder relocation; never alters runtime goals")
     gen.add_argument("--extra-post",nargs=3,type=float,action="append",default=[],
                      metavar=("X","Y","RADIUS"))
     gen.add_argument("--inbound-via",nargs=2,type=float,action="append",default=[],

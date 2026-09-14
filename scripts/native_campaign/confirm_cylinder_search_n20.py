@@ -19,13 +19,16 @@ RUNS = tuple(range(101, 121))
 
 
 def safe(row):
-    return boolean(row.get("success")) and contact_free(row)
+    return (boolean(row.get("success")) and contact_free(row)
+            and integer(row,"solid_collision_episodes")==0)
 
 
 def known_outcome(row):
     return (str(row.get("success", "")).strip().lower() in {"true", "false", "1", "0", "yes", "no"}
             and integer(row, "safety_collisions") >= 0
-            and integer(row, "static_pcd_collisions") >= 0)
+            and integer(row, "static_pcd_collisions") >= 0
+            and integer(row, "solid_collision_episodes") >= 0
+            and boolean(row.get("solid_observer_valid")))
 
 
 def eligible(rows):
@@ -44,7 +47,8 @@ def result(rows):
     for mode in MODES:
         group = [r for r in rows if r["mode"] == mode]
         counts[mode] = dict(rows=len(group), complete=sum(boolean(r.get("success")) for r in group),
-                           contact_free=sum(contact_free(r) for r in group),
+                           contact_free=sum(contact_free(r) and integer(r,"solid_collision_episodes")==0 for r in group),
+                           solid_contact_trials=sum(integer(r,"solid_collision_episodes")>0 for r in group),
                            safe_complete=sum(safe(r) for r in group),
                            quality_valid=sum(quality_valid(r) for r in group))
     keys = {(int(r["run"]), r["mode"]) for r in rows}
@@ -70,6 +74,8 @@ def main():
     if not args.map.startswith("cyl2_") or not args.map.replace("_", "").isalnum():
         parser.error("Use an emitted cyl2_ candidate")
     development = search.OUT / args.map
+    import cylinder_solid_campaign as solid
+    development_data = solid.OUT / args.map
     output = ROOT / args.map
     raw = output / "raw.csv"
     read_rows = lambda p: list(csv.DictReader(p.open())) if p.exists() else []
@@ -77,21 +83,27 @@ def main():
         print(json.dumps(result(read_rows(raw)), indent=2))
         return
     candidate = json.loads((development / "manifest.json").read_text())
-    development_rows = read_rows(development / "raw.csv")
+    development_rows = read_rows(development_data / "raw.csv")
     if not eligible(development_rows):
         parser.error("Development map does not meet the user's actual outcome criterion")
+    instrumentation={str(p):search.geometry.sha256(p) for p in (solid.OBSERVER,Path(solid.__file__))}
     def verify():
         if search.frozen_policy() != candidate["policy"]:
             raise RuntimeError("Runtime policy hash changed")
         for p, sha in candidate["assets"].items():
             if search.geometry.sha256(Path(p)) != sha:
                 raise RuntimeError(f"Frozen map asset changed: {p}")
+        if any(search.geometry.sha256(Path(p))!=sha for p,sha in instrumentation.items()):
+            raise RuntimeError("Frozen solid-observer instrumentation changed")
     verify()
     output.mkdir(parents=True, exist_ok=True)
     declaration = dict(map=args.map, runs=list(RUNS), modes=list(MODES),
                        expected_rows=60, selection="development_outcome_selected",
                        source_manifest_sha256=search.geometry.sha256(development / "manifest.json"),
-                       source_development_raw_sha256=search.geometry.sha256(development / "raw.csv"),
+                       source_development_raw=str(development_data / "raw.csv"),
+                       source_development_raw_sha256=search.geometry.sha256(development_data / "raw.csv"),
+                       measurement_protocol="prelaunch-solid-cylinder-observer-v1",
+                       instrumentation_sha256=instrumentation,
                        simulator_dynamics_unchanged=True,
                        criterion="Full=20/20 safe complete, Adaptive=20/20 safe complete, Sector<20/20 safe complete",
                        retry_policy="no automatic retry; retain all requested rows including failures",
@@ -111,18 +123,9 @@ def main():
     if any(r.get("map") != args.map or not quality_valid(r) or not known_outcome(r) for r in rows):
         raise RuntimeError("Existing row is mismatched or quality-invalid; diagnose without overwriting it")
     campaign = search.campaign
-    original_monitor = campaign.build_loop_monitor_command
-    if "monitor_witness" in candidate:
-        x, y, radius, height = candidate["monitor_witness"]
-        def observed_monitor(wps, switch, timeout, out_json, monitor_options=""):
-            monitor_options += (f" --trajectory-risk-audit --trajectory-audit-center-x {x}"
-                f" --trajectory-audit-center-y {y} --trajectory-audit-radius-m {radius}"
-                f" --trajectory-audit-height-m {height}")
-            return original_monitor(wps, switch, timeout, out_json, monitor_options)
-        campaign.build_loop_monitor_command = observed_monitor
     campaign.install_campaign_signal_handlers()
     with raw.open("a", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=campaign.FIELDS, extrasaction="ignore", lineterminator="\n")
+        writer = csv.DictWriter(stream, fieldnames=solid.FIELDS, extrasaction="ignore", lineterminator="\n")
         if not rows: writer.writeheader(); stream.flush()
         try:
             for index, run in enumerate(RUNS):
@@ -131,9 +134,7 @@ def main():
                 for position, mode in enumerate(modes, 1):
                     if (run, mode) in existing: continue
                     verify()
-                    rec = campaign.run_one(args.map, mode, run, **search.OPTIONS,
-                        artifacts_dir=str(output / "artifacts"),
-                        seedmap_super_config_override=search.PROFILES[mode])
+                    rec = solid.run_trial(args.map,mode,run,output)
                     rec["campaign_sequence_index"] = index * 3 + position
                     rec["mode_order_position"] = position
                     writer.writerow(rec); stream.flush(); rows.append(rec)

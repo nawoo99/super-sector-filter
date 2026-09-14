@@ -1,6 +1,22 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-15 최신 정정: 원기둥 내부 접촉 누락.** H01 Full은 기존 표면-PCD
+> 계측상 접촉 0이지만 실제 저장된 위치가 원기둥 내부(부피 기준 body clearance
+> −0.724 m)였다. unsigned 표면 거리와 monitor의 늦은 시작이 계측 결함이다.
+> 기존 59회 raw는 보존했고 `solid_context_audit.json`에 희소 실제 3D 위치의
+> 후향 점검을 별도로 기록했다. 과거의 0을 전체 비행 안전 인증으로 쓰지 말 것.
+> Runtime 275개 hash/알고리즘/센서/simulator/원래 runner·monitor는 동결하고,
+> 새 wrapper에서 simulator보다 먼저 읽기 전용 solid-cylinder observer를 시작한다.
+> 이후 20회 진입은 **새 solid 관측이 유효한** 3-mode 실제 성과만 인정한다.
+> 첫 F04는 Full/Sector/Adaptive 모두 완주·solid 접촉 0으로 목표 미달이다.
+> H04도 세 모드 모두 통과해 목표 미달이다. H05 Full은 통과했고 나머지
+> 모드를 시험 중이다. H08/H09/H10은 후속 후보, H06/H07은 기하학 사전
+> 검사 미통과로 미비행이다. 아직 적격 맵/20회 캠페인은 없다.
+> 최신 근거: `docs/cylinder_solid_measurement_correction_20260915.md`, §8.81,
+> `results/cylinder_solid_map_search_20260915/`. 아래 옛 checkpoint보다 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-15 사용자 정정 후 원기둥 map-only 탐색 재개.** 아래의 비행 중단
 > checkpoint는 현재 작업 지시가 아니다. 사용자는 알고리즘과 simulator를
 > 유지한 채 실제 결과로 `Full/Adaptive 완주·접촉 0, Sector 완주 실패 또는
