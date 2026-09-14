@@ -268,3 +268,40 @@ Sector memory PSI는 0, infrastructure_failure=False다. 단순 계산 지연의
 마감 미스가 아니라 WP 도착 후 cloud/map 갱신 정체와 함께 발생한 실패다.
 별도 개발 중 지도 생성/기하 검사도 일부 수행했으므로 확인 시험에서는
 그 작업을 중단하고 동일 실행 조건에서 반복한다.
+
+추가 해석 한계: 이 generator는 원기둥 표면만 PCD에 쓰며 바닥 평면이나
+지면 반사점을 추가하지 않는다. 이는 현재 원기둥 benchmark의 조건이지
+실제 LiDAR의 모든 환경을 대표하지 않는다. run1 Sector의 최종 body yaw는
+-99.839도다. 그 위치에서 15 m 범위 내 원기둥 원판과 ±45도 수평 cone의
+보수적인 교차 후보가 0개였다(가장 가까운 angular boundary도 약23.2도 밖).
+정적 cylinder 존재와 filtered cloud 비어 있음은 양립한다. Full/Adaptive의
+비행 결과 차이를 바닥 반사점이 존재하는 환경까지 일반화하지 않는다.
+run1 Adaptive의 effective full-open 전환은 52회지만 이벤트별 전환 기록 없이
+그중 특정 전환이 WP3 재출발을 직접 구했다고 단정하지 않는다.
+
+## J01 개발 3묶음 통과와 새 n20 시작 (03:49 KST)
+
+| 모드 | 개발 완주 | solid 접촉 실행 | run1 / run2 / run3 시간(s) |
+|---|---:|---:|---|
+| Full | 3/3 | 0/3 | 115.19 / 90.95 / 99.87 |
+| Sector | 0/3 | 0/3 | 180.00 / 180.00 / 180.00 |
+| Adaptive | 3/3 | 0/3 | 90.26 / 160.13 / 89.35 |
+
+9행 모두 quality/solid-observer valid, retry 0. Sector run2는 첫 WP 전
+(21.236,18.429,0.955)에서, run1/3은 WP3 부근에서 empty filtered cloud /
+MAP_STALE로 정체했다. run3의 twist가 남은 정지 위치를 일시적으로 이동으로
+오해한 중간 설명은 연속 pose 확인 후 정정했다. 판정/CSV/접촉 측정은 위치
+기반 원자료와 최종 실제 완주 결과를 사용하며 그 오해로 행을 바꾸지 않았다.
+
+Adaptive run2는 네 번째 leg에 95.5초를 썼고 pose-derived 정지가 81.5초였다.
+A-star 0.1초 timeout과 reroute/epoch reset 뒤 회복해 실제 160.13초 완주했다.
+이 시간 변동을 숨기거나 순간 정체를 최종 완주 실패로 세지 않는다. 아직
+Full/Adaptive 반복 20/20을 확인한 것은 아니다.
+
+이제 `confirm_cylinder_search_n20.py cyl2_j01 --min-development-runs 3
+--stop-on-reference-failure`로 **새 run101--120/모드, 총60회**를 시작한다.
+개발9행은 제외하며 모드 순서를 회전한다. 시작 전 map/runtime/개발 raw/
+observer hash와 기준 모드 실패 시 묶음 종료 후 탈락 규칙을 동결한다.
+별도 맵 생성/빌드/대형 git 작업을 병행하지 않는다. 예상 약2시간30분은
+예상치일 뿐 완료 보고가 아니다. 현재 적격 후보는 J01 하나이며 나머지
+네 성공 맵이나 완료된 n20을 만들어냈다고 주장하지 않는다.

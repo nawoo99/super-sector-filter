@@ -1,6 +1,17 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-15 03:49 KST: J01 개발3묶음 통과, 새 n20 진입.** Full 3/3,
+> Adaptive 3/3 완주, Sector 0/3 완주이며 9행 모두 solid 접촉0/quality-valid.
+> Adaptive run2는160.13초로 변동성이 크다. **20회 결과가 아니다.** 새
+> run101--120/모드 총60회를 `--min-development-runs 3
+> --stop-on-reference-failure`로 실행한다. 기준 모드 실패 시 현재 묶음을
+> 끝내고 탈락하며 실패 표본을 지우지 않는다. 원자료:
+> `results/cylinder_confirmation_n20_20260915/cyl2_j01/`.
+> J01 하나만 적격이며 5개 성공 맵을 확보한 것은 아니다. 관측된 차이는
+> empty filtered cloud/MAP_STALE에 따른 완주 차이로, 충돌 방지 우위가 아니다.
+
+> [!IMPORTANT]
 > **2026-09-15 03:31 KST: J01 개발 run1에서 실제 결과 분리.** Full
 > 115.19초/Adaptive 90.26초 완주·solid 접촉 0, Sector 180초 WP3/5
 > 실패·접촉 0. 전부 유효한 단일 실행이다. **아직 최종 성과/n20이 아니다.**
