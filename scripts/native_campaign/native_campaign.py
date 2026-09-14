@@ -1330,6 +1330,9 @@ STATIC_BURST_DROPOUT_CONFIRMATION_MAPS = (
     + STATIC_BURST_DROPOUT_C4_MAPS
     + STATIC_BURST_DROPOUT_C5_MAPS
 )
+CYLINDER_ONLY_STRESS_MAPS = tuple(
+    f"stress_cyl_r{tier}" for tier in range(1, 6)
+)
 STATIC_HEADING_MISMATCH_MAPS = (
     STATIC_HEADING_MISMATCH_H1_MAPS
     + STATIC_HEADING_MISMATCH_H2_MAPS
@@ -1425,6 +1428,14 @@ STATIC_BURST_DROPOUT_AUDIT_WITNESSES = {
     map_name: (*probe, 3.20)
     for map_name, probe in STATIC_BURST_DROPOUT_PROBES.items()
 }
+CYLINDER_ONLY_STRESS_PROBES = {
+    map_name: (19.5, 23.5, 1.5)
+    for map_name in CYLINDER_ONLY_STRESS_MAPS
+}
+CYLINDER_ONLY_STRESS_AUDIT_WITNESSES = {
+    map_name: (*probe, 3.0)
+    for map_name, probe in CYLINDER_ONLY_STRESS_PROBES.items()
+}
 STATIC_HEADING_MISMATCH_CYLINDER_HAZARDS = {
     map_name: STATIC_HEADING_MISMATCH_AUDIT_WITNESSES[map_name]
     for map_name in STATIC_HEADING_MISMATCH_H1_MAPS
@@ -1446,6 +1457,7 @@ STATIC_OCCLUSION_EXPERIMENT_MAPS = (
     + STATIC_TWO_ROUTE_BLIND_HAZARD_MAPS
     + STATIC_HEADING_MISMATCH_MAPS
     + STATIC_BURST_DROPOUT_CONFIRMATION_MAPS
+    + CYLINDER_ONLY_STRESS_MAPS
 )
 VALID_MAPS = (
     tuple(f"seed{i}" for i in range(1, 16))
@@ -2587,6 +2599,10 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 probe_x, probe_y, probe_radius = (
                     STATIC_BURST_DROPOUT_PROBES[map_name]
                 )
+            elif map_name in CYLINDER_ONLY_STRESS_MAPS:
+                probe_x, probe_y, probe_radius = (
+                    CYLINDER_ONLY_STRESS_PROBES[map_name]
+                )
             elif map_name in STATIC_HEADING_MISMATCH_MAPS:
                 probe_x, probe_y, probe_radius = (
                     STATIC_HEADING_MISMATCH_PROBES[map_name]
@@ -3101,6 +3117,17 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             elif map_name in STATIC_BURST_DROPOUT_CONFIRMATION_MAPS:
                 hazard_x, hazard_y, hazard_radius, hazard_height = (
                     STATIC_BURST_DROPOUT_AUDIT_WITNESSES[map_name]
+                )
+                monitor_options += (
+                    " --trajectory-risk-audit"
+                    f" --trajectory-audit-center-x {hazard_x}"
+                    f" --trajectory-audit-center-y {hazard_y}"
+                    f" --trajectory-audit-radius-m {hazard_radius}"
+                    f" --trajectory-audit-height-m {hazard_height}"
+                )
+            elif map_name in CYLINDER_ONLY_STRESS_MAPS:
+                hazard_x, hazard_y, hazard_radius, hazard_height = (
+                    CYLINDER_ONLY_STRESS_AUDIT_WITNESSES[map_name]
                 )
                 monitor_options += (
                     " --trajectory-risk-audit"
@@ -4483,6 +4510,7 @@ def main():
             STATIC_HEADING_MISMATCH_H8_MAPS,
             STATIC_HEADING_MISMATCH_H9_MAPS,
             STATIC_BURST_DROPOUT_CONFIRMATION_MAPS,
+            CYLINDER_ONLY_STRESS_MAPS,
         )
         if any(map_name in family for map_name in args.maps)
     ]

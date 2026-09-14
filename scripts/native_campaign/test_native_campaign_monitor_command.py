@@ -85,6 +85,22 @@ def test_v4_gate_is_a_separate_observed_exit_family():
     }
 
 
+def test_cylinder_only_stress_is_a_separate_registered_family():
+    expected = tuple(f"stress_cyl_r{tier}" for tier in range(1, 6))
+
+    assert MODULE.CYLINDER_ONLY_STRESS_MAPS == expected
+    assert set(expected).issubset(MODULE.VALID_MAPS)
+    assert set(MODULE.CYLINDER_ONLY_STRESS_PROBES) == set(expected)
+    assert set(MODULE.CYLINDER_ONLY_STRESS_AUDIT_WITNESSES) == set(expected)
+    assert all(
+        probe == (19.5, 23.5, 1.5)
+        for probe in MODULE.CYLINDER_ONLY_STRESS_PROBES.values()
+    )
+    assert not set(expected).intersection(
+        MODULE.STATIC_BURST_DROPOUT_CONFIRMATION_MAPS
+    )
+
+
 def test_static_blind_doorway_candidates_are_separate_families():
     assert MODULE.STATIC_BLIND_DOORWAY_C1_MAPS == (
         "sbd1_c1_clear", "sbd1_c1_hazard"
