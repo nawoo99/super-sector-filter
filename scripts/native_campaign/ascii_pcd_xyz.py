@@ -70,5 +70,7 @@ def load_ascii_pcd_xyz(path):
 
     if points.ndim != 2 or points.shape[1] != 3 or not len(points):
         raise ValueError(f"PCD contains no XYZ points: {source}")
-    return points[np.isfinite(points).all(axis=1)]
-
+    points = points[np.isfinite(points).all(axis=1)]
+    if not len(points):
+        raise ValueError(f"PCD contains no finite XYZ points: {source}")
+    return points

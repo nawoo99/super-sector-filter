@@ -1,6 +1,28 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-14 원기둥 전용 Stress 1--5 Full feasibility gate 실패.** 기존
+> wall/dropout C1--C5가 사용자의 의도와 달라, planner는 동결하고 Normal처럼
+> 수직 원기둥 410개만 쓰는 별도 family를 만들었다. 개발 seed5의 structure와
+> 동일 raw-hash MARSIM/C++ replay는 통과했으며, 최종 짝수 seed2/4/6/8/10은
+> 비행 전에 동결했다.
+>
+> Full first-attempt n=1에서 Stress 1--3은 접촉 0으로 완주했지만 Stress 4--5는
+> 첫 waypoint 전에 정지해 180.01초 timeout이었다. 전체 접촉은 0/5, 완주는
+> 3/5다. 원인은 analytic gate가 corner 이후 북쪽 bypass만 확인하고 inbound
+> diagonal과 inner cylinder row의 교차를 놓친 것, radius 증가와 함께 scan
+> point load가 약 16.3k에서 33k로 늘어 0.1초 A-star budget과 결합한 것이다.
+> 판정은 `STOP_PAIRED_CAMPAIGN_FULL_FEASIBILITY_GATE_FAILED`; 이 이름들로
+> Sector/Adaptive flight를 실행하거나 결과를 고르기 위한 Full 재시도를 하지
+> 말 것. 계속하려면 새 v2 이름, inbound inflation/local-horizon route gate,
+> point-budget normalization이 필요하다.
+>
+> 시작 전 static-PCD monitor의 XYZI→XYZ reshape 버그도 발견해 PCD
+> `FIELDS`/`COUNT` 기반 loader로 수정했다. 비행 전 종료된 두 행은 별도
+> infrastructure-aborted 파일로 보존했다. 최신 근거는
+> `docs/cylinder_only_stress_full_gate_result_20260914.md`를 우선한다.
+
+> [!IMPORTANT]
 > **2026-09-10 C4--C5 prospective extension 및 10조건 n=20 표 완료.** 기존
 > R1--R5/C1--C3의 480행은 수정하지 않고, 결과 관측 전에 동결·push한 두 정적
 > blind-fork(C4 deep mirror, C5 asymmetric offset)를 추가했다. 두 맵은

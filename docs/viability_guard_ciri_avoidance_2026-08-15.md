@@ -4923,3 +4923,46 @@ after C1--C3 results, so C1--C5 pooled inference is secondary. Even 100/100
 has Wilson lower bound 0.9630 and is not a population-level guarantee. The
 authoritative table, claim boundary and evidence paths are in
 `docs/ten_condition_n20_result_20260910.md`.
+
+### 8.78 Cylinder-only static Stress 1--5 Full feasibility gate (2026-09-14)
+
+The earlier wall/dropout C1--C5 family was preserved unchanged. A separate
+supplement was created to match the requested Normal-like visual grammar:
+exactly 410 vertical cylinders per map, no wall or mesh primitive, no moving
+obstacle, no artificial sensor fault and no planner change. A seed-5/radius-
+0.4 development map passed the analytic structure gate and paired production
+MARSIM/C++ replay. The identical ten-frame raw stream contained trajectory
+conflicts in every frame, Fixed Sector retained zero conflicting points and
+Adaptive emitted five consecutive fresh occupied verdicts.
+
+Before final flight, five even-seed backgrounds and radius tiers
+0.15/0.275/0.4/0.525/0.65 were frozen under `stress_cyl_r1..r5`. The analytic
+gate checked direct collision, a north-side post-turn bypass, 0.20 m chain
+surface gaps, background separation and 45-degree exclusion. It did not check
+the inbound route from the origin to waypoint 1.
+
+The first measurement startup exposed a monitor-only PCD schema defect: the
+new XYZI files were flattened and reshaped as XYZ. No odometry/mission result
+existed in those two rows. The monitor was changed to resolve coordinate
+columns from PCD `FIELDS`/`COUNT`, extra-field and malformed-schema tests were
+added, and the two non-results were retained separately. No map or planner
+parameter changed. The Full gate then restarted from Stress 1 with exactly one
+attempt per map and no retry.
+
+Stress 1--3 completed contact-free in 82.30/72.11/85.15 s. Stress 4--5 stayed
+contact-free but stopped before waypoint 1 and timed out at 180.01 s. All five
+rows were speed/run/resource valid and had no infrastructure failure. The
+frozen decision is `STOP_PAIRED_CAMPAIGN_FULL_FEASIBILITY_GATE_FAILED`: five
+contacts were 0, but completion was only 3/5, so Sector/Adaptive flights were
+not run.
+
+Forensics showed that the inner cylinder row intersects the inbound diagonal.
+Stress 4 accumulated 1,676 0.1 s A-star timeouts; Stress 5 accumulated 322
+A-star timeouts, 488 replan overtime events, 122 EXP optimizer failures and
+203 reroute arms. Fixed surface sampling also raised mean input from 16.3k to
+about 33k points per scan and Full ingress from 5.07 to about 10.2 MiB/s,
+mixing geometric severity with compute load. These frozen names are negative
+development evidence. Any v2 continuation needs a new freeze, origin-to-turn
+inflation/local-horizon route certification and point-budget normalization.
+Full results and paths are in
+`docs/cylinder_only_stress_full_gate_result_20260914.md`.

@@ -72,3 +72,11 @@ def test_rejects_missing_coordinate_field(tmp_path):
 
     with pytest.raises(ValueError, match="missing coordinate fields z"):
         load_ascii_pcd_xyz(path)
+
+
+def test_rejects_cloud_with_no_finite_xyz_point(tmp_path):
+    path = tmp_path / "nonfinite.pcd"
+    write_pcd(path, ["x", "y", "z"], [["nan", "nan", "nan"]])
+
+    with pytest.raises(ValueError, match="no finite XYZ points"):
+        load_ascii_pcd_xyz(path)

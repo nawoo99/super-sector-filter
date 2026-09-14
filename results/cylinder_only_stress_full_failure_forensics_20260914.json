@@ -1,0 +1,58 @@
+{
+  "schema": "cylinder-only-static-stress-full-failure-forensics-v1",
+  "source": "results/cylinder_only_stress_full_feasibility_n1_artifacts_20260914/*_run1_full.stack.log",
+  "interpretation": {
+    "stress_cyl_r4": "The vehicle stopped before waypoint 1 at the inbound side of the inner cylinder chain. Repeated 0.1 s A-star TIME_OUT results dominated; this was a valid, contact-free mission timeout.",
+    "stress_cyl_r5": "The vehicle stopped before waypoint 1 at the inbound side of the inner cylinder chain. EXP optimization overtime/failure, topology reroute arms and A-star timeouts repeatedly cycled; this was a valid, contact-free mission timeout.",
+    "geometry_error": "The analytic structure gate checked the north-side bypass after the first corner but did not certify an inflation- and search-budget-feasible route from the inbound diagonal to waypoint 1. The inner cylinder row intersects that inbound approach.",
+    "compute_coupling": "Increasing cylinder radius also increased rendered surface samples and planner ingress. Mean input points rose from 16307 in Stress 1 to about 33792/33153 in Stress 4/5, making the fixed 0.1 s search budget a material confound rather than holding compute load constant."
+  },
+  "pattern_counts": [
+    {
+      "map": "stress_cyl_r1",
+      "astar_timeout": 81,
+      "plan_from_rest_failed": 152,
+      "replan_overtime": 60,
+      "exp_optimizer_ret_minus_1008": 1,
+      "trajectory_reroute_arm": 19,
+      "trajectory_reroute_epoch_reset": 19
+    },
+    {
+      "map": "stress_cyl_r2",
+      "astar_timeout": 47,
+      "plan_from_rest_failed": 60,
+      "replan_overtime": 23,
+      "exp_optimizer_ret_minus_1008": 0,
+      "trajectory_reroute_arm": 6,
+      "trajectory_reroute_epoch_reset": 3
+    },
+    {
+      "map": "stress_cyl_r3",
+      "astar_timeout": 105,
+      "plan_from_rest_failed": 171,
+      "replan_overtime": 72,
+      "exp_optimizer_ret_minus_1008": 0,
+      "trajectory_reroute_arm": 22,
+      "trajectory_reroute_epoch_reset": 22
+    },
+    {
+      "map": "stress_cyl_r4",
+      "astar_timeout": 1676,
+      "plan_from_rest_failed": 1678,
+      "replan_overtime": 8,
+      "exp_optimizer_ret_minus_1008": 0,
+      "trajectory_reroute_arm": 2,
+      "trajectory_reroute_epoch_reset": 2
+    },
+    {
+      "map": "stress_cyl_r5",
+      "astar_timeout": 322,
+      "plan_from_rest_failed": 986,
+      "replan_overtime": 488,
+      "exp_optimizer_ret_minus_1008": 122,
+      "trajectory_reroute_arm": 203,
+      "trajectory_reroute_epoch_reset": 102
+    }
+  ],
+  "conclusion": "Do not run the paired Sector/Adaptive campaign on these frozen names. Preserve the negative result. If continuing, create newly named v2 maps and add inbound-route certification plus point-budget normalization before their first flight."
+}
