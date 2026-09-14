@@ -21,6 +21,7 @@ from sensor_msgs_py import point_cloud2 as pc2
 from std_msgs.msg import Bool
 from visualization_msgs.msg import MarkerArray
 
+from ascii_pcd_xyz import load_ascii_pcd_xyz
 from trajectory_audit_math import sample_future_positions
 
 
@@ -133,18 +134,7 @@ class StaticPcdIndex:
     CELL_M = 0.5
 
     def __init__(self, path):
-        with open(path) as stream:
-            while True:
-                line = stream.readline()
-                if not line:
-                    raise ValueError(f"PCD has no DATA header: {path}")
-                if line.startswith("DATA "):
-                    if line.strip() != "DATA ascii":
-                        raise ValueError(f"only ASCII PCD is supported: {path}")
-                    break
-            points = np.loadtxt(stream, dtype=np.float32)
-        points = points.reshape(-1, 3)
-        points = points[np.isfinite(points).all(axis=1)]
+        points = load_ascii_pcd_xyz(path)
         keys = np.floor(points / self.CELL_M).astype(np.int32)
         order = np.lexsort((keys[:, 2], keys[:, 1], keys[:, 0]))
         self.points = points[order]
