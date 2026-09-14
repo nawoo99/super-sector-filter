@@ -4966,3 +4966,52 @@ development evidence. Any v2 continuation needs a new freeze, origin-to-turn
 inflation/local-horizon route certification and point-budget normalization.
 Full results and paths are in
 `docs/cylinder_only_stress_full_gate_result_20260914.md`.
+
+### 8.79 Map-only cylinder search and command-loss pose-hold audit (2026-09-14--15)
+
+The user explicitly allowed cylinder positions, arrangements, counts and sizes
+to change, but froze planner/guard/Adaptive behavior. New `cyl2_*` assets retain
+loop24, v7, fixed half-angle 45 degrees and nominal 10 Hz LiDAR. Runtime source,
+mode-profile and binary hashes were captured and matched after the flights.
+No runtime planner/filter code or sensor fault was changed.
+
+Seven candidates were flown, producing 17 unique first-attempt rows. Five
+corner/slalom candidates completed in all three modes with zero static-PCD
+contacts. The two ring candidates failed Full feasibility: d01 timed out
+before waypoint 1 (1,711 A-star timeouts); d02 reached four waypoints but timed
+out returning to the enclosed origin (1,173 A-star timeouts). Both were
+resource-valid, with PSI some max 0.0. Sector/Adaptive were not run on these
+failed Full maps. The generated a02/a04 candidates remain unflown.
+
+All five paired candidates showed 12.27--19.63% lower end-to-end mean CPU and
+81.68--86.56% lower logical planner ingress under Adaptive versus Full, but
+there is no contact/completion superiority in these n=1 rows. These are
+exploratory, not inferential or held-out results.
+
+An important diagnostic appeared in Sector a01 and a03 only: moving-brake
+rejections followed by frozen pose despite a nonzero reported odometry twist.
+For a03, at epoch 1789397757.2286 a 6.815 m/s brake was rejected and no brake
+command was published. About 0.11 s later pose-difference speed was zero while
+twist still reported 6.815 m/s. After stability waiting, a stationary hold was
+certified. This matches the frozen implementation: guarded EMER_STOP suppresses
+ordinary position commands; PerfectDrone directly assigns commanded position
+and velocity and does not integrate inertia when commands stop. Contact-free
+completion therefore does not prove physically executable braking in this
+case. It also does not prove that a real collision was inevitable.
+
+The read-only stop audit finds 3 and 1 clusters of moving-rejection records in
+Sector a01/a03, respectively, and none in Full/Adaptive across the five paired
+maps. Retry records are not independent events. This post-hoc diagnostic is
+preserved separately from actual contact counts. Further flight search is
+paused at this checkpoint because changing the simulator/command-loss model
+needs scope beyond the user's map-only request. No success claim, dynamics
+change, or automatic larger campaign was made.
+
+Correction to §8.78: v1's 1.5 m audit disc bounded a cluster, not an actual
+individual cylinder; a negative proxy clearance is not an actual trajectory
+intersection. Increased point load was not isolated as a causal explanation
+for A-star failure. Point-budget normalization is not part of this map-only
+continuation. The old raw results remain untouched.
+
+Details: `docs/cylinder_map_only_search_20260914.md`; evidence and summaries:
+`results/cylinder_map_search_20260914/`, including `stop_audit.json`.

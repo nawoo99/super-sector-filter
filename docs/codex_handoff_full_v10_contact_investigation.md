@@ -1,6 +1,26 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-14 후속: 사용자 요청은 원기둥 맵만 바꾸는 반복 탐색이다.**
+> Planner/guard/Adaptive, v7, ±45도, loop24, nominal 10 Hz LiDAR를 동결했다.
+> `cyl2_*`라는 새 이름으로 위치·배열·개수·반경만 탐색하며 기존 결과는
+> 보존한다. 진행 기록은 `docs/cylinder_map_only_search_20260914.md`, 원본은
+> `results/cylinder_map_search_20260914/`를 우선한다.
+> 2026-09-15 checkpoint: 7개 후보/17회 완료. 5개 비교 후보는 세 모드 모두
+> 완주/접촉 0, ring 2개는 Full timeout(WP 0/5 및 4/5)으로 탈락했다.
+> **Sector의 두 맵에서 이동 중 brake rejection 후 명령 중단으로 simulator
+> 위치가 고정되는 증거를 찾았다.** 따라서 접촉 0을 실제 제동 성공으로
+> 해석하지 말 것. 알고리즘은 유지했고, simulator 동역학/command-loss 검증은
+> map-only 범위 밖이므로 임의 수정 없이 추가 비행을 멈췄다. a02/a04는
+> 생성만 한 미비행 후보다. 자세한 사건 시각은 `stop_audit.json`에 있다.
+>
+> 아래 v1 기록의 해석을 정정한다. radius 1.5 m trajectory audit는 실제
+> 개별 원기둥이 아닌 cluster proxy였으므로 음수 값을 실제 충돌 궤적으로
+> 해석하지 말 것. scan 부하 증가가 timeout을 야기했다는 독립적인 인과
+> 검증도 없다. 센서 point-budget normalization은 이번 사용자 요청과 맞지
+> 않아 시행하지 않는다. 실제 static-PCD 접촉/완주 결과는 그대로 보존한다.
+
+> [!IMPORTANT]
 > **2026-09-14 원기둥 전용 Stress 1--5 Full feasibility gate 실패.** 기존
 > wall/dropout C1--C5가 사용자의 의도와 달라, planner는 동결하고 Normal처럼
 > 수직 원기둥 410개만 쓰는 별도 family를 만들었다. 개발 seed5의 structure와
