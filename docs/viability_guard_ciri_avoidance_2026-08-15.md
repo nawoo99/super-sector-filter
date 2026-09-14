@@ -5015,3 +5015,57 @@ continuation. The old raw results remain untouched.
 
 Details: `docs/cylinder_map_only_search_20260914.md`; evidence and summaries:
 `results/cylinder_map_search_20260914/`, including `stop_audit.json`.
+
+### 8.80 Cylinder map search resumed under actual-outcome n=20 rule (2026-09-15)
+
+The user explicitly resumed map-only exploration and clarified the acceptance
+criterion: Full and Adaptive must complete without contact, while Sector must
+have an actual contact or completion failure on the same map. Moving brake
+rejections, pose holds, reduced clearance, and longer travel alone do not meet
+that criterion. The command-loss simulator limitation from §8.79 remains, but
+it is not authorization to change the simulator or planner. All deployed
+algorithms, profiles, nominal 10 Hz sensing, 7 m/s, loop24, and the 180 s limit
+remain frozen. Only static cylinder geometry is changed.
+
+An eligible development map is followed by 20 NEW runs per mode (101--120),
+with a frozen map/policy/development snapshot and rotating mode order. The
+runner retains failed rows, never replaces them with successful retries, and
+requires all 60 unique, quality-valid outcomes before deciding whether the
+observed criterion is met. Invalid infrastructure or missing outcome data
+stops the campaign for diagnosis. It is a repetition check on a development-
+selected map, not unseen-map generalization or population-level certainty.
+
+The previously unflown a02/a04 and the new d03/e01/d06/d04 all finished safely
+in every mode at n=1, so none qualifies. In d03, a new south return opening
+removed the previously observed Full return failure on d02. Narrowing and
+moving d06's exit rearward did not separate Sector; instead Adaptive took
+80.03 s versus roughly 58 s in Full/Sector. These negative outcomes are kept.
+Further ring, closed-U, continuous-slalom and small-cylinder candidates are
+under development, with no 20-run campaign or success claim yet.
+
+Geometric preflight also found intersecting rail cylinders in the unflown
+continuous-slalom draft f01. The new f02 prunes the intersecting posts, retains
+all 19 large slalom cylinders, and refills the background to 410 total. This
+is a map correction, not a runtime change. Every intended flight rejects
+overlapping individual cylinders before ROS launch. The read-only trajectory
+plots were extended to cover origin rings and corner rings correctly.
+
+Latest live ledger and detailed rules: `docs/cylinder_success_rule_n20_20260915.md`,
+`results/cylinder_map_search_20260914/{summary.csv,decisions.json}`.
+Runner: `scripts/native_campaign/confirm_cylinder_search_n20.py`.
+
+01:09 KST checkpoint: 48 completed first-attempt rows on 18 flown maps
+(including the old 17 rows), all quality-valid and contact-free. Fifteen
+three-mode maps completed in every mode. Full d01/d02/g01 timed out; the
+filtered modes were not flown on these rejected maps. The new g01 final pose
+was (16.948,25.250,2.150) after four local escapes, with minimum MemAvailable
+4329.5 MiB and zero memory PSI. Its 8 m dead-end depth exceeded the frozen
+7 m path horizon; this is a plausible explanation for entering the pocket
+before the later A-star timeout, not a controlled causal intervention.
+G02/g03 move the closure inside/at that horizon and narrow the U. The h01--h03
+forest proposals retain 410 scattered cylinders based on seed9/10 coordinates
+with radii .75/.85 m; all have offline geometric route certificates, but no
+flight success has yet been established. The offline Python A-star supplies
+no runtime waypoints and changes no deployed planner. Twelve focused tests
+pass, including n=20 outcome validation, disjoint cylinders, and geometric
+path checks. The next five-candidate Full-first queue is running.

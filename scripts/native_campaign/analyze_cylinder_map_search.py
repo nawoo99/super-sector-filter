@@ -26,7 +26,14 @@ def main():
             "waypoints_reached","final_x","final_y","policy_unchanged"]
     combined=[]; decisions=[]
     for folder in sorted(OUT.iterdir()):
-        if not folder.is_dir() or not (folder/"manifest.json").exists(): continue
+        if not folder.is_dir(): continue
+        if (folder/"design_rejection.json").exists():
+            proposal=json.loads((folder/"design_rejection.json").read_text())
+            decisions.append({"map":folder.name,"decision":"REJECT_OFFLINE_GEOMETRIC_PATH",
+                              "rows":0,"reason":proposal["reason"],
+                              "runtime_policy_unchanged":proposal["policy"]==current})
+            continue
+        if not (folder/"manifest.json").exists(): continue
         manifest=json.loads((folder/"manifest.json").read_text())
         raw=folder/"raw.csv"
         rows=list(csv.DictReader(raw.open())) if raw.exists() else []
@@ -34,7 +41,8 @@ def main():
         safe=lambda r: boolean(r.get("success")) and contact_free(r)
         mode_rows={mode:[r for r in rows if r["mode"]==mode] for mode in ("full","sector","adaptive")}
         decision="PENDING"
-        if rows and not valid: decision="INFRASTRUCTURE_OR_QUALITY_INVALID"
+        if (folder/"geometry_rejection.json").exists(): decision="REJECT_GEOMETRY_OVERLAPPING_POSTS"
+        elif rows and not valid: decision="INFRASTRUCTURE_OR_QUALITY_INVALID"
         elif any(not safe(r) for m in ("full","adaptive") for r in mode_rows[m]):
             decision="REJECT_FULL_OR_ADAPTIVE_UNSAFE_OR_INCOMPLETE"
         elif all(mode_rows.values()):

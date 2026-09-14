@@ -37,6 +37,10 @@ for name in sys.argv[1:]:
             ax.scatter(*contact["position"][:2],s=90,marker="x",color=color)
     if manifest["parameters"].get("layout")=="slalom":
         ax.set_xlim(0,24);ax.set_ylim(0,24)
+    elif manifest["parameters"].get("layout")=="ring":
+        ax.set_xlim(-9,9);ax.set_ylim(-9,9)
+    elif manifest["parameters"].get("layout")=="corner_ring":
+        ax.set_xlim(15,32);ax.set_ylim(16,32)
     else:
         ax.set_xlim(14,29);ax.set_ylim(17,29)
     ax.set_aspect("equal");ax.grid(alpha=.2);ax.set_xlabel("x (m)");ax.set_ylabel("y (m)")

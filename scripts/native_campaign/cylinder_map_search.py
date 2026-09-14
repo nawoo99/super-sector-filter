@@ -64,11 +64,39 @@ def clearance(path, cylinders):
                for a, b in zip(path, path[1:]) for c in cylinders)
 
 
+def loop_slalom(radius, feature_radius, lateral, disjoint_posts=False):
+    """Static posts along all five legs; returned paths are certificates only."""
+    structure, paths = [], []
+    for start, end in zip(geometry.LOOP_WAYPOINTS, geometry.LOOP_WAYPOINTS[1:]):
+        length = math.dist(start, end)
+        ux, uy = ((end[0]-start[0])/length, (end[1]-start[1])/length)
+        def xy(s, l):
+            return (start[0]+ux*s-uy*l, start[1]+uy*s+ux*l)
+        for side in (-1, 1):
+            for i in range(int(length-14)+1):
+                structure.append(geometry.Cylinder(*xy(7+i, side*3.8), radius, "loop_rail"))
+        path = [start, xy(6, 0)]
+        for i in range(int((length-20)/7)+1):
+            s = 10+7*i
+            structure.append(geometry.Cylinder(*xy(s, 1.1*(-1)**i), feature_radius, "loop_slalom"))
+            path.append(xy(s, -lateral*(-1)**i))
+        path.extend((xy(length-6, 0), end))
+        paths.append(path)
+    if disjoint_posts:
+        kept = [c for c in structure if c.role=="loop_slalom"]
+        for c in structure:
+            if c.role=="loop_rail" and not geometry.conflicts(c, kept, .15):
+                kept.append(c)
+        structure = kept
+    return structure, paths
+
+
 def create(args):
     folder = OUT / args.name
     if folder.exists() or (geometry.CONFIG_DIR / f"{args.name}.yaml").exists():
         raise ValueError("Candidate already exists: use a new name, never overwrite")
     r = args.radius
+    custom_rest = None
     if args.layout=="corner":
         inner_end = min(args.closure_x,args.inner_end)
         structure = geometry.chain_axis(21.35, inner_end, 6, r, "inner_row")
@@ -91,19 +119,67 @@ def create(args):
         lateral = args.slalom_offset
         inbound = [(0.,0.),xy(6,0),xy(12,-lateral),xy(18,lateral),xy(24,-lateral),xy(30,0),(24.,24.)]
         bypass = [(24.,24.),(17.,24.)]
+    elif args.layout=="loop_slalom":
+        structure, paths = loop_slalom(r, args.feature_radius, args.slalom_offset, args.disjoint_posts)
+        inbound, bypass = paths[:2]
+        custom_rest = [paths[2][0]] + [p for path in paths[2:] for p in path[1:]]
+    elif args.layout=="forest":
+        import cylinder_forest_geometry as forest_geometry
+        structure = forest_geometry.forest(args.source_seed, r, args.count)
+        try:
+            paths = forest_geometry.paths(structure)
+        except ValueError as error:
+            folder.mkdir(parents=True)
+            geometry.write_cylinder_csv(folder/"cylinders.csv",structure)
+            (folder/"design_rejection.json").write_text(json.dumps({
+                "parameters":vars(args),"reason":str(error),"flown":False,
+                "policy":frozen_policy()},indent=2)+"\n")
+            raise
+        inbound, bypass = paths[:2]
+        custom_rest = [paths[2][0]] + [p for path in paths[2:] for p in path[1:]]
+    elif args.layout=="culdesac":
+        # A cylinder-post U, open to the east. Unlike the corner layout, the
+        # west closure joins BOTH rails: recovery requires leaving the pocket.
+        lower, upper = 24-args.u_half_width, 24+args.u_half_width
+        structure = geometry.chain_axis(lower, args.closure_x, args.inner_end, r, "u_rail")
+        structure += geometry.chain_axis(upper, args.closure_x, args.inner_end, r, "u_rail")
+        for c in geometry.chain_axis(args.closure_x, lower, upper, r, "u_closure", vertical=True):
+            if not any(math.dist(c[:2], other[:2])<1e-8 for other in structure):
+                structure.append(c)
+        inbound=[(0.,0.),(24.5,20.),(25.,22.),(24.,24.)]
+        bypass=[(24.,24.),(24.5,upper+1.2),(args.closure_x-1.5,upper+1.2),(args.closure_x-1.5,24.)]
+        custom_rest=[bypass[-1],(-24.,24.),(-24.,-24.),(24.,-24.),(0.,0.)]
+    elif args.layout=="corner_ring":
+        low,high=args.ring_gap
+        angle=math.radians((low+high)/2)
+        structure=[geometry.Cylinder(24+args.ring_radius*math.cos(math.radians(a)),
+                     24+args.ring_radius*math.sin(math.radians(a)),r,"corner_ring")
+                   for a in range(0,360,12) if not low<=a<=high
+                   and not any(lo<=a<=hi for lo,hi in args.ring_extra_gap)]
+        exit_point=(24+(args.ring_radius+3)*math.cos(angle),
+                    24+(args.ring_radius+3)*math.sin(angle))
+        inbound=[(0.,0.),(24.,24.)]
+        bypass=[(24.,24.),exit_point,(18.,exit_point[1]),(17.,24.)]
+        ring_return=[(0.,0.)]
     else:
-        # Static cylindrical enclosure; the only opening is behind initial yaw.
+        # Static cylindrical enclosure; openings are map-only parameters.
         # Goal and mission are unchanged; Full must first prove this is flyable.
         low,high=args.ring_gap
         angle=math.radians((low+high)/2)
         ring_exit=((args.ring_radius+3)*math.cos(angle),(args.ring_radius+3)*math.sin(angle))
         structure = [geometry.Cylinder(args.ring_radius*math.cos(math.radians(a)),
                          args.ring_radius*math.sin(math.radians(a)),r,"ring")
-                     for a in range(0,360,12) if not low<=a<=high]
+                     for a in range(0,360,12) if not low<=a<=high
+                     and not any(lo<=a<=hi for lo,hi in args.ring_extra_gap)]
         inbound = ([(0.,0.),ring_exit,(-7.,-4.),(-7.,7.),(7.,7.),(24.,24.)]
                    if ring_exit[1]<0 else [(0.,0.),ring_exit,(-5.,7.),(7.,7.),(24.,24.)])
         ring_return=([(0.,-8.),ring_exit,(0.,0.)] if ring_exit[1]<0
                      else [(9.,9.),(-5.,7.),ring_exit,(0.,0.)])
+        if args.ring_return_angle is not None:
+            return_angle=math.radians(args.ring_return_angle)
+            return_entry=((args.ring_radius+3)*math.cos(return_angle),
+                          (args.ring_radius+3)*math.sin(return_angle))
+            ring_return=[(0.,-8.),return_entry,(0.,0.)]
         bypass = [(24.,24.),(17.,24.)]
     for x,y,post_radius in args.extra_post:
         if post_radius<=0: raise ValueError("Post radius must be positive")
@@ -111,15 +187,16 @@ def create(args):
     if args.inbound_via:
         # Geometry certificate only: runtime mission stays the original loop24.
         inbound = [(0.,0.),*map(tuple,args.inbound_via),(24.,24.)]
-    if args.count<=len(structure):
-        raise ValueError("Cylinder count must exceed structural count")
+    if args.count<len(structure):
+        raise ValueError("Cylinder count is smaller than structural count")
     source = geometry.load_source(5, .4)
     retained = [geometry.Cylinder(c.x, c.y, r, "background") for c in source]
     retained = [c for c in retained if geometry.route_surface_distance(c) > 2
                 and not geometry.protected_location(c)
                 and not geometry.conflicts(c, structure, 1)]
-    if args.layout=="ring":
-        certificate = inbound + bypass[1:] + [(-24.,24.),(-24.,-24.),(24.,-24.),*ring_return]
+    if args.layout in ("ring","corner_ring","loop_slalom","culdesac"):
+        certificate = (inbound + bypass[1:] + custom_rest[1:] if custom_rest else
+                       inbound + bypass[1:] + [(-24.,24.),(-24.,-24.),(24.,-24.),*ring_return])
         def admissible(c):
             return min(geometry.point_segment_distance((c.x,c.y),a,b)-c.radius
                        for a,b in zip(certificate,certificate[1:]))>1.0
@@ -140,8 +217,10 @@ def create(args):
     # Analytic centerline feasibility, including the previously missed inbound.
     # Not a claim about a dynamically executable SUPER trajectory.
     rest = [bypass[-1], (-24.,24.),(-24.,-24.),(24.,-24.),(0.,0.)]
-    if args.layout=="ring":
+    if args.layout in ("ring","corner_ring"):
         rest = [bypass[-1],(-24.,24.),(-24.,-24.),(24.,-24.),*ring_return]
+    if custom_rest is not None:
+        rest = custom_rest
     gates = {"inbound_body_clearance_m": clearance(inbound,cylinders),
              "bypass_body_clearance_m": clearance(bypass,cylinders),
              "rest_body_clearance_m": clearance(rest,cylinders)}
@@ -166,7 +245,7 @@ def create(args):
                 "inbound":inbound,"bypass":bypass,"rest":rest, "geometry_gate":gates,
                 "monitor_witness":list(next(c for c in reversed(structure)
                                   if c.role in (("closure",) if args.layout=="corner"
-                                               else ("slalom","side_post","ring"))))[:3]+[3.0],
+                                               else ("slalom","side_post","ring","corner_ring","loop_slalom","u_closure","forest"))))[:3]+[3.0],
                 "assets":{str(p):geometry.sha256(p) for p in (csv_path,pcd_path,config_path)},
                 "policy":frozen_policy()}
     (folder/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
@@ -188,9 +267,11 @@ def plot(folder,cylinders,route):
         ax.scatter(*zip(*geometry.LOOP_WAYPOINTS),color="black",s=15)
         ax.set_aspect("equal"); ax.grid(alpha=.2); ax.set_xlabel("x (m)"); ax.set_ylabel("y (m)")
     axes[0].set_xlim(-33,33); axes[0].set_ylim(-33,33)
-    if any(c.role=="ring" for c in cylinders):
+    if any(c.role=="corner_ring" for c in cylinders):
+        axes[1].set_xlim(15,32); axes[1].set_ylim(16,32)
+    elif any(c.role=="ring" for c in cylinders):
         axes[1].set_xlim(-9,9); axes[1].set_ylim(-9,9)
-    elif any(c.role=="slalom" for c in cylinders):
+    elif any(c.role in ("slalom","loop_slalom") for c in cylinders):
         axes[1].set_xlim(0,24); axes[1].set_ylim(0,24)
     else:
         axes[1].set_xlim(14,29); axes[1].set_ylim(17,29)
@@ -206,6 +287,17 @@ def fly(args):
         raise ValueError("Frozen algorithm/config/binary hash changed; refusing flight")
     if any(geometry.sha256(Path(p))!=sha for p,sha in manifest["assets"].items()):
         raise ValueError("Candidate assets changed; refusing flight")
+    # Physical map preflight, not a runtime planner/metric change. Distinct
+    # vertical cylinders may form a close row but must not overlap in XY.
+    cylinders = [geometry.Cylinder(float(r["x"]),float(r["y"]),float(r["r"]),r["role"])
+                 for r in csv.DictReader((folder/"cylinders.csv").open())]
+    overlap = next(((a,b,geometry.surface_gap(a,b)) for i,a in enumerate(cylinders)
+                    for b in cylinders[i+1:] if geometry.surface_gap(a,b)<-1e-8), None)
+    if overlap:
+        rejection = {"decision":"REJECT_GEOMETRY_OVERLAPPING_POSTS", "witness":overlap,
+                     "flown":False, "note":"Retain candidate; redesign under a new name"}
+        (folder/"geometry_rejection.json").write_text(json.dumps(rejection,indent=2)+"\n")
+        raise ValueError("Distinct static cylinders overlap; candidate retained, flight refused")
     # Read-only trajectory/heading diagnostics about one actual cylinder.
     # No filter probe, synthetic bounding disc or runtime algorithm change.
     if "monitor_witness" in manifest:
@@ -261,11 +353,18 @@ def main():
     gen.add_argument("--inner-end",type=float,default=19.5)
     gen.add_argument("--bypass-y",type=float,default=25.3,
                      help="Analytic certificate only; not mission waypoints")
-    gen.add_argument("--layout",choices=("corner","slalom","ring"),default="corner")
+    gen.add_argument("--layout",choices=("corner","slalom","ring","corner_ring","loop_slalom","culdesac","forest"),default="corner")
     gen.add_argument("--ring-radius",type=float,default=4.5)
     gen.add_argument("--ring-gap",nargs=2,type=float,default=[210,240])
+    gen.add_argument("--ring-extra-gap",nargs=2,type=float,action="append",default=[])
+    gen.add_argument("--ring-return-angle",type=float,default=None,
+                     help="Analytic certificate only; not mission waypoints")
     gen.add_argument("--feature-radius",type=float,default=1.5)
     gen.add_argument("--slalom-offset",type=float,default=1.8)
+    gen.add_argument("--disjoint-posts",action="store_true",
+                     help="Prune overlapping rail posts at loop junctions; map geometry only")
+    gen.add_argument("--u-half-width",type=float,default=3.)
+    gen.add_argument("--source-seed",type=int,choices=range(1,11),default=9)
     gen.add_argument("--extra-post",nargs=3,type=float,action="append",default=[],
                      metavar=("X","Y","RADIUS"))
     gen.add_argument("--inbound-via",nargs=2,type=float,action="append",default=[],
