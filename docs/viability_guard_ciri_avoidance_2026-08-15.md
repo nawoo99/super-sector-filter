@@ -5112,3 +5112,16 @@ placed near its old path, disproving that counterfactual as an actual outcome.
 F04 is ineligible. H04's Full passed in 92.37 s with solid clearance +0.259 m;
 its remaining modes are in progress. No n=20 confirmation has started.
 Details: `docs/cylinder_solid_measurement_correction_20260915.md`.
+
+01:55 KST update: H04 completed safely in all modes and remains ineligible.
+H05 is the FIRST eligible development map: Full completed in 93.49 s,
+Sector timed out at 180.01 s with 4/5 waypoints, Adaptive completed in
+107.71 s; all three had zero solid contacts and valid single-attempt
+measurements. The WP2-to-WP3 interval was 18.72 s in Full versus 115.41 s
+in Sector, consistent with the observed eastward detour and return on the
+west leg. Minimum available memory was at least 4057.55 MiB, with PSI
+zero; this is not proof of FOV-only causality. Development included some
+parallel map generation and git saving. Therefore run1 is explicitly
+exploratory, not the repeated outcome claim. Start fresh frozen H05 runs
+101--120 per mode; no map generation/build/large git work during that
+confirmation. No n=20 success is claimed before all 60 outcomes exist.

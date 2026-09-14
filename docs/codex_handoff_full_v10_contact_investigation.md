@@ -16,6 +16,13 @@
 > 최신 근거: `docs/cylinder_solid_measurement_correction_20260915.md`, §8.81,
 > `results/cylinder_solid_map_search_20260915/`. 아래 옛 checkpoint보다 우선한다.
 
+> **01:55 KST 후속:** H05는 Full 93.49초 완주/접촉 0, Sector 180.01초
+> timeout(WP 4/5)/접촉 0, Adaptive 107.71초 완주/접촉 0으로 **첫 개발 적격**이다.
+> 세 행 모두 새 solid 관측 및 quality-valid. 동일 맵의 새 run101--120,
+> 각 모드 20회(60회) 확인을 시작한다. 결과는
+> `results/cylinder_confirmation_n20_20260915/cyl2_h05/`에 별도 보존한다.
+> 아직 n=20 성과 달성이 아니며 실패를 성공 재시도로 대체하지 않는다.
+
 > [!IMPORTANT]
 > **2026-09-15 사용자 정정 후 원기둥 map-only 탐색 재개.** 아래의 비행 중단
 > checkpoint는 현재 작업 지시가 아니다. 사용자는 알고리즘과 simulator를
