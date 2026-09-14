@@ -5151,3 +5151,40 @@ a futility rule before flight: finish the current three-mode block, then
 stop if Full/Adaptive has failed; otherwise complete all 20 per mode.
 Stopping is labeled incomplete n20, never successful repetition. Twenty-one
 focused tests pass. No deployed planner/Adaptive/sensor/dynamics changes.
+
+### 8.82 Repeated map-only failures and early filtered-cloud diagnosis (2026-09-15)
+
+H11 failed its third development Full flight (180 s, WP0/5); the remaining
+run3 modes were not flown. D08 Full also failed at WP0/5. D09 completed in
+all modes (Full/Sector/Adaptive 60.86/59.34/55.88 s). All these observations
+were valid and had zero solid contacts; none qualifies as the requested
+Sector-only actual-outcome separation. H05 remains stopped at six of its
+planned sixty confirmation rows, not a completed n20 campaign.
+
+A separate D09 Sector run201 diagnostic recorded the first twelve seconds
+of filtered clouds and odometry/body yaw. All 17 initial stationary clouds
+had zero far-field points outside ±47 degrees; initial Full passthrough was
+not observed in that run. It completed in 55.16 s without solid contact,
+but additional diagnostic subscribers mean it is not pooled with primary
+trials. Incremental exit through the NW gap is consistent with changing
+body yaw and the existing 1.5 m omnidirectional near field. No independent
+causal effect or general absence of passthrough is claimed.
+
+F05 changes static cylinder pitch/offset only: 410 cylinders, 32 alternating
+radius-1.9 m features at 3.6 m axial pitch and ±1.8 m lateral centers.
+Analytic minimum body clearance is 0.3875 m; certificates do not modify
+mission waypoints. New geometry defaults preserve older maps, and thirteen
+focused geometry/policy tests pass. Runtime hashes remain unchanged.
+See `cylinder_solid_measurement_correction_20260915.md` for full details.
+
+03:31 KST: F05 finished with all modes safe-complete (79.00/79.52/101.61 s),
+so it did not separate actual outcomes. J01 replaces large features with
+alternating five-cylinder rows: 24 rows, 120 structural baffle cylinders,
+410 cylinders total, all radius 0.4 m/height 3 m. Its first development
+Full and Adaptive completed in 115.19/90.26 s; Sector timed out at WP3/5
+after 180 s. All solid contacts were zero and all observations valid.
+Sector remained at WP3 with empty-cloud/MAP_STALE logs for ~108 s. This
+is a completion/liveness distinction, not evidence of collision prevention.
+Two more paired development blocks precede any fresh n20 confirmation.
+No final successful map or completed n20 is claimed. Twenty-seven focused
+tests pass; all runtime hashes and mirrored map assets match.

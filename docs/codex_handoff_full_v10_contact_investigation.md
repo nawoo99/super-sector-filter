@@ -1,6 +1,26 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-15 03:31 KST: J01 개발 run1에서 실제 결과 분리.** Full
+> 115.19초/Adaptive 90.26초 완주·solid 접촉 0, Sector 180초 WP3/5
+> 실패·접촉 0. 전부 유효한 단일 실행이다. **아직 최종 성과/n20이 아니다.**
+> J01은 410개 정적 원기둥 중 교차 열 120개(24열), 모든 반경 0.4 m/
+> 높이 3 m다. Sector는 WP3 도착 뒤 empty filtered cloud/MAP_STALE로
+> 정지했다. 완주/liveness 차이이지 충돌 방지 우위의 증거는 아니다.
+> 개발 run2/3을 추가하고 기준 모드 전부 안전 완주 시에만 새 n20을 시작한다.
+> 아래 H05/H11의 실패도 보존하며 알고리즘/runtime 275개 hash는 그대로다.
+
+> [!IMPORTANT]
+> **2026-09-15 03:18 KST: 최종 성과 후보는 아직 없다.** H11도 세 번째
+> 개발 Full에서 timeout으로 탈락했고 D08 Full 역시 실패했다. D09는 세
+> 모드 모두 완주/solid 접촉 0이므로 목표 미달이다. 별도 초기 cloud 진단에서
+> D09 Sector의 초기 정지 cloud는 실제 sector 범위 내였으며, 해당 진단은
+> 비교 표본에 합치지 않는다. F05는 교차 원기둥 간격을 3.6 m로 좁힌
+> map-only 후속 후보다. Planner/Adaptive/센서/미션과 275개 runtime hash는
+> 그대로다. H05 확인은 여전히 **중도 탈락 6/60행**이지 n20 완료가 아니다.
+> 상세/원본 경로: `docs/cylinder_solid_measurement_correction_20260915.md`.
+
+> [!IMPORTANT]
 > **02:15 KST 후속: H05는 6/60행(모드별 2회)에서 중도 탈락.** Full 0/2,
 > Sector 2/2, Adaptive 1/2 완주, 전부 solid 접촉 0이다. Adaptive도 같은
 > 구간에서 실패한 추가 증거를 보고 실행 계획을 변경했다. 사용자 답변을

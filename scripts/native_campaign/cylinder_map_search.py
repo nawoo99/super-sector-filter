@@ -64,8 +64,13 @@ def clearance(path, cylinders):
                for a, b in zip(path, path[1:]) for c in cylinders)
 
 
-def loop_slalom(radius, feature_radius, lateral, disjoint_posts=False):
+def loop_slalom(radius, feature_radius, lateral, disjoint_posts=False,
+                pitch=7., feature_offset=1.1):
     """Static posts along all five legs; returned paths are certificates only."""
+    if not math.isfinite(pitch) or pitch <= 0:
+        raise ValueError("Slalom cylinder pitch must be finite and positive")
+    if not math.isfinite(feature_offset) or feature_offset < 0:
+        raise ValueError("Slalom cylinder lateral offset must be finite and nonnegative")
     structure, paths = [], []
     for start, end in zip(geometry.LOOP_WAYPOINTS, geometry.LOOP_WAYPOINTS[1:]):
         length = math.dist(start, end)
@@ -76,9 +81,9 @@ def loop_slalom(radius, feature_radius, lateral, disjoint_posts=False):
             for i in range(int(length-14)+1):
                 structure.append(geometry.Cylinder(*xy(7+i, side*3.8), radius, "loop_rail"))
         path = [start, xy(6, 0)]
-        for i in range(int((length-20)/7)+1):
-            s = 10+7*i
-            structure.append(geometry.Cylinder(*xy(s, 1.1*(-1)**i), feature_radius, "loop_slalom"))
+        for i in range(int((length-20)/pitch)+1):
+            s = 10+pitch*i
+            structure.append(geometry.Cylinder(*xy(s, feature_offset*(-1)**i), feature_radius, "loop_slalom"))
             path.append(xy(s, -lateral*(-1)**i))
         path.extend((xy(length-6, 0), end))
         paths.append(path)
@@ -88,6 +93,37 @@ def loop_slalom(radius, feature_radius, lateral, disjoint_posts=False):
             if c.role=="loop_rail" and not geometry.conflicts(c, kept, .15):
                 kept.append(c)
         structure = kept
+    return structure, paths
+
+
+def loop_baffles(radius=.4, pitch=5., lateral=2.8):
+    """Alternating rows of separate cylinders; no simulated walls or gates.
+
+    Row centers span lateral -2.8..1.2, mirrored at alternating stations.
+    Cylinders are always present. Returned centerlines are offline checks only.
+    """
+    if not math.isfinite(pitch) or pitch <= 0:
+        raise ValueError("Baffle pitch must be finite and positive")
+    structure, paths = loop_slalom(radius, 0., lateral, False, pitch)
+    rails = [c for c in structure if c.role == "loop_rail"]
+    features, paths = [], []
+    for start, end in zip(geometry.LOOP_WAYPOINTS, geometry.LOOP_WAYPOINTS[1:]):
+        length = math.dist(start, end)
+        ux, uy = ((end[0]-start[0])/length, (end[1]-start[1])/length)
+        def xy(s, l):
+            return (start[0]+ux*s-uy*l, start[1]+uy*s+ux*l)
+        path = [start, xy(6, 0)]
+        for i in range(int((length-20)/pitch)+1):
+            s, side = 10+pitch*i, -(-1)**i
+            features.extend(geometry.Cylinder(*xy(s, side*l), radius, "loop_baffle")
+                            for l in (-2.8, -1.8, -.8, .2, 1.2))
+            path.append(xy(s, side*lateral))
+        path.extend((xy(length-6, 0), end))
+        paths.append(path)
+    structure = list(features)
+    for c in rails:
+        if not geometry.conflicts(c, structure, .15):
+            structure.append(c)
     return structure, paths
 
 
@@ -119,8 +155,13 @@ def create(args):
         lateral = args.slalom_offset
         inbound = [(0.,0.),xy(6,0),xy(12,-lateral),xy(18,lateral),xy(24,-lateral),xy(30,0),(24.,24.)]
         bypass = [(24.,24.),(17.,24.)]
-    elif args.layout=="loop_slalom":
-        structure, paths = loop_slalom(r, args.feature_radius, args.slalom_offset, args.disjoint_posts)
+    elif args.layout in ("loop_slalom", "loop_baffles"):
+        if args.layout == "loop_baffles":
+            structure, paths = loop_baffles(r, args.slalom_pitch, args.slalom_offset)
+        else:
+            structure, paths = loop_slalom(r, args.feature_radius, args.slalom_offset,
+                                      args.disjoint_posts, args.slalom_pitch,
+                                      args.slalom_feature_offset)
         inbound, bypass = paths[:2]
         custom_rest = [paths[2][0]] + [p for path in paths[2:] for p in path[1:]]
     elif args.layout=="forest":
@@ -199,7 +240,7 @@ def create(args):
     retained = [c for c in retained if geometry.route_surface_distance(c) > 2
                 and not geometry.protected_location(c)
                 and not geometry.conflicts(c, structure, 1)]
-    if args.layout in ("ring","corner_ring","loop_slalom","culdesac"):
+    if args.layout in ("ring","corner_ring","loop_slalom","loop_baffles","culdesac"):
         certificate = (inbound + bypass[1:] + custom_rest[1:] if custom_rest else
                        inbound + bypass[1:] + [(-24.,24.),(-24.,-24.),(24.,-24.),*ring_return])
         def admissible(c):
@@ -250,7 +291,7 @@ def create(args):
                 "inbound":inbound,"bypass":bypass,"rest":rest, "geometry_gate":gates,
                 "monitor_witness":list(next(c for c in reversed(structure)
                                   if c.role in (("closure",) if args.layout=="corner"
-                                               else ("slalom","side_post","ring","corner_ring","loop_slalom","u_closure","forest"))))[:3]+[3.0],
+                                               else ("slalom","side_post","ring","corner_ring","loop_slalom","loop_baffle","u_closure","forest"))))[:3]+[3.0],
                 "assets":{str(p):geometry.sha256(p) for p in (csv_path,pcd_path,config_path)},
                 "policy":frozen_policy()}
     (folder/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
@@ -358,7 +399,7 @@ def main():
     gen.add_argument("--inner-end",type=float,default=19.5)
     gen.add_argument("--bypass-y",type=float,default=25.3,
                      help="Analytic certificate only; not mission waypoints")
-    gen.add_argument("--layout",choices=("corner","slalom","ring","corner_ring","loop_slalom","culdesac","forest"),default="corner")
+    gen.add_argument("--layout",choices=("corner","slalom","ring","corner_ring","loop_slalom","loop_baffles","culdesac","forest"),default="corner")
     gen.add_argument("--ring-radius",type=float,default=4.5)
     gen.add_argument("--ring-gap",nargs=2,type=float,default=[210,240])
     gen.add_argument("--ring-extra-gap",nargs=2,type=float,action="append",default=[])
@@ -366,6 +407,10 @@ def main():
                      help="Analytic certificate only; not mission waypoints")
     gen.add_argument("--feature-radius",type=float,default=1.5)
     gen.add_argument("--slalom-offset",type=float,default=1.8)
+    gen.add_argument("--slalom-pitch",type=float,default=7.,
+                     help="Loop-slalom cylinder spacing along each leg; geometry only")
+    gen.add_argument("--slalom-feature-offset",type=float,default=1.1,
+                     help="Loop-slalom cylinder lateral offset; not mission waypoints")
     gen.add_argument("--disjoint-posts",action="store_true",
                      help="Prune overlapping rail posts at loop junctions; map geometry only")
     gen.add_argument("--u-half-width",type=float,default=3.)
