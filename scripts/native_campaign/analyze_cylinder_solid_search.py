@@ -30,16 +30,27 @@ def main():
     maps = []
     for raw in sorted(campaign.OUT.glob("cyl2_*/raw.csv")):
         rows = list(csv.DictReader(raw.open()))
-        eligible = confirmation.eligible(rows)
+        development_eligible = confirmation.eligible(rows)
+        confirmed_raw=confirmation.ROOT/raw.parent.name/"raw.csv"
+        confirmed_rows=list(csv.DictReader(confirmed_raw.open())) if confirmed_raw.exists() else []
+        failed_confirmation_reference=any(
+            r["mode"] in ("full","adaptive") and quality_valid(r)
+            and confirmation.known_outcome(r) and not confirmation.safe(r) for r in confirmed_rows)
+        eligible = confirmation.qualified(rows,3) and not failed_confirmation_reference
         valid = all(quality_valid(r) and confirmation.known_outcome(r) for r in rows)
         failed_reference = any(not confirmation.safe(r) for r in rows if r["mode"] in ("full","adaptive"))
         all_modes = {r["mode"] for r in rows} == set(confirmation.MODES)
         decision = ("INVALID_MEASUREMENT_OR_INFRASTRUCTURE" if not valid else
+                    "REJECT_REFERENCE_FAILURE_IN_CONFIRMATION" if failed_confirmation_reference else
                     "REJECT_FULL_OR_ADAPTIVE_FAILURE" if failed_reference else
                     "ELIGIBLE_FOR_NEW_N20" if eligible else
+                    "DEVELOPMENT_SEPARATION_REQUIRES_THREE_PAIRED_REPETITIONS" if development_eligible else
                     "NO_ACTUAL_OUTCOME_SEPARATION" if all_modes else "PILOT_INCOMPLETE")
         maps.append(dict(map=raw.parent.name, raw=str(raw), rows=len(rows),
                          decision=decision, eligible_for_new_n20=eligible,
+                         single_development_criterion_met=development_eligible,
+                         confirmation_rows=len(confirmed_rows),
+                         reference_failure_in_confirmation=failed_confirmation_reference,
                          per_mode=summarize(rows)))
     result = dict(measurement="prelaunch-solid-cylinder-observer-v1", legacy_rows_pooled=False,
                   total_completed_rows=sum(m["rows"] for m in maps), maps=maps,

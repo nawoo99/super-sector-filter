@@ -1,0 +1,14 @@
+{
+  "map": "cyl2_h11",
+  "declared_after_observing_run": 1,
+  "existing_run1_times_s": {"full": 86.48, "sector": 140.60, "adaptive": 106.37},
+  "existing_run1_all_safe_complete": true,
+  "additional_development_runs": [2, 3],
+  "mode_order": ["full", "sector", "adaptive"],
+  "purpose": "Assess development variability; elapsed-time differences alone are not the requested outcome",
+  "stop_rule": "Reject this map if Full or Adaptive fails; retain all rows; do not retry to erase failure",
+  "confirmation_gate": "All Full/Adaptive rows safe-complete in three paired development runs AND at least one actual Sector failure/contact",
+  "confirmation_if_gate_passes": "20 NEW runs per mode with preregistered reference-failure futility rule",
+  "map_and_runtime_changes": false,
+  "development_outcome_selected": true
+}

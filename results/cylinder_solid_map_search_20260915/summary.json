@@ -1,7 +1,7 @@
 {
   "measurement": "prelaunch-solid-cylinder-observer-v1",
   "legacy_rows_pooled": false,
-  "total_completed_rows": 9,
+  "total_completed_rows": 15,
   "maps": [
     {
       "map": "cyl2_f04",
@@ -9,6 +9,9 @@
       "rows": 3,
       "decision": "NO_ACTUAL_OUTCOME_SEPARATION",
       "eligible_for_new_n20": false,
+      "single_development_criterion_met": false,
+      "confirmation_rows": 0,
+      "reference_failure_in_confirmation": false,
       "per_mode": [
         {
           "mode": "full",
@@ -51,6 +54,9 @@
       "rows": 3,
       "decision": "NO_ACTUAL_OUTCOME_SEPARATION",
       "eligible_for_new_n20": false,
+      "single_development_criterion_met": false,
+      "confirmation_rows": 0,
+      "reference_failure_in_confirmation": false,
       "per_mode": [
         {
           "mode": "full",
@@ -91,8 +97,11 @@
       "map": "cyl2_h05",
       "raw": "/root/super-sector-filter/results/cylinder_solid_map_search_20260915/cyl2_h05/raw.csv",
       "rows": 3,
-      "decision": "ELIGIBLE_FOR_NEW_N20",
-      "eligible_for_new_n20": true,
+      "decision": "REJECT_REFERENCE_FAILURE_IN_CONFIRMATION",
+      "eligible_for_new_n20": false,
+      "single_development_criterion_met": true,
+      "confirmation_rows": 6,
+      "reference_failure_in_confirmation": true,
       "per_mode": [
         {
           "mode": "full",
@@ -126,6 +135,51 @@
           "valid": 1,
           "mean_time_s": 107.71,
           "min_solid_clearance_m": 0.2462489974203837
+        }
+      ]
+    },
+    {
+      "map": "cyl2_h11",
+      "raw": "/root/super-sector-filter/results/cylinder_solid_map_search_20260915/cyl2_h11/raw.csv",
+      "rows": 6,
+      "decision": "NO_ACTUAL_OUTCOME_SEPARATION",
+      "eligible_for_new_n20": false,
+      "single_development_criterion_met": false,
+      "confirmation_rows": 0,
+      "reference_failure_in_confirmation": false,
+      "per_mode": [
+        {
+          "mode": "full",
+          "n": 2,
+          "complete": 2,
+          "solid_contact_trials": 0,
+          "solid_contact_episodes": 0,
+          "safe_complete": 2,
+          "valid": 2,
+          "mean_time_s": 120.09,
+          "min_solid_clearance_m": 0.1528658288505978
+        },
+        {
+          "mode": "sector",
+          "n": 2,
+          "complete": 2,
+          "solid_contact_trials": 0,
+          "solid_contact_episodes": 0,
+          "safe_complete": 2,
+          "valid": 2,
+          "mean_time_s": 151.445,
+          "min_solid_clearance_m": 0.17880246313548526
+        },
+        {
+          "mode": "adaptive",
+          "n": 2,
+          "complete": 2,
+          "solid_contact_trials": 0,
+          "solid_contact_episodes": 0,
+          "safe_complete": 2,
+          "valid": 2,
+          "mean_time_s": 112.89,
+          "min_solid_clearance_m": 0.12917561225471214
         }
       ]
     }

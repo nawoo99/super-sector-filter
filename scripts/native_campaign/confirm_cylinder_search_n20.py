@@ -42,6 +42,24 @@ def eligible(rows):
             and any(not safe(r) for r in by_mode["sector"]))
 
 
+def qualified(rows, minimum_repetitions=1):
+    if not eligible(rows) or minimum_repetitions < 1:
+        return False
+    runs=[{str(r["run"]) for r in rows if r["mode"]==mode} for mode in MODES]
+    return all(r==runs[0] for r in runs) and len(runs[0])>=minimum_repetitions
+
+
+def reference_failure(rows):
+    return any(r["mode"] in ("full","adaptive") and not safe(r) for r in rows)
+
+
+def stopped_result(rows, marker):
+    summary=result(rows)
+    summary.update(stopped_early=len(rows)<60, stopping_record=marker,
+                   decision="STOPPED_EARLY_REFERENCE_FAILURE" if len(rows)<60 else summary["decision"])
+    return summary
+
+
 def result(rows):
     counts = {}
     for mode in MODES:
@@ -70,9 +88,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("map")
     parser.add_argument("--analyze-only", action="store_true")
+    parser.add_argument("--min-development-runs",type=int,default=1)
+    parser.add_argument("--stop-on-reference-failure",action="store_true",
+                        help="Preregister futility stop after a complete three-mode block")
     args = parser.parse_args()
     if not args.map.startswith("cyl2_") or not args.map.replace("_", "").isalnum():
         parser.error("Use an emitted cyl2_ candidate")
+    if args.min_development_runs<1:
+        parser.error("Minimum development runs must be positive")
     development = search.OUT / args.map
     import cylinder_solid_campaign as solid
     development_data = solid.OUT / args.map
@@ -80,11 +103,14 @@ def main():
     raw = output / "raw.csv"
     read_rows = lambda p: list(csv.DictReader(p.open())) if p.exists() else []
     if args.analyze_only:
-        print(json.dumps(result(read_rows(raw)), indent=2))
+        marker=output/"boundary_stop.json"
+        summary=(stopped_result(read_rows(raw),json.loads(marker.read_text()))
+                 if marker.exists() else result(read_rows(raw)))
+        print(json.dumps(summary, indent=2))
         return
     candidate = json.loads((development / "manifest.json").read_text())
     development_rows = read_rows(development_data / "raw.csv")
-    if not eligible(development_rows):
+    if not qualified(development_rows,args.min_development_runs):
         parser.error("Development map does not meet the user's actual outcome criterion")
     instrumentation={str(p):search.geometry.sha256(p) for p in (solid.OBSERVER,Path(solid.__file__))}
     def verify():
@@ -109,6 +135,12 @@ def main():
                        retry_policy="no automatic retry; retain all requested rows including failures",
                        mode_order="rotation by run; no outcome-dependent ordering",
                        candidate=candidate)
+    # Leave the original default declaration byte-for-byte compatible with
+    # the resumable H05 campaign. New optional rules are frozen explicitly.
+    if args.min_development_runs!=1:
+        declaration["minimum_paired_development_repetitions"]=args.min_development_runs
+    if args.stop_on_reference_failure:
+        declaration["stopping_rule"]="finish current three-mode block; stop if any Full/Adaptive failure; retain all rows and label incomplete n20"
     freeze = output / "freeze.json"
     if freeze.exists():
         if json.loads(freeze.read_text()) != declaration:
@@ -122,6 +154,8 @@ def main():
         raise RuntimeError("Duplicate or unexpected confirmation rows")
     if any(r.get("map") != args.map or not quality_valid(r) or not known_outcome(r) for r in rows):
         raise RuntimeError("Existing row is mismatched or quality-invalid; diagnose without overwriting it")
+    if args.stop_on_reference_failure and reference_failure(rows):
+        raise RuntimeError("Reference failure already recorded under the frozen futility rule")
     campaign = search.campaign
     campaign.install_campaign_signal_handlers()
     with raw.open("a", newline="") as stream:
@@ -144,6 +178,15 @@ def main():
                     print("CONFIRMATION_PROGRESS " + json.dumps(summary), flush=True)
                     if not quality_valid(rec) or not known_outcome(rec):
                         raise RuntimeError("Quality-invalid row retained; stop to diagnose infrastructure")
+                if args.stop_on_reference_failure and reference_failure(rows):
+                    marker=dict(action="preregistered_reference_failure_stop_after_complete_block",
+                                completed_rows=len(rows),planned_rows=60,
+                                raw_rows_deleted_or_replaced=False,completed_20_per_mode=len(rows)==60)
+                    (output/"boundary_stop.json").write_text(json.dumps(marker,indent=2)+"\n")
+                    summary=stopped_result(rows,marker)
+                    (output/"result.json").write_text(json.dumps(summary,indent=2)+"\n")
+                    print("CONFIRMATION_FUTILITY_STOP "+json.dumps(summary),flush=True)
+                    break
         finally:
             campaign.cleanup_active_process_groups()
 

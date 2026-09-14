@@ -5125,3 +5125,29 @@ parallel map generation and git saving. Therefore run1 is explicitly
 exploratory, not the repeated outcome claim. Start fresh frozen H05 runs
 101--120 per mode; no map generation/build/large git work during that
 confirmation. No n=20 success is claimed before all 60 outcomes exist.
+
+02:15 KST correction: H05 DID NOT survive confirmation. Run101 Full timed
+out, and run102 Adaptive and Full also timed out; all solid contacts remained
+zero. At two trials/mode, Full completed 0/2, Sector 2/2, Adaptive 1/2.
+The first Full failure spent ~150 s on the unfinished third leg, including
+~129 s of near-stationary actual poses, with A-star timeout/local-escape logs.
+The exploratory Sector failure and later reference failures share the west
+pocket, so the single pilot was not a stable Sector-only weakness.
+
+After observing both reference modes fail, the execution plan was changed
+to stop at the completed second three-mode block and return to map-only
+search. This was NOT the originally declared complete 60-row experiment,
+and no user answer to the asynchronous preference question is presumed.
+The exact own controller was interrupted only after six finalized rows;
+freeze/raw and a boundary_stop.json are preserved and the original default
+runner can resume. The short-lived boundary watcher initially used 17.5%
+of one core before switching to file-write notifications; this affected
+the final Full102 instrumentation load and is disclosed separately. Full101
+and Adaptive102 failures were already complete before it started.
+
+H11 rotates only the static cylinder XY layout by 270 degrees. Future fresh
+confirmation requires three complete development repetitions and freezes
+a futility rule before flight: finish the current three-mode block, then
+stop if Full/Adaptive has failed; otherwise complete all 20 per mode.
+Stopping is labeled incomplete n20, never successful repetition. Twenty-one
+focused tests pass. No deployed planner/Adaptive/sensor/dynamics changes.

@@ -1,4 +1,4 @@
-from confirm_cylinder_search_n20 import eligible, result, MODES, RUNS
+from confirm_cylinder_search_n20 import eligible, qualified, reference_failure, stopped_result, result, MODES, RUNS
 
 
 def row(mode, run=1, success=True, contacts=0):
@@ -55,3 +55,18 @@ def test_surface_only_rows_cannot_certify_no_contact_and_solid_contacts_count():
     assert eligible(rows)
     del rows[0]["solid_collision_episodes"]
     assert not eligible(rows)
+
+
+def test_repeated_pilot_and_futility_stop_are_not_twenty_completed_trials():
+    rows=[row(m,r,success=(m!="sector")) for r in range(1,4) for m in MODES]
+    assert qualified(rows,3)
+    assert not qualified(rows[:-1],3)
+    assert not qualified(rows[:3],3)
+    assert not reference_failure(rows)
+    rows[0]["success"]=False
+    assert reference_failure(rows)
+    assert not qualified(rows,3)
+    report=stopped_result(rows,{"planned_rows":60})
+    assert report["stopped_early"]
+    assert report["decision"]=="STOPPED_EARLY_REFERENCE_FAILURE"
+    assert not report["observed_user_criterion_met"]
