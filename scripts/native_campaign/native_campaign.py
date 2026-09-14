@@ -3929,6 +3929,15 @@ def main():
     ap.add_argument("--modes", nargs="+", choices=VALID_MODES, default=MODES)
     ap.add_argument("--runs", type=int, default=1)
     ap.add_argument(
+        "--attempt-max",
+        type=int,
+        default=3,
+        help=(
+            "maximum launch attempts per requested row (default: 3); use 1 "
+            "for a no-replacement preregistered feasibility gate"
+        ),
+    )
+    ap.add_argument(
         "--rotate-modes",
         action="store_true",
         help="rotate requested mode order each run to balance order effects",
@@ -4330,6 +4339,10 @@ def main():
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "native_campaign.csv"))
     args = ap.parse_args()
 
+    if args.runs <= 0:
+        ap.error("--runs must be positive")
+    if args.attempt_max <= 0:
+        ap.error("--attempt-max must be positive")
     if args.loop_timeout is not None and args.loop_timeout <= 0.0:
         ap.error("--loop-timeout must be positive")
     if args.resource_preflight_min_available_mib < 0.0:
@@ -4799,6 +4812,7 @@ def main():
                         map_name,
                         mode,
                         run,
+                        attempt_max=args.attempt_max,
                         artifacts_dir=(
                             os.path.abspath(args.artifacts_dir)
                             if args.artifacts_dir
