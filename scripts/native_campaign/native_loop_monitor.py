@@ -23,6 +23,7 @@ from visualization_msgs.msg import MarkerArray
 
 from ascii_pcd_xyz import load_ascii_pcd_xyz
 from trajectory_audit_math import sample_future_positions
+from message_intervals import MessageIntervals
 
 
 def parse_args():
@@ -255,6 +256,8 @@ class LoopMonitor(Node):
         self.in_side_entry_collision = False
         self.contact_events = []
         self.samples = 0
+        self.message_intervals = ({name: MessageIntervals() for name in ('command', 'odometry')}
+                                  if os.environ.get('SUPER_MONITOR_INTERVALS') == '1' else {})
         self.clearance_samples = 0
         self.waypoint_index = 0
         self.last_position = None
@@ -574,6 +577,10 @@ class LoopMonitor(Node):
         return [round(float(value.x), 4), round(float(value.y), 4), round(float(value.z), 4)]
 
     def command_callback(self, msg):
+        if self.message_intervals:
+            self.message_intervals['command'].observe(
+                int(msg.header.stamp.sec) * 1000000000 + int(msg.header.stamp.nanosec),
+                time.monotonic_ns())
         self.latest_command = {
             "position": self.vector3(msg.position),
             "velocity": self.vector3(msg.velocity),
@@ -813,6 +820,10 @@ class LoopMonitor(Node):
         )
 
     def odom_callback(self, msg):
+        if self.message_intervals:
+            self.message_intervals['odometry'].observe(
+                int(msg.header.stamp.sec) * 1000000000 + int(msg.header.stamp.nanosec),
+                time.monotonic_ns())
         p = msg.pose.pose.position
         position = np.array([p.x, p.y, p.z], dtype=np.float32)
         if self.last_position is not None:
@@ -955,6 +966,7 @@ mission_time = (
     else time.time() - node.start_time
 )
 result = {
+    "message_intervals": {name: counter.summary() for name, counter in node.message_intervals.items()},
     "success": success,
     "mission_time_s": round(mission_time, 2),
     "waypoints_reached": node.waypoint_index,

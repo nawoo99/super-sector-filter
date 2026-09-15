@@ -48,11 +48,17 @@ std::vector<std::string> splitFilterArguments(const std::string &encoded) {
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
+  const auto side_executor_threads =
+      perfect_drone::common_execution_policy::parseSideExecutorThreads(
+          std::getenv("SUPER_SIDE_EXECUTOR_THREADS"));
 
   rclcpp::NodeOptions intra_process_options;
   intra_process_options.use_intra_process_comms(true);
   auto configuration_node = std::make_shared<rclcpp::Node>(
       "perfect_drone_adaptive_config", intra_process_options);
+  RCLCPP_INFO(configuration_node->get_logger(),
+              "[COMMON_EXECUTOR_SETTINGS] side_threads=%zu default_threads=10",
+              side_executor_threads);
   configuration_node->declare_parameter("drone_config",
                                         std::string{"lidar_sim.yaml"});
   configuration_node->declare_parameter("super_config",
@@ -131,7 +137,7 @@ int main(int argc, char **argv) {
   // thread, while commands, FSM and frontend callbacks run independently.
   // Frontend and ROG-Map each retain their own bounded latest-only worker.
   rclcpp::executors::MultiThreadedExecutor side_executor(
-      rclcpp::ExecutorOptions(), 10);
+      rclcpp::ExecutorOptions(), side_executor_threads);
   side_executor.add_callback_group(simulator->cmdSubCbkGroup(),
                                    simulator->get_node_base_interface());
   side_executor.add_callback_group(simulator->odomTimerCbkGroup(),

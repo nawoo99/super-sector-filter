@@ -83,6 +83,10 @@ def main():
     parser.add_argument('--snapshot-line-query', action='store_true')
     parser.add_argument('--snapshot-neighbor-cache', action='store_true',
                         help='Exact snapshot-scoped neighborhood cache; requires line query')
+    parser.add_argument('--static-pc-poll-ms', type=int, choices=(1, 100), default=1)
+    parser.add_argument('--side-executor-threads', type=int, choices=range(4, 17), default=10)
+    parser.add_argument('--monitor-intervals', action='store_true',
+                        help='Bounded received-message interval statistics on existing monitor subscriptions')
     parser.add_argument('--full-config', default=diagnostic.search.PROFILES['full'])
     parser.add_argument('--sector-config', default=diagnostic.search.PROFILES['sector'])
     parser.add_argument('--adaptive-config', default=event.PROFILE)
@@ -113,6 +117,9 @@ def main():
     os.environ['SUPER_COMPARE_OCCUPIED_BOX_SCAN'] = '1' if args.compare_occupied_box_scan else '0'
     os.environ['SUPER_SNAPSHOT_LINE_QUERY'] = '1' if args.snapshot_line_query else '0'
     os.environ['SUPER_SNAPSHOT_NEIGHBOR_CACHE'] = '1' if args.snapshot_neighbor_cache else '0'
+    os.environ['SUPER_STATIC_PC_POLL_MS'] = str(args.static_pc_poll_ms)
+    os.environ['SUPER_SIDE_EXECUTOR_THREADS'] = str(args.side_executor_threads)
+    os.environ['SUPER_MONITOR_INTERVALS'] = '1' if args.monitor_intervals else '0'
     runtime = Path('/root/super_ws/src/SUPER')
     profiles = {'full': args.full_config, 'sector': args.sector_config,
                 'adaptive': args.adaptive_config}
@@ -126,6 +133,8 @@ def main():
                   Path('/root/super_ws/install/rog_map/lib/librog_map.a'),
                   Path('/root/super_ws/install/super_planner/lib/libsuper.a'),
                   Path(recovery_audit.__file__).resolve(),
+                  Path(__file__).resolve().with_name('native_loop_monitor.py'),
+                  Path(__file__).resolve().with_name('message_intervals.py'),
                   Path(__file__).resolve()})
     if args.compose:
         files.add(Path('/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_adaptive_node'))
@@ -156,6 +165,9 @@ def main():
         compare_occupied_box_scan=args.compare_occupied_box_scan,
         snapshot_line_query=args.snapshot_line_query,
         snapshot_neighbor_cache=args.snapshot_neighbor_cache,
+        static_pc_poll_ms=args.static_pc_poll_ms,
+        side_executor_threads=args.side_executor_threads,
+        monitor_intervals=args.monitor_intervals,
         effective_run_options=effective_options,
         runtime_policy_note='Inherited base policy only; effective_run_options and profiles override it. Source acquisition follows native 10Hz cadence, not inherited filter-rate hint.',
         logical_cpus=os.cpu_count(), runtime_policy=frozen_policy,
@@ -199,6 +211,24 @@ def main():
                     root / 'artifacts' / f'seed1_run{args.run}_{mode}.attempt1.stack.log', mode)
                 result['source_acquisition']['checks']['strict_source_recovery_audit'] = (
                     result['strict_recovery_audit']['valid'])
+                stack = (root / 'artifacts' /
+                    f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
+                result['source_acquisition']['checks']['static_pc_poll_setting'] = (
+                    f'[STATIC_PC_POLL_SETTINGS] poll_ms={args.static_pc_poll_ms} '
+                    f'bootstrap_once={int(args.static_pc_poll_ms == 100)}' in stack)
+                if args.compose or mode == 'full':
+                    result['source_acquisition']['checks']['side_executor_setting'] = (
+                        f'[COMMON_EXECUTOR_SETTINGS] side_threads={args.side_executor_threads} ' in stack)
+                if args.monitor_intervals:
+                    monitor_result = json.loads((root / 'artifacts' /
+                        f'seed1_run{args.run}_{mode}.json').read_text())
+                    intervals = monitor_result.get('message_intervals', {})
+                    result['message_intervals'] = intervals
+                    result['source_acquisition']['checks']['message_interval_audit_present'] = (
+                        set(intervals) == {'command', 'odometry'} and all(
+                            x.get('messages', 0) > 1 and x.get('intervals_dropped', 1) == 0
+                            and x.get('backward_receipts', 1) == 0
+                            for x in intervals.values()))
                 if args.skip_backup_diagnostic_replay or args.fast_occupied_box_scan or args.snapshot_line_query:
                     stack = (root / 'artifacts' /
                         f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')

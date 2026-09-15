@@ -5596,3 +5596,55 @@ unchanged and not pooled. Detailed design/evidence/reproduction:
 `results/sensor_acquisition_seed1_n1_20260916/`.
 Controller2622042 completed normally, no flight remains, stress stays stopped.
 Local commits only; no upstream or mirror-repo push in this turn.
+
+### 8.93 Seed1 mean-CPU40% optimization exploration (2026-09-16)
+
+User explicitly authorized algorithm/planner changes and single-flight iterative
+tuning, targeting Adaptive mean **experimental cgroup CPU** at least40% below
+matched Full. Also report cumulative CPU; it is not a second40% requirement.
+Preserve v2 and oldNormal300; never merge these exploratory observations with
+earlier campaigns. Runtime/archive and exact protocol are in
+`docs/adaptive_cpu40_seed1_20260916.md`. No upstream push, no new GitHub push.
+
+All below use seed1/loop24/v7, source±45deg/0.4deg/10Hz, matching common options,
+with profiler enabled and one flight per mode. All completed/contact0 with
+source/recovery/resource/speed checks passing and no automatic retries.
+
+| Candidate | Run | F/A mission s | F/A mean cores | F/A core-s | Mean reduction | Cumulative reduction |
+|---|---:|---|---|---|---:|---:|
+| C1 composed direct cloud | 9301 | 63.22/60.87 | 1.620519/1.353746 | 106.159269/84.659005 | 16.46% | 20.25% |
+| C2 discard replay/unobserved path | 9302 | 62.26/61.15 | 1.630290/1.357637 | 103.872415/85.023065 | 16.72% | 18.15% |
+| C3 exact occupied-box scan | 9304 | 59.50/63.28 | 1.622260/1.345714 | 100.007307/87.158267 | 17.05% | 12.85% |
+| C4 one snapshot per line | 9305 | 41.29/42.27 | 1.077889/1.016868 | 45.764834/44.415111 | 5.66% | 2.95% |
+| C5 exact neighborhood cache | 9306 | 41.59/43.96 | 0.920618/0.776242 | 40.108006/35.464695 | 15.68% | 11.58% |
+
+**40% unmet as of C5.** C3 run9303 is a separate dual-query Full correctness
+probe (at least6144ordered live comparisons,0mismatch); excluded from CPU-target
+acceptance. Candidate target also requires A/F travel time<=1.10, zero contacts,
+all quality checks, and an **unprofiled** matched confirmation; profiled threshold
+alone cannot be final target_met. All failed diagnostic variants are retained.
+
+C4/C5 cut common backup visibility costs without neighbor thinning, smaller
+body radius, coarser map or sensor/guard throttling. Cache is thread-local,
+bounded88,136bytes/thread,4096entries; full ordered neighbor contents and snapshot
+control-block/version identify entries. Weak ownership avoids old-map retention.
+Publication change before acceptance conservatively rejects the line. Tests
+include boundary arithmetic, virtual bounds, signed ring indices, alias/ABA,
+epoch wrap, collisions, publication races and ASan/UBSan. Exact query speedups
+are not themselves end-to-end CPU claims. C5 backup frontend F/A~0.0453/0.0532
+cores; EXP/BACK optimizers and uninstrumented common runtime remain material.
+
+C2 caveat: discarded optimizer replay advances shared LP geometry RNG, so
+removing it is not production bitwise-trajectory equivalent. Controlled-state
+tests pass, but native numerical differences are preserved/documented. Full and
+Adaptive both receive this option and the same guards. Logical cloud payload
+must not be labeled actual NIC/memory bandwidth; composed process CPU includes
+simulator+frontend+planner and is counted once, not reported as planner-only.
+
+Current C6 preparation separately reduces static `/global_pc` subscriber polling
+from1ms to100ms, while LiDAR10Hz and odom/command/mainFSM100Hz stay unchanged.
+Defaults stay legacy; common side-executor10→4 is a separate opt-in future trial.
+Late persistent subscribers/full geometry and bounded received-message interval
+audits are required. See dated result subdirectories for hashes/rawlogs and
+strict Full-source→exact-mapACK→new-path→Sector cycle audits. Stress search stays
+stopped; no safety superiority/generalization claim from these seed1 n1 trials.

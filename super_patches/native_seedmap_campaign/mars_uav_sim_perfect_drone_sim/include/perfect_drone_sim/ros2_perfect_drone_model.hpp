@@ -13,6 +13,7 @@
 #include <marsim_render/marsim_render.hpp>
 #include "pcl_conversions/pcl_conversions.h"
 #include "perfect_drone_sim/config.hpp"
+#include "perfect_drone_sim/common_execution_policy.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 #include <chrono>
 #include <cmath>
@@ -241,6 +242,9 @@ namespace perfect_drone {
         Config cfg_;
         std::shared_ptr<marsim::MarsimRender> render_ptr_;
         double sys_start_t;
+        int static_pc_poll_ms_{1};
+        common_execution_policy::StaticPcPolicy static_pc_policy_;
+        std::chrono::steady_clock::time_point static_pc_policy_start_;
         rclcpp::TimerBase::SharedPtr odom_pub_timer_;
         rclcpp::TimerBase::SharedPtr global_pc_pub_timer_;
         rclcpp::TimerBase::SharedPtr local_pc_pub_timer_;
@@ -496,8 +500,15 @@ namespace perfect_drone {
             );
 
             global_pc_pub_cbk_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+            static_pc_poll_ms_ = common_execution_policy::parseStaticPcPollMs(
+                    std::getenv("SUPER_STATIC_PC_POLL_MS"));
+            static_pc_policy_start_ = std::chrono::steady_clock::now();
+            RCLCPP_INFO(this->get_logger(),
+                        "[STATIC_PC_POLL_SETTINGS] poll_ms=%d bootstrap_once=%d "
+                        "complete_geometry=1 qos_unchanged=1",
+                        static_pc_poll_ms_, static_pc_poll_ms_ == 100);
             global_pc_pub_timer_ = this->create_wall_timer(
-                    std::chrono::milliseconds(1),
+                    std::chrono::milliseconds(static_pc_poll_ms_),
                     std::bind(&PerfectDrone::publishGlobalPC, this),
                     global_pc_pub_cbk_group
             );
@@ -1120,6 +1131,29 @@ namespace perfect_drone {
 
 
         void publishGlobalPC() {
+            if (static_pc_poll_ms_ == 100) {
+                const auto elapsed_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        std::chrono::steady_clock::now() - static_pc_policy_start_).count();
+                const auto subscribers = this->count_subscribers("/global_pc");
+                const auto decision = static_pc_policy_.observe(elapsed_ns, subscribers);
+                if (!decision.publish) return;
+                // Same complete geometry, timestamp and publisher QoS as the
+                // legacy path. This never changes acquired LiDAR scan input.
+                pcl::PointCloud<marsim::PointType>::Ptr global_map(new pcl::PointCloud<marsim::PointType>);
+                render_ptr_->getGlobalMap(global_map);
+                sensor_msgs::msg::PointCloud2 pc_msg;
+                pcl::toROSMsg(*global_map, pc_msg);
+                pc_msg.header.frame_id = "world";
+                pc_msg.header.stamp = this->get_clock()->now();
+                global_pc_pub_->publish(pc_msg);
+                static_pc_policy_.published(decision);
+                RCLCPP_INFO(this->get_logger(),
+                            "[STATIC_PC_PUBLICATION] points=%zu subscribers=%zu "
+                            "bootstrap=%d count_change=%d poll_ms=%d",
+                            global_map->size(), subscribers, decision.bootstrap,
+                            decision.subscriber_change, static_pc_poll_ms_);
+                return;
+            }
             static int last_sub_num = 0;
             // update sub num
             int sub_num = this->count_subscribers("/global_pc");
