@@ -5418,3 +5418,50 @@ cancelled pilot. Geometry/evidence commits occur only between flights, only in
 the mirror repo, no push or co-author trailer. Outcomes are selected using
 development and n20 results, not independent holdouts or population guarantees.
 See `docs/cylinder_persistent_feedback_20260915.md` for gates and live-state paths.
+
+21:24 KST handoff verified: the pilot completed9/9 rows normally at21:21:11.
+L0001 had3/3 safe completions per mode, zero contacts; Sector ACK gaps were
+0.1305/0.1252/0.1181 s. The running controller PID2400625 adopted these rows,
+classified no meaningful separation, enqueued immutable L0006 hardening, then
+generated/mirrored L0002 and launched its actual Full run1 diagnostic. No map
+has yet qualified at n20. Source and completed pilot evidence were saved
+locally (`25a9471` and subsequent candidate snapshots); no GitHub push.
+
+21:30 KST failure transition verified: L0002 finished one valid block, F0/1,
+S1/1,A1/1, zero contacts. Full timed out at180.01 s with153.58 s pose hold at
+(12.5034,19.1428),1568 A* timeout logs, no empty/MAP_STALE and maximum ACK
+gap0.1283 s. The controller retained REFERENCE_FAILURE, appended L0007 opening
+recipe at that position, and continued to actual L0003 Full run1. L0003 repairs
+the older K06 dead-end geometry:13 origin posts added,14 internal posts removed,
+518 cylinders. New L0007 is queued, not yet flown. Evidence snapshots56e6921/
+bb3f56c are local only; the ongoing controller has not been stopped.
+
+### 8.90 Normal seed1 independent host/process/thread/GPU CPU diagnostic (2026-09-16)
+
+User questioned whether the previous7--8% CPU normalization omitted actual
+autonomous-driving work, then requested one Full/Sector/Adaptive flight with
+simultaneous host CPU, process/thread CPU, GPU and processing-time observation.
+No runtime/planner/map/sensor changes. New run9001 per mode, dedicated artifacts,
+native cgroup counters unchanged, read-only1 Hz /proc/psutil + NVML observer,
+12 s baseline before each mode. Seven unit tests and NVML sampling smoke passed.
+
+All3 valid first attempts completed without static-PCD contact:59.12/62.55/59.88 s.
+Host CPU mean21.81/19.83/20.69%, maximum27.85/26.11/25.36%; experiment-only
+CPU share of20 logical CPUs8.03/6.77/7.13%. Independent process-time sums differ
+from native integrated cgroup means by0.52/0.45/0.39%, with expected4/5/5 member
+processes. Whole-GPU mean46.69/49.31/49.52% cannot be assigned to the flight:
+pre-flight GPU means were45.82/49.92/49.92%. No per-process GPU utilization.
+Map Total mean36.98/10.32/22.37 ms and p95 51.40/16.41/49.83 ms are map-stage
+wall times, not sensor-to-command latency. Highest1 s thread samples63.47/59.47/
+69.43% use ONE logical CPU=100%, unlike host-normalized process CPU percentages.
+
+All279 frozen hashes unchanged. Native Full monitor_cpu_pct is missing, not0;
+this outside-cgroup instrumentation is included in host CPU but not experimental
+cgroup CPU in any mode. Extra observer/controller process cost is combined, not
+incremental profiler overhead. Additional-observer n1 results stay separate from
+Normal300. See docs/normal_cpu_gpu_diagnostic_20260916.md and dedicated results.
+
+Before this diagnostic, the persistent stress controller had already stopped
+at23:10:48 Sep15 on L0010 Adaptive run3 infrastructure memory pressure
+(MemAvailable1331.7 MiB below2048 MiB). Invalid evidence remains retained. This
+turn did not restart that search or change its frozen scripts/data/policy.
