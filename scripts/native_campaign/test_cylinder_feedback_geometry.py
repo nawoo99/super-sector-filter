@@ -29,3 +29,9 @@ def test_hardening_nonidentical_and_keeps_background():
 
 def test_invalid_action_refused():
     with pytest.raises(ValueError):f.transform([],dict(action='change_planner'))
+
+
+def test_hardening_metadata_matches_actual_feature_radius():
+    cs,metadata=f.harden([],3)
+    assert metadata['kind']=='loop_slalom'
+    assert {c.radius for c in cs}=={metadata['radius']}

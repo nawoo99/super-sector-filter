@@ -5382,3 +5382,39 @@ and separate standard-protocol evidence. Related, result-informed variants are
 not five independent holdout environments. Preparation is complete; latest live
 progress belongs to `results/cylinder_background_five_20260915/status.json`.
 See `docs/cylinder_background_five_maps_20260915.md` for geometry and exact rules.
+
+### 8.89 Restore persistent failure-driven map redesign (2026-09-15)
+
+The K02--K06 bounded controller finished42 valid rows at19:17 KST: Full14/14,
+Sector11/14, Adaptive13/14 completed, all solid contacts0. K06 Adaptive failed
+in block2, so its third block was omitted. The user correctly objected that
+ending the entire search there did not satisfy the existing redesign-and-retest
+instruction. Do not require a new user prompt after each failed candidate.
+
+Failure signatures from retained logs/pose/ACK evidence: K02/K03/K06 Sector
+stalled on final leg near(2--3,-1), with111.75/111.39/117.90 s ACK gaps and
+111--117 s pose holds. Exterior perimeter posts did not cover the origin-area
+forward sector. K06 Adaptive instead had933 general ACKs, all10 recovery
+requests acknowledged, pending=false, no empty/MAP_STALE warnings and repeated
+A*0.1 s timeouts at(11.695,-18.998), longest pose hold92.48 s. This is not the
+earlier J07 exact-ACK failure. The classification is descriptive, not a proof
+of every internal root cause. No runtime fix is authorized or applied.
+
+L0001 preserves K02 and adds13 static origin-area cylinders, total549, radius
+0.4 m/height3 m. Geometric detour body clearance remains0.4533 m. It was emitted,
+mirrored and committed as`dd0be9f`, then entered real extra-ACK n3 diagnostics
+(PID2389339). First Full119.09 s and Sector125.41/109.83 s complete contact-free;
+Sector maximum ACK gaps are0.1305/0.1252 s, not yet a final n20 claim.
+
+New `cylinder_feedback_search.py` chains immutable geometry, diagnostic n3,
+separate standard-solid n3, and the unchanged fresh n20 confirmation runner.
+Failed candidates trigger static observation posts around observed starvation,
+openings around planning/contact dead ends, or revised interior layouts when
+there is no outcome contrast. A new name and all failed evidence are retained.
+No candidate-count cap: completion requires five observed n20 qualifying maps.
+User cancellation or a genuine infrastructure/integrity/storage block stops
+with evidence. A wait-for-pilot handoff prevents overlap and never resumes a
+cancelled pilot. Geometry/evidence commits occur only between flights, only in
+the mirror repo, no push or co-author trailer. Outcomes are selected using
+development and n20 results, not independent holdouts or population guarantees.
+See `docs/cylinder_persistent_feedback_20260915.md` for gates and live-state paths.

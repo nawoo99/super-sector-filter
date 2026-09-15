@@ -77,3 +77,14 @@ PYTHONNOUSERSITE=1 python3 -u scripts/native_campaign/run_cylinder_background_fi
 
 이미 실행 중이면 중복 시작하지 않는다. `status.json`과 실제 PID를 함께
 확인하며, 계획 파일/맵/동결 코드가 다르면 기존 결과에 이어 쓰지 않는다.
+
+## 18:05 KST 실제 실행 시작
+
+생성기·5개 맵·초기 계획은 로컬 커밋`eb792a2`에 저장했다(push 없음).
+실제 실행기 PID2268162, PTY session72038, 로그
+`/tmp/cylinder_background_five_20260915.log`로18:03 KST 시작했다.
+K02 Full run1은97.17초 완주·solid 접촉0, quality-valid이며 목표까지 ACK
+최대간격0.1392초다. Sector run1이 이어서 실행 중이다. 이는1/최대45회의
+진행 기록이며5개 성과 맵이나 n3/n20 완료를 의미하지 않는다. 이후 실제
+진행은 전체status 및 개별summary/원자료에서 확인한다. 실행 중이라 이
+시점 이후 로그/결과의 대규모 git 저장은 하지 않는다.

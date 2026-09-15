@@ -1,0 +1,295 @@
+{
+  "schema": "cylinder-background-diagnostic-analysis-v1",
+  "diagnostic_only": true,
+  "analysis_boundary_amendment": "Post-hoc after first Sector run: additionally bound completed flights at solid-observed WP5; original tail-inclusive metrics retained",
+  "extra_ack_observer": true,
+  "not_standard_n20": true,
+  "not_cpu_comparison": true,
+  "all_nine_unique_rows": true,
+  "counts": {
+    "full": {
+      "runs": 3,
+      "complete": 3,
+      "contact_trials": 0,
+      "contact_episodes": 0,
+      "all_quality_valid": true,
+      "mission_time_mean_s": 84.08,
+      "minimum_solid_clearance_m": 0.2414625261103231,
+      "goal_bounded_ack_gap_max_s": 0.16410088539123535,
+      "original_observer_ack_gap_max_s": 0.16410088539123535
+    },
+    "sector": {
+      "runs": 3,
+      "complete": 3,
+      "contact_trials": 0,
+      "contact_episodes": 0,
+      "all_quality_valid": true,
+      "mission_time_mean_s": 92.15666666666667,
+      "minimum_solid_clearance_m": 0.2054896889771915,
+      "goal_bounded_ack_gap_max_s": 0.30419158935546875,
+      "original_observer_ack_gap_max_s": 0.39263033866882324
+    },
+    "adaptive": {
+      "runs": 3,
+      "complete": 3,
+      "contact_trials": 0,
+      "contact_episodes": 0,
+      "all_quality_valid": true,
+      "mission_time_mean_s": 86.75333333333333,
+      "minimum_solid_clearance_m": 0.1333935740960201,
+      "goal_bounded_ack_gap_max_s": 0.24730277061462402,
+      "original_observer_ack_gap_max_s": 0.3023505210876465
+    }
+  },
+  "rows": [
+    {
+      "map": "cyl2_k04",
+      "run": 1,
+      "mode": "full",
+      "complete": true,
+      "safe_complete": true,
+      "quality_valid": true,
+      "mission_time_s": 85.44,
+      "solid_contacts": 0,
+      "minimum_solid_clearance_m": 0.26313382508160404,
+      "original_observer_window": {
+        "samples": 790,
+        "max_gap_s": 0.11659836769104004,
+        "hz": 10.00372062308404
+      },
+      "goal_bounded_window": {
+        "samples": 783,
+        "max_gap_s": 0.11659836769104004,
+        "hz": 10.002456960408585
+      },
+      "flight_window_end_kind": "solid_fifth_waypoint",
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 0
+      },
+      "raw_solid_report": "/root/super-sector-filter/results/cylinder_background_five_20260915/cyl2_k04/solid/cyl2_k04_run1_full.json"
+    },
+    {
+      "map": "cyl2_k04",
+      "run": 1,
+      "mode": "sector",
+      "complete": true,
+      "safe_complete": true,
+      "quality_valid": true,
+      "mission_time_s": 93.5,
+      "solid_contacts": 0,
+      "minimum_solid_clearance_m": 0.28680527394761396,
+      "original_observer_window": {
+        "samples": 893,
+        "max_gap_s": 0.30419158935546875,
+        "hz": 9.958681026670568
+      },
+      "goal_bounded_window": {
+        "samples": 889,
+        "max_gap_s": 0.30419158935546875,
+        "hz": 9.9774758698924
+      },
+      "flight_window_end_kind": "solid_fifth_waypoint",
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 4
+      },
+      "raw_solid_report": "/root/super-sector-filter/results/cylinder_background_five_20260915/cyl2_k04/solid/cyl2_k04_run1_sector.json"
+    },
+    {
+      "map": "cyl2_k04",
+      "run": 1,
+      "mode": "adaptive",
+      "complete": true,
+      "safe_complete": true,
+      "quality_valid": true,
+      "mission_time_s": 86.37,
+      "solid_contacts": 0,
+      "minimum_solid_clearance_m": 0.24317798999283619,
+      "original_observer_window": {
+        "samples": 425,
+        "max_gap_s": 0.3023505210876465,
+        "hz": 5.100775295701841
+      },
+      "goal_bounded_window": {
+        "samples": 421,
+        "max_gap_s": 0.24730277061462402,
+        "hz": 5.11973078909654
+      },
+      "flight_window_end_kind": "solid_fifth_waypoint",
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 3
+      },
+      "raw_solid_report": "/root/super-sector-filter/results/cylinder_background_five_20260915/cyl2_k04/solid/cyl2_k04_run1_adaptive.json"
+    },
+    {
+      "map": "cyl2_k04",
+      "run": 2,
+      "mode": "sector",
+      "complete": true,
+      "safe_complete": true,
+      "quality_valid": true,
+      "mission_time_s": 84.4,
+      "solid_contacts": 0,
+      "minimum_solid_clearance_m": 0.26469024645475153,
+      "original_observer_window": {
+        "samples": 801,
+        "max_gap_s": 0.39263033866882324,
+        "hz": 9.96655726942637
+      },
+      "goal_bounded_window": {
+        "samples": 799,
+        "max_gap_s": 0.1260983943939209,
+        "hz": 9.997550337581849
+      },
+      "flight_window_end_kind": "solid_fifth_waypoint",
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 3
+      },
+      "raw_solid_report": "/root/super-sector-filter/results/cylinder_background_five_20260915/cyl2_k04/solid/cyl2_k04_run2_sector.json"
+    },
+    {
+      "map": "cyl2_k04",
+      "run": 2,
+      "mode": "adaptive",
+      "complete": true,
+      "safe_complete": true,
+      "quality_valid": true,
+      "mission_time_s": 84.7,
+      "solid_contacts": 0,
+      "minimum_solid_clearance_m": 0.25997834115540147,
+      "original_observer_window": {
+        "samples": 420,
+        "max_gap_s": 0.240983247756958,
+        "hz": 5.14585538676403
+      },
+      "goal_bounded_window": {
+        "samples": 415,
+        "max_gap_s": 0.240983247756958,
+        "hz": 5.150834570706905
+      },
+      "flight_window_end_kind": "solid_fifth_waypoint",
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 0
+      },
+      "raw_solid_report": "/root/super-sector-filter/results/cylinder_background_five_20260915/cyl2_k04/solid/cyl2_k04_run2_adaptive.json"
+    },
+    {
+      "map": "cyl2_k04",
+      "run": 2,
+      "mode": "full",
+      "complete": true,
+      "safe_complete": true,
+      "quality_valid": true,
+      "mission_time_s": 83.45,
+      "solid_contacts": 0,
+      "minimum_solid_clearance_m": 0.2414625261103231,
+      "original_observer_window": {
+        "samples": 774,
+        "max_gap_s": 0.16410088539123535,
+        "hz": 10.00140593082867
+      },
+      "goal_bounded_window": {
+        "samples": 762,
+        "max_gap_s": 0.16410088539123535,
+        "hz": 10.00797873405584
+      },
+      "flight_window_end_kind": "solid_fifth_waypoint",
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 0
+      },
+      "raw_solid_report": "/root/super-sector-filter/results/cylinder_background_five_20260915/cyl2_k04/solid/cyl2_k04_run2_full.json"
+    },
+    {
+      "map": "cyl2_k04",
+      "run": 3,
+      "mode": "adaptive",
+      "complete": true,
+      "safe_complete": true,
+      "quality_valid": true,
+      "mission_time_s": 89.19,
+      "solid_contacts": 0,
+      "minimum_solid_clearance_m": 0.1333935740960201,
+      "original_observer_window": {
+        "samples": 435,
+        "max_gap_s": 0.23817014694213867,
+        "hz": 5.063483374001763
+      },
+      "goal_bounded_window": {
+        "samples": 431,
+        "max_gap_s": 0.23817014694213867,
+        "hz": 5.07180935607152
+      },
+      "flight_window_end_kind": "solid_fifth_waypoint",
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 0
+      },
+      "raw_solid_report": "/root/super-sector-filter/results/cylinder_background_five_20260915/cyl2_k04/solid/cyl2_k04_run3_adaptive.json"
+    },
+    {
+      "map": "cyl2_k04",
+      "run": 3,
+      "mode": "full",
+      "complete": true,
+      "safe_complete": true,
+      "quality_valid": true,
+      "mission_time_s": 83.35,
+      "solid_contacts": 0,
+      "minimum_solid_clearance_m": 0.2744944829739952,
+      "original_observer_window": {
+        "samples": 769,
+        "max_gap_s": 0.12520051002502441,
+        "hz": 10.00138703820125
+      },
+      "goal_bounded_window": {
+        "samples": 761,
+        "max_gap_s": 0.12520051002502441,
+        "hz": 10.001338719369176
+      },
+      "flight_window_end_kind": "solid_fifth_waypoint",
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 0
+      },
+      "raw_solid_report": "/root/super-sector-filter/results/cylinder_background_five_20260915/cyl2_k04/solid/cyl2_k04_run3_full.json"
+    },
+    {
+      "map": "cyl2_k04",
+      "run": 3,
+      "mode": "sector",
+      "complete": true,
+      "safe_complete": true,
+      "quality_valid": true,
+      "mission_time_s": 98.57,
+      "solid_contacts": 0,
+      "minimum_solid_clearance_m": 0.2054896889771915,
+      "original_observer_window": {
+        "samples": 941,
+        "max_gap_s": 0.29922914505004883,
+        "hz": 9.937719332678899
+      },
+      "goal_bounded_window": {
+        "samples": 941,
+        "max_gap_s": 0.29922914505004883,
+        "hz": 9.962929846090855
+      },
+      "flight_window_end_kind": "solid_fifth_waypoint",
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 6
+      },
+      "raw_solid_report": "/root/super-sector-filter/results/cylinder_background_five_20260915/cyl2_k04/solid/cyl2_k04_run3_sector.json"
+    }
+  ],
+  "reference_failure": false,
+  "sector_observed_failure": false,
+  "sector_long_map_ack_gap": false,
+  "decision": "NO_OBSERVED_OUTCOME_SEPARATION",
+  "automatically_qualified_for_n20": false,
+  "failure_segments": []
+}

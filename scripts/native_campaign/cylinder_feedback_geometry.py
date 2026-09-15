@@ -52,15 +52,17 @@ def harden(cylinders,iteration):
         feature_radius=round(.9+.8*v,3)
         structure,_=search.loop_slalom(.4,feature_radius,2.8,False,pitch,round(.6+.9*u,3))
         features=[c for c in structure if c.role=='loop_slalom']
+        kind='loop_slalom'
     else:
         structure,_=search.loop_baffles(radius,pitch,2.8)
         features=[c for c in structure if c.role=='loop_baffle']
+        feature_radius=radius;kind='loop_baffles'
     # A small deterministic stagger changes headings, not the flight policy.
     accepted=[];skipped=[]
     for c in features:
         if g.conflicts(c,fixed+accepted,.02):skipped.append(c)
         else:accepted.append(c)
-    return fixed+accepted,dict(iteration=iteration,pitch=pitch,radius=radius,
+    return fixed+accepted,dict(iteration=iteration,pitch=pitch,radius=feature_radius,kind=kind,
                                accepted=len(accepted),skipped=[list(c) for c in skipped])
 
 
