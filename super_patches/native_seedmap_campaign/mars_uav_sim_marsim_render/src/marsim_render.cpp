@@ -9,6 +9,32 @@ namespace marsim {
     using std::endl;
     using PointType = pcl::PointXYZI;
 
+    void MarsimRender::setHorizontalAcquisition(bool full, double half_angle_deg) {
+        if (cfg_.lidar_type != GENERAL_360 || original_yaw_fov_ != 360.0 ||
+            !std::isfinite(half_angle_deg) || half_angle_deg <= 0.0 || half_angle_deg > 180.0) {
+            throw std::invalid_argument("source acquisition requires GENERAL_360 and a valid horizontal window");
+        }
+        const double requested_fov = full ? original_yaw_fov_ : 2.0 * half_angle_deg;
+        // Do not overshoot the requested FoV when resolution does not divide it.
+        const int width = full ? original_width_ : std::max(1, static_cast<int>(
+                std::floor(requested_fov / cfg_.polar_resolution + 1e-5)));
+        acquisition_window_enabled_ = true;
+        if (width == cfg_.width) return;
+        cfg_.width = width;
+        cfg_.yaw_fov = full ? original_yaw_fov_ : width * cfg_.polar_resolution;
+        mypixels.resize(static_cast<std::size_t>(width) * cfg_.height);
+        red_pixels.resize(static_cast<std::size_t>(width) * cfg_.height);
+        ray_sin_azimuth_.resize(width);
+        ray_cos_azimuth_.resize(width);
+        for (int u = 0; u < width; ++u) {
+            const decimal_t azimuth = cfg_.polar_resolution / 180.0 * M_PI *
+                    (u - width * 0.5);
+            ray_sin_azimuth_[u] = std::sin(azimuth);
+            ray_cos_azimuth_[u] = std::cos(azimuth);
+        }
+        // GENERAL_360 uses active_image_rows_, not a full pattern allocation.
+    }
+
     void MarsimRender::input_dyn_clouds(pcl::PointCloud<pcl::PointXYZI> input_cloud) {
         this->dyn_clouds = std::move(input_cloud);
     }
@@ -320,6 +346,13 @@ namespace marsim {
             std::cerr << "OpenGL error: " << err << std::endl;
         }
 
+        if (acquisition_window_enabled_) {
+            // The backing window has the maximum size; only this smaller
+            // angular viewport is rasterized, cleared and read back.
+            glViewport(0, 0, cfg_.width, cfg_.height);
+            glEnable(GL_SCISSOR_TEST);
+            glScissor(0, 0, cfg_.width, cfg_.height);
+        }
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -395,10 +428,17 @@ namespace marsim {
         // glDrawElements(GL_POINTS, g_eigen_pt_vec.size()/2, GL_UNSIGNED_INT, 0);
         glDrawElements(GL_POINTS, points_index_infov.size(), GL_UNSIGNED_INT, 0);
 
+        if (acquisition_window_enabled_) {
+            // Read the scan just drawn, not the old/undefined back buffer
+            // after swapping. This matters when the angular window changes.
+            glReadBuffer(GL_BACK);
+            read_depth(16, depth_ptcloud_vec, output_pointcloud);
+        }
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        read_depth(16, depth_ptcloud_vec,output_pointcloud);
+        if (!acquisition_window_enabled_)
+            read_depth(16, depth_ptcloud_vec,output_pointcloud);
 
         static int cnt = 0;
         static double total_t = timer.stop();
@@ -511,6 +551,7 @@ namespace marsim {
                                            vec_E<Vec3f>& depth_ptcloud_vec) {
         origin_cloud->points.clear();
         depth_ptcloud_vec.clear();
+        conversion_rays_ = 0;
         const std::size_t expected_points = cfg_.lidar_type == GENERAL_360
                 ? static_cast<std::size_t>(cfg_.width) *
                         active_image_rows_.size()
@@ -533,6 +574,7 @@ namespace marsim {
             for (int u = 0; u < cfg_.width; u++) {
                 if (full_general_360_row ||
                     pattern_matrix(u, (cfg_.height - 1 - v)) > 0) {
+                    ++conversion_rays_;
                     float depth = depth_image.at<float>(v, u);
                     if (depth > cfg_.sensing_blind && depth < (cfg_.sensing_horizon - 0.1)) {
                         Eigen::Vector3f temp_point, temp_point_world;

@@ -2,6 +2,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <mission_planner/sensor_acquisition.hpp>
 
 #include <functional>
 #include <memory>
@@ -17,6 +18,9 @@ struct DirectInputHandle {
   std::shared_ptr<rclcpp::Node> node;
   std::function<void(const sensor_msgs::msg::PointCloud2::SharedPtr &)>
       submit_cloud;
+  std::function<SensorAcquisition()> acquisition_request;
+  std::function<void(const sensor_msgs::msg::PointCloud2::SharedPtr &,
+                     const SensorAcquisition &)> submit_acquired_cloud;
 };
 
 // Construct the native filter without owning rclcpp::init/shutdown. This is

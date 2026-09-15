@@ -59,6 +59,8 @@
 #include <vector>
 #include <string>
 #include <numeric>
+#include <cstdint>
+#include <stdexcept>
 #include <tr1/unordered_map>
 
 // 系统头文件
@@ -97,6 +99,10 @@ namespace marsim {
         std::vector<decimal_t> ray_sin_azimuth_, ray_cos_azimuth_;
         std::vector<decimal_t> ray_sin_elevation_, ray_cos_elevation_;
         std::vector<int> active_image_rows_;
+        int original_width_{0};
+        decimal_t original_yaw_fov_{360.0};
+        bool acquisition_window_enabled_{false};
+        std::uint64_t conversion_rays_{0};
 
 
     public:
@@ -104,6 +110,8 @@ namespace marsim {
 
         explicit MarsimRender(const std::string& cfg_path_) {
             cfg_ = Config(cfg_path_);
+            original_width_ = cfg_.width;
+            original_yaw_fov_ = cfg_.yaw_fov;
             uniform_01 = std::uniform_real_distribution<decimal_t>(0, 1);
             eng = std::default_random_engine(419);
 
@@ -158,6 +166,14 @@ namespace marsim {
         ~MarsimRender();
 
         typedef std::shared_ptr<MarsimRender> Ptr;
+
+        // Call only on the GL/render thread, BEFORE rendering the scan.
+        // Changes the projection/viewport AND depth readback/conversion size;
+        // it does not construct a Full point cloud and crop it afterwards.
+        void setHorizontalAcquisition(bool full, double half_angle_deg);
+        int acquisitionWidth() const { return cfg_.width; }
+        int acquisitionHeight() const { return cfg_.height; }
+        std::uint64_t conversionRays() const { return conversion_rays_; }
 
         void getGlobalMap(pcl::PointCloud<PointType>::Ptr & global_map) {
             global_map = cloud_color_mesh.makeShared();

@@ -2250,6 +2250,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             filter_half_angle_deg=60.0,
             adaptive_max_publish_hz=5.0,
             adaptive_event_recovery=False,
+            sensor_acquisition=False,
             adaptive_map_commit_refresh_age_s=0.12,
             adaptive_map_commit_refresh_min_interval_s=0.10,
             adaptive_risk_max_eval_hz=0.0,
@@ -2704,6 +2705,14 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 " --full-open-extra-max-points 0 --trajectory-guard-hold-s 0"
                 " --map-commit-refresh-age-s 0 --map-commit-pre-stale-full-age-s 0"
             )
+        if sensor_acquisition and base_mode != "full":
+            if filter_backend != "cpp-frontend" or (base_mode == "adaptive" and not adaptive_event_recovery):
+                raise ValueError("source acquisition requires cpp-frontend and event-only Adaptive")
+            if is_dynamic or is_recovery:
+                raise ValueError("source acquisition smoke supports static maps only")
+            if base_mode != "adaptive":
+                filter_options = f" --stats-json {filt_stats_json} --reliable-output --no-replan-guard"
+            filter_options += " --sensor-acquisition --near-field-radius-m 0 --near-field-speed-gain-s 0 --near-field-max-radius-m 0"
         if is_dynamic:
             filter_options += (
                 f" --input-topic /cloud_seed12 --track-trap "
@@ -2905,6 +2914,8 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 )
             if integrated_full_active:
                 launch_cmd += " use_integrated_full:=true"
+        if sensor_acquisition and base_mode == "full":
+            launch_cmd = "SUPER_SENSOR_FULL_ACQUISITION=1 " + launch_cmd
         if test_force_local_escape_once:
             launch_cmd = "SUPER_TEST_FORCE_LOCAL_ESCAPE_ONCE=1 " + launch_cmd
         if test_force_initial_footprint_egress_once:

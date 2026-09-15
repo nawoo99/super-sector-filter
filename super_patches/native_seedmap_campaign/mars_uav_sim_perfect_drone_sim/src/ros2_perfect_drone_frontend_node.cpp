@@ -72,8 +72,23 @@ int main(int argc, char **argv) {
   simulator_options.use_intra_process_comms(true);
   simulator_options.parameter_overrides(
       {rclcpp::Parameter("config_name", config_name)});
+  perfect_drone::AcquisitionProvider acquisition_provider;
+  perfect_drone::AcquiredCloudObserver acquired_observer;
+  if (filter.acquisition_request().enabled) {
+    acquisition_provider = [get = filter.acquisition_request]() {
+      const auto r = get();
+      return perfect_drone::AcquisitionWindow{
+          r.enabled, r.full, r.cycle, r.center_yaw_rad, r.half_angle_deg};
+    };
+    acquired_observer = [submit = filter.submit_acquired_cloud](
+        const sensor_msgs::msg::PointCloud2::SharedPtr &cloud,
+        const perfect_drone::AcquisitionWindow &r) {
+      submit(cloud, {r.enabled, r.full, r.cycle, r.center_yaw_rad, r.half_angle_deg});
+    };
+  }
   auto simulator = std::make_shared<perfect_drone::PerfectDrone>(
-      filter.submit_cloud, false, simulator_options);
+      filter.submit_cloud, false, simulator_options,
+      acquisition_provider, acquired_observer);
 
   RCLCPP_INFO(configuration_node->get_logger(),
               "raw DDS disabled: renderer -> native front-end uses direct "

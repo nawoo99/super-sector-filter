@@ -89,6 +89,7 @@ struct Options {
   bool test_drop_first_trajectory_guard_full_cloud{false};
   bool direct_input{false};
   bool event_recovery{false};
+  bool sensor_acquisition{false};
   std::string risk_verdict_topic;
   std::string risk_trajectory_topic{"/planning_cmd/poly_traj"};
   double risk_accum_window_s{1.5};
@@ -166,6 +167,8 @@ Options parseArgs(int argc, char **argv) {
       options.output_topic = requireValue(i, arg);
     } else if (arg == "--reliable-output") {
       options.reliable_output = true;
+    } else if (arg == "--sensor-acquisition") {
+      options.sensor_acquisition = true;
     } else if (arg == "--event-recovery") {
       options.event_recovery = true;
     } else if (arg == "--max-publish-hz") {
@@ -487,6 +490,13 @@ public:
          !options_.risk_verdict_topic.empty() || !options_.guard_witness_topic.empty())) {
       throw std::runtime_error("event recovery requires Adaptive + exact ACK and no raw-risk/witness stream");
     }
+    if (options_.sensor_acquisition &&
+        (!options_.direct_input || options_.near_field_radius_m != 0.0 ||
+         !options_.risk_verdict_topic.empty() || !options_.guard_witness_topic.empty() ||
+         (options_.mode == "adaptive" && !options_.event_recovery) ||
+         (options_.mode != "adaptive" && options_.replan_guard_en))) {
+      throw std::runtime_error("sensor acquisition requires typed direct input, zero near-field exception, no raw-risk and event-only Adaptive (or fixed Sector without replan guard)");
+    }
     start_time_s_ = nowSeconds();
     const auto sensor_qos =
         rclcpp::QoS(rclcpp::KeepLast(1)).best_effort().durability_volatile();
@@ -654,6 +664,20 @@ public:
   void submitCloud(
       const sensor_msgs::msg::PointCloud2::SharedPtr &cloud_msg) {
     cloudCallback(cloud_msg);
+  }
+
+  native_sector::SensorAcquisition acquisitionRequest() {
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    const double center =
+        ((options_.mode == "adaptive" || options_.mode == "velocity") && velocity_yaw_)
+            ? *velocity_yaw_ : yaw_;
+    return {options_.sensor_acquisition, effectiveFullOpen(),
+            event_recovery_.cycle, center, options_.half_angle_deg};
+  }
+
+  void submitAcquiredCloud(const sensor_msgs::msg::PointCloud2::SharedPtr &msg,
+                           const native_sector::SensorAcquisition &acquisition) {
+    enqueueCloud(msg, acquisition);
   }
 
 private:
@@ -1495,6 +1519,7 @@ private:
     sensor_msgs::msg::PointCloud2::SharedPtr cloud;
     RiskClock::time_point receive_time{};
     uint64_t sequence{0};
+    native_sector::SensorAcquisition acquisition;
   };
 
   static int64_t riskVoxelKey(const double x, const double y,
@@ -2087,6 +2112,11 @@ private:
   }
 
   void cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+    enqueueCloud(msg, {});
+  }
+
+  void enqueueCloud(const sensor_msgs::msg::PointCloud2::SharedPtr &msg,
+                    const native_sector::SensorAcquisition &acquisition) {
     const auto receive_time = RiskClock::now();
     const uint64_t cloud_sequence = ++cloud_input_callbacks_;
     recordCadence(cloud_input_first_ns_, cloud_input_last_ns_, receive_time);
@@ -2101,7 +2131,7 @@ private:
       std::lock_guard<std::mutex> lock(cloud_queue_mutex_);
       if (pending_cloud_)
         ++cloud_worker_overwrites_;
-      pending_cloud_ = InputCloudJob{msg, receive_time, cloud_sequence};
+      pending_cloud_ = InputCloudJob{msg, receive_time, cloud_sequence, acquisition};
     }
     cloud_queue_cv_.notify_one();
   }
@@ -2332,6 +2362,11 @@ private:
     if (statefulMode() && armed_)
       ++armed_frames_;
     const bool effective_open = effectiveFullOpen();
+    if (options_.sensor_acquisition &&
+        !job.acquisition.matches(effective_open, event_recovery_.cycle)) {
+      ++sensor_acquisition_stale_drops_;
+      return;
+    }
     if (effective_open) {
       ++open_frames_;
       open_input_points_ += input_points;
@@ -2365,6 +2400,16 @@ private:
       }
       ++published_frames_;
       ++event_recovery_full_frames_;
+      kept_points_ += input_points;
+      published_payload_bytes_ += msg->data.size();
+      publishFilteredCloud(*msg);
+      return;
+    }
+    if (options_.sensor_acquisition) {
+      // The sensor has already generated ONLY the selected angular window.
+      // No angular traversal/crop, packing or near-field rescue here.
+      ++sensor_acquisition_passthrough_frames_;
+      ++published_frames_;
       kept_points_ += input_points;
       published_payload_bytes_ += msg->data.size();
       publishFilteredCloud(*msg);
@@ -2611,6 +2656,9 @@ private:
                : 0.2);
     integer("frames", frames_);
     boolean("event_recovery_enabled", options_.event_recovery);
+    boolean("sensor_acquisition_enabled", options_.sensor_acquisition);
+    integer("sensor_acquisition_stale_drops", sensor_acquisition_stale_drops_);
+    integer("sensor_acquisition_passthrough_frames", sensor_acquisition_passthrough_frames_);
     boolean("event_recovery_active", event_recovery_.active);
     integer("event_recovery_requests", event_recovery_requests_);
     integer("event_recovery_cycles", event_recovery_.cycle);
@@ -3019,6 +3067,8 @@ private:
 
   Options options_;
   native_sector::EventRecoveryLatch event_recovery_;
+  uint64_t sensor_acquisition_stale_drops_{0};
+  uint64_t sensor_acquisition_passthrough_frames_{0};
   bool event_recovery_request_pending_{false};
   bool event_seen_successful_plan_{false};
   uint64_t event_recovery_ignored_replan_failures_{0};
@@ -3321,6 +3371,12 @@ DirectInputHandle createDirectInputNode(
                             const sensor_msgs::msg::PointCloud2::SharedPtr
                                 &cloud_msg) {
     concrete->submitCloud(cloud_msg);
+  };
+  handle.acquisition_request = [concrete]() { return concrete->acquisitionRequest(); };
+  handle.submit_acquired_cloud = [concrete](
+      const sensor_msgs::msg::PointCloud2::SharedPtr &msg,
+      const SensorAcquisition &acquisition) {
+    concrete->submitAcquiredCloud(msg, acquisition);
   };
   return handle;
 }

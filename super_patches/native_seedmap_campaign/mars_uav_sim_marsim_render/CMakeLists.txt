@@ -114,4 +114,11 @@ install(DIRECTORY include/
         DESTINATION include/
 )
 
+add_executable(source_acquisition_test test/source_acquisition_test.cpp)
+target_compile_definitions(source_acquisition_test PRIVATE
+        SOURCE_TEST_ASSET_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/../perfect_drone_sim/")
+target_link_libraries(source_acquisition_test ${PROJECT_NAME} ${third_party_libs})
+ament_target_dependencies(source_acquisition_test rclcpp)
+install(TARGETS source_acquisition_test DESTINATION lib/${PROJECT_NAME})
+
 ament_package()

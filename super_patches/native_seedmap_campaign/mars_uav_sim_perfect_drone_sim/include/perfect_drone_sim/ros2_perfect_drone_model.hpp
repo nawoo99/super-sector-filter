@@ -41,6 +41,17 @@ namespace perfect_drone {
     using SensorCloudObserver = std::function<void(
             const sensor_msgs::msg::PointCloud2::SharedPtr &)>;
 
+    struct AcquisitionWindow {
+        bool enabled{false};
+        bool full{false};
+        std::uint64_t cycle{0};
+        double center_yaw_rad{0.0};
+        double half_angle_deg{45.0};
+    };
+    using AcquisitionProvider = std::function<AcquisitionWindow()>;
+    using AcquiredCloudObserver = std::function<void(
+            const sensor_msgs::msg::PointCloud2::SharedPtr &, const AcquisitionWindow &)>;
+
     struct SideEntryV1Config {
         bool enabled{false};
         int scenario_version{0};
@@ -249,6 +260,8 @@ namespace perfect_drone {
         Eigen::Quaterniond q_;
         std::string mesh_resource_;
         SensorCloudObserver local_cloud_observer_;
+        AcquisitionProvider acquisition_provider_;
+        AcquiredCloudObserver acquired_cloud_observer_;
         bool publish_raw_cloud_{true};
         using SensorCadenceClock = std::chrono::steady_clock;
         std::optional<SensorCadenceClock::time_point> first_sensor_frame_time_;
@@ -313,10 +326,28 @@ namespace perfect_drone {
                 SensorCloudObserver local_cloud_observer = {},
                 const bool publish_raw_cloud = true,
                 const rclcpp::NodeOptions &node_options =
-                        rclcpp::NodeOptions())
+                        rclcpp::NodeOptions(),
+                AcquisitionProvider acquisition_provider = {},
+                AcquiredCloudObserver acquired_cloud_observer = {})
                 : Node("perfect_tracking", node_options),
                   local_cloud_observer_(std::move(local_cloud_observer)),
+                  acquisition_provider_(std::move(acquisition_provider)),
+                  acquired_cloud_observer_(std::move(acquired_cloud_observer)),
                   publish_raw_cloud_(publish_raw_cloud) {
+            // Matched Full control for the source-acquisition experiment.
+            // Legacy runs do not set this process-local opt-in.
+            if (const char *full_source = std::getenv("SUPER_SENSOR_FULL_ACQUISITION")) {
+                if (std::string(full_source) != "1" || acquisition_provider_)
+                    throw std::runtime_error("invalid/conflicting Full acquisition opt-in");
+                acquisition_provider_ = []() {
+                    return AcquisitionWindow{true, true, 0, 0.0, 45.0};
+                };
+                acquired_cloud_observer_ = [this](
+                        const sensor_msgs::msg::PointCloud2::SharedPtr &cloud,
+                        const AcquisitionWindow &) {
+                    if (local_cloud_observer_) local_cloud_observer_(cloud);
+                };
+            }
             // TODO: The current implementation uses a lenient QoS configuration for message transmission.
             const rclcpp::QoS qos(rclcpp::QoS(100)
                                           .best_effort()
@@ -601,20 +632,53 @@ namespace perfect_drone {
 
         void publishPC() {
             pcl::PointCloud<marsim::PointType>::Ptr local_map(new pcl::PointCloud<marsim::PointType>);
+            // Capture immutable acquisition mode BEFORE rendering. Neither
+            // the request nor its timestamp is replaced with the later state.
+            const auto acquisition = acquisition_provider_
+                    ? acquisition_provider_() : AcquisitionWindow{};
+            const auto acquisition_stamp = this->get_clock()->now();
+            const Eigen::Vector3f scan_position = position_.cast<float>();
+            Eigen::Quaternionf scan_rotation = q_.cast<float>();
+            if (acquisition.enabled) {
+                if (side_entry_v1_cfg_.enabled || !acquired_cloud_observer_)
+                    throw std::runtime_error("source acquisition requires typed handoff and no synthetic obstacle injection");
+                render_ptr_->setHorizontalAcquisition(acquisition.full, acquisition.half_angle_deg);
+                if (!acquisition.full) {
+                    // Steer horizontal azimuth in the actual sensor plane;
+                    // retain the vehicle's roll/pitch, not a post-cloud crop.
+                    const Eigen::Vector3f world_heading(
+                            std::cos(acquisition.center_yaw_rad),
+                            std::sin(acquisition.center_yaw_rad), 0.0f);
+                    const auto body_heading = scan_rotation.conjugate() * world_heading;
+                    const float azimuth = std::atan2(body_heading.y(), body_heading.x());
+                    scan_rotation = scan_rotation * Eigen::Quaternionf(
+                            Eigen::AngleAxisf(azimuth, Eigen::Vector3f::UnitZ()));
+                }
+            }
             const auto cur_t = sensor_fixed_render_time_s_.value_or(
                     this->get_clock()->now().seconds());
-            render_ptr_->renderOnceInWorld(position_.cast<float>(), q_.cast<float>(), cur_t, local_map);
+            render_ptr_->renderOnceInWorld(scan_position, scan_rotation, cur_t, local_map);
             appendSideEntryV1(position_, local_map);
             auto pc_msg = std::make_shared<sensor_msgs::msg::PointCloud2>();
             pcl::toROSMsg(*local_map, *pc_msg);
             pc_msg->header.frame_id = "world";
-            pc_msg->header.stamp = this->get_clock()->now();
+            pc_msg->header.stamp = acquisition.enabled ? acquisition_stamp : this->get_clock()->now();
             const auto sensor_frame_time = SensorCadenceClock::now();
             if (!first_sensor_frame_time_) {
                 first_sensor_frame_time_ = sensor_frame_time;
             }
             last_sensor_frame_time_ = sensor_frame_time;
             ++sensor_frame_count_;
+            if (acquisition.enabled) {
+                RCLCPP_INFO(get_logger(),
+                    "[SENSOR_ACQUISITION_FRAME] frame=%lu cycle=%lu full=%d stamp_ns=%ld width=%d height=%d readback_pixels=%lu conversion_rays=%lu generated_points=%lu bytes=%lu half_angle_deg=%.3f",
+                    sensor_frame_count_, acquisition.cycle, acquisition.full ? 1 : 0,
+                    acquisition_stamp.nanoseconds(), render_ptr_->acquisitionWidth(),
+                    render_ptr_->acquisitionHeight(),
+                    static_cast<unsigned long>(2ULL * render_ptr_->acquisitionWidth() * render_ptr_->acquisitionHeight()),
+                    render_ptr_->conversionRays(), local_map->size(), pc_msg->data.size(),
+                    acquisition.half_angle_deg);
+            }
             std::cout << "Publish local map size: " << local_map->size() << std::endl;
             const double sensor_elapsed_s = std::chrono::duration<double>(
                     sensor_frame_time - *first_sensor_frame_time_).count();
@@ -646,7 +710,10 @@ namespace perfect_drone {
             last_delivered_sensor_frame_time_ = sensor_frame_time;
             ++sensor_delivered_frame_count_;
             sensor_payload_bytes_ += pc_msg->data.size();
-            if (local_cloud_observer_) {
+            if (acquisition.enabled) {
+                acquired_cloud_observer_(pc_msg, acquisition);
+                ++direct_cloud_handoff_count_;
+            } else if (local_cloud_observer_) {
                 local_cloud_observer_(pc_msg);
                 ++direct_cloud_handoff_count_;
             }
