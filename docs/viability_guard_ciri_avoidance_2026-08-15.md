@@ -5268,3 +5268,92 @@ Subsequent checkpoint: J03 passed all three development reference trials
 failed all three at180 s without contact. The supervisor actually entered
 fresh runs101--120/mode confirmation. This verifies operational failure→new
 map→three development blocks→confirmation chaining, not final n20 success.
+
+### 8.85 Selected-environment scope and retained J05 result (2026-09-15)
+
+At 16:54 KST J05 has 60 fresh recorded trials: Full20/20 and Adaptive20/20
+completed without observed solid contact; Sector0/20 completed, also without
+contact. Preserve this result and its map unchanged. J02/J03/J04/J06/J07 are
+excluded from the final map selection, not erased from the exploratory record.
+J08 is still running:16 trials per mode, all Full/Adaptive complete and all
+Sector incomplete, with zero observed contacts. The existing supervisor runs
+one flight at a time and proceeds to the remaining declared map recipes.
+
+The user explicitly chose to retain frozen code/settings and select environments
+using map geometry only. Do not enable the existing recovery ACK retry option.
+J07's Adaptive run104 was a zero-motion startup failure: full refresh seq3 never
+received an exact process ACK although other map ACKs continued (921 at end).
+The frozen retry age is0.0/off. J03 exhibits the same startup pattern; J06's
+last recovery target also remained unacknowledged after WP4. These are not
+established geometry-difficulty failures. The original missing-scan stage is
+not identifiable from the existing logs. No runtime changes or reruns were made
+during this diagnosis.
+
+The paper target is Normal5 + Stress5 maps, three modes,20 trials per mode/map
+(600 final-table trials, not the current completed total). Map selection is
+outcome-dependent, including n20-based rejection; do not label the selected
+results as unbiased holdout validation or population100% safety. Preserve and
+disclose rejected candidates and early stops. Zero-contact Sector timeouts
+support a completion/liveness contrast, not collision-prevention superiority.
+See `docs/cylinder_selected_environment_protocol_20260915.md` for the user
+decision, original-result hash, diagnostic limits and live-state paths.
+
+### 8.86 Perimeter-background diagnostic preparation (2026-09-15)
+
+User approved a map-only intervention to distinguish Sector empty-input
+starvation from obstacle-information limitations. J05 is retained; J08's
+current confirmation may finish, but its parent supervisor was SIGSTOPped
+to prevent new J-family candidates. At17:18 KST J08 has58/60 rows and its
+next flight is waiting for MemAvailable>=7168 MiB. The threshold is unchanged.
+Permission to temporarily terminate the user's Pylance server was requested,
+not assumed. No new simulation runs concurrently.
+
+Prepared `add_cylinder_background.py` and `cylinder_background_diagnostic.py`:
+K01 keeps389 parent J05 cylinders and adds126 disjoint radius0.4 m/height3 m
+perimeter posts at x/y=±32 m,2 m pitch. Existing centerline clearances remain
+~0.40 m. A lightweight read-only map ACK observer will measure processing
+gaps for three runs per mode, separately from standard n20 evidence. These
+extra-instrumented diagnostic rows are not final CPU comparisons. Eleven
+unit tests pass. No runtime source, sensor config, ACK policy or original
+result has been changed; new map assets/flight are pending the resource gate.
+See `docs/cylinder_background_liveness_diagnostic_20260915.md` for exact
+process state, source paths, selection limits and safe resumption steps.
+
+### 8.87 K01 background-only diagnostic completed (2026-09-15)
+
+At17:46 KST all9 unique diagnostic trials completed: Full3/3, Sector3/3,
+Adaptive3/3, all quality-valid with zero observed solid contacts and one attempt
+per flight. Mean mission times are83.92/76.60/83.02 s respectively. The previous
+J05 Sector0/20 remains unchanged. This is exploratory evidence that perimeter
+cylinders can remove the observed long empty-input stalls without runtime
+changes, not evidence of Adaptive safety superiority: K01 shows no completion
+or contact contrast and does not qualify for the proposed stress n20 gate.
+
+Sector post-warmup, goal-bounded map ACK counts are685/752/744, all committed
+and unique map versions, with maximum gaps0.2854/0.2961/0.3434 s. The original
+observer-end metric included a shutdown tail (up to1.3050 s). After observing
+the first Sector run, an additional goal-bounded analysis was introduced;
+both original and amended windows are explicitly retained. No successful-run
+tail is used as evidence of in-flight starvation. Warmup is10 s; startup and
+shutdown log warnings are not silently removed from raw evidence. Full and
+Adaptive worst goal-bounded gaps are0.1491 and0.3485 s. Extra ACK observers
+make these diagnostic-only rows, not standard n20 or CPU-comparison evidence.
+
+User authorized termination of unnecessary development processes. Pylance and
+JSON language servers were terminated; auto-restarted Pylance2245516 remains
+SIGSTOPped to prevent renewed indexing. Editor files and the extension host
+that carries this conversation were preserved. J08 hit its unchanged600 s
+resource preflight timeout before either remaining flight started:58 rows,
+Full19/19, Sector0/20, Adaptive19/19, contacts0. Preserve this incomplete run;
+do not count unexecuted flights as failures or successes. The old controller
+and K01 runner have exited. There is no current simulation or J09 continuation.
+
+Thirteen focused unit tests pass,280 frozen/runtime/asset/script hashes match,
+K01 PCD/config runtime and mirror copies match, and J05 raw.csv SHA-256 is
+unchanged. No runtime build, parameter tuning or GitHub push was performed.
+Next proposed map-only step: retain K01 as a background-liveness control,
+preserve perimeter geometry and vary internal cylinder arrangement/radii/gaps,
+audit trajectory risk and feasible Full detours before flight, then use a fresh
+n20 only if actual mode differences emerge. Preserve failed candidates and
+state outcome-dependent selection. See the background diagnostic document
+for all nine mission times, ACK boundaries, limitations and evidence paths.
