@@ -251,3 +251,37 @@ epoch wrap; optimized and ASan+UBSan passes. Cache88,136bytes/thread,4096entries
 maximum512neighbors. Synthetic repeated-ray CPU11.64x faster is not a flight
 claim. Sequential3-package build26.1s;39Python audit/accounting tests pass.
 Evidence: `c05_preflight/`, `build_candidate5.log`.
+
+### Candidate5 measured result (run9306, one flight per mode)
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 41.59 | 0.920618 | 40.108006 |
+| Adaptive | 1/1,0 | 43.96 | 0.776242 | 35.464695 |
+
+Mean reduction15.6825%, cumulative11.5770%, time ratio1.05698. All declared
+source/recovery/resource/speed/quality checks pass; Adaptive completed3recovery
+cycles; no retry. **Target not met.** Exclusive backup frontend falls to
+0.0453/0.0532cores, versus C4's0.1988/0.2391; EXP optimizer0.1410/0.1629,
+operational BACK optimizer0.0738/0.0884, map update0.2526/0.0953. The exact-query
+optimization substantially reduces this measured stage, but common optimization
+and runtime overhead still limit relative savings. Source:`c05_neighbor_cache_profile/`.
+
+## Candidate6 preparation: common static-map publication polling
+
+The simulator polls static `/global_pc` subscriber count every1ms, independent
+of10Hz acquired LiDAR and100Hz odometry/commands. `SUPER_STATIC_PC_POLL_MS=100`
+opts into a real100ms timer and one bootstrap publication at>=5s, retaining full
+geometry, original QoS and publication on observed nonzero count changes.
+Legacy1ms remains default. This is a common simulator-overhead optimization,
+not an Adaptive sensing contribution. It deliberately removes repeated startup
+publications and can delay a new subscriber by100ms plus scheduling; volatile
+best-effort delivery is not guaranteed. Late-subscriber ROS tests required.
+
+A separate common `SUPER_SIDE_EXECUTOR_THREADS` accepts4..16(default10), built
+at the same time but **kept10 for candidate6**. Any4-thread flight is a separate
+candidate. Both settings are logged and audited. Existing monitor subscriptions
+optionally collect bounded command/odometry header and receipt intervals;
+these measure received messages, not executor callback latency. Intentional
+certified holds can suppress ordinary commands. No new subscriptions added.
+Preflight design/unit evidence:`executor_preflight/`.
