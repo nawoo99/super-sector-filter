@@ -31,6 +31,7 @@
 #include "fsm/fsm.h"
 #include "fsm/brake_motion_estimate_policy.hpp"
 #include "fsm/command_publication_policy.hpp"
+#include "fsm/path_publication_policy.hpp"
 #include <super_utils/thread_cpu_profile.hpp>
 
 #include <rclcpp/rclcpp.hpp>
@@ -53,6 +54,8 @@
 #include <cmath>
 #include <condition_variable>
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <deque>
 #include <limits>
 #include <mutex>
@@ -1771,6 +1774,8 @@ namespace fsm {
         }
 
         void publishCurPoseToPath() override {
+            const super_utils::thread_cpu_profile::Scope cpu_scope(
+                    super_utils::thread_cpu_profile::Stage::PlannerVisualizePath);
             path.header.frame_id = "world";
             ros_ptr_->getSimTime(path.header.stamp.sec, path.header.stamp.nanosec);
             geometry_msgs::msg::PoseStamped pose;
@@ -1783,6 +1788,20 @@ namespace fsm {
             pose.pose.orientation.z = robot_state_.q.z();
             pose.pose.orientation.w = robot_state_.q.w();
             path.poses.push_back(pose);
+            static const bool skip_unobserved_publication = [] {
+                const char *setting = std::getenv(
+                        "SUPER_SKIP_UNOBSERVED_PATH_PUBLICATION");
+                return setting && std::strcmp(setting, "1") == 0;
+            }();
+            // Preserve every pose even while this volatile visualization
+            // topic has no readers. A newly matched reader gets the entire
+            // path on the next tick, at the unchanged publication cadence.
+            if (skip_unobserved_publication &&
+                !visualizedPathPublicationAllowed(
+                        true, path_pub_->get_subscription_count(),
+                        path_pub_->get_intra_process_subscription_count())) {
+                return;
+            }
             path_pub_->publish(path);
         }
 
@@ -1849,6 +1868,8 @@ namespace fsm {
         }
 
         void publishPolyTraj() override {
+            const super_utils::thread_cpu_profile::Scope cpu_scope(
+                    super_utils::thread_cpu_profile::Stage::FsmPolyPublish);
             if (cfg_.event_recovery_en &&
                 safety_brake_active_.load(std::memory_order_acquire)) return;
             if (cfg_.trajectory_guard_en && !refreshSafetyCertificate("poly_publish")) {
@@ -1870,8 +1891,11 @@ namespace fsm {
             if (cfg_.trajectory_guard_en) {
                 const double velocity_limit =
                         planner_ptr_->getConfiguredMaxVelocity();
-                const double max_velocity =
-                        snapshot.pos_traj.getMaxVelRate();
+                const double max_velocity = [&] {
+                    const super_utils::thread_cpu_profile::Scope velocity_cpu_scope(
+                            super_utils::thread_cpu_profile::Stage::PlannerVelocityExtrema);
+                    return snapshot.pos_traj.getMaxVelRate();
+                }();
                 if (!std::isfinite(velocity_limit) ||
                     velocity_limit <= 0.0 ||
                     !std::isfinite(max_velocity) ||

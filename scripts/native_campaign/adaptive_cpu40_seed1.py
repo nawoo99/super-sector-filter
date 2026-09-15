@@ -64,6 +64,10 @@ def main():
                         default=['full', 'adaptive'])
     parser.add_argument('--compose', action='store_true')
     parser.add_argument('--profile-cpu', action='store_true')
+    parser.add_argument('--skip-backup-diagnostic-replay', action='store_true',
+                        help='Skip discarded optimizer replay equally in all modes')
+    parser.add_argument('--skip-unobserved-path-publication', action='store_true',
+                        help='Retain path poses but avoid publishing without subscribers')
     parser.add_argument('--full-config', default=diagnostic.search.PROFILES['full'])
     parser.add_argument('--sector-config', default=diagnostic.search.PROFILES['sector'])
     parser.add_argument('--adaptive-config', default=event.PROFILE)
@@ -82,6 +86,10 @@ def main():
     if event.sha(event.NORMAL) != event.NORMAL_SHA:
         raise RuntimeError('Frozen Normal observations changed')
     os.environ['SUPER_CPU_PROFILE'] = '1' if args.profile_cpu else '0'
+    os.environ['SUPER_SKIP_BACKUP_DIAGNOSTIC_REPLAY'] = (
+        '1' if args.skip_backup_diagnostic_replay else '0')
+    os.environ['SUPER_SKIP_UNOBSERVED_PATH_PUBLICATION'] = (
+        '1' if args.skip_unobserved_path_publication else '0')
     runtime = Path('/root/super_ws/src/SUPER')
     profiles = {'full': args.full_config, 'sector': args.sector_config,
                 'adaptive': args.adaptive_config}
@@ -104,6 +112,8 @@ def main():
         backup=BACKUP, mean_cpu_reduction_target_pct=40,
         cumulative_cpu_also_reported=True, max_mission_time_ratio=1.10,
         compose=args.compose, cpu_profile=args.profile_cpu,
+        skip_backup_diagnostic_replay=args.skip_backup_diagnostic_replay,
+        skip_unobserved_path_publication=args.skip_unobserved_path_publication,
         logical_cpus=os.cpu_count(), runtime_policy=frozen_policy,
         asset_sha256=hashes, baseline_seconds=12,
         common_parameters_unchanged='seed1/loop24/v7,45deg-half-angle,0.4deg/10Hz sensor',
@@ -144,6 +154,11 @@ def main():
                     raise RuntimeError('Source/config/binary changed during candidate')
                 result = diagnostic.summarize(profiler, row)
                 result['source_acquisition'] = source.audit_source(root / 'artifacts', args.run, mode)
+                if args.skip_backup_diagnostic_replay:
+                    stack = (root / 'artifacts' /
+                        f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
+                    result['source_acquisition']['checks']['backup_replay_skip_active'] = (
+                        '[BACKUP_DIAGNOSTIC_REPLAY] skip=true' in stack)
                 if args.compose and mode != 'full':
                     stats = result['source_acquisition']['frontend_stats']
                     result['source_acquisition']['checks'].update({

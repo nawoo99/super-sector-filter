@@ -29,12 +29,26 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <super_utils/scope_timer.hpp>
+#include <super_utils/thread_cpu_profile.hpp>
 #include <utils/optimization/polynomial_interpolation.h>
 #include <fmt/color.h>
 
 using namespace super_utils;
 
 namespace super_planner {
+    namespace {
+        bool skipBackupDiagnosticReplayEnabled() noexcept {
+            // Opt-in common optimization, applied identically to Full and
+            // Adaptive. Keep the legacy diagnostic replay when unset.
+            static const bool enabled = [] {
+                const char *value = std::getenv(
+                        "SUPER_SKIP_BACKUP_DIAGNOSTIC_REPLAY");
+                return value && value[0] == '1' && value[1] == '\0';
+            }();
+            return enabled;
+        }
+    }
+
     const char *trajectorySafetyStatusName(const TrajectorySafetyStatus status) {
         switch (status) {
             case TrajectorySafetyStatus::DISABLED: return "DISABLED";
@@ -58,6 +72,12 @@ namespace super_planner {
              const ros_interface::RosInterface::Ptr &ros_ptr,
              const rog_map::ROGMapROS::Ptr &map_ptr
             ) : cfg_(Config(cfg_path)), ros_ptr_(ros_ptr), map_ptr_(map_ptr) {
+
+        if (skipBackupDiagnosticReplayEnabled()) {
+            ros_ptr_->info(
+                    " -- [BACKUP_DIAGNOSTIC_REPLAY] skip=true "
+                    "operational_solve=unchanged init_log=retained");
+        }
 
         ros_ptr_->setResolution(cfg_.resolution);
         ros_ptr_->setVisualizationEn(cfg_.visualization_en);
@@ -218,6 +238,8 @@ namespace super_planner {
             const Vec3f *hard_current_pose,
             const bool test_force_initial_footprint_occupancy,
             const Vec3f *initial_footprint_origin) const {
+        const thread_cpu_profile::Scope cpu_scope(
+                thread_cpu_profile::Stage::PlannerValidateGeometry);
         TrajectorySafetyResult result;
         result.trajectory_generation = trajectory_generation;
         if (!trajectoryValidationEnabled()) {
@@ -1295,6 +1317,8 @@ namespace super_planner {
     bool SuperPlanner::commitTrajectoryCandidate(
             CmdTraj::Candidate candidate, const char *phase,
             std::string *rejected_segment_out) {
+        const thread_cpu_profile::Scope cpu_scope(
+                thread_cpu_profile::Stage::PlannerCommit);
         if (rejected_segment_out) {
             rejected_segment_out->clear();
         }
@@ -1306,9 +1330,13 @@ namespace super_planner {
         // again after scaling.
         if (cfg_.trajectory_guard_en) {
             const double velocity_limit = cfg_.exp_traj_cfg.max_vel;
-            const double max_velocity = candidate.pos_traj.empty()
-                    ? std::numeric_limits<double>::infinity()
-                    : candidate.pos_traj.getMaxVelRate();
+            const double max_velocity = [&] {
+                const thread_cpu_profile::Scope velocity_cpu_scope(
+                        thread_cpu_profile::Stage::PlannerVelocityExtrema);
+                return candidate.pos_traj.empty()
+                        ? std::numeric_limits<double>::infinity()
+                        : candidate.pos_traj.getMaxVelRate();
+            }();
             if (!std::isfinite(velocity_limit) || velocity_limit <= 0.0 ||
                 !std::isfinite(max_velocity)) {
                 ros_ptr_->error(
@@ -1336,8 +1364,11 @@ namespace super_planner {
                 if (candidate.carry_backup_end_tt >= 0.0) {
                     candidate.carry_backup_end_tt *= scale;
                 }
-                const double scaled_max_velocity =
-                        candidate.pos_traj.getMaxVelRate();
+                const double scaled_max_velocity = [&] {
+                    const thread_cpu_profile::Scope velocity_cpu_scope(
+                            thread_cpu_profile::Stage::PlannerVelocityExtrema);
+                    return candidate.pos_traj.getMaxVelRate();
+                }();
                 if (!std::isfinite(scaled_max_velocity) ||
                     scaled_max_velocity > velocity_limit * 1.001) {
                     ros_ptr_->error(
@@ -1746,6 +1777,8 @@ namespace super_planner {
             const std::uint64_t trajectory_generation,
             const Vec3f *initial_footprint_origin,
             const bool test_force_initial_footprint_occupancy) const {
+        const thread_cpu_profile::Scope cpu_scope(
+                thread_cpu_profile::Stage::PlannerStopViability);
         if (pos_traj.empty()) {
             return true;
         }
@@ -2697,6 +2730,8 @@ namespace super_planner {
 
 
     RET_CODE SuperPlanner::generateExpTraj(ExpTraj &last_exp_traj_info, ExpTraj &out_exp_traj_info) {
+        const thread_cpu_profile::Scope cpu_scope(
+                thread_cpu_profile::Stage::PlannerGenerateExp);
         /* 1) Log the exp traj frontend time*/
         TimeConsuming t_exp_frontend("t_exp_frontend", false);
 
@@ -3060,9 +3095,13 @@ namespace super_planner {
             ros_ptr_->warn(" -- [SUPER] Guard corridor retry: alternating back "
                            "to normal corridor generator this attempt.");
         }
-        bool bool_ret_code = active_cg->SearchPolytopeOnPath(
-                guide_path, sfc, shifted_sfc_start_pt_, cfg_.use_fov_cut,
-                guard_topology_avoidance_centers_, guard_topology_avoidance_radii_);
+        bool bool_ret_code = [&] {
+            const thread_cpu_profile::Scope corridor_cpu_scope(
+                    thread_cpu_profile::Stage::PlannerCorridorSearch);
+            return active_cg->SearchPolytopeOnPath(
+                    guide_path, sfc, shifted_sfc_start_pt_, cfg_.use_fov_cut,
+                    guard_topology_avoidance_centers_, guard_topology_avoidance_radii_);
+        }();
 
         if (!bool_ret_code) {
             // A moving-state ReplanOnce failure leaves the previously
@@ -3315,12 +3354,16 @@ namespace super_planner {
                             ? "guarded_vertical_lift"
                             : "reseed_without_lift");
         };
-        temp_ret = exp_traj_opt_->optimize(pos_init_state,
-                                           pos_fina_state,
-                                           guide_path,
-                                           guide_stamp,
-                                           sfc,
-                                           out_traj);
+        {
+            const thread_cpu_profile::Scope optimizer_cpu_scope(
+                    thread_cpu_profile::Stage::PlannerExpOptimize);
+            temp_ret = exp_traj_opt_->optimize(pos_init_state,
+                                               pos_fina_state,
+                                               guide_path,
+                                               guide_stamp,
+                                               sfc,
+                                               out_traj);
+        }
         time_consuming_[EXP_TRAJ_OPT] = t_exp_opt.stop();
         {
             VecDf init_ts;
@@ -3407,6 +3450,8 @@ namespace super_planner {
     }
 
     RET_CODE SuperPlanner::generateBackupTrajectory(ExpTraj &ref_exp_traj, BackupTraj &back_traj_info) {
+        const thread_cpu_profile::Scope cpu_scope(
+                thread_cpu_profile::Stage::PlannerGenerateBackup);
         // The backup frontend also mixes line-of-sight, nearest-cell and
         // corridor queries. Pin those reads to one map commit, then release
         // before optimizing the backup polynomial.
@@ -3587,15 +3632,19 @@ namespace super_planner {
         double opt_ts = heu_ts;
         Trajectory temp_pos_traj;
         auto sfc0 = back_traj_info.getSFC();
-        bool temp_ret = back_traj_opt_->optimize(ref_exp_traj.posTraj(),
-                                                 t0,
-                                                 te,
-                                                 heu_ts,
-                                                 heu_p,
-                                                 heu_dur,
-                                                 back_traj_info.getSFC(),
-                                                 temp_pos_traj,
-                                                 opt_ts);
+        bool temp_ret = [&] {
+            const thread_cpu_profile::Scope optimizer_cpu_scope(
+                    thread_cpu_profile::Stage::PlannerBackupOptimize);
+            return back_traj_opt_->optimize(ref_exp_traj.posTraj(),
+                                             t0,
+                                             te,
+                                             heu_ts,
+                                             heu_p,
+                                             heu_dur,
+                                             back_traj_info.getSFC(),
+                                             temp_pos_traj,
+                                             opt_ts);
+        }();
         time_consuming_[BACK_TRAJ_OPT] = t_back_opt.stop();
 
         {
@@ -3606,18 +3655,26 @@ namespace super_planner {
             latest_replan.setBackupCondition(init_ts, init_times, init_ps,
                                              t0, te,
                                              back_traj_info.getSFC());
-            Trajectory traj;
-            double out_ts;
-            back_traj_opt_->optimize(ref_exp_traj.posTraj(),
-                                     t0,
-                                     te,
-                                     init_ts,
-                                     sfc0,
-                                     init_times,
-                                     init_ps,
-                                     traj,
-                                     out_ts
-            );
+            if (!skipBackupDiagnosticReplayEnabled()) {
+                // This replay exists for diagnostics only. Its return value,
+                // trajectory and switch time are discarded; the operational
+                // result above remains the sole input to all decisions below.
+                // Retain the init-condition log regardless of this opt-in.
+                const thread_cpu_profile::Scope replay_cpu_scope(
+                        thread_cpu_profile::Stage::PlannerBackupReplay);
+                Trajectory traj;
+                double out_ts;
+                back_traj_opt_->optimize(ref_exp_traj.posTraj(),
+                                         t0,
+                                         te,
+                                         init_ts,
+                                         sfc0,
+                                         init_times,
+                                         init_ps,
+                                         traj,
+                                         out_ts
+                );
+            }
 
         }
 
@@ -3694,6 +3751,8 @@ namespace super_planner {
                              const double &searching_horizon,
                              vec_Vec3f &path,
                              const bool planning_from_rest) {
+        const thread_cpu_profile::Scope cpu_scope(
+                thread_cpu_profile::Stage::PlannerPathSearch);
         using namespace path_search;
         if (searching_horizon <= 0.0) {
             ros_ptr_->error(" -- [SUPER] Goal waypoints empty or searching horizon negative, force return.");

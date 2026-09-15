@@ -172,6 +172,9 @@ if(BUILD_TESTING)
     ament_add_gtest(command_publication_policy_test
             test/command_publication_policy_test.cpp)
     target_include_directories(command_publication_policy_test PRIVATE include)
+    ament_add_gtest(path_publication_policy_test
+            test/path_publication_policy_test.cpp)
+    target_include_directories(path_publication_policy_test PRIVATE include)
     ament_add_gtest(brake_motion_estimate_policy_test
             test/brake_motion_estimate_policy_test.cpp)
     target_include_directories(brake_motion_estimate_policy_test PRIVATE include)

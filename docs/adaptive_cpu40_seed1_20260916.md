@@ -114,3 +114,17 @@ removing replay can alter subsequent LP plane order, interior solution and
 optimizer numerics. **Production bitwise trajectory equivalence is not claimed.**
 State-reset testing needs controlled geometry randomness plus native-variation
 controls; operational acceptance and downstream safety checks remain required.
+
+Controlled test result: test-only linker wrapper supplies an analytic interior
+point for axis-aligned box fixtures and calls the real explicit-interior vertex
+enumeration. This shim is **not linked into production**. At configured2048
+iterations, uniform/nonuniform x2/3pieces each exercised5successes,2failures and
+2failure-to-success transitions. Replay/no-replay and no-replay/no-replay controls
+each passed1614scalar comparisons (max absolute difference0). Native rectangular
+and insufficient512-iteration variants remain as failed diagnostic artifacts;
+the production global-RNG numerical difference is not hidden or reclassified.
+Path/ordinary-command/brake-motion policy gtests pass3executables, and the
+extended thread CPU profiler passes disabled/nested/concurrent cases.
+Candidate2 sequential build completed3packages in9min32s; no errors, existing
+warning streams retained in `build_candidate2.log`. Ccache enabled only as a
+compiler cache (not a runtime change); after build MemAvailable9100MiB.

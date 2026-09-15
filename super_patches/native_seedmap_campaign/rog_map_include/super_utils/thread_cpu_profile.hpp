@@ -33,6 +33,19 @@ enum class Stage : std::size_t {
     GuardCertificate,
     GuardBrake,
     GuardRecover,
+    PlannerGenerateExp,
+    PlannerGenerateBackup,
+    PlannerCommit,
+    PlannerValidateGeometry,
+    PlannerStopViability,
+    PlannerPathSearch,
+    PlannerExpOptimize,
+    PlannerBackupOptimize,
+    PlannerBackupReplay,
+    PlannerCorridorSearch,
+    PlannerVelocityExtrema,
+    PlannerVisualizePath,
+    FsmPolyPublish,
     Count
 };
 
@@ -42,7 +55,13 @@ inline constexpr std::array<const char *, static_cast<std::size_t>(Stage::Count)
             "map_prob_update", "map_snapshot_commit_health", "map_ack_and_log",
             "fsm_main_callback", "fsm_main_core", "fsm_replan_callback",
             "fsm_replan_core", "fsm_command_callback", "guard_certificate",
-            "guard_brake", "guard_recover"}};
+            "guard_brake", "guard_recover", "planner_generate_exp",
+            "planner_generate_backup", "planner_commit",
+            "planner_validate_geometry", "planner_stop_viability",
+            "planner_path_search", "planner_exp_optimize",
+            "planner_backup_optimize", "planner_backup_replay",
+            "planner_corridor_search", "planner_velocity_extrema",
+            "planner_visualize_path", "fsm_poly_publish"}};
 
 inline bool enabled() noexcept {
     static const bool value = [] {

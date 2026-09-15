@@ -1,0 +1,103 @@
+Load config file: /root/super_ws/src/SUPER/super_planner/config/static_seedmaps_guard_viability_tight_v7.yaml
+[0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[0;33m Load param traj_opt/backup_traj/max_iterations failed, use default value: [0;0m2048
+[0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m12
+[0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[0;32m Load param traj_opt/boundary/max_vel success: [0;0m7
+[0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[0;32m Load param traj_opt/backup_traj/penna_clr success: [0;0m1e+06
+[0;32m Load param traj_opt/backup_traj/clearance_margin success: [0;0m0.1
+[0;32m Load param traj_opt/backup_traj/clearance_speed_gate success: [0;0m1.5
+[0;32m Load param traj_opt/backup_traj/clearance_speed_transition success: [0;0m0.5
+[0;33m Load param traj_opt/backup_traj/penna_passage_center failed, use default value: [0;0m-1
+[0;33m Load param traj_opt/backup_traj/passage_center_max_width failed, use default value: [0;0m0
+[0;33m Load param traj_opt/backup_traj/passage_center_min_opposition_cos failed, use default value: [0;0m0.9
+[0;33m Load param traj_opt/backup_traj/passage_center_min_horizontal_normal failed, use default value: [0;0m0.8
+[0;33m Load param traj_opt/backup_traj/passage_center_deadband failed, use default value: [0;0m0.15
+[0;33m Load param traj_opt/backup_traj/passage_center_log_en failed, use default value: [0;0m0
+[0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+[0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+COMPARISON_MODE operational_only_vs_operational_only unique_center_cubes=1
+CASE uniform/pieces2/straight operational_ok=1 pieces=2 out_ts=2.5
+CASE uniform/pieces2/diagonal_accelerating operational_ok=1 pieces=2 out_ts=2.8
+CASE uniform/pieces2/reverse_curved operational_ok=1 pieces=2 out_ts=2.3
+[33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[33m -- [SUPER] Minco backup_traj opt failed.[0m
+[33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[33m -- [SUPER] Minco backup_traj opt failed.[0m
+CASE uniform/pieces2/infeasible_head operational_ok=0 pieces=0 out_ts=2.5
+CASE uniform/pieces2/after_infeasible_head operational_ok=1 pieces=2 out_ts=2.5
+[33m -- [BackTrajOpt] Polytope is nan.[0m
+[33m -- [BackTrajOpt] Polytope is nan.[0m
+CASE uniform/pieces2/nan_corridor operational_ok=0 pieces=0 out_ts=-77
+CASE uniform/pieces2/after_nan_corridor operational_ok=1 pieces=2 out_ts=2.5
+PASS suite uniform=1 pieces=2 max_iterations=2048 successes=5 failures=2 failure_to_success=2 discarded_replays=0
+CASE uniform/pieces3/straight operational_ok=1 pieces=3 out_ts=2.5
+CASE uniform/pieces3/diagonal_accelerating operational_ok=1 pieces=3 out_ts=2.8
+CASE uniform/pieces3/reverse_curved operational_ok=1 pieces=3 out_ts=2.3
+[33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[33m -- [SUPER] Minco backup_traj opt failed.[0m
+[33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[33m -- [SUPER] Minco backup_traj opt failed.[0m
+CASE uniform/pieces3/infeasible_head operational_ok=0 pieces=0 out_ts=2.5
+CASE uniform/pieces3/after_infeasible_head operational_ok=1 pieces=3 out_ts=2.5
+[33m -- [BackTrajOpt] Polytope is nan.[0m
+[33m -- [BackTrajOpt] Polytope is nan.[0m
+CASE uniform/pieces3/nan_corridor operational_ok=0 pieces=0 out_ts=-77
+CASE uniform/pieces3/after_nan_corridor operational_ok=1 pieces=3 out_ts=2.5
+PASS suite uniform=1 pieces=3 max_iterations=2048 successes=5 failures=2 failure_to_success=2 discarded_replays=0
+CASE nonuniform/pieces2/straight operational_ok=1 pieces=2 out_ts=2.5
+CASE nonuniform/pieces2/diagonal_accelerating operational_ok=1 pieces=2 out_ts=2.8
+CASE nonuniform/pieces2/reverse_curved operational_ok=1 pieces=2 out_ts=2.3
+[33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[33m -- [SUPER] Minco backup_traj opt failed.[0m
+[33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[33m -- [SUPER] Minco backup_traj opt failed.[0m
+CASE nonuniform/pieces2/infeasible_head operational_ok=0 pieces=0 out_ts=2.5
+CASE nonuniform/pieces2/after_infeasible_head operational_ok=1 pieces=2 out_ts=2.5
+[33m -- [BackTrajOpt] Polytope is nan.[0m
+[33m -- [BackTrajOpt] Polytope is nan.[0m
+CASE nonuniform/pieces2/nan_corridor operational_ok=0 pieces=0 out_ts=-77
+CASE nonuniform/pieces2/after_nan_corridor operational_ok=1 pieces=2 out_ts=2.5
+PASS suite uniform=0 pieces=2 max_iterations=2048 successes=5 failures=2 failure_to_success=2 discarded_replays=0
+CASE nonuniform/pieces3/straight operational_ok=1 pieces=3 out_ts=2.5
+CASE nonuniform/pieces3/diagonal_accelerating operational_ok=1 pieces=3 out_ts=2.8
+CASE nonuniform/pieces3/reverse_curved operational_ok=1 pieces=3 out_ts=2.3
+[33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[33m -- [SUPER] Minco backup_traj opt failed.[0m
+[33m -- [MINCO] TrajOpt failed, (unknown)[0m
+[33m -- [SUPER] Minco backup_traj opt failed.[0m
+CASE nonuniform/pieces3/infeasible_head operational_ok=0 pieces=0 out_ts=2.49999
+CASE nonuniform/pieces3/after_infeasible_head operational_ok=1 pieces=3 out_ts=2.5
+[33m -- [BackTrajOpt] Polytope is nan.[0m
+[33m -- [BackTrajOpt] Polytope is nan.[0m
+CASE nonuniform/pieces3/nan_corridor operational_ok=0 pieces=0 out_ts=-77
+CASE nonuniform/pieces3/after_nan_corridor operational_ok=1 pieces=3 out_ts=2.5
+PASS suite uniform=0 pieces=3 max_iterations=2048 successes=5 failures=2 failure_to_success=2 discarded_replays=0
+PASS backup replay equivalence: scalar_checks=1614 maximum_absolute_error=0 tolerance=1e-10_relative
+TEST_ONLY_ANALYTIC_BOX_GEOMETRY calls=48 production_geometry_rng_not_covered=1
