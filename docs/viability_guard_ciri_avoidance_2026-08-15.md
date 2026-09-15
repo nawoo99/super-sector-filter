@@ -5465,3 +5465,69 @@ Before this diagnostic, the persistent stress controller had already stopped
 at23:10:48 Sep15 on L0010 Adaptive run3 infrastructure memory pressure
 (MemAvailable1331.7 MiB below2048 MiB). Invalid evidence remains retained. This
 turn did not restart that search or change its frozen scripts/data/policy.
+
+### 8.91 Event-only Adaptive: Full observation/map/path handshake (2026-09-16)
+
+User requested preserving the previous implementation, then ordinary Sector
+operation with event-driven Full recovery, returning only after a new Full scan
+has committed and a new safe path is available; no path means continued stop.
+This explicitly changes the Adaptive policy, unlike the preceding map-only
+stress search. No old normal/stress observations were overwritten or pooled.
+
+Original source and installed binaries were archived locally before edits:
+`results/event_recovery_v1_backup_20260916_kblK04/runtime_before.tar.gz`, SHA256
+`48d45a5c1860578795b5f6e7995d9eec33ec2220c8bd465030ad0da6bb20575f`.
+Old YAML profiles and frozen Normal300 CSV remain byte-identical. New behavior
+is gated by default-false `fsm/event_recovery/enable` and frontend
+`--event-recovery`, using a new event_recovery_v1 YAML. Runtime edits were made
+only in SUPER then mirrored with the established package/subdirectory mapping.
+
+Frontend starts in velocity-aligned45deg Sector with existing near-field
+retention, without raw-risk/witness subscriptions or periodic Full bursts.
+The corrected trigger uses initial planning-failure streak before any successful
+plan, persistent observed stall after motion, or the common map safety guard.
+Routine optimizer rejection after a successful plan does not invalidate a
+still-viable committed trajectory and no longer requests a stop by itself.
+Planner-owned certified brake/recovery uses exact post-edge scan timestamps,
+committed (not merely processed) map ACK and a later map version. Candidate
+publication stays suppressed during the active brake. A new committed trajectory
+generation and current map safety certificate are required before release.
+Frontend closes only after both that release and exact ACK; no timer closure.
+
+First prototype code and all run9101 flights were saved in `4cc4a0b`: F/S/A
+63.91/61.71/80.84s, all complete/contact-free, but A made44 unnecessary or safety
+recovery cycles because three failed routine optimizations could cause braking
+at up to7m/s. This unfavorable evidence is retained, not discarded. The trigger
+semantics were corrected and all three modes rerun in a separate cohort.
+
+Run9102, seed1/v7/loop24, Full/Sector/new Adaptive each1, all first-attempt,
+quality/resource/speed-valid, contact0. Mission times61.39/61.18/59.73s;
+experimental CPU105.369389/84.771644/86.123989core-s; experimental shares of20
+logical CPUs8.2757/6.6935/7.0292%; map-stage mean38.8303/10.7641/11.8827ms.
+Map cadence10.2948/10.3792/10.2628Hz. Whole-host CPU including background,
+separately,22.9651/18.8229/20.2147%. New A vs F descriptive reductions are
+18.2647% integrated CPU,15.0615% mean occupied cores,69.3983% map wall time.
+These n1 differences are not statistical/general safety or performance claims.
+
+Actual A Full2/Sector-return2, exact map ACK2, new path certificate2; both came
+from common safety events, so frontend event-request count0 is correct.
+Cycle1 stamp1789491102225008052 ACKmap16/certifiedmap24/gen1->2;
+cycle2 stamp1789491143327817510 ACKmap427/certifiedmap431/gen94->95.
+Full frames15/634;118 above-threshold routine failure notifications were ignored,
+not counted as successful planning. Raw-risk verdicts0/topic empty; all7
+flight audit checks passed. Sequential build passed; pure C++ gate tests,
+real ROS transport10checks and24 prior Python tests passed.
+
+Important scope limits: simulated LiDAR generation remains360deg10Hz; this is
+frontend selection/event policy, not sensor-FoV/GPU ray-generation reduction.
+Missing-path release was withheld in synthetic/latch tests, not a deliberately
+impossible-path closed-loop flight. Existing brake retries and perfect-tracking
+freeze semantics must not be called a physical safe-stop guarantee. Sector
+also succeeded here, so no safety superiority over Sector is established.
+
+Detailed implementation, preservation, reproduction and all evidence:
+`docs/event_recovery_v1_20260916.md`,
+`results/event_recovery_seed1_corrected_n1_20260916/` and
+`results/event_recovery_transport_corrected_20260916/`.
+Controller2595929 exited normally with COMPLETE3. No flight left running;
+the earlier stress search remains stopped. No GitHub/upstream push this turn.

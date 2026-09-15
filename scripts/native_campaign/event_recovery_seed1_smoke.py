@@ -37,7 +37,8 @@ def audit_recovery(folder, run):
                             map(int,m))) for m in re.findall(pattern,text)]
     checks = {
         'event_mode_enabled': stats.get('event_recovery_enabled') is True,
-        'raw_risk_worker_disabled': stats.get('risk_verdict_messages', 0) == 0,
+        'raw_risk_worker_disabled': (stats.get('risk_verdict_messages', 0) == 0
+                                     and not stats.get('risk_verdict_topic')),
         'no_pre_stale_full_refresh': stats.get('pre_stale_full_refresh_frames', 0) == 0,
         'no_timed_replan_open': stats.get('replan_guard_open_transitions', 0) == 0,
         'path_certificates_have_new_generation': all(c['generation_after'] > c['generation_before'] for c in certificates),
@@ -69,6 +70,9 @@ def main():
     runtime=Path('/root/super_ws/src/SUPER')
     assets=[runtime/'super_planner/config'/PROFILE,
             runtime/'mission_planner/Apps/native_sector_cpp.cpp',
+            runtime/'mission_planner/include/mission_planner/event_recovery_latch.hpp',
+            runtime/'super_planner/include/fsm/config.hpp',
+            runtime/'super_planner/include/ros_interface/ros2/fsm_ros2.hpp',
             runtime/'mars_uav_sim/perfect_drone_sim/config/seed1.yaml',
             runtime/'mars_uav_sim/perfect_drone_sim/pcd/seed_maps/seed1.pcd',
             runtime/'mission_planner/data/loop24.txt',
@@ -82,6 +86,7 @@ def main():
         logical_cpus=os.cpu_count(),runtime_policy=policy,asset_sha256=hashes,
         legacy_normal_sha256=NORMAL_SHA,baseline_seconds=12,
         algorithm_change='event-only Adaptive; exact Full-commit and new safe path before closing',
+        trigger_policy='initial no-path failure streak, persistent observed stall, or map-based safety stop; never routine optimizer failures after a successful plan',
         raw_sensor_unchanged=True,adaptive_follows_sensor_cadence=True,
         not_merged_into_existing_results=True))
     campaign.install_campaign_signal_handlers()

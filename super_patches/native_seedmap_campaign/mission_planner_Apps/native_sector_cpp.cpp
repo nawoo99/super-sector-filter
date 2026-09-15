@@ -1252,8 +1252,18 @@ private:
     }
 
     if (options_.event_recovery) {
-      if (replan_fail_streak_ >= options_.replan_fail_streak_open)
-        requestEventRecovery("replan_failure_streak");
+      if (msg->data) event_seen_successful_plan_ = true;
+      // A rejected routine optimization does not invalidate the previously
+      // committed trajectory. Once planning has succeeded, only persistent
+      // observed stall or the map-based safety guard may request a stop.
+      // Before any successful plan, repeated failures still expose a blocked
+      // initial planning view and may request fresh Full observations.
+      if (replan_fail_streak_ >= options_.replan_fail_streak_open) {
+        if (!event_seen_successful_plan_)
+          requestEventRecovery("initial_plan_failure_streak");
+        else
+          ++event_recovery_ignored_replan_failures_;
+      }
       return;  // Successful routine replans NEVER close a recovery episode.
     }
     if (!replan_guard_active_) {
@@ -2607,6 +2617,8 @@ private:
     integer("event_recovery_completed", event_recovery_completed_);
     integer("event_recovery_commit_acks", event_recovery_commit_acks_);
     integer("event_recovery_full_frames", event_recovery_full_frames_);
+    boolean("event_seen_successful_plan", event_seen_successful_plan_);
+    integer("event_recovery_ignored_replan_failures", event_recovery_ignored_replan_failures_);
     const uint64_t cloud_input_count =
         cloud_input_callbacks_.load(std::memory_order_relaxed);
     integer("cloud_input_callbacks", cloud_input_count);
@@ -3008,6 +3020,8 @@ private:
   Options options_;
   native_sector::EventRecoveryLatch event_recovery_;
   bool event_recovery_request_pending_{false};
+  bool event_seen_successful_plan_{false};
+  uint64_t event_recovery_ignored_replan_failures_{0};
   double event_recovery_last_refresh_s_{-1.0};
   uint64_t event_recovery_requests_{0}, event_recovery_completed_{0};
   uint64_t event_recovery_commit_acks_{0}, event_recovery_full_frames_{0};

@@ -1,6 +1,23 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-16 01:53 KST: Event-only Adaptive 별도 구현 및 seed1 F/S/A 재시험 완료.**
+> 사용자가 요청한 정상 Sector→정체/안전정지 시 Full→새 관측의 정확한
+> committed ACK→새 실행궤적 안전인증→Sector 복귀를 opt-in으로 구현했다.
+> 경로 미확보 시 기존 제동/terminal hold를 유지하며 타이머만으로 복귀하지 않는다.
+> 기존 소스/설치 바이너리는 로컬 archive로 보존, 기존 YAML/Normal300 그대로.
+> 최초 prototype은 정상 최적화 실패까지 제동하여 A80.84초/44회 전환; 코드와
+> 결과를 `4cc4a0b`로 보존한 뒤, 유효한 기존 경로 진행 중 실패만으로 멈추지
+> 않도록 수정했다. 별도 run9102 F/S/A 각1회 모두 완주·접촉0·retry0:
+> 61.39/61.18/59.73초, CPU105.369/84.772/86.124 core-s.
+> 새 A는 Full2회/Sector복귀2회 모두 정확한 맵반영·새 generation 인증 확인.
+> ROS 통신10검사+순수C++ gate검사+Python24검사 통과. 실제 무경로 비행은 미시험.
+> **센서360도10Hz 생성은 그대로; raw-risk 상시평가 없이 frontend 선택/전환 변경.**
+> 원자료 `results/event_recovery_seed1_corrected_n1_20260916/`, 상세
+> `docs/event_recovery_v1_20260916.md`, viability §8.91. n1이고 기존300회와 합산 금지.
+> 현재 이 시험 종료; 이전 Stress search는 여전히 중단 상태다. upstream push 금지.
+
+> [!IMPORTANT]
 > **2026-09-16 00:15 KST: Normal seed1 CPU/GPU/스레드 진단3회 완료.**
 > 사용자 요청으로 기존 설정 그대로 F/S/A 각1회(run9001), 모두 완주·접촉0,
 > quality-valid·retry0. PC전체 CPU 평균21.81/19.83/20.69%, 실험 cgroup의
