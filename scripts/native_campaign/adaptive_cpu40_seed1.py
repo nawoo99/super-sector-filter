@@ -19,6 +19,7 @@ import psutil
 import normal_cpu_gpu_diagnostic as diagnostic
 import event_recovery_seed1_smoke as event
 import sensor_acquisition_seed1_smoke as source
+import audit_cpu40_recovery as recovery_audit
 from analyze_cylinder_only_stress_full_gate import quality_valid
 
 BACKUP = 'results/adaptive_cpu40_backup_20260916_aloDDu/runtime_before.tar.gz'
@@ -119,6 +120,7 @@ def main():
                   Path('/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_full_node'),
                   Path('/root/super_ws/install/rog_map/lib/librog_map.a'),
                   Path('/root/super_ws/install/super_planner/lib/libsuper.a'),
+                  Path(recovery_audit.__file__).resolve(),
                   Path(__file__).resolve()})
     if args.compose:
         files.add(Path('/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_adaptive_node'))
@@ -185,6 +187,10 @@ def main():
                     raise RuntimeError('Source/config/binary changed during candidate')
                 result = diagnostic.summarize(profiler, row)
                 result['source_acquisition'] = source.audit_source(root / 'artifacts', args.run, mode)
+                result['strict_recovery_audit'] = recovery_audit.audit_file(
+                    root / 'artifacts' / f'seed1_run{args.run}_{mode}.attempt1.stack.log', mode)
+                result['source_acquisition']['checks']['strict_source_recovery_audit'] = (
+                    result['strict_recovery_audit']['valid'])
                 if args.skip_backup_diagnostic_replay or args.fast_occupied_box_scan or args.snapshot_line_query:
                     stack = (root / 'artifacts' /
                         f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')

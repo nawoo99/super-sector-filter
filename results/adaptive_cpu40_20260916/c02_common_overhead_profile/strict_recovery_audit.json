@@ -1,0 +1,65 @@
+{
+  "schema": "cpu40-source-recovery-audit-v1",
+  "mode": "adaptive",
+  "valid": true,
+  "checks": {
+    "records_well_formed": true,
+    "source_records_present": true,
+    "source_half_angle_45": true,
+    "source_shape_valid": true,
+    "source_identity_unique": true,
+    "source_initial_mode_valid": true,
+    "completed_cycles_one_to_one": true,
+    "completed_cycles_fresh_full_source": true,
+    "completed_cycles_exact_committed_ack": true,
+    "completed_cycles_new_certified_path": true,
+    "completed_cycles_timestamp_order": true,
+    "all_requested_cycles_closed": true
+  },
+  "errors": [],
+  "source_frames": 622,
+  "opened_cycles": 3,
+  "completed_cycles": [
+    {
+      "cycle": 1,
+      "valid": true,
+      "source_frame": 16,
+      "stamp_ns": 1789499909597959967,
+      "ack_map": 16,
+      "certified_map": 19,
+      "generation_before": 1,
+      "generation_after": 2,
+      "timestamps_observed": true,
+      "fsm_ack_evidence_count": 1
+    },
+    {
+      "cycle": 2,
+      "valid": true,
+      "source_frame": 107,
+      "stamp_ns": 1789499918697957547,
+      "ack_map": 107,
+      "certified_map": 111,
+      "generation_before": 12,
+      "generation_after": 13,
+      "timestamps_observed": true,
+      "fsm_ack_evidence_count": 1
+    },
+    {
+      "cycle": 3,
+      "valid": true,
+      "source_frame": 202,
+      "stamp_ns": 1789499928197988866,
+      "ack_map": 202,
+      "certified_map": 207,
+      "generation_before": 32,
+      "generation_after": 33,
+      "timestamps_observed": true,
+      "fsm_ack_evidence_count": 1
+    }
+  ],
+  "outstanding_cycles": [],
+  "timestamp_observed_completed_cycles": 3,
+  "unmatched_path_records": 0,
+  "require_all_closed": true,
+  "scope": "Source metadata and completed log episodes only; not physical safety proof"
+}
