@@ -5250,3 +5250,21 @@ environments. No collision-prevention superiority is inferred from all-zero
 contacts and empty-filtered-cloud completion failures. Thirty-six focused
 tests include mocked supervisor success, preserved early reference failure,
 and immediate invalid-row stop. Runtime and measurement hashes are frozen.
+
+10:46 KST live update: the real controller rejected J02 after development
+run2 Full completed but contacted a cylinder (all three contact metrics1).
+It retained the failed row/audit and advanced to J03 without asking for a
+new user turn. A5.37849 m odometry step over0.0099864 s landed inside the
+(-4,-23.2,r0.4) cylinder; minimum solid clearance was-0.24716 m. Reported
+twist did not capture this positional discontinuity. The precise execution
+cause remains unisolated; no simulator/command/planner code was changed.
+Sampled-pose zero contacts must not be presented as continuous swept safety
+or dynamical validity. J03 trims leg3/4 tips (398 cylinders): first pilot
+Full89.35 s and Adaptive67.89 s completed contact-free, Sector timed out.
+Development run2 is underway. No map has yet passed final n20.
+
+Subsequent checkpoint: J03 passed all three development reference trials
+(Full89.35/91.38/89.83 s, Adaptive67.89/71.10/71.54 s, contacts0); Sector
+failed all three at180 s without contact. The supervisor actually entered
+fresh runs101--120/mode confirmation. This verifies operational failure→new
+map→three development blocks→confirmation chaining, not final n20 success.

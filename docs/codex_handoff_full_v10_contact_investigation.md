@@ -1,6 +1,27 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-15 후속: J03 개발3묶음 통과 → 새 n20 실행 중.** Full3/3
+> (89.35/91.38/89.83초), Adaptive3/3(67.89/71.10/71.54초) 완주·접촉0,
+> Sector0/3 완주·접촉0. 개발9행은 확인 표본에 합치지 않는다.
+> `results/cylinder_confirmation_n20_20260915/cyl2_j03/`의 새run101--120/모드
+> 확인이 시작됐다. 반복 실행기PID1935342가 살아 있으며, 기준모드 실패는
+> 보존·탈락 후 다음 사전 선언 변형으로 진행한다. **n20 성공맵은 아직0개.**
+> 실시간 상태는 `results/cylinder_refinement_repeat_20260915/status.json`.
+> 그 파일의 run은 개발묶음 번호이고, 확인회차는 해당맵 확인raw.csv를 볼 것.
+
+> [!IMPORTANT]
+> **2026-09-15 10:46 KST: J02도 Full 접촉으로 탈락, 자동으로 J03 시험 중.**
+> J02 개발run2 Full은70.96초 완주했지만 solid/static-PCD/safety 접촉이
+> 각각1회라 탈락했다. odometry의 약10 ms 간격에서5.378 m 위치 불연속과
+> 기둥 내부 도착(-0.247 m solid 여유)을 확인했다. 접촉을 invalid/retry로
+> 지우지 않았다. 런타임/센서/시뮬레이터 동작은 수정하지 않는다.
+> J03(원본J01의 leg3·4 끝 기둥1개씩 제외,398개)은 개발run1 Full89.35초/
+> Adaptive67.89초 완주·접촉0, Sector180초 실패·접촉0. 현재개발run2다.
+> 반복 실행기PID1935342, live상태 `results/cylinder_refinement_repeat_20260915/status.json`.
+> 아직 최종20회 통과맵은0개다. 아래단일개발성공을 최종성공으로 읽지 말 것.
+
+> [!IMPORTANT]
 > **2026-09-15 10:33 KST: map-only 반복 실행기로 연결.** J02 개발run1은
 > Full77.34초/Adaptive77.70초 완주·solid접촉0, Sector180초 WP1/5 실패·접촉0.
 > 아직 n20 성과가 아니다. `repeat_cylinder_refinements.py`가 J02의 기존
