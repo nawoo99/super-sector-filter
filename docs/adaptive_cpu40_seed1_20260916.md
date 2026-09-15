@@ -171,3 +171,11 @@ and falls back to baseline on any mismatch. Such dual-query flight probes are
 marked ineligible for CPU-target acceptance, even if their numerical reduction
 exceeds40%. Run a Full correctness probe before the next ordinary matched pair.
 Command/evidence bundle: `c03_preflight/`.
+
+Build completed3packages in30.6s. Full same-snapshot flight probe run9303
+completed58.83s/contact0, all source/speed/resource checks pass. Last periodic
+comparison counter6144/mismatches0; all mismatches would have been logged, none
+were. This is a lower bound on compared queries, not an exact final count.
+Probe mean1.634731cores/99.172245core-s is **diagnostic only**, excluded from
+target acceptance. Source: `c03_box_correctness_probe/`. Proceed to ordinary
+Full/Adaptive candidate3 with comparison disabled.
