@@ -5531,3 +5531,68 @@ Detailed implementation, preservation, reproduction and all evidence:
 `results/event_recovery_transport_corrected_20260916/`.
 Controller2595929 exited normally with COMPLETE3. No flight left running;
 the earlier stress search remains stopped. No GitHub/upstream push this turn.
+
+### 8.92 Source-side angular acquisition, not a Full-cloud crop (2026-09-16)
+
+User correctly identified that8.91/v1 had not changed source acquisition: it
+still generated360deg then cropped. They explicitly authorized implementing
+Sector-only generation/output with event-only Full sensing and the same
+fresh-observation/map/path release contract. v1 results remain intact and are
+not evidence of source acquisition. Backup source/install archive:
+`results/sensor_acquisition_v2_backup_20260916_fsDc9a/runtime_before.tar.gz`,
+SHA256 b4812fa6ba35b748ed507070077dccc5811e68345afcce761d5d1f860226038c.
+
+Runtime source edits in SUPER, then mirrored as usual. `--sensor-acquisition`
+defaultsfalse. Typed direct request/evidence carries generation mode/cycle from
+before rendering; stale in-flight Sector or prior-cycle Full cannot satisfy
+the fresh Full gate. Marsim changes angular projection/viewport/scissor,
+readback width and conversion loop BEFORE PCL/PointCloud2 construction.
+Seed1 Full900x445 versus Sector225x445 at0.4deg,128active rows,10Hz;
+115,200 versus28,800 candidate rays and801,000 versus200,250 depth+color readback
+pixels per scan. Frontend performs no angular traversal, near-field exception
+or packing in this mode. Sensor-local±45deg is steered using existing heading
+policy while retaining roll/pitch; it is not the old world-horizontal crop.
+
+Source scans are stamped at acquisition start and read from just-rendered
+GL_BACK before swapping. Full control opts into the same readback policy via
+process-local SUPER_SENSOR_FULL_ACQUISITION=1, keeping360deg. Legacy profiles/
+invocations remain unchanged. Source CPU/GPU still include scene geometry
+submission and a maximum-size framebuffer; do not claim75% GPU time/memory
+savings or physical sensor availability from the75% ray/readback reduction.
+
+First2 renderer tests failed because the test binary resolved the PCD under
+marsim_render rather than PerfectDrone's assets. Earlier readback-root-cause
+speculation was corrected; all failed logs preserved. Final real GPU test loaded
+241,490 points and passed16 varying-pose scans, angular leaks0, max nearest-map
+distance0.302016m. Typed-boundary/event-latch C++tests, ROS10checks, Python24tests
+and sequential builds all passed. Implementation/verification saved6a2e476.
+
+Run9201 dedicated seed1/v7/loop24 Full/Sector/Adaptive each1, all valid first
+attempt, contact0 and no speed exceedance. Times60.39/65.22/66.37s;
+CPU101.020821/87.916298/89.551627core-s, mean1.63577/1.31648/1.31801cores,
+experimental shares of20CPUs8.1788/6.5824/6.5901%. Background-inclusive host CPU
+20.7139/19.9098/21.0047%, not reduced for A. Map Total37.4504/11.1501/13.1694ms,
+updates10.2004/10.2576/10.2305Hz; logical map input5.2080/1.5383/1.6560MiB/s.
+A vs F cumulativeCPU -11.3533%, meanCPU -19.4255%, map walltime -64.8350%,
+mission time +5.98s (+9.9023%). No repeated/population efficacy claim from n1.
+
+A actually generated630 Sector and77 Full source scans (707 logged lifecycle
+frames), Full9/Sector-return9, exact committed-ACK9/new-path-certificates9.
+Every ACK stamp is matched to a GENERATED Full frame. Two frontend stalls
+requested recovery; seven other episodes came directly from common safety
+guard. One obsolete boundary frame/15,181points rejected; kept_pct99.586%
+therefore does not mean angular filtering. Fixed Sector kept100% and never
+generated Full. All source/protocol audit checks passed. Different source and
+frontend final checkpoint counts are recorded, not hidden as perfect delivery.
+
+Common guard recovery-active times F1.8934/S2.8384/A7.6250s: A's extra5.7316s
+is consistent with recovery overhead explaining much of the5.98s mission
+increase, not an isolated causal test. No planner tuning or outside-Sector
+rescue was added to improve these outcomes. All9A recoveries found paths;
+deliberately impossible-path closed-loop and real dynamics remain untested.
+All3modes succeeded, so no A-over-S safety-superiority claim. OldNormal300 hash
+unchanged and not pooled. Detailed design/evidence/reproduction:
+`docs/sensor_acquisition_v2_20260916.md` and
+`results/sensor_acquisition_seed1_n1_20260916/`.
+Controller2622042 completed normally, no flight remains, stress stays stopped.
+Local commits only; no upstream or mirror-repo push in this turn.

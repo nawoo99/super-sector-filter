@@ -1,6 +1,25 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-16 02:30 KST: 센서 생성단 Sector/Full 전환 v2 구현·seed1 시험 완료.**
+> 사용자가 요청한 것은360도 수신 후 필터링이 아니라 처음부터 Sector 스캔
+> 생성/출력이었다. 아래 v1은 그 입력단 요구를 충족하지 않았으며 결과 재해석 금지.
+> 새 opt-in은 렌더러 projection/viewport/readback/conversion부터 Sector225열,
+> Full900열로 전환한다(센서 좌표계±45도, 근거리전방위예외0,0.4도·10Hz).
+> 프런트엔드는 typed 생성모드/회차를 확인하고 그대로 전달하며, 이전모드 스캔
+> 1개를 차단했다. 실제 GPU16스캔 각도/광선/맵표면검사, ROS10검사·Python24검사
+> 및 C++gate검사 통과. 초기2개 renderer test 실패는 테스트 맵경로 오류로 보존.
+> 새 별도 Full도 동일한 스캔 시작stamp/버퍼교환 전 readback으로 비교했다.
+> **seed1/v7 F/S/A 각1회 모두완주·접촉0·retry0:60.39/65.22/66.37초.**
+> A는 실제Full획득9회/새관측맵ACK·새경로검증후Sector복귀9회. 센서로그707프레임
+> 중Sector630/Full77. CPU101.021/87.916/89.552core-s, A누적CPU11.35%감소이나
+> 시간5.98초증가. PC전체 배경포함CPU는20.71/19.91/21.00%로 A가 줄지 않았다.
+> 코드/검증저장`6a2e476`, 원자료`results/sensor_acquisition_seed1_n1_20260916/`,
+> 상세`docs/sensor_acquisition_v2_20260916.md`, viability §8.92. 기존profile/data보존.
+> 시뮬레이터의 가변시야 센서 모델이며 실제LiDAR 지원/지연/동역학보장 아님.
+> 과거v1/Normal300과 합산 금지. 현재비행종료, Stress search중단유지, push 없음.
+
+> [!IMPORTANT]
 > **2026-09-16 01:53 KST: Event-only Adaptive 별도 구현 및 seed1 F/S/A 재시험 완료.**
 > 사용자가 요청한 정상 Sector→정체/안전정지 시 Full→새 관측의 정확한
 > committed ACK→새 실행궤적 안전인증→Sector 복귀를 opt-in으로 구현했다.
