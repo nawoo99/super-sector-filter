@@ -5357,3 +5357,28 @@ audit trajectory risk and feasible Full detours before flight, then use a fresh
 n20 only if actual mode differences emerge. Preserve failed candidates and
 state outcome-dependent selection. See the background diagnostic document
 for all nine mission times, ACK boundaries, limitations and evidence paths.
+
+### 8.88 Five fixed-background interior variants (2026-09-15)
+
+At18:01 KST the user approved continuing experiments while creating five maps.
+K02 restores five-post baffles; K03 enlarges their radius to0.48 m; K04 decreases
+row pitch to4 m; K05 replaces rows with radius1.3 m alternating posts; K06 adds
+four radius1.2 m cylinders3.5 m after corner waypoints. K01 perimeter126 posts,
+other background and rails are preserved. Counts are536/536/576/440/519. No
+runtime/algorithm/sensor/mission/timeout/resource thresholds changed. All new
+sensor YAML files differ from K01 only in map name. Runtime-to-mirror asset
+hashes match; geometric detour clearance is>=0.45 m, not a dynamic guarantee.
+
+New offline generator and bounded sequential controller pass25 focused tests.
+First execute a three-mode block on every map, then extend reference-safe maps
+to three blocks (maximum45 flights). Complete the current block before excluding
+a candidate with any Full/Adaptive failure; retain all failures. Infrastructure
+or invalid measurement stops the batch. A live ACK observer with zero messages
+can be genuine starvation and is not automatically excluded as invalid data.
+These extra-ACK diagnostic rows are not standard n20 or final CPU comparisons.
+Goal-bounded and original shutdown-tail ACK windows are declared before flight.
+No n20 is automatically started: real mode separation requires a causal audit
+and separate standard-protocol evidence. Related, result-informed variants are
+not five independent holdout environments. Preparation is complete; latest live
+progress belongs to `results/cylinder_background_five_20260915/status.json`.
+See `docs/cylinder_background_five_maps_20260915.md` for geometry and exact rules.
