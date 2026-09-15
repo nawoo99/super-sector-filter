@@ -41,6 +41,11 @@ def generate_launch_description():
         description=('compose simulator and SUPER for direct latest-only '
                      'Full-cloud handoff without changing cloud contents')
     )
+    declare_sensor_planner_cmd = DeclareLaunchArgument(
+        'use_sensor_planner', default_value='false',
+        description=('experimental simulator/frontend/SUPER composition with '
+                     'direct latest-only acquired-cloud delivery')
+    )
 
     waypoint_data = LaunchConfiguration('waypoint_data')
     drone_config = LaunchConfiguration('drone_config')
@@ -49,13 +54,16 @@ def generate_launch_description():
     filter_arguments = LaunchConfiguration('filter_arguments')
     use_sensor_frontend = LaunchConfiguration('use_sensor_frontend')
     use_integrated_full = LaunchConfiguration('use_integrated_full')
+    use_sensor_planner = LaunchConfiguration('use_sensor_planner')
     external_simulator = PythonExpression([
         "'", use_sensor_frontend, "' != 'true' and '",
-        use_integrated_full, "' != 'true'"
+        use_integrated_full, "' != 'true' and '",
+        use_sensor_planner, "' != 'true'"
     ])
     external_super = PythonExpression([
         "'", use_integrated_filter, "' != 'true' and '",
-        use_integrated_full, "' != 'true'"
+        use_integrated_full, "' != 'true' and '",
+        use_sensor_planner, "' != 'true'"
     ])
 
     ld = LaunchDescription()
@@ -66,6 +74,7 @@ def generate_launch_description():
     ld.add_action(declare_filter_arguments_cmd)
     ld.add_action(declare_sensor_frontend_cmd)
     ld.add_action(declare_integrated_full_cmd)
+    ld.add_action(declare_sensor_planner_cmd)
 
     mission_planner = Node(
         package='mission_planner',
@@ -112,6 +121,19 @@ def generate_launch_description():
         }]
     )
     ld.add_action(perfect_drone_full)
+
+    perfect_drone_adaptive = Node(
+        package='perfect_drone_sim',
+        executable='perfect_drone_adaptive_node',
+        output='screen',
+        condition=IfCondition(use_sensor_planner),
+        parameters=[{
+            'drone_config': drone_config,
+            'super_config': super_config,
+            'filter_arguments': filter_arguments,
+        }]
+    )
+    ld.add_action(perfect_drone_adaptive)
 
     SUPER = Node(
         package='super_planner',

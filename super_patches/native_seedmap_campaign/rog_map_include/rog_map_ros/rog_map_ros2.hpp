@@ -56,6 +56,7 @@
 
 #include <rog_map/rog_map.h>
 #include <super_utils/color_msg_utils.hpp>
+#include <super_utils/thread_cpu_profile.hpp>
 
 namespace rog_map {
     using namespace super_utils;
@@ -156,6 +157,8 @@ namespace rog_map {
         }
 
         void cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
+            const thread_cpu_profile::Scope cpu_scope(
+                    thread_cpu_profile::Stage::MapCloudEnqueue);
             const auto rx_time = MapHealthClock::now();
             const RobotState robot_state = getRobotState();
             if (!robot_state.rcv) {
@@ -236,6 +239,8 @@ namespace rog_map {
         }
 
         void updateCallback() {
+            const thread_cpu_profile::Scope cpu_scope(
+                    thread_cpu_profile::Stage::MapWorker);
             sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg;
             PointCloud temp_pc;
             Pose temp_pose;
@@ -277,7 +282,11 @@ namespace rog_map {
             // COW publication directly on whichever executor thread happened
             // to take the DDS callback allowed allocator high-water state to
             // accumulate across executor arenas during planner stalls.
-            pcl::fromROSMsg(*cloud_msg, temp_pc);
+            {
+                const thread_cpu_profile::Scope conversion_cpu_scope(
+                        thread_cpu_profile::Stage::MapRosToPcl);
+                pcl::fromROSMsg(*cloud_msg, temp_pc);
+            }
             if (temp_pc.empty() || !temp_pc.is_dense) {
                 std::cout << YELLOW
                           << " -- [ROS] Empty or non-dense point cloud, skip map update."
@@ -287,10 +296,22 @@ namespace rog_map {
 
             auto map_write_transaction = acquireMapWriteTransaction();
             recordMapUpdateStarted();
-            const auto result = updateProbMap(
-                temp_pc, temp_pose, payload_bytes, point_step);
-            recordMapUpdateFinished(scan_seq, source_stamp_ns, scan_rx_time,
-                                    result);
+            const auto result = [&] {
+                const thread_cpu_profile::Scope update_cpu_scope(
+                        thread_cpu_profile::Stage::MapProbUpdate);
+                return updateProbMap(
+                        temp_pc, temp_pose, payload_bytes, point_step);
+            }();
+            {
+                // Includes immutable COW snapshot publication and its health
+                // bookkeeping, not just the inner snapshot-copy operation.
+                const thread_cpu_profile::Scope snapshot_cpu_scope(
+                        thread_cpu_profile::Stage::MapSnapshotCommitHealth);
+                recordMapUpdateFinished(scan_seq, source_stamp_ns, scan_rx_time,
+                                        result);
+            }
+            const thread_cpu_profile::Scope ack_cpu_scope(
+                    thread_cpu_profile::Stage::MapAckAndLog);
             const auto health = getMapHealthSnapshot();
             if (result.scan_processed && rc_.cloud_process_ack_pub) {
                 // Content-specific acknowledgement. The PointCloud2 source
@@ -479,6 +500,7 @@ namespace rog_map {
             if (rc_.update_worker.joinable()) {
                 rc_.update_worker.join();
             }
+            thread_cpu_profile::report(true);
         }
 
         void setAcceptedCloudObserver(AcceptedCloudObserver observer) {

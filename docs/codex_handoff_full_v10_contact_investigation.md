@@ -1,6 +1,16 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-16: seed1 Adaptive CPU40% 최적화 탐색을 새로 시작함.**
+> 사용자가 알고리즘/planner 수정을 허용했고, 목표는 평균 실험CPU Full대비40%
+> 이상감소(누적CPU별도보고)로 명시했다. 기존v2/Normal결과는보존한다.
+> 새실험은 `docs/adaptive_cpu40_seed1_20260916.md`와
+> `results/adaptive_cpu40_20260916/` 참조. 첫후보는frontend→map까지 직접
+> SharedPtr전달하는별도실행파일+opt-in thread CPU계측이다. 현재빌드/검증중,
+> 아직40%성과나새비행결과없음. Full새관측→정확한맵ACK→새안전경로gate유지.
+> 새탐색결과를기존수백회검증과합산금지. 기존Stress search재개아님. push없음.
+
+> [!IMPORTANT]
 > **2026-09-16 02:30 KST: 센서 생성단 Sector/Full 전환 v2 구현·seed1 시험 완료.**
 > 사용자가 요청한 것은360도 수신 후 필터링이 아니라 처음부터 Sector 스캔
 > 생성/출력이었다. 아래 v1은 그 입력단 요구를 충족하지 않았으며 결과 재해석 금지.

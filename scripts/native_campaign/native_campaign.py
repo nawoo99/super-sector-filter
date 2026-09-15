@@ -1578,6 +1578,7 @@ FIELDS = ["map", "run", "mode", "campaign_sequence_index",
           "filter_intra_process",
           "filter_sensor_frontend",
           "full_sensor_intra_process",
+          "sensor_planner_intra_process",
           "algorithm_cpu_scope", "algorithm_cpu_excludes_simulator",
           "end_to_end_cpu_scope",
           "success", "run_valid",
@@ -2062,6 +2063,7 @@ def clean_fastdds_zombies():
 def kill_all(settle_s=1.5):
     for n in ("perfect_drone_node", "perfect_drone_frontend_node",
               "perfect_drone_full_node",
+              "perfect_drone_adaptive_node",
               "fsm_node", "waypoint_mission", "native_sector.py",
               "native_sector_cpp",
               "native_loop_monitor.py", "native_reference_monitor.py",
@@ -2251,6 +2253,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             adaptive_max_publish_hz=5.0,
             adaptive_event_recovery=False,
             sensor_acquisition=False,
+            sensor_planner_intra_process=False,
             adaptive_map_commit_refresh_age_s=0.12,
             adaptive_map_commit_refresh_min_interval_s=0.10,
             adaptive_risk_max_eval_hz=0.0,
@@ -2731,9 +2734,17 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
         integrated_full_active = (
             full_sensor_intra_process and base_mode == "full" and raw_direct
         )
+        sensor_planner_active = (
+            sensor_planner_intra_process and sensor_frontend_active
+        )
+        if sensor_planner_intra_process and base_mode != "full" and (
+                not sensor_planner_active or not sensor_acquisition):
+            raise ValueError("sensor/planner composition requires source cpp-frontend")
         fsm_executable = (
             "perfect_drone_full_node"
-            if integrated_full_active else "fsm_node"
+            if integrated_full_active else
+            "perfect_drone_adaptive_node"
+            if sensor_planner_active else "fsm_node"
         )
         if sensor_frontend_active and base_mode == "adaptive" and not adaptive_event_recovery:
             filter_options += (
@@ -2909,7 +2920,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                      *filter_options.strip().split()]
                 )
                 launch_cmd += (
-                    " use_sensor_frontend:=true"
+                    (" use_sensor_planner:=true" if sensor_planner_active
+                     else " use_sensor_frontend:=true")
+                    +
                     f" filter_arguments:='{encoded_filter_arguments}'"
                 )
             if integrated_full_active:
@@ -3032,7 +3045,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             if filter_backend == "python" else SECTOR_CPP_EXECUTABLE
         )
         fsm_cpu.start_executable(fsm_executable)
-        if integrated_full_active:
+        if integrated_full_active or sensor_planner_active:
             # The combined process already includes simulator and planner;
             # do not double-count the same PID as a second component.
             sim_cpu = CpuMeter("__no_separate_integrated_full_simulator__")
@@ -3387,6 +3400,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                ),
                "filter_sensor_frontend": sensor_frontend_active,
                "full_sensor_intra_process": integrated_full_active,
+               "sensor_planner_intra_process": sensor_planner_active,
                # A Linux process cannot be split between cgroups.  The Full
                # composition deliberately puts simulator+planner in one
                # process, while cpp-frontend puts simulator+filter in one
@@ -3394,13 +3408,16 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                # algorithm measurement, but make its composition explicit so
                # it is never mistaken for a cross-mode comparable metric.
                "algorithm_cpu_scope": (
+                   "simulator+frontend+planner"
+                   if sensor_planner_active else
                    "simulator+planner"
                    if integrated_full_active else
                    "planner+filter"
                    if (integrated_filter_active or filt_proc is not None) else
                    "planner_only"
                ),
-               "algorithm_cpu_excludes_simulator": not integrated_full_active,
+               "algorithm_cpu_excludes_simulator": not (
+                   integrated_full_active or sensor_planner_active),
                "end_to_end_cpu_scope": (
                    "simulator+frontend+planner+mission"
                ),
@@ -3716,14 +3733,18 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     (planner_ingress_bytes + filter_input_bytes)
                     / payload_duration_s / mib
                 )
-                if integrated_full_active:
+                if integrated_full_active or sensor_planner_active:
                     # The complete Full cloud enters ROG directly in the
                     # combined process. Keep logical algorithm input bytes in
                     # planner/algorithm metrics while reporting zero DDS cloud
                     # bytes for this transport.
                     rec["dds_cloud_payload_mib_s"] = 0.0
+                    rec["dds_risk_verdict_payload_mib_s"] = 0.0
+                    rec["dds_total_algorithm_payload_mib_s"] = 0.0
                     rec["intra_process_cloud_payload_mib_s"] = (
-                        planner_ingress_bytes / payload_duration_s / mib
+                        (planner_ingress_bytes +
+                         (filter_input_bytes if sensor_planner_active else 0))
+                        / payload_duration_s / mib
                     )
                 elif sensor_frontend_active:
                     verdict_bytes = (

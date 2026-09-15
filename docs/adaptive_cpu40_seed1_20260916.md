@@ -1,0 +1,71 @@
+# Adaptive source-acquisition CPU optimization, seed1 (2026-09-16)
+
+## Authorization and experiment contract
+
+The user authorizes algorithm/planner changes and one seed1 flight per candidate
+mode, followed by diagnosis/redesign. The clarified target is **>=40% reduction
+in mean experimental CPU use relative to matched Full**; cumulative CPU time is
+also reported, but need not independently reach40%. This is exploratory tuning
+on seed1, not independent confirmation or population-level safety evidence.
+
+Frozen preceding source-acquisition v2: mirror commit `de3562d`. Runtime source
+and installed files were backed up before changes to
+`results/adaptive_cpu40_backup_20260916_aloDDu/runtime_before.tar.gz`, SHA256
+`a257ef96fa30c734c39d24e39019b21afd0856e5a5e9e4197a4dd6750b8761a8`.
+PCD assets are excluded from this archive and remain unchanged. Old Normal300
+SHA256 remains `b40f880271a52f4b3332bfe67afe3d489cf8c6d444ac0c72ed30d9e9cd445ec5`.
+
+- Keep seed1 map, loop24 waypoints, v7 speed limit, 45deg half-angle and source
+  0.4deg/10Hz settings unchanged for initial optimization candidates.
+- Retain each unsuccessful candidate, infrastructure-invalid attempt and raw
+  log. No automatic infrastructure retry or favorable-result overwrite.
+- Full and Adaptive must both complete with zero static-PCD contacts, valid
+  speed/resource/measurement and source/recovery contract audits.
+- Guard against artificially reduced mean CPU due to stationary waiting:
+  declare an additional maximum A/F mission time ratio1.10 for target acceptance.
+- Fresh Full observation -> exact committed-map ACK -> newly certified path
+  remains the release condition. No path means hold. No outside-Sector data.
+- A common optimization must also be applied to Full. Do not preserve
+  deliberately inefficient Full behavior to enlarge relative savings.
+- Compare experiment cgroup totals, not whole-PC background or falsely
+  planner-only CPU from a process containing the simulator.
+- No changes are pushed to upstream SUPER. No GitHub push requested this turn.
+
+## Candidate1: same-process acquired cloud delivery + CPU instrumentation
+
+Opt-in new `perfect_drone_adaptive_node` composes source renderer, frontend and
+FSM/map. Source mode/cycle metadata and exact Full request handling remain;
+frontend submits the same acquired PointCloud2 SharedPtr to existing latest-only
+map admission. Heavy map work stays on its dedicated worker, GLFW on main
+thread, side executor10threads matching Full. No cloud DDS publisher in the
+new direct-output path. Old two-argument component API/default profiles remain.
+New launch option `use_sensor_planner:=true`, campaign option
+`sensor_planner_intra_process=True`. Logical payload is still measured; actual
+cloud DDS payload is zero in both composed Full and composed Adaptive.
+
+`SUPER_CPU_PROFILE=1` opt-in CLOCK_THREAD_CPUTIME_ID scopes measure CPU in map
+conversion/update/snapshot/ACK, FSM/replan/command and guard stages. Reports every
+5s are cumulative; inclusive fields overlap, exclusive fields do not within an
+instrumented thread. Other worker/simulator/middleware CPU is not attributed by
+these scopes. Both compared modes use identical instrumentation. Disabled mode
+does not read clocks/log/update counters. Final no-instrumentation confirmation
+is required if an exploratory candidate meets the target.
+
+Runner: `scripts/native_campaign/adaptive_cpu40_seed1.py`. Each output directory
+is new and records configurations/source/binary hashes and clarified objective.
+Stage analysis: `scripts/native_campaign/analyze_thread_cpu_profile.py`.
+
+Initial checks:22Python tests pass (runner acceptance/accounting/resource guard);
+standalone profiler tests pass disabled/enabled, nested exclusive accounting,
+sleep exclusion and concurrent aggregation. The direct-sink ROS test passes
+pointer/payload/stamp identity, no second crop, explicit stale mode/cycle/missing
+metadata rejection, no cloud ROS publisher, and legacy two-argument delivery.
+Its first two manual link commands lacked ROS statistics libraries; those were
+test-build failures (not flight failures). Corrected third build/run passes,
+evidence `/tmp/native_direct_sink_test_qrBShi` and `native_direct_sink_test_run3.log`.
+Existing synthetic ROS Full recovery handshake passes all10checks. Sequential
+4-package build finished in12min29s (existing compiler/CMake warnings, no errors):
+`results/adaptive_cpu40_20260916/build_candidate1.log`. Source Normal300 hash
+matches; MemAvailable9360MiB after compiler exit. Launch argument check passes.
+
+Results and next candidates will be appended after actual flights.

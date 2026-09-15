@@ -31,6 +31,7 @@
 #include "fsm/fsm.h"
 #include "fsm/brake_motion_estimate_policy.hpp"
 #include "fsm/command_publication_policy.hpp"
+#include <super_utils/thread_cpu_profile.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 #include <ros_interface/ros2/ros2_interface.hpp>
@@ -2101,6 +2102,8 @@ namespace fsm {
         }
 
         bool refreshSafetyCertificate(const char *trigger) {
+            const super_utils::thread_cpu_profile::Scope cpu_scope(
+                    super_utils::thread_cpu_profile::Stage::GuardCertificate);
             if (!cfg_.trajectory_guard_en) {
                 return true;
             }
@@ -2223,6 +2226,8 @@ namespace fsm {
 
         bool activateEmergencyBrake(const std::string &reason,
                                     bool replace_active_body_brake = false) {
+            const super_utils::thread_cpu_profile::Scope cpu_scope(
+                    super_utils::thread_cpu_profile::Stage::GuardBrake);
             if (!cfg_.trajectory_guard_en) {
                 return false;
             }
@@ -2883,6 +2888,8 @@ namespace fsm {
         }
 
         bool tryRecoverFromEmergencyBrake() {
+            const super_utils::thread_cpu_profile::Scope cpu_scope(
+                    super_utils::thread_cpu_profile::Stage::GuardRecover);
             if (!safety_brake_active_.load(std::memory_order_acquire) ||
                 !safety_brake_finished_.load(std::memory_order_acquire)) {
                 return false;
@@ -2943,7 +2950,11 @@ namespace fsm {
             if (machine_state_ != GENERATE_TRAJ) {
                 ChangeState("TrajectoryGuardRecovery", GENERATE_TRAJ);
             }
-            callMainFsmOnce();
+            {
+                const super_utils::thread_cpu_profile::Scope main_cpu_scope(
+                        super_utils::thread_cpu_profile::Stage::FsmMainCore);
+                callMainFsmOnce();
+            }
             const bool candidate_rejected =
                     planner_ptr_->consumeTrajectoryGuardRejection();
             const auto generation_after =
@@ -3477,6 +3488,8 @@ namespace fsm {
         }
 
         void pubCmdTimerCallback() {
+            const super_utils::thread_cpu_profile::Scope cpu_scope(
+                    super_utils::thread_cpu_profile::Stage::FsmCommandCallback);
             if (stop) {
                 return;
             }
@@ -3597,6 +3610,8 @@ namespace fsm {
         }
 
         void replanTimerCallback() {
+            const super_utils::thread_cpu_profile::Scope cpu_scope(
+                    super_utils::thread_cpu_profile::Stage::FsmReplanCallback);
             if (safety_brake_active_.load(std::memory_order_acquire)) {
                 return;
             }
@@ -3641,7 +3656,11 @@ namespace fsm {
                     return;
                 }
             }
-            callReplanOnce();
+            {
+                const super_utils::thread_cpu_profile::Scope replan_cpu_scope(
+                        super_utils::thread_cpu_profile::Stage::FsmReplanCore);
+                callReplanOnce();
+            }
             const bool candidate_rejected = cfg_.trajectory_guard_en &&
                     planner_ptr_->consumeTrajectoryGuardRejection();
             if (candidate_rejected && machine_state_ != FOLLOW_TRAJ) {
@@ -3672,6 +3691,9 @@ namespace fsm {
         }
 
         void mainFsmTimerCallback() {
+            super_utils::thread_cpu_profile::report();
+            const super_utils::thread_cpu_profile::Scope cpu_scope(
+                    super_utils::thread_cpu_profile::Stage::FsmMainCallback);
             if (cfg_.event_recovery_en) {
                 const auto request = event_recovery_requested_.load(std::memory_order_acquire);
                 if (request > event_recovery_handled_) {
@@ -3801,7 +3823,11 @@ namespace fsm {
                 activateEmergencyBrake("main_pre_uncertified");
                 return;
             }
-            callMainFsmOnce();
+            {
+                const super_utils::thread_cpu_profile::Scope main_cpu_scope(
+                        super_utils::thread_cpu_profile::Stage::FsmMainCore);
+                callMainFsmOnce();
+            }
             const bool candidate_rejected = cfg_.trajectory_guard_en &&
                     planner_ptr_->consumeTrajectoryGuardRejection();
             if (candidate_rejected && machine_state_ != FOLLOW_TRAJ) {

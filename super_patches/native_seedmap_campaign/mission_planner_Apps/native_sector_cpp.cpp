@@ -473,7 +473,8 @@ public:
   explicit NativeSectorCpp(
       Options options,
       const rclcpp::NodeOptions &node_options = rclcpp::NodeOptions(),
-      native_sector::GuardCloudObserver guard_cloud_observer = {})
+      native_sector::GuardCloudObserver guard_cloud_observer = {},
+      native_sector::FilteredCloudSink filtered_cloud_sink = {})
       : Node("native_sector_cpp", node_options), options_(std::move(options)),
         half_angle_rad_(options_.half_angle_deg * kPi / 180.0),
         half_angle_cos_(std::cos(half_angle_rad_)),
@@ -483,6 +484,7 @@ public:
             options_.replan_open_burst_s.value_or(options_.open_burst_s)),
         replan_guard_cooldown_s_(
             options_.replan_open_cooldown_s.value_or(options_.open_cooldown_s)),
+        filtered_cloud_sink_(std::move(filtered_cloud_sink)),
         guard_cloud_observer_(std::move(guard_cloud_observer)),
         armed_(options_.mode == "legacy-trigger") {
     if (options_.event_recovery &&
@@ -559,8 +561,10 @@ public:
     const auto output_qos = options_.reliable_output
         ? rclcpp::QoS(rclcpp::KeepLast(1)).reliable().durability_volatile()
         : sensor_qos;
-    cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
-        options_.output_topic, output_qos);
+    if (!filtered_cloud_sink_) {
+      cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
+          options_.output_topic, output_qos);
+    }
     if (!options_.risk_verdict_topic.empty()) {
       trajectory_sub_ = create_subscription<
           mars_quadrotor_msgs::msg::PolynomialTrajectory>(
@@ -632,6 +636,11 @@ public:
                 options_.risk_body_horizon_s);
     publishState();
     writeStats();
+    if (filtered_cloud_sink_) {
+      RCLCPP_INFO(get_logger(),
+          "filtered DDS disabled: source metadata checked before direct "
+          "latest-only map handoff; Full request precedes cloud enqueue");
+    }
     cloud_worker_ = std::thread(&NativeSectorCpp::cloudWorkerLoop, this);
     if (risk_verdict_pub_)
       risk_worker_ = std::thread(&NativeSectorCpp::riskWorkerLoop, this);
@@ -2332,7 +2341,29 @@ private:
   }
 
   void publishFilteredCloud(const sensor_msgs::msg::PointCloud2 &msg) {
-    cloud_pub_->publish(msg);
+    if (filtered_cloud_sink_) {
+      // Legacy angular-filter paths construct a new output value. They may
+      // also use a sink, but only the acquired-source path below is zero-copy.
+      filtered_cloud_sink_(
+          std::make_shared<sensor_msgs::msg::PointCloud2>(msg));
+      ++direct_output_events_;
+    } else {
+      cloud_pub_->publish(msg);
+    }
+    ++cloud_publish_events_;
+    recordCadence(cloud_publish_first_ns_, cloud_publish_last_ns_);
+  }
+
+  void publishFilteredCloud(
+      const sensor_msgs::msg::PointCloud2::SharedPtr &msg) {
+    if (filtered_cloud_sink_) {
+      // Keep the exact acquired stamp and allocation. processCloud has already
+      // checked immutable mode/cycle metadata and published any Full token.
+      filtered_cloud_sink_(msg);
+      ++direct_output_events_;
+    } else {
+      cloud_pub_->publish(*msg);
+    }
     ++cloud_publish_events_;
     recordCadence(cloud_publish_first_ns_, cloud_publish_last_ns_);
   }
@@ -2402,7 +2433,7 @@ private:
       ++event_recovery_full_frames_;
       kept_points_ += input_points;
       published_payload_bytes_ += msg->data.size();
-      publishFilteredCloud(*msg);
+      publishFilteredCloud(msg);
       return;
     }
     if (options_.sensor_acquisition) {
@@ -2412,7 +2443,7 @@ private:
       ++published_frames_;
       kept_points_ += input_points;
       published_payload_bytes_ += msg->data.size();
-      publishFilteredCloud(*msg);
+      publishFilteredCloud(msg);
       return;
     }
     // Event-mode Sector follows sensor cadence: no proactive Full refresh,
@@ -2657,6 +2688,8 @@ private:
     integer("frames", frames_);
     boolean("event_recovery_enabled", options_.event_recovery);
     boolean("sensor_acquisition_enabled", options_.sensor_acquisition);
+    boolean("direct_output_enabled", static_cast<bool>(filtered_cloud_sink_));
+    integer("direct_output_events", direct_output_events_);
     integer("sensor_acquisition_stale_drops", sensor_acquisition_stale_drops_);
     integer("sensor_acquisition_passthrough_frames", sensor_acquisition_passthrough_frames_);
     boolean("event_recovery_active", event_recovery_.active);
@@ -3092,6 +3125,8 @@ private:
   rclcpp::Subscription<std_msgs::msg::UInt64MultiArray>::SharedPtr
       map_process_ack_sub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_pub_;
+  native_sector::FilteredCloudSink filtered_cloud_sink_;
+  uint64_t direct_output_events_{0};
   rclcpp::Publisher<mars_quadrotor_msgs::msg::TrajectoryRiskVerdict>::SharedPtr
       risk_verdict_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
@@ -3351,6 +3386,13 @@ std::shared_ptr<rclcpp::Node> createNode(
 DirectInputHandle createDirectInputNode(
     const std::vector<std::string> &arguments,
     const rclcpp::NodeOptions &node_options) {
+  return createDirectInputNode(arguments, node_options, FilteredCloudSink{});
+}
+
+DirectInputHandle createDirectInputNode(
+    const std::vector<std::string> &arguments,
+    const rclcpp::NodeOptions &node_options,
+    FilteredCloudSink filtered_cloud_sink) {
   std::vector<std::string> direct_arguments = arguments;
   direct_arguments.emplace_back("--direct-input");
   std::vector<std::string> storage;
@@ -3364,7 +3406,8 @@ DirectInputHandle createDirectInputNode(
     argv.push_back(argument.data());
   Options options = parseArgs(static_cast<int>(argv.size()), argv.data());
   auto concrete = std::make_shared<NativeSectorCpp>(
-      std::move(options), node_options);
+      std::move(options), node_options, GuardCloudObserver{},
+      std::move(filtered_cloud_sink));
   DirectInputHandle handle;
   handle.node = concrete;
   handle.submit_cloud = [concrete](
