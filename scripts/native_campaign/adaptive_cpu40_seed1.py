@@ -81,6 +81,8 @@ def main():
     parser.add_argument('--compare-occupied-box-scan', action='store_true',
                         help='Dual-query correctness probe; never eligible for CPU target')
     parser.add_argument('--snapshot-line-query', action='store_true')
+    parser.add_argument('--snapshot-neighbor-cache', action='store_true',
+                        help='Exact snapshot-scoped neighborhood cache; requires line query')
     parser.add_argument('--full-config', default=diagnostic.search.PROFILES['full'])
     parser.add_argument('--sector-config', default=diagnostic.search.PROFILES['sector'])
     parser.add_argument('--adaptive-config', default=event.PROFILE)
@@ -89,6 +91,8 @@ def main():
         parser.error('Each mode may run only once per candidate')
     if args.compare_occupied_box_scan and not args.fast_occupied_box_scan:
         parser.error('--compare-occupied-box-scan requires --fast-occupied-box-scan')
+    if args.snapshot_neighbor_cache and not args.snapshot_line_query:
+        parser.error('--snapshot-neighbor-cache requires --snapshot-line-query')
     root = args.output
     root.mkdir(parents=True, exist_ok=False)
     campaign = diagnostic.search.campaign
@@ -108,6 +112,7 @@ def main():
     os.environ['SUPER_FAST_OCCUPIED_BOX_SCAN'] = '1' if args.fast_occupied_box_scan else '0'
     os.environ['SUPER_COMPARE_OCCUPIED_BOX_SCAN'] = '1' if args.compare_occupied_box_scan else '0'
     os.environ['SUPER_SNAPSHOT_LINE_QUERY'] = '1' if args.snapshot_line_query else '0'
+    os.environ['SUPER_SNAPSHOT_NEIGHBOR_CACHE'] = '1' if args.snapshot_neighbor_cache else '0'
     runtime = Path('/root/super_ws/src/SUPER')
     profiles = {'full': args.full_config, 'sector': args.sector_config,
                 'adaptive': args.adaptive_config}
@@ -128,6 +133,8 @@ def main():
         files.add(runtime / 'rog_map/include/rog_map/occupied_box_scan.hpp')
     if args.snapshot_line_query:
         files.add(runtime / 'rog_map/include/rog_map/snapshot_line_query.hpp')
+    if args.snapshot_neighbor_cache:
+        files.add(runtime / 'rog_map/include/rog_map/snapshot_neighborhood_cache.hpp')
     hashes = {str(p): event.sha(p) for p in sorted(files)}
     frozen_policy = diagnostic.search.frozen_policy()
     diagnostic.RUN = args.run
@@ -148,6 +155,7 @@ def main():
         fast_occupied_box_scan=args.fast_occupied_box_scan,
         compare_occupied_box_scan=args.compare_occupied_box_scan,
         snapshot_line_query=args.snapshot_line_query,
+        snapshot_neighbor_cache=args.snapshot_neighbor_cache,
         effective_run_options=effective_options,
         runtime_policy_note='Inherited base policy only; effective_run_options and profiles override it. Source acquisition follows native 10Hz cadence, not inherited filter-rate hint.',
         logical_cpus=os.cpu_count(), runtime_policy=frozen_policy,
@@ -212,6 +220,9 @@ def main():
                 if args.snapshot_line_query:
                     result['source_acquisition']['checks']['snapshot_line_query_active'] = (
                         '[ROG_MAP_SNAPSHOT_LINE_QUERY] enabled=true immutable=true active=true' in stack)
+                if args.snapshot_neighbor_cache:
+                    result['source_acquisition']['checks']['snapshot_neighbor_cache_active'] = (
+                        '[ROG_MAP_SNAPSHOT_NEIGHBOR_CACHE] enabled=true immutable=true line_query=true active=true' in stack)
                 if args.compose and mode != 'full':
                     stats = result['source_acquisition']['frontend_stats']
                     result['source_acquisition']['checks'].update({

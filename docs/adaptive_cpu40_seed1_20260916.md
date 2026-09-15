@@ -218,3 +218,29 @@ defaults. Earlier plan files retain their original nested defaults; top-level
 overrides and actual acquisition logs, not those base defaults, establish the
 source10Hz/event-only/45deg experiment configuration. Bandwidth remains logical
 payload, not NIC or memory bandwidth.
+
+### Candidate4 measured result (run9305, one flight per mode)
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 41.29 | 1.077889 | 45.764834 |
+| Adaptive | 1/1,0 | 42.27 | 1.016868 | 44.415111 |
+
+Mean reduction5.6612%, cumulative2.9493%, time ratio1.02373. Strict source and
+recovery audit passes (Adaptive completed1Full recovery cycle), speed/resource
+checks pass, no retry. Both modes use less CPU and finish sooner than C3, but
+**relative40% target remains unmet**; separate n1 flights do not isolate causality.
+Exclusive Full/Adaptive profile: backup frontend0.1988/0.2391cores,
+EXP optimizer0.1265/0.1846, map update0.2468/0.1026, operational BACK optimizer
+0.0736/0.0816, corridor0.0687/0.0765. Adaptive's larger planning cost offsets
+much of its map savings. Source: `c04_snapshot_line_profile/`.
+
+## Candidate5 preparation: exact snapshot-scoped neighborhood reuse
+
+The next opt-in candidate caches the boolean OR over the complete body-neighbor
+list for a voxel, only within the same immutable snapshot, predicate settings
+and ordered neighbor contents. Cache collisions recompute; changes invalidate;
+empty-neighbor float queries bypass; C4 final publication validation remains.
+No sensor/planner frequency, body radius, map resolution or guard is reduced.
+Bounded thread-local storage and weak snapshot ownership avoid retaining old
+maps. Tests/build and flight results will be recorded before effectiveness claims.
