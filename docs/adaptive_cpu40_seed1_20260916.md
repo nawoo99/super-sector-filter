@@ -128,3 +128,29 @@ extended thread CPU profiler passes disabled/nested/concurrent cases.
 Candidate2 sequential build completed3packages in9min32s; no errors, existing
 warning streams retained in `build_candidate2.log`. Ccache enabled only as a
 compiler cache (not a runtime change); after build MemAvailable9100MiB.
+
+### Candidate2 measured result (run9302, one flight per mode)
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 62.26 | 1.630290 | 103.872415 |
+| Adaptive | 1/1,0 | 61.15 | 1.357637 | 85.023065 |
+
+Mean reduction16.7242%, cumulative18.1466%, time ratio0.98217; all quality,
+resource, speed and source/recovery audits pass; no retry. **40% still unmet.**
+Mean CPU is essentially unchanged from candidate1 despite reduced diagnostic
+work; these are separate stochastic closed-loop flights, not isolated overhead
+ablations. Source: `c02_common_overhead_profile/`.
+
+Exclusive profile Full/Adaptive (common periodic window, used cores): backup
+frontend0.5655/0.5673; EXP corridor0.1232/0.1327; EXP optimizer0.0715/0.0916;
+path search0.0500/0.0516; operational backup optimizer0.0463/0.0507;
+map update0.3845/0.1059. Exact polynomial extrema is negligible, so caching it
+is not prioritized. Unsubscribed path publication work is now negligible.
+
+Main lead: backup visibility casts many rays, each voxel checks257 body-sphere
+neighbors, and each neighbor atomically reloads the same shared snapshot.
+Next candidates optimize raw occupied-box scans and per-ray snapshot queries,
+without removing body-neighbor, virtual boundary or distance checks. A query
+using one snapshot must reject on a commit-version change before returning
+clear; it is not a long-lived stale map cache.
