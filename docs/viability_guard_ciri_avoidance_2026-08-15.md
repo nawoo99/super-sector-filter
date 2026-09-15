@@ -5200,3 +5200,53 @@ qualification and preregistered block-boundary reference-failure futility.
 Estimated ~2.5 hours; n20 is not yet complete. J01 is the only qualified
 candidate, not five successful maps. No map generation/build/large git
 work during this confirmation.
+
+### 8.83 J01 confirmation rejection and immutable map-only refinement (2026-09-15)
+
+J01's fresh confirmation stopped at18/60 rows after Adaptive run106 timed
+out: Full6/6, Sector0/6, Adaptive5/6 completions, all solid contacts zero.
+Every recorded trial was quality-valid and single-attempt. This is a
+preregistered incomplete confirmation, not n20 success. Original freeze,
+raw, boundary stop and rejected-map evidence are retained.
+
+The failed Adaptive's fourth leg lasted133.4 s including125.1 s of
+pose-derived stillness (longest continuous hold122.3 s), ending near
+(0.995,-21.430,1.729). Repeated optimizer failure/overtime, reroute zones,
+A-star timeout and epoch resets were recorded. PSI was zero, no infrastructure
+failure/retry. This motivates a geometry intervention, not a proved
+single-cause planner diagnosis or permission to change runtime behavior.
+
+J02 removes only the six inner baffle-tip cylinders on leg4 of J01. The
+remaining404 cylinders and their positions/radii are unchanged, no background
+refill, same height3 m and radius0.4 m. Local passage surface width increases
+from1.8 to2.8 m. Parent certificates remain feasible with minimum body
+clearance~0.40 m and disjoint-cylinder surface gap~0.20 m. New immutable
+refinement helper writes runtime map assets then mirrors them; sensor YAML
+changes only pcd_name. Runtime275 hashes and prelaunch solid observer remain
+unchanged. Thirteen geometry/refinement tests pass; Full-first development
+then three paired blocks before fresh n20 remain the qualification rule.
+
+### 8.84 Sequential map-only refinement supervisor (2026-09-15)
+
+J02 pilot run1: Full77.34 s and Adaptive77.70 s completed; Sector180 s
+timed out at WP1/5. All three quality-valid, solid contacts zero. This is
+only exploratory and is not a completed20-trial result.
+
+The offline supervisor `repeat_cylinder_refinements.py` declares ten related
+J01-derived geometry variants: trim1, then2 inner posts per row on leg sets
+{4}, {3,4}, {2,3,4}, {1,2,3,4}, {1,2,3,4,5}. It preserves parent assets and
+all outcomes, fills three development blocks without duplicates, then
+starts independent20/mode confirmation. Reference failures reject the map,
+record actual-pose segment and log-pattern diagnostics, and advance to the
+next predeclared variant. Invalid measurement/infrastructure stops for
+diagnosis; no success retries replace failures. Only one flight runs at a
+time and no map generation/build/large git work occurs during confirmation.
+
+Target is five maps with actual20/20 Full and Adaptive safe completions
+and at least one actual Sector failure/contact. This is not guaranteed.
+Exhausting the ten-recipe family is explicitly a new-design-needed state,
+not success. These related geometry variants are not independent held-out
+environments. No collision-prevention superiority is inferred from all-zero
+contacts and empty-filtered-cloud completion failures. Thirty-six focused
+tests include mocked supervisor success, preserved early reference failure,
+and immediate invalid-row stop. Runtime and measurement hashes are frozen.

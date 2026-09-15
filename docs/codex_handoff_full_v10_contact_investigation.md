@@ -1,6 +1,28 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-15 10:33 KST: map-only 반복 실행기로 연결.** J02 개발run1은
+> Full77.34초/Adaptive77.70초 완주·solid접촉0, Sector180초 WP1/5 실패·접촉0.
+> 아직 n20 성과가 아니다. `repeat_cylinder_refinements.py`가 J02의 기존
+> 개발행을 보존하면서3묶음→새20회/모드로 진행한다. 기준모드 실패 시
+> 해당 맵을 탈락시키고 J03 이후 사전 선언된 기둥열 완화 배치를 시험한다.
+> 목표는 새20회 조건 통과5개 맵.10개 변형 소진/계측오류는 성공이 아니라
+> 진단·새 설계 필요 상태다. 단일 비행만 실행하며 알고리즘/센서/mission은
+> 동결한다. live 상태: `results/cylinder_refinement_repeat_20260915/status.json`.
+> J01 확인18/60 탈락을 유지한다. 상세는 viability §8.84 및 cylinder 정정 문서.
+
+> [!IMPORTANT]
+> **2026-09-15 10:20 KST: J01 확인 시험 탈락, map-only 반복 재개.** 새
+> 확인18/60행에서 Full6/6, Sector0/6, Adaptive5/6 완주/전부 solid 접촉0.
+> Adaptive run106의 유효한 완주 실패로 사전 선언한 묶음 경계 중단이
+> 04:32 KST에 실행됐다. **n20 완료/목표 달성이 아니다.** 네 번째 leg의
+> (0.995,-21.430,1.729) 부근에서 최적화 실패/시간초과와 reroute/A-star
+> timeout/epoch reset이 반복됐다. J02는 해당 leg 교차 열의 끝 기둥6개만
+> 제외한404개 배치다. 나머지 원기둥/센서/미션/275개 runtime hash 동일.
+> 원본 J01 및 실패18행 보존, J02 Full-first 개발 시험을 시작한다.
+> 상세: `docs/cylinder_solid_measurement_correction_20260915.md`.
+
+> [!IMPORTANT]
 > **2026-09-15 03:49 KST: J01 개발3묶음 통과, 새 n20 진입.** Full 3/3,
 > Adaptive 3/3 완주, Sector 0/3 완주이며 9행 모두 solid 접촉0/quality-valid.
 > Adaptive run2는160.13초로 변동성이 크다. **20회 결과가 아니다.** 새

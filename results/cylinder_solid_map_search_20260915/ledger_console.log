@@ -1,7 +1,7 @@
 {
   "measurement": "prelaunch-solid-cylinder-observer-v1",
   "legacy_rows_pooled": false,
-  "total_completed_rows": 32,
+  "total_completed_rows": 35,
   "maps": [
     {
       "map": "cyl2_d08",
@@ -300,11 +300,11 @@
       "map": "cyl2_j01",
       "raw": "/root/super-sector-filter/results/cylinder_solid_map_search_20260915/cyl2_j01/raw.csv",
       "rows": 9,
-      "decision": "ELIGIBLE_FOR_NEW_N20",
-      "eligible_for_new_n20": true,
+      "decision": "REJECT_REFERENCE_FAILURE_IN_CONFIRMATION",
+      "eligible_for_new_n20": false,
       "single_development_criterion_met": true,
-      "confirmation_rows": 0,
-      "reference_failure_in_confirmation": false,
+      "confirmation_rows": 18,
+      "reference_failure_in_confirmation": true,
       "per_mode": [
         {
           "mode": "full",
@@ -338,6 +338,51 @@
           "valid": 3,
           "mean_time_s": 113.24666666666667,
           "min_solid_clearance_m": 0.18019517623743503
+        }
+      ]
+    },
+    {
+      "map": "cyl2_j02",
+      "raw": "/root/super-sector-filter/results/cylinder_solid_map_search_20260915/cyl2_j02/raw.csv",
+      "rows": 3,
+      "decision": "DEVELOPMENT_SEPARATION_REQUIRES_THREE_PAIRED_REPETITIONS",
+      "eligible_for_new_n20": false,
+      "single_development_criterion_met": true,
+      "confirmation_rows": 0,
+      "reference_failure_in_confirmation": false,
+      "per_mode": [
+        {
+          "mode": "full",
+          "n": 1,
+          "complete": 1,
+          "solid_contact_trials": 0,
+          "solid_contact_episodes": 0,
+          "safe_complete": 1,
+          "valid": 1,
+          "mean_time_s": 77.34,
+          "min_solid_clearance_m": 0.20590038812204253
+        },
+        {
+          "mode": "sector",
+          "n": 1,
+          "complete": 0,
+          "solid_contact_trials": 0,
+          "solid_contact_episodes": 0,
+          "safe_complete": 0,
+          "valid": 1,
+          "mean_time_s": 180.0,
+          "min_solid_clearance_m": 0.2413840208495746
+        },
+        {
+          "mode": "adaptive",
+          "n": 1,
+          "complete": 1,
+          "solid_contact_trials": 0,
+          "solid_contact_episodes": 0,
+          "safe_complete": 1,
+          "valid": 1,
+          "mean_time_s": 77.7,
+          "min_solid_clearance_m": 0.21497856850693525
         }
       ]
     }
