@@ -22,6 +22,29 @@
 */
 
 #include "rog_map/rog_map.h"
+#include "rog_map/occupied_box_scan.hpp"
+
+#include <cstdlib>
+#include <cstring>
+#include <limits>
+
+namespace {
+bool fastOccupiedBoxScanEnabled() {
+    static const bool enabled = [] {
+        const char *setting = std::getenv("SUPER_FAST_OCCUPIED_BOX_SCAN");
+        return setting && std::strcmp(setting, "1") == 0;
+    }();
+    return enabled;
+}
+
+bool compareOccupiedBoxScanEnabled() {
+    static const bool enabled = [] {
+        const char *setting = std::getenv("SUPER_COMPARE_OCCUPIED_BOX_SCAN");
+        return setting && std::strcmp(setting, "1") == 0;
+    }();
+    return enabled;
+}
+}  // namespace
 
 using namespace rog_map;
 using namespace super_utils;
@@ -89,6 +112,12 @@ void ROGMap::init() {
                    " -- [ROGMap] Immutable planner snapshot enabled "
                    "(fixed occupancy-only map).\n");
     }
+    fmt::print(" -- [ROG_MAP_OCCUPIED_BOX_SCAN] fast={} compare={} immutable={} "
+               "comparison_overhead={}\n",
+               fastOccupiedBoxScanEnabled(), compareOccupiedBoxScanEnabled(),
+               immutable_snapshot_enabled_,
+               immutable_snapshot_enabled_ && fastOccupiedBoxScanEnabled() &&
+                       compareOccupiedBoxScanEnabled());
 }
 
 std::shared_ptr<const ROGMap::PublishedMapSnapshot> ROGMap::loadPublishedSnapshot() const {
@@ -459,6 +488,95 @@ void ROGMap::boxSearch(const Vec3f& input_min, const Vec3f& input_max,
     Vec3i min_id, max_id;
     snapshotPosToGlobalIndex(box_min, snapshot->probability.resolution, min_id);
     snapshotPosToGlobalIndex(box_max, snapshot->probability.resolution, max_id);
+    if (gt == OCCUPIED && fastOccupiedBoxScanEnabled()) {
+        const auto &grid = snapshot->probability;
+        const occupied_box_scan::Index begin{{min_id.x() + 1,
+                                              min_id.y() + 1,
+                                              min_id.z() + 1}};
+        const occupied_box_scan::Index end{{max_id.x(), max_id.y(), max_id.z()}};
+        const occupied_box_scan::Index size{{grid.size_i.x(), grid.size_i.y(),
+                                             grid.size_i.z()}};
+        const occupied_box_scan::Index half{{grid.half_size_i.x(),
+                                             grid.half_size_i.y(),
+                                             grid.half_size_i.z()}};
+        occupied_box_scan::forEachOccupied(
+                begin, end, size, half,
+                [&grid](const std::size_t word_id) {
+                    return grid.occupied_pages[word_id / SNAPSHOT_PAGE_WORDS]
+                            ->words[word_id % SNAPSHOT_PAGE_WORDS];
+                },
+                [&grid, &out_points](const int i, const int j, const int k) {
+                    const Vec3i id_g(i, j, k);
+                    Vec3f pos;
+                    snapshotGlobalIndexToPos(id_g, grid.resolution, pos);
+                    out_points.push_back(pos);
+                });
+        if (compareOccupiedBoxScanEnabled()) {
+            // Diagnostic only: both loops consume the SAME captured snapshot
+            // and the SAME once-computed bounds. Do not call boxSearch again:
+            // that would acquire a different snapshot. The original bounding
+            // helper's independent snapshot load above remains unchanged.
+            vec_E<Vec3f> baseline_points;
+            for (int i = min_id.x() + 1; i < max_id.x(); ++i) {
+                for (int j = min_id.y() + 1; j < max_id.y(); ++j) {
+                    for (int k = min_id.z() + 1; k < max_id.z(); ++k) {
+                        const Vec3i id_g(i, j, k);
+                        if (snapshotBit(grid.occupied_pages,
+                                        snapshotHash(grid, id_g))) {
+                            Vec3f pos;
+                            snapshotGlobalIndexToPos(id_g, grid.resolution, pos);
+                            baseline_points.push_back(pos);
+                        }
+                    }
+                }
+            }
+            const std::size_t common_size = std::min(out_points.size(),
+                                                      baseline_points.size());
+            std::size_t first_difference = 0;
+            while (first_difference < common_size &&
+                   std::memcmp(out_points[first_difference].data(),
+                               baseline_points[first_difference].data(),
+                               3 * sizeof(double)) == 0) {
+                ++first_difference;
+            }
+            const bool equal = out_points.size() == baseline_points.size() &&
+                               first_difference == common_size;
+            static std::atomic_uint64_t comparison_checks{0};
+            static std::atomic_uint64_t comparison_mismatches{0};
+            if (!equal) {
+                comparison_mismatches.fetch_add(1, std::memory_order_relaxed);
+                const Vec3f unavailable = Vec3f::Constant(
+                        std::numeric_limits<double>::quiet_NaN());
+                const Vec3f fast_point = first_difference < out_points.size()
+                        ? out_points[first_difference] : unavailable;
+                const Vec3f baseline_point = first_difference < baseline_points.size()
+                        ? baseline_points[first_difference] : unavailable;
+                fmt::print(" -- [ROG_MAP_OCCUPIED_BOX_SCAN_MISMATCH] map={} "
+                           "fast_points={} baseline_points={} first_difference={} "
+                           "input_min=[{},{},{}] input_max=[{},{},{}] "
+                           "begin=[{},{},{}] end=[{},{},{}] "
+                           "fast=[{},{},{}] baseline=[{},{},{}] "
+                           "action=return_baseline candidate_rejected=true\n",
+                           snapshot->version, out_points.size(), baseline_points.size(),
+                           first_difference, input_min.x(), input_min.y(), input_min.z(),
+                           input_max.x(), input_max.y(), input_max.z(),
+                           begin[0], begin[1], begin[2], end[0], end[1], end[2],
+                           fast_point.x(), fast_point.y(), fast_point.z(),
+                           baseline_point.x(), baseline_point.y(), baseline_point.z());
+                out_points.swap(baseline_points);
+            }
+            const auto checks = comparison_checks.fetch_add(
+                    1, std::memory_order_relaxed) + 1;
+            if (checks == 1 || checks % 256 == 0 || !equal) {
+                fmt::print(" -- [ROG_MAP_OCCUPIED_BOX_SCAN_COMPARE] checks={} "
+                           "mismatches={} map={} comparison_overhead=true "
+                           "cpu_candidate=false\n",
+                           checks, comparison_mismatches.load(std::memory_order_relaxed),
+                           snapshot->version);
+            }
+        }
+        return;
+    }
     for (int i = min_id.x() + 1; i < max_id.x(); ++i) {
         for (int j = min_id.y() + 1; j < max_id.y(); ++j) {
             for (int k = min_id.z() + 1; k < max_id.z(); ++k) {

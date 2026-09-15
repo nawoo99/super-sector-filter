@@ -36,3 +36,9 @@ def test_collision_failure_and_contract_failure_never_pass():
 
 def test_missing_mode_cannot_pass():
     assert not comparison(pair()[:1])['target_met']
+
+
+def test_dual_query_probe_cannot_claim_cpu_target():
+    rows = pair()
+    rows[0]['cpu_comparison_instrumented'] = True
+    assert not comparison(rows)['target_met']

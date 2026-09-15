@@ -154,3 +154,20 @@ Next candidates optimize raw occupied-box scans and per-ray snapshot queries,
 without removing body-neighbor, virtual boundary or distance checks. A query
 using one snapshot must reject on a commit-version change before returning
 clear; it is not a long-lived stale map cache.
+
+## Candidate3: exact occupied-box bitmap scan
+
+Opt-in `SUPER_FAST_OCCUPIED_BOX_SCAN=1` traverses occupied bitmap words instead
+of testing every raw voxel. Only OCCUPIED queries use it; original bounds,
+exclusive index endpoints, signed ring mapping, point conversion and output
+order remain. Mutable maps/UNKNOWN/FRONTIER follow the old implementation.
+Standalone ordered-output differential corpus passed19191queries, also under
+ASan+UBSan. Synthetic whole-query speedups are2.3–44.7x depending on occupancy;
+these are **not measured planner/end-to-end savings**.
+
+`SUPER_COMPARE_OCCUPIED_BOX_SCAN=1` runs both implementations against the same
+captured snapshot and already-computed bounds, compares ordered XYZ bitwise,
+and falls back to baseline on any mismatch. Such dual-query flight probes are
+marked ineligible for CPU-target acceptance, even if their numerical reduction
+exceeds40%. Run a Full correctness probe before the next ordinary matched pair.
+Command/evidence bundle: `c03_preflight/`.

@@ -12,6 +12,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import time
 
 import psutil
@@ -49,7 +50,10 @@ def comparison(results):
     # protracted stationary operation as the requested performance success.
     out['safety_and_quality_pass'] = safe
     out['mission_time_guardrail_pass'] = out['mission_time_ratio'] <= 1.10
+    out['cpu_comparison_instrumented'] = any(
+        r.get('cpu_comparison_instrumented', False) for r in (f, a))
     out['target_met'] = bool(safe and out['mission_time_guardrail_pass']
+                             and not out['cpu_comparison_instrumented']
                              and reduction is not None and reduction >= 40.)
     out['exploratory_n1_only'] = True
     return out
@@ -68,12 +72,17 @@ def main():
                         help='Skip discarded optimizer replay equally in all modes')
     parser.add_argument('--skip-unobserved-path-publication', action='store_true',
                         help='Retain path poses but avoid publishing without subscribers')
+    parser.add_argument('--fast-occupied-box-scan', action='store_true')
+    parser.add_argument('--compare-occupied-box-scan', action='store_true',
+                        help='Dual-query correctness probe; never eligible for CPU target')
     parser.add_argument('--full-config', default=diagnostic.search.PROFILES['full'])
     parser.add_argument('--sector-config', default=diagnostic.search.PROFILES['sector'])
     parser.add_argument('--adaptive-config', default=event.PROFILE)
     args = parser.parse_args()
     if len(set(args.modes)) != len(args.modes):
         parser.error('Each mode may run only once per candidate')
+    if args.compare_occupied_box_scan and not args.fast_occupied_box_scan:
+        parser.error('--compare-occupied-box-scan requires --fast-occupied-box-scan')
     root = args.output
     root.mkdir(parents=True, exist_ok=False)
     campaign = diagnostic.search.campaign
@@ -90,6 +99,8 @@ def main():
         '1' if args.skip_backup_diagnostic_replay else '0')
     os.environ['SUPER_SKIP_UNOBSERVED_PATH_PUBLICATION'] = (
         '1' if args.skip_unobserved_path_publication else '0')
+    os.environ['SUPER_FAST_OCCUPIED_BOX_SCAN'] = '1' if args.fast_occupied_box_scan else '0'
+    os.environ['SUPER_COMPARE_OCCUPIED_BOX_SCAN'] = '1' if args.compare_occupied_box_scan else '0'
     runtime = Path('/root/super_ws/src/SUPER')
     profiles = {'full': args.full_config, 'sector': args.sector_config,
                 'adaptive': args.adaptive_config}
@@ -102,6 +113,8 @@ def main():
                   Path(__file__).resolve()})
     if args.compose:
         files.add(Path('/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_adaptive_node'))
+    if args.fast_occupied_box_scan or args.compare_occupied_box_scan:
+        files.add(runtime / 'rog_map/include/rog_map/occupied_box_scan.hpp')
     hashes = {str(p): event.sha(p) for p in sorted(files)}
     frozen_policy = diagnostic.search.frozen_policy()
     diagnostic.RUN = args.run
@@ -114,6 +127,8 @@ def main():
         compose=args.compose, cpu_profile=args.profile_cpu,
         skip_backup_diagnostic_replay=args.skip_backup_diagnostic_replay,
         skip_unobserved_path_publication=args.skip_unobserved_path_publication,
+        fast_occupied_box_scan=args.fast_occupied_box_scan,
+        compare_occupied_box_scan=args.compare_occupied_box_scan,
         logical_cpus=os.cpu_count(), runtime_policy=frozen_policy,
         asset_sha256=hashes, baseline_seconds=12,
         common_parameters_unchanged='seed1/loop24/v7,45deg-half-angle,0.4deg/10Hz sensor',
@@ -154,11 +169,24 @@ def main():
                     raise RuntimeError('Source/config/binary changed during candidate')
                 result = diagnostic.summarize(profiler, row)
                 result['source_acquisition'] = source.audit_source(root / 'artifacts', args.run, mode)
-                if args.skip_backup_diagnostic_replay:
+                if args.skip_backup_diagnostic_replay or args.fast_occupied_box_scan:
                     stack = (root / 'artifacts' /
                         f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
+                if args.skip_backup_diagnostic_replay:
                     result['source_acquisition']['checks']['backup_replay_skip_active'] = (
                         '[BACKUP_DIAGNOSTIC_REPLAY] skip=true' in stack)
+                if args.fast_occupied_box_scan:
+                    compare_label = 'true' if args.compare_occupied_box_scan else 'false'
+                    result['source_acquisition']['checks']['fast_occupied_box_scan_active'] = (
+                        f'[ROG_MAP_OCCUPIED_BOX_SCAN] fast=true compare={compare_label} immutable=true' in stack)
+                    result['source_acquisition']['checks']['box_scan_no_mismatch'] = (
+                        '[ROG_MAP_OCCUPIED_BOX_SCAN_MISMATCH]' not in stack)
+                    if args.compare_occupied_box_scan:
+                        counters = re.findall(r'\[ROG_MAP_OCCUPIED_BOX_SCAN_COMPARE\] checks=(\d+) mismatches=(\d+)', stack)
+                        result['source_acquisition']['checks']['box_scan_comparison_exercised'] = (
+                            bool(counters) and max(int(c[0]) for c in counters) > 0
+                            and all(int(c[1]) == 0 for c in counters))
+                        result['box_scan_comparison_reports'] = counters
                 if args.compose and mode != 'full':
                     stats = result['source_acquisition']['frontend_stats']
                     result['source_acquisition']['checks'].update({
@@ -167,6 +195,7 @@ def main():
                         'cloud_dds_zero': row.get('dds_cloud_payload_mib_s') == 0.,
                     })
                 result['candidate'] = args.candidate
+                result['cpu_comparison_instrumented'] = args.compare_occupied_box_scan
                 result['compose'] = args.compose
                 result['dds_cloud_payload_mib_s'] = row.get('dds_cloud_payload_mib_s')
                 result['algorithm_cpu_scope'] = row.get('algorithm_cpu_scope')

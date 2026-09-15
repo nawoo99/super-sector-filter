@@ -1,0 +1,53 @@
+{
+  "candidate": "c03_preflight",
+  "persisted_at_utc": "2026-09-15 19:13:51 UTC",
+  "results_kind": "standalone synthetic corpus and synthetic whole-query CPU benchmark",
+  "runtime_integrated": false,
+  "flight_validated": false,
+  "end_to_end_cpu_claim": false,
+  "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.2) 11.4.0",
+  "workspace": "/root/super_ws/src/SUPER",
+  "source_sha256": {
+    "rog_map/include/rog_map/occupied_box_scan.hpp": "431926fe511f260c517d29a5a2cc6c6a3062a82130ee70cbb6c9063b2a7af7f7",
+    "rog_map/test/occupied_box_scan_corpus.cpp": "b66ce4d90f032a716b024e8594093999163add3766e3f03593ab0fd25bf0b175"
+  },
+  "ordered_corpus": {"queries": 19191, "exit_code": 0, "status": "PASS"},
+  "sanitizer_corpus": {
+    "queries": 19191,
+    "exit_code": 0,
+    "status": "PASS",
+    "sanitizers": ["address", "undefined"],
+    "diagnostics": [],
+    "asan_options": "quarantine_size_mb=32"
+  },
+  "synthetic_benchmark": {
+    "exit_code": 0,
+    "clock": "CLOCK_THREAD_CPUTIME_ID",
+    "dimensions": [401, 401, 121],
+    "resolution_m": 0.05,
+    "corridor_padding_m": 0.8,
+    "seed_axis_extra_extent_m": 1.0,
+    "boxes": 64,
+    "repetitions_per_round": 8,
+    "rounds": 5,
+    "order": "alternating baseline-first and fast-first",
+    "statistic": "median CPU time per implementation",
+    "includes": ["clipping", "floor division", "bitmap scan", "point conversion", "output vector allocation and growth", "output vector destruction"],
+    "excludes": ["console IO", "map construction", "ROS", "CIRI", "live map publication", "planner execution"],
+    "rows": [
+      {"occupancy_percent": 0.000, "baseline_us": 431.378, "fast_us": 9.647, "speedup": 44.715},
+      {"occupancy_percent": 0.098, "baseline_us": 441.097, "fast_us": 12.482, "speedup": 35.338},
+      {"occupancy_percent": 0.781, "baseline_us": 427.036, "fast_us": 21.993, "speedup": 19.417},
+      {"occupancy_percent": 6.250, "baseline_us": 554.798, "fast_us": 57.581, "speedup": 9.635},
+      {"occupancy_percent": 50.000, "baseline_us": 1254.097, "fast_us": 133.459, "speedup": 9.397},
+      {"occupancy_percent": 100.000, "baseline_us": 622.494, "fast_us": 270.250, "speedup": 2.303}
+    ]
+  },
+  "known_limitations": [
+    "The two standalone query wrappers share transcribed bounds conversion and clipping.",
+    "No test of real boundBoxByLocalMap second-snapshot-load timing or concurrent writer behavior.",
+    "Synthetic grid dimensions and occupancy distributions are not production map measurements.",
+    "No end-to-end Full/Adaptive CPU conclusion follows from these timings."
+  ],
+  "artifact_provenance": "Observed tool stdout persisted with apply_patch; no runtime files edited during this artifact-persistence step."
+}
