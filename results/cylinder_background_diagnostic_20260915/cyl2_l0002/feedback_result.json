@@ -1,0 +1,72 @@
+{
+  "map": "cyl2_l0002",
+  "phase": "diagnostic",
+  "rows": 3,
+  "decision": "REFERENCE_FAILURE",
+  "counts": {
+    "full": {
+      "rows": 1,
+      "complete": 0,
+      "contact_free": 1,
+      "solid_contact_trials": 0,
+      "safe_complete": 0,
+      "quality_valid": 1
+    },
+    "sector": {
+      "rows": 1,
+      "complete": 1,
+      "contact_free": 1,
+      "solid_contact_trials": 0,
+      "safe_complete": 1,
+      "quality_valid": 1
+    },
+    "adaptive": {
+      "rows": 1,
+      "complete": 1,
+      "contact_free": 1,
+      "solid_contact_trials": 0,
+      "safe_complete": 1,
+      "quality_valid": 1
+    }
+  },
+  "audits": [
+    {
+      "map": "cyl2_l0002",
+      "run": 1,
+      "mode": "full",
+      "signature": "PATH_SEARCH_STALL",
+      "diagnostic_not_causal_proof": true,
+      "position": [
+        12.503395758794827,
+        19.1428122092278,
+        2.7500000000000004
+      ],
+      "complete": false,
+      "solid_contacts": 0,
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 0,
+        "0.1 seconds time limit exceeded": 1568,
+        "REROUTE_EPOCH_RESET": 5
+      },
+      "ack_gap_s": 0.12828731536865234,
+      "ack_instrumented": true,
+      "pending_refresh_ack": false,
+      "longest_actual_pose_hold_s": 153.57987070083618,
+      "segments": [
+        {
+          "leg": 1,
+          "completed": false,
+          "elapsed_s": 185.1905553340912,
+          "observed_xyz_path_length_m": 32.48223311339384,
+          "near_stationary_pose_time_s": 173.32969450950623,
+          "longest_pose_hold_s": 153.57987070083618,
+          "speed_threshold_mps": 0.05
+        }
+      ],
+      "solid_report": "/root/super-sector-filter/results/cylinder_background_diagnostic_20260915/cyl2_l0002/solid/cyl2_l0002_run1_full.json",
+      "max_position_step_m": 0.36523081606655494,
+      "limitation": "Sampled-pose contacts; no continuous swept/dynamics guarantee. Without ACK observer, empty-input classification is a log/hold proxy."
+    }
+  ]
+}

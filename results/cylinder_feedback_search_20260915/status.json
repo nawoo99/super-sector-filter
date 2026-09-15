@@ -27,28 +27,47 @@
       "parent": "cyl2_l0001",
       "action": "harden",
       "iteration": 6
+    },
+    {
+      "name": "cyl2_l0007",
+      "parent": "cyl2_l0002",
+      "action": "open_escape",
+      "position": [
+        12.503395758794827,
+        19.1428122092278
+      ],
+      "escape_radius": 4.0
     }
   ],
-  "current_recipe": {
-    "name": "cyl2_l0002",
-    "parent": "cyl2_k03",
-    "action": "origin_background"
-  },
+  "current_recipe": null,
   "passed": [],
   "completed_candidates": [
     {
       "map": "cyl2_l0001",
       "decision": "NO_MEANINGFUL_SEPARATION",
       "rows": 9
+    },
+    {
+      "map": "cyl2_l0002",
+      "decision": "REFERENCE_FAILURE",
+      "rows": 3
     }
   ],
-  "next_index": 7,
+  "next_index": 8,
   "target": 5,
   "pid": 2400625,
   "state": "RUNNING",
-  "updated_epoch_s": 1789474878.485455,
+  "updated_epoch_s": 1789475377.874256,
   "map": "cyl2_l0002",
-  "phase": "geometry",
-  "run": null,
-  "mode": null
+  "phase": "diagnostic",
+  "run": 1,
+  "mode": "adaptive",
+  "last_flight": {
+    "map": "cyl2_l0002",
+    "run": 1,
+    "mode": "adaptive",
+    "success": true,
+    "mission_time_s": 139.25,
+    "solid_collision_episodes": 0
+  }
 }
