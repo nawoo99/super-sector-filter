@@ -305,3 +305,34 @@ The next actual candidate is `c06_executor4_legacy_poll_profile`:common4-thread
 executor only, static poll remains exactlegacy1ms, C1–C5flags retained. Match
 Full/Adaptive instrumentation and inspect command/odom received-message gaps.
 No claim that unchanged legacy best-effort global-map delivery is guaranteed.
+
+### Candidate6 actual executor-only result (run9307)
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 39.23 | 0.861363 | 35.778029 |
+| Adaptive | 1/1,0 | 43.37 | 0.735408 | 32.933434 |
+
+Mean reduction14.6228%, cumulative7.9507%, A/Ftime1.10553: **CPU target unmet,
+and predeclared1.10time guardrail failed**. Completion/contact/resource/speed/
+source/recovery checks pass (Adaptive4cycles), no retry. Not adopted as final.
+Recorded unchanged boundary rather than raising the threshold after observing.
+
+F/A odometry received99.9877/99.9852Hz, headerp99 10.154/10.169ms;
+command received94.253/94.562Hz, headerp99 20.038/20.035ms,
+receiptmax20.620/30.034ms. No repeated/backwards stamps or truncation.
+Profiled command callback counts~99.98Hz: received messages are not callback
+invocations, and guarded command suppression is expected. No identical message
+interval baseline exists for old10-thread flights, so no causal jitter claim.
+See `c06_executor4_legacy_poll_profile/`, `executor_preflight/c06_timing.json`.
+
+Next candidate design retains C5's10threads/legacy1ms and15Hz demand checks,
+100Hz guards/commands, but permits bounded deferral of a redundant ordinary
+moving solve only with exact generation/current-map geometry and renewed sampled
+stop-viability evidence, sufficient trajectory/backup horizon, no pending goal/
+recovery/rejection, and a fixed dispatch deadline. It is not a blind timer
+reduction. Existing sampled viability allows unknown and clearance-margin stops,
+unlike stricter runtime emergency braking; no continuous stop-safety theorem.
+Before flight also compare each mode's duration against C5 (<=1.10) in addition
+to the matched A/Ftime guard, and report reference cumulativeCPU differences.
+Design/prototypes in `demand_replan_preflight/`; not flight-validated yet.
