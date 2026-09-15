@@ -1,0 +1,110 @@
+{
+  "map": "cyl2_l0009",
+  "phase": "diagnostic",
+  "rows": 9,
+  "decision": "REFERENCE_FAILURE",
+  "counts": {
+    "full": {
+      "rows": 3,
+      "complete": 2,
+      "contact_free": 2,
+      "solid_contact_trials": 1,
+      "safe_complete": 2,
+      "quality_valid": 3
+    },
+    "sector": {
+      "rows": 3,
+      "complete": 2,
+      "contact_free": 2,
+      "solid_contact_trials": 1,
+      "safe_complete": 2,
+      "quality_valid": 3
+    },
+    "adaptive": {
+      "rows": 3,
+      "complete": 3,
+      "contact_free": 3,
+      "solid_contact_trials": 0,
+      "safe_complete": 3,
+      "quality_valid": 3
+    }
+  },
+  "audits": [
+    {
+      "map": "cyl2_l0009",
+      "run": 2,
+      "mode": "sector",
+      "signature": "CONTACT",
+      "diagnostic_not_causal_proof": true,
+      "position": [
+        13.344557095857459,
+        14.328742439108606,
+        2.143028291318076
+      ],
+      "complete": false,
+      "solid_contacts": 1,
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 0,
+        "0.1 seconds time limit exceeded": 0,
+        "REROUTE_EPOCH_RESET": 1
+      },
+      "ack_gap_s": 0.12411880493164062,
+      "ack_instrumented": true,
+      "pending_refresh_ack": false,
+      "longest_actual_pose_hold_s": 168.8512303829193,
+      "segments": [
+        {
+          "leg": 1,
+          "completed": false,
+          "elapsed_s": 186.2711899280548,
+          "observed_xyz_path_length_m": 24.896606575510944,
+          "near_stationary_pose_time_s": 177.97152709960938,
+          "longest_pose_hold_s": 168.8512303829193,
+          "speed_threshold_mps": 0.05
+        }
+      ],
+      "solid_report": "/root/super-sector-filter/results/cylinder_background_diagnostic_20260915/cyl2_l0009/solid/cyl2_l0009_run2_sector.json",
+      "max_position_step_m": 2.640762389012305,
+      "limitation": "Sampled-pose contacts; no continuous swept/dynamics guarantee. Without ACK observer, empty-input classification is a log/hold proxy."
+    },
+    {
+      "map": "cyl2_l0009",
+      "run": 3,
+      "mode": "full",
+      "signature": "CONTACT",
+      "diagnostic_not_causal_proof": true,
+      "position": [
+        10.847583051439244,
+        10.546922534831948,
+        2.2521189835317994
+      ],
+      "complete": false,
+      "solid_contacts": 1,
+      "log_counts": {
+        "MAP_STALE": 0,
+        "Empty or non-dense point cloud": 0,
+        "0.1 seconds time limit exceeded": 0,
+        "REROUTE_EPOCH_RESET": 0
+      },
+      "ack_gap_s": 0.1065378189086914,
+      "ack_instrumented": true,
+      "pending_refresh_ack": false,
+      "longest_actual_pose_hold_s": 173.23064613342285,
+      "segments": [
+        {
+          "leg": 1,
+          "completed": false,
+          "elapsed_s": 183.27057814598083,
+          "observed_xyz_path_length_m": 20.249569504721787,
+          "near_stationary_pose_time_s": 176.1113646030426,
+          "longest_pose_hold_s": 173.23064613342285,
+          "speed_threshold_mps": 0.05
+        }
+      ],
+      "solid_report": "/root/super-sector-filter/results/cylinder_background_diagnostic_20260915/cyl2_l0009/solid/cyl2_l0009_run3_full.json",
+      "max_position_step_m": 5.045055407816651,
+      "limitation": "Sampled-pose contacts; no continuous swept/dynamics guarantee. Without ACK observer, empty-input classification is a log/hold proxy."
+    }
+  ]
+}
