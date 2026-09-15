@@ -244,3 +244,10 @@ empty-neighbor float queries bypass; C4 final publication validation remains.
 No sensor/planner frequency, body radius, map resolution or guard is reduced.
 Bounded thread-local storage and weak snapshot ownership avoid retaining old
 maps. Tests/build and flight results will be recorded before effectiveness claims.
+
+Preflight passed7,456real-RayCaster comparisons, context mutation, true/false
+hits, collisions, weak lifetime, alias/control-block ABA, bypass/reentry and
+epoch wrap; optimized and ASan+UBSan passes. Cache88,136bytes/thread,4096entries,
+maximum512neighbors. Synthetic repeated-ray CPU11.64x faster is not a flight
+claim. Sequential3-package build26.1s;39Python audit/accounting tests pass.
+Evidence: `c05_preflight/`, `build_candidate5.log`.

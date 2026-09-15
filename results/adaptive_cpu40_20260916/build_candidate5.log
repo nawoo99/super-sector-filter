@@ -1,0 +1,76 @@
+Starting >>> rog_map
+--- stderr: rog_map
+-- GLOB mismatch!
+Using ROS2
+** WARNING ** io features related to pcap will be disabled
+/root/super_ws/src/SUPER/rog_map/src/rog_map/rog_map.cpp: In member function ‘void rog_map::ROGMap::init()’:
+/root/super_ws/src/SUPER/rog_map/src/rog_map/rog_map.cpp:101:23: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<std::__cxx11::basic_string<char> >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  101 |     for (int i = 0; i < time_consuming_name_.size(); i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/rog_map/src/rog_map/rog_map.cpp:103:15: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<std::__cxx11::basic_string<char> >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  103 |         if (i != time_consuming_name_.size() - 1) {
+      |             ~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /root/super_ws/src/SUPER/rog_map/include/fmt/format.h:48,
+                 from /root/super_ws/src/SUPER/rog_map/include/super_utils/fmt_eigen.hpp:28,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/common_lib.hpp:38,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/config.hpp:26,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/sliding_map.h:26,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/counter_map.h:27,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/inf_map.h:28,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/prob_map.h:31,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map.h:38,
+                 from /root/super_ws/src/SUPER/rog_map/src/rog_map/rog_map.cpp:24:
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h: In substitution of ‘template<class T, class Context> using mapped_type_constant = fmt::v9::detail::type_constant<decltype (fmt::v9::detail::arg_mapper<Context>().map(declval<const T&>())), typename Context::char_type> [with T = super_utils::GridType; Context = fmt::v9::basic_format_context<fmt::v9::appender, char>]’:
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h:1730:41:   recursively required from ‘constexpr long long unsigned int fmt::v9::detail::encode_types() [with Context = fmt::v9::basic_format_context<fmt::v9::appender, char>; Arg = Eigen::Transpose<const Eigen::Matrix<double, 3, 1> >; Args = {super_utils::GridType, bool}]’
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h:1730:41:   required from ‘constexpr long long unsigned int fmt::v9::detail::encode_types() [with Context = fmt::v9::basic_format_context<fmt::v9::appender, char>; Arg = long unsigned int; Args = {Eigen::Transpose<const Eigen::Matrix<double, 3, 1, 0, 3, 1> >, super_utils::GridType, bool}]’
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h:1886:58:   required from ‘constexpr const long long unsigned int fmt::v9::format_arg_store<fmt::v9::basic_format_context<fmt::v9::appender, char>, long unsigned int, Eigen::Transpose<const Eigen::Matrix<double, 3, 1, 0, 3, 1> >, super_utils::GridType, bool>::desc’
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h:1999:63:   required from ‘constexpr fmt::v9::basic_format_args<Context>::basic_format_args(const fmt::v9::format_arg_store<Context, Args ...>&) [with Args = {long unsigned int, Eigen::Transpose<const Eigen::Matrix<double, 3, 1, 0, 3, 1> >, super_utils::GridType, bool}; Context = fmt::v9::basic_format_context<fmt::v9::appender, char>]’
+/root/super_ws/src/SUPER/rog_map/include/fmt/color.h:510:9:   required from ‘void fmt::v9::print(FILE*, const fmt::v9::text_style&, const S&, const Args& ...) [with S = char [111]; Args = {long unsigned int, Eigen::Transpose<const Eigen::Matrix<double, 3, 1, 0, 3, 1> >, super_utils::GridType, bool}; typename std::enable_if<fmt::v9::detail::is_string<S>::value, int>::type <anonymous> = 0; FILE = FILE]’
+/root/super_ws/src/SUPER/rog_map/include/fmt/color.h:528:15:   required from ‘void fmt::v9::print(const fmt::v9::text_style&, const S&, const Args& ...) [with S = char [111]; Args = {long unsigned int, Eigen::Transpose<const Eigen::Matrix<double, 3, 1, 0, 3, 1> >, super_utils::GridType, bool}; typename std::enable_if<fmt::v9::detail::is_string<S>::value, int>::type <anonymous> = 0]’
+/root/super_ws/src/SUPER/rog_map/src/rog_map/rog_map.cpp:712:15:   required from here
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h:1530:53: warning: ‘constexpr decltype (declval<fmt::v9::detail::arg_mapper<Context> >().map(static_cast<fmt::v9::underlying_t<T> >(val))) fmt::v9::detail::arg_mapper<Context>::map(const T&) [with T = super_utils::GridType; typename std::enable_if<((((std::is_enum<U>::value && std::is_convertible<T, int>::value) && (! fmt::v9::detail::has_format_as<T>::value)) && (! std::is_constructible<typename Context::formatter_type<T> >::value)) && (! fmt::v9::detail::has_fallback_formatter<T, typename Context::char_type>::value)), int>::type <anonymous> = 0; Context = fmt::v9::basic_format_context<fmt::v9::appender, char>; decltype (declval<fmt::v9::detail::arg_mapper<Context> >().map(static_cast<fmt::v9::underlying_t<T> >(val))) = unsigned int; fmt::v9::detail::arg_mapper<Context> = fmt::v9::detail::arg_mapper<fmt::v9::basic_format_context<fmt::v9::appender, char> >; fmt::v9::underlying_t<T> = unsigned int]’ is deprecated [-Wdeprecated-declarations]
+ 1530 |     type_constant<decltype(arg_mapper<Context>().map(std::declval<const T&>())),
+      |                            ~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h:1470:48: note: declared here
+ 1470 |   FMT_DEPRECATED FMT_CONSTEXPR FMT_INLINE auto map(const T& val)
+      |                                                ^~~
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h: In instantiation of ‘constexpr fmt::v9::detail::value<Context> fmt::v9::detail::make_value(T&&) [with Context = fmt::v9::basic_format_context<fmt::v9::appender, char>; T = const super_utils::GridType&]’:
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h:1777:29:   required from ‘constexpr fmt::v9::detail::value<Context> fmt::v9::detail::make_arg(T&&) [with bool IS_PACKED = true; Context = fmt::v9::basic_format_context<fmt::v9::appender, char>; fmt::v9::detail::type <anonymous> = fmt::v9::detail::type::uint_type; T = const super_utils::GridType&; typename std::enable_if<IS_PACKED, int>::type <anonymous> = 0]’
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h:1901:77:   required from ‘constexpr fmt::v9::format_arg_store<Context, Args>::format_arg_store(T&& ...) [with T = {const long unsigned int&, const Eigen::Transpose<const Eigen::Matrix<double, 3, 1, 0, 3, 1> >&, const super_utils::GridType&, const bool&}; Context = fmt::v9::basic_format_context<fmt::v9::appender, char>; Args = {long unsigned int, Eigen::Transpose<const Eigen::Matrix<double, 3, 1, 0, 3, 1> >, super_utils::GridType, bool}]’
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h:1918:31:   required from ‘constexpr fmt::v9::format_arg_store<Context, typename std::remove_cv<typename std::remove_reference<Args>::type>::type ...> fmt::v9::make_format_args(Args&& ...) [with Context = fmt::v9::basic_format_context<fmt::v9::appender, char>; Args = {const long unsigned int&, const Eigen::Transpose<const Eigen::Matrix<double, 3, 1, 0, 3, 1> >&, const super_utils::GridType&, const bool&}]’
+/root/super_ws/src/SUPER/rog_map/include/fmt/color.h:511:58:   required from ‘void fmt::v9::print(FILE*, const fmt::v9::text_style&, const S&, const Args& ...) [with S = char [111]; Args = {long unsigned int, Eigen::Transpose<const Eigen::Matrix<double, 3, 1, 0, 3, 1> >, super_utils::GridType, bool}; typename std::enable_if<fmt::v9::detail::is_string<S>::value, int>::type <anonymous> = 0; FILE = FILE]’
+/root/super_ws/src/SUPER/rog_map/include/fmt/color.h:528:15:   required from ‘void fmt::v9::print(const fmt::v9::text_style&, const S&, const Args& ...) [with S = char [111]; Args = {long unsigned int, Eigen::Transpose<const Eigen::Matrix<double, 3, 1, 0, 3, 1> >, super_utils::GridType, bool}; typename std::enable_if<fmt::v9::detail::is_string<S>::value, int>::type <anonymous> = 0]’
+/root/super_ws/src/SUPER/rog_map/src/rog_map/rog_map.cpp:712:15:   required from here
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h:1735:46: warning: ‘constexpr decltype (declval<fmt::v9::detail::arg_mapper<Context> >().map(static_cast<fmt::v9::underlying_t<T> >(val))) fmt::v9::detail::arg_mapper<Context>::map(const T&) [with T = super_utils::GridType; typename std::enable_if<((((std::is_enum<U>::value && std::is_convertible<T, int>::value) && (! fmt::v9::detail::has_format_as<T>::value)) && (! std::is_constructible<typename Context::formatter_type<T> >::value)) && (! fmt::v9::detail::has_fallback_formatter<T, typename Context::char_type>::value)), int>::type <anonymous> = 0; Context = fmt::v9::basic_format_context<fmt::v9::appender, char>; decltype (declval<fmt::v9::detail::arg_mapper<Context> >().map(static_cast<fmt::v9::underlying_t<T> >(val))) = unsigned int; fmt::v9::detail::arg_mapper<Context> = fmt::v9::detail::arg_mapper<fmt::v9::basic_format_context<fmt::v9::appender, char> >; fmt::v9::underlying_t<T> = unsigned int]’ is deprecated [-Wdeprecated-declarations]
+ 1735 |   const auto& arg = arg_mapper<Context>().map(FMT_FORWARD(val));
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/rog_map/include/fmt/core.h:1470:48: note: declared here
+ 1470 |   FMT_DEPRECATED FMT_CONSTEXPR FMT_INLINE auto map(const T& val)
+      |                                                ^~~
+In file included from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/config.hpp:26,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/sliding_map.h:26,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/counter_map.h:27,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/inf_map.h:28,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/prob_map.h:31,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map.h:38,
+                 from /root/super_ws/src/SUPER/rog_map/src/rog_map/rog_map.cpp:24:
+/root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/common_lib.hpp: At global scope:
+/root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/common_lib.hpp:120:17: warning: ‘bool rog_map::lineIntersectBox(super_utils::Vec3f, super_utils::Vec3f, super_utils::Vec3f, super_utils::Vec3f, super_utils::Vec3f&)’ defined but not used [-Wunused-function]
+  120 |     static bool lineIntersectBox(super_utils::Vec3f L1, super_utils::Vec3f L2, super_utils::Vec3f B1,
+      |                 ^~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/common_lib.hpp:76:31: warning: ‘super_utils::Vec3f rog_map::lineBoxIntersectPoint(const Vec3f&, const Vec3f&, const Vec3f&, const Vec3f&)’ defined but not used [-Wunused-function]
+   76 |     static super_utils::Vec3f lineBoxIntersectPoint(const super_utils::Vec3f& pt, const super_utils::Vec3f& pos,
+      |                               ^~~~~~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/common_lib.hpp:65:19: warning: ‘double rog_map::computePathLength(super_utils::vec_E<Eigen::Matrix<double, 3, 1> >&)’ defined but not used [-Wunused-function]
+   65 |     static double computePathLength(const super_utils::vec_E<super_utils::Vec3f>& path) {
+      |                   ^~~~~~~~~~~~~~~~~
+cc1plus: note: unrecognized command-line option ‘-Wno-dev’ may have been intended to silence earlier diagnostics
+---
+Finished <<< rog_map [17.6s]
+Starting >>> super_planner
+Finished <<< super_planner [2.50s]
+Starting >>> perfect_drone_sim
+Finished <<< perfect_drone_sim [5.83s]
+
+Summary: 3 packages finished [26.1s]
+  1 package had stderr output: rog_map

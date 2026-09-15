@@ -24,6 +24,7 @@
 #include "rog_map/rog_map.h"
 #include "rog_map/occupied_box_scan.hpp"
 #include "rog_map/snapshot_line_query.hpp"
+#include "rog_map/snapshot_neighborhood_cache.hpp"
 
 #include <cstdlib>
 #include <cstring>
@@ -49,6 +50,14 @@ bool compareOccupiedBoxScanEnabled() {
 bool snapshotLineQueryEnabled() {
     static const bool enabled = [] {
         const char *setting = std::getenv("SUPER_SNAPSHOT_LINE_QUERY");
+        return setting && std::strcmp(setting, "1") == 0;
+    }();
+    return enabled;
+}
+
+bool snapshotNeighborCacheEnabled() {
+    static const bool enabled = [] {
+        const char *setting = std::getenv("SUPER_SNAPSHOT_NEIGHBOR_CACHE");
         return setting && std::strcmp(setting, "1") == 0;
     }();
     return enabled;
@@ -131,6 +140,14 @@ void ROGMap::init() {
                "changed_publication=reject\n",
                snapshotLineQueryEnabled(), immutable_snapshot_enabled_,
                immutable_snapshot_enabled_ && snapshotLineQueryEnabled());
+    fmt::print(" -- [ROG_MAP_SNAPSHOT_NEIGHBOR_CACHE] enabled={} immutable={} "
+               "line_query={} active={} entries=4096 max_neighbors=512 bytes_per_thread={} "
+               "publication_check=required\n",
+               snapshotNeighborCacheEnabled(), immutable_snapshot_enabled_,
+               snapshotLineQueryEnabled(),
+               immutable_snapshot_enabled_ && snapshotLineQueryEnabled() &&
+                       snapshotNeighborCacheEnabled(),
+               sizeof(snapshot_neighborhood_cache::Cache<>));
 }
 
 std::shared_ptr<const ROGMap::PublishedMapSnapshot> ROGMap::loadPublishedSnapshot() const {
@@ -756,44 +773,71 @@ bool ROGMap::isLineFree(const Vec3f& start_pt, const Vec3f& end_pt, const double
         raycaster::RayCaster raycaster;
         raycaster.setResolution(cfg_.resolution);
         raycaster.setInput(start_pt, end_pt);
+        auto float_occupied = [&](const Vec3f& point) {
+            Vec3i id_g;
+            snapshotPosToGlobalIndex(point, snapshot->probability.resolution, id_g);
+            if (!snapshotInside(snapshot->probability, id_g)) {
+                return false;
+            }
+            if (point.z() > cfg_.virtual_ceil_height ||
+                point.z() < cfg_.virtual_ground_height) {
+                return true;
+            }
+            return snapshotBit(snapshot->probability.occupied_pages,
+                               snapshotHash(snapshot->probability, id_g));
+        };
+        auto point_to_index = [&](const Vec3f& point) -> Vec3i {
+            Vec3i id_g;
+            posToGlobalIndex(point, id_g);
+            return id_g;
+        };
+        auto integer_occupied = [&](const Vec3i& id_g) {
+            if (!snapshotInside(snapshot->probability, id_g)) {
+                return false;
+            }
+            if (id_g.z() > sc_.virtual_ceil_height_id_g ||
+                id_g.z() < sc_.virtual_ground_height_id_g + sc_.safe_margin_i) {
+                return true;
+            }
+            return snapshotBit(snapshot->probability.occupied_pages,
+                               snapshotHash(snapshot->probability, id_g));
+        };
+        auto still_current = [&] {
+            // A newer publication invalidates an otherwise-free result.
+            // This is intentionally conservative, and never a long cache.
+            const auto current = loadPublishedSnapshot();
+            return current && current.get() == snapshot.get() &&
+                   current->version == snapshot->version;
+        };
+        if (snapshotNeighborCacheEnabled() && !neighbor_list.empty()) {
+            // Bounded, thread-confined memoization of this pure integer
+            // neighborhood predicate. Context identity includes weak ownership
+            // plus version and the full neighbor contents, never their address
+            // alone. No obsolete snapshot pages are kept alive across lines.
+            static thread_local snapshot_neighborhood_cache::Cache<> cache;
+            const snapshot_neighborhood_cache::PredicateIdentity identity{
+                this, sc_.virtual_ground_height_id_g, sc_.virtual_ceil_height_id_g,
+                sc_.safe_margin_i};
+            cache.beginLine(snapshot, snapshot->version, identity, neighbor_list);
+            auto neighborhood_occupied = [&](const Vec3i& center) {
+                const snapshot_neighborhood_cache::Index key{center.x(), center.y(), center.z()};
+                return cache.anyOccupied(key, [&] {
+                    for (const auto& neighbor : neighbor_list) {
+                        const Vec3i shifted = center + neighbor;
+                        if (integer_occupied(shifted)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+            };
+            return snapshot_neighborhood_cache::isLineFree(
+                raycaster, start_pt, max_dis, true, float_occupied, point_to_index,
+                neighborhood_occupied, still_current);
+        }
         return snapshot_line_query::isLineFree(
-            raycaster, start_pt, max_dis, neighbor_list,
-            [&](const Vec3f& point) {
-                Vec3i id_g;
-                snapshotPosToGlobalIndex(point, snapshot->probability.resolution, id_g);
-                if (!snapshotInside(snapshot->probability, id_g)) {
-                    return false;
-                }
-                if (point.z() > cfg_.virtual_ceil_height ||
-                    point.z() < cfg_.virtual_ground_height) {
-                    return true;
-                }
-                return snapshotBit(snapshot->probability.occupied_pages,
-                                   snapshotHash(snapshot->probability, id_g));
-            },
-            [&](const Vec3f& point) -> Vec3i {
-                Vec3i id_g;
-                posToGlobalIndex(point, id_g);
-                return id_g;
-            },
-            [&](const Vec3i& id_g) {
-                if (!snapshotInside(snapshot->probability, id_g)) {
-                    return false;
-                }
-                if (id_g.z() > sc_.virtual_ceil_height_id_g ||
-                    id_g.z() < sc_.virtual_ground_height_id_g + sc_.safe_margin_i) {
-                    return true;
-                }
-                return snapshotBit(snapshot->probability.occupied_pages,
-                                   snapshotHash(snapshot->probability, id_g));
-            },
-            [&] {
-                // A newer publication invalidates an otherwise-free result.
-                // This is intentionally conservative, and never a long cache.
-                const auto current = loadPublishedSnapshot();
-                return current && current.get() == snapshot.get() &&
-                       current->version == snapshot->version;
-            });
+            raycaster, start_pt, max_dis, neighbor_list, float_occupied,
+            point_to_index, integer_occupied, still_current);
     }
     raycaster::RayCaster raycaster;
     raycaster.setResolution(cfg_.resolution);
