@@ -285,3 +285,23 @@ optionally collect bounded command/odometry header and receipt intervals;
 these measure received messages, not executor callback latency. Intentional
 certified holds can suppress ordinary commands. No new subscriptions added.
 Preflight design/unit evidence:`executor_preflight/`.
+
+### Static-poll candidate rejected before CPU flight; executor-only trial next
+
+Simulator build passed5min51s; C++ policy parser/state tests and43Python tests
+passed. However real ROS late-reader test failed:100ms policy logged complete
+241,490point publication but subscriber received nothing. Unchanged1ms legacy
+late-reader control also failed. Reader-before-start legacy bootstrap delivered
+6completeidentical7,727,680byte clouds out of20publications;100ms one-shot
+control delivered0/2. Warm subscriber-count pulse control delivered1/6, only
+atbootstrap, and0of4spacedcount-change sends. Payload is transportable, but these
+observations do not distinguish all FastDDS discovery/history/fragment/resource
+loss causes. Host buffers/QoS not modified; no speculative retry declared a fix.
+One legacy shutdown control aborted after invalid-context graph query; retained.
+
+**Do not enable100ms static polling based on these results.** Source option
+remains experimental/defaultoff, and no C6static CPU comparison was run.
+The next actual candidate is `c06_executor4_legacy_poll_profile`:common4-thread
+executor only, static poll remains exactlegacy1ms, C1–C5flags retained. Match
+Full/Adaptive instrumentation and inspect command/odom received-message gaps.
+No claim that unchanged legacy best-effort global-map delivery is guaranteed.

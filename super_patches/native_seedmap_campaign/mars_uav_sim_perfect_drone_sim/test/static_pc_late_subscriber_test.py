@@ -25,6 +25,8 @@ def main():
     parser.add_argument('--out-dir', type=Path, required=True)
     parser.add_argument('--config', default='seed1.yaml')
     parser.add_argument('--expected-points', type=int, default=241490)
+    parser.add_argument('--poll-ms', type=int, choices=(1, 100), default=100,
+                        help='1 is the untouched legacy control; 100 is the candidate')
     args = parser.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
     log_path = args.out_dir / 'simulator.log'
@@ -34,11 +36,11 @@ def main():
     if 'ROS_DOMAIN_ID' not in os.environ:
         raise SystemExit('set a dedicated ROS_DOMAIN_ID before this no-flight test')
 
-    env = dict(os.environ, SUPER_STATIC_PC_POLL_MS='100')
+    env = dict(os.environ, SUPER_STATIC_PC_POLL_MS=str(args.poll_ms))
     command = ['ros2', 'run', 'perfect_drone_sim', 'perfect_drone_node',
                '--ros-args', '-p', f'config_name:={args.config}']
     result = dict(valid=False, command=command, ros_domain_id=os.environ['ROS_DOMAIN_ID'],
-                  no_fsm=True, no_commands_published=True, poll_ms=100, phases=[])
+                  no_fsm=True, no_commands_published=True, poll_ms=args.poll_ms, phases=[])
     process = None
     node = None
     subscriptions = []
@@ -87,9 +89,10 @@ def main():
         with log_path.open('w') as log:
             process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT,
                                        env=env, start_new_session=True)
-            wait_for(lambda: '[STATIC_PC_POLL_SETTINGS] poll_ms=100' in log_text(),
+            wait_for(lambda: f'[STATIC_PC_POLL_SETTINGS] poll_ms={args.poll_ms} ' in log_text(),
                      20, 'effective static polling settings')
-            wait_for(lambda: re.search(r'\[STATIC_PC_PUBLICATION\].*subscribers=0 bootstrap=1', log_text()),
+            wait_for(lambda: (re.search(r'\[STATIC_PC_PUBLICATION\].*subscribers=0 bootstrap=1', log_text())
+                              if args.poll_ms == 100 else 'Publish global map size:' in log_text()),
                      10, 'bootstrap without listeners')
             spin_for(.3)
             result['phases'].append('bootstrap_without_subscribers')
@@ -125,13 +128,14 @@ def main():
                 raise RuntimeError('static geometry payload changed across subscriber transitions')
             publication_lines = [line for line in log_text().splitlines()
                                  if '[STATIC_PC_PUBLICATION]' in line]
-            if sum('bootstrap=1' in line for line in publication_lines) != 1:
+            if args.poll_ms == 100 and sum('bootstrap=1' in line for line in publication_lines) != 1:
                 raise RuntimeError('bootstrap not exactly once')
             cadence = [float(value) for value in re.findall(
                 r'\[SENSOR_CADENCE_SUMMARY\].*? hz=([0-9.]+)', log_text())]
             if not cadence or not 9.0 <= cadence[-1] <= 11.0:
                 raise RuntimeError(f'source cadence missing or outside smoke range: {cadence}')
-            result.update(valid=True, clouds=received, bootstrap_publications=1,
+            result.update(valid=True, clouds=received,
+                          bootstrap_publications=1 if args.poll_ms == 100 else None,
                           publication_records=publication_lines, sensor_cadence_hz=cadence,
                           scope='Simulator-only static-map publication smoke; no flight/performance claim')
     except Exception as error:
