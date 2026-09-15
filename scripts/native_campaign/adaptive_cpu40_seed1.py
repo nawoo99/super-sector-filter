@@ -52,9 +52,13 @@ def comparison(results):
     out['mission_time_guardrail_pass'] = out['mission_time_ratio'] <= 1.10
     out['cpu_comparison_instrumented'] = any(
         r.get('cpu_comparison_instrumented', False) for r in (f, a))
-    out['target_met'] = bool(safe and out['mission_time_guardrail_pass']
-                             and not out['cpu_comparison_instrumented']
-                             and reduction is not None and reduction >= 40.)
+    out['requires_unprofiled_confirmation'] = any(
+        r.get('cpu_profile', False) for r in (f, a))
+    out['measured_threshold_pass'] = bool(safe and out['mission_time_guardrail_pass']
+                                         and not out['cpu_comparison_instrumented']
+                                         and reduction is not None and reduction >= 40.)
+    out['target_met'] = (out['measured_threshold_pass']
+                         and not out['requires_unprofiled_confirmation'])
     out['exploratory_n1_only'] = True
     return out
 
@@ -75,6 +79,7 @@ def main():
     parser.add_argument('--fast-occupied-box-scan', action='store_true')
     parser.add_argument('--compare-occupied-box-scan', action='store_true',
                         help='Dual-query correctness probe; never eligible for CPU target')
+    parser.add_argument('--snapshot-line-query', action='store_true')
     parser.add_argument('--full-config', default=diagnostic.search.PROFILES['full'])
     parser.add_argument('--sector-config', default=diagnostic.search.PROFILES['sector'])
     parser.add_argument('--adaptive-config', default=event.PROFILE)
@@ -101,6 +106,7 @@ def main():
         '1' if args.skip_unobserved_path_publication else '0')
     os.environ['SUPER_FAST_OCCUPIED_BOX_SCAN'] = '1' if args.fast_occupied_box_scan else '0'
     os.environ['SUPER_COMPARE_OCCUPIED_BOX_SCAN'] = '1' if args.compare_occupied_box_scan else '0'
+    os.environ['SUPER_SNAPSHOT_LINE_QUERY'] = '1' if args.snapshot_line_query else '0'
     runtime = Path('/root/super_ws/src/SUPER')
     profiles = {'full': args.full_config, 'sector': args.sector_config,
                 'adaptive': args.adaptive_config}
@@ -110,15 +116,25 @@ def main():
                   runtime / 'mission_planner/data/loop24.txt',
                   Path('/root/super_ws/install/marsim_render/lib/libmarsim_render.so'),
                   Path('/root/super_ws/install/mission_planner/lib/libnative_sector_cpp_component.so'),
+                  Path('/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_full_node'),
+                  Path('/root/super_ws/install/rog_map/lib/librog_map.a'),
+                  Path('/root/super_ws/install/super_planner/lib/libsuper.a'),
                   Path(__file__).resolve()})
     if args.compose:
         files.add(Path('/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_adaptive_node'))
     if args.fast_occupied_box_scan or args.compare_occupied_box_scan:
         files.add(runtime / 'rog_map/include/rog_map/occupied_box_scan.hpp')
+    if args.snapshot_line_query:
+        files.add(runtime / 'rog_map/include/rog_map/snapshot_line_query.hpp')
     hashes = {str(p): event.sha(p) for p in sorted(files)}
     frozen_policy = diagnostic.search.frozen_policy()
     diagnostic.RUN = args.run
     profiler = diagnostic.Profiler(root / 'telemetry.jsonl')
+    effective_options = {
+        mode: dict(diagnostic.search.OPTIONS,
+                   sensor_acquisition=True,
+                   sensor_planner_intra_process=args.compose,
+                   adaptive_event_recovery=mode == 'adaptive') for mode in args.modes}
     diagnostic.save(root / 'plan.json', dict(
         schema='adaptive-cpu40-seed1-exploratory-v1', candidate=args.candidate,
         map='seed1', run=args.run, modes=args.modes, profiles=profiles,
@@ -129,6 +145,9 @@ def main():
         skip_unobserved_path_publication=args.skip_unobserved_path_publication,
         fast_occupied_box_scan=args.fast_occupied_box_scan,
         compare_occupied_box_scan=args.compare_occupied_box_scan,
+        snapshot_line_query=args.snapshot_line_query,
+        effective_run_options=effective_options,
+        runtime_policy_note='Inherited base policy only; effective_run_options and profiles override it. Source acquisition follows native 10Hz cadence, not inherited filter-rate hint.',
         logical_cpus=os.cpu_count(), runtime_policy=frozen_policy,
         asset_sha256=hashes, baseline_seconds=12,
         common_parameters_unchanged='seed1/loop24/v7,45deg-half-angle,0.4deg/10Hz sensor',
@@ -148,10 +167,7 @@ def main():
                 diagnostic.save(root / 'status.json', dict(pid=os.getpid(), state='RUNNING',
                     candidate=args.candidate, mode=mode, phase='baseline'))
                 time.sleep(12)
-                options = dict(diagnostic.search.OPTIONS)
-                options.update(sensor_acquisition=True,
-                    sensor_planner_intra_process=args.compose,
-                    adaptive_event_recovery=mode == 'adaptive')
+                options = effective_options[mode]
                 profiler.phase = 'flight'
                 diagnostic.save(root / 'status.json', dict(pid=os.getpid(), state='RUNNING',
                     candidate=args.candidate, mode=mode, phase='flight'))
@@ -169,7 +185,7 @@ def main():
                     raise RuntimeError('Source/config/binary changed during candidate')
                 result = diagnostic.summarize(profiler, row)
                 result['source_acquisition'] = source.audit_source(root / 'artifacts', args.run, mode)
-                if args.skip_backup_diagnostic_replay or args.fast_occupied_box_scan:
+                if args.skip_backup_diagnostic_replay or args.fast_occupied_box_scan or args.snapshot_line_query:
                     stack = (root / 'artifacts' /
                         f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
                 if args.skip_backup_diagnostic_replay:
@@ -187,6 +203,9 @@ def main():
                             bool(counters) and max(int(c[0]) for c in counters) > 0
                             and all(int(c[1]) == 0 for c in counters))
                         result['box_scan_comparison_reports'] = counters
+                if args.snapshot_line_query:
+                    result['source_acquisition']['checks']['snapshot_line_query_active'] = (
+                        '[ROG_MAP_SNAPSHOT_LINE_QUERY] enabled=true immutable=true active=true' in stack)
                 if args.compose and mode != 'full':
                     stats = result['source_acquisition']['frontend_stats']
                     result['source_acquisition']['checks'].update({
@@ -195,6 +214,7 @@ def main():
                         'cloud_dds_zero': row.get('dds_cloud_payload_mib_s') == 0.,
                     })
                 result['candidate'] = args.candidate
+                result['cpu_profile'] = args.profile_cpu
                 result['cpu_comparison_instrumented'] = args.compare_occupied_box_scan
                 result['compose'] = args.compose
                 result['dds_cloud_payload_mib_s'] = row.get('dds_cloud_payload_mib_s')

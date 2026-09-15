@@ -1,0 +1,25 @@
+Optimized corpus, initial run:
+conversion_boundary_distinctions=198 predicate_edges=PASS
+quiescent_cases=16832 ordered_occupancy_queries=43197133
+publication_change_rejections=10 writer_thread=PASS
+benchmark_repeats=300 queries=9252000 baseline_atomic_loads=9252000 pinned_atomic_loads=600 baseline_cpu_s=0.295105882 pinned_cpu_s=0.069547521 synthetic_speedup=4.24322647
+snapshot_line_query_corpus=PASS
+
+ASan+UBSan rerun on final tightened source, after runtime binding and before flight:
+conversion_boundary_distinctions=198 predicate_edges=PASS
+quiescent_cases=16832 ordered_occupancy_queries=43197133
+publication_change_rejections=10 writer_thread=PASS
+snapshot_line_query_corpus=PASS
+
+ASan+UBSan, before final test-only page-edge tightening:
+conversion_boundary_distinctions=198 predicate_edges=PASS
+quiescent_cases=16832 ordered_occupancy_queries=43197133
+publication_change_rejections=10 writer_thread=PASS
+snapshot_line_query_corpus=PASS
+
+Optimized corpus, final run with virtual obstacles disabled for explicit page-edge bit assertions:
+conversion_boundary_distinctions=198 predicate_edges=PASS
+quiescent_cases=16832 ordered_occupancy_queries=43197133
+publication_change_rejections=10 writer_thread=PASS
+benchmark_repeats=300 queries=9252000 baseline_atomic_loads=9252000 pinned_atomic_loads=600 baseline_cpu_s=0.330984859 pinned_cpu_s=0.067010836 synthetic_speedup=4.93927369
+snapshot_line_query_corpus=PASS

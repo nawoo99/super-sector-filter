@@ -179,3 +179,42 @@ were. This is a lower bound on compared queries, not an exact final count.
 Probe mean1.634731cores/99.172245core-s is **diagnostic only**, excluded from
 target acceptance. Source: `c03_box_correctness_probe/`. Proceed to ordinary
 Full/Adaptive candidate3 with comparison disabled.
+
+### Candidate3 measured result (run9304, one flight per mode)
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 59.50 | 1.622260 | 100.007307 |
+| Adaptive | 1/1,0 | 63.28 | 1.345714 | 87.158267 |
+
+Mean reduction17.0470%, cumulative12.8481%, time ratio1.06353; all declared
+quality checks pass; no retry. Target not met. The synthetic box-query speedup
+did not translate into a large end-to-end reduction. Backup frontend remains
+0.5633/0.5558cores; EXP corridor0.1098/0.1058cores. Prioritize repeated line
+occupancy queries, not further claims based on a microbenchmark.
+
+## Candidate4: one immutable snapshot per line-of-sight query
+
+Opt-in `SUPER_SNAPSHOT_LINE_QUERY=1` changes only the bool max-distance +
+neighbor-list overload. Preserve 257 body-sphere neighbors, RayCaster, distance
+limits, outside-map behavior, distinct float/integer virtual bounds, and
+division versus reciprocal-multiply index semantics. Load one immutable
+snapshot per line instead of once per neighbor; before returning free, require
+unchanged publication owner/pointer and version. A changed publication rejects
+conservatively; this is not equivalence under concurrent commits or a guarantee
+against a commit after return. No persistent cache in this candidate.
+
+Corpus:16832line cases/43197133ordered predicates,198index-conversion boundary
+distinctions,10publication-change rejections; optimized and final ASan/UBSan
+pass. Synthetic query CPU speedup4.24–4.94x is not a flight result. Sequential
+build3packages completed25.8s. Evidence: `c04_line_preflight/`.
+
+Measurement audit confirmed cgroup mean=CPU-seconds/duration and no composed
+double counting; independent process sums agree within about0.4% in C1/C2.
+The runner now explicitly prevents a **profiled** threshold pass from being
+reported as final `target_met`: unprofiled confirmation is mandatory. Also
+records effective per-mode launch options separately from inherited base-policy
+defaults. Earlier plan files retain their original nested defaults; top-level
+overrides and actual acquisition logs, not those base defaults, establish the
+source10Hz/event-only/45deg experiment configuration. Bandwidth remains logical
+payload, not NIC or memory bandwidth.

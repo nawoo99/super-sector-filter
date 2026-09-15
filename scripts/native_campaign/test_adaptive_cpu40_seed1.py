@@ -42,3 +42,12 @@ def test_dual_query_probe_cannot_claim_cpu_target():
     rows = pair()
     rows[0]['cpu_comparison_instrumented'] = True
     assert not comparison(rows)['target_met']
+
+
+def test_profiled_threshold_requires_unprofiled_confirmation():
+    rows = pair()
+    rows[0]['cpu_profile'] = rows[1]['cpu_profile'] = True
+    out = comparison(rows)
+    assert out['measured_threshold_pass']
+    assert out['requires_unprofiled_confirmation']
+    assert not out['target_met']

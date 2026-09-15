@@ -23,6 +23,7 @@
 
 #include "rog_map/rog_map.h"
 #include "rog_map/occupied_box_scan.hpp"
+#include "rog_map/snapshot_line_query.hpp"
 
 #include <cstdlib>
 #include <cstring>
@@ -40,6 +41,14 @@ bool fastOccupiedBoxScanEnabled() {
 bool compareOccupiedBoxScanEnabled() {
     static const bool enabled = [] {
         const char *setting = std::getenv("SUPER_COMPARE_OCCUPIED_BOX_SCAN");
+        return setting && std::strcmp(setting, "1") == 0;
+    }();
+    return enabled;
+}
+
+bool snapshotLineQueryEnabled() {
+    static const bool enabled = [] {
+        const char *setting = std::getenv("SUPER_SNAPSHOT_LINE_QUERY");
         return setting && std::strcmp(setting, "1") == 0;
     }();
     return enabled;
@@ -118,6 +127,10 @@ void ROGMap::init() {
                immutable_snapshot_enabled_,
                immutable_snapshot_enabled_ && fastOccupiedBoxScanEnabled() &&
                        compareOccupiedBoxScanEnabled());
+    fmt::print(" -- [ROG_MAP_SNAPSHOT_LINE_QUERY] enabled={} immutable={} active={} "
+               "changed_publication=reject\n",
+               snapshotLineQueryEnabled(), immutable_snapshot_enabled_,
+               immutable_snapshot_enabled_ && snapshotLineQueryEnabled());
 }
 
 std::shared_ptr<const ROGMap::PublishedMapSnapshot> ROGMap::loadPublishedSnapshot() const {
@@ -732,6 +745,56 @@ bool ROGMap::isLineFree(const rog_map::Vec3f& start_pt, const rog_map::Vec3f& en
 
 bool ROGMap::isLineFree(const Vec3f& start_pt, const Vec3f& end_pt, const double& max_dis,
                         const vec_Vec3i& neighbor_list) const {
+    if (immutable_snapshot_enabled_ && snapshotLineQueryEnabled()) {
+        // Pin exactly one immutable publication for this line. The individual
+        // float/integer predicates below deliberately preserve their different
+        // index conversions and virtual-boundary rules from isOccupied().
+        const auto snapshot = loadPublishedSnapshot();
+        if (!snapshot) {
+            return false;
+        }
+        raycaster::RayCaster raycaster;
+        raycaster.setResolution(cfg_.resolution);
+        raycaster.setInput(start_pt, end_pt);
+        return snapshot_line_query::isLineFree(
+            raycaster, start_pt, max_dis, neighbor_list,
+            [&](const Vec3f& point) {
+                Vec3i id_g;
+                snapshotPosToGlobalIndex(point, snapshot->probability.resolution, id_g);
+                if (!snapshotInside(snapshot->probability, id_g)) {
+                    return false;
+                }
+                if (point.z() > cfg_.virtual_ceil_height ||
+                    point.z() < cfg_.virtual_ground_height) {
+                    return true;
+                }
+                return snapshotBit(snapshot->probability.occupied_pages,
+                                   snapshotHash(snapshot->probability, id_g));
+            },
+            [&](const Vec3f& point) -> Vec3i {
+                Vec3i id_g;
+                posToGlobalIndex(point, id_g);
+                return id_g;
+            },
+            [&](const Vec3i& id_g) {
+                if (!snapshotInside(snapshot->probability, id_g)) {
+                    return false;
+                }
+                if (id_g.z() > sc_.virtual_ceil_height_id_g ||
+                    id_g.z() < sc_.virtual_ground_height_id_g + sc_.safe_margin_i) {
+                    return true;
+                }
+                return snapshotBit(snapshot->probability.occupied_pages,
+                                   snapshotHash(snapshot->probability, id_g));
+            },
+            [&] {
+                // A newer publication invalidates an otherwise-free result.
+                // This is intentionally conservative, and never a long cache.
+                const auto current = loadPublishedSnapshot();
+                return current && current.get() == snapshot.get() &&
+                       current->version == snapshot->version;
+            });
+    }
     raycaster::RayCaster raycaster;
     raycaster.setResolution(cfg_.resolution);
     Vec3f ray_pt;
