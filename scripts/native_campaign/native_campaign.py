@@ -2249,6 +2249,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             filter_backend="python",
             filter_half_angle_deg=60.0,
             adaptive_max_publish_hz=5.0,
+            adaptive_event_recovery=False,
             adaptive_map_commit_refresh_age_s=0.12,
             adaptive_map_commit_refresh_min_interval_s=0.10,
             adaptive_risk_max_eval_hz=0.0,
@@ -2690,6 +2691,19 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 filter_options += " --no-replan-guard"
             if filtered_reliable_map_link:
                 filter_options += " --reliable-output"
+        if adaptive_event_recovery and base_mode == "adaptive":
+            if filter_backend != "cpp-frontend":
+                raise ValueError("Event recovery requires the C++ sensor frontend")
+            # Separate opt-in: no timed Full bursts, no periodic refresh and
+            # no continuous raw-risk. Both sectors follow the 10 Hz sensor.
+            filter_options = (
+                f" --stats-json {filt_stats_json} --event-recovery"
+                " --full-refresh-generation-ack --reliable-output"
+                " --replan-fail-streak-open 3 --max-publish-hz 0"
+                " --near-field-speed-gain-s 0.2 --near-field-max-radius-m 3.0"
+                " --full-open-extra-max-points 0 --trajectory-guard-hold-s 0"
+                " --map-commit-refresh-age-s 0 --map-commit-pre-stale-full-age-s 0"
+            )
         if is_dynamic:
             filter_options += (
                 f" --input-topic /cloud_seed12 --track-trap "
@@ -2712,7 +2726,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             "perfect_drone_full_node"
             if integrated_full_active else "fsm_node"
         )
-        if sensor_frontend_active and base_mode == "adaptive":
+        if sensor_frontend_active and base_mode == "adaptive" and not adaptive_event_recovery:
             filter_options += (
                 " --risk-verdict-topic /planning/trajectory_risk_verdict"
                 " --risk-trajectory-topic /planning_cmd/poly_traj"

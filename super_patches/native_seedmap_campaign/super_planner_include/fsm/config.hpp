@@ -72,6 +72,8 @@ namespace fsm {
         // Runtime certification of the committed composite trajectory and a
         // sticky, continuous emergency brake when certification is lost.
         bool trajectory_guard_en{false};
+        // Separate event-only Adaptive experiment. Legacy profiles stay inert.
+        bool event_recovery_en{false};
         bool trajectory_guard_same_map_replan_coalesce_en{false};
         double trajectory_guard_same_map_replan_min_interval_s{0.0};
         // Planner-side candidate validation/logging only. This never suppresses
@@ -225,6 +227,7 @@ namespace fsm {
             loader.LoadParam("fsm/map_readiness/max_cloud_age_s", map_readiness_max_cloud_age_s, 0.75);
             loader.LoadParam("fsm/map_readiness/max_map_age_s", map_readiness_max_map_age_s, 0.75);
             loader.LoadParam("fsm/trajectory_guard/enable", trajectory_guard_en, false);
+            loader.LoadParam("fsm/event_recovery/enable", event_recovery_en, false);
             loader.LoadParam(
                     "fsm/trajectory_guard/same_map_replan_coalesce_enable",
                     trajectory_guard_same_map_replan_coalesce_en, false);

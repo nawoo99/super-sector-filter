@@ -2,6 +2,7 @@
 #include <rclcpp/serialization.hpp>
 
 #include <mission_planner/native_sector_cpp.hpp>
+#include <mission_planner/event_recovery_latch.hpp>
 
 #include <nav_msgs/msg/odometry.hpp>
 #include <mars_quadrotor_msgs/msg/polynomial_trajectory.hpp>
@@ -87,6 +88,7 @@ struct Options {
   double trajectory_guard_ack_retry_age_s{0.0};
   bool test_drop_first_trajectory_guard_full_cloud{false};
   bool direct_input{false};
+  bool event_recovery{false};
   std::string risk_verdict_topic;
   std::string risk_trajectory_topic{"/planning_cmd/poly_traj"};
   double risk_accum_window_s{1.5};
@@ -164,6 +166,8 @@ Options parseArgs(int argc, char **argv) {
       options.output_topic = requireValue(i, arg);
     } else if (arg == "--reliable-output") {
       options.reliable_output = true;
+    } else if (arg == "--event-recovery") {
+      options.event_recovery = true;
     } else if (arg == "--max-publish-hz") {
       options.max_publish_hz = parseDouble(arg, requireValue(i, arg));
     } else if (arg == "--map-commit-topic") {
@@ -478,6 +482,11 @@ public:
             options_.replan_open_cooldown_s.value_or(options_.open_cooldown_s)),
         guard_cloud_observer_(std::move(guard_cloud_observer)),
         armed_(options_.mode == "legacy-trigger") {
+    if (options_.event_recovery &&
+        (options_.mode != "adaptive" || !options_.full_refresh_generation_ack_en ||
+         !options_.risk_verdict_topic.empty() || !options_.guard_witness_topic.empty())) {
+      throw std::runtime_error("event recovery requires Adaptive + exact ACK and no raw-risk/witness stream");
+    }
     start_time_s_ = nowSeconds();
     const auto sensor_qos =
         rclcpp::QoS(rclcpp::KeepLast(1)).best_effort().durability_volatile();
@@ -566,6 +575,13 @@ public:
     }
     full_open_pub_ =
         create_publisher<std_msgs::msg::Bool>("/sector/full_open", 1);
+    if (options_.event_recovery) {
+      rclcpp::PublisherOptions request_options;
+      request_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+      event_recovery_request_pub_ = create_publisher<std_msgs::msg::UInt64>(
+          "/sector/event_recovery_request",
+          rclcpp::QoS(1).reliable().transient_local(), request_options);
+    }
     armed_pub_ =
         create_publisher<std_msgs::msg::Bool>("/sector/trigger_armed", 1);
     state_timer_ = create_wall_timer(std::chrono::seconds(1), [this]() {
@@ -647,6 +663,7 @@ private:
   }
 
   bool effectiveFullOpen() const {
+    if (options_.event_recovery) return event_recovery_.active;
     return options_.mode == "full" ||
            (statefulMode() && effective_recovery_open_) ||
            replan_guard_open_ || trajectory_guard_open_;
@@ -672,6 +689,29 @@ private:
   }
 
   double nowSeconds() { return get_clock()->now().seconds(); }
+
+  void requestEventRecovery(const char *reason) {
+    if (event_recovery_.active || event_recovery_request_pending_ ||
+        !event_recovery_request_pub_) return;
+    event_recovery_request_pending_ = true;
+    std_msgs::msg::UInt64 request;
+    request.data = ++event_recovery_requests_;
+    event_recovery_request_pub_->publish(request);
+    RCLCPP_INFO(get_logger(), "[EVENT_RECOVERY_REQUEST] request=%lu reason=%s",
+                request.data, reason);
+  }
+
+  void finishEventRecovery() {
+    ++event_recovery_completed_;
+    event_recovery_request_pending_ = false;
+    replan_fail_streak_ = replan_ok_streak_ = 0;
+    slow_since_s_.reset();
+    setTrajectoryGuardOpen(false, nowSeconds());
+    RCLCPP_INFO(get_logger(),
+        "[EVENT_RECOVERY_SECTOR] cycle=%lu stamp_ns=%lu map=%lu committed=1 planner_release=1",
+        event_recovery_.cycle, event_recovery_.refresh_stamp, event_recovery_.map_version);
+    publishState();
+  }
 
   enum class PublishDecision {
     DROP,
@@ -918,6 +958,18 @@ private:
       return;
     }
     const uint64_t stamp_ns = msg->data[1];
+    if (options_.event_recovery) {
+      const bool was_committed = event_recovery_.committed;
+      const bool closed = event_recovery_.acknowledge(
+          stamp_ns, msg->data[2], msg->data[3] != 0);
+      if (!was_committed && event_recovery_.committed) {
+        ++event_recovery_commit_acks_;
+        RCLCPP_INFO(get_logger(),
+            "[EVENT_RECOVERY_MAP_ACK] cycle=%lu stamp_ns=%lu map=%lu",
+            event_recovery_.cycle, stamp_ns, msg->data[2]);
+      }
+      if (closed) finishEventRecovery();
+    }
     last_map_process_ack_scan_seq_ = msg->data[0];
     last_map_process_ack_stamp_ns_ = stamp_ns;
     last_map_process_ack_version_ = msg->data[2];
@@ -1101,6 +1153,19 @@ private:
     if (!statefulMode())
       return;
     const double now = nowSeconds();
+    if (options_.event_recovery) {
+      // A stopped initial vehicle does not constitute a stall. Initial
+      // PlanFromRest failures use the replan-status event instead.
+      if (speed > options_.resume_v) armed_ = true;
+      if (armed_ && speed < options_.stall_v && !event_recovery_.active) {
+        if (!slow_since_s_) slow_since_s_ = now;
+        if (now - *slow_since_s_ >= options_.stall_t)
+          requestEventRecovery("stalled");
+      } else {
+        slow_since_s_.reset();
+      }
+      return;
+    }
     if (!armed_) {
       if (speed > options_.resume_v) {
         if (!fast_since_s_) {
@@ -1186,6 +1251,11 @@ private:
           std::max(max_replan_fail_streak_, replan_fail_streak_);
     }
 
+    if (options_.event_recovery) {
+      if (replan_fail_streak_ >= options_.replan_fail_streak_open)
+        requestEventRecovery("replan_failure_streak");
+      return;  // Successful routine replans NEVER close a recovery episode.
+    }
     if (!replan_guard_active_) {
       const bool cooldown_ready =
           !replan_guard_next_burst_s_ || now >= *replan_guard_next_burst_s_;
@@ -1225,6 +1295,22 @@ private:
     const double now = nowSeconds();
     ++trajectory_guard_status_count_;
     trajectory_guard_active_ = msg->data;
+    if (options_.event_recovery) {
+      if (msg->data) {
+        event_recovery_.start(cloud_input_callbacks_.load(std::memory_order_acquire),
+                              static_cast<uint64_t>(get_clock()->now().nanoseconds()));
+        event_recovery_last_refresh_s_ = -1.0;
+        event_recovery_request_pending_ = false;
+        setTrajectoryGuardOpen(true, now);
+        RCLCPP_INFO(get_logger(), "[EVENT_RECOVERY_FULL] cycle=%lu input_boundary=%lu",
+                    event_recovery_.cycle, event_recovery_.boundary_sequence);
+      } else if (event_recovery_.requestClose()) {
+        finishEventRecovery();
+      }
+      publishState();
+      writeStats();
+      return;
+    }
     if (msg->data) {
       ++trajectory_guard_active_count_;
       // A held-open interval can contain many distinct guard episodes. Each
@@ -1252,6 +1338,7 @@ private:
   }
 
   bool updateTrajectoryGuardHold(double now) {
+    if (options_.event_recovery) return false;
     const bool previous = trajectory_guard_open_;
     if (trajectory_guard_active_) {
       setTrajectoryGuardOpen(true, now);
@@ -2215,9 +2302,9 @@ private:
     if (!msg)
       return;
     const double now = nowSeconds();
-    const bool state_changed =
-        updateRecoveryBurst(now) | updateReplanGuardBurst(now) |
-        updateTrajectoryGuardHold(now);
+    const bool state_changed = !options_.event_recovery &&
+        (updateRecoveryBurst(now) | updateReplanGuardBurst(now) |
+         updateTrajectoryGuardHold(now));
     if (state_changed)
       publishState();
     ++frames_;
@@ -2254,7 +2341,29 @@ private:
       ++map_commit_age_samples_;
       map_commit_age_max_s_ = std::max(map_commit_age_max_s_, commit_age_s);
     }
-    const PublishDecision publish_decision = publicationDecision(now);
+    if (options_.event_recovery && effective_open) {
+      // Never acknowledge a pre-transition queued Sector scan as a new Full
+      // observation. Remain Full for the entire certified-stop/replan episode.
+      if (!event_recovery_.fresh(job.sequence, cloudStampNs(*msg))) return;
+      if (!event_recovery_.committed &&
+          (event_recovery_last_refresh_s_ < 0.0 ||
+           now - event_recovery_last_refresh_s_ >= 0.30)) {
+        if (event_recovery_.select(job.sequence, cloudStampNs(*msg))) {
+          publishFullRefreshRequest(*msg, 2, now);
+          event_recovery_last_refresh_s_ = now;
+        }
+      }
+      ++published_frames_;
+      ++event_recovery_full_frames_;
+      kept_points_ += input_points;
+      published_payload_bytes_ += msg->data.size();
+      publishFilteredCloud(*msg);
+      return;
+    }
+    // Event-mode Sector follows sensor cadence: no proactive Full refresh,
+    // no legacy burst timer, no map-rate reduction confound in this version.
+    const PublishDecision publish_decision = options_.event_recovery
+        ? PublishDecision::REGULAR : publicationDecision(now);
     if (publish_decision == PublishDecision::DROP)
       return;
     const bool commit_refresh =
@@ -2491,6 +2600,13 @@ private:
                ? options_.resume_v
                : 0.2);
     integer("frames", frames_);
+    boolean("event_recovery_enabled", options_.event_recovery);
+    boolean("event_recovery_active", event_recovery_.active);
+    integer("event_recovery_requests", event_recovery_requests_);
+    integer("event_recovery_cycles", event_recovery_.cycle);
+    integer("event_recovery_completed", event_recovery_completed_);
+    integer("event_recovery_commit_acks", event_recovery_commit_acks_);
+    integer("event_recovery_full_frames", event_recovery_full_frames_);
     const uint64_t cloud_input_count =
         cloud_input_callbacks_.load(std::memory_order_relaxed);
     integer("cloud_input_callbacks", cloud_input_count);
@@ -2890,6 +3006,12 @@ private:
   }
 
   Options options_;
+  native_sector::EventRecoveryLatch event_recovery_;
+  bool event_recovery_request_pending_{false};
+  double event_recovery_last_refresh_s_{-1.0};
+  uint64_t event_recovery_requests_{0}, event_recovery_completed_{0};
+  uint64_t event_recovery_commit_acks_{0}, event_recovery_full_frames_{0};
+  rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr event_recovery_request_pub_;
   double half_angle_rad_;
   double half_angle_cos_;
   double near_field_max_radius_m_;

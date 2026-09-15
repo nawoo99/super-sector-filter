@@ -41,6 +41,7 @@
 #include "mars_quadrotor_msgs/msg/polynomial_trajectory.hpp"
 #include "mars_quadrotor_msgs/msg/trajectory_risk_verdict.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/u_int64.hpp"
 #include "std_msgs/msg/u_int64_multi_array.hpp"
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -74,6 +75,11 @@ namespace fsm {
                 full_refresh_request_sub_;
         rclcpp::Subscription<std_msgs::msg::UInt64MultiArray>::SharedPtr
                 cloud_process_ack_sub_;
+        rclcpp::Subscription<std_msgs::msg::UInt64>::SharedPtr event_recovery_request_sub_;
+        std::atomic<std::uint64_t> event_recovery_requested_{0};
+        std::uint64_t event_recovery_handled_{0};
+        std::uint64_t event_recovery_min_map_version_{0};
+        std::uint64_t event_recovery_not_before_stamp_ns_{0};
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub_;
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
                 guard_cloud_sub_;
@@ -175,10 +181,15 @@ namespace fsm {
             if (cfg_.trajectory_guard_full_refresh_ack_sla_s <= 0.0) {
                 return;
             }
+            const auto event_map_version = cfg_.event_recovery_en
+                    ? map_ptr_->getMapHealthSnapshot().map_version : 0;
             std::lock_guard<std::mutex> lock(full_refresh_mutex_);
-            if (!full_refresh_gate_advertised_) {
+            if (!full_refresh_gate_advertised_ && !cfg_.event_recovery_en) {
                 return;
             }
+            event_recovery_min_map_version_ = event_map_version;
+            if (cfg_.event_recovery_en)
+                event_recovery_not_before_stamp_ns_ = nh_->get_clock()->now().nanoseconds();
             required_full_refresh_min_seq_ =
                     latest_full_refresh_request_seq_ + 1;
             required_full_refresh_target_seq_ = 0;
@@ -218,6 +229,10 @@ namespace fsm {
                 if (request_seq == 0 ||
                     request_seq <= latest_full_refresh_request_seq_) {
                     return;
+                }
+                if (cfg_.event_recovery_en && required_full_refresh_min_seq_ != 0 &&
+                    stamp_ns <= event_recovery_not_before_stamp_ns_) {
+                    return;  // Delayed Full token from an earlier recovery cycle.
                 }
                 const bool unresolved_chain_active =
                         latest_full_refresh_request_seq_ != 0 &&
@@ -271,6 +286,12 @@ namespace fsm {
             std::uint64_t satisfied_seq = 0;
             {
                 std::lock_guard<std::mutex> lock(full_refresh_mutex_);
+                // Processed is not the same as committed. Event-only recovery
+                // requires a new Full observation that really advanced the map.
+                if (cfg_.event_recovery_en &&
+                    (msg->data[3] == 0 || map_version <= event_recovery_min_map_version_)) {
+                    return;
+                }
                 recent_refresh_process_acks_.push_back(
                         RefreshProcessAck{stamp_ns, map_version});
                 while (recent_refresh_process_acks_.size() > 64) {
@@ -1827,6 +1848,8 @@ namespace fsm {
         }
 
         void publishPolyTraj() override {
+            if (cfg_.event_recovery_en &&
+                safety_brake_active_.load(std::memory_order_acquire)) return;
             if (cfg_.trajectory_guard_en && !refreshSafetyCertificate("poly_publish")) {
                 safety_revalidation_requested_.store(true, std::memory_order_release);
                 return;
@@ -2950,7 +2973,7 @@ namespace fsm {
                 recovered_sample.finished) {
                 return false;
             }
-            publishPolyTraj();
+            if (!cfg_.event_recovery_en) publishPolyTraj();
 
             std::string recovered_reason;
             {
@@ -2964,6 +2987,16 @@ namespace fsm {
                 safety_brake_finished_.store(false, std::memory_order_release);
                 safety_brake_active_.store(false, std::memory_order_release);
                 active_brake_body_replaced_ = false;
+            }
+            if (cfg_.event_recovery_en) {
+                publishPolyTraj();
+                std::lock_guard<std::mutex> lock(full_refresh_mutex_);
+                ros_ptr_->info(
+                        " -- [EVENT_RECOVERY_PATH_READY] request_seq={} stamp_ns={} "
+                        "ack_map={} certified_map={} generation_before={} generation_after={}",
+                        required_full_refresh_target_seq_, required_full_refresh_stamp_ns_,
+                        required_full_refresh_ack_map_version_, recovered_certificate.map_version,
+                        generation_before, generation_after);
             }
             publishTrajectoryGuardRecoveryState(false);
             ros_ptr_->info(" -- [TRAJ_GUARD_RECOVERED] trigger={} gen={} map={}",
@@ -3183,6 +3216,10 @@ namespace fsm {
             // 初始化参数读取
             nh_ = nh;
             cfg_ = Config(cfg_path);
+            if (cfg_.event_recovery_en &&
+                (!cfg_.trajectory_guard_en || cfg_.trajectory_guard_full_refresh_ack_sla_s <= 0.0)) {
+                throw std::runtime_error("Event recovery requires certified guard and Full commit ACK");
+            }
             // Keep map commits schedulable while planner optimization is
             // running. Planner map-reading frontends take an explicit shared
             // map transaction; the writer takes the matching exclusive lock.
@@ -3240,6 +3277,14 @@ namespace fsm {
                                             &FsmRos2::cloudProcessAckCallback,
                                             this, std::placeholders::_1),
                                     refresh_options);
+                    if (cfg_.event_recovery_en) {
+                        event_recovery_request_sub_ = nh_->create_subscription<std_msgs::msg::UInt64>(
+                            "/sector/event_recovery_request", request_qos,
+                            [this](const std_msgs::msg::UInt64::SharedPtr request) {
+                                const auto old = event_recovery_requested_.load();
+                                if (request->data > old) event_recovery_requested_.store(request->data);
+                            }, refresh_options);
+                    }
                     ros_ptr_->info(
                             " -- [FULL_REFRESH_ACK_GATE] listening sla={:.3f}s",
                             cfg_.trajectory_guard_full_refresh_ack_sla_s);
@@ -3627,6 +3672,18 @@ namespace fsm {
         }
 
         void mainFsmTimerCallback() {
+            if (cfg_.event_recovery_en) {
+                const auto request = event_recovery_requested_.load(std::memory_order_acquire);
+                if (request > event_recovery_handled_) {
+                    event_recovery_handled_ = request;
+                    if (started_ && machine_state_ != WAIT_GOAL && machine_state_ != INIT &&
+                        !safety_brake_active_.load(std::memory_order_acquire)) {
+                        ros_ptr_->info(" -- [EVENT_RECOVERY_STOP_REQUEST] request={}", request);
+                        activateEmergencyBrake("event_recovery_request");
+                        return;
+                    }
+                }
+            }
             // 2026-08-19: isolated diagnostic, gated only on the subscription
             // existing (not on trajectory_guard_raw_cloud_en, which this
             // does not read or affect). Purely observational -- see the
