@@ -6,8 +6,10 @@
 > 이상감소(누적CPU별도보고)로 명시했다. 기존v2/Normal결과는보존한다.
 > 새실험은 `docs/adaptive_cpu40_seed1_20260916.md`와
 > `results/adaptive_cpu40_20260916/` 참조. 첫후보는frontend→map까지 직접
-> SharedPtr전달하는별도실행파일+opt-in thread CPU계측이다. 현재빌드/검증중,
-> 아직40%성과나새비행결과없음. Full새관측→정확한맵ACK→새안전경로gate유지.
+> SharedPtr전달하는별도실행파일+opt-in thread CPU계측이다. 첫후보run9301
+> F/A각1회완주·접촉0,63.22/60.87초; 평균CPU16.46%,누적CPU20.25%감소.
+> 40%미달이며다음은두모드공통진단용중복backup최적화제거·계측예정.
+> Full새관측→정확한맵ACK→새안전경로gate유지.
 > 새탐색결과를기존수백회검증과합산금지. 기존Stress search재개아님. push없음.
 
 > [!IMPORTANT]

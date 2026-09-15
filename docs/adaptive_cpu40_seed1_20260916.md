@@ -68,4 +68,49 @@ Existing synthetic ROS Full recovery handshake passes all10checks. Sequential
 `results/adaptive_cpu40_20260916/build_candidate1.log`. Source Normal300 hash
 matches; MemAvailable9360MiB after compiler exit. Launch argument check passes.
 
-Results and next candidates will be appended after actual flights.
+### Candidate1 measured result (run9301, one flight per mode)
+
+| Mode | Complete/contact | Mission s | Mean used cores | Whole20CPU equivalent % | CPU core-s |
+|---|---|---:|---:|---:|---:|
+| Full | 1/1,0 | 63.22 | 1.620519 | 8.1026 | 106.159269 |
+| Adaptive | 1/1,0 | 60.87 | 1.353746 | 6.7687 | 84.659005 |
+
+Mean CPU reduction16.4622%; cumulative reduction20.2528%; time ratio0.96283.
+Both quality/resource/speed/source-recovery audits pass, no infrastructure
+retry. **40% target not met.** Results: `c01_composed_profile/` under the dated
+result directory. This instrumentation-enabled candidate is not a repeat of
+the earlier v2 and is not proof that composition alone improves CPU.
+
+Thread CPU within common periodic report windows (not exact whole-flight
+cgroup windows): Full/Adaptive replanning0.73940/0.70965used cores;
+FSM main0.15012/0.14781; map update0.37194/0.11162; snapshot0.05480/0.02557.
+The map-stage savings are real, but the almost unchanged replanning cost
+dominates. Inclusive and exclusive counters must not be added together.
+
+## Candidate2: shared discarded replay / unsubscribed path publication removal
+
+Code audit found the operational backup solve is followed by an unconditional
+second solve whose bool/trajectory/start-time outputs are discarded. The old
+BACK_TRAJ_OPT timer stops before this second solve. Following decisions use
+only the first outputs; optimizer setup resets state before the next
+operational solve. Next step: optional removal applied equally to Full and
+Adaptive, state-reset regression, deeper nested CPU scopes,
+then another matched seed1 pair. This does not disable operational backup or
+safety checks. Default behavior remains unchanged during exploration.
+
+Also opt-in: retain every100Hz `fsm/path` pose, but skip publishing the entire
+growing path when both inter/intra-process subscriber counts are zero. With a
+subscriber present the existing cadence/content remains unchanged. Native
+campaign monitors consume odometry/commands and other risk topics, not this
+RViz visualization path. Apply the same option to both modes; this optimizes
+headless runs, not a claimed sensor-filter advantage. Deeper profile scopes
+include path visualization and polynomial velocity extrema checks.
+
+Regression caveat discovered before flight: strict coefficient equality in
+two optimizer instances failed after a failure/recovery sequence. The initial
+member-state audit missed a global RNG in `src/utils/sdlp.cpp::rand_permutation`:
+the discarded replay advances it through corridor vertex enumeration. Therefore
+removing replay can alter subsequent LP plane order, interior solution and
+optimizer numerics. **Production bitwise trajectory equivalence is not claimed.**
+State-reset testing needs controlled geometry randomness plus native-variation
+controls; operational acceptance and downstream safety checks remain required.
