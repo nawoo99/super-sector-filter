@@ -5743,3 +5743,18 @@ acceptances each followed by realreplan, despite only5distinct targets. Paired
 explicit commandidentity/idempotency proposal must preserve fresh intent and
 blocked/recovery retries, not infer commandidentity merely fromequalposition.
 Detailed evidence/design and all raw runs remain in dated CPU40 folder/doc.
+
+#### C14 explicit goal identity implemented and flown (run9315)
+
+Paired default-off creation-ID protocol distinguishes retransmissions from fresh
+same-pose user intent. Actual-Fsm metadata54checks/4000concurrent requests,
+existing demand regression flagOFF/ON, pure optimized/ASan/UBSan and6m25s build
+pass. Healthy current-SAFE own-commit token required; stop/recovery retries stay.
+Raw-goal reprojection semantics intentionally change for explicit retransmissions;
+no previous-trace equivalence claim. Default/old profiles remain unchanged.
+
+Full37.54s/.579354cores/22.889422core-s; Adaptive39.65s/.423070cores/17.650004core-s.
+Bothcomplete/contact0, all source/resource/speed/recovery/time/timing/identity
+audits pass, no retry. Mean26.9756%, cumulative22.8901%, **40% still unmet**.
+F34/A33retransmissions coalesced;5freshIDs/targets retained each. C13two-phaseOFF.
+Next headless-only common parameter-service overhead ablation is prospective.

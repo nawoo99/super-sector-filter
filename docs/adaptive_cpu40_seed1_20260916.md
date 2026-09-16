@@ -663,3 +663,72 @@ NO_NEED exits. Association is by log order, not exact per-decision CPU attributi
 Next proposal uses explicit retransmission identity, not pose-only inference:
 fresh user intent must remain distinguishable and blocked/recovery retries must
 stay active. Producer/receiver changes remain outside runtime pending review.
+
+## Candidate14 prospective: explicit goal retransmission identity
+
+Return to legacy1ms static polling (two-phase OFF). New paired, default-off
+`SUPER_GOAL_RETRANSMIT_IDENTITY=1` gives each mission intent a positive creation
+stamp retained on its existing1Hz retransmissions. A fresh same-pose request or
+waypoint advance gets a fresh ID. Exact raw position/quaternion/frame must also
+match; malformed/nonfinite/unsupported IDs use ordinary goal admission. Opt-in
+mission callbacks use one serialized executor; default execution is unchanged.
+This candidate therefore combines command identity and mission serialization,
+not an isolated causal estimate of deduplication alone.
+
+Receiver coalescing requires an own successful ordinary replan token, unchanged
+goal/state/brake/event/Full-request epochs, ordinary FOLLOW, fresh immutable map,
+an exact-current SAFE certificate without escape exceptions, and a finite
+unfinished nonbackup command sample within its certified interval. New/pending
+goals, failure/recovery/stop/refresh or contended outer locks fall back to the
+existing queue. Coalescing never renews a demand lease or mutates trajectory,
+certification, goal revisions, or recovery state. Both modes must demonstrate
+actual coalescing linked to producer retransmissions; zero Full coverage is not
+a valid common-optimization comparison.
+
+The same explicit intent no longer repeats original-raw-goal projection during
+healthy following. Ordinary replanning still remaps its current effective goal.
+This is a declared command-idempotence algorithm change, not bitwise/behavioral
+equivalence to the previous repeated-intent interpretation. The outer activation,
+refresh and certificate locks are try-only, but inner metadata/trajectory/map
+reads can briefly block; live callback timing must still pass existing gates.
+
+Producer Release build and direct actual-ROS controls passed: unchanged legacy
+stamp behavior; opt-in three repeats share an ID, same-pose retrigger and next
+waypoint each allocate a fresh ID, each then repeats correctly. Nine messages
+per first attempt, no retries, receipt cadence1.00045–1.01001s opt-in. Pure helper
+optimized and ASan/UBSan tests pass94checks. These tests do not validate combined
+receiver/flight safety. Receiver build/integration and launch-output capture are
+being checked before the new matched flight. Evidence:
+`results/adaptive_cpu40_20260916/goal_retransmit_preflight/`.
+
+### Candidate14 measured result (run9315)
+
+Sequential planner/simulator build passed6min25s. Actual-Fsm metadata tests
+passed54checks/4000concurrent requests, with existing demand regression passing
+both flagOFF/ON. Pure policy optimized and ASan/UBSan tests pass. The metadata
+test stubs its live proof; actual ROS/solver evidence is the separate flight.
+Launch-style producer INFO capture works; its earlier fixture double-SIGINT
+cleanup failure remains explicitly preserved, not claimed as clean-pass.
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 37.54 | 0.579354 | 22.889422 |
+| Adaptive | 1/1,0 | 39.65 | 0.423070 | 17.650004 |
+
+Mean reduction26.9756%, cumulative22.8901%, A/Ftime1.05621. All flight/source/
+resource/recovery/time/callback/identity gates pass; **40% unmet**. No retries.
+Full coalesces34of36 retransmissions; Adaptive33of38. Both retain5fresh intent
+IDs and visit5targets. Accepted-goal logs drop to6/9, with119/128 ordinary
+replan commits (C12:40/41acceptances,138/137commits). This supports the repeated
+intent cause but is not an isolated causal CPU estimate from n1 trajectories.
+All67coalesces link to producer repeats and nearby same-gen/map SAFE logs;
+mixed stdout/stderr log ordering is NOT a strict concurrency proof.
+
+Evidence:`c14_goal_identity_profile/`, `executor_preflight/c14_timing.json`, and
+receiver flight review. Legacy1ms static polling restored; no two-phase option.
+Next bounded candidate will disable unused remote ROS parameter services/event
+publishers equally for composed Full/Adaptive nodes, preserving local startup
+parameters, source/control periods and safety gates. This changes remote
+introspection availability under an explicit headless-only opt-in, not the
+planner's physical observation contract. Static durable transport and extra
+frontend residual attribution remain separate unimplemented proposals.

@@ -3,7 +3,7 @@ from adaptive_cpu40_seed1 import (SMALL_POOL_MATCH_FIELDS, comparison,
                                  reference_comparison, small_pool_timing_audit,
                                  small_pool_profile_reference_audit,
                                  DEMAND_REASONS, demand_reason_audit,
-                                 static_two_phase_audit)
+                                 static_two_phase_audit, goal_identity_audit)
 
 
 def pair():
@@ -268,3 +268,35 @@ def test_unresolved_static_delivery_cannot_claim_target_or_bless_reference():
     plan, reference, summaries = profile_reference_fixture()
     plan['static_pc_two_phase'] = reference['static_pc_two_phase'] = True
     assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+
+
+def goal_identity_log():
+    return ('[MISSION_GOAL_IDENTITY_SETTINGS] enabled=1 executor=single callbacks_serialized=1 timers_qos_unchanged=1\n'
+            '[GOAL_RETRANSMIT_IDENTITY] enabled=true role=receiver guarded_demand=true identity=creation_stamp_raw_pose_frame default_off=true\n'
+            '[MISSION_GOAL_IDENTITY] stamp_ns=100 new_intent=1 new_identity=1 supported=1 waypoint=0\n'
+            '[MISSION_GOAL_IDENTITY] stamp_ns=100 new_intent=0 new_identity=0 supported=1 waypoint=0\n'
+            '[GOAL_RETRANSMIT_COALESCED] stamp_ns=100 generation=5 map=6 queued_revision=1 accepted_revision=1 coalesced_total=1\n')
+
+
+def test_goal_identity_requires_explicit_repeated_identity_and_actual_coverage():
+    log = goal_identity_log()
+    assert goal_identity_audit(log)['valid']
+    assert goal_identity_audit(log)['coalesced'] == 1
+    for bad in ('', log.replace('supported=1', 'supported=0'),
+                log.replace('new_intent=0', 'new_intent=1'),
+                log.replace('COALESCED] stamp_ns=100', 'COALESCED] stamp_ns=101'),
+                log.replace('generation=5', 'generation=0'),
+                log.replace('coalesced_total=1', 'coalesced_total=2'),
+                log.replace('executor=single', 'executor=multi'),
+                log.replace('stamp_ns=100 new_intent=0', 'stamp_ns=101 new_intent=0')):
+        assert not goal_identity_audit(bad)['valid'], bad
+
+
+def test_goal_coalescing_must_be_exercised_in_both_compared_modes():
+    rows = pair()
+    for row in rows:
+        row['goal_retransmit_identity'] = True
+        row['goal_retransmit_exercised'] = True
+    assert comparison(rows)['target_met']
+    rows[0]['goal_retransmit_exercised'] = False
+    assert not comparison(rows)['target_met']

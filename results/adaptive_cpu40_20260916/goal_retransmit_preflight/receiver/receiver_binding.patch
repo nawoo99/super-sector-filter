@@ -1,0 +1,603 @@
+--- a/super_planner/include/fsm/fsm.h
++++ b/super_planner/include/fsm/fsm.h
+@@ -34,6 +34,9 @@
+ #include <fmt/color.h>
+ #include <cereal/archives/binary_file_handler.hpp>
+ #include <fsm/config.hpp>
++#include <fsm/goal_retransmit_policy.hpp>
++#include <cstdlib>
++#include <functional>
+ #include <super_core/super_planner.h>
+ 
+ 
+@@ -78,11 +81,92 @@
+             Vec3f goal_p{Vec3f::Zero()};
+             Quatf goal_q{Quatf::Identity()};
+             bool valid{false};
++            std::string frame;
++            std::int64_t creation_stamp_ns{0};
++            std::uint64_t source_revision{0};
+         } pending_goal_;
+         mutable std::mutex pending_goal_mutex_;
+         std::uint64_t queued_goal_revision_{0};
+         std::uint64_t accepted_goal_revision_{0};
+         bool goal_update_in_progress_{false};
++        goal_retransmit::Request accepted_raw_goal_request_{};
++        std::uint64_t accepted_raw_goal_source_revision_{0};
++        std::uint64_t goal_retransmit_epoch_{0};
++        std::uint64_t goal_retransmit_coalesced_{0};
++
++        struct GoalRetransmissionToken {
++            bool valid{false};
++            std::uint64_t epoch{0}, generation{0};
++            std::uint64_t queued_revision{0}, accepted_revision{0};
++            std::uint64_t brake_revision{0}, event_request{0}, full_request{0};
++        } goal_retransmit_token_;
++
++        static bool goalRetransmitIdentityEnabled() {
++            static const bool enabled = goal_retransmit::enabledSetting(
++                    std::getenv("SUPER_GOAL_RETRANSMIT_IDENTITY"));
++            return enabled;
++        }
++
++        static goal_retransmit::Request rawGoalRequest(
++                const Vec3f& p, const Quatf& q, const std::string& frame,
++                const std::int64_t stamp) {
++            return {{p.x(), p.y(), p.z()}, {q.w(), q.x(), q.y(), q.z()}, frame, stamp};
++        }
++
++        void invalidateGoalRetransmissionTokenLocked() {
++            goal_retransmit_token_.valid = false;
++            ++goal_retransmit_epoch_;
++        }
++
++        void invalidateGoalRetransmissionToken() {
++            if (!goalRetransmitIdentityEnabled()) return;
++            std::lock_guard<std::mutex> lock(pending_goal_mutex_);
++            invalidateGoalRetransmissionTokenLocked();
++        }
++
++        std::uint64_t goalRetransmissionEpoch() const {
++            std::lock_guard<std::mutex> lock(pending_goal_mutex_);
++            return goal_retransmit_epoch_;
++        }
++
++        bool matchesGoalRetransmissionLocked(
++                const goal_retransmit::Request& request,
++                const GoalRetransmissionToken& token) const {
++            return goalRetransmitIdentityEnabled() && token.valid &&
++                    goal_retransmit_token_.valid && token.epoch == goal_retransmit_epoch_ &&
++                    token.epoch == goal_retransmit_token_.epoch &&
++                    token.generation == goal_retransmit_token_.generation &&
++                    token.brake_revision == goal_retransmit_token_.brake_revision &&
++                    token.event_request == goal_retransmit_token_.event_request &&
++                    token.full_request == goal_retransmit_token_.full_request &&
++                    !pending_goal_.valid && !goal_update_in_progress_ &&
++                    token.queued_revision == queued_goal_revision_ &&
++                    token.accepted_revision == accepted_goal_revision_ &&
++                    accepted_raw_goal_source_revision_ == queued_goal_revision_ &&
++                    goal_retransmit::sameRequest(request, accepted_raw_goal_request_);
++        }
++
++        GoalRetransmissionToken goalRetransmissionCandidate(
++                const goal_retransmit::Request& request) const {
++            std::lock_guard<std::mutex> lock(pending_goal_mutex_);
++            if (!matchesGoalRetransmissionLocked(request, goal_retransmit_token_)) return {};
++            return goal_retransmit_token_;
++        }
++
++        bool tryCoalesceGoalRetransmission(
++                const goal_retransmit::Request& request,
++                const GoalRetransmissionToken& token,
++                const std::function<bool()>& final_healthy) {
++            std::lock_guard<std::mutex> lock(pending_goal_mutex_);
++            if (!matchesGoalRetransmissionLocked(request, token) || !final_healthy()) return false;
++            ++goal_retransmit_coalesced_;
++            return true;  // No queue/revision/goal/lease update on a retransmission.
++        }
++
++        std::uint64_t goalRetransmissionCoalescedCount() const {
++            std::lock_guard<std::mutex> lock(pending_goal_mutex_);
++            return goal_retransmit_coalesced_;
++        }
+ 
+         struct GoalDemandSnapshot {
+             std::uint64_t queued_revision{0};
+@@ -96,14 +180,45 @@
+                     pending_goal_.valid || goal_update_in_progress_};
+         }
+ 
++        bool publishGoalRetransmissionToken(
++                const GoalDemandSnapshot& goal, const std::uint64_t epoch,
++                const std::uint64_t generation, const std::uint64_t brake_revision,
++                const std::uint64_t event_request, const std::uint64_t full_request,
++                const std::function<bool()>& final_healthy) {
++            if (!goalRetransmitIdentityEnabled()) return false;
++            std::lock_guard<std::mutex> lock(pending_goal_mutex_);
++            if (generation == 0 || epoch != goal_retransmit_epoch_ ||
++                goal.pending_or_updating || pending_goal_.valid || goal_update_in_progress_ ||
++                goal.queued_revision != queued_goal_revision_ ||
++                goal.accepted_revision != accepted_goal_revision_ ||
++                accepted_raw_goal_source_revision_ != queued_goal_revision_ ||
++                !accepted_raw_goal_request_.validIdentity() || !final_healthy()) return false;
++            goal_retransmit_token_ = {true, epoch, generation, queued_goal_revision_,
++                                     accepted_goal_revision_, brake_revision,
++                                     event_request, full_request};
++            return true;
++        }
++
+         // Keeps the existing goal-processing work outside the queue mutex but
+         // prevents its consume-to-accept gap from qualifying for a solver skip.
+         struct GoalUpdateScope {
+             Fsm& fsm;
+             bool accepted{false};
++            PendingGoal consumed{};
+             ~GoalUpdateScope() {
+                 std::lock_guard<std::mutex> lock(fsm.pending_goal_mutex_);
+-                if (accepted) ++fsm.accepted_goal_revision_;
++                if (accepted) {
++                    ++fsm.accepted_goal_revision_;
++                    if (consumed.valid) {
++                        fsm.accepted_raw_goal_request_ = rawGoalRequest(
++                                consumed.goal_p, consumed.goal_q, consumed.frame,
++                                consumed.creation_stamp_ns);
++                        fsm.accepted_raw_goal_source_revision_ = consumed.source_revision;
++                    } else {
++                        fsm.accepted_raw_goal_source_revision_ = 0;
++                    }
++                }
++                if (goalRetransmitIdentityEnabled()) fsm.invalidateGoalRetransmissionTokenLocked();
+                 fsm.goal_update_in_progress_ = false;
+             }
+         };
+@@ -219,7 +334,8 @@
+ 
+         bool closeToGoal(const double &thresh_dis);
+ 
+-        void enqueueGoal(const Vec3f &p, const Quatf &q);
++        void enqueueGoal(const Vec3f &p, const Quatf &q,
++                         const std::string& frame = {}, const std::int64_t creation_stamp_ns = 0);
+ 
+         bool tryConsumePendingGoal();
+ 
+--- a/super_planner/src/super_core/fsm.cpp
++++ b/super_planner/src/super_core/fsm.cpp
+@@ -97,6 +97,7 @@
+ //            cout << YELLOW << " -- [Fsm] ReplanOnce failed." << RESET << endl;
+         } else { cout << GREEN << " -- [Fsm] ReplanOnce succeed." << RESET << endl; }
+ 
++        if (ret_code != SUCCESS && ret_code != FINISH) invalidateGoalRetransmissionToken();
+         if (ret_code == EMER) {
+             ChangeState("ReplanTimerCallback", EMER_STOP);
+         } else if (ret_code == NEW_TRAJ) {
+@@ -255,13 +256,18 @@
+         return dis < thresh_dis;
+     }
+ 
+-    void Fsm::enqueueGoal(const Vec3f &p, const Quatf &q) {
++    void Fsm::enqueueGoal(const Vec3f &p, const Quatf &q,
++                          const std::string& frame, const std::int64_t creation_stamp_ns) {
+         {
+             std::lock_guard<std::mutex> lock(pending_goal_mutex_);
+             pending_goal_.goal_p = p;
+             pending_goal_.goal_q = q;
+             pending_goal_.valid = true;
+             ++queued_goal_revision_;
++            pending_goal_.frame = frame;
++            pending_goal_.creation_stamp_ns = creation_stamp_ns;
++            pending_goal_.source_revision = queued_goal_revision_;
++            if (goalRetransmitIdentityEnabled()) invalidateGoalRetransmissionTokenLocked();
+         }
+         started_.store(true, std::memory_order_release);
+     }
+@@ -290,6 +296,7 @@
+         }
+ 
+         GoalUpdateScope goal_update{*this};
++        goal_update.consumed = pending_goal;
+         auto click_point = pending_goal.goal_p;
+         if (cfg_.click_height > -5) {
+             click_point.z() = cfg_.click_height;
+@@ -433,6 +440,12 @@
+         const MACHINE_STATE old_state = machine_state_.load(std::memory_order_acquire);
+         fmt::print(fg(fmt::color::green), " -- [Fsm]: [{}] change state from [{}] to [{}].\n", call_func,
+                    MACHINE_STATE_STR[int(old_state)], MACHINE_STATE_STR[int(new_state)]);
+-        machine_state_.store(new_state, std::memory_order_release);
++        if (goalRetransmitIdentityEnabled()) {
++            std::lock_guard<std::mutex> lock(pending_goal_mutex_);
++            invalidateGoalRetransmissionTokenLocked();
++            machine_state_.store(new_state, std::memory_order_release);
++        } else {
++            machine_state_.store(new_state, std::memory_order_release);
++        }
+     }
+ }
+--- a/super_planner/include/ros_interface/ros2/fsm_ros2.hpp
++++ b/super_planner/include/ros_interface/ros2/fsm_ros2.hpp
+@@ -3273,11 +3273,141 @@
+             return true;
+         }
+ 
++        // Caller holds activation -> full-refresh -> safety locks, then enters
++        // the short base goal transaction. This path is read-only: it never
++        // refreshes certificates, changes recovery state, or extends a lease.
++        bool healthyGoalRetransmissionLocked(
++                const std::uint64_t generation, const std::uint64_t brake_revision,
++                const std::uint64_t event_request, const std::uint64_t full_request,
++                std::uint64_t* map_out = nullptr) {
++            goal_retransmit::HealthyFollow proof;
++            const auto health = map_ptr_->getMapHealthSnapshot();
++            proof.guard_enabled = cfg_.trajectory_guard_en;
++            proof.ordinary_follow = machine_state_.load(std::memory_order_acquire) == FOLLOW_TRAJ;
++            proof.stopped_finished_or_from_rest = stop.load(std::memory_order_acquire) ||
++                    finish_plan.load(std::memory_order_acquire) ||
++                    plan_from_rest_.load(std::memory_order_acquire);
++            proof.brake_or_revalidation = safety_brake_active_.load(std::memory_order_acquire) ||
++                    safety_revalidation_requested_.load(std::memory_order_acquire);
++            proof.recovery_or_refresh_pending =
++                    trajectory_guard_recovery_announced_.load(std::memory_order_acquire) ||
++                    brake_activation_revision_ != brake_revision ||
++                    event_recovery_requested_.load(std::memory_order_acquire) != event_request ||
++                    (cfg_.event_recovery_en &&
++                     event_recovery_requested_.load(std::memory_order_acquire) >
++                     event_recovery_completed_.load(std::memory_order_acquire)) ||
++                    latest_full_refresh_request_seq_ != full_request ||
++                    required_full_refresh_min_seq_ != 0 ||
++                    (full_refresh_gate_advertised_ && latest_full_refresh_request_seq_ != 0 &&
++                     !latest_full_refresh_request_acked_);
++            proof.failure_or_rejection = planner_ptr_->trajectoryGuardRejectionPending() ||
++                    planner_ptr_->topologyRetryPending();
++            proof.immutable_map = map_ptr_->immutablePlannerSnapshotEnabled();
++            double map_age = std::numeric_limits<double>::infinity();
++            // Conservative speed-independent limit avoids taking the command
++            // cache lock while holding the certificate transaction.
++            const double low_limit = cfg_.trajectory_guard_brake_trigger_map_age_s;
++            const double high_limit = cfg_.trajectory_guard_brake_trigger_high_speed_map_age_s;
++            const double age_limit = std::min(low_limit, high_limit);
++            proof.map_fresh = std::isfinite(low_limit) && low_limit > 0.0 &&
++                    std::isfinite(high_limit) && high_limit > 0.0 &&
++                    mapFreshForGuard(health, map_age) && map_age <= age_limit;
++            proof.generation = generation;
++            proof.map_version = health.map_version;
++            proof.explicitly_safe = safety_certificate_valid_ &&
++                    safety_certificate_.status == TrajectorySafetyStatus::SAFE;
++            proof.special_escape = safety_certificate_.used_clearance_escape ||
++                    safety_certificate_.used_initial_footprint_egress;
++            proof.certificate_generation = safety_certificate_.trajectory_generation;
++            proof.certificate_map_version = safety_certificate_.map_version;
++            proof.certificate_from_tt = safety_certificate_.checked_from_tt;
++            proof.certificate_until_tt = safety_certificate_.checked_to_tt;
++            CmdTraj::Sample sample;
++            proof.sample_valid_finite = planner_ptr_->getOneCommandSample(sample, generation) &&
++                    sample.generation == generation && sample.pvaj.array().isFinite().all() &&
++                    std::isfinite(sample.start_wt) && std::isfinite(sample.trajectory_time) &&
++                    std::isfinite(sample.yaw) && std::isfinite(sample.yaw_dot);
++            proof.sample_finished = sample.finished;
++            proof.sample_on_backup = sample.on_backup;
++            proof.sample_tt = sample.trajectory_time;
++            proof.final_evidence_current =
++                    planner_ptr_->getCommittedTrajectoryGeneration() == generation &&
++                    map_ptr_->getMapHealthSnapshot().map_version == health.map_version &&
++                    machine_state_.load(std::memory_order_acquire) == FOLLOW_TRAJ &&
++                    !stop.load(std::memory_order_acquire) &&
++                    !finish_plan.load(std::memory_order_acquire) &&
++                    !plan_from_rest_.load(std::memory_order_acquire) &&
++                    !safety_brake_active_.load(std::memory_order_acquire) &&
++                    !safety_revalidation_requested_.load(std::memory_order_acquire) &&
++                    !trajectory_guard_recovery_announced_.load(std::memory_order_acquire) &&
++                    !planner_ptr_->trajectoryGuardRejectionPending() &&
++                    !planner_ptr_->topologyRetryPending();
++            if (map_out) *map_out = health.map_version;
++            return goal_retransmit::eligible(proof);
++        }
++
++        bool coalesceExplicitGoalRetransmission(const goal_retransmit::Request& request) {
++            if (!goalRetransmitIdentityEnabled() || !demandReplanEnabled()) return false;
++            const auto token = goalRetransmissionCandidate(request);
++            if (!token.valid) return false;
++            // Never wait behind brake construction/certificate work to optimize
++            // a 1 Hz retransmission. Contention follows the original queue.
++            std::unique_lock<std::mutex> activation(brake_activation_mutex_, std::try_to_lock);
++            if (!activation) return false;
++            std::unique_lock<std::mutex> refresh(full_refresh_mutex_, std::try_to_lock);
++            if (!refresh) return false;
++            std::unique_lock<std::mutex> safety(safety_mutex_, std::try_to_lock);
++            if (!safety) return false;
++            std::uint64_t map_version = 0;
++            const bool coalesced = tryCoalesceGoalRetransmission(request, token, [&] {
++                return healthyGoalRetransmissionLocked(
++                        token.generation, token.brake_revision, token.event_request,
++                        token.full_request, &map_version);
++            });
++            safety.unlock();
++            refresh.unlock();
++            activation.unlock();
++            if (coalesced) {
++                ros_ptr_->info(
++                        " -- [GOAL_RETRANSMIT_COALESCED] stamp_ns={} generation={} map={} "
++                        "queued_revision={} accepted_revision={} coalesced_total={}",
++                        request.creation_stamp_ns, token.generation, map_version,
++                        token.queued_revision, token.accepted_revision,
++                        goalRetransmissionCoalescedCount());
++            }
++            return coalesced;
++        }
++
++        void recordGoalRetransmissionOwnCommit(
++                const GoalDemandSnapshot& goal, const std::uint64_t epoch,
++                const std::uint64_t generation) {
++            if (!goalRetransmitIdentityEnabled()) return;
++            std::unique_lock<std::mutex> activation(brake_activation_mutex_, std::try_to_lock);
++            if (!activation) return;
++            std::unique_lock<std::mutex> refresh(full_refresh_mutex_, std::try_to_lock);
++            if (!refresh) return;
++            std::unique_lock<std::mutex> safety(safety_mutex_, std::try_to_lock);
++            if (!safety) return;
++            const auto brake_revision = brake_activation_revision_;
++            const auto event_request = event_recovery_requested_.load(std::memory_order_acquire);
++            const auto full_request = latest_full_refresh_request_seq_;
++            publishGoalRetransmissionToken(goal, epoch, generation, brake_revision,
++                                           event_request, full_request, [&] {
++                return healthyGoalRetransmissionLocked(
++                        generation, brake_revision, event_request, full_request);
++            });
++        }
++
+         void goalCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
+             super_utils::Vec3f goal_p = Vec3f{msg->pose.position.x, msg->pose.position.y, msg->pose.position.z};
+             super_utils::Quatf goal_q = super_utils::Quatf{msg->pose.orientation.w, msg->pose.orientation.x,
+                                                            msg->pose.orientation.y, msg->pose.orientation.z};
+-            enqueueGoal(goal_p, goal_q);
++            const auto creation_stamp = goal_retransmit::canonicalPositiveStamp(
++                    msg->header.stamp.sec, msg->header.stamp.nanosec);
++            const auto request = rawGoalRequest(goal_p, goal_q, msg->header.frame_id, creation_stamp);
++            if (!coalesceExplicitGoalRetransmission(request)) {
++                enqueueGoal(goal_p, goal_q, msg->header.frame_id, creation_stamp);
++            }
+         }
+ 
+         void init(const rclcpp::Node::SharedPtr nh, const std::string &cfg_path) {
+@@ -3510,6 +3640,15 @@
+                 exit(0);
+             }
+ 
++            if (goalRetransmitIdentityEnabled()) {
++                if (!demandReplanEnabled()) {
++                    throw std::invalid_argument(
++                            "SUPER_GOAL_RETRANSMIT_IDENTITY=1 requires SUPER_GUARDED_DEMAND_REPLAN=1");
++                }
++                ros_ptr_->info(
++                        " -- [GOAL_RETRANSMIT_IDENTITY] enabled=true role=receiver "
++                        "guarded_demand=true identity=creation_stamp_raw_pose_frame default_off=true");
++            }
+             if (demandReplanEnabled()) {
+                 ros_ptr_->info(
+                         " -- [GUARDED_DEMAND_REPLAN] enabled=true max_dispatch_interval={} "
+@@ -3861,7 +4000,8 @@
+                 const MovingReplanOutcome& outcome, const bool candidate_rejected,
+                 const GoalDemandSnapshot& goal_before,
+                 const std::uint64_t event_before,
+-                const rog_map::MapHealthClock::time_point dispatch) {
++                const rog_map::MapHealthClock::time_point dispatch,
++                const std::uint64_t retransmit_epoch) {
+             // Do not manufacture a lease from SUCCESS/NO_NEED, an unrelated
+             // concurrent PlanFromRest commit, or a goal/recovery update.
+             const double dispatch_to_commit_s = std::chrono::duration<double>(
+@@ -3891,6 +4031,8 @@
+             demand_success_goal_ = goal_before;
+             demand_success_event_request_ = event_before;
+             demand_success_dispatch_ = dispatch;
++            recordGoalRetransmissionOwnCommit(goal_before, retransmit_epoch,
++                                              outcome.committed_generation);
+         }
+ 
+         void replanTimerCallback() {
+@@ -3953,12 +4095,20 @@
+                     ? event_recovery_requested_.load(std::memory_order_acquire) : 0;
+             const auto demand_dispatch = demand_enabled
+                     ? rog_map::MapHealthClock::now() : rog_map::MapHealthClock::time_point{};
++            const auto retransmit_epoch = goalRetransmitIdentityEnabled()
++                    ? goalRetransmissionEpoch() : 0;
+             MovingReplanOutcome demand_outcome;
+             {
+                 const super_utils::thread_cpu_profile::Scope replan_cpu_scope(
+                         super_utils::thread_cpu_profile::Stage::FsmReplanCore);
+                 demand_outcome = callReplanOnce();
+             }
++            if (goalRetransmitIdentityEnabled() &&
++                planner_ptr_->trajectoryGuardRejectionPending()) {
++                // Invalidate before consuming the flag, so clearing it cannot
++                // make a failed candidate briefly resemble a healthy retry.
++                invalidateGoalRetransmissionToken();
++            }
+             const bool candidate_rejected = cfg_.trajectory_guard_en &&
+                     planner_ptr_->consumeTrajectoryGuardRejection();
+             if (demand_enabled) {
+@@ -3981,7 +4131,7 @@
+             if (demand_enabled) {
+                 recordDemandReplanOutcome(demand_outcome, candidate_rejected,
+                                           demand_goal_before, demand_event_before,
+-                                          demand_dispatch);
++                                          demand_dispatch, retransmit_epoch);
+             }
+             if (cfg_.trajectory_guard_en &&
+                 cfg_.trajectory_guard_same_map_replan_coalesce_en &&
+--- /dev/null
++++ b/super_planner/include/fsm/goal_retransmit_policy.hpp
+@@ -0,0 +1,83 @@
++#pragma once
++
++#include <array>
++#include <cmath>
++#include <cstdint>
++#include <cstring>
++#include <string>
++
++namespace fsm::goal_retransmit {
++
++inline bool enabledSetting(const char* setting) noexcept {
++    return setting && std::strcmp(setting, "1") == 0;
++}
++
++inline std::int64_t canonicalPositiveStamp(const std::int32_t sec,
++                                         const std::uint32_t nanosec) noexcept {
++    if (sec < 0 || nanosec >= 1000000000U) return 0;
++    // Nonnegative int32 seconds fit safely in signed64 nanoseconds.
++    const auto stamp = static_cast<std::int64_t>(sec) * 1000000000LL + nanosec;
++    return stamp > 0 ? stamp : 0;
++}
++
++struct Request {
++    std::array<double, 3> position{};
++    // Preserve original coefficients, not normalized yaw/quaternion equivalence.
++    std::array<double, 4> quaternion{};  // w,x,y,z
++    std::string frame;
++    std::int64_t creation_stamp_ns{0};
++
++    bool validIdentity() const noexcept {
++        if (creation_stamp_ns <= 0 || frame.empty()) return false;
++        for (const auto value : position) if (!std::isfinite(value)) return false;
++        for (const auto value : quaternion) if (!std::isfinite(value)) return false;
++        return true;
++    }
++};
++
++inline bool sameRequest(const Request& a, const Request& b) noexcept {
++    return a.validIdentity() && b.validIdentity() &&
++            a.creation_stamp_ns == b.creation_stamp_ns && a.frame == b.frame &&
++            std::memcmp(a.position.data(), b.position.data(), sizeof(double) * 3) == 0 &&
++            std::memcmp(a.quaternion.data(), b.quaternion.data(), sizeof(double) * 4) == 0;
++}
++
++struct HealthyFollow {
++    bool guard_enabled{false};
++    bool ordinary_follow{false};
++    bool stopped_finished_or_from_rest{true};
++    bool brake_or_revalidation{true};
++    bool recovery_or_refresh_pending{true};
++    bool failure_or_rejection{true};
++    bool immutable_map{false};
++    bool map_fresh{false};
++    bool explicitly_safe{false};
++    bool special_escape{true};
++    bool sample_valid_finite{false};
++    bool sample_finished{true};
++    bool sample_on_backup{true};
++    bool final_evidence_current{false};
++    std::uint64_t generation{0};
++    std::uint64_t map_version{0};
++    std::uint64_t certificate_generation{0};
++    std::uint64_t certificate_map_version{0};
++    double sample_tt{0.0};
++    double certificate_from_tt{0.0};
++    double certificate_until_tt{0.0};
++};
++
++inline bool eligible(const HealthyFollow& e) noexcept {
++    return e.guard_enabled && e.ordinary_follow && !e.stopped_finished_or_from_rest &&
++            !e.brake_or_revalidation && !e.recovery_or_refresh_pending &&
++            !e.failure_or_rejection && e.immutable_map && e.map_fresh &&
++            e.explicitly_safe && !e.special_escape && e.sample_valid_finite &&
++            !e.sample_finished && !e.sample_on_backup && e.final_evidence_current &&
++            e.generation != 0 && e.map_version != 0 &&
++            e.certificate_generation == e.generation &&
++            e.certificate_map_version == e.map_version &&
++            std::isfinite(e.sample_tt) && e.sample_tt >= 0.0 &&
++            std::isfinite(e.certificate_from_tt) && std::isfinite(e.certificate_until_tt) &&
++            e.certificate_from_tt <= e.sample_tt && e.certificate_until_tt >= e.sample_tt;
++}
++
++}  // namespace fsm::goal_retransmit
+--- /dev/null
++++ b/super_planner/test/goal_retransmit_policy_test.cpp
+@@ -0,0 +1,90 @@
++#include <fsm/goal_retransmit_policy.hpp>
++
++#include <functional>
++#include <iostream>
++#include <limits>
++#include <stdexcept>
++#include <vector>
++
++namespace policy = fsm::goal_retransmit;
++void require(bool value, const char* why) {
++    if (!value) throw std::runtime_error(why);
++}
++
++policy::Request request() {
++    return {{1.0, 2.0, 3.0}, {1.0, 0.0, 0.0, 0.0}, "world", 123456789};
++}
++policy::HealthyFollow healthy() {
++    policy::HealthyFollow e;
++    e.guard_enabled = e.ordinary_follow = e.immutable_map = e.map_fresh = true;
++    e.explicitly_safe = e.sample_valid_finite = e.final_evidence_current = true;
++    e.stopped_finished_or_from_rest = e.brake_or_revalidation = false;
++    e.recovery_or_refresh_pending = e.failure_or_rejection = e.special_escape = false;
++    e.sample_finished = e.sample_on_backup = false;
++    e.generation = e.certificate_generation = 7;
++    e.map_version = e.certificate_map_version = 12;
++    e.sample_tt = 0.5; e.certificate_from_tt = 0.4; e.certificate_until_tt = 1.0;
++    return e;
++}
++
++int main() {
++    try {
++        require(!policy::enabledSetting(nullptr) && !policy::enabledSetting("0") &&
++                !policy::enabledSetting("true") && policy::enabledSetting("1"), "exact default-off flag");
++        const auto a = request();
++        require(policy::sameRequest(a, a), "unchanged explicit retransmission");
++        for (const auto& mutate : std::vector<std::function<void(policy::Request&)>>{
++                [](auto& r) { ++r.creation_stamp_ns; },
++                [](auto& r) { r.creation_stamp_ns = 0; },
++                [](auto& r) { r.creation_stamp_ns = -1; },
++                [](auto& r) { r.frame = "map"; },
++                [](auto& r) { r.frame.clear(); },
++                [](auto& r) { r.position[0] = std::nextafter(r.position[0], 2.0); },
++                [](auto& r) { r.position[1] += 1.0; },
++                [](auto& r) { r.position[2] += .01; },
++                [](auto& r) { r.quaternion[0] = -1.0; },
++                [](auto& r) { r.quaternion[1] = .001; },
++                [](auto& r) { r.quaternion[2] = -0.0; },
++                [](auto& r) { r.quaternion[3] = .1; },
++                [](auto& r) { r.position[0] = std::numeric_limits<double>::quiet_NaN(); },
++                [](auto& r) { r.quaternion[0] = std::numeric_limits<double>::infinity(); }}) {
++            auto b = a; mutate(b);
++            require(!policy::sameRequest(a, b), "changed/invalid raw request is never coalesced");
++        }
++        require(policy::eligible(healthy()), "healthy existing committed motion");
++        unsigned rejected = 0;
++        for (const auto& mutate : std::vector<std::function<void(policy::HealthyFollow&)>>{
++                [](auto& e) { e.guard_enabled = false; },
++                [](auto& e) { e.ordinary_follow = false; },
++                [](auto& e) { e.stopped_finished_or_from_rest = true; },
++                [](auto& e) { e.brake_or_revalidation = true; },
++                [](auto& e) { e.recovery_or_refresh_pending = true; },
++                [](auto& e) { e.failure_or_rejection = true; },
++                [](auto& e) { e.immutable_map = false; },
++                [](auto& e) { e.map_fresh = false; },
++                [](auto& e) { e.explicitly_safe = false; },
++                [](auto& e) { e.special_escape = true; },
++                [](auto& e) { e.sample_valid_finite = false; },
++                [](auto& e) { e.sample_finished = true; },
++                [](auto& e) { e.sample_on_backup = true; },
++                [](auto& e) { e.final_evidence_current = false; },
++                [](auto& e) { e.generation = 0; },
++                [](auto& e) { e.map_version = 0; },
++                [](auto& e) { ++e.certificate_generation; },
++                [](auto& e) { ++e.certificate_map_version; },
++                [](auto& e) { e.certificate_from_tt = .6; },
++                [](auto& e) { e.certificate_until_tt = .4; },
++                [](auto& e) { e.sample_tt = -1.0; },
++                [](auto& e) { e.sample_tt = std::numeric_limits<double>::quiet_NaN(); },
++                [](auto& e) { e.certificate_until_tt = std::numeric_limits<double>::infinity(); }}) {
++            auto e = healthy(); mutate(e); ++rejected;
++            require(!policy::eligible(e), "unhealthy retransmission preserves ordinary retry");
++        }
++        std::cout << "goal_retransmit_policy_test=PASS raw_change_cases=14 healthy_rejections="
++                  << rejected << '\n';
++        return 0;
++    } catch (const std::exception& error) {
++        std::cerr << "goal_retransmit_policy_test=FAIL reason=" << error.what() << '\n';
++        return 1;
++    }
++}

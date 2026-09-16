@@ -66,7 +66,7 @@ SMALL_POOL_MATCH_FIELDS = (
     'skip_backup_diagnostic_replay', 'skip_unobserved_path_publication',
     'fast_occupied_box_scan', 'compare_occupied_box_scan', 'snapshot_line_query',
     'snapshot_neighbor_cache', 'static_pc_poll_ms', 'static_pc_two_phase', 'side_executor_threads',
-    'monitor_intervals', 'guarded_demand_replan', 'extended_demand_lease',
+    'monitor_intervals', 'guarded_demand_replan', 'extended_demand_lease', 'goal_retransmit_identity',
     'dedicated_static_pc_executor',
     'optimizer_phase_memory_trace', 'time_reference_folder',
     'max_same_mode_reference_time_ratio', 'max_mission_time_ratio',
@@ -135,6 +135,9 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
         checks[mode + '_static_delivery_preservation'] = (
             not plan.get('static_pc_two_phase') or
             row.get('static_pc_delivery_validated') is True)
+        checks[mode + '_goal_identity_exercised'] = (
+            not plan.get('goal_retransmit_identity') or
+            row.get('goal_retransmit_exercised') is True)
     ftime = summaries.get('full', {}).get('mission_time_s')
     atime = summaries.get('adaptive', {}).get('mission_time_s')
     checks['paired_mission_time'] = (
@@ -234,6 +237,56 @@ def static_two_phase_audit(stack, profile=None):
                 scope='Stable-clock startup/handoff and reduced callback rate only; no late-reader delivery guarantee')
 
 
+def goal_identity_audit(stack):
+    """Check explicit producer identities and actual healthy receiver coalescing.
+
+    Geometry/health concurrency is tested separately in the receiver; these logs
+    establish exercised identity linkage, not a continuous-safety certificate.
+    """
+    publications = [tuple(map(int, row)) for row in re.findall(
+        r'\[MISSION_GOAL_IDENTITY\] stamp_ns=(\d+) new_intent=([01]) '
+        r'new_identity=([01]) supported=([01]) waypoint=(\d+)', stack)]
+    coalesced = [tuple(map(int, row)) for row in re.findall(
+        r'\[GOAL_RETRANSMIT_COALESCED\] stamp_ns=(\d+) generation=(\d+) '
+        r'map=(\d+) queued_revision=(\d+) accepted_revision=(\d+) '
+        r'coalesced_total=(\d+)', stack)]
+    consistent = bool(publications)
+    previous = None
+    issued = set()
+    repeated = set()
+    for row in publications:
+        stamp, intent, new, supported, waypoint = row
+        consistent = consistent and supported == 1 and stamp > 0
+        if new:
+            consistent = consistent and stamp not in issued and (
+                previous is None or stamp > previous[0])
+            issued.add(stamp)
+        else:
+            consistent = consistent and intent == 0 and previous is not None and (
+                stamp == previous[0] and waypoint == previous[4])
+            repeated.add(stamp)
+        if intent:
+            consistent = consistent and new == 1
+        previous = row
+    checks = dict(
+        producer_serialized=('[MISSION_GOAL_IDENTITY_SETTINGS] enabled=1 executor=single '
+                             'callbacks_serialized=1 timers_qos_unchanged=1' in stack),
+        receiver_enabled=('[GOAL_RETRANSMIT_IDENTITY] enabled=true role=receiver guarded_demand=true '
+                          'identity=creation_stamp_raw_pose_frame default_off=true' in stack),
+        producer_identity_consistent=bool(consistent),
+        actual_retransmissions=bool(repeated),
+        actual_receiver_coalescing=bool(coalesced),
+        coalesced_identity_linkage=bool(coalesced) and all(
+            stamp in repeated and all(v > 0 for v in (gen, version, queued, accepted))
+            for stamp, gen, version, queued, accepted, total in coalesced),
+        coalesced_counter=bool(coalesced) and
+            [row[-1] for row in coalesced] == list(range(1, len(coalesced) + 1)))
+    return dict(valid=all(checks.values()), checks=checks,
+                publications=len(publications), creation_identities=len(issued),
+                repeated_identities=len(repeated), coalesced=len(coalesced),
+                scope='Explicit creation-ID linkage and exercised coverage; not proof that every repeat may safely be suppressed')
+
+
 def comparison(results):
     modes = {r['mode']: r for r in results}
     if not {'full', 'adaptive'} <= modes.keys():
@@ -277,10 +330,14 @@ def comparison(results):
     out['static_delivery_preservation_pass'] = all(
         not r.get('static_pc_two_phase', False) or
         r.get('static_pc_delivery_validated') is True for r in (f, a))
+    out['common_goal_identity_exercise_pass'] = all(
+        not r.get('goal_retransmit_identity', False) or
+        r.get('goal_retransmit_exercised') is True for r in (f, a))
     out['measured_threshold_pass'] = bool(safe and out['mission_time_guardrail_pass']
                                          and out['per_mode_reference_time_guardrail_pass']
                                          and out['common_demand_exercise_pass']
                                          and out['static_delivery_preservation_pass']
+                                         and out['common_goal_identity_exercise_pass']
                                          and not out['cpu_comparison_instrumented']
                                          and reduction is not None and reduction >= 40.)
     out['target_met'] = (out['measured_threshold_pass']
@@ -317,6 +374,8 @@ def main():
     parser.add_argument('--guarded-demand-replan', action='store_true')
     parser.add_argument('--extended-demand-lease', action='store_true',
                         help='Opt in to 0.5s maximum dispatch age; rolling safety evidence and timer cadence unchanged')
+    parser.add_argument('--goal-retransmit-identity', action='store_true',
+                        help='Paired mission creation-ID retransmission and healthy receiver coalescing')
     parser.add_argument('--dedicated-static-pc-executor', action='store_true')
     parser.add_argument('--no-optimizer-phase-memory-trace', action='store_true',
                         help='Disable per-solve diagnostic /proc reads and logs equally in both modes; retain external resource guards')
@@ -338,6 +397,8 @@ def main():
         parser.error('--guarded-demand-replan requires --time-reference-folder')
     if args.extended_demand_lease and not args.guarded_demand_replan:
         parser.error('--extended-demand-lease requires --guarded-demand-replan')
+    if args.goal_retransmit_identity and not args.guarded_demand_replan:
+        parser.error('--goal-retransmit-identity requires --guarded-demand-replan')
     if args.static_pc_two_phase and (args.static_pc_poll_ms != 1 or not args.compose):
         parser.error('--static-pc-two-phase requires --static-pc-poll-ms 1 and --compose')
     if args.side_executor_threads < 4 and not (
@@ -397,6 +458,7 @@ def main():
     os.environ['SUPER_MONITOR_INTERVALS'] = '1' if args.monitor_intervals else '0'
     os.environ['SUPER_GUARDED_DEMAND_REPLAN'] = '1' if args.guarded_demand_replan else '0'
     os.environ['SUPER_GUARDED_DEMAND_EXTENDED_LEASE'] = '1' if args.extended_demand_lease else '0'
+    os.environ['SUPER_GOAL_RETRANSMIT_IDENTITY'] = '1' if args.goal_retransmit_identity else '0'
     os.environ['SUPER_STATIC_PC_DEDICATED_EXECUTOR'] = (
         '1' if args.dedicated_static_pc_executor else '0')
     os.environ['SUPER_OPTIMIZER_PHASE_MEMORY_TRACE'] = (
@@ -411,6 +473,8 @@ def main():
                   runtime / 'mission_planner/data/loop24.txt',
                   Path('/root/super_ws/install/marsim_render/lib/libmarsim_render.so'),
                   Path('/root/super_ws/install/mission_planner/lib/libnative_sector_cpp_component.so'),
+                  Path('/root/super_ws/install/mission_planner/lib/mission_planner/waypoint_mission'),
+                  runtime / 'mission_planner/Apps/ros2_waypoint_mission.cpp',
                   Path('/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_full_node'),
                   Path('/root/super_ws/install/rog_map/lib/librog_map.a'),
                   Path('/root/super_ws/install/super_planner/lib/libsuper.a'),
@@ -457,6 +521,7 @@ def main():
         monitor_intervals=args.monitor_intervals,
         guarded_demand_replan=args.guarded_demand_replan,
         extended_demand_lease=args.extended_demand_lease,
+        goal_retransmit_identity=args.goal_retransmit_identity,
         dedicated_static_pc_executor=args.dedicated_static_pc_executor,
         optimizer_phase_memory_trace=not args.no_optimizer_phase_memory_trace,
         time_reference_folder=str(args.time_reference_folder) if args.time_reference_folder else None,
@@ -558,6 +623,12 @@ def main():
                         result['demand_reason_audit'] = demand_reason_audit(stack, demand_cap)
                         result['source_acquisition']['checks']['demand_reason_accounting'] = (
                             result['demand_reason_audit']['valid'])
+                if args.goal_retransmit_identity:
+                    result['goal_retransmit_identity'] = True
+                    result['goal_identity_audit'] = goal_identity_audit(stack)
+                    result['goal_retransmit_exercised'] = result['goal_identity_audit']['valid']
+                    result['source_acquisition']['checks']['goal_identity_audit'] = (
+                        result['goal_identity_audit']['valid'])
                 if args.side_executor_threads < 4:
                     result['small_pool_timing'] = small_pool_timing_audit(
                         result.get('message_intervals', {}), row.get('sensor_hz'),

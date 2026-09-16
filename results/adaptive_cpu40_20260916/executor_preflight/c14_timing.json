@@ -1,0 +1,439 @@
+{
+  "schema": "executor-preflight-existing-log-timing-v1",
+  "runs": [
+    {
+      "campaign": "c14_goal_identity_profile",
+      "mode": "full",
+      "stack_log": "results/adaptive_cpu40_20260916/c14_goal_identity_profile/artifacts/seed1_run9315_full.attempt1.stack.log",
+      "monitor_json": "results/adaptive_cpu40_20260916/c14_goal_identity_profile/artifacts/seed1_run9315_full.json",
+      "strict_recovery_audit_valid": true,
+      "strict_audit_errors": [],
+      "acquisition_stamp_intervals_ms": {
+        "count": 390,
+        "min": 99.636733,
+        "mean": 99.9957215025641,
+        "p50": 99.996377,
+        "p95": 100.12104685000001,
+        "p99": 100.17975785,
+        "max": 100.460328
+      },
+      "acquisition_missing_frame_numbers": 0,
+      "acquisition_first_to_last_hz": 10.000427868049913,
+      "recovery_cycles": [],
+      "recovery_latency_distributions_ms": {},
+      "callback_count_windows": {
+        "fsm_main_callback": {
+          "report_windows": [
+            {
+              "span_s": 5.009650103,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00698445984861
+            },
+            {
+              "span_s": 5.009768758,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00461582183071
+            },
+            {
+              "span_s": 5.009837094,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00325172250002
+            },
+            {
+              "span_s": 5.009814452,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00370369006234
+            },
+            {
+              "span_s": 5.009800704,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00397812232013
+            },
+            {
+              "span_s": 5.009830348,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00338638213702
+            }
+          ],
+          "completed_calls_per_s": {
+            "count": 6,
+            "min": 100.00325172250002,
+            "mean": 100.00432003311647,
+            "p50": 100.00384090619124,
+            "p95": 100.00639230034413,
+            "p99": 100.00686602794771,
+            "max": 100.00698445984861
+          },
+          "interpretation": "Approximate finished callback count per profiler reporting window; not callback start jitter, timer lateness, or published-message rate."
+        },
+        "fsm_command_callback": {
+          "report_windows": [
+            {
+              "span_s": 5.009650103,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00698445984861
+            },
+            {
+              "span_s": 5.009768758,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00461582183071
+            },
+            {
+              "span_s": 5.009837094,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00325172250002
+            },
+            {
+              "span_s": 5.009814452,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00370369006234
+            },
+            {
+              "span_s": 5.009800704,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00397812232013
+            },
+            {
+              "span_s": 5.009830348,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00338638213702
+            }
+          ],
+          "completed_calls_per_s": {
+            "count": 6,
+            "min": 100.00325172250002,
+            "mean": 100.00432003311647,
+            "p50": 100.00384090619124,
+            "p95": 100.00639230034413,
+            "p99": 100.00686602794771,
+            "max": 100.00698445984861
+          },
+          "interpretation": "Approximate finished callback count per profiler reporting window; not callback start jitter, timer lateness, or published-message rate."
+        },
+        "fsm_replan_callback": {
+          "report_windows": [
+            {
+              "span_s": 5.009650103,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.170720197501986
+            },
+            {
+              "span_s": 5.009768758,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.170360883151965
+            },
+            {
+              "span_s": 5.009837094,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.170153953912179
+            },
+            {
+              "span_s": 5.009814452,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.170222515857759
+            },
+            {
+              "span_s": 5.009800704,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.17026414630006
+            },
+            {
+              "span_s": 5.009830348,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.170174381322184
+            }
+          ],
+          "completed_calls_per_s": {
+            "count": 6,
+            "min": 15.170153953912179,
+            "mean": 15.170316013007687,
+            "p50": 15.17024333107891,
+            "p95": 15.17063036891448,
+            "p99": 15.170702231784485,
+            "max": 15.170720197501986
+          },
+          "interpretation": "Approximate finished callback count per profiler reporting window; not callback start jitter, timer lateness, or published-message rate."
+        }
+      },
+      "observed_odom_count": 3753,
+      "rounded_monitor_duration_s": 37.54,
+      "observed_odom_count_per_rounded_duration_s": 99.97336174746937,
+      "unavailable": [
+        "Per-message odometry stamp/receipt interval distribution",
+        "PositionCommand publication or receipt count and interval distribution",
+        "Timer callback start lateness/execution wall time",
+        "Actual map-commit timestamp or ACK publication\u2192subscriber scheduling latency"
+      ],
+      "limitations": [
+        "Source stamps and ROS log stamps assume the unchanged system/ROS clock used in these runs.",
+        "Recovery ACK times are subscriber processing/log times, not exact commit times.",
+        "Frontend ACK may legitimately arrive after FSM PATH_READY; its signed delta is not a safety failure.",
+        "Whole startup\u2192shutdown source coverage differs from monitor mission and profiler report windows.",
+        "Monitor odom count/duration is only a rounded mission-wide receive-rate approximation."
+      ]
+    },
+    {
+      "campaign": "c14_goal_identity_profile",
+      "mode": "adaptive",
+      "stack_log": "results/adaptive_cpu40_20260916/c14_goal_identity_profile/artifacts/seed1_run9315_adaptive.attempt1.stack.log",
+      "monitor_json": "results/adaptive_cpu40_20260916/c14_goal_identity_profile/artifacts/seed1_run9315_adaptive.json",
+      "strict_recovery_audit_valid": true,
+      "strict_audit_errors": [],
+      "acquisition_stamp_intervals_ms": {
+        "count": 414,
+        "min": 97.956939,
+        "mean": 99.99587253140098,
+        "p50": 99.9964515,
+        "p95": 100.12235095,
+        "p99": 100.1892144,
+        "max": 101.992631
+      },
+      "acquisition_missing_frame_numbers": 0,
+      "acquisition_first_to_last_hz": 10.000412763896604,
+      "recovery_cycles": [
+        {
+          "cycle": 1,
+          "frame": 16,
+          "map_id": 16,
+          "open_to_source_ms": 87.987427,
+          "source_to_frontend_ack_ms": 55.914904,
+          "source_to_fsm_ack_ms": 55.804995,
+          "fsm_ack_to_path_ms": 1081.867606,
+          "frontend_ack_to_path_ms": 1081.757697,
+          "path_to_close_ms": 0.117579,
+          "open_to_close_ms": 1225.777607
+        }
+      ],
+      "recovery_latency_distributions_ms": {
+        "open_to_source_ms": {
+          "count": 1,
+          "min": 87.987427,
+          "mean": 87.987427,
+          "p50": 87.987427,
+          "p95": 87.987427,
+          "p99": 87.987427,
+          "max": 87.987427
+        },
+        "source_to_frontend_ack_ms": {
+          "count": 1,
+          "min": 55.914904,
+          "mean": 55.914904,
+          "p50": 55.914904,
+          "p95": 55.914904,
+          "p99": 55.914904,
+          "max": 55.914904
+        },
+        "source_to_fsm_ack_ms": {
+          "count": 1,
+          "min": 55.804995,
+          "mean": 55.804995,
+          "p50": 55.804995,
+          "p95": 55.804995,
+          "p99": 55.804995,
+          "max": 55.804995
+        },
+        "fsm_ack_to_path_ms": {
+          "count": 1,
+          "min": 1081.867606,
+          "mean": 1081.867606,
+          "p50": 1081.867606,
+          "p95": 1081.867606,
+          "p99": 1081.867606,
+          "max": 1081.867606
+        },
+        "frontend_ack_to_path_ms": {
+          "count": 1,
+          "min": 1081.757697,
+          "mean": 1081.757697,
+          "p50": 1081.757697,
+          "p95": 1081.757697,
+          "p99": 1081.757697,
+          "max": 1081.757697
+        },
+        "path_to_close_ms": {
+          "count": 1,
+          "min": 0.117579,
+          "mean": 0.117579,
+          "p50": 0.117579,
+          "p95": 0.117579,
+          "p99": 0.117579,
+          "max": 0.117579
+        },
+        "open_to_close_ms": {
+          "count": 1,
+          "min": 1225.777607,
+          "mean": 1225.777607,
+          "p50": 1225.777607,
+          "p95": 1225.777607,
+          "p99": 1225.777607,
+          "max": 1225.777607
+        }
+      },
+      "callback_count_windows": {
+        "fsm_main_callback": {
+          "report_windows": [
+            {
+              "span_s": 5.00972702,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00544899949459
+            },
+            {
+              "span_s": 5.009878018,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.0024348297416
+            },
+            {
+              "span_s": 5.009736611,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.005257541872
+            },
+            {
+              "span_s": 5.009900981,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00197646620913
+            },
+            {
+              "span_s": 5.009749627,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00499771482892
+            },
+            {
+              "span_s": 5.009808935,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00381381810124
+            },
+            {
+              "span_s": 5.009782212,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.0043472548463
+            }
+          ],
+          "completed_calls_per_s": {
+            "count": 7,
+            "min": 100.00197646620913,
+            "mean": 100.00403951787054,
+            "p50": 100.0043472548463,
+            "p95": 100.0053915622078,
+            "p99": 100.00543751203723,
+            "max": 100.00544899949459
+          },
+          "interpretation": "Approximate finished callback count per profiler reporting window; not callback start jitter, timer lateness, or published-message rate."
+        },
+        "fsm_command_callback": {
+          "report_windows": [
+            {
+              "span_s": 5.00972702,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00544899949459
+            },
+            {
+              "span_s": 5.009878018,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.0024348297416
+            },
+            {
+              "span_s": 5.009736611,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.005257541872
+            },
+            {
+              "span_s": 5.009900981,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00197646620913
+            },
+            {
+              "span_s": 5.009749627,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00499771482892
+            },
+            {
+              "span_s": 5.009808935,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.00381381810124
+            },
+            {
+              "span_s": 5.009782212,
+              "completed_calls": 501,
+              "completed_calls_per_s": 100.0043472548463
+            }
+          ],
+          "completed_calls_per_s": {
+            "count": 7,
+            "min": 100.00197646620913,
+            "mean": 100.00403951787054,
+            "p50": 100.0043472548463,
+            "p95": 100.0053915622078,
+            "p99": 100.00543751203723,
+            "max": 100.00544899949459
+          },
+          "interpretation": "Approximate finished callback count per profiler reporting window; not callback start jitter, timer lateness, or published-message rate."
+        },
+        "fsm_replan_callback": {
+          "report_windows": [
+            {
+              "span_s": 5.00972702,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.170487273376425
+            },
+            {
+              "span_s": 5.009878018,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.170030034052617
+            },
+            {
+              "span_s": 5.009736611,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.170458229904733
+            },
+            {
+              "span_s": 5.009900981,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.169960501860066
+            },
+            {
+              "span_s": 5.009749627,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.170418815023947
+            },
+            {
+              "span_s": 5.009808935,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.170239221907572
+            },
+            {
+              "span_s": 5.009782212,
+              "completed_calls": 76,
+              "completed_calls_per_s": 15.170320142451734
+            }
+          ],
+          "completed_calls_per_s": {
+            "count": 7,
+            "min": 15.169960501860066,
+            "mean": 15.170273459796729,
+            "p50": 15.170320142451734,
+            "p95": 15.170478560334917,
+            "p99": 15.170485530768124,
+            "max": 15.170487273376425
+          },
+          "interpretation": "Approximate finished callback count per profiler reporting window; not callback start jitter, timer lateness, or published-message rate."
+        }
+      },
+      "observed_odom_count": 3965,
+      "rounded_monitor_duration_s": 39.65,
+      "observed_odom_count_per_rounded_duration_s": 100.0,
+      "unavailable": [
+        "Per-message odometry stamp/receipt interval distribution",
+        "PositionCommand publication or receipt count and interval distribution",
+        "Timer callback start lateness/execution wall time",
+        "Actual map-commit timestamp or ACK publication\u2192subscriber scheduling latency"
+      ],
+      "limitations": [
+        "Source stamps and ROS log stamps assume the unchanged system/ROS clock used in these runs.",
+        "Recovery ACK times are subscriber processing/log times, not exact commit times.",
+        "Frontend ACK may legitimately arrive after FSM PATH_READY; its signed delta is not a safety failure.",
+        "Whole startup\u2192shutdown source coverage differs from monitor mission and profiler report windows.",
+        "Monitor odom count/duration is only a rounded mission-wide receive-rate approximation."
+      ]
+    }
+  ]
+}
