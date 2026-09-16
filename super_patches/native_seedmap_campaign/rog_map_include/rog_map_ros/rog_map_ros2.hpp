@@ -120,6 +120,8 @@ namespace rog_map {
         } rc_;
 
         void odomCallback(const nav_msgs::msg::Odometry::SharedPtr odom_msg) {
+            const thread_cpu_profile::Scope cpu_scope(
+                    thread_cpu_profile::Stage::MapOdom);
             const double receive_time = nh_->get_clock()->now().seconds();
             const Vec3f odom_twist(odom_msg->twist.twist.linear.x,
                                    odom_msg->twist.twist.linear.y,
@@ -224,6 +226,7 @@ namespace rog_map {
         }
 
         void updateWorkerLoop() {
+            thread_cpu_profile::reportThreadRole("map_update_worker");
             while (true) {
                 {
                     std::unique_lock<std::mutex> lock(rc_.update_lock);

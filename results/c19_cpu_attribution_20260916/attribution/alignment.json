@@ -1,0 +1,2372 @@
+{
+  "schema": "cpu-window-alignment-v1",
+  "input_folder": "/root/super-sector-filter/results/c19_cpu_attribution_20260916/profile_preflight_run9500",
+  "inputs": {
+    "/root/super-sector-filter/results/c19_cpu_attribution_20260916/profile_preflight_run9500/thread_cpu_summary.json": "1c25b8d222a0c84d59336fe0ff93f336375138c1c8dcdf472a70d52e77838a49",
+    "/root/super-sector-filter/results/c19_cpu_attribution_20260916/profile_preflight_run9500/telemetry.jsonl": "e6137f8706a5f153f79bf703a56245f37d7b7d655e340799a2e78798805710eb"
+  },
+  "modes": {
+    "full": {
+      "available": true,
+      "processes": [
+        {
+          "pid": 3245612,
+          "stage_profile": {
+            "start_monotonic_s": 1059893.57319558,
+            "end_monotonic_s": 1059923.632374875,
+            "duration_s": 30.059179295,
+            "exclusive_cpu_core_s": 13.269996726000006,
+            "exclusive_mean_cores": 0.44146237645973646,
+            "stages": [
+              {
+                "stage": "map_prob_update",
+                "exclusive_cpu_core_s": 7.297961787,
+                "exclusive_mean_cores": 0.24278646184508212,
+                "inclusive_cpu_core_s": 7.297961787,
+                "calls": 301
+              },
+              {
+                "stage": "map_snapshot_commit_health",
+                "exclusive_cpu_core_s": 1.445541032,
+                "exclusive_mean_cores": 0.04808983697836518,
+                "inclusive_cpu_core_s": 1.445541032,
+                "calls": 301
+              },
+              {
+                "stage": "sim_render_callback",
+                "exclusive_cpu_core_s": 1.341197296,
+                "exclusive_mean_cores": 0.04461856003577226,
+                "inclusive_cpu_core_s": 1.342971222,
+                "calls": 300
+              },
+              {
+                "stage": "planner_exp_optimize",
+                "exclusive_cpu_core_s": 1.013415374,
+                "exclusive_mean_cores": 0.03371400676160743,
+                "inclusive_cpu_core_s": 1.013415374,
+                "calls": 109
+              },
+              {
+                "stage": "planner_backup_optimize",
+                "exclusive_cpu_core_s": 0.506546968,
+                "exclusive_mean_cores": 0.01685165662803902,
+                "inclusive_cpu_core_s": 0.506546968,
+                "calls": 101
+              },
+              {
+                "stage": "planner_generate_backup",
+                "exclusive_cpu_core_s": 0.317519758,
+                "exclusive_mean_cores": 0.01056315459859597,
+                "inclusive_cpu_core_s": 0.824066726,
+                "calls": 109
+              },
+              {
+                "stage": "fsm_command_callback",
+                "exclusive_cpu_core_s": 0.275290164,
+                "exclusive_mean_cores": 0.009158272795750993,
+                "inclusive_cpu_core_s": 0.275290164,
+                "calls": 3006
+              },
+              {
+                "stage": "planner_path_search",
+                "exclusive_cpu_core_s": 0.26480732,
+                "exclusive_mean_cores": 0.008809532602377062,
+                "inclusive_cpu_core_s": 0.26480732,
+                "calls": 106
+              },
+              {
+                "stage": "sim_odom_callback",
+                "exclusive_cpu_core_s": 0.24967184099999998,
+                "exclusive_mean_cores": 0.00830600990631604,
+                "inclusive_cpu_core_s": 0.24967184099999998,
+                "calls": 3006
+              },
+              {
+                "stage": "planner_corridor_search",
+                "exclusive_cpu_core_s": 0.155524477,
+                "exclusive_mean_cores": 0.005173942890246166,
+                "inclusive_cpu_core_s": 0.155524477,
+                "calls": 109
+              },
+              {
+                "stage": "map_ros_to_pcl",
+                "exclusive_cpu_core_s": 0.12437972700000001,
+                "exclusive_mean_cores": 0.004137828441001021,
+                "inclusive_cpu_core_s": 0.12437972700000001,
+                "calls": 300
+              },
+              {
+                "stage": "planner_validate_geometry",
+                "exclusive_cpu_core_s": 0.106500675,
+                "exclusive_mean_cores": 0.003543033359454201,
+                "inclusive_cpu_core_s": 0.106500675,
+                "calls": 2303
+              },
+              {
+                "stage": "guard_certificate",
+                "exclusive_cpu_core_s": 0.031892048,
+                "exclusive_mean_cores": 0.001060975340910418,
+                "inclusive_cpu_core_s": 0.059618478,
+                "calls": 5872
+              },
+              {
+                "stage": "map_odom_callback",
+                "exclusive_cpu_core_s": 0.028258057000000003,
+                "exclusive_mean_cores": 0.0009400807893880325,
+                "inclusive_cpu_core_s": 0.028258057000000003,
+                "calls": 3006
+              },
+              {
+                "stage": "map_ack_and_log",
+                "exclusive_cpu_core_s": 0.02273001,
+                "exclusive_mean_cores": 0.000756175335890853,
+                "inclusive_cpu_core_s": 0.02273001,
+                "calls": 301
+              },
+              {
+                "stage": "planner_visualize_path",
+                "exclusive_cpu_core_s": 0.017334048,
+                "exclusive_mean_cores": 0.0005766640476070257,
+                "inclusive_cpu_core_s": 0.017334048,
+                "calls": 2827
+              },
+              {
+                "stage": "fsm_main_callback",
+                "exclusive_cpu_core_s": 0.015884198,
+                "exclusive_mean_cores": 0.0005284308611393843,
+                "inclusive_cpu_core_s": 0.133866533,
+                "calls": 3005
+              },
+              {
+                "stage": "fsm_main_core",
+                "exclusive_cpu_core_s": 0.010575197,
+                "exclusive_mean_cores": 0.0003518125660123749,
+                "inclusive_cpu_core_s": 0.06359446900000001,
+                "calls": 2829
+              },
+              {
+                "stage": "planner_stop_viability",
+                "exclusive_cpu_core_s": 0.009948993,
+                "exclusive_mean_cores": 0.00033098019418164557,
+                "inclusive_cpu_core_s": 0.08068276499999999,
+                "calls": 367
+              },
+              {
+                "stage": "planner_commit",
+                "exclusive_cpu_core_s": 0.008082626999999998,
+                "exclusive_mean_cores": 0.00026889047504182693,
+                "inclusive_cpu_core_s": 0.032846235,
+                "calls": 106
+              },
+              {
+                "stage": "fsm_replan_callback",
+                "exclusive_cpu_core_s": 0.0074455170000000005,
+                "exclusive_mean_cores": 0.0002476952855874703,
+                "inclusive_cpu_core_s": 2.347047044,
+                "calls": 455
+              },
+              {
+                "stage": "planner_generate_exp",
+                "exclusive_cpu_core_s": 0.007250834999999999,
+                "exclusive_mean_cores": 0.00024121866165541293,
+                "inclusive_cpu_core_s": 1.440998006,
+                "calls": 109
+              },
+              {
+                "stage": "fsm_replan_core",
+                "exclusive_cpu_core_s": 0.004687024,
+                "exclusive_mean_cores": 0.00015592654589806557,
+                "inclusive_cpu_core_s": 2.2748458129999998,
+                "calls": 109
+              },
+              {
+                "stage": "map_worker",
+                "exclusive_cpu_core_s": 0.002279309,
+                "exclusive_mean_cores": 7.582738629125304e-05,
+                "inclusive_cpu_core_s": 8.893520961,
+                "calls": 301
+              },
+              {
+                "stage": "planner_velocity_extrema",
+                "exclusive_cpu_core_s": 0.001975134,
+                "exclusive_mean_cores": 6.570818120535117e-05,
+                "inclusive_cpu_core_s": 0.001975134,
+                "calls": 211
+              },
+              {
+                "stage": "map_cloud_enqueue",
+                "exclusive_cpu_core_s": 0.001773926,
+                "exclusive_mean_cores": 5.90144522107785e-05,
+                "inclusive_cpu_core_s": 0.001773926,
+                "calls": 300
+              },
+              {
+                "stage": "fsm_poly_publish",
+                "exclusive_cpu_core_s": 0.0007357970000000001,
+                "exclusive_mean_cores": 2.4478279755375473e-05,
+                "inclusive_cpu_core_s": 0.007948404,
+                "calls": 105
+              },
+              {
+                "stage": "guard_recover",
+                "exclusive_cpu_core_s": 0.000469516,
+                "exclusive_mean_cores": 1.5619721197048737e-05,
+                "inclusive_cpu_core_s": 0.036515296,
+                "calls": 176
+              },
+              {
+                "stage": "guard_brake",
+                "exclusive_cpu_core_s": 0.000318071,
+                "exclusive_mean_cores": 1.0581493156498371e-05,
+                "inclusive_cpu_core_s": 0.0006178210000000001,
+                "calls": 2
+              }
+            ]
+          },
+          "scopes": {
+            "composed_process": {
+              "nominal_timestamp": {
+                "window_duration_s": 30.059179295087233,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 14.370000000000001,
+                "possible_intersection_cpu_core_s": 15.389999999999999,
+                "lower_cpu_core_s": 14.370000000000001,
+                "upper_cpu_core_s": 15.389999999999999,
+                "lower_mean_cores": 0.47805696419491345,
+                "upper_mean_cores": 0.5119900263715879,
+                "boundary_uncertainty_core_s": 1.0199999999999978,
+                "wholly_enclosed_nominal_span_s": 29.160441792104393,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059893.05190649,
+                    "start_latest": 1059893.052040749,
+                    "end_earliest": 1059894.057963868,
+                    "end_latest": 1059894.058030366,
+                    "cpu_core_s": 0.5299999999999994,
+                    "index": 28,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245612
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059923.21840566,
+                    "start_latest": 1059923.218474482,
+                    "end_earliest": 1059924.224553543,
+                    "end_latest": 1059924.224634187,
+                    "cpu_core_s": 0.48999999999999844,
+                    "index": 58,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245612
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 23,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 1.1000032739999952,
+                  "upper_accounting_cpu_core_s": 2.120003273999993,
+                  "lower_accounting_mean_cores": 0.03659458773645812,
+                  "upper_accounting_mean_cores": 0.07052764991313248,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 30.059179295087233,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 14.370000000000001,
+                "possible_intersection_cpu_core_s": 15.389999999999999,
+                "lower_cpu_core_s": 14.370000000000001,
+                "upper_cpu_core_s": 15.389999999999999,
+                "lower_mean_cores": 0.47805696419491345,
+                "upper_mean_cores": 0.5119900263715879,
+                "boundary_uncertainty_core_s": 1.0199999999999978,
+                "wholly_enclosed_nominal_span_s": 29.160441792104393,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059893.05190649,
+                    "start_latest": 1059893.052040749,
+                    "end_earliest": 1059894.057963868,
+                    "end_latest": 1059894.058030366,
+                    "cpu_core_s": 0.5299999999999994,
+                    "index": 28,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245612
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059923.21840566,
+                    "start_latest": 1059923.218474482,
+                    "end_earliest": 1059924.224553543,
+                    "end_latest": 1059924.224634187,
+                    "cpu_core_s": 0.48999999999999844,
+                    "index": 58,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245612
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 23,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 1.1000032739999952,
+                  "upper_accounting_cpu_core_s": 2.120003273999993,
+                  "lower_accounting_mean_cores": 0.03659458773645812,
+                  "upper_accounting_mean_cores": 0.07052764991313248,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              }
+            },
+            "noncomposed_processes": {
+              "nominal_timestamp": {
+                "window_duration_s": 30.059179295087233,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 1.17,
+                "possible_intersection_cpu_core_s": 1.2400000000000002,
+                "lower_cpu_core_s": 1.17,
+                "upper_cpu_core_s": 1.2400000000000002,
+                "lower_mean_cores": 0.03892321837912656,
+                "upper_mean_cores": 0.041251957940270895,
+                "boundary_uncertainty_core_s": 0.07000000000000028,
+                "wholly_enclosed_nominal_span_s": 29.160271268105134,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059893.050811388,
+                    "start_latest": 1059893.051417956,
+                    "end_earliest": 1059894.057455842,
+                    "end_latest": 1059894.057744765,
+                    "cpu_core_s": 0.03,
+                    "index": 28,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245581,
+                      3245609,
+                      3245610
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059923.21772711,
+                    "start_latest": 1059923.218139201,
+                    "end_earliest": 1059924.223784318,
+                    "end_latest": 1059924.224239642,
+                    "cpu_core_s": 0.040000000000000036,
+                    "index": 58,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245581,
+                      3245609,
+                      3245610
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 23,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ]
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 30.059179295087233,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 1.17,
+                "possible_intersection_cpu_core_s": 1.2400000000000002,
+                "lower_cpu_core_s": 1.17,
+                "upper_cpu_core_s": 1.2400000000000002,
+                "lower_mean_cores": 0.03892321837912656,
+                "upper_mean_cores": 0.041251957940270895,
+                "boundary_uncertainty_core_s": 0.07000000000000028,
+                "wholly_enclosed_nominal_span_s": 29.160271268105134,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059893.050811388,
+                    "start_latest": 1059893.051417956,
+                    "end_earliest": 1059894.057455842,
+                    "end_latest": 1059894.057744765,
+                    "cpu_core_s": 0.03,
+                    "index": 28,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245581,
+                      3245609,
+                      3245610
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059923.21772711,
+                    "start_latest": 1059923.218139201,
+                    "end_earliest": 1059924.223784318,
+                    "end_latest": 1059924.224239642,
+                    "cpu_core_s": 0.040000000000000036,
+                    "index": 58,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245581,
+                      3245609,
+                      3245610
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 23,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ]
+              }
+            },
+            "experiment_process_sum": {
+              "nominal_timestamp": {
+                "window_duration_s": 30.059179295087233,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 15.540000000000003,
+                "possible_intersection_cpu_core_s": 16.63,
+                "lower_cpu_core_s": 15.540000000000003,
+                "upper_cpu_core_s": 16.63,
+                "lower_mean_cores": 0.5169801825740401,
+                "upper_mean_cores": 0.5532419843118587,
+                "boundary_uncertainty_core_s": 1.0899999999999963,
+                "wholly_enclosed_nominal_span_s": 29.160271268105134,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059893.050811388,
+                    "start_latest": 1059893.052040749,
+                    "end_earliest": 1059894.057455842,
+                    "end_latest": 1059894.058030366,
+                    "cpu_core_s": 0.5599999999999994,
+                    "index": 28,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245581,
+                      3245609,
+                      3245610,
+                      3245612
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059923.21772711,
+                    "start_latest": 1059923.218474482,
+                    "end_earliest": 1059924.223784318,
+                    "end_latest": 1059924.224634187,
+                    "cpu_core_s": 0.5299999999999985,
+                    "index": 58,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245581,
+                      3245609,
+                      3245610,
+                      3245612
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 23,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 2.270003273999997,
+                  "upper_accounting_cpu_core_s": 3.360003273999993,
+                  "lower_accounting_mean_cores": 0.07551780611558474,
+                  "upper_accounting_mean_cores": 0.11177960785340338,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 30.059179295087233,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 15.540000000000003,
+                "possible_intersection_cpu_core_s": 16.63,
+                "lower_cpu_core_s": 15.540000000000003,
+                "upper_cpu_core_s": 16.63,
+                "lower_mean_cores": 0.5169801825740401,
+                "upper_mean_cores": 0.5532419843118587,
+                "boundary_uncertainty_core_s": 1.0899999999999963,
+                "wholly_enclosed_nominal_span_s": 29.160271268105134,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059893.050811388,
+                    "start_latest": 1059893.052040749,
+                    "end_earliest": 1059894.057455842,
+                    "end_latest": 1059894.058030366,
+                    "cpu_core_s": 0.5599999999999994,
+                    "index": 28,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245581,
+                      3245609,
+                      3245610,
+                      3245612
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059923.21772711,
+                    "start_latest": 1059923.218474482,
+                    "end_earliest": 1059924.223784318,
+                    "end_latest": 1059924.224634187,
+                    "cpu_core_s": 0.5299999999999985,
+                    "index": 58,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3245581,
+                      3245609,
+                      3245610,
+                      3245612
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 23,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 2.270003273999997,
+                  "upper_accounting_cpu_core_s": 3.360003273999993,
+                  "lower_accounting_mean_cores": 0.07551780611558474,
+                  "upper_accounting_mean_cores": 0.11177960785340338,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              }
+            },
+            "experiment_cgroup": {
+              "nominal_timestamp": {
+                "window_duration_s": 30.059179295087233,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 15.540431000000002,
+                "possible_intersection_cpu_core_s": 16.635883000000003,
+                "lower_cpu_core_s": 15.540431000000002,
+                "upper_cpu_core_s": 16.635883000000003,
+                "lower_mean_cores": 0.516994520956195,
+                "upper_mean_cores": 0.5534376982381191,
+                "boundary_uncertainty_core_s": 1.0954520000000016,
+                "wholly_enclosed_nominal_span_s": 29.159650274086744,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059893.047183068,
+                    "start_latest": 1059893.047303591,
+                    "end_earliest": 1059894.055483769,
+                    "end_latest": 1059894.055567869,
+                    "cpu_core_s": 0.56541,
+                    "index": 28,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_full.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  },
+                  {
+                    "start_earliest": 1059923.215134043,
+                    "start_latest": 1059923.215245206,
+                    "end_earliest": 1059924.221010968,
+                    "end_latest": 1059924.221113062,
+                    "cpu_core_s": 0.530042,
+                    "index": 58,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_full.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 23,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 2.270434273999996,
+                  "upper_accounting_cpu_core_s": 3.3658862739999975,
+                  "lower_accounting_mean_cores": 0.07553214449773975,
+                  "upper_accounting_mean_cores": 0.1119753217796637,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 30.059179295087233,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 15.540431000000002,
+                "possible_intersection_cpu_core_s": 16.635883000000003,
+                "lower_cpu_core_s": 15.540431000000002,
+                "upper_cpu_core_s": 16.635883000000003,
+                "lower_mean_cores": 0.516994520956195,
+                "upper_mean_cores": 0.5534376982381191,
+                "boundary_uncertainty_core_s": 1.0954520000000016,
+                "wholly_enclosed_nominal_span_s": 29.159650274086744,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059893.047183068,
+                    "start_latest": 1059893.047303591,
+                    "end_earliest": 1059894.055483769,
+                    "end_latest": 1059894.055567869,
+                    "cpu_core_s": 0.56541,
+                    "index": 28,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_full.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  },
+                  {
+                    "start_earliest": 1059923.215134043,
+                    "start_latest": 1059923.215245206,
+                    "end_earliest": 1059924.221010968,
+                    "end_latest": 1059924.221113062,
+                    "cpu_core_s": 0.530042,
+                    "index": 58,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_full.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 23,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 2.270434273999996,
+                  "upper_accounting_cpu_core_s": 3.3658862739999975,
+                  "lower_accounting_mean_cores": 0.07553214449773975,
+                  "upper_accounting_mean_cores": 0.1119753217796637,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              }
+            }
+          }
+        }
+      ],
+      "raw_cgroup_traces": [
+        {
+          "path": "/root/super-sector-filter/results/c19_cpu_attribution_20260916/profile_preflight_run9500/artifacts/seed1_run9500_full.attempt1.cgroup.csv",
+          "sha256": "a441ca2527e920fff7aadc926ff83e5ca7f0c491b6fd49d2b82266afed0cec55",
+          "samples": 41,
+          "elapsed_span_s": 40.564799,
+          "alignment_available": false,
+          "reason": "CSV stores relative elapsed_s only; absolute monotonic origin was not persisted. No origin inferred from launch, CPU shape, or wall timestamps.",
+          "algorithm_observed_cpu_core_s": 20.417453,
+          "end_to_end_observed_cpu_core_s": 22.015991
+        }
+      ]
+    },
+    "sector": {
+      "available": true,
+      "processes": [
+        {
+          "pid": 3246520,
+          "stage_profile": {
+            "start_monotonic_s": 1059960.29364726,
+            "end_monotonic_s": 1059995.34261172,
+            "duration_s": 35.04896446,
+            "exclusive_cpu_core_s": 8.229106657000003,
+            "exclusive_mean_cores": 0.23478886705459037,
+            "stages": [
+              {
+                "stage": "map_prob_update",
+                "exclusive_cpu_core_s": 3.237938313,
+                "exclusive_mean_cores": 0.09238328044457152,
+                "inclusive_cpu_core_s": 3.237938313,
+                "calls": 351
+              },
+              {
+                "stage": "planner_exp_optimize",
+                "exclusive_cpu_core_s": 1.058619872,
+                "exclusive_mean_cores": 0.030204027089249984,
+                "inclusive_cpu_core_s": 1.058619872,
+                "calls": 134
+              },
+              {
+                "stage": "map_snapshot_commit_health",
+                "exclusive_cpu_core_s": 0.708967085,
+                "exclusive_mean_cores": 0.020227903903098653,
+                "inclusive_cpu_core_s": 0.708967085,
+                "calls": 351
+              },
+              {
+                "stage": "planner_backup_optimize",
+                "exclusive_cpu_core_s": 0.533515263,
+                "exclusive_mean_cores": 0.015221997888379267,
+                "inclusive_cpu_core_s": 0.533515263,
+                "calls": 118
+              },
+              {
+                "stage": "sim_render_callback",
+                "exclusive_cpu_core_s": 0.5276279269999999,
+                "exclusive_mean_cores": 0.015054023282261617,
+                "inclusive_cpu_core_s": 0.5302888619999999,
+                "calls": 350
+              },
+              {
+                "stage": "planner_path_search",
+                "exclusive_cpu_core_s": 0.485408593,
+                "exclusive_mean_cores": 0.01384944178747357,
+                "inclusive_cpu_core_s": 0.485408593,
+                "calls": 130
+              },
+              {
+                "stage": "sim_odom_callback",
+                "exclusive_cpu_core_s": 0.399659406,
+                "exclusive_mean_cores": 0.011402887707456108,
+                "inclusive_cpu_core_s": 0.399659406,
+                "calls": 3505
+              },
+              {
+                "stage": "planner_generate_backup",
+                "exclusive_cpu_core_s": 0.33714025599999997,
+                "exclusive_mean_cores": 0.009619121739952255,
+                "inclusive_cpu_core_s": 0.870655519,
+                "calls": 132
+              },
+              {
+                "stage": "fsm_command_callback",
+                "exclusive_cpu_core_s": 0.294439771,
+                "exclusive_mean_cores": 0.00840081227894857,
+                "inclusive_cpu_core_s": 0.294439771,
+                "calls": 3505
+              },
+              {
+                "stage": "planner_corridor_search",
+                "exclusive_cpu_core_s": 0.197703161,
+                "exclusive_mean_cores": 0.005640770392107613,
+                "inclusive_cpu_core_s": 0.197703161,
+                "calls": 134
+              },
+              {
+                "stage": "planner_validate_geometry",
+                "exclusive_cpu_core_s": 0.13868796800000002,
+                "exclusive_mean_cores": 0.003956977620787602,
+                "inclusive_cpu_core_s": 0.13868796800000002,
+                "calls": 2825
+              },
+              {
+                "stage": "map_ack_and_log",
+                "exclusive_cpu_core_s": 0.042673473,
+                "exclusive_mean_cores": 0.001217538767763069,
+                "inclusive_cpu_core_s": 0.042673473,
+                "calls": 351
+              },
+              {
+                "stage": "guard_certificate",
+                "exclusive_cpu_core_s": 0.039285218999999996,
+                "exclusive_mean_cores": 0.0011208667532769667,
+                "inclusive_cpu_core_s": 0.07373502600000001,
+                "calls": 7256
+              },
+              {
+                "stage": "map_odom_callback",
+                "exclusive_cpu_core_s": 0.032497216,
+                "exclusive_mean_cores": 0.0009271947545579497,
+                "inclusive_cpu_core_s": 0.032497216,
+                "calls": 3505
+              },
+              {
+                "stage": "map_ros_to_pcl",
+                "exclusive_cpu_core_s": 0.031669492,
+                "exclusive_mean_cores": 0.0009035785361402943,
+                "inclusive_cpu_core_s": 0.031669492,
+                "calls": 350
+              },
+              {
+                "stage": "frontend_stats",
+                "exclusive_cpu_core_s": 0.030080196,
+                "exclusive_mean_cores": 0.000858233515981031,
+                "inclusive_cpu_core_s": 0.030080196,
+                "calls": 42
+              },
+              {
+                "stage": "fsm_main_callback",
+                "exclusive_cpu_core_s": 0.020850984,
+                "exclusive_mean_cores": 0.0005949101299068737,
+                "inclusive_cpu_core_s": 0.12020710999999999,
+                "calls": 3505
+              },
+              {
+                "stage": "planner_visualize_path",
+                "exclusive_cpu_core_s": 0.019950712,
+                "exclusive_mean_cores": 0.0005692240072533086,
+                "inclusive_cpu_core_s": 0.019950712,
+                "calls": 3505
+              },
+              {
+                "stage": "frontend_odom",
+                "exclusive_cpu_core_s": 0.016261409,
+                "exclusive_mean_cores": 0.00046396260918231993,
+                "inclusive_cpu_core_s": 0.016261409,
+                "calls": 3505
+              },
+              {
+                "stage": "fsm_main_core",
+                "exclusive_cpu_core_s": 0.012886239,
+                "exclusive_mean_cores": 0.00036766390101786194,
+                "inclusive_cpu_core_s": 0.032836951,
+                "calls": 3505
+              },
+              {
+                "stage": "planner_stop_viability",
+                "exclusive_cpu_core_s": 0.012863928,
+                "exclusive_mean_cores": 0.0003670273344218513,
+                "inclusive_cpu_core_s": 0.10799779000000001,
+                "calls": 440
+              },
+              {
+                "stage": "planner_generate_exp",
+                "exclusive_cpu_core_s": 0.010470442,
+                "exclusive_mean_cores": 0.00029873755648186133,
+                "inclusive_cpu_core_s": 1.752202068,
+                "calls": 134
+              },
+              {
+                "stage": "fsm_replan_callback",
+                "exclusive_cpu_core_s": 0.009854348,
+                "exclusive_mean_cores": 0.00028115946225020085,
+                "inclusive_cpu_core_s": 2.7745897800000003,
+                "calls": 531
+              },
+              {
+                "stage": "planner_commit",
+                "exclusive_cpu_core_s": 0.008801274000000001,
+                "exclusive_mean_cores": 0.0002511136672823686,
+                "inclusive_cpu_core_s": 0.035555485,
+                "calls": 127
+              },
+              {
+                "stage": "fsm_replan_core",
+                "exclusive_cpu_core_s": 0.00579509,
+                "exclusive_mean_cores": 0.00016534268813030717,
+                "inclusive_cpu_core_s": 2.67304171,
+                "calls": 134
+              },
+              {
+                "stage": "frontend_cloud",
+                "exclusive_cpu_core_s": 0.004340639,
+                "exclusive_mean_cores": 0.0001238449998987502,
+                "inclusive_cpu_core_s": 0.007041068,
+                "calls": 350
+              },
+              {
+                "stage": "map_cloud_enqueue",
+                "exclusive_cpu_core_s": 0.0027004290000000003,
+                "exclusive_mean_cores": 7.704732626499974e-05,
+                "inclusive_cpu_core_s": 0.0027004290000000003,
+                "calls": 350
+              },
+              {
+                "stage": "map_worker",
+                "exclusive_cpu_core_s": 0.002269001,
+                "exclusive_mean_cores": 6.473803249135995e-05,
+                "inclusive_cpu_core_s": 4.023613009,
+                "calls": 351
+              },
+              {
+                "stage": "planner_velocity_extrema",
+                "exclusive_cpu_core_s": 0.0021625340000000002,
+                "exclusive_mean_cores": 6.170036785160985e-05,
+                "inclusive_cpu_core_s": 0.0021625340000000002,
+                "calls": 240
+              },
+              {
+                "stage": "frontend_enqueue",
+                "exclusive_cpu_core_s": 0.001653367,
+                "exclusive_mean_cores": 4.717306275587464e-05,
+                "inclusive_cpu_core_s": 0.001653367,
+                "calls": 350
+              },
+              {
+                "stage": "frontend_acquisition",
+                "exclusive_cpu_core_s": 0.001007568,
+                "exclusive_mean_cores": 2.8747439917943868e-05,
+                "inclusive_cpu_core_s": 0.001007568,
+                "calls": 350
+              },
+              {
+                "stage": "fsm_poly_publish",
+                "exclusive_cpu_core_s": 0.000801007,
+                "exclusive_mean_cores": 2.2853941973497037e-05,
+                "inclusive_cpu_core_s": 0.008833548,
+                "calls": 112
+              },
+              {
+                "stage": "frontend_report",
+                "exclusive_cpu_core_s": 0.000524475,
+                "exclusive_mean_cores": 1.4964065503235129e-05,
+                "inclusive_cpu_core_s": 0.004469848,
+                "calls": 7
+              },
+              {
+                "stage": "guard_brake",
+                "exclusive_cpu_core_s": 0.0,
+                "exclusive_mean_cores": 0.0,
+                "inclusive_cpu_core_s": 0.0,
+                "calls": 0
+              },
+              {
+                "stage": "guard_recover",
+                "exclusive_cpu_core_s": 0.0,
+                "exclusive_mean_cores": 0.0,
+                "inclusive_cpu_core_s": 0.0,
+                "calls": 0
+              }
+            ]
+          },
+          "scopes": {
+            "composed_process": {
+              "nominal_timestamp": {
+                "window_duration_s": 35.048964460147545,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 34,
+                "possible_intersecting_intervals": 36,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 10.41,
+                "possible_intersection_cpu_core_s": 10.98,
+                "lower_cpu_core_s": 10.41,
+                "upper_cpu_core_s": 10.98,
+                "lower_mean_cores": 0.29701305474621653,
+                "upper_mean_cores": 0.3132760173980267,
+                "boundary_uncertainty_core_s": 0.5700000000000003,
+                "wholly_enclosed_nominal_span_s": 34.20895948819816,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059959.409062313,
+                    "start_latest": 1059959.409144493,
+                    "end_earliest": 1059960.414802302,
+                    "end_latest": 1059960.414862214,
+                    "cpu_core_s": 0.3000000000000007,
+                    "index": 94,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246520
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059994.62376179,
+                    "start_latest": 1059994.62386286,
+                    "end_earliest": 1059995.630872908,
+                    "end_latest": 1059995.630968955,
+                    "cpu_core_s": 0.2699999999999996,
+                    "index": 129,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246520
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 89,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 2.1808933429999975,
+                  "upper_accounting_cpu_core_s": 2.7508933429999978,
+                  "lower_accounting_mean_cores": 0.06222418769261455,
+                  "upper_accounting_mean_cores": 0.07848715034442467,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 35.048964460147545,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 34,
+                "possible_intersecting_intervals": 36,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 10.41,
+                "possible_intersection_cpu_core_s": 10.98,
+                "lower_cpu_core_s": 10.41,
+                "upper_cpu_core_s": 10.98,
+                "lower_mean_cores": 0.29701305474621653,
+                "upper_mean_cores": 0.3132760173980267,
+                "boundary_uncertainty_core_s": 0.5700000000000003,
+                "wholly_enclosed_nominal_span_s": 34.20895948819816,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059959.409062313,
+                    "start_latest": 1059959.409144493,
+                    "end_earliest": 1059960.414802302,
+                    "end_latest": 1059960.414862214,
+                    "cpu_core_s": 0.3000000000000007,
+                    "index": 94,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246520
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059994.62376179,
+                    "start_latest": 1059994.62386286,
+                    "end_earliest": 1059995.630872908,
+                    "end_latest": 1059995.630968955,
+                    "cpu_core_s": 0.2699999999999996,
+                    "index": 129,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246520
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 89,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 2.1808933429999975,
+                  "upper_accounting_cpu_core_s": 2.7508933429999978,
+                  "lower_accounting_mean_cores": 0.06222418769261455,
+                  "upper_accounting_mean_cores": 0.07848715034442467,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              }
+            },
+            "noncomposed_processes": {
+              "nominal_timestamp": {
+                "window_duration_s": 35.048964460147545,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 34,
+                "possible_intersecting_intervals": 36,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 1.4899999999999998,
+                "possible_intersection_cpu_core_s": 1.5899999999999999,
+                "lower_cpu_core_s": 1.4899999999999998,
+                "upper_cpu_core_s": 1.5899999999999999,
+                "lower_mean_cores": 0.04251195500210015,
+                "upper_mean_cores": 0.04536510634452298,
+                "boundary_uncertainty_core_s": 0.10000000000000009,
+                "wholly_enclosed_nominal_span_s": 34.20859095011838,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059959.408314909,
+                    "start_latest": 1059959.408722291,
+                    "end_earliest": 1059960.414247514,
+                    "end_latest": 1059960.414556665,
+                    "cpu_core_s": 0.040000000000000036,
+                    "index": 94,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246483,
+                      3246517,
+                      3246518
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059994.622838464,
+                    "start_latest": 1059994.623374063,
+                    "end_earliest": 1059995.63002384,
+                    "end_latest": 1059995.630506972,
+                    "cpu_core_s": 0.06000000000000005,
+                    "index": 129,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246483,
+                      3246517,
+                      3246518
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 89,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ]
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 35.048964460147545,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 34,
+                "possible_intersecting_intervals": 36,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 1.4899999999999998,
+                "possible_intersection_cpu_core_s": 1.5899999999999999,
+                "lower_cpu_core_s": 1.4899999999999998,
+                "upper_cpu_core_s": 1.5899999999999999,
+                "lower_mean_cores": 0.04251195500210015,
+                "upper_mean_cores": 0.04536510634452298,
+                "boundary_uncertainty_core_s": 0.10000000000000009,
+                "wholly_enclosed_nominal_span_s": 34.20859095011838,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059959.408314909,
+                    "start_latest": 1059959.408722291,
+                    "end_earliest": 1059960.414247514,
+                    "end_latest": 1059960.414556665,
+                    "cpu_core_s": 0.040000000000000036,
+                    "index": 94,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246483,
+                      3246517,
+                      3246518
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059994.622838464,
+                    "start_latest": 1059994.623374063,
+                    "end_earliest": 1059995.63002384,
+                    "end_latest": 1059995.630506972,
+                    "cpu_core_s": 0.06000000000000005,
+                    "index": 129,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246483,
+                      3246517,
+                      3246518
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 89,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ]
+              }
+            },
+            "experiment_process_sum": {
+              "nominal_timestamp": {
+                "window_duration_s": 35.048964460147545,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 34,
+                "possible_intersecting_intervals": 36,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 11.899999999999999,
+                "possible_intersection_cpu_core_s": 12.570000000000002,
+                "lower_cpu_core_s": 11.899999999999999,
+                "upper_cpu_core_s": 12.570000000000002,
+                "lower_mean_cores": 0.3395250097483166,
+                "upper_mean_cores": 0.3586411237425497,
+                "boundary_uncertainty_core_s": 0.6700000000000035,
+                "wholly_enclosed_nominal_span_s": 34.20859095011838,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059959.408314909,
+                    "start_latest": 1059959.409144493,
+                    "end_earliest": 1059960.414247514,
+                    "end_latest": 1059960.414862214,
+                    "cpu_core_s": 0.34000000000000075,
+                    "index": 94,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246483,
+                      3246517,
+                      3246518,
+                      3246520
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059994.622838464,
+                    "start_latest": 1059994.62386286,
+                    "end_earliest": 1059995.63002384,
+                    "end_latest": 1059995.630968955,
+                    "cpu_core_s": 0.3299999999999996,
+                    "index": 129,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246483,
+                      3246517,
+                      3246518,
+                      3246520
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 89,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 3.670893342999996,
+                  "upper_accounting_cpu_core_s": 4.340893342999999,
+                  "lower_accounting_mean_cores": 0.10473614269471465,
+                  "upper_accounting_mean_cores": 0.12385225668894771,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 35.048964460147545,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 34,
+                "possible_intersecting_intervals": 36,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 11.899999999999999,
+                "possible_intersection_cpu_core_s": 12.570000000000002,
+                "lower_cpu_core_s": 11.899999999999999,
+                "upper_cpu_core_s": 12.570000000000002,
+                "lower_mean_cores": 0.3395250097483166,
+                "upper_mean_cores": 0.3586411237425497,
+                "boundary_uncertainty_core_s": 0.6700000000000035,
+                "wholly_enclosed_nominal_span_s": 34.20859095011838,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059959.408314909,
+                    "start_latest": 1059959.409144493,
+                    "end_earliest": 1059960.414247514,
+                    "end_latest": 1059960.414862214,
+                    "cpu_core_s": 0.34000000000000075,
+                    "index": 94,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246483,
+                      3246517,
+                      3246518,
+                      3246520
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1059994.622838464,
+                    "start_latest": 1059994.62386286,
+                    "end_earliest": 1059995.63002384,
+                    "end_latest": 1059995.630968955,
+                    "cpu_core_s": 0.3299999999999996,
+                    "index": 129,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3246483,
+                      3246517,
+                      3246518,
+                      3246520
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 89,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 3.670893342999996,
+                  "upper_accounting_cpu_core_s": 4.340893342999999,
+                  "lower_accounting_mean_cores": 0.10473614269471465,
+                  "upper_accounting_mean_cores": 0.12385225668894771,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              }
+            },
+            "experiment_cgroup": {
+              "nominal_timestamp": {
+                "window_duration_s": 35.048964460147545,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 34,
+                "possible_intersecting_intervals": 36,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 11.905414,
+                "possible_intersection_cpu_core_s": 12.573369000000001,
+                "lower_cpu_core_s": 11.905414,
+                "upper_cpu_core_s": 12.573369000000001,
+                "lower_mean_cores": 0.33967947936199544,
+                "upper_mean_cores": 0.3587372464112759,
+                "boundary_uncertainty_core_s": 0.667955000000001,
+                "wholly_enclosed_nominal_span_s": 34.20665789395571,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059959.405760494,
+                    "start_latest": 1059959.405849887,
+                    "end_earliest": 1059960.412253074,
+                    "end_latest": 1059960.41233446,
+                    "cpu_core_s": 0.347515,
+                    "index": 94,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_sector.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  },
+                  {
+                    "start_earliest": 1059994.618910968,
+                    "start_latest": 1059994.619063443,
+                    "end_earliest": 1059995.627040181,
+                    "end_latest": 1059995.627158122,
+                    "cpu_core_s": 0.32044,
+                    "index": 129,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_sector.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 89,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 3.6763073429999977,
+                  "upper_accounting_cpu_core_s": 4.344262342999999,
+                  "lower_accounting_mean_cores": 0.10489061230839349,
+                  "upper_accounting_mean_cores": 0.12394837935767392,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 35.048964460147545,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 34,
+                "possible_intersecting_intervals": 36,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 11.905414,
+                "possible_intersection_cpu_core_s": 12.573369000000001,
+                "lower_cpu_core_s": 11.905414,
+                "upper_cpu_core_s": 12.573369000000001,
+                "lower_mean_cores": 0.33967947936199544,
+                "upper_mean_cores": 0.3587372464112759,
+                "boundary_uncertainty_core_s": 0.667955000000001,
+                "wholly_enclosed_nominal_span_s": 34.20665789395571,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1059959.405760494,
+                    "start_latest": 1059959.405849887,
+                    "end_earliest": 1059960.412253074,
+                    "end_latest": 1059960.41233446,
+                    "cpu_core_s": 0.347515,
+                    "index": 94,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_sector.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  },
+                  {
+                    "start_earliest": 1059994.618910968,
+                    "start_latest": 1059994.619063443,
+                    "end_earliest": 1059995.627040181,
+                    "end_latest": 1059995.627158122,
+                    "cpu_core_s": 0.32044,
+                    "index": 129,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_sector.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 89,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 3.6763073429999977,
+                  "upper_accounting_cpu_core_s": 4.344262342999999,
+                  "lower_accounting_mean_cores": 0.10489061230839349,
+                  "upper_accounting_mean_cores": 0.12394837935767392,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              }
+            }
+          }
+        }
+      ],
+      "raw_cgroup_traces": [
+        {
+          "path": "/root/super-sector-filter/results/c19_cpu_attribution_20260916/profile_preflight_run9500/artifacts/seed1_run9500_sector.attempt1.cgroup.csv",
+          "sha256": "bb6f522eae958535511c40c0239576d881c49871fd0c03f9507cd4d8bc7a8bed",
+          "samples": 41,
+          "elapsed_span_s": 40.563686000000004,
+          "alignment_available": false,
+          "reason": "CSV stores relative elapsed_s only; absolute monotonic origin was not persisted. No origin inferred from launch, CPU shape, or wall timestamps.",
+          "algorithm_observed_cpu_core_s": 12.107035,
+          "end_to_end_observed_cpu_core_s": 13.884857
+        }
+      ]
+    },
+    "adaptive": {
+      "available": true,
+      "processes": [
+        {
+          "pid": 3247499,
+          "stage_profile": {
+            "start_monotonic_s": 1060027.185136403,
+            "end_monotonic_s": 1060057.244467793,
+            "duration_s": 30.05933139,
+            "exclusive_cpu_core_s": 7.227648682,
+            "exclusive_mean_cores": 0.2404460893765741,
+            "stages": [
+              {
+                "stage": "map_prob_update",
+                "exclusive_cpu_core_s": 2.9312029649999998,
+                "exclusive_mean_cores": 0.0975139109705926,
+                "inclusive_cpu_core_s": 2.9312029649999998,
+                "calls": 300
+              },
+              {
+                "stage": "planner_exp_optimize",
+                "exclusive_cpu_core_s": 0.9666069890000001,
+                "exclusive_mean_cores": 0.032156636368883655,
+                "inclusive_cpu_core_s": 0.9666069890000001,
+                "calls": 106
+              },
+              {
+                "stage": "map_snapshot_commit_health",
+                "exclusive_cpu_core_s": 0.617137012,
+                "exclusive_mean_cores": 0.02053063003940621,
+                "inclusive_cpu_core_s": 0.617137012,
+                "calls": 300
+              },
+              {
+                "stage": "sim_render_callback",
+                "exclusive_cpu_core_s": 0.572794204,
+                "exclusive_mean_cores": 0.019055453914405912,
+                "inclusive_cpu_core_s": 0.5756946000000001,
+                "calls": 300
+              },
+              {
+                "stage": "planner_path_search",
+                "exclusive_cpu_core_s": 0.354572275,
+                "exclusive_mean_cores": 0.011795747230690483,
+                "inclusive_cpu_core_s": 0.354572275,
+                "calls": 99
+              },
+              {
+                "stage": "planner_backup_optimize",
+                "exclusive_cpu_core_s": 0.317835189,
+                "exclusive_mean_cores": 0.010573594764178153,
+                "inclusive_cpu_core_s": 0.317835189,
+                "calls": 96
+              },
+              {
+                "stage": "sim_odom_callback",
+                "exclusive_cpu_core_s": 0.31485719300000004,
+                "exclusive_mean_cores": 0.010474524164058596,
+                "inclusive_cpu_core_s": 0.31485719300000004,
+                "calls": 3006
+              },
+              {
+                "stage": "fsm_command_callback",
+                "exclusive_cpu_core_s": 0.31232518800000003,
+                "exclusive_mean_cores": 0.010390290587231855,
+                "inclusive_cpu_core_s": 0.31232518800000003,
+                "calls": 3006
+              },
+              {
+                "stage": "planner_generate_backup",
+                "exclusive_cpu_core_s": 0.273575074,
+                "exclusive_mean_cores": 0.009101169631837243,
+                "inclusive_cpu_core_s": 0.591410263,
+                "calls": 107
+              },
+              {
+                "stage": "planner_corridor_search",
+                "exclusive_cpu_core_s": 0.157251871,
+                "exclusive_mean_cores": 0.0052313828594442325,
+                "inclusive_cpu_core_s": 0.157251871,
+                "calls": 106
+              },
+              {
+                "stage": "planner_validate_geometry",
+                "exclusive_cpu_core_s": 0.12065995699999998,
+                "exclusive_mean_cores": 0.004014059908203433,
+                "inclusive_cpu_core_s": 0.12065995699999998,
+                "calls": 2326
+              },
+              {
+                "stage": "map_ack_and_log",
+                "exclusive_cpu_core_s": 0.040307074,
+                "exclusive_mean_cores": 0.0013409171839866396,
+                "inclusive_cpu_core_s": 0.040307074,
+                "calls": 300
+              },
+              {
+                "stage": "guard_certificate",
+                "exclusive_cpu_core_s": 0.039588847,
+                "exclusive_mean_cores": 0.001317023538759423,
+                "inclusive_cpu_core_s": 0.068205062,
+                "calls": 6212
+              },
+              {
+                "stage": "frontend_stats",
+                "exclusive_cpu_core_s": 0.029323896000000002,
+                "exclusive_mean_cores": 0.0009755338739754983,
+                "inclusive_cpu_core_s": 0.029323896000000002,
+                "calls": 36
+              },
+              {
+                "stage": "map_ros_to_pcl",
+                "exclusive_cpu_core_s": 0.027867808,
+                "exclusive_mean_cores": 0.0009270934086468382,
+                "inclusive_cpu_core_s": 0.027867808,
+                "calls": 300
+              },
+              {
+                "stage": "map_odom_callback",
+                "exclusive_cpu_core_s": 0.024069216,
+                "exclusive_mean_cores": 0.0008007235985297809,
+                "inclusive_cpu_core_s": 0.024069216,
+                "calls": 3004
+              },
+              {
+                "stage": "planner_visualize_path",
+                "exclusive_cpu_core_s": 0.020763126,
+                "exclusive_mean_cores": 0.0006907381182439534,
+                "inclusive_cpu_core_s": 0.020763126,
+                "calls": 3006
+              },
+              {
+                "stage": "fsm_main_callback",
+                "exclusive_cpu_core_s": 0.019297963,
+                "exclusive_mean_cores": 0.0006419957499926282,
+                "inclusive_cpu_core_s": 0.114470391,
+                "calls": 3006
+              },
+              {
+                "stage": "frontend_odom",
+                "exclusive_cpu_core_s": 0.018500127,
+                "exclusive_mean_cores": 0.0006154537091984201,
+                "inclusive_cpu_core_s": 0.018500127,
+                "calls": 3003
+              },
+              {
+                "stage": "fsm_main_core",
+                "exclusive_cpu_core_s": 0.011803774,
+                "exclusive_mean_cores": 0.00039268252000863944,
+                "inclusive_cpu_core_s": 0.0325669,
+                "calls": 3006
+              },
+              {
+                "stage": "planner_stop_viability",
+                "exclusive_cpu_core_s": 0.011755191,
+                "exclusive_mean_cores": 0.00039106628312799606,
+                "inclusive_cpu_core_s": 0.097364282,
+                "calls": 379
+              },
+              {
+                "stage": "fsm_replan_callback",
+                "exclusive_cpu_core_s": 0.009796557000000001,
+                "exclusive_mean_cores": 0.00032590734879948377,
+                "inclusive_cpu_core_s": 2.212572666,
+                "calls": 456
+              },
+              {
+                "stage": "planner_commit",
+                "exclusive_cpu_core_s": 0.007940089,
+                "exclusive_mean_cores": 0.00026414722593069625,
+                "inclusive_cpu_core_s": 0.028064102,
+                "calls": 105
+              },
+              {
+                "stage": "planner_generate_exp",
+                "exclusive_cpu_core_s": 0.0077001710000000004,
+                "exclusive_mean_cores": 0.000256165744343923,
+                "inclusive_cpu_core_s": 1.486131306,
+                "calls": 108
+              },
+              {
+                "stage": "fsm_replan_core",
+                "exclusive_cpu_core_s": 0.005356871,
+                "exclusive_mean_cores": 0.0001782099185939345,
+                "inclusive_cpu_core_s": 2.118066102,
+                "calls": 108
+              },
+              {
+                "stage": "frontend_cloud",
+                "exclusive_cpu_core_s": 0.003958758000000001,
+                "exclusive_mean_cores": 0.00013169813887866388,
+                "inclusive_cpu_core_s": 0.006232665,
+                "calls": 300
+              },
+              {
+                "stage": "map_cloud_enqueue",
+                "exclusive_cpu_core_s": 0.0022739070000000004,
+                "exclusive_mean_cores": 7.564729136844585e-05,
+                "inclusive_cpu_core_s": 0.0022739070000000004,
+                "calls": 300
+              },
+              {
+                "stage": "map_worker",
+                "exclusive_cpu_core_s": 0.0020061999999999997,
+                "exclusive_mean_cores": 6.674133812129345e-05,
+                "inclusive_cpu_core_s": 3.618521059,
+                "calls": 300
+              },
+              {
+                "stage": "frontend_enqueue",
+                "exclusive_cpu_core_s": 0.001806382,
+                "exclusive_mean_cores": 6.009388487599358e-05,
+                "inclusive_cpu_core_s": 0.001806382,
+                "calls": 300
+              },
+              {
+                "stage": "planner_velocity_extrema",
+                "exclusive_cpu_core_s": 0.0017954059999999998,
+                "exclusive_mean_cores": 5.972874036038231e-05,
+                "inclusive_cpu_core_s": 0.0017954059999999998,
+                "calls": 197
+              },
+              {
+                "stage": "frontend_acquisition",
+                "exclusive_cpu_core_s": 0.001094014,
+                "exclusive_mean_cores": 3.6395154163806564e-05,
+                "inclusive_cpu_core_s": 0.001094014,
+                "calls": 300
+              },
+              {
+                "stage": "fsm_poly_publish",
+                "exclusive_cpu_core_s": 0.000743707,
+                "exclusive_mean_cores": 2.474130213845718e-05,
+                "inclusive_cpu_core_s": 0.00710356,
+                "calls": 92
+              },
+              {
+                "stage": "frontend_map_ack",
+                "exclusive_cpu_core_s": 0.000548034,
+                "exclusive_mean_cores": 1.8231742845162463e-05,
+                "inclusive_cpu_core_s": 0.000548034,
+                "calls": 300
+              },
+              {
+                "stage": "frontend_report",
+                "exclusive_cpu_core_s": 0.000323385,
+                "exclusive_mean_cores": 1.0758223321879416e-05,
+                "inclusive_cpu_core_s": 0.003914959,
+                "calls": 6
+              },
+              {
+                "stage": "frontend_replan_status",
+                "exclusive_cpu_core_s": 0.000210262,
+                "exclusive_mean_cores": 6.99489942979733e-06,
+                "inclusive_cpu_core_s": 0.000210262,
+                "calls": 108
+              },
+              {
+                "stage": "guard_brake",
+                "exclusive_cpu_core_s": 0.0,
+                "exclusive_mean_cores": 0.0,
+                "inclusive_cpu_core_s": 0.0,
+                "calls": 0
+              },
+              {
+                "stage": "guard_recover",
+                "exclusive_cpu_core_s": 0.0,
+                "exclusive_mean_cores": 0.0,
+                "inclusive_cpu_core_s": 0.0,
+                "calls": 0
+              },
+              {
+                "stage": "frontend_guard_status",
+                "exclusive_cpu_core_s": 0.0,
+                "exclusive_mean_cores": 0.0,
+                "inclusive_cpu_core_s": 0.0,
+                "calls": 0
+              }
+            ]
+          },
+          "scopes": {
+            "composed_process": {
+              "nominal_timestamp": {
+                "window_duration_s": 30.059331390075386,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 8.57,
+                "possible_intersection_cpu_core_s": 9.15,
+                "lower_cpu_core_s": 8.57,
+                "upper_cpu_core_s": 9.15,
+                "lower_mean_cores": 0.2851028151221466,
+                "upper_mean_cores": 0.30439798814091495,
+                "boundary_uncertainty_core_s": 0.5800000000000001,
+                "wholly_enclosed_nominal_span_s": 29.183377887820825,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1060026.809718749,
+                    "start_latest": 1060026.809793434,
+                    "end_earliest": 1060027.817885599,
+                    "end_latest": 1060027.818040895,
+                    "cpu_core_s": 0.3100000000000005,
+                    "index": 161,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247499
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1060057.001263487,
+                    "start_latest": 1060057.00132832,
+                    "end_earliest": 1060058.007283841,
+                    "end_latest": 1060058.007355715,
+                    "cpu_core_s": 0.2699999999999996,
+                    "index": 191,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247499
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 156,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 1.3423513180000004,
+                  "upper_accounting_cpu_core_s": 1.9223513180000005,
+                  "lower_accounting_mean_cores": 0.044656725746175484,
+                  "upper_accounting_mean_cores": 0.06395189876494387,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 30.059331390075386,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 8.57,
+                "possible_intersection_cpu_core_s": 9.15,
+                "lower_cpu_core_s": 8.57,
+                "upper_cpu_core_s": 9.15,
+                "lower_mean_cores": 0.2851028151221466,
+                "upper_mean_cores": 0.30439798814091495,
+                "boundary_uncertainty_core_s": 0.5800000000000001,
+                "wholly_enclosed_nominal_span_s": 29.183377887820825,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1060026.809718749,
+                    "start_latest": 1060026.809793434,
+                    "end_earliest": 1060027.817885599,
+                    "end_latest": 1060027.818040895,
+                    "cpu_core_s": 0.3100000000000005,
+                    "index": 161,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247499
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1060057.001263487,
+                    "start_latest": 1060057.00132832,
+                    "end_earliest": 1060058.007283841,
+                    "end_latest": 1060058.007355715,
+                    "cpu_core_s": 0.2699999999999996,
+                    "index": 191,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247499
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 156,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 1.3423513180000004,
+                  "upper_accounting_cpu_core_s": 1.9223513180000005,
+                  "lower_accounting_mean_cores": 0.044656725746175484,
+                  "upper_accounting_mean_cores": 0.06395189876494387,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              }
+            },
+            "noncomposed_processes": {
+              "nominal_timestamp": {
+                "window_duration_s": 30.059331390075386,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 1.32,
+                "possible_intersection_cpu_core_s": 1.4200000000000002,
+                "lower_cpu_core_s": 1.32,
+                "upper_cpu_core_s": 1.4200000000000002,
+                "lower_mean_cores": 0.04391315238754183,
+                "upper_mean_cores": 0.047239906356295006,
+                "boundary_uncertainty_core_s": 0.10000000000000009,
+                "wholly_enclosed_nominal_span_s": 29.1842428969685,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1060026.809081581,
+                    "start_latest": 1060026.809441925,
+                    "end_earliest": 1060027.816435084,
+                    "end_latest": 1060027.817234226,
+                    "cpu_core_s": 0.05000000000000002,
+                    "index": 161,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247475,
+                      3247496,
+                      3247497
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1060057.000677981,
+                    "start_latest": 1060057.001023535,
+                    "end_earliest": 1060058.006432226,
+                    "end_latest": 1060058.00692671,
+                    "cpu_core_s": 0.04999999999999982,
+                    "index": 191,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247475,
+                      3247496,
+                      3247497
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 156,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ]
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 30.059331390075386,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 1.32,
+                "possible_intersection_cpu_core_s": 1.4200000000000002,
+                "lower_cpu_core_s": 1.32,
+                "upper_cpu_core_s": 1.4200000000000002,
+                "lower_mean_cores": 0.04391315238754183,
+                "upper_mean_cores": 0.047239906356295006,
+                "boundary_uncertainty_core_s": 0.10000000000000009,
+                "wholly_enclosed_nominal_span_s": 29.1842428969685,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1060026.809081581,
+                    "start_latest": 1060026.809441925,
+                    "end_earliest": 1060027.816435084,
+                    "end_latest": 1060027.817234226,
+                    "cpu_core_s": 0.05000000000000002,
+                    "index": 161,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247475,
+                      3247496,
+                      3247497
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1060057.000677981,
+                    "start_latest": 1060057.001023535,
+                    "end_earliest": 1060058.006432226,
+                    "end_latest": 1060058.00692671,
+                    "cpu_core_s": 0.04999999999999982,
+                    "index": 191,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247475,
+                      3247496,
+                      3247497
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 156,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ]
+              }
+            },
+            "experiment_process_sum": {
+              "nominal_timestamp": {
+                "window_duration_s": 30.059331390075386,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 9.890000000000002,
+                "possible_intersection_cpu_core_s": 10.57,
+                "lower_cpu_core_s": 9.890000000000002,
+                "upper_cpu_core_s": 10.57,
+                "lower_mean_cores": 0.3290159675096885,
+                "upper_mean_cores": 0.35163789449720995,
+                "boundary_uncertainty_core_s": 0.6799999999999979,
+                "wholly_enclosed_nominal_span_s": 29.1842428969685,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1060026.809081581,
+                    "start_latest": 1060026.809793434,
+                    "end_earliest": 1060027.816435084,
+                    "end_latest": 1060027.818040895,
+                    "cpu_core_s": 0.36000000000000054,
+                    "index": 161,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247475,
+                      3247496,
+                      3247497,
+                      3247499
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1060057.000677981,
+                    "start_latest": 1060057.00132832,
+                    "end_earliest": 1060058.006432226,
+                    "end_latest": 1060058.007355715,
+                    "cpu_core_s": 0.3199999999999994,
+                    "index": 191,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247475,
+                      3247496,
+                      3247497,
+                      3247499
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 156,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 2.6623513180000025,
+                  "upper_accounting_cpu_core_s": 3.3423513180000004,
+                  "lower_accounting_mean_cores": 0.08856987813371739,
+                  "upper_accounting_mean_cores": 0.11119180512123887,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 30.059331390075386,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 9.890000000000002,
+                "possible_intersection_cpu_core_s": 10.57,
+                "lower_cpu_core_s": 9.890000000000002,
+                "upper_cpu_core_s": 10.57,
+                "lower_mean_cores": 0.3290159675096885,
+                "upper_mean_cores": 0.35163789449720995,
+                "boundary_uncertainty_core_s": 0.6799999999999979,
+                "wholly_enclosed_nominal_span_s": 29.1842428969685,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1060026.809081581,
+                    "start_latest": 1060026.809793434,
+                    "end_earliest": 1060027.816435084,
+                    "end_latest": 1060027.818040895,
+                    "cpu_core_s": 0.36000000000000054,
+                    "index": 161,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247475,
+                      3247496,
+                      3247497,
+                      3247499
+                    ],
+                    "process_create_time_checked": true
+                  },
+                  {
+                    "start_earliest": 1060057.000677981,
+                    "start_latest": 1060057.00132832,
+                    "end_earliest": 1060058.006432226,
+                    "end_latest": 1060058.007355715,
+                    "cpu_core_s": 0.3199999999999994,
+                    "index": 191,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      3247475,
+                      3247496,
+                      3247497,
+                      3247499
+                    ],
+                    "process_create_time_checked": true
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 156,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 2.6623513180000025,
+                  "upper_accounting_cpu_core_s": 3.3423513180000004,
+                  "lower_accounting_mean_cores": 0.08856987813371739,
+                  "upper_accounting_mean_cores": 0.11119180512123887,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              }
+            },
+            "experiment_cgroup": {
+              "nominal_timestamp": {
+                "window_duration_s": 30.059331390075386,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 9.894257,
+                "possible_intersection_cpu_core_s": 10.570481999999998,
+                "lower_cpu_core_s": 9.894257,
+                "upper_cpu_core_s": 10.570481999999998,
+                "lower_mean_cores": 0.3291575874261382,
+                "upper_mean_cores": 0.3516539294513393,
+                "boundary_uncertainty_core_s": 0.6762249999999987,
+                "wholly_enclosed_nominal_span_s": 29.185810341965407,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1060026.806132714,
+                    "start_latest": 1060026.806246396,
+                    "end_earliest": 1060027.81239689,
+                    "end_latest": 1060027.812511915,
+                    "cpu_core_s": 0.349904,
+                    "index": 161,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_adaptive.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  },
+                  {
+                    "start_earliest": 1060056.998207232,
+                    "start_latest": 1060056.99829562,
+                    "end_earliest": 1060058.003692424,
+                    "end_latest": 1060058.003794382,
+                    "cpu_core_s": 0.326321,
+                    "index": 191,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_adaptive.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 156,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 2.6666083179999998,
+                  "upper_accounting_cpu_core_s": 3.3428333179999985,
+                  "lower_accounting_mean_cores": 0.08871149805016712,
+                  "upper_accounting_mean_cores": 0.11120784007536819,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              },
+              "read_bracket_conservative": {
+                "window_duration_s": 30.059331390075386,
+                "complete_counter_chain": true,
+                "wholly_enclosed_intervals": 29,
+                "possible_intersecting_intervals": 31,
+                "boundary_intervals": 2,
+                "missing_chain_edges": [],
+                "enclosed_cpu_core_s": 9.894257,
+                "possible_intersection_cpu_core_s": 10.570481999999998,
+                "lower_cpu_core_s": 9.894257,
+                "upper_cpu_core_s": 10.570481999999998,
+                "lower_mean_cores": 0.3291575874261382,
+                "upper_mean_cores": 0.3516539294513393,
+                "boundary_uncertainty_core_s": 0.6762249999999987,
+                "wholly_enclosed_nominal_span_s": 29.185810341965407,
+                "boundary_records": [
+                  {
+                    "start_earliest": 1060026.806132714,
+                    "start_latest": 1060026.806246396,
+                    "end_earliest": 1060027.81239689,
+                    "end_latest": 1060027.812511915,
+                    "cpu_core_s": 0.349904,
+                    "index": 161,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_adaptive.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  },
+                  {
+                    "start_earliest": 1060056.998207232,
+                    "start_latest": 1060056.99829562,
+                    "end_earliest": 1060058.003692424,
+                    "end_latest": 1060058.003794382,
+                    "cpu_core_s": 0.326321,
+                    "index": 191,
+                    "counter_source": "raw_cumulative_actual_read_brackets",
+                    "identities": [
+                      "/sys/fs/cgroup/super_sector_filter_3245358_seed1_run9500_adaptive.attempt1"
+                    ],
+                    "process_create_time_checked": false
+                  }
+                ],
+                "interpolation_used": false,
+                "omitted_samples": [
+                  {
+                    "index": 156,
+                    "reason": "no previous active same-mode scope"
+                  }
+                ],
+                "counter_sources": [
+                  "raw_cumulative_actual_read_brackets"
+                ],
+                "stage_subtracted_accounting_residual": {
+                  "lower_accounting_cpu_core_s": 2.6666083179999998,
+                  "upper_accounting_cpu_core_s": 3.3428333179999985,
+                  "lower_accounting_mean_cores": 0.08871149805016712,
+                  "upper_accounting_mean_cores": 0.11120784007536819,
+                  "negative_lower_is_not_clamped": true,
+                  "physical_uninstrumented_cpu_bound": false,
+                  "reason": "Stage counters charge entire scopes at completion and report fields are not one atomic snapshot; boundary scope/report skew is not measured."
+                }
+              }
+            }
+          }
+        }
+      ],
+      "raw_cgroup_traces": [
+        {
+          "path": "/root/super-sector-filter/results/c19_cpu_attribution_20260916/profile_preflight_run9500/artifacts/seed1_run9500_adaptive.attempt1.cgroup.csv",
+          "sha256": "83cb79d93885d95ff7eda7553e6cdf288d564e968f1e01c6eb9662ddce43cb44",
+          "samples": 39,
+          "elapsed_span_s": 38.486293,
+          "alignment_available": false,
+          "reason": "CSV stores relative elapsed_s only; absolute monotonic origin was not persisted. No origin inferred from launch, CPU shape, or wall timestamps.",
+          "algorithm_observed_cpu_core_s": 11.594264,
+          "end_to_end_observed_cpu_core_s": 13.319439
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "All means below divide by the same profiler report-window duration, not by the shorter enclosed-sample duration.",
+    "New telemetry cumulative counters use actual before/after read brackets in BOTH variants; no midpoint is invented. For legacy C18 only, nominal bounds assume reads at sample-start while the conservative fallback allows reads before the next sampling pass.",
+    "Deltas are never linearly interpolated or prorated. Enclosed intervals supply the lower amount; all possibly intersecting intervals supply the upper amount only if the counter-read chain covers the window.",
+    "Bounds concern counter-reported CPU. /proc user/system counters remain tick-quantized. New telemetry checks PID create_time and actual read brackets; legacy C18 lacks those fields and therefore only PID/name/scope continuity can be checked. Cgroup path replacement without a counter reset remains unproven.",
+    "Stage counters are completion-attributed and independently loaded, not exact clipped-window integrals. Unknown active-scope boundary CPU and report skew prevent calling the subtracted interval a strict physical uninstrumented-CPU bound.",
+    "Exclusive stage CPU only is summed. Inclusive parent stages overlap children and must not be added; work performed by spawned worker threads is not implicitly attributed to their caller.",
+    "Composed-process residual includes uninstrumented useful callbacks, executor/DDS work, profiling overhead and boundary attribution error. It is not all avoidable waste.",
+    "Experiment cgroup includes launcher/mission/other experiment processes; process sum and cgroup are alternative measurements, never added. Observer CPU is outside this scope.",
+    "Raw cumulative cgroup CSV remains useful for its own full span, but cannot be rigorously aligned without a persisted absolute monotonic origin.",
+    "This is a profiled single-run offline diagnostic, not new flight evidence or an unprofiled40% acceptance result."
+  ],
+  "interpolation_used": false
+}

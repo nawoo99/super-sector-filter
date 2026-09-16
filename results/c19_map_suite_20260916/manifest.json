@@ -1,0 +1,956 @@
+{
+  "spec": {
+    "schema": "c19-map-suite-geometry-v1",
+    "normal_seeds": [
+      1,
+      3,
+      5,
+      7,
+      9
+    ],
+    "normal_choice": "First physical seed in each historical diameter tier, not best-performing seed",
+    "stress_names": [
+      "c19_cyl_probe_s1",
+      "c19_cyl_probe_s2",
+      "c19_cyl_probe_s3",
+      "c19_cyl_probe_s4",
+      "c19_cyl_probe_s5"
+    ],
+    "radius_tiers_m": [
+      0.15,
+      0.275,
+      0.4,
+      0.525,
+      0.65
+    ],
+    "cylinder_count": 410,
+    "stress_min_surface_gap_m": 1.0,
+    "background_route_clearance_m": 2.0,
+    "ne_posts": [
+      [
+        20.4,
+        24.0
+      ],
+      [
+        17.0,
+        24.8
+      ],
+      [
+        13.6,
+        23.2
+      ]
+    ],
+    "nw_posts": [
+      [
+        -24.0,
+        20.4
+      ],
+      [
+        -24.8,
+        17.0
+      ],
+      [
+        -23.2,
+        13.6
+      ]
+    ],
+    "s1_to_s3": "NE posts only",
+    "s4_to_s5": "NE and NW posts",
+    "source_background_seeds": [
+      1,
+      3,
+      5,
+      7,
+      9
+    ],
+    "background_not_unseen": true,
+    "planner_change": false,
+    "sensor_fault": false,
+    "moving_obstacle": false,
+    "cylinder_only": true,
+    "final_performance_qualified": false,
+    "flight_runs": 0,
+    "no_performance_based_selection": true,
+    "no_historical_results_pooling": true,
+    "waypoint_file": "loop24.txt",
+    "max_velocity_m_s": 7,
+    "sector_half_angle_deg": 45,
+    "lidar_hz": 10,
+    "control_hz": 100,
+    "generator_sha256": "d174ebc9fd98db8483ca0acc11240e8bbc7b2362a11987b899fd939075add2ab"
+  },
+  "maps": [
+    {
+      "group": "Normal",
+      "display": "N1",
+      "map": "seed1",
+      "count": 410,
+      "diameter_m": 0.3,
+      "height_m": 3.0,
+      "min_surface_gap_m": 1.0030740577572714,
+      "mean_nearest_surface_gap_m": 1.7298454500038563,
+      "assets": {
+        "/root/super-sector-filter/scripts/native_campaign/seed1_static.csv": "80ce339700fa26f302850e3219c2e9cb4a0606e7ecd7a1116cfdaf9a6ad4a85e",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/seed1.pcd": "7a9f832753fb0a23af8de6ca30245853e7f3c6ecf1ec00835712228ebe24b55c",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed1.yaml": "39a9c7de83e2ad197beb9f827a0c07d1d7193b4b3966134458b433ad62001d1c"
+      },
+      "status": "physical map frozen; current-version all-map flight campaign pending"
+    },
+    {
+      "group": "Stress",
+      "display": "S1",
+      "map": "c19_cyl_probe_s1",
+      "count": 410,
+      "diameter_m": 0.3,
+      "height_m": 3.0,
+      "min_surface_gap_m": 1.0030740577572714,
+      "mean_nearest_surface_gap_m": 1.6575460543422096,
+      "structural_posts": 3,
+      "point_count": 241490,
+      "geometry_route_body_clearance_m": 0.4500000000000007,
+      "geometric_routes_xy": [
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            24.0,
+            24.0
+          ]
+        ],
+        [
+          [
+            24.0,
+            24.0
+          ],
+          [
+            21.6,
+            24.0
+          ],
+          [
+            20.900000000000006,
+            24.700000000000003
+          ],
+          [
+            20.800000000000004,
+            24.700000000000003
+          ],
+          [
+            20.700000000000003,
+            24.800000000000004
+          ],
+          [
+            18.200000000000003,
+            24.800000000000004
+          ],
+          [
+            17.5,
+            24.1
+          ],
+          [
+            17.400000000000006,
+            24.1
+          ],
+          [
+            17.300000000000004,
+            24.0
+          ],
+          [
+            -24.0,
+            24.0
+          ]
+        ],
+        [
+          [
+            -24.0,
+            24.0
+          ],
+          [
+            -24.0,
+            -24.0
+          ]
+        ],
+        [
+          [
+            -24.0,
+            -24.0
+          ],
+          [
+            24.0,
+            -24.0
+          ]
+        ],
+        [
+          [
+            24.0,
+            -24.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "offline_route_not_supplied_to_planner": true,
+      "assets": {
+        "/root/super-sector-filter/results/c19_map_suite_20260916/c19_cyl_probe_s1_cylinders.csv": "5adb51dd4b67b4670774f1f36b8e6b22f0099993f58ad7ac99a8a151eaf98b8d",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/c19_cyl_probe_s1.pcd": "beb7eb27b9709523b237a3f3bc13de3a89d1b96aa8064f584a2aeae6a344f798",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/c19_cyl_probe_s1.yaml": "023684a5a7809c394f396e1c0e2143053deb6035b29c76cc7a34f9964402d627"
+      },
+      "status": "geometry-only exploratory candidate; zero flight validation"
+    },
+    {
+      "group": "Normal",
+      "display": "N2",
+      "map": "seed3",
+      "count": 410,
+      "diameter_m": 0.55,
+      "height_m": 3.0,
+      "min_surface_gap_m": 1.0071698687041177,
+      "mean_nearest_surface_gap_m": 1.610234351683753,
+      "assets": {
+        "/root/super-sector-filter/scripts/native_campaign/seed3_static.csv": "18894e92bfeb27676f63b04999e088520255094652f418713632a24106eac93d",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/seed3.pcd": "be00f75aaf26d5e47a4b54605eb72e6daee8ce546cb1c6de9ad9ea47f77b9bb0",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed3.yaml": "441ea73e21e01c179359cdef8742452faff9513ced36df832ee6361b6a12b243"
+      },
+      "status": "physical map frozen; current-version all-map flight campaign pending"
+    },
+    {
+      "group": "Stress",
+      "display": "S2",
+      "map": "c19_cyl_probe_s2",
+      "count": 410,
+      "diameter_m": 0.55,
+      "height_m": 3.0,
+      "min_surface_gap_m": 1.0071698687041177,
+      "mean_nearest_surface_gap_m": 1.5432068824022502,
+      "structural_posts": 3,
+      "point_count": 444850,
+      "geometry_route_body_clearance_m": 0.46839811320566166,
+      "geometric_routes_xy": [
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            24.0,
+            24.0
+          ]
+        ],
+        [
+          [
+            24.0,
+            24.0
+          ],
+          [
+            21.800000000000004,
+            24.0
+          ],
+          [
+            21.0,
+            23.200000000000003
+          ],
+          [
+            20.900000000000006,
+            23.200000000000003
+          ],
+          [
+            20.800000000000004,
+            23.1
+          ],
+          [
+            20.700000000000003,
+            23.1
+          ],
+          [
+            20.6,
+            23.0
+          ],
+          [
+            15.200000000000003,
+            23.0
+          ],
+          [
+            14.200000000000003,
+            24.0
+          ],
+          [
+            14.100000000000001,
+            24.0
+          ],
+          [
+            14.0,
+            24.1
+          ],
+          [
+            13.900000000000006,
+            24.1
+          ],
+          [
+            13.800000000000004,
+            24.200000000000003
+          ],
+          [
+            -23.6,
+            24.200000000000003
+          ],
+          [
+            -23.7,
+            24.1
+          ],
+          [
+            -23.9,
+            24.1
+          ],
+          [
+            -24.0,
+            24.0
+          ]
+        ],
+        [
+          [
+            -24.0,
+            24.0
+          ],
+          [
+            -24.0,
+            -24.0
+          ]
+        ],
+        [
+          [
+            -24.0,
+            -24.0
+          ],
+          [
+            24.0,
+            -24.0
+          ]
+        ],
+        [
+          [
+            24.0,
+            -24.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "offline_route_not_supplied_to_planner": true,
+      "assets": {
+        "/root/super-sector-filter/results/c19_map_suite_20260916/c19_cyl_probe_s2_cylinders.csv": "76235af5b780c7b42d27ec04ae3ed789db0cdc1a0fd29fef637033ddcc05f559",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/c19_cyl_probe_s2.pcd": "1575880d9254495c425c609cf4d7e96f6be8a14ab40d749b0182e7ac3f19ef7e",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/c19_cyl_probe_s2.yaml": "87b5dffa7a2947a92060e024214c4e9dcd9d064003345f1db347cc167fd677e0"
+      },
+      "status": "geometry-only exploratory candidate; zero flight validation"
+    },
+    {
+      "group": "Normal",
+      "display": "N3",
+      "map": "seed5",
+      "count": 410,
+      "diameter_m": 0.8,
+      "height_m": 3.0,
+      "min_surface_gap_m": 1.003770495379055,
+      "mean_nearest_surface_gap_m": 1.4808008797468861,
+      "assets": {
+        "/root/super-sector-filter/scripts/native_campaign/seed5_static.csv": "1fc7be69d4d202e5eea0517177e243a475ff137fbab19127bb31f94f1c8ede75",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/seed5.pcd": "939e343efae7bc0d83a5aa167d4f5d53cfb66f30ab1d37fb99fa3f14f41e0ec5",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed5.yaml": "9d2fc2818c0317a0fc9af0600fa4447f35e2235cf98dd42e1c6013b684dbe115"
+      },
+      "status": "physical map frozen; current-version all-map flight campaign pending"
+    },
+    {
+      "group": "Stress",
+      "display": "S3",
+      "map": "c19_cyl_probe_s3",
+      "count": 410,
+      "diameter_m": 0.8,
+      "height_m": 3.0,
+      "min_surface_gap_m": 1.003415418553121,
+      "mean_nearest_surface_gap_m": 1.419516462191983,
+      "structural_posts": 3,
+      "point_count": 635500,
+      "geometry_route_body_clearance_m": 0.46066017177982493,
+      "geometric_routes_xy": [
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            24.0,
+            24.0
+          ]
+        ],
+        [
+          [
+            24.0,
+            24.0
+          ],
+          [
+            21.900000000000006,
+            24.0
+          ],
+          [
+            20.900000000000006,
+            23.0
+          ],
+          [
+            20.800000000000004,
+            23.0
+          ],
+          [
+            20.700000000000003,
+            22.900000000000006
+          ],
+          [
+            15.400000000000006,
+            22.900000000000006
+          ],
+          [
+            14.100000000000001,
+            24.200000000000003
+          ],
+          [
+            14.0,
+            24.200000000000003
+          ],
+          [
+            13.900000000000006,
+            24.300000000000004
+          ],
+          [
+            -23.4,
+            24.300000000000004
+          ],
+          [
+            -23.5,
+            24.200000000000003
+          ],
+          [
+            -23.6,
+            24.200000000000003
+          ],
+          [
+            -23.7,
+            24.1
+          ],
+          [
+            -23.9,
+            24.1
+          ],
+          [
+            -24.0,
+            24.0
+          ]
+        ],
+        [
+          [
+            -24.0,
+            24.0
+          ],
+          [
+            -24.0,
+            -24.0
+          ]
+        ],
+        [
+          [
+            -24.0,
+            -24.0
+          ],
+          [
+            24.0,
+            -24.0
+          ]
+        ],
+        [
+          [
+            24.0,
+            -24.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "offline_route_not_supplied_to_planner": true,
+      "assets": {
+        "/root/super-sector-filter/results/c19_map_suite_20260916/c19_cyl_probe_s3_cylinders.csv": "8889ef086b9276eb43fbc17ac1d135f807a5dc5ff2572356feadba7b064ab558",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/c19_cyl_probe_s3.pcd": "b2e71d4603562d9b62d4cc6c50750d0dedde12c74334b1f932502181ac32dc6a",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/c19_cyl_probe_s3.yaml": "49d084fafe2bfa2a857ec548adf930adbc29962f5e8231d376217348af4bae9b"
+      },
+      "status": "geometry-only exploratory candidate; zero flight validation"
+    },
+    {
+      "group": "Normal",
+      "display": "N4",
+      "map": "seed7",
+      "count": 410,
+      "diameter_m": 1.05,
+      "height_m": 3.0,
+      "min_surface_gap_m": 1.0043955315371988,
+      "mean_nearest_surface_gap_m": 1.3809744069294347,
+      "assets": {
+        "/root/super-sector-filter/scripts/native_campaign/seed7_static.csv": "a01a54bd4cd24360a9f0b42736e764a0420244071bc58bd828a390fbf60b836c",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/seed7.pcd": "b02d81453f097bde2605ef934a72b4b784a89f8755af45ac3e9555cc2e91ab84",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed7.yaml": "e743bfeb7cb7134490e3f4f4ceefd164ec809cc574ea5ab5876a2233f10ad8c1"
+      },
+      "status": "physical map frozen; current-version all-map flight campaign pending"
+    },
+    {
+      "group": "Stress",
+      "display": "S4",
+      "map": "c19_cyl_probe_s4",
+      "count": 410,
+      "diameter_m": 1.05,
+      "height_m": 3.0,
+      "min_surface_gap_m": 1.0011180847160577,
+      "mean_nearest_surface_gap_m": 1.291994155591238,
+      "structural_posts": 6,
+      "point_count": 838860,
+      "geometry_route_body_clearance_m": 0.4749999999999957,
+      "geometric_routes_xy": [
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            24.0,
+            24.0
+          ]
+        ],
+        [
+          [
+            24.0,
+            24.0
+          ],
+          [
+            22.1,
+            24.0
+          ],
+          [
+            21.0,
+            22.900000000000006
+          ],
+          [
+            20.900000000000006,
+            22.900000000000006
+          ],
+          [
+            20.800000000000004,
+            22.800000000000004
+          ],
+          [
+            15.700000000000003,
+            22.800000000000004
+          ],
+          [
+            14.200000000000003,
+            24.300000000000004
+          ],
+          [
+            14.100000000000001,
+            24.300000000000004
+          ],
+          [
+            14.0,
+            24.400000000000006
+          ],
+          [
+            -23.2,
+            24.400000000000006
+          ],
+          [
+            -23.299999999999997,
+            24.300000000000004
+          ],
+          [
+            -23.4,
+            24.300000000000004
+          ],
+          [
+            -23.5,
+            24.200000000000003
+          ],
+          [
+            -23.6,
+            24.200000000000003
+          ],
+          [
+            -23.7,
+            24.1
+          ],
+          [
+            -23.9,
+            24.1
+          ],
+          [
+            -24.0,
+            24.0
+          ]
+        ],
+        [
+          [
+            -24.0,
+            24.0
+          ],
+          [
+            -24.0,
+            22.1
+          ],
+          [
+            -22.9,
+            21.0
+          ],
+          [
+            -22.9,
+            20.900000000000006
+          ],
+          [
+            -22.799999999999997,
+            20.800000000000004
+          ],
+          [
+            -22.799999999999997,
+            15.700000000000003
+          ],
+          [
+            -24.3,
+            14.200000000000003
+          ],
+          [
+            -24.3,
+            14.100000000000001
+          ],
+          [
+            -24.4,
+            14.0
+          ],
+          [
+            -24.4,
+            -23.2
+          ],
+          [
+            -24.3,
+            -23.299999999999997
+          ],
+          [
+            -24.3,
+            -23.4
+          ],
+          [
+            -24.2,
+            -23.5
+          ],
+          [
+            -24.2,
+            -23.6
+          ],
+          [
+            -24.1,
+            -23.7
+          ],
+          [
+            -24.1,
+            -23.9
+          ],
+          [
+            -24.0,
+            -24.0
+          ]
+        ],
+        [
+          [
+            -24.0,
+            -24.0
+          ],
+          [
+            24.0,
+            -24.0
+          ]
+        ],
+        [
+          [
+            24.0,
+            -24.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "offline_route_not_supplied_to_planner": true,
+      "assets": {
+        "/root/super-sector-filter/results/c19_map_suite_20260916/c19_cyl_probe_s4_cylinders.csv": "9bca33d66b77d0a44cc5df9096984ab49b36a2fa23c2ae69ecf98b8619ab35d3",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/c19_cyl_probe_s4.pcd": "df50a94c7792553a052dcc950f137e7015db90f986b1e1734819937cf314f166",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/c19_cyl_probe_s4.yaml": "2a627d14f30c15db015525fa43b7892ea9136d854787f5feba2acb311ed18c0f"
+      },
+      "status": "geometry-only exploratory candidate; zero flight validation"
+    },
+    {
+      "group": "Normal",
+      "display": "N5",
+      "map": "seed9",
+      "count": 410,
+      "diameter_m": 1.3,
+      "height_m": 3.0,
+      "min_surface_gap_m": 1.0030310462518743,
+      "mean_nearest_surface_gap_m": 1.303900813634331,
+      "assets": {
+        "/root/super-sector-filter/scripts/native_campaign/seed9_static.csv": "f6de213d5013e41221d4f4c0010ec74d4f8dbe929c10f38329022e1a26e84aff",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/seed9.pcd": "a2cff026e14101c8ba2c5b2373578c7cd656f535387518bebd74234aa4183863",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed9.yaml": "a6b8e5611418ffa4c5b90b46671c10f1b7835549cef144cb897bc6102c3df944"
+      },
+      "status": "physical map frozen; current-version all-map flight campaign pending"
+    },
+    {
+      "group": "Stress",
+      "display": "S5",
+      "map": "c19_cyl_probe_s5",
+      "count": 410,
+      "diameter_m": 1.3,
+      "height_m": 3.0,
+      "min_surface_gap_m": 1.004289631908883,
+      "mean_nearest_surface_gap_m": 1.209527639899875,
+      "structural_posts": 6,
+      "point_count": 1042220,
+      "geometry_route_body_clearance_m": 0.45,
+      "geometric_routes_xy": [
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            24.0,
+            24.0
+          ]
+        ],
+        [
+          [
+            24.0,
+            24.0
+          ],
+          [
+            22.300000000000004,
+            24.0
+          ],
+          [
+            21.200000000000003,
+            22.900000000000006
+          ],
+          [
+            21.1,
+            22.900000000000006
+          ],
+          [
+            20.900000000000006,
+            22.700000000000003
+          ],
+          [
+            20.5,
+            22.700000000000003
+          ],
+          [
+            20.400000000000006,
+            22.6
+          ],
+          [
+            16.1,
+            22.6
+          ],
+          [
+            14.400000000000006,
+            24.300000000000004
+          ],
+          [
+            14.300000000000004,
+            24.300000000000004
+          ],
+          [
+            14.200000000000003,
+            24.400000000000006
+          ],
+          [
+            14.100000000000001,
+            24.400000000000006
+          ],
+          [
+            14.0,
+            24.5
+          ],
+          [
+            -23.0,
+            24.5
+          ],
+          [
+            -23.1,
+            24.400000000000006
+          ],
+          [
+            -23.2,
+            24.400000000000006
+          ],
+          [
+            -23.299999999999997,
+            24.300000000000004
+          ],
+          [
+            -23.4,
+            24.300000000000004
+          ],
+          [
+            -23.5,
+            24.200000000000003
+          ],
+          [
+            -23.6,
+            24.200000000000003
+          ],
+          [
+            -23.7,
+            24.1
+          ],
+          [
+            -23.9,
+            24.1
+          ],
+          [
+            -24.0,
+            24.0
+          ]
+        ],
+        [
+          [
+            -24.0,
+            24.0
+          ],
+          [
+            -24.0,
+            22.300000000000004
+          ],
+          [
+            -22.9,
+            21.200000000000003
+          ],
+          [
+            -22.9,
+            21.1
+          ],
+          [
+            -22.799999999999997,
+            21.0
+          ],
+          [
+            -22.799999999999997,
+            20.900000000000006
+          ],
+          [
+            -22.7,
+            20.800000000000004
+          ],
+          [
+            -22.7,
+            16.0
+          ],
+          [
+            -24.3,
+            14.400000000000006
+          ],
+          [
+            -24.3,
+            14.300000000000004
+          ],
+          [
+            -24.4,
+            14.200000000000003
+          ],
+          [
+            -24.4,
+            14.100000000000001
+          ],
+          [
+            -24.5,
+            14.0
+          ],
+          [
+            -24.5,
+            -23.0
+          ],
+          [
+            -24.4,
+            -23.1
+          ],
+          [
+            -24.4,
+            -23.2
+          ],
+          [
+            -24.3,
+            -23.299999999999997
+          ],
+          [
+            -24.3,
+            -23.4
+          ],
+          [
+            -24.2,
+            -23.5
+          ],
+          [
+            -24.2,
+            -23.6
+          ],
+          [
+            -24.1,
+            -23.7
+          ],
+          [
+            -24.1,
+            -23.9
+          ],
+          [
+            -24.0,
+            -24.0
+          ]
+        ],
+        [
+          [
+            -24.0,
+            -24.0
+          ],
+          [
+            24.0,
+            -24.0
+          ]
+        ],
+        [
+          [
+            24.0,
+            -24.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "offline_route_not_supplied_to_planner": true,
+      "assets": {
+        "/root/super-sector-filter/results/c19_map_suite_20260916/c19_cyl_probe_s5_cylinders.csv": "293d38aed27c3983b76c081cc4f785b636b04dede5649bbc93bbe434cf1ec15c",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/c19_cyl_probe_s5.pcd": "a6ae24ccdd773a09cd29f6878679c01703f3625d1a5bbff5394efff407b14811",
+        "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/c19_cyl_probe_s5.yaml": "22e4786242326768e8209a1e8594625ff302804eb0ee7d3064ee4149fc4156f0"
+      },
+      "status": "geometry-only exploratory candidate; zero flight validation"
+    }
+  ]
+}

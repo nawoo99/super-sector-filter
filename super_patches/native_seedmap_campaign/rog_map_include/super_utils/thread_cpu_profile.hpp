@@ -53,6 +53,19 @@ enum class Stage : std::size_t {
     SimStaticCloud,
     SimOdom,
     SimRender,
+    MapOdom,
+    FrontendAcquisition,
+    FrontendEnqueue,
+    FrontendCloud,
+    FrontendOdom,
+    FrontendReplanStatus,
+    FrontendMapCommit,
+    FrontendMapAck,
+    FrontendGuardStatus,
+    FrontendTrajectory,
+    FrontendRisk,
+    FrontendReport,
+    FrontendStats,
     Count
 };
 
@@ -70,7 +83,11 @@ inline constexpr std::array<const char *, static_cast<std::size_t>(Stage::Count)
             "planner_corridor_search", "planner_velocity_extrema",
             "planner_visualize_path", "fsm_poly_publish",
             "sim_static_cloud_callback", "sim_odom_callback",
-            "sim_render_callback"}};
+            "sim_render_callback", "map_odom_callback",
+            "frontend_acquisition", "frontend_enqueue", "frontend_cloud",
+            "frontend_odom", "frontend_replan_status", "frontend_map_commit",
+            "frontend_map_ack", "frontend_guard_status", "frontend_trajectory",
+            "frontend_risk", "frontend_report", "frontend_stats"}};
 
 inline bool enabled() noexcept {
     static const bool value = [] {

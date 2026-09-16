@@ -13,7 +13,8 @@ static_assert(static_cast<std::size_t>(profile::Stage::FsmPolyPublish) == 26);
 static_assert(static_cast<std::size_t>(profile::Stage::SimStaticCloud) == 27);
 static_assert(static_cast<std::size_t>(profile::Stage::SimOdom) == 28);
 static_assert(static_cast<std::size_t>(profile::Stage::SimRender) == 29);
-static_assert(static_cast<std::size_t>(profile::Stage::Count) == 30);
+static_assert(static_cast<std::size_t>(profile::Stage::MapOdom) == 30);
+static_assert(static_cast<std::size_t>(profile::Stage::Count) == 43);
 
 void require(bool condition, const char *description) {
     if (!condition) {

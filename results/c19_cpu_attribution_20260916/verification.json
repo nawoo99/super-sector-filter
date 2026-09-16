@@ -1,0 +1,130 @@
+{
+  "schema": "c19-attribution-verification-v1",
+  "arms": {
+    "ON": {
+      "checks": {
+        "three_modes": true,
+        "all_completed": true,
+        "no_contacts": true,
+        "source_contracts": true,
+        "safety_quality": true,
+        "paired_mission_time": true,
+        "full_profile_presence_correct": true,
+        "sector_profile_presence_correct": true,
+        "adaptive_profile_presence_correct": true
+      },
+      "comparison": {
+        "mean_cpu_reduction_target_pct": 30.0,
+        "threshold_scope": "Predeclared engineering objective; not statistical significance",
+        "end_to_end_cpu_cores_mean_reduction_pct": 36.28203792356226,
+        "end_to_end_cpu_core_s_reduction_pct": 39.56088516555387,
+        "mission_time_ratio": 0.9502664298401422,
+        "safety_and_quality_pass": true,
+        "mission_time_guardrail_pass": true,
+        "per_mode_reference_time_guardrail_pass": true,
+        "cpu_comparison_instrumented": false,
+        "requires_unprofiled_confirmation": true,
+        "common_demand_exercise_pass": true,
+        "static_delivery_preservation_pass": true,
+        "common_goal_identity_exercise_pass": true,
+        "measured_threshold_pass": true,
+        "target_met": false,
+        "exploratory_n1_only": true
+      }
+    },
+    "OFF": {
+      "checks": {
+        "three_modes": true,
+        "all_completed": true,
+        "no_contacts": true,
+        "source_contracts": true,
+        "safety_quality": true,
+        "paired_mission_time": false,
+        "full_profile_presence_correct": true,
+        "sector_profile_presence_correct": true,
+        "adaptive_profile_presence_correct": true
+      },
+      "comparison": {
+        "mean_cpu_reduction_target_pct": 30.0,
+        "threshold_scope": "Predeclared engineering objective; not statistical significance",
+        "end_to_end_cpu_cores_mean_reduction_pct": 30.596942889588675,
+        "end_to_end_cpu_core_s_reduction_pct": 21.491635846957593,
+        "mission_time_ratio": 1.1614016458720466,
+        "safety_and_quality_pass": true,
+        "mission_time_guardrail_pass": false,
+        "per_mode_reference_time_guardrail_pass": true,
+        "cpu_comparison_instrumented": false,
+        "requires_unprofiled_confirmation": false,
+        "common_demand_exercise_pass": true,
+        "static_delivery_preservation_pass": true,
+        "common_goal_identity_exercise_pass": true,
+        "measured_threshold_pass": false,
+        "target_met": false,
+        "exploratory_n1_only": true
+      }
+    }
+  },
+  "runtime_hashes_unchanged": true,
+  "frozen_normal_unchanged": true,
+  "diagnostic_execution_complete": true,
+  "all_verification_gates_pass": false,
+  "expansion_campaign_started": false,
+  "new_flight_retries": 0,
+  "profiler_overhead_causal_estimate_available": false,
+  "autonomy_full_cpu_independently_measured": false,
+  "recovery_evidence": {
+    "ON": {
+      "log": "/root/super-sector-filter/results/c19_cpu_attribution_20260916/profile_preflight_run9500/artifacts/seed1_run9500_adaptive.attempt1.stack.log",
+      "sha256": "c3edd22e7151d074e4a22d99ebcfb79c1d03c9574886af0b4d6391c842408218",
+      "episodes": {
+        "1": {
+          "FULL": 1789548187.803243,
+          "SECTOR": 1789548189.0401113,
+          "full_residence_s": 1.2368683815002441
+        }
+      },
+      "version_changed_lines": [],
+      "brake_rejected_lines": [],
+      "full_residence_not_identical_to_added_mission_time": true
+    },
+    "OFF": {
+      "log": "/root/super-sector-filter/results/c19_cpu_attribution_20260916/repeats/r01_run9501/artifacts/seed1_run9501_adaptive.attempt1.stack.log",
+      "sha256": "b059f58aa30338b9194a81bb40fb6645611f0e0762949f64ade0745f4bf6eb4d",
+      "episodes": {
+        "1": {
+          "FULL": 1789548253.2599,
+          "SECTOR": 1789548254.7624218,
+          "full_residence_s": 1.5025217533111572
+        },
+        "2": {
+          "FULL": 1789548265.260326,
+          "SECTOR": 1789548265.8052294,
+          "full_residence_s": 0.5449035167694092
+        },
+        "3": {
+          "FULL": 1789548275.759527,
+          "SECTOR": 1789548277.3327303,
+          "full_residence_s": 1.5732033252716064
+        },
+        "4": {
+          "FULL": 1789548278.8593984,
+          "SECTOR": 1789548279.5612926,
+          "full_residence_s": 0.7018942832946777
+        }
+      },
+      "version_changed_lines": [
+        "[perfect_drone_adaptive_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=VERSION_CHANGED gen=83 map=240 map_age=0.007s map_age_limit=0.500s motion_speed=6.846mps samples=243 range=[0.076,1.282] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]",
+        "[perfect_drone_adaptive_node-2]  -- [TRAJ_GUARD_CERT] trigger=main_pre status=VERSION_CHANGED gen=90 map=271 map_age=0.010s map_age_limit=0.514s motion_speed=3.223mps samples=300 range=[0.074,1.568] collision_tt=-1.000 ttc=-1.000 p=[0.000,0.000,0.000]"
+      ],
+      "brake_rejected_lines": [
+        "[perfect_drone_adaptive_node-2] [ERROR] [1789548265.260273780] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=main_pre_uncertified searched=[0.400,3.000]s speed0=6.963 initial_source=fresh_command cmd_age=0.010s cmd_pos_err=0.068 cmd_vel_err=inf motion_speed=inf motion_dt=infs motion_pose_speed=inf motion_twist_speed=6.959 motion_disagreement=inf motion_source=none motion_gen=44/2 motion_gen_continuous=false last_dynamics_ok=false max_vel=7.314 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=UNOBSERVED last_map=135 map_age=0.008s raw_status=DISABLED raw_cloud=0 raw_age=0.000s ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published",
+        "[perfect_drone_adaptive_node-2] [ERROR] [1789548265.270281606] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=6.963 initial_source=fresh_command cmd_age=0.020s cmd_pos_err=0.000 cmd_vel_err=0.000 motion_speed=6.963 motion_dt=0.008s motion_pose_speed=6.856 motion_twist_speed=6.963 motion_disagreement=0.116 motion_source=odom_twist motion_gen=44/44 motion_gen_continuous=true last_dynamics_ok=false max_vel=7.314 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=UNOBSERVED last_map=135 map_age=0.018s raw_status=DISABLED raw_cloud=0 raw_age=0.000s ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published",
+        "[perfect_drone_adaptive_node-2] [ERROR] [1789548265.370020464] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=6.992 initial_source=trajectory_fallback cmd_age=0.120s cmd_pos_err=0.000 cmd_vel_err=inf motion_speed=inf motion_dt=infs motion_pose_speed=inf motion_twist_speed=6.963 motion_disagreement=inf motion_source=none motion_gen=45/44 motion_gen_continuous=false last_dynamics_ok=false max_vel=10.039 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=CLEARANCE_MARGIN last_map=135 map_age=0.117s raw_status=DISABLED raw_cloud=0 raw_age=0.000s ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published",
+        "[perfect_drone_adaptive_node-2] [ERROR] [1789548265.469673021] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.220s cmd_pos_err=0.000 cmd_vel_err=6.963 motion_speed=0.000 motion_dt=0.100s motion_pose_speed=0.000 motion_twist_speed=6.963 motion_disagreement=6.963 motion_source=position_difference motion_gen=45/45 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=SAFE last_map=137 map_age=0.005s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published",
+        "[perfect_drone_adaptive_node-2] [ERROR] [1789548265.579592087] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.330s cmd_pos_err=0.000 cmd_vel_err=6.963 motion_speed=0.000 motion_dt=0.110s motion_pose_speed=0.000 motion_twist_speed=6.963 motion_disagreement=6.963 motion_source=position_difference motion_gen=45/45 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=SAFE last_map=138 map_age=0.008s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published",
+        "[perfect_drone_adaptive_node-2] [ERROR] [1789548265.679591873] [fsm_node]:  -- [TRAJ_GUARD_BRAKE_REJECTED] trigger=emergency_stop_retry searched=[0.400,3.000]s speed0=0.000 initial_source=position_difference cmd_age=0.430s cmd_pos_err=0.000 cmd_vel_err=6.963 motion_speed=0.000 motion_dt=0.100s motion_pose_speed=0.000 motion_twist_speed=6.963 motion_disagreement=6.963 motion_source=position_difference motion_gen=45/45 motion_gen_continuous=true last_dynamics_ok=true max_vel=0.000 vel_limit=7.000 max_acc=0.000 max_jerk=0.000 last_path_status=SAFE last_map=139 map_age=0.013s raw_status=DISABLED raw_cloud=0 raw_age=infs ciri_shadow=DISABLED ciri_shadow_result=0 ciri_shadow_queued=0 ciri_shadow_age=infs; no brake command published"
+      ],
+      "full_residence_not_identical_to_added_mission_time": true
+    }
+  }
+}

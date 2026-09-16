@@ -5896,3 +5896,52 @@ oldStress5 arewalls/dropout, requestedcylinderStress5 are not finalized. Need
 fixed physical map identities, map-aware geometry/transport and mode timing
 validation; in future stress, separate measurement validity from Sector safety
 outcomes instead of filtering away its intended failure cases.
+
+### 8.95 CPU attribution diagnostics and physical map freeze (2026-09-16)
+
+User authorized next steps1–3, not the20/map campaign. Preserved frozen C19
+sources and OFF n5 evidence; added only default-off CPU scopes for frontend
+callbacks/cloud work/stats and map odometry, plus actual map/cloud worker TIDs.
+Stage IDs0–29 retained,30–42 appended. Runtime edits were made in SUPER then
+mirrored. Algorithm, safety parameters, callback rates and executor layout stay
+unchanged. Disabled/nested/threaded/cross-DSO profiler tests pass; actual binaries
+share GNU UNIQUE registry/TLS symbols. Serial release build completes; renewed
+six static transport cases and actual RViz late/reconnect all pass.
+
+Seed1 run9500 ON F/S/A:39.41/38.97/37.45s, CPU.542691/.342253/.345792cores.
+Run9501 OFF A/S/F order, reported F/S/A:37.67/36.76/43.75s,
+CPU.530831/.348768/.368413cores, core-s21.012528/13.456781/16.496592.
+All6 complete/contact0, source/recovery/resource/speed checks pass, no retries.
+OFF Adaptive mean CPU saving30.60%, cumulative21.49%, but time+16.14% fails the
+predeclared1.10 paired-time guard. Controller COMPLETE is execution completion,
+NOT acceptance; `verification.json` explicitly records all-gates=false. No
+claim of successful expansion, negligible profiler overhead, or40% acceptance.
+
+ON exclusive measured autonomy subtotal F/S/A.387961/.206890/.209239cores;
+simulator callbacks.052925/.026457/.029530. Unknown/completion-edge accounting
+and other experiment processes remain separate. This is not pure whole-autonomy
+CPU, and the subtotal's46.1% reduction does not satisfy the user's original40%
+experiment-total objective. ON/OFF and old OFF n5 are separate cohorts.
+
+Adaptive recovery rises from1ON to4OFF, all fresh-Full/map-ACK/new-path/return
+completed. Full residence1.237→4.323s, path221.181→223.099m. OFF episodes3/4 show
+VERSION_CHANGED for generations83/90 concurrent with commits84/91, followed by
+main_pre_uncertified braking. Both map and trajectory changes share this status;
+do not overclaim isolated causality. Episode2 also has UNOBSERVED/dynamics brake
+rejection and emergency retry, not proven identical cause. Preserve this timing
+finding and investigate certificate/commit concurrency before broad validation;
+never simply treat VERSION_CHANGED as SAFE.
+
+Physical Normal identities frozen toseed1/3/5/7/9; new separated-cylinder corner
+probes c19_cyl_probe_s1–s5 preregistered and geometrically checked,410cylinders,
+height3m, diameter.30/.55/.80/1.05/1.30m, surface gaps>=1m. No walls/dropout/moving
+obstacles. These are geometry-only exploratory candidates with0flights, not
+performance-qualified final stress maps or unseen generalization. Offline paths
+are never supplied to the planner. All historical failures retained. Final20/map
+campaign not started; map-aware runner/transport/timing checks still needed.
+
+Evidence: `results/c19_cpu_attribution_20260916/` (including initial offline
+parser failure fixed for Sector's deliberately absent ACK subscription),
+`results/c19_map_suite_20260916/`, and
+`docs/c19_cpu_attribution_and_map_freeze_20260916.md`.136Python tests pass.
+Frozen Normal SHA unchanged; local commit only, no push.

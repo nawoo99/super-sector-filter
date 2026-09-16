@@ -1,5 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/serialization.hpp>
+#include <super_utils/thread_cpu_profile.hpp>
 
 #include <mission_planner/native_sector_cpp.hpp>
 #include <mission_planner/event_recovery_latch.hpp>
@@ -676,6 +677,8 @@ public:
   }
 
   native_sector::SensorAcquisition acquisitionRequest() {
+    const super_utils::thread_cpu_profile::Scope cpu_scope(
+        super_utils::thread_cpu_profile::Stage::FrontendAcquisition);
     std::lock_guard<std::mutex> lock(state_mutex_);
     const double center =
         ((options_.mode == "adaptive" || options_.mode == "velocity") && velocity_yaw_)
@@ -914,6 +917,8 @@ private:
   }
 
   void mapCommitCallback(const std_msgs::msg::UInt64::SharedPtr msg) {
+    const super_utils::thread_cpu_profile::Scope cpu_scope(
+        super_utils::thread_cpu_profile::Stage::FrontendMapCommit);
     std::lock_guard<std::mutex> lock(state_mutex_);
     const double now = nowSeconds();
     if (pre_stale_full_refresh_pending_version_advance_ &&
@@ -984,6 +989,8 @@ private:
 
   void mapProcessAckCallback(
       const std_msgs::msg::UInt64MultiArray::SharedPtr msg) {
+    const super_utils::thread_cpu_profile::Scope cpu_scope(
+        super_utils::thread_cpu_profile::Stage::FrontendMapAck);
     std::lock_guard<std::mutex> lock(state_mutex_);
     ++map_process_ack_status_count_;
     if (msg->data.size() < 4) {
@@ -1154,6 +1161,8 @@ private:
   }
 
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
+    const super_utils::thread_cpu_profile::Scope cpu_scope(
+        super_utils::thread_cpu_profile::Stage::FrontendOdom);
     std::lock_guard<std::mutex> lock(state_mutex_);
     const auto &p = msg->pose.pose.position;
     const auto &q = msg->pose.pose.orientation;
@@ -1270,6 +1279,8 @@ private:
   }
 
   void replanCallback(const std_msgs::msg::Bool::SharedPtr msg) {
+    const super_utils::thread_cpu_profile::Scope cpu_scope(
+        super_utils::thread_cpu_profile::Stage::FrontendReplanStatus);
     std::lock_guard<std::mutex> lock(state_mutex_);
     const double now = nowSeconds();
     ++replan_status_count_;
@@ -1334,6 +1345,8 @@ private:
   }
 
   void trajectoryGuardCallback(const std_msgs::msg::Bool::SharedPtr msg) {
+    const super_utils::thread_cpu_profile::Scope cpu_scope(
+        super_utils::thread_cpu_profile::Stage::FrontendGuardStatus);
     std::lock_guard<std::mutex> lock(state_mutex_);
     const double now = nowSeconds();
     ++trajectory_guard_status_count_;
@@ -1547,6 +1560,8 @@ private:
 
   void trajectoryCallback(
       const mars_quadrotor_msgs::msg::PolynomialTrajectory::SharedPtr msg) {
+    const super_utils::thread_cpu_profile::Scope cpu_scope(
+        super_utils::thread_cpu_profile::Stage::FrontendTrajectory);
     using TrajectoryMsg = mars_quadrotor_msgs::msg::PolynomialTrajectory;
     if ((msg->type & TrajectoryMsg::POSITION_TRAJ) == 0 ||
         msg->trajectory_generation == 0 || msg->piece_num_pos == 0) {
@@ -1918,6 +1933,7 @@ private:
   }
 
   void riskWorkerLoop() {
+    super_utils::thread_cpu_profile::reportThreadRole("frontend_risk_worker");
     while (true) {
       RiskJob job;
       {
@@ -1930,6 +1946,8 @@ private:
         job = *pending_risk_job_;
         pending_risk_job_.reset();
       }
+      const super_utils::thread_cpu_profile::Scope cpu_scope(
+          super_utils::thread_cpu_profile::Stage::FrontendRisk);
       publishRiskVerdict(calculateRiskVerdict(job));
     }
   }
@@ -2126,6 +2144,8 @@ private:
 
   void enqueueCloud(const sensor_msgs::msg::PointCloud2::SharedPtr &msg,
                     const native_sector::SensorAcquisition &acquisition) {
+    const super_utils::thread_cpu_profile::Scope cpu_scope(
+        super_utils::thread_cpu_profile::Stage::FrontendEnqueue);
     const auto receive_time = RiskClock::now();
     const uint64_t cloud_sequence = ++cloud_input_callbacks_;
     recordCadence(cloud_input_first_ns_, cloud_input_last_ns_, receive_time);
@@ -2146,6 +2166,7 @@ private:
   }
 
   void cloudWorkerLoop() {
+    super_utils::thread_cpu_profile::reportThreadRole("frontend_cloud_worker");
     while (true) {
       InputCloudJob job;
       {
@@ -2159,6 +2180,8 @@ private:
         pending_cloud_.reset();
       }
       const auto filter_start = RiskClock::now();
+      const super_utils::thread_cpu_profile::Scope cpu_scope(
+          super_utils::thread_cpu_profile::Stage::FrontendCloud);
       {
         std::lock_guard<std::mutex> state_lock(state_mutex_);
         processCloud(job);
@@ -3065,6 +3088,8 @@ private:
   }
 
   void writeStats() const {
+    const super_utils::thread_cpu_profile::Scope cpu_scope(
+        super_utils::thread_cpu_profile::Stage::FrontendStats);
     if (options_.stats_json.empty())
       return;
     const std::string temporary = options_.stats_json + ".tmp";
@@ -3080,6 +3105,8 @@ private:
   }
 
   void report() {
+    const super_utils::thread_cpu_profile::Scope cpu_scope(
+        super_utils::thread_cpu_profile::Stage::FrontendReport);
     std::lock_guard<std::mutex> lock(state_mutex_);
     if (frames_ == 0)
       return;

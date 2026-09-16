@@ -77,6 +77,12 @@ add_library(native_sector_cpp_component SHARED
 target_compile_definitions(native_sector_cpp_component PRIVATE
         NATIVE_SECTOR_CPP_NO_MAIN
 )
+# Header-only, opt-in diagnostics shared with the composed simulator/planner.
+# No new runtime dependency or executor is introduced.
+target_include_directories(native_sector_cpp PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../rog_map/include)
+target_include_directories(native_sector_cpp_component PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../rog_map/include)
 
 ament_target_dependencies(waypoint_mission PUBLIC
         ${dependencies}

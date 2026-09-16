@@ -1,6 +1,22 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-16 17:52 KST: CPU 귀속 보완·seed1 진단·맵 목록 고정(요청1–3단계) 수행.**
+> planner 알고리즘/안전/주기는 그대로, 기본OFF frontend/map CPU scope만 추가.
+> 새바이너리6전달조건+실제RViz통과. ON/OFF F/S/A각1회,총6회모두완주·접촉0,재시도0.
+> 단OFF Adaptive43.75초/Full37.67초=1.1614로 **시간비1.10기준미통과**.
+> OFF평균CPU F.530831/S.348768/A.368413코어; A평균30.60%,누적21.49%감소.
+> Adaptive복구 ON1회/OFF4회(모두완료);추가2건은검증중경로commit과VERSION_CHANGED가겹침.
+> 평균CPU만보고합격처리금지. 실행COMPLETE와별개로verification.json의전체검증판정false.
+> 순수autonomy전체CPU는여전히독립측정불가;계측exclusive소계와공통/미분류범위를분리함.
+> Normal N1–N5=seed1/3/5/7/9. 새원기둥Stress c19_cyl_probe_s1–s5는
+> **기하만검사한동결탐색후보(비행0회)**,성과검증완료맵아님. 맵당20회캠페인미실행.
+> 결과 `results/c19_cpu_attribution_20260916/`, 맵 `results/c19_map_suite_20260916/`.
+> 상세 `docs/c19_cpu_attribution_and_map_freeze_20260916.md`, §8.95;136Python검사통과.
+> 기존OFF n5/Normal자료보존·새진단과합산금지. 다음은시간초과/버전교체경쟁확인후map-aware검증.
+> 런타임변경은SUPER에서수행후미러링;로컬커밋만,push없음.
+
+> [!IMPORTANT]
 > **2026-09-16 16:52 KST: C19 고정·비프로파일 seed1 3모드 각5회 검증 완료.**
 > 사용자가 약30% 절감 후보의 반복검증과 전체 연산량 비교를 승인했다.
 > planner/센서 코드·설정·바이너리는run9320과동일;비교실행기/집계기만보완.
