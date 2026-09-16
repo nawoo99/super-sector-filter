@@ -858,3 +858,78 @@ StaticSingleThreadedExecutor in both modes. It must retain legacy1ms polling,
 callback body, QoS, payload, thread ownership and all other executors. This is
 independent of the unanswered static/RViz QoS migration question, not approval
 for that migration. A small overhead ablation, not a prediction of40%.
+
+### C16 recovery cause audit: no publication-race fix justified
+
+All three Adaptive episodes explicitly reject the old committed trajectory for
+`CLEARANCE_MARGIN` on a newly committed map. Brake-log `path_status=SAFE` refers
+to the NEW brake candidate, not that old path. `motion_gen=2/0`, `6/2`, `40/6`
+and infinity values describe a recovery-only differencing anchor, not a missing
+safety certificate. Identified avoidable publication-race episodes: zero; no
+positive saving estimate or guard relaxation follows from these records.
+
+The perfect-tracking simulator can retain its last velocity field while position
+stays fixed during command suppression. The existing stationary-stability gate
+remains; these observations are not real-dynamics braking validation. Source/log
+evidence: `frontend_cpu_preflight/C16_RECOVERY_CAUSAL_AUDIT.md`. No runtime change
+was made for this read-only diagnosis.
+
+## Candidate17 prospective: cached entities for the existing static-PC executor
+
+`SUPER_STATIC_PC_CACHED_EXECUTOR=1` is defaultOFF and permitted only with the
+existing dedicated static-PC executor, legacy1ms poll, two-phaseOFF, durableOFF.
+Only executor class changes, identically in Full and Adaptive; no frontend
+dedicated executor in this ablation (C15 settings). Preserve the same callback
+group, callback body, timer, subscribers, QoS, bootstrap, cloud geometry, thread
+ownership and all side/render/mission executors. A pending user question about
+static-map/RViz interface migration does not authorize such a migration here.
+
+Before flight: independently review same-node groups split among side/static/
+render executors; test manual registration/routing, intra-process subscriptions,
+ordinary cancellation, context shutdown and lifecycle. Flight audits require
+actual executor-class marker, unchanged poll/QoS markers, actual static-thread
+CPU coverage (one TID,≥90% samples over≥5s), and measured static callback rate
+980..1020Hz with no profiler clock errors. All earlier acceptance gates remain.
+Unprofiled confirmation requires a matching passed profiled pair. These bounds
+are finite-run checks, not guarantees for every execution or middleware state.
+
+Ceiling estimate from C15: static-thread minus callback CPU≈0.03cores/mode,
+including irreducible waiting/dispatch. Even removing all of it projects only
+≈33.84% relative saving; this candidate alone is not expected to meet40%.
+
+### Candidate17 measured result (run9318)
+
+Independent source review,12 first-execution ROS helper cases and60 focused
+Python tests pass. Original10 arms cover ordinary/cached manual three-domain
+ownership with real IPC waitables, immediate start/stop, invalid context, early
+shutdown, callback exception. Two additional arms explicitly wait for spinning
+AND an actual callback before external shutdown; both exit0. Their test-only
+rebuild occurred after the3min54s simulator build; production code did not change.
+Do not imply arbitrary dynamic group migration or inherited lifecycle guarantees.
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 38.16 | 0.566375 | 22.398955 |
+| Adaptive | 1/1,0 | 38.42 | 0.406830 | 16.082279 |
+
+Mean reduction28.1694%, cumulative28.2008%, A/Ftime1.006813. All acceptance
+checks pass. Static callback998.204/998.211Hz; actual static TIDs3019018/3019964
+measure.036009/.043885cores with full sample coverage. Main/command≈100Hz,
+source/odom timing preserved. F33/A30 retransmissions coalesced; Adaptive1 exact
+completed recovery cycle, no outstanding cycle. No retry. Source/mirror/Normal
+freeze checks pass; legacy1ms/QoS/body retained, frontend dedicatedOFF.
+
+**40% unmet; C17 is not adopted as an improvement.** Against C15, Full mean fell
+but Adaptive mean rose; its shorter mission partly explains why cumulative
+Adaptive CPU still fell. C15/C16/C17 are distinct n1 trajectories/workloads, not
+causal repeated estimates. Highest eligible observed relative mean saving so far
+is C16's32.89%, still profiled/exploratory and not a stable demonstrated gain over
+C15. No unprofiled40% confirmation has been triggered. Preserve all results;
+do not select a lucky run, slow Full, suppress safety checks, or change scope.
+
+Evidence: `c17_cached_static_executor_profile/`, `static_cached_executor_preflight/`,
+`executor_preflight/c17_timing.json`. Static durable and two-phase remainOFF. The
+larger static-map/RViz interface migration is still awaiting the user's answer;
+even that common-cost change alone does not guarantee40%. Small mission/frontend
+cached-executor proposals remain read-only, with limited ceilings documented in
+`frontend_cpu_preflight/MISSION_AND_FRONTEND_CACHED_STE_REVIEW.md`.

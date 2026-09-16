@@ -1,0 +1,605 @@
+{
+  "full": {
+    "available": true,
+    "mode": "full",
+    "processes": [
+      {
+        "pid": 3018923,
+        "duration_s": 30.000868324,
+        "first_report_monotonic_s": 1039557.090624901,
+        "last_report_monotonic_s": 1039587.091493225,
+        "sum_exclusive_mean_cores": 0.4560763213994767,
+        "thread_roles": {
+          "roles": [
+            {
+              "role": "sim_render_executor",
+              "tids": [
+                3018923
+              ],
+              "unambiguous": true,
+              "eligible_interval_s": 29.158989150077105,
+              "observed_interval_s": 29.158989150077105,
+              "sampled_cpu_core_s": 1.2299999999999995,
+              "mean_used_cores": 0.04218253224312294,
+              "samples": 29
+            },
+            {
+              "role": "sim_static_cloud_executor",
+              "tids": [
+                3019018
+              ],
+              "unambiguous": true,
+              "eligible_interval_s": 29.158989150077105,
+              "observed_interval_s": 29.158989150077105,
+              "sampled_cpu_core_s": 1.0499999999999998,
+              "mean_used_cores": 0.03600947874412935,
+              "samples": 29
+            }
+          ],
+          "interval_scope": "Wholly enclosed /proc sample intervals; not exact stage boundaries or whole-flight cgroup window"
+        },
+        "stages": [
+          {
+            "stage": "map_prob_update",
+            "calls": 300,
+            "inclusive_cpu_s": 7.157458403000001,
+            "exclusive_cpu_s": 7.157458403000001,
+            "mean_used_cores_exclusive": 0.23857504141885785,
+            "inclusive_cpu_ms_per_call": 23.858194676666667,
+            "clock_errors": 0
+          },
+          {
+            "stage": "map_snapshot_commit_health",
+            "calls": 300,
+            "inclusive_cpu_s": 1.418589986,
+            "exclusive_cpu_s": 1.418589986,
+            "mean_used_cores_exclusive": 0.047284964244356915,
+            "inclusive_cpu_ms_per_call": 4.728633286666667,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_exp_optimize",
+            "calls": 107,
+            "inclusive_cpu_s": 1.239096188,
+            "exclusive_cpu_s": 1.239096188,
+            "mean_used_cores_exclusive": 0.04130201081575868,
+            "inclusive_cpu_ms_per_call": 11.580338205607477,
+            "clock_errors": 0
+          },
+          {
+            "stage": "sim_render_callback",
+            "calls": 300,
+            "inclusive_cpu_s": 1.239021273,
+            "exclusive_cpu_s": 1.2371066069999999,
+            "mean_used_cores_exclusive": 0.04123569336859304,
+            "inclusive_cpu_ms_per_call": 4.130070910000001,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_backup_optimize",
+            "calls": 96,
+            "inclusive_cpu_s": 0.69013154,
+            "exclusive_cpu_s": 0.69013154,
+            "mean_used_cores_exclusive": 0.023003718843961286,
+            "inclusive_cpu_ms_per_call": 7.188870208333333,
+            "clock_errors": 0
+          },
+          {
+            "stage": "sim_static_cloud_callback",
+            "calls": 29947,
+            "inclusive_cpu_s": 0.458224575,
+            "exclusive_cpu_s": 0.458224575,
+            "mean_used_cores_exclusive": 0.015273710415689234,
+            "inclusive_cpu_ms_per_call": 0.015301184592780579,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_path_search",
+            "calls": 103,
+            "inclusive_cpu_s": 0.287722367,
+            "exclusive_cpu_s": 0.287722367,
+            "mean_used_cores_exclusive": 0.009590467978882756,
+            "inclusive_cpu_ms_per_call": 2.793421038834951,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_generate_backup",
+            "calls": 107,
+            "inclusive_cpu_s": 0.97027443,
+            "exclusive_cpu_s": 0.28014289,
+            "mean_used_cores_exclusive": 0.009337826058050865,
+            "inclusive_cpu_ms_per_call": 9.067985327102804,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_command_callback",
+            "calls": 3000,
+            "inclusive_cpu_s": 0.242993542,
+            "exclusive_cpu_s": 0.242993542,
+            "mean_used_cores_exclusive": 0.008099550298869544,
+            "inclusive_cpu_ms_per_call": 0.08099784733333334,
+            "clock_errors": 0
+          },
+          {
+            "stage": "sim_odom_callback",
+            "calls": 3000,
+            "inclusive_cpu_s": 0.174432906,
+            "exclusive_cpu_s": 0.174432906,
+            "mean_used_cores_exclusive": 0.0058142619112280065,
+            "inclusive_cpu_ms_per_call": 0.058144302,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_corridor_search",
+            "calls": 107,
+            "inclusive_cpu_s": 0.14059391599999999,
+            "exclusive_cpu_s": 0.14059391599999999,
+            "mean_used_cores_exclusive": 0.004686328224957679,
+            "inclusive_cpu_ms_per_call": 1.3139618317757007,
+            "clock_errors": 0
+          },
+          {
+            "stage": "map_ros_to_pcl",
+            "calls": 300,
+            "inclusive_cpu_s": 0.128183031,
+            "exclusive_cpu_s": 0.128183031,
+            "mean_used_cores_exclusive": 0.004272644032021451,
+            "inclusive_cpu_ms_per_call": 0.42727677,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_validate_geometry",
+            "calls": 2283,
+            "inclusive_cpu_s": 0.101496409,
+            "exclusive_cpu_s": 0.101496409,
+            "mean_used_cores_exclusive": 0.003383115711981084,
+            "inclusive_cpu_ms_per_call": 0.04445747218572054,
+            "clock_errors": 0
+          },
+          {
+            "stage": "guard_certificate",
+            "calls": 6177,
+            "inclusive_cpu_s": 0.052441296,
+            "exclusive_cpu_s": 0.027013341,
+            "mean_used_cores_exclusive": 0.0009004186381628812,
+            "inclusive_cpu_ms_per_call": 0.008489767848470131,
+            "clock_errors": 0
+          },
+          {
+            "stage": "map_ack_and_log",
+            "calls": 300,
+            "inclusive_cpu_s": 0.021388042,
+            "exclusive_cpu_s": 0.021388042,
+            "mean_used_cores_exclusive": 0.0007129140986526067,
+            "inclusive_cpu_ms_per_call": 0.07129347333333333,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_main_callback",
+            "calls": 2990,
+            "inclusive_cpu_s": 0.195078883,
+            "exclusive_cpu_s": 0.013837735,
+            "mean_used_cores_exclusive": 0.0004612444830115178,
+            "inclusive_cpu_ms_per_call": 0.06524377357859533,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_visualize_path",
+            "calls": 2989,
+            "inclusive_cpu_s": 0.012369397,
+            "exclusive_cpu_s": 0.012369397,
+            "mean_used_cores_exclusive": 0.0004123012996295434,
+            "inclusive_cpu_ms_per_call": 0.00413830612244898,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_main_core",
+            "calls": 2990,
+            "inclusive_cpu_s": 0.13430851100000002,
+            "exclusive_cpu_s": 0.009703056,
+            "mean_used_cores_exclusive": 0.00032342583871940064,
+            "inclusive_cpu_ms_per_call": 0.04491923444816054,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_stop_viability",
+            "calls": 360,
+            "inclusive_cpu_s": 0.07889105699999999,
+            "exclusive_cpu_s": 0.009503646,
+            "mean_used_cores_exclusive": 0.00031677903110548646,
+            "inclusive_cpu_ms_per_call": 0.21914182499999996,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_commit",
+            "calls": 98,
+            "inclusive_cpu_s": 0.028570167,
+            "exclusive_cpu_s": 0.007376436,
+            "mean_used_cores_exclusive": 0.0002458740833877472,
+            "inclusive_cpu_ms_per_call": 0.29153231632653065,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_generate_exp",
+            "calls": 109,
+            "inclusive_cpu_s": 1.67459917,
+            "exclusive_cpu_s": 0.007186699000000001,
+            "mean_used_cores_exclusive": 0.00023954969977488315,
+            "inclusive_cpu_ms_per_call": 15.363295137614678,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_replan_callback",
+            "calls": 454,
+            "inclusive_cpu_s": 2.6452181450000003,
+            "exclusive_cpu_s": 0.00714513,
+            "mean_used_cores_exclusive": 0.00023816410654634493,
+            "inclusive_cpu_ms_per_call": 5.826471685022027,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_replan_core",
+            "calls": 111,
+            "inclusive_cpu_s": 2.5725668429999997,
+            "exclusive_cpu_s": 0.0045556450000000005,
+            "mean_used_cores_exclusive": 0.0001518504381540047,
+            "inclusive_cpu_ms_per_call": 23.17627786486486,
+            "clock_errors": 0
+          },
+          {
+            "stage": "map_worker",
+            "calls": 300,
+            "inclusive_cpu_s": 8.727597380999999,
+            "exclusive_cpu_s": 0.002096878,
+            "mean_used_cores_exclusive": 6.9893910314674e-05,
+            "inclusive_cpu_ms_per_call": 29.091991269999998,
+            "clock_errors": 0
+          },
+          {
+            "stage": "map_cloud_enqueue",
+            "calls": 300,
+            "inclusive_cpu_s": 0.0019146659999999998,
+            "exclusive_cpu_s": 0.0019146659999999998,
+            "mean_used_cores_exclusive": 6.382035277519989e-05,
+            "inclusive_cpu_ms_per_call": 0.006382219999999999,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_velocity_extrema",
+            "calls": 187,
+            "inclusive_cpu_s": 0.0017917679999999998,
+            "exclusive_cpu_s": 0.0017917679999999998,
+            "mean_used_cores_exclusive": 5.972387134430462e-05,
+            "inclusive_cpu_ms_per_call": 0.009581647058823528,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_poly_publish",
+            "calls": 89,
+            "inclusive_cpu_s": 0.006803488999999999,
+            "exclusive_cpu_s": 0.000630865,
+            "mean_used_cores_exclusive": 2.1028224689594156e-05,
+            "inclusive_cpu_ms_per_call": 0.07644369662921348,
+            "clock_errors": 0
+          },
+          {
+            "stage": "guard_brake",
+            "calls": 0,
+            "inclusive_cpu_s": 0.0,
+            "exclusive_cpu_s": 0.0,
+            "mean_used_cores_exclusive": 0.0,
+            "inclusive_cpu_ms_per_call": null,
+            "clock_errors": 0
+          }
+        ]
+      }
+    ],
+    "scope": "thread CPU in instrumented stages only; common periodic report window within flight; not full cgroup window"
+  },
+  "adaptive": {
+    "available": true,
+    "mode": "adaptive",
+    "processes": [
+      {
+        "pid": 3019878,
+        "duration_s": 30.01069801,
+        "first_report_monotonic_s": 1039622.475485522,
+        "last_report_monotonic_s": 1039652.486183532,
+        "sum_exclusive_mean_cores": 0.25805245077670225,
+        "thread_roles": {
+          "roles": [
+            {
+              "role": "sim_render_executor",
+              "tids": [
+                3019878
+              ],
+              "unambiguous": true,
+              "eligible_interval_s": 29.167244149022736,
+              "observed_interval_s": 29.167244149022736,
+              "sampled_cpu_core_s": 0.45999999999999996,
+              "mean_used_cores": 0.01577111631286607,
+              "samples": 29
+            },
+            {
+              "role": "sim_static_cloud_executor",
+              "tids": [
+                3019964
+              ],
+              "unambiguous": true,
+              "eligible_interval_s": 29.167244149022736,
+              "observed_interval_s": 29.167244149022736,
+              "sampled_cpu_core_s": 1.28,
+              "mean_used_cores": 0.043884845392322985,
+              "samples": 29
+            }
+          ],
+          "interval_scope": "Wholly enclosed /proc sample intervals; not exact stage boundaries or whole-flight cgroup window"
+        },
+        "stages": [
+          {
+            "stage": "map_prob_update",
+            "calls": 301,
+            "inclusive_cpu_s": 2.844819006,
+            "exclusive_cpu_s": 2.844819006,
+            "mean_used_cores_exclusive": 0.09479349680744063,
+            "inclusive_cpu_ms_per_call": 9.451225933554817,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_exp_optimize",
+            "calls": 109,
+            "inclusive_cpu_s": 1.295503395,
+            "exclusive_cpu_s": 1.295503395,
+            "mean_used_cores_exclusive": 0.04316805275799714,
+            "inclusive_cpu_ms_per_call": 11.885352247706422,
+            "clock_errors": 0
+          },
+          {
+            "stage": "map_snapshot_commit_health",
+            "calls": 301,
+            "inclusive_cpu_s": 0.620881,
+            "exclusive_cpu_s": 0.620881,
+            "mean_used_cores_exclusive": 0.020688655751796025,
+            "inclusive_cpu_ms_per_call": 2.0627275747508307,
+            "clock_errors": 0
+          },
+          {
+            "stage": "sim_static_cloud_callback",
+            "calls": 29957,
+            "inclusive_cpu_s": 0.5510977340000001,
+            "exclusive_cpu_s": 0.5510977340000001,
+            "mean_used_cores_exclusive": 0.01836337608063519,
+            "inclusive_cpu_ms_per_call": 0.018396292485896453,
+            "clock_errors": 0
+          },
+          {
+            "stage": "sim_render_callback",
+            "calls": 300,
+            "inclusive_cpu_s": 0.449605273,
+            "exclusive_cpu_s": 0.449605273,
+            "mean_used_cores_exclusive": 0.014981500025430434,
+            "inclusive_cpu_ms_per_call": 1.4986842433333334,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_path_search",
+            "calls": 106,
+            "inclusive_cpu_s": 0.401162362,
+            "exclusive_cpu_s": 0.401162362,
+            "mean_used_cores_exclusive": 0.01336731194543782,
+            "inclusive_cpu_ms_per_call": 3.78455058490566,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_backup_optimize",
+            "calls": 98,
+            "inclusive_cpu_s": 0.384946235,
+            "exclusive_cpu_s": 0.384946235,
+            "mean_used_cores_exclusive": 0.0128269670659353,
+            "inclusive_cpu_ms_per_call": 3.928022806122449,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_generate_backup",
+            "calls": 107,
+            "inclusive_cpu_s": 0.649968214,
+            "exclusive_cpu_s": 0.265021979,
+            "mean_used_cores_exclusive": 0.00883091685877119,
+            "inclusive_cpu_ms_per_call": 6.074469289719626,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_command_callback",
+            "calls": 3001,
+            "inclusive_cpu_s": 0.240767164,
+            "exclusive_cpu_s": 0.240767164,
+            "mean_used_cores_exclusive": 0.008022711231833825,
+            "inclusive_cpu_ms_per_call": 0.08022897834055315,
+            "clock_errors": 0
+          },
+          {
+            "stage": "sim_odom_callback",
+            "calls": 3001,
+            "inclusive_cpu_s": 0.235967753,
+            "exclusive_cpu_s": 0.235967753,
+            "mean_used_cores_exclusive": 0.00786278789388278,
+            "inclusive_cpu_ms_per_call": 0.07862970776407864,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_corridor_search",
+            "calls": 109,
+            "inclusive_cpu_s": 0.157543195,
+            "exclusive_cpu_s": 0.157543195,
+            "mean_used_cores_exclusive": 0.005249567835693269,
+            "inclusive_cpu_ms_per_call": 1.4453504128440366,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_validate_geometry",
+            "calls": 2354,
+            "inclusive_cpu_s": 0.117524676,
+            "exclusive_cpu_s": 0.117524676,
+            "mean_used_cores_exclusive": 0.003916092720030673,
+            "inclusive_cpu_ms_per_call": 0.049925520815632965,
+            "clock_errors": 0
+          },
+          {
+            "stage": "map_ack_and_log",
+            "calls": 301,
+            "inclusive_cpu_s": 0.036385177,
+            "exclusive_cpu_s": 0.036385177,
+            "mean_used_cores_exclusive": 0.0012124068886327113,
+            "inclusive_cpu_ms_per_call": 0.12088098671096345,
+            "clock_errors": 0
+          },
+          {
+            "stage": "guard_certificate",
+            "calls": 6209,
+            "inclusive_cpu_s": 0.056557551000000005,
+            "exclusive_cpu_s": 0.028941135,
+            "mean_used_cores_exclusive": 0.0009643606086854892,
+            "inclusive_cpu_ms_per_call": 0.009108962956997906,
+            "clock_errors": 0
+          },
+          {
+            "stage": "map_ros_to_pcl",
+            "calls": 300,
+            "inclusive_cpu_s": 0.026809591,
+            "exclusive_cpu_s": 0.026809591,
+            "mean_used_cores_exclusive": 0.0008933344699635662,
+            "inclusive_cpu_ms_per_call": 0.08936530333333334,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_main_callback",
+            "calls": 3001,
+            "inclusive_cpu_s": 0.091329894,
+            "exclusive_cpu_s": 0.016639590000000003,
+            "mean_used_cores_exclusive": 0.000554455281061955,
+            "inclusive_cpu_ms_per_call": 0.030433153615461513,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_visualize_path",
+            "calls": 3001,
+            "inclusive_cpu_s": 0.012912354000000001,
+            "exclusive_cpu_s": 0.012912354000000001,
+            "mean_used_cores_exclusive": 0.00043025836972193773,
+            "inclusive_cpu_ms_per_call": 0.004302683772075975,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_stop_viability",
+            "calls": 374,
+            "inclusive_cpu_s": 0.094519952,
+            "exclusive_cpu_s": 0.011519312,
+            "mean_used_cores_exclusive": 0.0003838401891272772,
+            "inclusive_cpu_ms_per_call": 0.25272714438502675,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_main_core",
+            "calls": 3001,
+            "inclusive_cpu_s": 0.024028103000000002,
+            "exclusive_cpu_s": 0.011115749,
+            "mean_used_cores_exclusive": 0.00037039288444061085,
+            "inclusive_cpu_ms_per_call": 0.00800669876707764,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_replan_callback",
+            "calls": 454,
+            "inclusive_cpu_s": 2.64223064,
+            "exclusive_cpu_s": 0.008390016,
+            "mean_used_cores_exclusive": 0.0002795675061341234,
+            "inclusive_cpu_ms_per_call": 5.81989127753304,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_generate_exp",
+            "calls": 109,
+            "inclusive_cpu_s": 1.8618587750000002,
+            "exclusive_cpu_s": 0.007649823,
+            "mean_used_cores_exclusive": 0.0002549032014334011,
+            "inclusive_cpu_ms_per_call": 17.081273165137617,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_commit",
+            "calls": 105,
+            "inclusive_cpu_s": 0.029107273999999995,
+            "exclusive_cpu_s": 0.007122780999999999,
+            "mean_used_cores_exclusive": 0.00023734139731193809,
+            "inclusive_cpu_ms_per_call": 0.2772121333333333,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_replan_core",
+            "calls": 109,
+            "inclusive_cpu_s": 2.553383064,
+            "exclusive_cpu_s": 0.005058839,
+            "mean_used_cores_exclusive": 0.00016856785531327268,
+            "inclusive_cpu_ms_per_call": 23.425532697247707,
+            "clock_errors": 0
+          },
+          {
+            "stage": "map_cloud_enqueue",
+            "calls": 300,
+            "inclusive_cpu_s": 0.002437308,
+            "exclusive_cpu_s": 0.002437308,
+            "mean_used_cores_exclusive": 8.12146388327207e-05,
+            "inclusive_cpu_ms_per_call": 0.008124359999999999,
+            "clock_errors": 0
+          },
+          {
+            "stage": "map_worker",
+            "calls": 301,
+            "inclusive_cpu_s": 3.531073734,
+            "exclusive_cpu_s": 0.002003631,
+            "mean_used_cores_exclusive": 6.67638919738675e-05,
+            "inclusive_cpu_ms_per_call": 11.731141973421927,
+            "clock_errors": 0
+          },
+          {
+            "stage": "planner_velocity_extrema",
+            "calls": 203,
+            "inclusive_cpu_s": 0.001833799,
+            "exclusive_cpu_s": 0.001833799,
+            "mean_used_cores_exclusive": 6.110484332583507e-05,
+            "inclusive_cpu_ms_per_call": 0.009033492610837439,
+            "clock_errors": 0
+          },
+          {
+            "stage": "fsm_poly_publish",
+            "calls": 98,
+            "inclusive_cpu_s": 0.007389962000000001,
+            "exclusive_cpu_s": 0.000675294,
+            "mean_used_cores_exclusive": 2.250177585922801e-05,
+            "inclusive_cpu_ms_per_call": 0.07540777551020408,
+            "clock_errors": 0
+          },
+          {
+            "stage": "guard_brake",
+            "calls": 0,
+            "inclusive_cpu_s": 0.0,
+            "exclusive_cpu_s": 0.0,
+            "mean_used_cores_exclusive": 0.0,
+            "inclusive_cpu_ms_per_call": null,
+            "clock_errors": 0
+          },
+          {
+            "stage": "guard_recover",
+            "calls": 0,
+            "inclusive_cpu_s": 0.0,
+            "exclusive_cpu_s": 0.0,
+            "mean_used_cores_exclusive": 0.0,
+            "inclusive_cpu_ms_per_call": null,
+            "clock_errors": 0
+          }
+        ]
+      }
+    ],
+    "scope": "thread CPU in instrumented stages only; common periodic report window within flight; not full cgroup window"
+  }
+}

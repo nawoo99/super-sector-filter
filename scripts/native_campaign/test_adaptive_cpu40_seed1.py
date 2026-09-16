@@ -4,7 +4,8 @@ from adaptive_cpu40_seed1 import (SMALL_POOL_MATCH_FIELDS, comparison,
                                  small_pool_profile_reference_audit,
                                  DEMAND_REASONS, demand_reason_audit,
                                  static_two_phase_audit, goal_identity_audit,
-                                 headless_parameter_audit, frontend_executor_audit)
+                                 headless_parameter_audit, frontend_executor_audit,
+                                 static_cached_executor_audit)
 
 
 def pair():
@@ -351,4 +352,42 @@ def test_frontend_profile_reference_requires_adaptive_evidence_not_full_dummy_wo
     plan['frontend_dedicated_executor'] = reference['frontend_dedicated_executor'] = True
     assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
     summaries['adaptive']['frontend_executor_audit'] = dict(valid=True)
+    assert small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+
+
+def test_cached_static_executor_requires_actual_thread_and_unchanged_cadence():
+    marker = ('[STATIC_PC_EXECUTOR_KIND] cached_entities=1 executor=static_single '
+              'callbacks_qos_cadence_unchanged=1\n'
+              '[STATIC_PC_POLL_SETTINGS] poll_ms=1 bootstrap_once=0\n'
+              '[STATIC_PC_DURABLE_SETTINGS] enabled=0 actual_qos=1')
+    role = dict(role='sim_static_cloud_executor', tids=[19], unambiguous=True,
+                mean_used_cores=.01, eligible_interval_s=20., observed_interval_s=20.)
+    stage = dict(stage='sim_static_cloud_callback', calls=20000, clock_errors=0)
+    profile = dict(processes=[dict(duration_s=20., thread_roles=dict(roles=[role]), stages=[stage])])
+    assert static_cached_executor_audit(marker, profile)['valid']
+    assert static_cached_executor_audit(marker)['valid']
+    assert not static_cached_executor_audit(marker)['thread_cpu_measured']
+    for bad in ('', marker + marker, marker.replace('executor=static_single', 'executor=single'),
+                marker.replace('poll_ms=1 ', 'poll_ms=100 '),
+                marker.replace('enabled=0 ', 'enabled=1 ')):
+        assert not static_cached_executor_audit(bad, profile)['valid']
+    for key, value in [('calls', 19000), ('calls', 22000), ('calls', None), ('clock_errors', 1)]:
+        changed = copy.deepcopy(profile)
+        changed['processes'][0]['stages'][0][key] = value
+        assert not static_cached_executor_audit(marker, changed)['valid']
+    for key, value in [('mean_used_cores', float('nan')), ('observed_interval_s', 17.),
+                       ('tids', [19, 20]), ('eligible_interval_s', None)]:
+        changed = copy.deepcopy(profile)
+        changed['processes'][0]['thread_roles']['roles'][0][key] = value
+        assert not static_cached_executor_audit(marker, changed)['valid']
+    assert not static_cached_executor_audit(marker, {})['valid']
+
+
+def test_cached_static_profile_reference_requires_both_modes_evidence():
+    plan, reference, summaries = profile_reference_fixture()
+    plan['static_pc_cached_executor'] = reference['static_pc_cached_executor'] = True
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+    summaries['adaptive']['static_cached_executor_audit'] = dict(valid=True)
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+    summaries['full']['static_cached_executor_audit'] = dict(valid=True)
     assert small_pool_profile_reference_audit(plan, reference, summaries)['valid']

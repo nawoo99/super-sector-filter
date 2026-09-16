@@ -5788,3 +5788,23 @@ Adaptive3 exact recovery cycles; dedicated executor actualTID3003371 measured
 Next small ablation returns frontendOFF and tries cached-entity executor only
 for existing static-PC thread, retaining1ms/QoS/payload/callback behavior. No
 static/RViz interface migration is authorized by the unanswered user question.
+
+#### C17 cached static-PC executor only (run9318)
+
+Default-off, both modes, legacy1ms/QoS/body unchanged; C16 frontend executorOFF.
+12actual ROS cases and60Python tests PASS; simulator build3min54s. Full38.16s/
+.566375cores/22.398955core-s; Adaptive38.42s/.406830cores/16.082279core-s.
+Each1/1 complete/contact0, all acceptance gatesPASS, no retry. Mean28.1694%,
+cumulative28.2008%; **40% unmet, no adoption as a performance improvement**.
+Actual static callback998.204/998.211Hz; threadCPU.036009/.043885cores included.
+F33/A30 goal retransmissions coalesced; Adaptive1 exact recovery cycle closed.
+Highest eligible exploratory mean observation remains C16's32.89%, not a proven
+stable effect or unprofiled confirmation. Larger static/RViz migration remains
+unanswered; no such interface change applied. All new flags remain defaultOFF.
+
+Read-only C16 cause audit found all3 Adaptive recoveries were new-map
+CLEARANCE_MARGIN rejection of the original trajectory, not evidenced publication
+races. Brake-candidate SAFE is a different status; recovery-only motion anchors
+explain infinity fields. Keep guards/passive-stability conditions. Perfect-tracking
+simulator position freezing with stale velocity does not validate real dynamics.
+Evidence in `frontend_cpu_preflight/C16_RECOVERY_CAUSAL_AUDIT.md`.
