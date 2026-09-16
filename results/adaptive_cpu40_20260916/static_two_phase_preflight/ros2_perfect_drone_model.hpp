@@ -1173,9 +1173,8 @@ namespace perfect_drone {
                 global_pc_pub_timer_->cancel();
                 RCLCPP_INFO(this->get_logger(),
                             "[STATIC_PC_TWO_PHASE] enabled=true phase=coarse poll_ms=100 "
-                            "ros_elapsed_s=%.9f fast_timer_canceled=%d "
-                            "detection=nominal_not_delivery_guarantee",
-                            elapsed, global_pc_pub_timer_->is_canceled());
+                            "ros_elapsed_s=%.9f detection=nominal_not_delivery_guarantee",
+                            elapsed);
             } else if (decision.change == static_pc_two_phase::Change::LegacyFallback) {
                 if (decision.reset_fast_timer) global_pc_pub_timer_->reset();
                 RCLCPP_WARN(this->get_logger(),

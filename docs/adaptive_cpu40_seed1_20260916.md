@@ -569,3 +569,97 @@ This separates callback CPU from executor/middleware residual; GPU device time
 is not thread CPU. Profiling stays opt-in/defaultoff, and unprofiled confirmation
 is still mandatory before target acceptance. Both compared modes receive the
 same policy and instrumentation changes, then the same declared timing gates.
+
+### Candidate12 measured result (run9313)
+
+Build passed3packages in9min37s.50focused Python tests and the recorded C++
+optimized/sanitizer tests pass. Each mode flown once, no retries:
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 37.48 | 0.607148 | 24.136908 |
+| Adaptive | 1/1,0 | 38.48 | 0.447553 | 17.764726 |
+
+Mean reduction26.2860%, cumulative26.4002%, A/Ftime1.02668. All safety/source/
+resource/recovery/time/callback and19-bin accounting gates pass; **40% unmet**.
+Main/command~100.001Hz both; odom receiptmax11.848/14.080ms. Adaptive1exact
+Full observation→ACK→newpath→Sector cycle, no outstanding cycle; full episode
+1057.85ms. Command-message maxgap29.96/25.03ms. Evidence:`c12_extended_lease_profile/`
+and `executor_preflight/c12_timing.json`; this is still profiled n1 exploration.
+
+Final periodic reasons F/A: SKIP379/360, checks528/514; stale-certificate10/12,
+insufficient_geometry0/0, deadline31/26, motion-horizon28/23, new-goal43/38,
+viability-renewal-rejected15/22. Cache refresh is therefore low priority and has
+NOT been implemented. No unsafe current-map certificate may be overwritten to
+increase skip rates. See `demand_replan_preflight/certificate_refresh_review.md`.
+
+Actual labeled static executor thread CPU F0.04831/A0.04933cores; callback CPU
+only0.017315/0.017366, with the remaining thread CPU including executor work.
+Actual render thread0.04900/0.02329cores. The /proc averages cover wholly enclosed
+sample intervals29.18/29.19s, while scope windows30.04/30.03s; never subtract as
+exact full-flight attribution. Map update0.23580/0.09325cores. Static optimization
+alone is not expected to guarantee40%; measured end-to-end comparison remains
+the acceptance metric, not a favorable subset of instrumented stages.
+
+## Candidate13 prospective: preserve bootstrap, reduce idle static polling
+
+New default-off `SUPER_STATIC_PC_TWO_PHASE=1` preserves original1ms timer and
+complete legacy publication behavior until an executed postbootstrap callback
+at node-relative time>=5.1s. It then actually cancels that timer and invokes the
+same publication/subscriber-state function from a100ms timer in the same
+MutuallyExclusive group. This is distinct from the rejected100ms single-shot
+bootstrap. No planner/LiDAR/odom/guard timer or geometry/QoS is changed.
+Observed clock rollback/invalid time or simulated time permanently falls back
+to1ms; arbitrary clock jumps between coarse samples are not equivalent timing.
+Postbootstrap discovery gains up to a nominal100ms poll delay plus scheduling/
+DDS delay, not a hard100ms delivery guarantee. Default remains unchanged.
+
+Preflight requires exact complete reader-first payload/layout/SHA matching the
+legacy control. Late and reconnect controls must retain/report any failure:
+the existing large best-effort cloud transport failure is not repaired by this
+timer change. Do not label the whole delivery suite passed from startup evidence,
+or promote this exploratory batch-only option as a general late-viewer fix.
+Before any candidate flight, run both reader-first and late controls/candidate
+with no FSM. Matched flight also requires ready truth observer and all previous
+source/quality gates; stable phase handoff and actual timer cancellation are
+audited. Profiling additionally requires reduced static callback rate5..20Hz
+over>=10s (allow boundary bootstrap fragments), with no clock errors. Any
+unprofiled small-pool confirmation must match the passed profiled candidate.
+
+Pure optimized/ASan/UBSan phase-policy tests and harness syntax pass;51focused
+Python accounting/audit tests pass. Actual simulator build/ROS preflight pending.
+
+### Candidate13 preflight and diagnostic result (run9314)
+
+Simulator build passed5min57s. Reader-first legacy and two-phase both delivered
+identical complete geometry/layout/SHA. Both subsequently timed out for a second
+reader; both separate late-reader trials timed out. All children exited0; later
+disconnect/reconnect phases were NOT reached. Whole delivery suite therefore
+FAILS for both, not a validated late-viewer fix. Raw evidence and predeclared
+diagnostic-only decision:`static_two_phase_preflight/ROS_FINDINGS.md`.
+
+The runner was updated BEFORE flight to disqualify unresolved two-phase delivery
+from target acceptance/unprofiled preflight eligibility;52Python tests pass.
+Startup-ready CPU diagnostic, one flight/mode, no retry:
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 39.64 | 0.569059 | 23.643770 |
+| Adaptive | 1/1,0 | 38.17 | 0.417815 | 16.896414 |
+
+Mean reduction26.5779%, cumulative28.5376%, A/Ftime0.96292. Flight safety/source/
+resource/recovery/time/timing and timer-cancellation checks pass; late-delivery
+preservation is explicitly false, **40% unmet and candidate not adopted**.
+Actual static executor CPU drops to0.001169/0.001369cores in sampled middle
+windows, so the static-cost hypothesis is supported, but the relative savings
+remain limited. The next functional candidate returns to default legacy1ms
+static polling. Keep this optional prototype/evidence; no default promotion.
+
+New independently quantified cause: the actual benchmark `waypoint.yaml` repeats
+goals every1s. C12 Full accepted40goals (5distinct targets+35duplicates), Adaptive
+41 (5+36); each duplicate is followed by a real ordinary replan commit before
+the next accepted goal. Acceptance sets `gi_.new_goal`, bypassing goal-connected
+NO_NEED exits. Association is by log order, not exact per-decision CPU attribution.
+Next proposal uses explicit retransmission identity, not pose-only inference:
+fresh user intent must remain distinguishable and blocked/recovery retries must
+stay active. Producer/receiver changes remain outside runtime pending review.

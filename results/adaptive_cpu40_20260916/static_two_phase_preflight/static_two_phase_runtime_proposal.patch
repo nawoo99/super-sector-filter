@@ -1,0 +1,461 @@
+--- /dev/null
++++ b/mars_uav_sim/perfect_drone_sim/include/perfect_drone_sim/static_pc_two_phase_policy.hpp
+@@ -0,0 +1,86 @@
++#pragma once
++
++#include <cmath>
++#include <cstring>
++#include <stdexcept>
++
++namespace perfect_drone::static_pc_two_phase {
++
++inline bool parseEnabled(const char* setting, const int legacy_poll_ms) {
++    if (!setting || std::strcmp(setting, "0") == 0) return false;
++    if (std::strcmp(setting, "1") != 0) {
++        throw std::invalid_argument("SUPER_STATIC_PC_TWO_PHASE must be 0 or 1");
++    }
++    if (legacy_poll_ms != 1) {
++        throw std::invalid_argument("SUPER_STATIC_PC_TWO_PHASE=1 requires SUPER_STATIC_PC_POLL_MS=1");
++    }
++    return true;
++}
++
++enum class Change { None, Coarse, LegacyFallback };
++enum class Fallback { None, SimulatedTime, InvalidElapsed, ClockRollback };
++
++inline const char* fallbackName(const Fallback reason) noexcept {
++    switch (reason) {
++        case Fallback::None: return "none";
++        case Fallback::SimulatedTime: return "simulated_time";
++        case Fallback::InvalidElapsed: return "invalid_elapsed";
++        case Fallback::ClockRollback: return "clock_rollback";
++    }
++    return "unknown";
++}
++
++struct Decision {
++    Change change{Change::None};
++    Fallback fallback{Fallback::None};
++    bool reset_fast_timer{false};
++};
++
++// State is owned by the global-PC MutuallyExclusive callback group. The caller
++// performs the existing legacy publication before observeAfterLegacy(); this
++// class changes only which real timer may next invoke that same callback.
++// Stable node time is required for coarse mode. Observed unsupported clocks
++// permanently return to the legacy timer, not an oscillating new schedule.
++class Policy {
++public:
++    static constexpr double kBootstrapWindowEndS = 5.1;
++    explicit Policy(const bool enabled = false) : enabled_(enabled) {}
++
++    bool enabled() const noexcept { return enabled_; }
++    bool fastActive() const noexcept { return !coarse_; }
++    bool coarseActive() const noexcept { return enabled_ && coarse_; }
++    bool fallbackLatched() const noexcept { return fallback_latched_; }
++
++    Decision observeAfterLegacy(const double ros_elapsed_s,
++                                const bool ros_time_active) noexcept {
++        if (!enabled_ || fallback_latched_) return {};
++        Fallback reason = Fallback::None;
++        if (ros_time_active) reason = Fallback::SimulatedTime;
++        else if (!std::isfinite(ros_elapsed_s) || ros_elapsed_s < 0.0)
++            reason = Fallback::InvalidElapsed;
++        else if (have_previous_ && ros_elapsed_s < previous_elapsed_s_)
++            reason = Fallback::ClockRollback;
++        if (reason != Fallback::None) {
++            const bool was_coarse = coarse_;
++            coarse_ = false;
++            fallback_latched_ = true;
++            return {Change::LegacyFallback, reason, was_coarse};
++        }
++        previous_elapsed_s_ = ros_elapsed_s;
++        have_previous_ = true;
++        if (!coarse_ && ros_elapsed_s >= kBootstrapWindowEndS) {
++            coarse_ = true;
++            return {Change::Coarse, Fallback::None, false};
++        }
++        return {};
++    }
++
++private:
++    bool enabled_{false};
++    bool coarse_{false};
++    bool fallback_latched_{false};
++    bool have_previous_{false};
++    double previous_elapsed_s_{0.0};
++};
++
++}  // namespace perfect_drone::static_pc_two_phase
+--- /dev/null
++++ b/mars_uav_sim/perfect_drone_sim/test/static_pc_two_phase_policy_test.cpp
+@@ -0,0 +1,128 @@
++#include <perfect_drone_sim/static_pc_two_phase_policy.hpp>
++
++#include <iostream>
++#include <limits>
++#include <string>
++#include <vector>
++
++namespace phase = perfect_drone::static_pc_two_phase;
++
++void require(const bool condition, const char* message) {
++    if (!condition) throw std::runtime_error(message);
++}
++
++template <typename Function>
++void invalid(Function&& function) {
++    bool caught = false;
++    try { function(); } catch (const std::invalid_argument&) { caught = true; }
++    require(caught, "expected invalid argument");
++}
++
++// A scheduling fixture, not an actual ROS timer test. Publication exactly uses
++// the existing predicate and subscriber-state update to check the handoff.
++struct Fixture {
++    phase::Policy policy{true};
++    int last_subscribers{0};
++    unsigned calls{0}, publications{0}, cancel_fast{0}, reset_fast{0};
++
++    void dispatch(const bool slow, const double elapsed, const int subscribers,
++                  const bool ros_active = false) {
++        if (slow ? !policy.coarseActive() : !policy.fastActive()) return;
++        ++calls;
++        if ((subscribers > 0 && subscribers != last_subscribers) ||
++            (elapsed > 5.0 && elapsed < 5.1)) ++publications;
++        last_subscribers = subscribers;
++        const auto decision = policy.observeAfterLegacy(elapsed, ros_active);
++        cancel_fast += decision.change == phase::Change::Coarse;
++        reset_fast += decision.reset_fast_timer;
++    }
++};
++
++int main() {
++    try {
++        require(!phase::parseEnabled(nullptr, 1), "default legacy");
++        require(!phase::parseEnabled("0", 1), "explicit legacy");
++        require(!phase::parseEnabled(nullptr, 100), "old100 remains separate");
++        require(phase::parseEnabled("1", 1), "exact two-phase opt-in");
++        invalid([] { phase::parseEnabled("1", 100); });
++        for (const char* value : {"", "true", "01", "1 ", " 1", "100", "-1"})
++            invalid([&] { phase::parseEnabled(value, 1); });
++
++        phase::Policy disabled;
++        for (const double t : {-1.0, 0.0, 5.1, 10.0, 2.0}) {
++            require(disabled.observeAfterLegacy(t, true).change == phase::Change::None,
++                    "disabled policy does not alter old schedules");
++            require(disabled.fastActive() && !disabled.coarseActive(), "disabled remains legacy");
++        }
++
++        Fixture schedule;
++        schedule.dispatch(false, 0.0, 1);  // Reader first, same first opportunity.
++        require(schedule.publications == 1, "reader-first count transition");
++        schedule.dispatch(true, 1.0, 2);
++        require(schedule.calls == 1 && schedule.last_subscribers == 1,
++                "early slow timer performs no graph/publication-state work");
++        for (const double t : {4.999, 5.0, 5.001, 5.025, 5.050, 5.099})
++            schedule.dispatch(false, t, 1);
++        require(schedule.publications == 5 && schedule.cancel_fast == 0,
++                "all scripted legacy bootstrap opportunities retained");
++        // A new subscriber on the exact handoff tick must be handled before cancel.
++        schedule.dispatch(false, 5.1, 2);
++        require(schedule.publications == 6 && schedule.last_subscribers == 2 &&
++                schedule.cancel_fast == 1 && schedule.policy.coarseActive(),
++                "handoff after legacy count-change check at exact5.1");
++        const auto handoff_calls = schedule.calls;
++        schedule.dispatch(false, 5.101, 3);  // Already queued canceled fast callback.
++        require(schedule.calls == handoff_calls && schedule.last_subscribers == 2,
++                "queued canceled fast callback cannot publish");
++        schedule.dispatch(true, 5.1, 2);  // Simultaneously-ready slow callback.
++        require(schedule.publications == 6, "no duplicate bootstrap at handoff");
++        schedule.dispatch(true, 5.2, 1);
++        schedule.dispatch(true, 5.3, 0);
++        schedule.dispatch(true, 5.4, 1);
++        require(schedule.publications == 8 && schedule.last_subscribers == 1,
++                "same subscriber state across coarse disconnect/reconnect");
++
++        schedule.dispatch(true, 5.05, 1);  // Clock rolls back into bootstrap window.
++        require(schedule.policy.fallbackLatched() && schedule.policy.fastActive() &&
++                schedule.reset_fast == 1 && schedule.publications == 9,
++                "clock rollback restores fast timer after current legacy work");
++        const auto rollback_calls = schedule.calls;
++        schedule.dispatch(true, 5.06, 2);
++        require(schedule.calls == rollback_calls, "slow callback disabled after fallback");
++        schedule.dispatch(false, 5.07, 1);
++        schedule.dispatch(false, 10.0, 1);
++        require(schedule.policy.fastActive() && schedule.cancel_fast == 1,
++                "fallback never reenters coarse mode");
++
++        for (const double invalid_time : {-1.0, std::numeric_limits<double>::quiet_NaN(),
++                                         std::numeric_limits<double>::infinity()}) {
++            phase::Policy p(true);
++            require(p.observeAfterLegacy(5.2, false).change == phase::Change::Coarse,
++                    "test enters coarse");
++            const auto decision = p.observeAfterLegacy(invalid_time, false);
++            require(decision.change == phase::Change::LegacyFallback &&
++                    decision.fallback == phase::Fallback::InvalidElapsed && decision.reset_fast_timer,
++                    "invalid time restores fast mode");
++        }
++        phase::Policy simulated(true);
++        const auto sim = simulated.observeAfterLegacy(0.0, true);
++        require(sim.change == phase::Change::LegacyFallback &&
++                sim.fallback == phase::Fallback::SimulatedTime && !sim.reset_fast_timer,
++                "simulated time preserves already-active legacy mode");
++        require(simulated.observeAfterLegacy(100.0, false).change == phase::Change::None &&
++                simulated.fastActive(), "simulated-clock exclusion is permanent");
++        phase::Policy repeated(true);
++        require(repeated.observeAfterLegacy(5.099999, false).change == phase::Change::None,
++                "strict just-before boundary");
++        require(repeated.observeAfterLegacy(5.1, false).change == phase::Change::Coarse,
++                "exact endpoint changes once");
++        require(repeated.observeAfterLegacy(5.1, false).change == phase::Change::None,
++                "equal clock value is not rollback");
++        std::cout << "static_pc_two_phase_policy_test=PASS default_ms=1 handoff_ros_s=5.1 "
++                     "coarse_ms=100 rollback=permanent_legacy timings=synthetic_only\n";
++        return 0;
++    } catch (const std::exception& error) {
++        std::cerr << "static_pc_two_phase_policy_test=FAIL reason=" << error.what() << '\n';
++        return 1;
++    }
++}
+--- a/mars_uav_sim/perfect_drone_sim/include/perfect_drone_sim/ros2_perfect_drone_model.hpp
++++ b/mars_uav_sim/perfect_drone_sim/include/perfect_drone_sim/ros2_perfect_drone_model.hpp
+@@ -14,6 +14,7 @@
+ #include "pcl_conversions/pcl_conversions.h"
+ #include "perfect_drone_sim/config.hpp"
+ #include "perfect_drone_sim/common_execution_policy.hpp"
++#include "perfect_drone_sim/static_pc_two_phase_policy.hpp"
+ // Only the composed Full/Adaptive targets have the shared planner profiler
+ // dependency. Standalone/front-end targets retain their existing dependencies.
+ #ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
+@@ -249,9 +250,11 @@
+         double sys_start_t;
+         int static_pc_poll_ms_{1};
+         common_execution_policy::StaticPcPolicy static_pc_policy_;
++        static_pc_two_phase::Policy static_pc_two_phase_policy_;
+         std::chrono::steady_clock::time_point static_pc_policy_start_;
+         rclcpp::TimerBase::SharedPtr odom_pub_timer_;
+         rclcpp::TimerBase::SharedPtr global_pc_pub_timer_;
++        rclcpp::TimerBase::SharedPtr global_pc_slow_pub_timer_;
+         rclcpp::TimerBase::SharedPtr local_pc_pub_timer_;
+         rclcpp::Subscription<mars_quadrotor_msgs::msg::PositionCommand>::SharedPtr cmd_sub_;
+         rclcpp::CallbackGroup::SharedPtr odom_timer_cbk_group, global_pc_pub_cbk_group, local_pc_pub_cbk_group,
+@@ -507,6 +510,9 @@
+             global_pc_pub_cbk_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+             static_pc_poll_ms_ = common_execution_policy::parseStaticPcPollMs(
+                     std::getenv("SUPER_STATIC_PC_POLL_MS"));
++            static_pc_two_phase_policy_ = static_pc_two_phase::Policy(
++                    static_pc_two_phase::parseEnabled(
++                            std::getenv("SUPER_STATIC_PC_TWO_PHASE"), static_pc_poll_ms_));
+             static_pc_policy_start_ = std::chrono::steady_clock::now();
+             RCLCPP_INFO(this->get_logger(),
+                         "[STATIC_PC_POLL_SETTINGS] poll_ms=%d bootstrap_once=%d "
+@@ -514,10 +520,24 @@
+                         static_pc_poll_ms_, static_pc_poll_ms_ == 100);
+             global_pc_pub_timer_ = this->create_wall_timer(
+                     std::chrono::milliseconds(static_pc_poll_ms_),
+-                    std::bind(&PerfectDrone::publishGlobalPC, this),
++                    std::bind(&PerfectDrone::publishGlobalPCFast, this),
+                     global_pc_pub_cbk_group
+             );
+ 
++            if (static_pc_two_phase_policy_.enabled()) {
++                // Same mutually-exclusive group owns both timers and the
++                // unchanged publication/subscriber-count state. During startup
++                // this slow callback returns without graph queries/publication.
++                global_pc_slow_pub_timer_ = this->create_wall_timer(
++                        std::chrono::milliseconds(100),
++                        std::bind(&PerfectDrone::publishGlobalPCSlow, this),
++                        global_pc_pub_cbk_group);
++                RCLCPP_INFO(this->get_logger(),
++                            "[STATIC_PC_TWO_PHASE] enabled=true phase=fast initial_poll_ms=1 "
++                            "coarse_poll_ms=100 bootstrap_window_end_ros_s=5.1 "
++                            "clock_fallback=permanent_legacy qos_unchanged=1");
++            }
++
+             const int publish_dt_ms = static_cast<int>((1.0 / cfg_.sensing_rate) * 1000);
+             local_pc_pub_cbk_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+             local_pc_pub_timer_ = this->create_wall_timer(
+@@ -1139,6 +1159,44 @@
+         }
+ 
+ 
++        void advanceStaticPcTwoPhase() {
++            if (!static_pc_two_phase_policy_.enabled()) return;
++            const auto clock = this->get_clock();
++            const double elapsed = clock->now().seconds() - sys_start_t;
++            const bool simulated_time = clock->get_clock_type() == RCL_ROS_TIME &&
++                                        clock->ros_time_is_active();
++            const auto decision = static_pc_two_phase_policy_.observeAfterLegacy(
++                    elapsed, simulated_time);
++            if (decision.change == static_pc_two_phase::Change::Coarse) {
++                // Current legacy callback has already processed this tick's
++                // subscriber change before its fast timer is canceled.
++                global_pc_pub_timer_->cancel();
++                RCLCPP_INFO(this->get_logger(),
++                            "[STATIC_PC_TWO_PHASE] enabled=true phase=coarse poll_ms=100 "
++                            "ros_elapsed_s=%.9f detection=nominal_not_delivery_guarantee",
++                            elapsed);
++            } else if (decision.change == static_pc_two_phase::Change::LegacyFallback) {
++                if (decision.reset_fast_timer) global_pc_pub_timer_->reset();
++                RCLCPP_WARN(this->get_logger(),
++                            "[STATIC_PC_TWO_PHASE] enabled=true phase=legacy_fallback poll_ms=1 "
++                            "ros_elapsed_s=%.9f reason=%s permanent=true",
++                            elapsed, static_pc_two_phase::fallbackName(decision.fallback));
++            }
++        }
++
++        void publishGlobalPCFast() {
++            // A callback selected before cancel may arrive after handoff.
++            if (!static_pc_two_phase_policy_.fastActive()) return;
++            publishGlobalPC();
++            advanceStaticPcTwoPhase();
++        }
++
++        void publishGlobalPCSlow() {
++            if (!static_pc_two_phase_policy_.coarseActive()) return;
++            publishGlobalPC();
++            advanceStaticPcTwoPhase();
++        }
++
+         void publishGlobalPC() {
+ #ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
+             super_utils::thread_cpu_profile::Scope cpu_scope(
+--- a/mars_uav_sim/perfect_drone_sim/test/static_pc_late_subscriber_test.py
++++ b/mars_uav_sim/perfect_drone_sim/test/static_pc_late_subscriber_test.py
+@@ -27,7 +27,15 @@
+     parser.add_argument('--expected-points', type=int, default=241490)
+     parser.add_argument('--poll-ms', type=int, choices=(1, 100), default=100,
+                         help='1 is the untouched legacy control; 100 is the candidate')
++    parser.add_argument('--two-phase', action='store_true',
++                        help='retain legacy1ms startup, then100ms; requires --poll-ms1')
++    parser.add_argument('--sequence', choices=('late', 'reader-first'), default='late',
++                        help='reader-first preserves bootstrap reader readiness before later transitions')
++    parser.add_argument('--expected-sha256',
++                        help='require exact geometry payload SHA from a separate legacy control')
+     args = parser.parse_args()
++    if args.two_phase and args.poll_ms != 1:
++        parser.error('--two-phase requires --poll-ms 1')
+     args.out_dir.mkdir(parents=True, exist_ok=True)
+     log_path = args.out_dir / 'simulator.log'
+     result_path = args.out_dir / 'result.json'
+@@ -36,11 +44,14 @@
+     if 'ROS_DOMAIN_ID' not in os.environ:
+         raise SystemExit('set a dedicated ROS_DOMAIN_ID before this no-flight test')
+ 
+-    env = dict(os.environ, SUPER_STATIC_PC_POLL_MS=str(args.poll_ms))
++    env = dict(os.environ, SUPER_STATIC_PC_POLL_MS=str(args.poll_ms),
++               SUPER_STATIC_PC_TWO_PHASE='1' if args.two_phase else '0')
+     command = ['ros2', 'run', 'perfect_drone_sim', 'perfect_drone_node',
+                '--ros-args', '-p', f'config_name:={args.config}']
+     result = dict(valid=False, command=command, ros_domain_id=os.environ['ROS_DOMAIN_ID'],
+-                  no_fsm=True, no_commands_published=True, poll_ms=args.poll_ms, phases=[])
++                  no_fsm=True, no_commands_published=True, poll_ms=args.poll_ms,
++                  two_phase=args.two_phase, sequence=args.sequence,
++                  expected_sha256=args.expected_sha256, phases=[])
+     process = None
+     node = None
+     subscriptions = []
+@@ -70,12 +81,39 @@
+ 
+     def callback(label):
+         def accept(msg):
+-            received[label].append(dict(
++            cloud = dict(
+                 elapsed_s=time.monotonic() - started,
+                 points=int(msg.width) * int(msg.height), point_step=int(msg.point_step),
+                 bytes=len(msg.data), frame=msg.header.frame_id,
+                 sha256=hashlib.sha256(bytes(msg.data)).hexdigest(),
+-                stamp_ns=msg.header.stamp.sec * 10**9 + msg.header.stamp.nanosec))
++                stamp_ns=msg.header.stamp.sec * 10**9 + msg.header.stamp.nanosec)
++            received[label].append(cloud)
++            # Validate and retain phase-local evidence immediately. A later
++            # known best-effort transition timeout must not erase reader-first
++            # geometry evidence or silently validate malformed earlier data.
++            layout = dict(width=int(msg.width), height=int(msg.height),
++                          point_step=int(msg.point_step), row_step=int(msg.row_step),
++                          is_bigendian=bool(msg.is_bigendian), is_dense=bool(msg.is_dense),
++                          fields=[dict(name=f.name, offset=int(f.offset),
++                                       datatype=int(f.datatype), count=int(f.count))
++                                  for f in msg.fields])
++            if (cloud['points'] != args.expected_points or cloud['frame'] != 'world'
++                    or cloud['point_step'] <= 0
++                    or cloud['bytes'] != cloud['points'] * cloud['point_step']
++                    or cloud['bytes'] != layout['row_step'] * layout['height']):
++                raise RuntimeError(f'incomplete or malformed geometry in phase {label}')
++            if result.get('geometry_sha256', cloud['sha256']) != cloud['sha256']:
++                raise RuntimeError(f'geometry payload changed in phase {label}')
++            if result.get('geometry_layout', layout) != layout:
++                raise RuntimeError(f'geometry layout changed in phase {label}')
++            if args.expected_sha256 and cloud['sha256'] != args.expected_sha256:
++                raise RuntimeError(f'geometry SHA differs from legacy control in phase {label}')
++            result['geometry_sha256'] = cloud['sha256']
++            result['geometry_layout'] = layout
++            result['geometry_validated_clouds'] = result.get('geometry_validated_clouds', 0) + 1
++            if label == 'first' and args.sequence == 'reader-first':
++                result['reader_first_geometry_valid'] = True
++                result['reader_first_geometry_sha256'] = cloud['sha256']
+         return accept
+ 
+     def subscribe(label):
+@@ -86,20 +124,36 @@
+ 
+     try:
+         node = rclpy.create_node('static_pc_late_subscriber_test')
++        first = subscribe('first') if args.sequence == 'reader-first' else None
+         with log_path.open('w') as log:
+             process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT,
+                                        env=env, start_new_session=True)
+             wait_for(lambda: f'[STATIC_PC_POLL_SETTINGS] poll_ms={args.poll_ms} ' in log_text(),
+                      20, 'effective static polling settings')
+-            wait_for(lambda: (re.search(r'\[STATIC_PC_PUBLICATION\].*subscribers=0 bootstrap=1', log_text())
+-                              if args.poll_ms == 100 else 'Publish global map size:' in log_text()),
+-                     10, 'bootstrap without listeners')
+-            spin_for(.3)
+-            result['phases'].append('bootstrap_without_subscribers')
+-
+-            first = subscribe('first')
+-            wait_for(lambda: bool(received['first']), 5, 'first persistent late subscriber')
+-            result['phases'].append('late_subscriber_0_to_1')
++            if args.sequence == 'reader-first':
++                wait_for(lambda: bool(received['first']), 10, 'reader-first static geometry')
++                result['phases'].append('reader_first_static_geometry')
++                # Wait past the legacy bootstrap window before testing transitions.
++                # Publication counts are load-dependent; no fixed count is asserted.
++                spin_for(5.3)
++                result['phases'].append('reader_first_waited_past_bootstrap_window')
++            else:
++                wait_for(lambda: (re.search(r'\[STATIC_PC_PUBLICATION\].*subscribers=0 bootstrap=1', log_text())
++                                  if args.poll_ms == 100 else 'Publish global map size:' in log_text()),
++                         10, 'bootstrap without listeners')
++                spin_for(.3)
++                result['phases'].append('bootstrap_without_subscribers')
++            if args.two_phase:
++                wait_for(lambda: '[STATIC_PC_TWO_PHASE] enabled=true phase=coarse ' in log_text(),
++                         10, 'two-phase handoff after5.1s node time')
++                if 'phase=legacy_fallback ' in log_text():
++                    raise RuntimeError('unexpected clock fallback in stable-clock smoke')
++                result['phases'].append('two_phase_coarse_handoff')
++
++            if first is None:
++                first = subscribe('first')
++                wait_for(lambda: bool(received['first']), 5, 'first persistent late subscriber')
++                result['phases'].append('late_subscriber_0_to_1')
+             second = subscribe('second')
+             wait_for(lambda: bool(received['second']), 5, 'second persistent subscriber')
+             result['phases'].append('subscriber_1_to_2')
+@@ -124,8 +178,13 @@
+                                  or cloud['bytes'] != cloud['points'] * cloud['point_step']
+                                  for cloud in clouds):
+                 raise RuntimeError('incomplete or malformed static geometry')
+-            if len({cloud['sha256'] for cloud in clouds}) != 1:
++            geometry_hashes = {cloud['sha256'] for cloud in clouds}
++            if len(geometry_hashes) != 1:
+                 raise RuntimeError('static geometry payload changed across subscriber transitions')
++            geometry_sha256 = next(iter(geometry_hashes))
++            if args.expected_sha256 and geometry_sha256 != args.expected_sha256:
++                raise RuntimeError('geometry SHA differs from supplied legacy control')
++            result['geometry_sha256'] = geometry_sha256
+             publication_lines = [line for line in log_text().splitlines()
+                                  if '[STATIC_PC_PUBLICATION]' in line]
+             if args.poll_ms == 100 and sum('bootstrap=1' in line for line in publication_lines) != 1:

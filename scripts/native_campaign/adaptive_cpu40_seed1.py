@@ -65,7 +65,7 @@ SMALL_POOL_MATCH_FIELDS = (
     'schema', 'map', 'profiles', 'compose', 'effective_run_options',
     'skip_backup_diagnostic_replay', 'skip_unobserved_path_publication',
     'fast_occupied_box_scan', 'compare_occupied_box_scan', 'snapshot_line_query',
-    'snapshot_neighbor_cache', 'static_pc_poll_ms', 'side_executor_threads',
+    'snapshot_neighbor_cache', 'static_pc_poll_ms', 'static_pc_two_phase', 'side_executor_threads',
     'monitor_intervals', 'guarded_demand_replan', 'extended_demand_lease',
     'dedicated_static_pc_executor',
     'optimizer_phase_memory_trace', 'time_reference_folder',
@@ -132,6 +132,9 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
         checks[mode + '_demand_exercised'] = (
             not plan.get('guarded_demand_replan') or
             row.get('demand_replan_exercised') is True)
+        checks[mode + '_static_delivery_preservation'] = (
+            not plan.get('static_pc_two_phase') or
+            row.get('static_pc_delivery_validated') is True)
     ftime = summaries.get('full', {}).get('mission_time_s')
     atime = summaries.get('adaptive', {}).get('mission_time_s')
     checks['paired_mission_time'] = (
@@ -198,6 +201,39 @@ def demand_reason_audit(stack, max_dispatch_interval):
                 scope='Cumulative final outcomes after renewal; early-gated ticks and final partial report interval excluded')
 
 
+def static_two_phase_audit(stack, profile=None):
+    """Confirm bootstrap-preserving handoff; not late DDS delivery proof."""
+    handoffs = re.findall(
+        r'\[STATIC_PC_TWO_PHASE\] enabled=true phase=coarse poll_ms=100 '
+        r'ros_elapsed_s=([^\s]+) fast_timer_canceled=([01])', stack)
+    valid_handoff = False
+    if len(handoffs) == 1:
+        try:
+            elapsed = float(handoffs[0][0])
+            valid_handoff = math.isfinite(elapsed) and elapsed >= 5.1 and handoffs[0][1] == '1'
+        except ValueError:
+            pass
+    checks = dict(
+        startup_fast=('[STATIC_PC_TWO_PHASE] enabled=true phase=fast initial_poll_ms=1 ' in stack),
+        single_post_bootstrap_handoff=valid_handoff,
+        no_clock_fallback=('[STATIC_PC_TWO_PHASE] enabled=true phase=legacy_fallback ' not in stack))
+    callback_hz = None
+    if profile is not None:
+        processes = profile.get('processes', [])
+        checks['profile_static_callback_rate'] = False
+        if len(processes) == 1 and processes[0].get('duration_s', 0) >= 10:
+            p = processes[0]
+            stages = [s for s in p['stages'] if s['stage'] == 'sim_static_cloud_callback']
+            if len(stages) == 1:
+                callback_hz = stages[0]['calls'] / p['duration_s']
+                checks['profile_static_callback_rate'] = (
+                    math.isfinite(callback_hz) and 5 <= callback_hz <= 20 and
+                    stages[0]['clock_errors'] == 0)
+    return dict(valid=all(checks.values()), checks=checks, callback_hz=callback_hz,
+                callback_counts_instrumented=profile is not None,
+                scope='Stable-clock startup/handoff and reduced callback rate only; no late-reader delivery guarantee')
+
+
 def comparison(results):
     modes = {r['mode']: r for r in results}
     if not {'full', 'adaptive'} <= modes.keys():
@@ -235,9 +271,16 @@ def comparison(results):
     # comparison even if its numerical threshold were to pass.
     out['common_demand_exercise_pass'] = not demand_requested or all(
         r.get('demand_replan_exercised') is True for r in (f, a))
+    # The two-phase prototype preserves startup truth delivery, but both it and
+    # legacy still fail the declared late-reader preservation test. Measure its
+    # CPU effect without promoting an unresolved delivery prototype to success.
+    out['static_delivery_preservation_pass'] = all(
+        not r.get('static_pc_two_phase', False) or
+        r.get('static_pc_delivery_validated') is True for r in (f, a))
     out['measured_threshold_pass'] = bool(safe and out['mission_time_guardrail_pass']
                                          and out['per_mode_reference_time_guardrail_pass']
                                          and out['common_demand_exercise_pass']
+                                         and out['static_delivery_preservation_pass']
                                          and not out['cpu_comparison_instrumented']
                                          and reduction is not None and reduction >= 40.)
     out['target_met'] = (out['measured_threshold_pass']
@@ -266,6 +309,8 @@ def main():
     parser.add_argument('--snapshot-neighbor-cache', action='store_true',
                         help='Exact snapshot-scoped neighborhood cache; requires line query')
     parser.add_argument('--static-pc-poll-ms', type=int, choices=(1, 100), default=1)
+    parser.add_argument('--static-pc-two-phase', action='store_true',
+                        help='Preserve legacy1ms startup; after5.1s use100ms subscriber polling')
     parser.add_argument('--side-executor-threads', type=int, choices=range(2, 17), default=10)
     parser.add_argument('--monitor-intervals', action='store_true',
                         help='Bounded received-message interval statistics on existing monitor subscriptions')
@@ -293,6 +338,8 @@ def main():
         parser.error('--guarded-demand-replan requires --time-reference-folder')
     if args.extended_demand_lease and not args.guarded_demand_replan:
         parser.error('--extended-demand-lease requires --guarded-demand-replan')
+    if args.static_pc_two_phase and (args.static_pc_poll_ms != 1 or not args.compose):
+        parser.error('--static-pc-two-phase requires --static-pc-poll-ms 1 and --compose')
     if args.side_executor_threads < 4 and not (
             args.dedicated_static_pc_executor and args.monitor_intervals):
         parser.error('Pools below4 require --dedicated-static-pc-executor and --monitor-intervals')
@@ -345,6 +392,7 @@ def main():
     os.environ['SUPER_SNAPSHOT_LINE_QUERY'] = '1' if args.snapshot_line_query else '0'
     os.environ['SUPER_SNAPSHOT_NEIGHBOR_CACHE'] = '1' if args.snapshot_neighbor_cache else '0'
     os.environ['SUPER_STATIC_PC_POLL_MS'] = str(args.static_pc_poll_ms)
+    os.environ['SUPER_STATIC_PC_TWO_PHASE'] = '1' if args.static_pc_two_phase else '0'
     os.environ['SUPER_SIDE_EXECUTOR_THREADS'] = str(args.side_executor_threads)
     os.environ['SUPER_MONITOR_INTERVALS'] = '1' if args.monitor_intervals else '0'
     os.environ['SUPER_GUARDED_DEMAND_REPLAN'] = '1' if args.guarded_demand_replan else '0'
@@ -402,6 +450,9 @@ def main():
         snapshot_line_query=args.snapshot_line_query,
         snapshot_neighbor_cache=args.snapshot_neighbor_cache,
         static_pc_poll_ms=args.static_pc_poll_ms,
+        static_pc_two_phase=args.static_pc_two_phase,
+        static_pc_delivery_scope=('Startup-ready CPU diagnostic only; late-reader preservation unresolved'
+                                  if args.static_pc_two_phase else 'Legacy static publication'),
         side_executor_threads=args.side_executor_threads,
         monitor_intervals=args.monitor_intervals,
         guarded_demand_replan=args.guarded_demand_replan,
@@ -479,6 +530,13 @@ def main():
                     result['source_acquisition']['checks']['static_pc_executor_setting'] = (
                         '[STATIC_PC_EXECUTOR_SETTINGS] '
                         f'dedicated={int(args.dedicated_static_pc_executor)} ' in stack)
+                if args.static_pc_two_phase:
+                    result['static_pc_two_phase'] = True
+                    result['static_pc_delivery_validated'] = False
+                    result['static_pc_two_phase_audit'] = static_two_phase_audit(
+                        stack, stage_profile.summarize(root, mode, args.run) if args.profile_cpu else None)
+                    result['source_acquisition']['checks']['static_pc_two_phase'] = (
+                        result['static_pc_two_phase_audit']['valid'])
                 if args.monitor_intervals:
                     monitor_result = json.loads((root / 'artifacts' /
                         f'seed1_run{args.run}_{mode}.json').read_text())

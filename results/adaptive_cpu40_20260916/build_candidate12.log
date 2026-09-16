@@ -1,0 +1,76 @@
+Starting >>> rog_map
+--- stderr: rog_map
+In file included from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/config.hpp:26,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/sliding_map.h:26,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/counter_map.h:27,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/inf_map.h:28,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/prob_map.h:31,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map.h:38,
+                 from /root/super_ws/src/SUPER/rog_map/include/rog_map_ros/rog_map_ros2.hpp:57,
+                 from /root/super_ws/src/SUPER/rog_map/src/rog_map_ros/rog_map_ros1.cpp:14:
+/root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/common_lib.hpp:120:17: warning: ‘bool rog_map::lineIntersectBox(super_utils::Vec3f, super_utils::Vec3f, super_utils::Vec3f, super_utils::Vec3f, super_utils::Vec3f&)’ defined but not used [-Wunused-function]
+  120 |     static bool lineIntersectBox(super_utils::Vec3f L1, super_utils::Vec3f L2, super_utils::Vec3f B1,
+      |                 ^~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/common_lib.hpp:76:31: warning: ‘super_utils::Vec3f rog_map::lineBoxIntersectPoint(const Vec3f&, const Vec3f&, const Vec3f&, const Vec3f&)’ defined but not used [-Wunused-function]
+   76 |     static super_utils::Vec3f lineBoxIntersectPoint(const super_utils::Vec3f& pt, const super_utils::Vec3f& pos,
+      |                               ^~~~~~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/rog_map/include/rog_map/rog_map_core/common_lib.hpp:65:19: warning: ‘double rog_map::computePathLength(super_utils::vec_E<Eigen::Matrix<double, 3, 1> >&)’ defined but not used [-Wunused-function]
+   65 |     static double computePathLength(const super_utils::vec_E<super_utils::Vec3f>& path) {
+      |                   ^~~~~~~~~~~~~~~~~
+cc1plus: note: unrecognized command-line option ‘-Wno-dev’ may have been intended to silence earlier diagnostics
+---
+Finished <<< rog_map [10.8s]
+Starting >>> super_planner
+--- stderr: super_planner
+/root/super_ws/src/SUPER/super_planner/src/super_core/astar.cpp: In constructor ‘path_search::Astar::Astar(const string&, const Ptr&, rog_map::ROGMapROS::Ptr)’:
+/root/super_ws/src/SUPER/super_planner/src/super_core/astar.cpp:33:5: warning:   when initialized here [-Wreorder]
+   33 |     Astar::Astar(const std::string &cfg_path,
+      |     ^~~~~
+/root/super_ws/src/SUPER/super_planner/src/super_core/astar.cpp: In member function ‘super_utils::RET_CODE path_search::Astar::escapePathSearch(const Vec3f&, int, super_utils::vec_Vec3f&)’:
+/root/super_ws/src/SUPER/super_planner/src/super_core/astar.cpp:614:35: warning: ‘tmp’ may be used uninitialized [-Wmaybe-uninitialized]
+  614 |         RET_CODE setup_ret = setup(start_pt, tmp, flag, 999);
+      |                              ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/super_core/astar.cpp:64:5: note: by argument 3 of type ‘const Vec3f&’ {aka ‘const Eigen::Matrix<double, 3, 1>&’} to ‘super_utils::RET_CODE path_search::Astar::setup(const Vec3f&, const Vec3f&, const int&, const double&)’ declared here
+   64 |     Astar::setup(const Vec3f &start_pt, const Vec3f &goal_pt, const int &flag, const double &searching_horizon) {
+      |     ^~~~~
+/root/super_ws/src/SUPER/super_planner/src/super_core/astar.cpp:613:15: note: ‘tmp’ declared here
+  613 |         Vec3f tmp;
+      |               ^~~
+/root/super_ws/src/SUPER/super_planner/src/super_core/corridor_generator.cpp: In member function ‘bool super_planner::CorridorGenerator::SearchPolytopeOnPath(const vec_Vec3f&, geometry_utils::PolytopeVec&, super_utils::Vec3f&, bool, const vec_Vec3f&, const std::vector<double, std::allocator<double> >&)’:
+/root/super_ws/src/SUPER/super_planner/src/super_core/corridor_generator.cpp:170:24: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  170 |         while(first_id < path.size() && map_ptr_->isOccupiedInflate(path[first_id])) {
+      |               ~~~~~~~~~^~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/super_core/corridor_generator.cpp:183:42: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  183 |             for (int j = first_id + 1; j < path.size(); j++) {
+      |                                        ~~^~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/super_core/corridor_generator.cpp:205:56: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  205 |             if (second_id == first_id && second_id + 1 < path.size()) {
+      |                                          ~~~~~~~~~~~~~~^~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/super_core/corridor_generator.cpp:279:27: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  279 |             if (second_id == path.size() - 1) {
+      |                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/super_core/super_planner.cpp: In constructor ‘super_planner::SuperPlanner::SuperPlanner(const string&, const Ptr&, const Ptr&)’:
+/root/super_ws/src/SUPER/super_planner/src/super_core/super_planner.cpp:70:5: warning:   when initialized here [-Wreorder]
+   70 |     SuperPlanner::SuperPlanner
+      |     ^~~~~~~~~~~~
+---
+Finished <<< super_planner [3min 25s]
+Starting >>> perfect_drone_sim
+--- stderr: perfect_drone_sim
+CMake Warning (dev) at CMakeLists.txt:41 (find_package):
+  Policy CMP0074 is not set: find_package uses <PackageName>_ROOT variables.
+  Run "cmake --help-policy CMP0074" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  CMake variable PCL_ROOT is set to:
+
+    /usr
+
+  For compatibility, CMake is ignoring the variable.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+---
+Finished <<< perfect_drone_sim [6min 1s]
+
+Summary: 3 packages finished [9min 37s]
+  3 packages had stderr output: perfect_drone_sim rog_map super_planner

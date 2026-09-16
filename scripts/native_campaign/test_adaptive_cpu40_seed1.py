@@ -2,7 +2,8 @@ import copy
 from adaptive_cpu40_seed1 import (SMALL_POOL_MATCH_FIELDS, comparison,
                                  reference_comparison, small_pool_timing_audit,
                                  small_pool_profile_reference_audit,
-                                 DEMAND_REASONS, demand_reason_audit)
+                                 DEMAND_REASONS, demand_reason_audit,
+                                 static_two_phase_audit)
 
 
 def pair():
@@ -159,7 +160,7 @@ def test_profile_reference_allows_reverse_order_and_separate_evidence_paths():
 
 
 def test_profile_reference_rejects_changed_runtime_binary_options_or_profiles():
-    for kind in ('binary', 'options', 'profiles', 'threads', 'missing_field', 'wrong_pair', 'launch', 'lease'):
+    for kind in ('binary', 'options', 'profiles', 'threads', 'missing_field', 'wrong_pair', 'launch', 'lease', 'static_phase'):
         plan, reference, summaries = profile_reference_fixture()
         if kind == 'binary':
             reference['asset_sha256'][next(iter(reference['asset_sha256']))] = 'b' * 64
@@ -175,6 +176,8 @@ def test_profile_reference_rejects_changed_runtime_binary_options_or_profiles():
             reference['modes'] = ['full']
         elif kind == 'lease':
             reference['extended_demand_lease'] = not plan['extended_demand_lease']
+        elif kind == 'static_phase':
+            reference['static_pc_two_phase'] = not plan['static_pc_two_phase']
         else:
             reference['runtime_policy']['sha256'][next(iter(reference['runtime_policy']['sha256']))] = 'd' * 64
         assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid'], kind
@@ -235,3 +238,33 @@ def test_demand_histogram_requires_matched_complete_monotonic_accounting():
                  demand_log() + demand_log(),
                  demand_log() + demand_log(20, 5)):
         assert not demand_reason_audit(text, .5)['valid'], text
+
+
+def test_static_phase_requires_actual_cancel_post_bootstrap_and_no_fallback():
+    stack = ('[STATIC_PC_TWO_PHASE] enabled=true phase=fast initial_poll_ms=1 \n'
+             '[STATIC_PC_TWO_PHASE] enabled=true phase=coarse poll_ms=100 '
+             'ros_elapsed_s=5.100001 fast_timer_canceled=1\n')
+    assert static_two_phase_audit(stack)['valid']
+    assert not static_two_phase_audit(stack)['callback_counts_instrumented']
+    for bad in ('', stack + stack, stack.replace('5.100001', '5.09'),
+                stack.replace('5.100001', 'nan'), stack.replace('5.100001', 'bad'),
+                stack.replace('canceled=1', 'canceled=0'),
+                stack + '[STATIC_PC_TWO_PHASE] enabled=true phase=legacy_fallback poll_ms=1'):
+        assert not static_two_phase_audit(bad)['valid'], bad
+    profile = dict(processes=[dict(duration_s=30., stages=[dict(
+        stage='sim_static_cloud_callback', calls=300, clock_errors=0)])])
+    assert static_two_phase_audit(stack, profile)['valid']
+    profile['processes'][0]['stages'][0]['calls'] = 30000
+    assert not static_two_phase_audit(stack, profile)['valid']
+    assert not static_two_phase_audit(stack, {})['valid']
+
+
+def test_unresolved_static_delivery_cannot_claim_target_or_bless_reference():
+    rows = pair()
+    rows[1]['static_pc_two_phase'] = True
+    out = comparison(rows)
+    assert out['safety_and_quality_pass']
+    assert not out['static_delivery_preservation_pass'] and not out['target_met']
+    plan, reference, summaries = profile_reference_fixture()
+    plan['static_pc_two_phase'] = reference['static_pc_two_phase'] = True
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']

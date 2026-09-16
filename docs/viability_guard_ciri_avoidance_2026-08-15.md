@@ -5719,3 +5719,27 @@ unchanged, rolling current evidence still checked every eligible demand tick.
 Source/guard/command timers and geometry thresholds unchanged.19-bin final
 reason audit and simulator CPU callback attribution added for diagnosis.
 Full and Adaptive receive the same optimizations. Old Normal300 remains frozen.
+
+#### C12/C13 CPU diagnosis, target still unmet
+
+C12(run9313), extra0.5s bounded dispatch lease + simulator CPU scopes:
+Full37.48s/0.607148cores/24.136908core-s; Adaptive38.48s/0.447553cores/
+17.764726core-s. Mean26.286%, cumulative26.400%; both complete/contact0,
+all flight/source/recovery/time/timing/accounting guards pass, no retry.
+Cached certificate misses only10/528F and12/514A; no geometry-refresh change made.
+Static executor measured~0.049cores each, so tested separate two-phase polling.
+
+C13(run9314) preserves legacy1ms startup to5.1s then cancels fast timer and uses
+100ms count polling. Reader-first full-payload/SHA checks pass both legacy/new;
+late/second-reader delivery fails both, reconnect steps not reached. Thus CPU
+diagnostic ONLY, disqualified from adoption/target/reference before flight.
+Full39.64s/0.569059cores/23.643770core-s; Adaptive38.17s/0.417815cores/
+16.896414core-s. Both complete/contact0, all flight guards pass; mean26.578%,
+cumulative28.538%. Static thread~0.0012/0.0014cores confirms cost removal, but
+40% unmet and delivery unresolved. Next candidate returns tolegacy1ms.
+
+New cause under review: waypoint.yaml repeats samegoal1Hz; C12F35/A36duplicate
+acceptances each followed by realreplan, despite only5distinct targets. Paired
+explicit commandidentity/idempotency proposal must preserve fresh intent and
+blocked/recovery retries, not infer commandidentity merely fromequalposition.
+Detailed evidence/design and all raw runs remain in dated CPU40 folder/doc.
