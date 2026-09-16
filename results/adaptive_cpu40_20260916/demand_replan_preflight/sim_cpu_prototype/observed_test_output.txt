@@ -1,0 +1,37 @@
+2026-09-16: simulator profiler proposal applied with apply_patch after root authorization and independent review. All six corresponding runtime/mirror pairs are byte-identical.
+
+After application, rebuilt both test binaries using actual runtime rog_map/include and rog_map/test paths instead of the prototype. Both optimized and ASan/UBSan disabled/enabled executions passed again with no diagnostics; enabled main-role PID/TID pairs were 2926542/2926542 and 2926557/2926557. No compiler remains active. Full ROS build and closed-loop callback validation are still pending parent execution.
+
+Optimized build: g++ -std=c++17 -O2 -Wall -Wextra -pedantic -pthread -I<prototype>/rog_map/include <prototype>/rog_map/test/thread_cpu_profile_test.cpp -o /tmp/sim_cpu_profile_test
+Sanitizer build: same source/include, -O1 -g0 -fsanitize=address,undefined -fno-omit-frame-pointer -o /tmp/sim_cpu_profile_test_sanitize
+Both builds exit 0 without diagnostics.
+
+sim_prof_off exit=0
+PASS disabled profiler
+
+sim_prof_on exit=0
+[THREAD_CPU_ROLE] version=1 pid=2925323 tid=2925323 role=profiler_test_main
+PASS enabled, nested, sleeping, concurrent profiler
+[THREAD_CPU_PROFILE] version=1 pid=2925323 steady_ns=1031997359960021 final=1 stage=map_cloud_enqueue calls=1 inclusive_cpu_s=0.000002394 exclusive_cpu_s=0.000002394 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925323 steady_ns=1031997359960021 final=1 stage=map_worker calls=4000 inclusive_cpu_s=0.005000016 exclusive_cpu_s=0.005000016 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925323 steady_ns=1031997359960021 final=1 stage=fsm_main_callback calls=1 inclusive_cpu_s=0.000056720 exclusive_cpu_s=0.000009344 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925323 steady_ns=1031997359960021 final=1 stage=guard_certificate calls=1 inclusive_cpu_s=0.000047376 exclusive_cpu_s=0.000047376 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925323 steady_ns=1031997359960021 final=1 stage=sim_static_cloud_callback calls=1 inclusive_cpu_s=0.000000550 exclusive_cpu_s=0.000000550 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925323 steady_ns=1031997359960021 final=1 stage=sim_odom_callback calls=1 inclusive_cpu_s=0.000000444 exclusive_cpu_s=0.000000444 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925323 steady_ns=1031997359960021 final=1 stage=sim_render_callback calls=1 inclusive_cpu_s=0.000000456 exclusive_cpu_s=0.000000456 clock_errors=0
+
+sim_prof_san_off exit=0
+PASS disabled profiler
+
+sim_prof_san_on exit=0
+[THREAD_CPU_ROLE] version=1 pid=2925419 tid=2925419 role=profiler_test_main
+[THREAD_CPU_PROFILE] version=1 pid=2925419 steady_ns=1032005134984909 final=1 stage=map_cloud_enqueue calls=1 inclusive_cpu_s=0.000001599 exclusive_cpu_s=0.000001599 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925419 steady_ns=1032005134984909 final=1 stage=map_worker calls=4000 inclusive_cpu_s=0.003031963 exclusive_cpu_s=0.003031963 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925419 steady_ns=1032005134984909 final=1 stage=fsm_main_callback calls=1 inclusive_cpu_s=0.000035164 exclusive_cpu_s=0.000005897 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925419 steady_ns=1032005134984909 final=1 stage=guard_certificate calls=1 inclusive_cpu_s=0.000029267 exclusive_cpu_s=0.000029267 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925419 steady_ns=1032005134984909 final=1 stage=sim_static_cloud_callback calls=1 inclusive_cpu_s=0.000000288 exclusive_cpu_s=0.000000288 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925419 steady_ns=1032005134984909 final=1 stage=sim_odom_callback calls=1 inclusive_cpu_s=0.000000277 exclusive_cpu_s=0.000000277 clock_errors=0
+[THREAD_CPU_PROFILE] version=1 pid=2925419 steady_ns=1032005134984909 final=1 stage=sim_render_callback calls=1 inclusive_cpu_s=0.000000398 exclusive_cpu_s=0.000000398 clock_errors=0
+PASS enabled, nested, sleeping, concurrent profiler
+
+Disabled stdout contains only PASS and no THREAD_CPU markers. Enabled main-role TID equals process PID and both are positive. Tests cover thread CPU accounting, not actual ROS callbacks; callback binding requires rebuilt flight verification.

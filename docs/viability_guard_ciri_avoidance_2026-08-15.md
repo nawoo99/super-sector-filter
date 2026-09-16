@@ -5698,3 +5698,24 @@ FullACK→newpath→release cycle; new Adaptive startup branch not exercised.
 Next opt-in2worker/dedicated-static ablation retains sensor/guard periods and
 predeclared timing/quality requirements, with extra observed cadence/gap audits.
 Fewer worker threads alone are not evidence of preserved100Hz callbacks.
+
+#### C10/C11 two-worker timing validation and further CPU search
+
+C10(run9311), common demand0.25s + dedicated static executor +2sideworkers:
+Full36.84s/0.648614cores/24.920355core-s; Adaptive39.34s/0.478033cores/
+19.869999core-s. Mean26.299%, cumulative20.266% reduction; original and extra
+sensor/odom/callback timing checks pass. Adaptive2exact FullACK→newpath→Sector
+cycles. A340ms command-message gap is logged fail-closed brake suppression,
+not evidence of a340ms main callback stall; measured main/command~100Hz.
+
+C11(run9312), only optional per-solve optimizer memory diagnostics OFF:
+Full39.69s/0.630825cores/26.241412core-s; Adaptive41.38s/0.473869cores/
+20.234247core-s. Mean24.881%, cumulative22.892%, time ratio1.04258; all gates
+pass, both complete/contact0, no retries. n1 variation prevents isolated causal
+claims. **40% still unmet**; no unprofiled confirmation attempted prematurely.
+
+C12 prepared: extra opt-in0.5s maximum ordinary-dispatch age, default0.25
+unchanged, rolling current evidence still checked every eligible demand tick.
+Source/guard/command timers and geometry thresholds unchanged.19-bin final
+reason audit and simulator CPU callback attribution added for diagnosis.
+Full and Adaptive receive the same optimizations. Old Normal300 remains frozen.

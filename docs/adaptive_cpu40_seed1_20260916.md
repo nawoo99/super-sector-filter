@@ -527,3 +527,45 @@ cgroup means F0.6486/A0.4780; windows differ and this residual is not pure execu
 cost. C11 disables only optional per-solve optimizer memory diagnostics equally
 in both modes, retaining external memory/cgroup guards and all operational logs.
 Demand cap remains0.25,2workers+dedicated-static retained; profile stays ON.
+
+### Candidate11 measured result (run9312)
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 39.69 | 0.630825 | 26.241412 |
+| Adaptive | 1/1,0 | 41.38 | 0.473869 | 20.234247 |
+
+Only optional optimizer per-solve memory trace is disabled relative to C10.
+Mean reduction24.8810%, cumulative22.8919%, A/Ftime1.04258. All original and
+small-pool gates pass, no retries; **40% unmet**. This n1 variation does not
+establish that diagnostic removal caused a throughput improvement. C11 retains
+external cgroup/resource checks and operational source/ACK/path/guard evidence.
+Raw evidence:`c11_no_phase_trace_profile/`, independent timing extraction:
+`executor_preflight/c11_timing.json`. Trace remains off in the next candidate.
+
+## Candidate12 prospective: extended bounded dispatch lease and attribution
+
+Extra opt-in `SUPER_GUARDED_DEMAND_EXTENDED_LEASE=1`, requiring the existing
+demand opt-in, extends only the maximum successful ordinary-dispatch age from
+0.25s to0.5s. Default remains0.25s. This is NOT a blind0.5s trajectory hold:
+every eligible15Hz skip still needs current immutable map/generation, explicit
+SAFE geometry covering the next approximately0.206s, renewed stop-viability
+evidence, sufficient remaining EXP motion, and no new goal/recovery/rejection.
+Source10Hz and main/command100Hz timers remain unchanged. All existing safety
+limitations of sampled stop evidence remain; no continuous-safety theorem.
+
+Final post-renewal decisions receive a callback-owned19-bin histogram; every
+existing5s report must reconcile sum==checks and SKIP==aggregate skips, with
+monotonic counters. The runner freezes the extra option, checks the actual cap,
+and requires matching cap/options/binaries for any unprofiled small-pool retest.
+Focused optimized and ASan/UBSan policy tests pass the original41decisions/
+21nonfinite cases plus40extended unchanged-gate cases and boundary/accounting
+tests. Independent policy review identified no new blocker; flight evidence
+remains required. This mechanism alone is not predicted to guarantee40%.
+
+Append-only thread CPU scopes will also cover composed simulator static-cloud,
+odometry and render callbacks, with actual running-thread role/TID markers.
+This separates callback CPU from executor/middleware residual; GPU device time
+is not thread CPU. Profiling stays opt-in/defaultoff, and unprofiled confirmation
+is still mandatory before target acceptance. Both compared modes receive the
+same policy and instrumentation changes, then the same declared timing gates.

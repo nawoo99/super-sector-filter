@@ -66,7 +66,8 @@ SMALL_POOL_MATCH_FIELDS = (
     'skip_backup_diagnostic_replay', 'skip_unobserved_path_publication',
     'fast_occupied_box_scan', 'compare_occupied_box_scan', 'snapshot_line_query',
     'snapshot_neighbor_cache', 'static_pc_poll_ms', 'side_executor_threads',
-    'monitor_intervals', 'guarded_demand_replan', 'dedicated_static_pc_executor',
+    'monitor_intervals', 'guarded_demand_replan', 'extended_demand_lease',
+    'dedicated_static_pc_executor',
     'optimizer_phase_memory_trace', 'time_reference_folder',
     'max_same_mode_reference_time_ratio', 'max_mission_time_ratio',
     'logical_cpus', 'frozen_normal_sha256')
@@ -150,6 +151,53 @@ def reference_comparison(result, reference):
                 scope='Same-mode predeclared exploratory reference; not an isolated causal ablation')
 
 
+DEMAND_REASONS = (
+    'DISABLED', 'INVALID_POLICY', 'NOT_ORDINARY', 'NEW_GOAL', 'RECOVERY_PENDING',
+    'SAFETY_PENDING', 'FAILURE_OR_REJECTION', 'NO_SUCCESSFUL_LEASE',
+    'STALE_OR_UNCERTIFIED_MAP', 'TRAJECTORY_MISMATCH', 'CLOCK_INVALID',
+    'DISPATCH_DEADLINE', 'ON_BACKUP', 'INSUFFICIENT_GEOMETRY',
+    'INSUFFICIENT_MOTION_HORIZON', 'NEED_VIABILITY_RENEWAL',
+    'VIABILITY_RENEWAL_REJECTED', 'EVIDENCE_CHANGED', 'SKIP')
+
+
+def demand_reason_audit(stack, max_dispatch_interval):
+    """Check final-outcome accounting, not a continuous-safety certificate."""
+    aggregate = {int(n): (int(skips), int(renewals)) for n, skips, renewals in
+                 re.findall(r'\[DEMAND_REPLAN\] checks=(\d+) skips=(\d+) renewals=(\d+)', stack)}
+    reports = []
+    valid = True
+    previous = None
+    for match in re.finditer(
+            r'\[DEMAND_REPLAN_REASONS\] checks=(\d+) counted=(\d+) '
+            r'max_dispatch_interval=([^\s]+) final_counts=([^\s]+)', stack):
+        checks, counted, cap, fields = match.groups()
+        entries = [field.split('=') for field in fields.split(',')]
+        if any(len(p) != 2 or not p[1].isdigit() for p in entries):
+            valid = False
+            continue
+        counts = {key: int(value) for key, value in entries}
+        try:
+            cap_matches = float(cap) == max_dispatch_interval
+        except ValueError:
+            cap_matches = False
+        n, total = int(checks), int(counted)
+        row_valid = (len(entries) == len(counts) == len(DEMAND_REASONS) and
+                     set(counts) == set(DEMAND_REASONS) and
+                     n == total == sum(counts.values()) and n in aggregate and
+                     counts.get('SKIP') == aggregate.get(n, (None, None))[0] and
+                     cap_matches)
+        if previous is not None:
+            row_valid = row_valid and n > previous['checks'] and all(
+                counts.get(k, -1) >= v for k, v in previous['counts'].items())
+        row = dict(checks=n, counted=total, counts=counts, valid=row_valid)
+        reports.append(row)
+        previous = row
+        valid = valid and row_valid
+    return dict(valid=bool(reports) and valid, reports=reports,
+                max_dispatch_interval_s=max_dispatch_interval,
+                scope='Cumulative final outcomes after renewal; early-gated ticks and final partial report interval excluded')
+
+
 def comparison(results):
     modes = {r['mode']: r for r in results}
     if not {'full', 'adaptive'} <= modes.keys():
@@ -222,6 +270,8 @@ def main():
     parser.add_argument('--monitor-intervals', action='store_true',
                         help='Bounded received-message interval statistics on existing monitor subscriptions')
     parser.add_argument('--guarded-demand-replan', action='store_true')
+    parser.add_argument('--extended-demand-lease', action='store_true',
+                        help='Opt in to 0.5s maximum dispatch age; rolling safety evidence and timer cadence unchanged')
     parser.add_argument('--dedicated-static-pc-executor', action='store_true')
     parser.add_argument('--no-optimizer-phase-memory-trace', action='store_true',
                         help='Disable per-solve diagnostic /proc reads and logs equally in both modes; retain external resource guards')
@@ -241,6 +291,8 @@ def main():
         parser.error('--snapshot-neighbor-cache requires --snapshot-line-query')
     if args.guarded_demand_replan and not args.time_reference_folder:
         parser.error('--guarded-demand-replan requires --time-reference-folder')
+    if args.extended_demand_lease and not args.guarded_demand_replan:
+        parser.error('--extended-demand-lease requires --guarded-demand-replan')
     if args.side_executor_threads < 4 and not (
             args.dedicated_static_pc_executor and args.monitor_intervals):
         parser.error('Pools below4 require --dedicated-static-pc-executor and --monitor-intervals')
@@ -296,6 +348,7 @@ def main():
     os.environ['SUPER_SIDE_EXECUTOR_THREADS'] = str(args.side_executor_threads)
     os.environ['SUPER_MONITOR_INTERVALS'] = '1' if args.monitor_intervals else '0'
     os.environ['SUPER_GUARDED_DEMAND_REPLAN'] = '1' if args.guarded_demand_replan else '0'
+    os.environ['SUPER_GUARDED_DEMAND_EXTENDED_LEASE'] = '1' if args.extended_demand_lease else '0'
     os.environ['SUPER_STATIC_PC_DEDICATED_EXECUTOR'] = (
         '1' if args.dedicated_static_pc_executor else '0')
     os.environ['SUPER_OPTIMIZER_PHASE_MEMORY_TRACE'] = (
@@ -352,6 +405,7 @@ def main():
         side_executor_threads=args.side_executor_threads,
         monitor_intervals=args.monitor_intervals,
         guarded_demand_replan=args.guarded_demand_replan,
+        extended_demand_lease=args.extended_demand_lease,
         dedicated_static_pc_executor=args.dedicated_static_pc_executor,
         optimizer_phase_memory_trace=not args.no_optimizer_phase_memory_trace,
         time_reference_folder=str(args.time_reference_folder) if args.time_reference_folder else None,
@@ -436,11 +490,16 @@ def main():
                             and x.get('backward_receipts', 1) == 0
                             for x in intervals.values()))
                 if args.guarded_demand_replan:
+                    demand_cap = 0.5 if args.extended_demand_lease else 0.25
                     result['source_acquisition']['checks']['guarded_demand_replan_active'] = (
-                        '[GUARDED_DEMAND_REPLAN] enabled=true max_dispatch_interval=0.25 ' in stack)
+                        f'[GUARDED_DEMAND_REPLAN] enabled=true max_dispatch_interval={demand_cap:g} ' in stack)
                     reports = re.findall(r'\[DEMAND_REPLAN\] checks=(\d+) skips=(\d+) renewals=(\d+)', stack)
                     result['demand_replan_reports'] = reports
                     result['demand_replan_exercised'] = bool(reports) and max(int(r[1]) for r in reports) > 0
+                    if args.extended_demand_lease:
+                        result['demand_reason_audit'] = demand_reason_audit(stack, demand_cap)
+                        result['source_acquisition']['checks']['demand_reason_accounting'] = (
+                            result['demand_reason_audit']['valid'])
                 if args.side_executor_threads < 4:
                     result['small_pool_timing'] = small_pool_timing_audit(
                         result.get('message_intervals', {}), row.get('sensor_hz'),

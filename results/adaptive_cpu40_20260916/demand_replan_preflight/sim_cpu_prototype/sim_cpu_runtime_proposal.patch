@@ -1,0 +1,226 @@
+--- a/rog_map/include/super_utils/thread_cpu_profile.hpp
++++ b/rog_map/include/super_utils/thread_cpu_profile.hpp
+@@ -15,6 +15,9 @@
+ #include <cstring>
+ #include <time.h>
+ #include <unistd.h>
++#if defined(__linux__)
++#include <sys/syscall.h>
++#endif
+ 
+ namespace super_utils::thread_cpu_profile {
+ 
+@@ -46,6 +49,10 @@
+     PlannerVelocityExtrema,
+     PlannerVisualizePath,
+     FsmPolyPublish,
++    // Append only: historical stage IDs are part of diagnostic tooling.
++    SimStaticCloud,
++    SimOdom,
++    SimRender,
+     Count
+ };
+ 
+@@ -61,7 +68,9 @@
+             "planner_path_search", "planner_exp_optimize",
+             "planner_backup_optimize", "planner_backup_replay",
+             "planner_corridor_search", "planner_velocity_extrema",
+-            "planner_visualize_path", "fsm_poly_publish"}};
++            "planner_visualize_path", "fsm_poly_publish",
++            "sim_static_cloud_callback", "sim_odom_callback",
++            "sim_render_callback"}};
+ 
+ inline bool enabled() noexcept {
+     static const bool value = [] {
+@@ -71,6 +80,25 @@
+     return value;
+ }
+ 
++// Invoke once from the actual executor thread, not from its creator. No marker
++// is emitted for pooled workers whose execution thread is not known here.
++inline void reportThreadRole(const char *role) noexcept {
++    if (!enabled()) {
++        return;
++    }
++#if defined(__linux__) && defined(SYS_gettid)
++    const long tid = syscall(SYS_gettid);
++    if (tid <= 0) {
++        return;
++    }
++    std::fprintf(stderr,
++            "[THREAD_CPU_ROLE] version=1 pid=%ld tid=%ld role=%s\n",
++            static_cast<long>(getpid()), tid, role ? role : "unspecified");
++#else
++    (void)role;  // Do not invent a TID on unsupported platforms.
++#endif
++}
++
+ struct alignas(64) Counter {
+     std::atomic<std::uint64_t> calls{0};
+     std::atomic<std::uint64_t> inclusive_ns{0};
+--- a/rog_map/test/thread_cpu_profile_test.cpp
++++ b/rog_map/test/thread_cpu_profile_test.cpp
+@@ -8,6 +8,13 @@
+ 
+ namespace profile = super_utils::thread_cpu_profile;
+ 
++static_assert(static_cast<std::size_t>(profile::Stage::MapCloudEnqueue) == 0);
++static_assert(static_cast<std::size_t>(profile::Stage::FsmPolyPublish) == 26);
++static_assert(static_cast<std::size_t>(profile::Stage::SimStaticCloud) == 27);
++static_assert(static_cast<std::size_t>(profile::Stage::SimOdom) == 28);
++static_assert(static_cast<std::size_t>(profile::Stage::SimRender) == 29);
++static_assert(static_cast<std::size_t>(profile::Stage::Count) == 30);
++
+ void require(bool condition, const char *description) {
+     if (!condition) {
+         std::cerr << "FAIL: " << description << '\n';
+@@ -29,6 +36,12 @@
+         profile::Scope disabled_or_enabled(Stage::MapCloudEnqueue);
+         burn(1000);
+     }
++    for (const auto stage :
++            {Stage::SimStaticCloud, Stage::SimOdom, Stage::SimRender}) {
++        profile::Scope callback(stage);
++        burn(100);
++    }
++    profile::reportThreadRole("profiler_test_main");
+     if (!profile::enabled()) {
+         profile::report(true);
+         for (const auto &counter : state.counters) {
+@@ -40,6 +53,19 @@
+         return 0;
+     }
+ 
++    for (const auto stage :
++            {Stage::SimStaticCloud, Stage::SimOdom, Stage::SimRender}) {
++        const auto &counter = state.counters[static_cast<std::size_t>(stage)];
++        require(counter.calls.load() == 1, "sim callback scope counted");
++        require(counter.inclusive_ns.load() == counter.exclusive_ns.load(),
++                "sim callback leaf accounting");
++    }
++    require(std::strcmp(profile::kStageNames[27],
++                        "sim_static_cloud_callback") == 0 &&
++            std::strcmp(profile::kStageNames[28], "sim_odom_callback") == 0 &&
++            std::strcmp(profile::kStageNames[29], "sim_render_callback") == 0,
++            "stable appended callback stage names");
++
+     const auto wall_start = std::chrono::steady_clock::now();
+     {
+         profile::Scope parent(Stage::FsmMainCallback);
+--- a/mars_uav_sim/perfect_drone_sim/include/perfect_drone_sim/ros2_perfect_drone_model.hpp
++++ b/mars_uav_sim/perfect_drone_sim/include/perfect_drone_sim/ros2_perfect_drone_model.hpp
+@@ -14,6 +14,11 @@
+ #include "pcl_conversions/pcl_conversions.h"
+ #include "perfect_drone_sim/config.hpp"
+ #include "perfect_drone_sim/common_execution_policy.hpp"
++// Only the composed Full/Adaptive targets have the shared planner profiler
++// dependency. Standalone/front-end targets retain their existing dependencies.
++#ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
++#include <super_utils/thread_cpu_profile.hpp>
++#endif
+ #include "tf2_ros/transform_broadcaster.h"
+ #include <chrono>
+ #include <cmath>
+@@ -642,6 +647,10 @@
+ 
+ 
+         void publishPC() {
++#ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
++            super_utils::thread_cpu_profile::Scope cpu_scope(
++                    super_utils::thread_cpu_profile::Stage::SimRender);
++#endif
+             pcl::PointCloud<marsim::PointType>::Ptr local_map(new pcl::PointCloud<marsim::PointType>);
+             // Capture immutable acquisition mode BEFORE rendering. Neither
+             // the request nor its timestamp is replaced with the later state.
+@@ -1131,6 +1140,10 @@
+ 
+ 
+         void publishGlobalPC() {
++#ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
++            super_utils::thread_cpu_profile::Scope cpu_scope(
++                    super_utils::thread_cpu_profile::Stage::SimStaticCloud);
++#endif
+             if (static_pc_poll_ms_ == 100) {
+                 const auto elapsed_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                         std::chrono::steady_clock::now() - static_pc_policy_start_).count();
+@@ -1172,6 +1185,10 @@
+         }
+ 
+         void publishOdom() {
++#ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
++            super_utils::thread_cpu_profile::Scope cpu_scope(
++                    super_utils::thread_cpu_profile::Stage::SimOdom);
++#endif
+             odom_.pose.pose.position.x = position_.x();
+             odom_.pose.pose.position.y = position_.y();
+             odom_.pose.pose.position.z = position_.z();
+--- a/mars_uav_sim/perfect_drone_sim/src/ros2_perfect_drone_full_node.cpp
++++ b/mars_uav_sim/perfect_drone_sim/src/ros2_perfect_drone_full_node.cpp
+@@ -8,6 +8,7 @@
+  */
+ 
+ #include "perfect_drone_sim/ros2_perfect_drone_model.hpp"
++#include <super_utils/thread_cpu_profile.hpp>
+ 
+ #include <ament_index_cpp/get_package_share_directory.hpp>
+ #include <ros_interface/ros2/fsm_ros2.hpp>
+@@ -105,6 +106,8 @@
+   std::atomic_bool static_pc_executor_failed{false};
+   if (static_pc_executor) {
+     static_pc_thread = std::thread([&]() {
++      super_utils::thread_cpu_profile::reportThreadRole(
++          "sim_static_cloud_executor");
+       try {
+         static_pc_executor->spin();
+       } catch (const std::exception& error) {
+@@ -123,6 +126,7 @@
+   rclcpp::executors::SingleThreadedExecutor render_executor;
+   render_executor.add_callback_group(simulator->localPcCbkGroup(),
+                                      simulator->get_node_base_interface());
++  super_utils::thread_cpu_profile::reportThreadRole("sim_render_executor");
+   render_executor.spin();
+ 
+   side_executor.cancel();
+--- a/mars_uav_sim/perfect_drone_sim/src/ros2_perfect_drone_adaptive_node.cpp
++++ b/mars_uav_sim/perfect_drone_sim/src/ros2_perfect_drone_adaptive_node.cpp
+@@ -9,6 +9,7 @@
+  */
+ 
+ #include "perfect_drone_sim/ros2_perfect_drone_model.hpp"
++#include <super_utils/thread_cpu_profile.hpp>
+ 
+ #include <ament_index_cpp/get_package_share_directory.hpp>
+ #include <mission_planner/native_sector_cpp.hpp>
+@@ -169,6 +170,8 @@
+   std::atomic_bool static_pc_executor_failed{false};
+   if (static_pc_executor) {
+     static_pc_thread = std::thread([&]() {
++      super_utils::thread_cpu_profile::reportThreadRole(
++          "sim_static_cloud_executor");
+       try {
+         static_pc_executor->spin();
+       } catch (const std::exception& error) {
+@@ -187,6 +190,7 @@
+   rclcpp::executors::SingleThreadedExecutor render_executor;
+   render_executor.add_callback_group(simulator->localPcCbkGroup(),
+                                      simulator->get_node_base_interface());
++  super_utils::thread_cpu_profile::reportThreadRole("sim_render_executor");
+   render_executor.spin();
+ 
+   side_executor.cancel();
+--- a/mars_uav_sim/perfect_drone_sim/CMakeLists.txt
++++ b/mars_uav_sim/perfect_drone_sim/CMakeLists.txt
+@@ -89,11 +89,13 @@
+         src/ros2_perfect_drone_adaptive_node.cpp
+ )
+ target_compile_definitions(perfect_drone_full_node PRIVATE
++        SUPER_SIM_CPU_PROFILE_SUPPORT
+         USE_ROS2
+         FMT_HEADER_ONLY
+         ORIGIN_AT_CORNER
+ )
+ target_compile_definitions(perfect_drone_adaptive_node PRIVATE
++        SUPER_SIM_CPU_PROFILE_SUPPORT
+         USE_ROS2
+         FMT_HEADER_ONLY
+         ORIGIN_AT_CORNER

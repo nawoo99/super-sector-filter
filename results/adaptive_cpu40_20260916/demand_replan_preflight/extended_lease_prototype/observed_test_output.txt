@@ -1,0 +1,24 @@
+2026-09-16: applied reviewed extended lease patch to runtime with apply_patch.
+
+Optimized build command (exit 0):
+g++ -std=c++17 -O2 -Wall -Wextra -pedantic -I/root/super_ws/src/SUPER/super_planner/include /root/super_ws/src/SUPER/super_planner/test/extended_dispatch_lease_test.cpp -o /tmp/extended_dispatch_lease_test
+
+/tmp/extended_dispatch_lease_test (exit 0):
+decision_cases=41 nonfinite_cases=21 guard_ticks=101 command_ticks=101 demand_ticks=15 solves=5 skips=10
+demand_replan_policy_test=PASS
+extended_rejection_cases=40 caps=0.25,0.5 rolling_horizon_unchanged=true
+extended_dispatch_lease_test=PASS
+
+Sanitizer build command (exit 0):
+g++ -std=c++17 -O1 -g0 -Wall -Wextra -pedantic -fsanitize=address,undefined -fno-omit-frame-pointer -I/root/super_ws/src/SUPER/super_planner/include /root/super_ws/src/SUPER/super_planner/test/extended_dispatch_lease_test.cpp -o /tmp/extended_dispatch_lease_test_sanitize
+
+/tmp/extended_dispatch_lease_test_sanitize (exit 0; no sanitizer diagnostics):
+decision_cases=41 nonfinite_cases=21 guard_ticks=101 command_ticks=101 demand_ticks=15 solves=5 skips=10
+demand_replan_policy_test=PASS
+extended_rejection_cases=40 caps=0.25,0.5 rolling_horizon_unchanged=true
+extended_dispatch_lease_test=PASS
+
+Coverage limitation: pure policy evidence fixtures and synthetic callback cadence;
+not a real ROS timing/certificate renewal integration test or closed-loop flight.
+DecisionCounters bins checked for all contiguous Reason values 0..18; the final
+reason is recorded once/check after renewal. CPU profiler counters are independent.

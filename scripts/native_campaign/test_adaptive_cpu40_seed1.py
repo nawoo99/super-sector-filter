@@ -1,7 +1,8 @@
 import copy
 from adaptive_cpu40_seed1 import (SMALL_POOL_MATCH_FIELDS, comparison,
                                  reference_comparison, small_pool_timing_audit,
-                                 small_pool_profile_reference_audit)
+                                 small_pool_profile_reference_audit,
+                                 DEMAND_REASONS, demand_reason_audit)
 
 
 def pair():
@@ -158,7 +159,7 @@ def test_profile_reference_allows_reverse_order_and_separate_evidence_paths():
 
 
 def test_profile_reference_rejects_changed_runtime_binary_options_or_profiles():
-    for kind in ('binary', 'options', 'profiles', 'threads', 'missing_field', 'wrong_pair', 'launch'):
+    for kind in ('binary', 'options', 'profiles', 'threads', 'missing_field', 'wrong_pair', 'launch', 'lease'):
         plan, reference, summaries = profile_reference_fixture()
         if kind == 'binary':
             reference['asset_sha256'][next(iter(reference['asset_sha256']))] = 'b' * 64
@@ -172,6 +173,8 @@ def test_profile_reference_rejects_changed_runtime_binary_options_or_profiles():
             del reference['snapshot_neighbor_cache']
         elif kind == 'wrong_pair':
             reference['modes'] = ['full']
+        elif kind == 'lease':
+            reference['extended_demand_lease'] = not plan['extended_demand_lease']
         else:
             reference['runtime_policy']['sha256'][next(iter(reference['runtime_policy']['sha256']))] = 'd' * 64
         assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid'], kind
@@ -206,3 +209,29 @@ def test_profile_reference_requires_callback_and_receipt_coverage_and_time_guard
     plan, reference, summaries = profile_reference_fixture()
     reference['cpu_profile'] = False
     assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+
+
+def demand_log(n=10, skips=7, cap='0.5'):
+    counts = dict.fromkeys(DEMAND_REASONS, 0)
+    counts.update(SKIP=skips, DISPATCH_DEADLINE=n - skips)
+    fields = ','.join(f'{k}={v}' for k, v in counts.items())
+    return (f'[DEMAND_REPLAN] checks={n} skips={skips} renewals=6\n'
+            f'[DEMAND_REPLAN_REASONS] checks={n} counted={n} '
+            f'max_dispatch_interval={cap} final_counts={fields}\n')
+
+
+def test_demand_histogram_requires_matched_complete_monotonic_accounting():
+    out = demand_reason_audit(demand_log() + demand_log(20, 14), .5)
+    assert out['valid'] and out['reports'][-1]['counts']['SKIP'] == 14
+    assert demand_reason_audit(demand_log(cap='0.25'), .25)['valid']
+    for text in ('', demand_log(cap='nan'), demand_log(cap='0.25'),
+                 demand_log().replace('counted=10', 'counted=11'),
+                 demand_log().replace('skips=7', 'skips=6'),
+                 demand_log().replace('DISABLED=0,', ''),
+                 demand_log().replace('DISABLED=0,', 'DISABLED=0,DISABLED=0,'),
+                 demand_log().replace('DISABLED=0', 'DISABLED=-1'),
+                 demand_log().replace('DISABLED=0', 'UNKNOWN=0'),
+                 demand_log().replace('DISABLED=0', 'DISABLED=oops'),
+                 demand_log() + demand_log(),
+                 demand_log() + demand_log(20, 5)):
+        assert not demand_reason_audit(text, .5)['valid'], text
