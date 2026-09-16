@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """One exploratory flight per selected mode/candidate; never discard outcomes.
 
-The objective is >=40% reduction in experiment-cgroup mean used CPUs, with
+The default objective is >=40% reduction in experiment-cgroup mean used CPUs, with
 contact-free completion and no artificial long-hold gain. Integrated CPU time
-is reported separately. This is seed1 tuning, not confirmatory evidence.
+is reported separately. A different engineering threshold must be declared before
+launch. Each invocation is n1; an external prospective campaign can freeze and
+repeat it, but the per-invocation output is not statistical confirmation.
 """
 import argparse
 import csv
@@ -84,12 +86,14 @@ SMALL_POOL_MATCH_FIELDS = (
 
 
 def small_pool_profile_reference_audit(plan, reference_plan, summaries):
-    """Match a small-pool unprofiled pair to a passed profiled timing preflight.
+    """Match every selected mode to its own passed profiled timing preflight.
 
     No CPU-reduction threshold is required of the preflight. Run identifiers,
     output/evidence paths and mode order may differ; runtime inputs may not.
     """
-    modes = {'full', 'adaptive'}
+    selected = plan.get('modes', [])
+    reference_modes = reference_plan.get('modes', [])
+    modes = set(selected)
     same_fields = all(k in plan and k in reference_plan and
                       plan[k] == reference_plan[k] for k in SMALL_POOL_MATCH_FIELDS)
     def runtime_hashes(value):
@@ -102,10 +106,10 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
     checks = dict(
         unprofiled_confirmation=plan.get('cpu_profile') is False,
         profiled_preflight=reference_plan.get('cpu_profile') is True,
-        full_adaptive_pair=(len(plan.get('modes', [])) == 2 and
-                            set(plan.get('modes', [])) == modes and
-                            len(reference_plan.get('modes', [])) == 2 and
-                            set(reference_plan.get('modes', [])) == modes),
+        matching_mode_set=(bool(modes) and modes <= {'full', 'sector', 'adaptive'} and
+                           len(selected) == len(modes) and
+                           len(reference_modes) == len(modes) and
+                           set(reference_modes) == modes),
         matching_runtime_options=same_fields,
         matching_runtime_hashes=(required_binaries <= current_hashes.keys() and
                                  current_hashes == runtime_hashes(reference_plan)),
@@ -132,7 +136,10 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
             row.get('safety_collisions') == 0 and bool(source_checks) and
             all(v is True for v in source_checks.values()) and
             row.get('strict_recovery_audit', {}).get('valid') is True and
+            row.get('strict_recovery_audit', {}).get('mode') == mode and
             not row.get('cpu_comparison_instrumented', False))
+        if mode == 'sector':
+            checks['sector_fixed_source'] = source_checks.get('fixed_sector_never_full') is True
         checks[mode + '_profile_timing'] = (
             timing.get('valid') is True and
             timing.get('callback_counts_instrumented') is True and
@@ -163,12 +170,15 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
         checks[mode + '_optimizer_clearance_gate_first'] = (
             not plan.get('optimizer_clearance_gate_first') or
             row.get('optimizer_clearance_gate_audit', {}).get('valid') is True)
-    ftime = summaries.get('full', {}).get('mission_time_s')
-    atime = summaries.get('adaptive', {}).get('mission_time_s')
-    checks['paired_mission_time'] = (
-        all(isinstance(t, (int, float)) and math.isfinite(t) and t > 0
-            for t in (ftime, atime)) and atime / ftime <= 1.10)
+    if {'full', 'adaptive'} <= modes:
+        ftime = summaries.get('full', {}).get('mission_time_s')
+        atime = summaries.get('adaptive', {}).get('mission_time_s')
+        checks['paired_mission_time'] = (
+            all(isinstance(t, (int, float)) and math.isfinite(t) and t > 0
+                for t in (ftime, atime)) and atime / ftime <= 1.10)
     return dict(valid=all(checks.values()), checks=checks,
+                modes_audited=sorted(modes),
+                paired_mission_time_applicable={'full', 'adaptive'} <= modes,
                 scope='Matched profiled finite-run timing preflight; not a real-time or safety guarantee')
 
 
@@ -488,12 +498,18 @@ def optimizer_clearance_gate_audit(stack, enabled):
                 scope='One-time branch coverage; objective equivalence is tested separately')
 
 
-def comparison(results):
+def comparison(results, mean_cpu_reduction_target_pct=40.):
+    if (not isinstance(mean_cpu_reduction_target_pct, (int, float)) or
+            not math.isfinite(mean_cpu_reduction_target_pct) or
+            not 0 <= mean_cpu_reduction_target_pct <= 100):
+        raise ValueError('Mean CPU engineering target must be finite and within [0,100]')
     modes = {r['mode']: r for r in results}
     if not {'full', 'adaptive'} <= modes.keys():
-        return dict(target_met=False, reason='Full/Adaptive pair incomplete')
+        return dict(target_met=False, reason='Full/Adaptive pair incomplete',
+                    mean_cpu_reduction_target_pct=mean_cpu_reduction_target_pct)
     f, a = modes['full'], modes['adaptive']
-    out = {}
+    out = dict(mean_cpu_reduction_target_pct=mean_cpu_reduction_target_pct,
+               threshold_scope='Predeclared engineering objective; not statistical significance')
     for metric in ('end_to_end_cpu_cores_mean', 'end_to_end_cpu_core_s'):
         fv, av = f.get(metric), a.get(metric)
         out[metric + '_reduction_pct'] = (
@@ -540,7 +556,8 @@ def comparison(results):
                                          and out['static_delivery_preservation_pass']
                                          and out['common_goal_identity_exercise_pass']
                                          and not out['cpu_comparison_instrumented']
-                                         and reduction is not None and reduction >= 40.)
+                                         and reduction is not None
+                                         and reduction >= mean_cpu_reduction_target_pct)
     out['target_met'] = (out['measured_threshold_pass']
                          and not out['requires_unprofiled_confirmation'])
     out['exploratory_n1_only'] = True
@@ -552,6 +569,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--run', type=int, required=True)
     parser.add_argument('--candidate', required=True)
+    parser.add_argument('--mean-cpu-reduction-target-pct', type=float, default=40.,
+                        help='Predeclared engineering threshold, not statistical significance (default40)')
     parser.add_argument('--modes', nargs='+', choices=('full', 'sector', 'adaptive'),
                         default=['full', 'adaptive'])
     parser.add_argument('--compose', action='store_true')
@@ -595,11 +614,14 @@ def main():
     parser.add_argument('--time-reference-folder', type=Path,
                         help='Predeclare same-mode <=1.10 mission-time guard and CPU reference')
     parser.add_argument('--small-pool-profile-reference', type=Path,
-                        help='Passed matching Full/Adaptive profiled preflight required for unprofiled pools below4')
+                        help='Passed matching same-mode-set profiled preflight required for unprofiled pools below4')
     parser.add_argument('--full-config', default=diagnostic.search.PROFILES['full'])
     parser.add_argument('--sector-config', default=diagnostic.search.PROFILES['sector'])
     parser.add_argument('--adaptive-config', default=event.PROFILE)
     args = parser.parse_args()
+    if (not math.isfinite(args.mean_cpu_reduction_target_pct) or
+            not 0 <= args.mean_cpu_reduction_target_pct <= 100):
+        parser.error('--mean-cpu-reduction-target-pct must be finite and within [0,100]')
     if len(set(args.modes)) != len(args.modes):
         parser.error('Each mode may run only once per candidate')
     if args.compare_occupied_box_scan and not args.fast_occupied_box_scan:
@@ -646,7 +668,7 @@ def main():
         for mode in args.modes:
             path = (args.time_reference_folder / f'{mode}_summary.json').resolve()
             reference = json.loads(path.read_text())
-            if reference.get('success') is not True or any(
+            if reference.get('mode') != mode or reference.get('success') is not True or any(
                     not isinstance(reference.get(key), (int, float)) or
                     not math.isfinite(reference[key]) or reference[key] <= 0
                     for key in ('mission_time_s', 'end_to_end_cpu_cores_mean', 'end_to_end_cpu_core_s')):
@@ -656,7 +678,7 @@ def main():
     profile_reference_plan = None
     profile_reference_summaries = {}
     if args.small_pool_profile_reference:
-        for name in ('plan.json', 'full_summary.json', 'adaptive_summary.json'):
+        for name in ('plan.json', *(f'{mode}_summary.json' for mode in args.modes)):
             path = (args.small_pool_profile_reference / name).resolve()
             value = json.loads(path.read_text())
             reference_files.append(path)
@@ -752,7 +774,8 @@ def main():
     plan = dict(
         schema='adaptive-cpu40-seed1-exploratory-v1', candidate=args.candidate,
         map='seed1', run=args.run, modes=args.modes, profiles=profiles,
-        backup=BACKUP, mean_cpu_reduction_target_pct=40,
+        backup=BACKUP, mean_cpu_reduction_target_pct=args.mean_cpu_reduction_target_pct,
+        threshold_scope='Predeclared engineering objective; not statistical significance',
         cumulative_cpu_also_reported=True, max_mission_time_ratio=1.10,
         compose=args.compose, cpu_profile=args.profile_cpu,
         skip_backup_diagnostic_replay=args.skip_backup_diagnostic_replay,
@@ -973,7 +996,8 @@ def main():
                 result['algorithm_cpu_scope'] = row.get('algorithm_cpu_scope')
                 diagnostic.save(root / f'{mode}_summary.json', result)
                 results.append(result)
-                diagnostic.save(root / 'summary.json', dict(results=results, comparison=comparison(results)))
+                diagnostic.save(root / 'summary.json', dict(results=results,
+                    comparison=comparison(results, args.mean_cpu_reduction_target_pct)))
                 print('RESULT', json.dumps({k: result[k] for k in (
                     'mode', 'success', 'safety_collisions', 'mission_time_s',
                     'end_to_end_cpu_cores_mean', 'end_to_end_cpu_core_s')}), flush=True)
@@ -981,7 +1005,7 @@ def main():
                     raise RuntimeError('Source/recovery contract failure; stop for diagnosis')
         if event.sha(event.NORMAL) != event.NORMAL_SHA:
             raise RuntimeError('Frozen Normal data changed')
-        comp = comparison(results)
+        comp = comparison(results, args.mean_cpu_reduction_target_pct)
         diagnostic.save(root / 'status.json', dict(pid=os.getpid(), state='COMPLETE',
             candidate=args.candidate, completed=len(results), comparison=comp))
         print('COMPARISON', json.dumps(comp), flush=True)

@@ -1,6 +1,22 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-16 16:52 KST: C19 고정·비프로파일 seed1 3모드 각5회 검증 완료.**
+> 사용자가 약30% 절감 후보의 반복검증과 전체 연산량 비교를 승인했다.
+> planner/센서 코드·설정·바이너리는run9320과동일;비교실행기/집계기만보완.
+> ON사전3회는별도보조자료, OFF본시험15회는 F/S/A각5/5완주·접촉0,재시도0.
+> CPU평균 F.53450/S.34756/A.35144코어; Full대비Adaptive평균34.25%,
+> 누적32.87%감소. 주행37.808/38.288/38.682초(A+2.31%). 맵갱신60.08%,
+> 포인트70.83%,논리payload70.79%감소; GPU/메모리는뚜렷한절감없음.
+> 쌍별CPU절감27.08~38.61%이므로매회30%/모집단100%보장아님. 40%달성아님.
+> Adaptive매회Full활성화1/복귀1/인증복구1,미완료0. Sector도전부완주해안전성우위증거아님.
+> 전체20논리CPU분모와실험범위/배경전체CPU를구분; composed이므로순수autonomy CPU는N/A.
+> 결과 `results/c19_frozen_seed1_validation_20260916/comparison/`,
+> 설명 `docs/c19_frozen_seed1_validation_20260916.md`;129Python검사통과.
+> 옛Normal5는10seed의5쌍조건,옛Stress5는벽/dropout;새원기둥Stress5미확정.
+> 확대전실제맵목록과map-aware계측·전달·timing검증필요. 과거자료합산금지;push없음.
+
+> [!IMPORTANT]
 > **2026-09-16: seed1 Adaptive CPU40% 최적화 탐색을 새로 시작함.**
 > 사용자가 알고리즘/planner 수정을 허용했고, 목표는 평균 실험CPU Full대비40%
 > 이상감소(누적CPU별도보고)로 명시했다. 기존v2/Normal결과는보존한다.

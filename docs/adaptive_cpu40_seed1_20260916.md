@@ -1167,3 +1167,28 @@ Evidence: `c19_clearance_gate_profile_run9320/`, `c19_controller.log`,
 `c19_profile_analysis.log`, `c19_window_alignment.log`,
 `clearance_gate_preflight/`, `c19_static_latched_preflight/`,
 `build_candidate19.log`. Runtime edits were mirrored; no upstream push.
+
+### C19 frozen follow-up: three modes, unprofiled n5 (2026-09-16)
+
+User accepted an approximately30% engineering objective and requested all
+computational metrics. No runtime/config/binary changes after C19. A new
+three-mode profiled preflight passes, then15 unprofiled flights in five rotated
+triplets complete, all5/5 per mode and contact0, no retries. ON is not pooled
+with OFF. Mean cores F.534498/S.347561/A.351441; core-s20.942762/13.927856/
+14.058886 over the slightly wider cgroup measurement windows. Mean CPU reduction
+34.2484%, cumulative32.8700%; mission37.808/38.288/38.682s (A+2.3117%).
+Pairwise mean reductions27.08~38.61%, one pair below30%; not an every-run guarantee
+or40% achievement. Map elapsed/frame falls60.08%, points70.83%, logical payload
+proxy70.79%; memory and device GPU show no substantial saving. Separate ON
+solver/path-search stages can increase. Every Adaptive run has one certified
+Full activation and one Sector return, including startup recovery.
+
+Reports and raw evidence: `results/c19_frozen_seed1_validation_20260916/`;
+details `docs/c19_frozen_seed1_validation_20260916.md`, accounting caveats
+`docs/cpu_metric_scope_audit_20260916.md`.129 focused Python checks pass.
+Sector also5/5 means this is computational-repeatability evidence, not a safety
+advantage demonstration. Do not merge historical maps/results. Before expansion,
+resolve real map identities: legacyNormal5 are10seeds grouped into5tiers;
+legacyStress5 arewalls/dropout, whereas requested cylinderStress5 remain unfinalized.
+Map-aware static geometry and per-mode timing preflights must be generalized
+before leaving seed1. No broad campaign launched and no push.

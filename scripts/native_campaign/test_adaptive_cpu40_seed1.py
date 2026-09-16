@@ -1,4 +1,5 @@
 import copy
+import pytest
 from adaptive_cpu40_seed1 import (SMALL_POOL_MATCH_FIELDS, comparison,
                                  reference_comparison, small_pool_timing_audit,
                                  small_pool_profile_reference_audit,
@@ -133,6 +134,29 @@ def test_mean_target_and_cumulative_are_distinct():
     assert round(result['end_to_end_cpu_core_s_reduction_pct'], 2) == 41.67
 
 
+def test_prospective_engineering_target_is_explicit_and_legacy_default_unchanged():
+    rows = pair()
+    rows[1]['end_to_end_cpu_cores_mean'] = 1.38
+    assert not comparison(rows)['target_met']
+    result = comparison(rows, 30.)
+    assert result['target_met']
+    assert result['mean_cpu_reduction_target_pct'] == 30.
+    assert 'not statistical significance' in result['threshold_scope']
+    assert comparison(rows[:1], 30.)['mean_cpu_reduction_target_pct'] == 30.
+    for value in (float('nan'), float('inf'), -1., 101., None):
+        with pytest.raises(ValueError):
+            comparison(rows, value)
+
+
+def test_lower_engineering_target_does_not_bypass_other_gates():
+    for key, value in [('safety_collisions', 1), ('success', False),
+                       ('cpu_profile', True), ('mission_time_s', 100.),
+                       ('source_acquisition', {'checks': {'valid': False}})]:
+        rows = copy.deepcopy(pair())
+        rows[1][key] = value
+        assert not comparison(rows, 30.)['target_met']
+
+
 def test_low_cpu_due_to_long_stationary_hold_does_not_pass():
     rows = pair()
     rows[1]['mission_time_s'] = 150.
@@ -257,7 +281,7 @@ def profile_reference_fixture():
     for row in pair():
         summaries[row['mode']] = dict(row, cpu_profile=True,
             small_pool_timing=small_pool_timing_audit(intervals, 10., profile),
-            strict_recovery_audit={'valid': True}, demand_replan_exercised=True,
+            strict_recovery_audit={'valid': True, 'mode': row['mode']}, demand_replan_exercised=True,
             reference_comparison={'mission_time_guardrail_pass': True})
     return plan, reference, summaries
 
@@ -267,6 +291,65 @@ def test_profile_reference_allows_reverse_order_and_separate_evidence_paths():
     plan['modes'].reverse()
     plan['asset_sha256']['/root/super-sector-filter/results/reference/plan.json'] = 'b' * 64
     assert small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+
+
+def three_mode_profile_reference_fixture():
+    plan, reference, summaries = profile_reference_fixture()
+    for value in (plan, reference):
+        value['modes'].append('sector')
+        value['profiles']['sector'] = 's.yaml'
+        value['effective_run_options']['sector'] = {'rate': 10}
+    sector = copy.deepcopy(summaries['adaptive'])
+    sector['mode'] = sector['strict_recovery_audit']['mode'] = 'sector'
+    sector['source_acquisition']['checks']['fixed_sector_never_full'] = True
+    summaries['sector'] = sector
+    return plan, reference, summaries
+
+
+def test_three_mode_profile_reference_accepts_rotation_but_requires_own_sector_audit():
+    plan, reference, summaries = three_mode_profile_reference_fixture()
+    plan['modes'] = ['sector', 'adaptive', 'full']
+    out = small_pool_profile_reference_audit(plan, reference, summaries)
+    assert out['valid']
+    assert out['modes_audited'] == ['adaptive', 'full', 'sector']
+    assert out['paired_mission_time_applicable']
+    for key, value in [('mode', 'adaptive'), ('success', False),
+                       ('strict_recovery_audit', {'valid': True, 'mode': 'adaptive'}),
+                       ('small_pool_timing', {}),
+                       ('source_acquisition', {'checks': {'valid': True}})]:
+        changed = copy.deepcopy(summaries)
+        changed['sector'][key] = value
+        assert not small_pool_profile_reference_audit(plan, reference, changed)['valid'], key
+    del summaries['sector']
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+
+
+def test_full_adaptive_preflight_cannot_cover_a_new_sector_mode():
+    plan, reference, summaries = three_mode_profile_reference_fixture()
+    reference['modes'].remove('sector')
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+
+
+def test_single_mode_profile_reference_keeps_per_mode_guards_without_invented_pair():
+    plan, reference, summaries = three_mode_profile_reference_fixture()
+    for value in (plan, reference):
+        value['modes'] = ['sector']
+        value['effective_run_options'] = {'sector': {'rate': 10}}
+    summaries = {'sector': summaries['sector']}
+    out = small_pool_profile_reference_audit(plan, reference, summaries)
+    assert out['valid']
+    assert not out['paired_mission_time_applicable']
+    assert 'paired_mission_time' not in out['checks']
+    summaries['sector']['reference_comparison']['mission_time_guardrail_pass'] = False
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+
+
+def test_profile_reference_rejects_empty_unknown_or_duplicate_mode_sets():
+    for modes in ([], ['bogus'], ['full', 'adaptive', 'adaptive']):
+        plan, reference, summaries = profile_reference_fixture()
+        plan['modes'] = modes
+        reference['modes'] = list(modes)
+        assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
 
 
 def test_profile_reference_rejects_changed_runtime_binary_options_or_profiles():

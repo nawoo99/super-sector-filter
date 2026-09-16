@@ -5852,3 +5852,47 @@ remains included. Improvement of0.44percentage points vsC18 is not isolated
 causality/repeatability; mixed-corpus9.42% is not whole-flight savings. Preserve
 defaultOFF and Normal data. Next requires actual remaining ROS/frontend/common
 cost attribution, not more ungrounded scalar tuning or weakened safety.
+
+### 8.94 Frozen C19 three-mode computational validation, seed1 n5 (2026-09-16)
+
+User approved validation around a30% engineering CPU objective and requested
+all measured computational quantities. Freeze C19 runtime/config/binary hashes;
+change only experiment runner and offline reporting. Generalize the small-pool
+reference gate to the exact selected mode set, with an independently validated
+Sector source/timing contract; do not certify Sector from Adaptive evidence.
+Keep legacy40% default while the new prospective manifest explicitly sets30%.
+
+Three ON preflight flights pass, then15 OFF flights in five predeclared rotated
+orders finish without retries. Each mode5/5 complete andcontact0; all recorded
+source/recovery/resource/speed/timing gates pass. No runtime tuning during runs.
+Mean used cores F.534498/S.347561/A.351441; measured-window core-s20.942762/
+13.927856/14.058886; mission37.808/38.288/38.682s. Adaptive reductions are
+34.2484% meanCPU and32.8700% cumulativeCPU, with2.3117% longer mission. Paired
+meanCPU reduction27.08~38.61%, including one below30%; this is not40% or a
+per-run guarantee. All attempts remain.129 focused Python tests pass.
+
+Map wall-time/frame↓60.08%, points/frame↓70.83%, logical input payload proxy
+↓70.79%. PSS changes only~0.18%; whole-device GPU does not decrease. Separate
+ON n1 map/render CPU decreases but some solver/search CPU increases. Every
+Adaptive run shows one fresh-Full/map-ACK/new-certified-path recovery and one
+return to Sector (including startup), no outstanding cycles.
+
+Primary accounting includes simulator/frontend/planner/mission/launcher, not
+the external observer. Whole-machine20logicalCPU capacity and background-included
+hostCPU are distinct. Composed process prevents exact autonomy-only CPU split.
+Core-s window is slightly wider than the mission. Payload is logical data, not
+physical network traffic. Nested map wall times are not additive CPU. Profiled
+stage counters are not pooled with OFF repetitions. ON callbacks≈100Hz; OFF
+odom/source gates pass, but held command messages may have large receipt gaps.
+
+Full report/raw evidence: `results/c19_frozen_seed1_validation_20260916/`;
+Korean documentation `docs/c19_frozen_seed1_validation_20260916.md` and
+`docs/cpu_metric_scope_audit_20260916.md`. Independent verification reproduces
+1029 raw numeric column means. Frozen Normal SHA remains unchanged. No push.
+
+All modes succeeding on seed1 is NOT Adaptive-vs-Sector safety superiority.
+Broad expansion has not started: oldNormal5 are10physicalseeds grouped intotiers,
+oldStress5 arewalls/dropout, requestedcylinderStress5 are not finalized. Need
+fixed physical map identities, map-aware geometry/transport and mode timing
+validation; in future stress, separate measurement validity from Sector safety
+outcomes instead of filtering away its intended failure cases.
