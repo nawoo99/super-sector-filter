@@ -1,5 +1,7 @@
 import copy
-from adaptive_cpu40_seed1 import comparison, reference_comparison, small_pool_timing_audit
+from adaptive_cpu40_seed1 import (SMALL_POOL_MATCH_FIELDS, comparison,
+                                 reference_comparison, small_pool_timing_audit,
+                                 small_pool_profile_reference_audit)
 
 
 def pair():
@@ -87,6 +89,7 @@ def test_common_demand_optimization_requires_execution_in_both_modes():
 
 def test_small_pool_timing_guards_are_not_timer_setting_claims():
     intervals = {'odometry': dict(mean_received_hz=100., header_interval=dict(p99_ms=11., max_ms=20.),
+                                  receipt_interval=dict(p99_ms=12., max_ms=25.),
                                   backward_stamps=0, repeated_stamps=0, intervals_dropped=0)}
     profile = dict(processes=[dict(duration_s=10., stages=[
         dict(stage=s, calls=1000, clock_errors=0) for s in
@@ -105,3 +108,101 @@ def test_unprofiled_timing_audit_does_not_claim_callback_counts():
     out = small_pool_timing_audit({}, 10.)
     assert out['callback_counts_instrumented'] is False
     assert out['callback_hz'] == {}
+
+
+def test_small_pool_receipt_jitter_is_checked_separately_from_headers():
+    odom = dict(mean_received_hz=100., header_interval=dict(p99_ms=10., max_ms=10.),
+                receipt_interval=dict(p99_ms=12., max_ms=25.),
+                backward_stamps=0, repeated_stamps=0, intervals_dropped=0)
+    assert small_pool_timing_audit({'odometry': odom}, 10.)['valid']
+    for bad_receipt in (None, {}, dict(p99_ms=21., max_ms=25.),
+                        dict(p99_ms=12., max_ms=51.)):
+        changed = dict(odom, receipt_interval=bad_receipt)
+        assert not small_pool_timing_audit({'odometry': changed}, 10.)['valid']
+    assert not small_pool_timing_audit({'odometry': dict(odom, header_interval=None)}, 10.)['valid']
+
+
+def profile_reference_fixture():
+    plan = dict.fromkeys(SMALL_POOL_MATCH_FIELDS, False)
+    plan.update(cpu_profile=False, modes=['full', 'adaptive'], side_executor_threads=2,
+                dedicated_static_pc_executor=True, monitor_intervals=True, compose=True,
+                guarded_demand_replan=True, profiles={'full': 'f.yaml', 'adaptive': 'a.yaml'},
+                effective_run_options={'full': {'rate': 10}, 'adaptive': {'rate': 10}},
+                runtime_policy={'sha256': {
+                    '/root/super_ws/src/SUPER/mission_planner/launch/benchmark_seedmap.launch.py': 'c' * 64}},
+                asset_sha256={
+                    '/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/' + name: 'a' * 64
+                    for name in ('perfect_drone_full_node', 'perfect_drone_adaptive_node')})
+    reference = copy.deepcopy(plan)
+    reference['cpu_profile'] = True
+    intervals = {'odometry': dict(mean_received_hz=100., header_interval=dict(p99_ms=11., max_ms=20.),
+                                  receipt_interval=dict(p99_ms=12., max_ms=25.),
+                                  backward_stamps=0, repeated_stamps=0, intervals_dropped=0)}
+    profile = dict(processes=[dict(duration_s=10., stages=[
+        dict(stage=s, calls=1000, clock_errors=0) for s in
+        ('fsm_main_callback', 'fsm_command_callback')])])
+    summaries = {}
+    for row in pair():
+        summaries[row['mode']] = dict(row, cpu_profile=True,
+            small_pool_timing=small_pool_timing_audit(intervals, 10., profile),
+            strict_recovery_audit={'valid': True}, demand_replan_exercised=True,
+            reference_comparison={'mission_time_guardrail_pass': True})
+    return plan, reference, summaries
+
+
+def test_profile_reference_allows_reverse_order_and_separate_evidence_paths():
+    plan, reference, summaries = profile_reference_fixture()
+    plan['modes'].reverse()
+    plan['asset_sha256']['/root/super-sector-filter/results/reference/plan.json'] = 'b' * 64
+    assert small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+
+
+def test_profile_reference_rejects_changed_runtime_binary_options_or_profiles():
+    for kind in ('binary', 'options', 'profiles', 'threads', 'missing_field', 'wrong_pair', 'launch'):
+        plan, reference, summaries = profile_reference_fixture()
+        if kind == 'binary':
+            reference['asset_sha256'][next(iter(reference['asset_sha256']))] = 'b' * 64
+        elif kind == 'options':
+            reference['effective_run_options']['adaptive']['rate'] = 5
+        elif kind == 'profiles':
+            reference['profiles']['full'] = 'other.yaml'
+        elif kind == 'threads':
+            reference['side_executor_threads'] = 3
+        elif kind == 'missing_field':
+            del reference['snapshot_neighbor_cache']
+        elif kind == 'wrong_pair':
+            reference['modes'] = ['full']
+        else:
+            reference['runtime_policy']['sha256'][next(iter(reference['runtime_policy']['sha256']))] = 'd' * 64
+        assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid'], kind
+    plan, reference, summaries = profile_reference_fixture()
+    plan['runtime_policy'] = reference['runtime_policy'] = {'sha256': {}}
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+
+
+def test_profile_reference_rejects_missing_or_failed_mode_checks():
+    for mode in ('full', 'adaptive'):
+        for key, value in [('success', False), ('safety_collisions', 1), ('cpu_profile', False),
+                           ('resource_valid', False), ('cpu_comparison_instrumented', True),
+                           ('small_pool_timing', {}), ('source_acquisition', {'checks': {}}),
+                           ('strict_recovery_audit', {'valid': False}),
+                           ('demand_replan_exercised', False), ('reference_comparison', {})]:
+            plan, reference, summaries = profile_reference_fixture()
+            summaries[mode][key] = value
+            assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid'], (mode, key)
+    plan, reference, summaries = profile_reference_fixture()
+    del summaries['adaptive']
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+
+
+def test_profile_reference_requires_callback_and_receipt_coverage_and_time_guard():
+    for key in ('odometry_receipt_p99', 'odometry_receipt_max', 'profile_callback_coverage'):
+        plan, reference, summaries = profile_reference_fixture()
+        del summaries['adaptive']['small_pool_timing']['checks'][key]
+        assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+    plan, reference, summaries = profile_reference_fixture()
+    summaries['adaptive']['mission_time_s'] = 100.
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+    plan, reference, summaries = profile_reference_fixture()
+    reference['cpu_profile'] = False
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']

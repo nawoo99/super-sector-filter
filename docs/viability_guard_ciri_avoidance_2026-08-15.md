@@ -5677,3 +5677,24 @@ actualFsm17checks/2000concurrentqueues/4earlyoutcomes and46Python checks pass.
 These are not successful solver-commit or callback-race integration proofs.
 C9 is being implemented/reviewed; no target achievement claimed. All defaults
 remain off and production profiles unchanged. Details in dedicated CPU40 doc.
+
+#### C9 correction and matched retest (run9310)
+
+Startup-only failed-brake announcement repair passed104pure checks, ASan/UBSan,
+independent binding review and package build7min59s. Initial build intentionally
+interrupted after1min24s to fix reviewed activation-lock contention. A pending
+event frontend still requires exact committed FullACK BEFORE initial planning,
+then a fresh explicit SAFE new path before false/release. Actual active-brake
+recovery remains unchanged; unsupported legacy advertised ACK semantics excluded.
+
+Full36.88s/0.713513cores/27.430641core-s; Adaptive38.72s/0.580143cores/
+23.527604core-s, both complete/contact0, all quality/recovery/time checks pass,
+no retry. Full now repairs its pending startup episode atgen1/map13 and actually
+skips294of523last-periodic checks; Adaptive309of582. Mean18.692%,cumulative14.229%
+reduction, **40% unmet**. This replaces C7's asymmetric optimization observation
+for adoption purposes, not the raw preserved data. Adaptive1completed exact
+FullACK→newpath→release cycle; new Adaptive startup branch not exercised.
+
+Next opt-in2worker/dedicated-static ablation retains sensor/guard periods and
+predeclared timing/quality requirements, with extra observed cadence/gap audits.
+Fewer worker threads alone are not evidence of preserved100Hz callbacks.

@@ -32,7 +32,8 @@ FLIGHT_NAMES = {'fsm_node', 'perfect_drone_node', 'perfect_drone_full_node',
 def small_pool_timing_audit(intervals, sensor_hz, profile=None):
     """Prospective engineering gates for <4 workers, not real-time proof."""
     odom = intervals.get('odometry', {})
-    header = odom.get('header_interval', {})
+    header = odom.get('header_interval') or {}
+    receipt = odom.get('receipt_interval') or {}
     def finite_between(value, lower, upper):
         return (isinstance(value, (int, float)) and math.isfinite(value)
                 and lower <= value <= upper)
@@ -41,6 +42,8 @@ def small_pool_timing_audit(intervals, sensor_hz, profile=None):
         odometry_cadence=finite_between(odom.get('mean_received_hz'), 98., 102.),
         odometry_header_p99=finite_between(header.get('p99_ms'), 0., 20.),
         odometry_header_max=finite_between(header.get('max_ms'), 0., 50.),
+        odometry_receipt_p99=finite_between(receipt.get('p99_ms'), 0., 20.),
+        odometry_receipt_max=finite_between(receipt.get('max_ms'), 0., 50.),
         odometry_order=all(odom.get(k, 1) == 0 for k in
                            ('backward_stamps', 'repeated_stamps', 'intervals_dropped')))
     rates = {}
@@ -56,6 +59,85 @@ def small_pool_timing_audit(intervals, sensor_hz, profile=None):
     return dict(valid=all(checks.values()), checks=checks, callback_hz=rates,
                 callback_counts_instrumented=profile is not None,
                 scope='Finite-run engineering guard; command message gaps include intentional holds and are not callback gaps')
+
+
+SMALL_POOL_MATCH_FIELDS = (
+    'schema', 'map', 'profiles', 'compose', 'effective_run_options',
+    'skip_backup_diagnostic_replay', 'skip_unobserved_path_publication',
+    'fast_occupied_box_scan', 'compare_occupied_box_scan', 'snapshot_line_query',
+    'snapshot_neighbor_cache', 'static_pc_poll_ms', 'side_executor_threads',
+    'monitor_intervals', 'guarded_demand_replan', 'dedicated_static_pc_executor',
+    'optimizer_phase_memory_trace', 'time_reference_folder',
+    'max_same_mode_reference_time_ratio', 'max_mission_time_ratio',
+    'logical_cpus', 'frozen_normal_sha256')
+
+
+def small_pool_profile_reference_audit(plan, reference_plan, summaries):
+    """Match a small-pool unprofiled pair to a passed profiled timing preflight.
+
+    No CPU-reduction threshold is required of the preflight. Run identifiers,
+    output/evidence paths and mode order may differ; runtime inputs may not.
+    """
+    modes = {'full', 'adaptive'}
+    same_fields = all(k in plan and k in reference_plan and
+                      plan[k] == reference_plan[k] for k in SMALL_POOL_MATCH_FIELDS)
+    def runtime_hashes(value):
+        return {k: v for k, v in value.get('asset_sha256', {}).items()
+                if k.startswith('/root/super_ws/')}
+    current_hashes = runtime_hashes(plan)
+    required_binaries = {
+        '/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/' + name
+        for name in ('perfect_drone_full_node', 'perfect_drone_adaptive_node')}
+    checks = dict(
+        unprofiled_confirmation=plan.get('cpu_profile') is False,
+        profiled_preflight=reference_plan.get('cpu_profile') is True,
+        full_adaptive_pair=(len(plan.get('modes', [])) == 2 and
+                            set(plan.get('modes', [])) == modes and
+                            len(reference_plan.get('modes', [])) == 2 and
+                            set(reference_plan.get('modes', [])) == modes),
+        matching_runtime_options=same_fields,
+        matching_runtime_hashes=(required_binaries <= current_hashes.keys() and
+                                 current_hashes == runtime_hashes(reference_plan)),
+        matching_frozen_runtime_policy=(
+            bool(plan.get('runtime_policy', {}).get('sha256')) and
+            plan.get('runtime_policy') == reference_plan.get('runtime_policy')),
+        small_pool_configuration=(plan.get('side_executor_threads') in (2, 3) and
+                                  plan.get('dedicated_static_pc_executor') is True and
+                                  plan.get('monitor_intervals') is True and
+                                  plan.get('compose') is True))
+    required_timing = ('sensor_cadence', 'odometry_cadence', 'odometry_header_p99',
+                       'odometry_header_max', 'odometry_receipt_p99',
+                       'odometry_receipt_max', 'odometry_order', 'fsm_main_callback',
+                       'fsm_command_callback', 'profile_callback_coverage')
+    for mode in sorted(modes):
+        row = summaries.get(mode, {})
+        source_checks = row.get('source_acquisition', {}).get('checks', {})
+        timing = row.get('small_pool_timing', {})
+        timing_checks = timing.get('checks', {})
+        checks[mode + '_safe_source'] = (
+            row.get('mode') == mode and row.get('cpu_profile') is True and
+            all(row.get(k) is True for k in
+                ('success', 'run_valid', 'resource_valid', 'speed_limit_valid')) and
+            row.get('safety_collisions') == 0 and bool(source_checks) and
+            all(v is True for v in source_checks.values()) and
+            row.get('strict_recovery_audit', {}).get('valid') is True and
+            not row.get('cpu_comparison_instrumented', False))
+        checks[mode + '_profile_timing'] = (
+            timing.get('valid') is True and
+            timing.get('callback_counts_instrumented') is True and
+            all(timing_checks.get(k) is True for k in required_timing))
+        checks[mode + '_reference_time'] = (
+            row.get('reference_comparison', {}).get('mission_time_guardrail_pass') is True)
+        checks[mode + '_demand_exercised'] = (
+            not plan.get('guarded_demand_replan') or
+            row.get('demand_replan_exercised') is True)
+    ftime = summaries.get('full', {}).get('mission_time_s')
+    atime = summaries.get('adaptive', {}).get('mission_time_s')
+    checks['paired_mission_time'] = (
+        all(isinstance(t, (int, float)) and math.isfinite(t) and t > 0
+            for t in (ftime, atime)) and atime / ftime <= 1.10)
+    return dict(valid=all(checks.values()), checks=checks,
+                scope='Matched profiled finite-run timing preflight; not a real-time or safety guarantee')
 
 
 def reference_comparison(result, reference):
@@ -145,6 +227,8 @@ def main():
                         help='Disable per-solve diagnostic /proc reads and logs equally in both modes; retain external resource guards')
     parser.add_argument('--time-reference-folder', type=Path,
                         help='Predeclare same-mode <=1.10 mission-time guard and CPU reference')
+    parser.add_argument('--small-pool-profile-reference', type=Path,
+                        help='Passed matching Full/Adaptive profiled preflight required for unprofiled pools below4')
     parser.add_argument('--full-config', default=diagnostic.search.PROFILES['full'])
     parser.add_argument('--sector-config', default=diagnostic.search.PROFILES['sector'])
     parser.add_argument('--adaptive-config', default=event.PROFILE)
@@ -160,6 +244,10 @@ def main():
     if args.side_executor_threads < 4 and not (
             args.dedicated_static_pc_executor and args.monitor_intervals):
         parser.error('Pools below4 require --dedicated-static-pc-executor and --monitor-intervals')
+    if args.side_executor_threads < 4 and not args.profile_cpu and not args.small_pool_profile_reference:
+        parser.error('Unprofiled pools below4 require --small-pool-profile-reference')
+    if args.small_pool_profile_reference and (args.side_executor_threads >= 4 or args.profile_cpu):
+        parser.error('--small-pool-profile-reference is only for unprofiled pools below4')
     references = {}
     reference_files = []
     if args.time_reference_folder:
@@ -173,6 +261,17 @@ def main():
                 parser.error(f'Invalid successful reference: {path}')
             references[mode] = reference
             reference_files.append(path)
+    profile_reference_plan = None
+    profile_reference_summaries = {}
+    if args.small_pool_profile_reference:
+        for name in ('plan.json', 'full_summary.json', 'adaptive_summary.json'):
+            path = (args.small_pool_profile_reference / name).resolve()
+            value = json.loads(path.read_text())
+            reference_files.append(path)
+            if name == 'plan.json':
+                profile_reference_plan = value
+            else:
+                profile_reference_summaries[name.removesuffix('_summary.json')] = value
     root = args.output
     root.mkdir(parents=True, exist_ok=False)
     campaign = diagnostic.search.campaign
@@ -237,7 +336,7 @@ def main():
                    sensor_acquisition=True,
                    sensor_planner_intra_process=args.compose,
                    adaptive_event_recovery=mode == 'adaptive') for mode in args.modes}
-    diagnostic.save(root / 'plan.json', dict(
+    plan = dict(
         schema='adaptive-cpu40-seed1-exploratory-v1', candidate=args.candidate,
         map='seed1', run=args.run, modes=args.modes, profiles=profiles,
         backup=BACKUP, mean_cpu_reduction_target_pct=40,
@@ -263,7 +362,17 @@ def main():
         asset_sha256=hashes, baseline_seconds=12,
         common_parameters_unchanged='seed1/loop24/v7,45deg-half-angle,0.4deg/10Hz sensor',
         frozen_normal_sha256=event.NORMAL_SHA, no_automatic_retry=True,
-        exploratory_tuning=True, not_pooled_with_previous_results=True))
+        exploratory_tuning=True, not_pooled_with_previous_results=True)
+    profile_reference_audit = None
+    if profile_reference_plan is not None:
+        profile_reference_audit = small_pool_profile_reference_audit(
+            plan, profile_reference_plan, profile_reference_summaries)
+        plan['small_pool_profile_reference'] = dict(
+            folder=str(args.small_pool_profile_reference.resolve()), audit=profile_reference_audit)
+    diagnostic.save(root / 'plan.json', plan)
+    if profile_reference_audit is not None and not profile_reference_audit['valid']:
+        raise RuntimeError('Small-pool profiled preflight mismatch or failed gates: ' +
+                           json.dumps(profile_reference_audit['checks']))
     campaign.install_campaign_signal_handlers()
     profiler.thread.start()
     results = []
@@ -337,6 +446,10 @@ def main():
                         result.get('message_intervals', {}), row.get('sensor_hz'),
                         stage_profile.summarize(root, mode, args.run) if args.profile_cpu else None)
                     result['source_acquisition']['checks']['small_pool_timing'] = result['small_pool_timing']['valid']
+                    if not args.profile_cpu:
+                        result['small_pool_profile_reference'] = profile_reference_audit
+                        result['source_acquisition']['checks']['small_pool_profile_reference'] = (
+                            profile_reference_audit is not None and profile_reference_audit['valid'])
                 if args.skip_backup_diagnostic_replay or args.fast_occupied_box_scan or args.snapshot_line_query:
                     stack = (root / 'artifacts' /
                         f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
