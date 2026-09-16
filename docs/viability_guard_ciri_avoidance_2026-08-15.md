@@ -6123,3 +6123,21 @@ not infer causality/statistical significance from this n1. Adopt as a prospectiv
 candidate, not as a proven solution: iteration04 body-axis ON/common0.25s starts
 all static/ON/pilot checks again before independent n20. Current status moves to
 `results/c22_normal_five_20260916/iteration04/status.json`. No push.
+
+Latest stopping update: iteration04 static suites all passed, ON N1–N4 all12
+completed/contact0 with valid source/recovery/speed/resource/odometry. N4
+F39.64/S50.79/A43.97s; A/F1.109233 exceeds1.10 by0.366s. Only paired mission time
+failed; N5 ON not run and requested OFF pilot75/confirmation300 remain0.
+Maximum odometry receipt gap17.182ms across these12. Adaptive cycles1/1/2/4 all
+closed. N4 three moving CLEARANCE_MARGIN events, no version-race explanation.
+The body-axis option removes a control confound, not a demonstrated universal
+time bound. Do not tune/repeat solely to select a passing ratio or erase failures.
+
+User was asked whether per-pair+10% should remain mandatory or time should be a
+reported comparison metric. No answer received yet; no relaxation authorized.
+No active flight/controller remains. Await this material acceptance decision
+before further expansion; an approved changed protocol starts a new pilot and
+preserves previous failures. Full metrics/raw outcomes retained in iteration04
+and its comparison_preflight folder. Across distinct versions39 ON diagnostic/
+preflight flights were executed; they are NOT a pooled n5 or n20 dataset.
+119 Python tests, original Normal SHA unchanged, runtime mirrored, local only.

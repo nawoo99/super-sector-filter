@@ -1,0 +1,171 @@
+{
+  "valid": true,
+  "command": [
+    "/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_node",
+    "--ros-args",
+    "-p",
+    "config_name:=seed3.yaml"
+  ],
+  "ros_domain_id": "190",
+  "no_fsm": true,
+  "composition": "standalone",
+  "fixture_publishes_no_goals_or_commands": true,
+  "poll_ms": 1,
+  "two_phase": false,
+  "durable": true,
+  "latched_once": true,
+  "reader_qos": "durable",
+  "sequence": "reader-first",
+  "expected_sha256": "e4713ddd834a41adeabb3c3a535746a5e51cfb9917705fb47942b4f06f4ec1fd",
+  "phases": [
+    "one_shot_geometry_published",
+    "reader_first_static_geometry",
+    "reader_first_steady_no_republish",
+    "subscriber_1_to_2",
+    "subscriber_2_to_1_retained_without_republish",
+    "subscriber_1_to_0_to_1"
+  ],
+  "effective_poll_ms": 0,
+  "publisher_actual_qos": {
+    "reliability": "reliable",
+    "durability": "transient_local",
+    "history": "keep_last",
+    "depth": 1
+  },
+  "offered_qos": {
+    "reliability": 1,
+    "durability": 1,
+    "history": 3,
+    "depth": 0
+  },
+  "graph_qos_verified": {
+    "reliability": true,
+    "durability": true,
+    "history": false,
+    "depth": false
+  },
+  "latched_geometry_stamp_ns": 1789561373007387747,
+  "geometry_sha256": "e4713ddd834a41adeabb3c3a535746a5e51cfb9917705fb47942b4f06f4ec1fd",
+  "geometry_layout": {
+    "width": 444850,
+    "height": 1,
+    "point_step": 32,
+    "row_step": 14235200,
+    "is_bigendian": false,
+    "is_dense": true,
+    "fields": [
+      {
+        "name": "x",
+        "offset": 0,
+        "datatype": 7,
+        "count": 1
+      },
+      {
+        "name": "y",
+        "offset": 4,
+        "datatype": 7,
+        "count": 1
+      },
+      {
+        "name": "z",
+        "offset": 8,
+        "datatype": 7,
+        "count": 1
+      },
+      {
+        "name": "intensity",
+        "offset": 16,
+        "datatype": 7,
+        "count": 1
+      }
+    ]
+  },
+  "geometry_validated_clouds": 3,
+  "reader_first_geometry_valid": true,
+  "reader_first_geometry_sha256": "e4713ddd834a41adeabb3c3a535746a5e51cfb9917705fb47942b4f06f4ec1fd",
+  "clouds": {
+    "first": [
+      {
+        "elapsed_s": 0.8418315451126546,
+        "points": 444850,
+        "point_step": 32,
+        "bytes": 14235200,
+        "frame": "world",
+        "sha256": "e4713ddd834a41adeabb3c3a535746a5e51cfb9917705fb47942b4f06f4ec1fd",
+        "stamp_ns": 1789561373007387747
+      }
+    ],
+    "second": [
+      {
+        "elapsed_s": 6.199827229138464,
+        "points": 444850,
+        "point_step": 32,
+        "bytes": 14235200,
+        "frame": "world",
+        "sha256": "e4713ddd834a41adeabb3c3a535746a5e51cfb9917705fb47942b4f06f4ec1fd",
+        "stamp_ns": 1789561373007387747
+      }
+    ],
+    "reconnected": [
+      {
+        "elapsed_s": 7.4798156779725105,
+        "points": 444850,
+        "point_step": 32,
+        "bytes": 14235200,
+        "frame": "world",
+        "sha256": "e4713ddd834a41adeabb3c3a535746a5e51cfb9917705fb47942b4f06f4ec1fd",
+        "stamp_ns": 1789561373007387747
+      }
+    ]
+  },
+  "bootstrap_publications": null,
+  "publication_records": [],
+  "sensor_cadence_hz": [
+    10.004689,
+    10.000536
+  ],
+  "scope": "No-goal static-map transport smoke; no flight/performance claim",
+  "elapsed_s": 12.025937233120203,
+  "no_flight_observation": {
+    "command_messages": 0,
+    "odom_messages": 1102,
+    "initial_position": [
+      0.0,
+      0.0,
+      1.5
+    ],
+    "max_position_delta_m": 0.0,
+    "first_odom_receipt_ns": 1073208905974555,
+    "last_odom_receipt_ns": 1073219909195078
+  },
+  "simulator_exit_code": 0,
+  "exact_child_reaped": true,
+  "latched_once_audit": {
+    "valid": true,
+    "checks": {
+      "complete_geometry": true,
+      "exact_sha256": true,
+      "all_readers_same_stamp": true,
+      "publication_count_one": true,
+      "no_static_timers": true,
+      "no_static_poll_callbacks": true,
+      "cumulative_summaries_steady_at_least5s": true
+    },
+    "initial": {
+      "publications": 1,
+      "points": 444850,
+      "bytes": 14235200,
+      "stamp_ns": 1789561373007387747,
+      "timers_created": 0,
+      "poll_callbacks": 0
+    },
+    "publication_count": 1,
+    "summary_count": 3,
+    "observation_before_shutdown_s": 11.00528579694219,
+    "steady_summary_span_s": 6.029911136,
+    "one_publication": true,
+    "no_static_timers": true,
+    "no_static_poll_callbacks": true,
+    "all_readers_same_stamp": true
+  }
+}

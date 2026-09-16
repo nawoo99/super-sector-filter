@@ -73,7 +73,9 @@ per-algorithm power and energy are not measured.
 ## Execution and status
 
 Controller: `scripts/native_campaign/run_c22_normal_campaign.py`.
-Active root: `results/c22_normal_five_20260916/iteration04` (body-aligned event candidate).
+Latest root: `results/c22_normal_five_20260916/iteration04` (body-aligned event
+candidate). **Stopped at the paired time gate; no campaign is running. n5/n20
+OFF flights have not started. Awaiting user direction on the time criterion.**
 The controller writes immutable plans, per-triplet acceptance, phase gates,
 phase-specific all-metric reports and an atomic `status.json`.
 
@@ -187,3 +189,56 @@ Iteration04 freezes event body-heading ON, common0.25s lease, three side workers
 all maps/modes and the same safety/timing/time guards. Redo every map-specific
 static proof, ON preflight and OFF n5; expand only if that complete cohort passes.
 No old success replaces a new planned slot. No threshold relaxation authorized.
+
+### Latest result: iteration04 stopped, requested n5/n20 still unexecuted
+
+All five static suites passed. Current instrumented preflight observations:
+
+| Map | Full s | Sector s | Adaptive s | A/F time increase | Completed/contact | Triplet gate |
+|---|---:|---:|---:|---:|---|---|
+| N1 seed1 | 37.99 | 39.62 | 38.50 | 1.34% | 3/3, contact0 | pass |
+| N2 seed3 | 38.17 | 38.35 | 39.92 | 4.58% | 3/3, contact0 | pass |
+| N3 seed5 | 39.30 | 45.20 | 42.12 | 7.18% | 3/3, contact0 | pass |
+| N4 seed7 | 39.64 | 50.79 | 43.97 | 10.92% | 3/3, contact0 | paired time only failed |
+| N5 seed9 | N/A | N/A | N/A | N/A | not flown | not evaluated |
+
+All12 current flights passed completion/contact, source/recovery, speed,
+resource and odometry gates. Maximum odometry receipt gap across them17.182ms,
+below50ms. Adaptive cycles N1/N2/N3/N4=1/1/2/4, all closed. N4 accepted brakes
+F1/S6/A4; A has three moving CLEARANCE_MARGIN reports plus its initial recovery,
+not VERSION_CHANGED or an odometry timing failure. Relative time exceeds1.10
+by0.366s (43.970 minus43.604s). This does NOT mean failure to finish or a collision.
+
+| Map | Full mean cores / core-s | Sector mean cores / core-s | Adaptive mean cores / core-s |
+|---|---:|---:|---:|
+| N1 | .603530 /23.680515 | .400289 /16.553399 | .397931 /16.036926 |
+| N2 | .630943 /24.783981 | .405316 /16.349911 | .435529 /18.032616 |
+| N3 | .722778 /29.922179 | .418033 /19.430477 | .453698 /19.739055 |
+| N4 | .767032 /31.787550 | .444509 /23.460938 | .475734 /21.654331 |
+
+These are ON n1 diagnostics, NOT OFF campaign performance estimates. Full and
+Adaptive times both vary between repeated flights with the same policy. Heading
+alignment removed a known comparison confound but does not establish a universal
+<=10% time bound. Further arbitrary parameter changes/repeats merely to obtain
+a passing ratio would be inappropriate. The residual information/braking/time
+tradeoff needs an explicit acceptance decision, not relabeling previous failures.
+
+The user was asked asynchronously whether to retain per-pair+10% as a mandatory
+gate or report time as a comparison metric. No reply had arrived at stopping.
+Do not silently relax the existing gate. Proposed next protocol, only if approved:
+completion/contact/speed/source/recovery/resource/odometry remain mandatory;
+time and mean/cumulative CPU are reported with their tradeoff, without rejecting
+a flight solely for A/F time>1.10. Record any approved revision prospectively
+and start a fresh n5 cohort; do not turn the old failed gates into successes.
+
+Requested OFF pilot75 and independent confirmation300: **0 executed**. Current
+work includes39 instrumented exploratory/preflight flights across different
+versions; do not pool them or claim n5/n20 completion. All outcomes are preserved.
+Latest all-metric report:
+`results/c22_normal_five_20260916/iteration04/comparison_preflight/summary_ko.md`
+(also full metric CSV/JSON/Markdown and per-run raw logs/telemetry).
+
+119 Python checks pass after final controller additions. Frozen historical
+Normal SHA remains `b40f880271a52f4b3332bfe67afe3d489cf8c6d444ac0c72ed30d9e9cd445ec5`.
+No leftover flight/monitor/mission/controller process. No push. Runtime optional
+heading behavior remains default OFF; do not promote the candidate as qualified.
