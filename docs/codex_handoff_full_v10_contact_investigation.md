@@ -1,6 +1,25 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-16 C23: 비교 중단 — N3 Adaptive 메모리 급증. 현재 실행 중 캠페인 없음.**
+> N1–N5=seed1/3/5/7/9, 본시험 OFF75회만 실행; n20 자동확장 없음.
+> 새 요청은 비교 실험으로 해석하고 시간 +10%는 중단 조건 대신 결과 지표로 기록한다고 안내함.
+> 아래 C22의 기존 엄격 기준 실패/데이터는 소급 변경하지 않음. 런타임·맵 변경 없음.
+> iteration04의 hash-valid 정적검증5맵과 ON12회 재사용, N5 ON3회 추가 후 OFF75회.
+> body-heading ON, 공통3worker/0.25초 유지. 주기50ms·센서·복구·측정 검사는 유지.
+> **N5 ON 중단:** A51.29/F66.71초 완주·접촉0이나 Full main FSM97.586Hz<98Hz.
+> odom 최대17.97ms/command100Hz는 통과. 실패/ON2회 보존; N5 Sector와OFF15회 미실행.
+> 사용자에게 FSM 미달도 결과로 기록하며 비교할지/먼저 수정할지 질문, 아직 답변 대기.
+> N1–N4 OFF60회 계획도 17시도에서 중단: 완주16, N3 Adaptive 자원중단1(접촉결과미확인).
+> N3 Sector 2회차 접촉1회(최소정적여유−0.175m), 완주했으며 실패/접촉 회차를 대체하지 않음.
+> N3 Adaptive own composed process RSS 약3.1→7.2GiB, MemAvailable1.41GiB로 보호중단.
+> 배경부하로 단정/제외 금지. 한 스레드약94% 및 FSM진행멈춤, 원인함수미확정/미수정.
+> 다음은 이 자원증가/진행정지 진단·수정 후 새 독립75회 권장. N5의FSM미달도 여전히미해결.
+> 현재 상태 `results/c23_normal_n5_comparison_20260916/ready_maps/status.json`, 상세 `docs/c23_normal_comparison_20260916.md`.
+> 중간표 `ready_maps/report_partial/summary_ko.md`, 본시험17시도와사전ON2회 분리.
+> 75회/맵당5회 완료 또는 Adaptive100% 성공으로 표기 금지. 런타임 변경 없음. push 없음.
+
+> [!IMPORTANT]
 > **2026-09-16: C22 중단 — 시간 합격기준 사용자 선택 필요. 실행 중 캠페인 없음.**
 > 최신 iteration04 ON N1–N4 12회 모두완주·접촉0·주파수/속도/자원/복구통과.
 > 단N4 Full39.64/A43.97초(+10.92%)로 기존쌍별+10% 기준만초과(0.366초 차이).

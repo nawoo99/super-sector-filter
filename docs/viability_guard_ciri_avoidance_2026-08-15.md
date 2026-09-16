@@ -6141,3 +6141,35 @@ preserves previous failures. Full metrics/raw outcomes retained in iteration04
 and its comparison_preflight folder. Across distinct versions39 ON diagnostic/
 preflight flights were executed; they are NOT a pooled n5 or n20 dataset.
 119 Python tests, original Normal SHA unchanged, runtime mirrored, local only.
+
+### 8.99 C23 prospective Normal comparison: three modes, five maps, n5 (2026-09-16)
+
+New user request is explicitly a75-flight comparison (seed1/3/5/7/9 × F/S/A ×5),
+not automatic n20 expansion. Announced interpretation before running: retain
+mission time as an outcome rather than stopping at the old per-pair+10% gate.
+Old C22 failures and source data remain unchanged. No runtime/map modification.
+Added an opt-in measurement admission option retaining original time checks but
+not using them as acceptance gates; default strict behavior unchanged. Source,
+recovery, callback/odom timing, safety preflight, runtime hashes remain required.
+Revalidate/reuse current static evidence for5maps and ON12 prior flights; add
+missing seed9 ON3 then execute new independent OFF75. No retries or replacement.
+122 Python tests pass. Details: docs/c23_normal_comparison_20260916.md.
+Live state: results/c23_normal_n5_comparison_20260916/status.json. Not yet complete.
+
+C23 stopped update: N5 ON A/F complete contact0, but F main callback97.586Hz
+fails98Hz; command100Hz and odom receipt17.97ms pass. User asked whether this
+performance miss should remain blocking or be a reported result; no reply yet.
+Independent ready N1–N4 comparisons then ran17attempts,16complete. N3 Sector
+run16112 completed with static-PC contact1/min clearance−0.175m; retained.
+N3 Adaptive run16112 aborted by resource guard at58.22s: own composed process
+RSS rose3.1→7.2GiB, MemAvailable1407.3MiB. One thread94.4% CPU; planner/FSM
+progress stopped while source cloud10Hz continued. Root function not determined.
+Do not attribute this to unrelated host load just because raw classification is
+infrastructure_failure. Contact outcome missing, not zero. No automatic retry.
+No runtime edit/build; source/binaries/maps unchanged. Ready controller stopped,
+no active flight remains. Requested75 stillincomplete (58notexecuted).
+Partial report includes all17attempts and separate unknown-contact/valid-run
+counts, plus every available compute/resource metric. Report missing CPU/time
+for abortedrun explicitly; do not infer Adaptive100% success or completedn5.
+Recommend diagnose/fixmemorygrowth then fresh75, preservingthiscohort andN5ON2.
+Details docs/c23_normal_comparison_20260916.md; ready_maps/report_partial.

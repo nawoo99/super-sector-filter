@@ -637,12 +637,16 @@ def write_korean_summary(output, cohorts):
         if cohort.get("planned_slots_observed") is not True:
             lines.extend([f"주의: 계획된 모드당 {n if n is not None else '미확인'}회가 모두 수집된 최종 결과는 아닙니다.", ""])
         lines.extend(["| 결과 | Full | Sector | Adaptive |", "|---|---:|---:|---:|"])
-        for label, field in (("완주/수행", "successes"), ("접촉이 발생한 회차/수행", "contact_runs")):
+        for label, field in (("완주/수행", "successes"), ("유효 회차/수행", "valid_runs"),
+                             ("접촉이 발생한 회차/수행", "contact_runs"),
+                             ("접촉 결과 미확인 회차/수행", "contact_unknown_runs")):
             cells = []
             for mode in MODES:
                 data = cohort["modes"].get(mode)
                 cells.append(f"{data[field]}/{data['attempts']}" if data else "N/A")
             lines.append("| " + " | ".join([label, *cells]) + " |")
+        if any(v.get('contact_unknown_runs', 0) for v in cohort['modes'].values()):
+            lines.extend(["", "중단 등으로 접촉 결과가 없는 회차는 미확인입니다. 접촉 0회로 해석하지 마십시오."])
         if not cohort["all_modes_completed_all_attempts"]:
             lines.extend(["", "미완주 회차도 제외하지 않았습니다. 모드별 완주 여부가 다르면 주행시간·누적 CPU 단순 비교에는 제한이 있습니다."])
         lines.extend(["", "| 항목 | Full | Sector | Adaptive | Sector 감소율 | Adaptive 감소율 |", "|---|---:|---:|---:|---:|---:|"])

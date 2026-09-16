@@ -220,6 +220,19 @@ class ArtifactTests(unittest.TestCase):
             {"name": "perfect_drone_full_node", "pid": 123, "cpu_pct_one_core": {"mean": 50}}]})
         self.assertEqual(result["process.composed_simulator_frontend_planner.cpu_pct_one_core.mean"], 50)
 
+    def test_korean_summary_reports_unknown_contact_after_abort(self):
+        output = self.root / 'unknown_contact'
+        output.mkdir()
+        runs = [make_run(mode, 1) for mode in report.MODES]
+        runs.append(make_run('adaptive', None, run='2', success=False,
+                             safety_collisions=None, run_valid=0))
+        cohorts = report.aggregate(runs)
+        report.write_korean_summary(output, cohorts)
+        content = (output / 'summary_ko.md').read_text()
+        self.assertIn('| 접촉 결과 미확인 회차/수행 | 0/1 | 0/1 | 1/2 |', content)
+        self.assertIn('| 유효 회차/수행 | 1/1 | 1/1 | 1/2 |', content)
+        self.assertIn('접촉 0회로 해석하지 마십시오', content)
+
     def test_telemetry_active_mode_only_and_gpu_memory_util(self):
         samples = [{"mode": "full", "campaign_active": False, "gpu_memory_util_pct": 99},
                    {"mode": "full", "campaign_active": True, "gpu_memory_util_pct": 10,

@@ -184,7 +184,16 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
         checks['paired_mission_time'] = (
             all(isinstance(t, (int, float)) and math.isfinite(t) and t > 0
                 for t in (ftime, atime)) and atime / ftime <= 1.10)
-    return dict(valid=all(checks.values()), checks=checks,
+    # Prospective comparison campaigns may record mission duration as an
+    # outcome, without using the old +10% optimization acceptance threshold.
+    # Preserve the original checks (and the default strict behavior). This
+    # option never relaxes callback, source, safety, or runtime matching gates.
+    time_as_metric = plan.get('mission_time_as_metric') is True
+    acceptance_checks = {k: v for k, v in checks.items()
+                         if not (time_as_metric and
+                                 (k == 'paired_mission_time' or k.endswith('_reference_time')))}
+    return dict(valid=all(acceptance_checks.values()), checks=checks,
+                acceptance_checks=acceptance_checks, mission_time_as_metric=time_as_metric,
                 modes_audited=sorted(modes),
                 paired_mission_time_applicable={'full', 'adaptive'} <= modes,
                 scope='Matched profiled finite-run timing preflight; not a real-time or safety guarantee')
@@ -633,6 +642,8 @@ def main():
                         help='Predeclare same-mode <=1.10 mission-time guard and CPU reference')
     parser.add_argument('--small-pool-profile-reference', type=Path,
                         help='Passed matching same-mode-set profiled preflight required for unprofiled pools below4')
+    parser.add_argument('--mission-time-as-metric', action='store_true',
+                        help='Comparison-only admission: retain time checks as outcomes, not preflight gates')
     parser.add_argument('--full-config', default=diagnostic.search.PROFILES['full'])
     parser.add_argument('--sector-config', default=diagnostic.search.PROFILES['sector'])
     parser.add_argument('--adaptive-config', default=event.PROFILE)
@@ -840,6 +851,7 @@ def main():
         frozen_normal_sha256=event.NORMAL_SHA, no_automatic_retry=True,
         exploratory_tuning=True, not_pooled_with_previous_results=True)
     profile_reference_audit = None
+    plan['mission_time_as_metric'] = args.mission_time_as_metric
     if profile_reference_plan is not None:
         profile_reference_audit = small_pool_profile_reference_audit(
             plan, profile_reference_plan, profile_reference_summaries)
