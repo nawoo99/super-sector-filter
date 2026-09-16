@@ -1,6 +1,23 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-16: C20 인증 교체 경쟁 수정 완료, seed1 반복검증은 주기 실패로 중단.**
+> 최신 인증 덮어쓰기 방지·VERSION_CHANGED 최대1회 재검사(진입후4ms 협조적예산),
+> 실제 기하 실패/시간초과는 정지 유지. 첫 검사에 새 시간제한/안전완화 없음.
+> 실제함수추출 일반/ASan+UBSan각1403검사(300thread교차),Python135검사 통과.
+> 새 전달6조건+실제RViz통과. ON3회와OFF8회 모두완주·접촉0,비행재시도0.
+> **OFF run9603 Full odometry max56.99/57.57ms >50ms로STOPPED_FOR_DIAGNOSIS.**
+> 각5회계획 중Full3/Sector2/Adaptive3만실행,7회미실행. 완료·합격이라고 쓰지 말 것.
+> OFF평균F38.523/S39.735/A38.390초;CPU .523683/.350560/.357059코어.
+> A 평균CPU31.82%,누적31.13%감소는불완전표본의관측값이며40%달성/품질합격아님.
+> 실제로그최신인증재사용4/추가검사SAFE1건;회피충돌횟수아님. A복구2/1/1회모두완료.
+> 실패한Full은추가검사0회. PSI0/FSMswap0. 최대간격발생시각이기록되지않아
+> executor경합/외부부하/재계획지연중원인미확정. 다음은시각연결계측후재검증.
+> 결과 `results/c20_certificate_refresh_20260916/` 및 `docs/c20_certificate_refresh_20260916.md`, §8.96.
+> 최상위status는ROS환경미source에따른비행전실패;실제비행status는validation/status.json.
+> 기존C19/Normal/Stress보존·합산금지. 런타임C20유지,대규모시험중단,로컬커밋만/push없음.
+
+> [!IMPORTANT]
 > **2026-09-16 17:52 KST: CPU 귀속 보완·seed1 진단·맵 목록 고정(요청1–3단계) 수행.**
 > planner 알고리즘/안전/주기는 그대로, 기본OFF frontend/map CPU scope만 추가.
 > 새바이너리6전달조건+실제RViz통과. ON/OFF F/S/A각1회,총6회모두완주·접촉0,재시도0.

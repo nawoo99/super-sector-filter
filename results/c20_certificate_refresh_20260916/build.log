@@ -1,0 +1,28 @@
+Starting >>> super_planner
+--- stderr: super_planner
+** WARNING ** io features related to pcap will be disabled
+/root/super_ws/src/SUPER/super_planner/src/super_core/super_planner.cpp: In constructor ‘super_planner::SuperPlanner::SuperPlanner(const string&, const Ptr&, const Ptr&)’:
+/root/super_ws/src/SUPER/super_planner/src/super_core/super_planner.cpp:71:5: warning:   when initialized here [-Wreorder]
+   71 |     SuperPlanner::SuperPlanner
+      |     ^~~~~~~~~~~~
+---
+Finished <<< super_planner [2min 43s]
+Starting >>> perfect_drone_sim
+--- stderr: perfect_drone_sim
+CMake Warning (dev) at CMakeLists.txt:41 (find_package):
+  Policy CMP0074 is not set: find_package uses <PackageName>_ROOT variables.
+  Run "cmake --help-policy CMP0074" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  CMake variable PCL_ROOT is set to:
+
+    /usr
+
+  For compatibility, CMake is ignoring the variable.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+---
+Finished <<< perfect_drone_sim [4min 4s]
+
+Summary: 2 packages finished [6min 47s]
+  2 packages had stderr output: perfect_drone_sim super_planner

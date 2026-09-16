@@ -63,6 +63,7 @@ namespace super_planner {
             case TrajectorySafetyStatus::UNOBSERVED: return "UNOBSERVED";
             case TrajectorySafetyStatus::OUT_OF_MAP: return "OUT_OF_MAP";
             case TrajectorySafetyStatus::VERSION_CHANGED: return "VERSION_CHANGED";
+            case TrajectorySafetyStatus::VALIDATION_TIMEOUT: return "VALIDATION_TIMEOUT";
             default: return "UNKNOWN";
         }
     }
@@ -237,13 +238,33 @@ namespace super_planner {
             const bool unknown_as_occupied,
             const Vec3f *hard_current_pose,
             const bool test_force_initial_footprint_occupancy,
-            const Vec3f *initial_footprint_origin) const {
+            const Vec3f *initial_footprint_origin,
+            const std::chrono::steady_clock::time_point deadline) const {
         const thread_cpu_profile::Scope cpu_scope(
                 thread_cpu_profile::Stage::PlannerValidateGeometry);
         TrajectorySafetyResult result;
         result.trajectory_generation = trajectory_generation;
         if (!trajectoryValidationEnabled()) {
             result.status = TrajectorySafetyStatus::DISABLED;
+            return result;
+        }
+
+        // Only the additional certificate refresh attempt supplies a deadline.
+        // This is cooperative cancellation, not a hard real-time guarantee:
+        // a single query or OS scheduling can overrun. Never certify late work.
+        const bool bounded = deadline != std::chrono::steady_clock::time_point::max();
+        const auto expired = [&]() {
+            if (bounded && std::chrono::steady_clock::now() >= deadline) {
+                result.status = TrajectorySafetyStatus::VALIDATION_TIMEOUT;
+                return true;
+            }
+            return false;
+        };
+        if (expired()) return result;
+        // The legacy mutable-map read lock has no timed acquisition. Do not
+        // introduce a second potentially unbounded wait on that backend.
+        if (bounded && !map_ptr_->immutablePlannerSnapshotEnabled()) {
+            result.status = TrajectorySafetyStatus::VALIDATION_TIMEOUT;
             return result;
         }
 
@@ -349,6 +370,7 @@ namespace super_planner {
         rog_map::raycaster::RayCaster voxel_raycaster(
                 map_config.inflation_resolution);
         while (previous_tt < total_duration) {
+            if (expired()) return result;
             const double next_tt = std::min(total_duration, previous_tt + sample_dt);
             operation_start = std::chrono::steady_clock::now();
             const Vec3f next_point = sample_position(next_tt);
@@ -367,6 +389,7 @@ namespace super_planner {
                 const Vec3f segment_delta = next_point - previous_point;
                 const double segment_length_sq = segment_delta.squaredNorm();
                 while (voxel_raycaster.step(ray_point)) {
+                    if (expired()) return result;
                     double segment_alpha = 1.0;
                     if (segment_length_sq > 1.0e-12) {
                         segment_alpha = std::clamp(
@@ -394,6 +417,7 @@ namespace super_planner {
         // work. Hold the shared map transaction only while reading the prepared
         // voxel set, so map commits are not stalled for the full validation.
         const auto wait_start = std::chrono::steady_clock::now();
+        if (expired()) return result;
         auto map_read_transaction = map_ptr_->acquireMapReadTransaction();
         const auto query_start = std::chrono::steady_clock::now();
         result.map_wait_ms = std::chrono::duration<double, std::milli>(
@@ -501,6 +525,7 @@ namespace super_planner {
         double first_clearance_violation_tt = -1.0;
         Vec3f first_clearance_violation_pos = Vec3f::Zero();
         for (std::size_t query_index = 0; query_index < map_queries.size(); ++query_index) {
+            if (expired()) return result;
             const auto &query = map_queries[query_index];
             const auto &point = query.point;
             if (!map_ptr_->insideLocalMap(point)) {
@@ -660,6 +685,7 @@ namespace super_planner {
                             clearance_escape_free_confirmation_s);
         }
         result.used_clearance_escape = clearance_escape_completed;
+        if (expired()) return result;
         result.map_query_ms = std::chrono::duration<double, std::milli>(
                 std::chrono::steady_clock::now() - query_start).count();
         const auto health_after = map_ptr_->getMapHealthSnapshot();
@@ -675,7 +701,8 @@ namespace super_planner {
     }
 
     TrajectorySafetyResult SuperPlanner::validateCommittedTrajectory(
-            const double now_wt) const {
+            const double now_wt,
+            const std::chrono::steady_clock::time_point deadline) const {
         const auto snapshot = cmd_traj_info_.snapshot();
         if (snapshot.empty) {
             TrajectorySafetyResult result;
@@ -689,9 +716,13 @@ namespace super_planner {
         auto result = validatePositionTrajectory(snapshot.pos_traj,
                                                  checked_from_tt,
                                                  snapshot.generation,
-                                                 true);
+                                                 true, false, nullptr, false,
+                                                 nullptr, deadline);
         if (trajectoryValidationEnabled() &&
-            cmd_traj_info_.generation() != snapshot.generation) {
+            cmd_traj_info_.generation() != snapshot.generation &&
+            result.status == TrajectorySafetyStatus::SAFE) {
+            // Never replace a real geometry failure or timeout with a
+            // retryable version-change status.
             result.status = TrajectorySafetyStatus::VERSION_CHANGED;
         }
         return result;

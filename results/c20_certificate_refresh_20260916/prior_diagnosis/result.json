@@ -1,0 +1,32 @@
+{
+  "scope": "Controlled concurrency/control-flow reproduction, NOT flight or geometry validation",
+  "unchanged_extracted_functions": [
+    "validateCommittedTrajectory",
+    "refreshSafetyCertificate",
+    "main_pre non-SAFE brake decision"
+  ],
+  "fixture_dependencies": [
+    "command snapshot store",
+    "geometry validator",
+    "map health/freshness",
+    "clock",
+    "logging",
+    "brake actuator"
+  ],
+  "source_sha256": {
+    "/root/super_ws/src/SUPER/super_planner/src/super_core/super_planner.cpp": "a89e3d567838bd1702e07a9da423d0ba7fbdc4b8d9e0e857e0295f727d6da1f8",
+    "/root/super_ws/src/SUPER/super_planner/include/super_core/super_planner.h": "c3e4bf3569baaee9db846ab33604a230d6b8cfd6d60c8c042a7f92e2cd7dc3d3",
+    "/root/super_ws/src/SUPER/super_planner/include/ros_interface/ros2/fsm_ros2.hpp": "1248d6925914d002a94ce98ca002a51b86263160fb43a10b7ecd62b6cc45034c"
+  },
+  "fragment_sha256": {
+    "production_types.inc": "e40b7034a2c78dba62dc07d719e4d65c0d23389e6fbb27e2661802a7a4e94fb1",
+    "production_names.inc": "0c3d195d05b26e078ef5d2f9b28e8b30cece8f770eb27a88200aaa91999a5eea",
+    "production_validation.inc": "7926a0e114f07baeb5e2def69a629679d2e580d4b9a06d0b6cdb0fe1cb59792d",
+    "production_refresh.inc": "f0c33da2239522804761662641c7c398f2e3405df9f6ce3ba92f92e557e68cd1",
+    "production_decision.inc": "443ee990ee6fa007848b39f8c4fb519886d77b1e52b347a68e6e82ec26fa06da"
+  },
+  "exit_code": 0,
+  "stdout": "PASS 500/500 stable SAFE, OCCUPIED, CLEARANCE_MARGIN, map-stale and injected version-status controls\nREPRODUCED 100/100 SAFE geometry + concurrent commit -> VERSION_CHANGED -> brake request\nPASS 100/100 separate fresh-version rechecks return SAFE for controlled SAFE geometry\nREPRODUCED 100/100 old VERSION_CHANGED certificate overwrites already-published newer SAFE certificate\nScope: extracted production control flow; stub geometry/store/time/map. No flight replay, no deployed fix.\n",
+  "stderr": "",
+  "source_unchanged_after_test": true
+}

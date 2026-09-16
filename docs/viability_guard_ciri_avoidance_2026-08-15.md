@@ -5945,3 +5945,57 @@ parser failure fixed for Sector's deliberately absent ACK subscription),
 `results/c19_map_suite_20260916/`, and
 `docs/c19_cpu_attribution_and_map_freeze_20260916.md`.136Python tests pass.
 Frozen Normal SHA unchanged; local commit only, no push.
+
+### 8.96 C20 certificate ordering/bounded retry; timing gate stops validation (2026-09-16)
+
+User approved steps1–4: prevent stale certificate overwrite, bounded fresh-version
+revalidation, preserve fail-closed behavior, then repeat seed1 Full/Sector/Adaptive.
+Runtime edits were made only in SUPER, then mirrored. The three old source files
+are preserved in `results/c20_certificate_refresh_20260916/preservation/`.
+
+Validation start/publication sequence numbers prevent older finishing work from
+replacing a newer published certificate. Publication also checks current map and
+trajectory identity. A newer current SAFE receipt can be reused; a newer explicit
+failure cannot be overwritten by old SAFE. Only VERSION_CHANGED gets at most one
+extra geometry check, cooperatively bounded to4ms from refresh entry. Deadline
+checks cover sampling/DDA/query loops and final publication; initial validation is
+unchanged, and no hard real-time guarantee is claimed. Mutable-map untimed locking
+is excluded from extra retries. Actual hazards/timeouts are not relabeled as
+retryable version changes. Requests arriving during checking are no longer
+unconditionally cleared on completion. Command/brake gates are unchanged.
+
+Extracted-production control-flow tests pass1,403 assertions each in normal and
+ASan+UBSan builds, including300 controlled threaded supersessions. Geometry/store
+dependencies are fixtures, NOT flight/geometry validation. Python135, existing
+publication8 and demand-policy tests pass. Serial Release build took6m47s.
+The first transport invocation failed to import ROS Python messages because the
+shell had not sourced the workspace; no simulator/flight started. Preserve that
+top-level failure. Correctly sourced verification is under `validation/`.
+
+All6 static-delivery cases and actual RViz late/reconnect passed. ON preflight3
+flights completed with0contact, sensor10Hz and FSM/command about100Hz. OFF n5/mode
+was preregistered with rotated order and no automatic retries. After8OFF flights
+(all completed/0contact), run9603 Full failed odometry maximum stamp/receipt gap:
+56.987398/57.573880ms versus50ms. Controller correctly stopped; seven planned
+flights were not attempted. **This is not completed n5 validation or acceptance.**
+
+Partial OFF means F/S/A: n3/2/3, time38.523/39.735/38.390s, mean CPU
+.523683/.350560/.357059cores, accumulated CPU20.887109/14.593530/14.385624core-s.
+The failed-timing Full row is retained. A reductions31.82% mean /31.13% cumulative
+are descriptive partial observations, not accepted CPU40 evidence. A recovery
+cycles2/1/1 all closed with fresh Full observation, committed ACK and new certified
+path. Actual11flight logs show4newer-certificate reuses and1successful extra check;
+these are not avoided-collision counts. Terminal main_pre VERSION_CHANGED/timeout0.
+
+The failing Full used no extra geometry retry. PSI some/full avg10 were0 and FSM
+swap0; resource/speed/source-geometry/recovery checks passed. Separate replan
+overtime and external CPU-spike observations cannot be aligned causally because
+the observer saves interval distributions but not the largest-gap occurrence
+timestamp. Next: timestamp-linked producer/receipt/executor diagnostics, not a
+relaxed50ms threshold or replacement of the failed flight.
+
+Evidence and every attempted flight are retained in
+`results/c20_certificate_refresh_20260916/`; `verification.json` is false.
+Details: `docs/c20_certificate_refresh_20260916.md`; complete numeric inventory:
+`comparison/summary_ko.md`. Runtime remains C20; no larger campaign or historical
+pooling. Frozen Normal SHA unchanged. Local commit only, no push.

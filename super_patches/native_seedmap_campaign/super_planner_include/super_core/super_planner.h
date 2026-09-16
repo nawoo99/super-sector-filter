@@ -81,7 +81,8 @@ namespace super_planner {
         // validatePositionTrajectory's unknown_as_occupied parameter.
         UNOBSERVED,
         OUT_OF_MAP,
-        VERSION_CHANGED
+        VERSION_CHANGED,
+        VALIDATION_TIMEOUT
     };
 
     struct TrajectorySafetyResult {
@@ -344,9 +345,14 @@ namespace super_planner {
                 bool unknown_as_occupied = false,
                 const Vec3f *hard_current_pose = nullptr,
                 bool test_force_initial_footprint_occupancy = false,
-                const Vec3f *initial_footprint_origin = nullptr) const;
+                const Vec3f *initial_footprint_origin = nullptr,
+                std::chrono::steady_clock::time_point deadline =
+                        std::chrono::steady_clock::time_point::max()) const;
 
-        TrajectorySafetyResult validateCommittedTrajectory(double now_wt) const;
+        TrajectorySafetyResult validateCommittedTrajectory(
+                double now_wt,
+                std::chrono::steady_clock::time_point deadline =
+                        std::chrono::steady_clock::time_point::max()) const;
 
         // Shadow mode must re-check the trajectory already being executed
         // when a newer map commit becomes visible, not only when a candidate

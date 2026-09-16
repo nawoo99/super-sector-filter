@@ -1,0 +1,28 @@
+Running main() from ./googletest/src/gtest_main.cc
+[==========] Running 8 tests from 2 test suites.
+[----------] Global test environment set-up.
+[----------] 5 tests from CommandPublicationPolicy
+[ RUN      ] CommandPublicationPolicy.AllowsFollowingTrajectory
+[       OK ] CommandPublicationPolicy.AllowsFollowingTrajectory (0 ms)
+[ RUN      ] CommandPublicationPolicy.PreservesLegacyUnguardedEmergencyStop
+[       OK ] CommandPublicationPolicy.PreservesLegacyUnguardedEmergencyStop (0 ms)
+[ RUN      ] CommandPublicationPolicy.BlocksGuardedEmergencyStop
+[       OK ] CommandPublicationPolicy.BlocksGuardedEmergencyStop (0 ms)
+[ RUN      ] CommandPublicationPolicy.BlocksWhileCertifiedBrakeIsActive
+[       OK ] CommandPublicationPolicy.BlocksWhileCertifiedBrakeIsActive (0 ms)
+[ RUN      ] CommandPublicationPolicy.BlocksOtherStates
+[       OK ] CommandPublicationPolicy.BlocksOtherStates (0 ms)
+[----------] 5 tests from CommandPublicationPolicy (0 ms total)
+
+[----------] 3 tests from PathPublicationPolicy
+[ RUN      ] PathPublicationPolicy.DefaultPublishesWithoutSubscribers
+[       OK ] PathPublicationPolicy.DefaultPublishesWithoutSubscribers (0 ms)
+[ RUN      ] PathPublicationPolicy.OptInSkipsOnlyWhenBothCountsAreZero
+[       OK ] PathPublicationPolicy.OptInSkipsOnlyWhenBothCountsAreZero (0 ms)
+[ RUN      ] PathPublicationPolicy.ReconnectionResumesPublicationImmediately
+[       OK ] PathPublicationPolicy.ReconnectionResumesPublicationImmediately (0 ms)
+[----------] 3 tests from PathPublicationPolicy (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 8 tests from 2 test suites ran. (0 ms total)
+[  PASSED  ] 8 tests.
