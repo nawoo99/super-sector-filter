@@ -419,6 +419,11 @@ source/recovery/resource/speed checks pass, no retry. Mean reduction18.0491%,
 cumulative7.2459%, A/Ftime1.11585 **fails1.10 guardrail**, though both same-mode
 C5time guards pass. Not adopted as a final candidate. No guarantee inferred for
 best-effort global-PC delivery from these flights. Runtime option stays off.
+Adaptive has4completed source/ACK/path/release cycles; received odometry stays
+~100Hz with header max10.287ms, but command header max440.047ms (p99=20.083ms).
+These message-gap aggregates do not establish its cause or control-loop callback
+latency; intentional guarded command suppression is possible, not proven for
+this particular gap. Do not describe all command output as a guaranteed100Hz.
 
 C9 will first repair the narrowly identified startup announcement lifecycle,
 then retest demand with C7's original10thread pool/dedicated-static OFF. A new
@@ -426,3 +431,54 @@ prospective acceptance coverage check requires the common demand optimization
 to have actually skipped at least once in BOTH modes; absence is not a collision
 or unsafe-flight verdict, but cannot establish this intended common-policy
 comparison. C7's original raw summary is preserved unchanged.
+
+## Candidate9: startup recovery lifecycle repair
+
+The common repair is limited to pre-first-trajectory brake state-selection failure:
+generation0, empty command snapshot, no prior published command, startup state
+and no active brake. Each activation invalidates the previous startup episode;
+true-edge publication now occurs under the existing activation mutex. Before
+retrying initial planning, supported event frontends must have an exact committed
+post-event Full ACK; Full without a frontend explicitly requires none. Legacy
+advertised non-event frontends are excluded because their ACK cache does not
+retain committed-bit evidence. Pending goal/topology work is never held merely
+because it cannot yet earn a completion proof. Activation-lock contention only
+defers empty-generation0 GENERATE planning until the next main tick.
+
+Completion requires unchanged activation/goal/event/ACK identity, current fresh
+immutable map and explicit SAFE current-generation sample, no active brake/
+revalidation/rejection/topology demand, and a final current-state check. A short
+Full-refresh transaction emits PATH_READY before the false recovery edge and
+consumes only its exact gate. Existing active-brake recovery remains unchanged.
+An invalidated proof conservatively leaves the episode open; this does not repair
+all possible failed-brake lifecycle cases or prove continuous runtime safety.
+
+Pure startup helper tests:104checks pass optimized and ASan/UBSan. Independent
+binding/lock review passes;46Python tests pass. Initial package build was
+deliberately interrupted by root after1min24s to incorporate the reviewed lock-
+contention fix; that is not a compiler failure. Final build passed in7min59s
+(planner1min59s, simulator6min00s).
+Evidence:`demand_replan_preflight/startup_recovery_*`, `build_candidate9*.log`.
+
+C9 retains C7 settings:10side threads, dedicated static executor OFF,1ms static
+poll,0.25s bounded demand deferral, optimizer memory trace ON. Source10Hz and
+guard/command timer100Hz unchanged; real received intervals and sampled callback
+counts are inspected separately. Same-mode C5 and matched timing guards remain.
+
+Future opt-ins prepared but **not enabled for C9**: side-thread parser accepts
+2..16(default10), optimized/ASan tests pass; campaign pools below4 require
+dedicated static executor and message-interval audit. Two workers can still be
+occupied by expensive planning/braking, so no latency guarantee follows from
+the parser. `--no-optimizer-phase-memory-trace` explicitly disables only optional
+per-solve /proc reads/logging in both modes; external cgroup/memory guards and
+all source/ACK/path/guard evidence remain. Actual trace setting is audited.
+
+Before any<4worker trial, predeclare extra finite-run engineering guards:
+source9.5–10.5Hz; received odometry98–102Hz with headerp99<=20ms,max<=50ms,
+no reordered/repeated/dropped interval records; when profiling is enabled,
+main/command callback counts98–102Hz over>=5s common report window with no clock
+errors. Missing evidence fails closed. Unprofiled confirmation explicitly lacks
+callback counters and relies on the separate profiled validation plus its own
+source/odometry audit; command message gaps alone cannot distinguish intentional
+holds from delayed callbacks. These checks are not hard real-time guarantees.
+The limits were specified before any2worker flight;48Python tests now pass.

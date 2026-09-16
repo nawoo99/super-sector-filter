@@ -21,7 +21,7 @@ inline int parseStaticPcPollMs(const char* setting) {
 inline std::size_t parseSideExecutorThreads(const char* setting) {
     if (!setting) return 10;
     if (*setting == '\0') {
-        throw std::invalid_argument("SUPER_SIDE_EXECUTOR_THREADS must be an integer from 4 to 16");
+        throw std::invalid_argument("SUPER_SIDE_EXECUTOR_THREADS must be an integer from 2 to 16");
     }
     unsigned value = 0;
     for (const char* cursor = setting; *cursor; ++cursor) {
@@ -30,11 +30,11 @@ inline std::size_t parseSideExecutorThreads(const char* setting) {
         }
         value = value * 10U + static_cast<unsigned>(*cursor - '0');
         if (value > 16U) {
-            throw std::invalid_argument("SUPER_SIDE_EXECUTOR_THREADS must be between 4 and 16");
+            throw std::invalid_argument("SUPER_SIDE_EXECUTOR_THREADS must be between 2 and 16");
         }
     }
-    if (value < 4U) {
-        throw std::invalid_argument("SUPER_SIDE_EXECUTOR_THREADS must be between 4 and 16");
+    if (value < 2U) {
+        throw std::invalid_argument("SUPER_SIDE_EXECUTOR_THREADS must be between 2 and 16");
     }
     return value;
 }

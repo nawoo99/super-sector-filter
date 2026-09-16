@@ -26,12 +26,13 @@ int main() {
         for (const char* bad : {"", "0", "10", "99", "101", "true", "100 ", " 100"})
             requireInvalid([&] { policy::parseStaticPcPollMs(bad); });
         require(policy::parseSideExecutorThreads(nullptr) == 10, "default executor");
-        for (unsigned n = 4; n <= 16; ++n) {
+        for (unsigned n = 2; n <= 16; ++n) {
             const auto value = std::to_string(n);
             require(policy::parseSideExecutorThreads(value.c_str()) == n, "valid executor range");
         }
         require(policy::parseSideExecutorThreads("04") == 4, "decimal leading zero");
-        for (const char* bad : {"", "0", "3", "17", "-4", "+4", "4.0", "4 ", " 4", "4x",
+        require(policy::parseSideExecutorThreads("02") == 2, "opt-in two-worker decimal");
+        for (const char* bad : {"", "0", "1", "17", "-4", "+4", "4.0", "4 ", " 4", "4x",
                                 "999999999999999999999999999999999999"}) {
             requireInvalid([&] { policy::parseSideExecutorThreads(bad); });
         }
@@ -75,7 +76,7 @@ int main() {
         policy::StaticPcPolicy independent;
         require(independent.observe(60000000000LL, 1).bootstrap, "independent instance state");
         requireInvalid([&] { independent.observe(-1, 0); });
-        std::cout << "common_execution_policy_test=PASS parser_valid_range=4..16 "
+        std::cout << "common_execution_policy_test=PASS parser_valid_range=2..16 "
                   << "default_threads=10 static_default_ms=1 optin_ms=100\n";
         return 0;
     } catch (const std::exception& error) {

@@ -1,0 +1,20 @@
+Runtime source:
+/root/super_ws/src/SUPER/super_planner/test/startup_recovery_completion_test.cpp
+
+Optimized command:
+g++ -std=c++17 -O2 -Wall -Wextra -pedantic -I/root/super_ws/src/SUPER/super_planner/include /root/super_ws/src/SUPER/super_planner/test/startup_recovery_completion_test.cpp -o /tmp/startup_recovery_completion_runtime_test
+/tmp/startup_recovery_completion_runtime_test
+
+Sanitizer command:
+g++ -std=c++17 -O1 -g0 -Wall -Wextra -pedantic -fsanitize=address,undefined -fno-omit-frame-pointer -I/root/super_ws/src/SUPER/super_planner/include /root/super_ws/src/SUPER/super_planner/test/startup_recovery_completion_test.cpp -o /tmp/startup_recovery_completion_runtime_sanitize
+/tmp/startup_recovery_completion_runtime_sanitize
+
+Both observed exit codes: 0
+Both observed output:
+startup_recovery_checks=104
+startup_recovery_completion_test=PASS
+
+Coverage: pure production eligibility/control-flow predicates, not a live ROS
+callback/ACK transport integration test. Runtime binding independently reviewed.
+Root build57407 was deliberately interrupted via SIGINT before final patch;
+do not count that as a build failure. Root owns final compile/flight validation.

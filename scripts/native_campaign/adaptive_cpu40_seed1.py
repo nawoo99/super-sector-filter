@@ -20,12 +20,42 @@ import normal_cpu_gpu_diagnostic as diagnostic
 import event_recovery_seed1_smoke as event
 import sensor_acquisition_seed1_smoke as source
 import audit_cpu40_recovery as recovery_audit
+import analyze_thread_cpu_profile as stage_profile
 from analyze_cylinder_only_stress_full_gate import quality_valid
 
 BACKUP = 'results/adaptive_cpu40_backup_20260916_aloDDu/runtime_before.tar.gz'
 FLIGHT_NAMES = {'fsm_node', 'perfect_drone_node', 'perfect_drone_full_node',
                 'perfect_drone_frontend_node', 'perfect_drone_adaptive_node',
                 'source_acquisition_test'}
+
+
+def small_pool_timing_audit(intervals, sensor_hz, profile=None):
+    """Prospective engineering gates for <4 workers, not real-time proof."""
+    odom = intervals.get('odometry', {})
+    header = odom.get('header_interval', {})
+    def finite_between(value, lower, upper):
+        return (isinstance(value, (int, float)) and math.isfinite(value)
+                and lower <= value <= upper)
+    checks = dict(
+        sensor_cadence=finite_between(sensor_hz, 9.5, 10.5),
+        odometry_cadence=finite_between(odom.get('mean_received_hz'), 98., 102.),
+        odometry_header_p99=finite_between(header.get('p99_ms'), 0., 20.),
+        odometry_header_max=finite_between(header.get('max_ms'), 0., 50.),
+        odometry_order=all(odom.get(k, 1) == 0 for k in
+                           ('backward_stamps', 'repeated_stamps', 'intervals_dropped')))
+    rates = {}
+    if profile is not None:
+        processes = profile.get('processes', [])
+        if len(processes) == 1 and processes[0].get('duration_s', 0) >= 5:
+            p = processes[0]
+            for s in p['stages']:
+                if s['stage'] in ('fsm_main_callback', 'fsm_command_callback'):
+                    rates[s['stage']] = s['calls'] / p['duration_s']
+                    checks[s['stage']] = finite_between(rates[s['stage']], 98., 102.) and s['clock_errors'] == 0
+        checks['profile_callback_coverage'] = len(rates) == 2
+    return dict(valid=all(checks.values()), checks=checks, callback_hz=rates,
+                callback_counts_instrumented=profile is not None,
+                scope='Finite-run engineering guard; command message gaps include intentional holds and are not callback gaps')
 
 
 def reference_comparison(result, reference):
@@ -106,7 +136,7 @@ def main():
     parser.add_argument('--snapshot-neighbor-cache', action='store_true',
                         help='Exact snapshot-scoped neighborhood cache; requires line query')
     parser.add_argument('--static-pc-poll-ms', type=int, choices=(1, 100), default=1)
-    parser.add_argument('--side-executor-threads', type=int, choices=range(4, 17), default=10)
+    parser.add_argument('--side-executor-threads', type=int, choices=range(2, 17), default=10)
     parser.add_argument('--monitor-intervals', action='store_true',
                         help='Bounded received-message interval statistics on existing monitor subscriptions')
     parser.add_argument('--guarded-demand-replan', action='store_true')
@@ -127,6 +157,9 @@ def main():
         parser.error('--snapshot-neighbor-cache requires --snapshot-line-query')
     if args.guarded_demand_replan and not args.time_reference_folder:
         parser.error('--guarded-demand-replan requires --time-reference-folder')
+    if args.side_executor_threads < 4 and not (
+            args.dedicated_static_pc_executor and args.monitor_intervals):
+        parser.error('Pools below4 require --dedicated-static-pc-executor and --monitor-intervals')
     references = {}
     reference_files = []
     if args.time_reference_folder:
@@ -182,6 +215,7 @@ def main():
                   Path('/root/super_ws/install/rog_map/lib/librog_map.a'),
                   Path('/root/super_ws/install/super_planner/lib/libsuper.a'),
                   Path(recovery_audit.__file__).resolve(),
+                  Path(stage_profile.__file__).resolve(),
                   Path(__file__).resolve().with_name('native_loop_monitor.py'),
                   Path(__file__).resolve().with_name('message_intervals.py'),
                   Path(__file__).resolve()})
@@ -270,6 +304,9 @@ def main():
                     result['strict_recovery_audit']['valid'])
                 stack = (root / 'artifacts' /
                     f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
+                result['source_acquisition']['checks']['optimizer_phase_trace_setting'] = (
+                    row.get('optimizer_phase_trace_enabled') is
+                    (not args.no_optimizer_phase_memory_trace))
                 result['source_acquisition']['checks']['static_pc_poll_setting'] = (
                     f'[STATIC_PC_POLL_SETTINGS] poll_ms={args.static_pc_poll_ms} '
                     f'bootstrap_once={int(args.static_pc_poll_ms == 100)}' in stack)
@@ -295,6 +332,11 @@ def main():
                     reports = re.findall(r'\[DEMAND_REPLAN\] checks=(\d+) skips=(\d+) renewals=(\d+)', stack)
                     result['demand_replan_reports'] = reports
                     result['demand_replan_exercised'] = bool(reports) and max(int(r[1]) for r in reports) > 0
+                if args.side_executor_threads < 4:
+                    result['small_pool_timing'] = small_pool_timing_audit(
+                        result.get('message_intervals', {}), row.get('sensor_hz'),
+                        stage_profile.summarize(root, mode, args.run) if args.profile_cpu else None)
+                    result['source_acquisition']['checks']['small_pool_timing'] = result['small_pool_timing']['valid']
                 if args.skip_backup_diagnostic_replay or args.fast_occupied_box_scan or args.snapshot_line_query:
                     stack = (root / 'artifacts' /
                         f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')

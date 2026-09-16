@@ -1,5 +1,5 @@
 import copy
-from adaptive_cpu40_seed1 import comparison, reference_comparison
+from adaptive_cpu40_seed1 import comparison, reference_comparison, small_pool_timing_audit
 
 
 def pair():
@@ -83,3 +83,25 @@ def test_common_demand_optimization_requires_execution_in_both_modes():
     assert not out['common_demand_exercise_pass']
     assert not out['target_met']
     assert out['safety_and_quality_pass']
+
+
+def test_small_pool_timing_guards_are_not_timer_setting_claims():
+    intervals = {'odometry': dict(mean_received_hz=100., header_interval=dict(p99_ms=11., max_ms=20.),
+                                  backward_stamps=0, repeated_stamps=0, intervals_dropped=0)}
+    profile = dict(processes=[dict(duration_s=10., stages=[
+        dict(stage=s, calls=1000, clock_errors=0) for s in
+        ('fsm_main_callback', 'fsm_command_callback')])])
+    assert small_pool_timing_audit(intervals, 10., profile)['valid']
+    for sensor_hz in (9., float('nan'), None):
+        assert not small_pool_timing_audit(intervals, sensor_hz, profile)['valid']
+    profile['processes'][0]['stages'][0]['calls'] = 900
+    assert not small_pool_timing_audit(intervals, 10., profile)['valid']
+    intervals['odometry']['header_interval']['max_ms'] = 80.
+    assert not small_pool_timing_audit(intervals, 10.)['valid']
+    assert not small_pool_timing_audit({}, 10., {})['valid']
+
+
+def test_unprofiled_timing_audit_does_not_claim_callback_counts():
+    out = small_pool_timing_audit({}, 10.)
+    assert out['callback_counts_instrumented'] is False
+    assert out['callback_hz'] == {}

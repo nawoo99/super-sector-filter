@@ -29,6 +29,7 @@
 
 
 #include "fsm/fsm.h"
+#include "fsm/startup_recovery_completion_policy.hpp"
 #include "fsm/brake_motion_estimate_policy.hpp"
 #include "fsm/command_publication_policy.hpp"
 #include "fsm/path_publication_policy.hpp"
@@ -68,6 +69,7 @@
 
 namespace fsm {
     namespace demand_policy = super_planner::demand_replan;
+    namespace startup_recovery = super_planner::startup_recovery;
     class FsmRos2 : public Fsm {
 
         rclcpp::Node::SharedPtr nh_;
@@ -161,6 +163,10 @@ namespace fsm {
         double brake_passive_stability_start_wt_{0.0};
         bool brake_passive_stability_started_{false};
         std::atomic_bool trajectory_guard_recovery_announced_{false};
+        // Protected by brake_activation_mutex_. This is only the pre-first-path
+        // state-selection failure, not an alternative active-brake completion.
+        std::uint64_t brake_activation_revision_{0};
+        bool startup_recovery_pending_{false};
 
         struct RefreshProcessAck {
             std::uint64_t stamp_ns{0};
@@ -218,13 +224,17 @@ namespace fsm {
                     required_full_refresh_min_seq_);
         }
 
-        void clearFullRefreshRecoveryGate() {
-            std::lock_guard<std::mutex> lock(full_refresh_mutex_);
+        void clearFullRefreshRecoveryGateLocked() {
             required_full_refresh_min_seq_ = 0;
             required_full_refresh_target_seq_ = 0;
             required_full_refresh_stamp_ns_ = 0;
             required_full_refresh_ack_map_version_ = 0;
             required_full_refresh_acked_ = false;
+        }
+
+        void clearFullRefreshRecoveryGate() {
+            std::lock_guard<std::mutex> lock(full_refresh_mutex_);
+            clearFullRefreshRecoveryGateLocked();
         }
 
         void fullRefreshRequestCallback(
@@ -2272,9 +2282,14 @@ namespace fsm {
             // it later from a streak of planning failures. Keep this latched
             // across brake construction/retry; the filter applies its own
             // post-recovery quiet-period hold before closing again.
-            publishTrajectoryGuardRecoveryState(true);
             std::lock_guard<std::mutex> activation_lock(
                     brake_activation_mutex_);
+            ++brake_activation_revision_;
+            if (brake_activation_revision_ == 0) ++brake_activation_revision_;
+            startup_recovery_pending_ = false;
+            // Serialize the true edge with startup completion. Publishing before
+            // this lock let completion erase a newer waiting activator's edge.
+            publishTrajectoryGuardRecoveryState(true);
             if (safety_brake_active_.load(std::memory_order_acquire)) {
                 if (!replace_active_body_brake) {
                     return false;
@@ -2482,6 +2497,16 @@ namespace fsm {
             } else {
                 CmdTraj::Sample current_sample;
                 if (!planner_ptr_->getOneCommandSample(current_sample)) {
+                    const auto snapshot = planner_ptr_->getCommittedSharedTrajectorySnapshot();
+                    const auto state = machine_state_.load(std::memory_order_acquire);
+                    startup_recovery_pending_ = !cached_command_valid &&
+                            snapshot.empty && snapshot.generation == 0 &&
+                            !safety_brake_active_.load(std::memory_order_acquire) &&
+                            (state == INIT || state == WAIT_GOAL || state == GENERATE_TRAJ);
+                    if (startup_recovery_pending_) {
+                        ros_ptr_->info(" -- [TRAJ_GUARD_STARTUP_PENDING] revision={} generation=0",
+                                       brake_activation_revision_);
+                    }
                     ros_ptr_->error(
                             " -- [TRAJ_GUARD_BRAKE] no fresh odometry, "
                             "cached command is unusable, and no current "
@@ -3329,6 +3354,9 @@ namespace fsm {
                         event_recovery_request_sub_ = nh_->create_subscription<std_msgs::msg::UInt64>(
                             "/sector/event_recovery_request", request_qos,
                             [this](const std_msgs::msg::UInt64::SharedPtr request) {
+                                // Startup completion consumes its exact ACK gate
+                                // and false edge under this same short mutex.
+                                std::lock_guard<std::mutex> lock(full_refresh_mutex_);
                                 const auto old = event_recovery_requested_.load();
                                 if (request->data > old) event_recovery_requested_.store(request->data);
                             }, refresh_options);
@@ -3951,6 +3979,169 @@ namespace fsm {
             }
         }
 
+        // Caller holds full_refresh_mutex_. Legacy non-event advertised ACKs
+        // do not retain committed=1 evidence, so this new completion excludes
+        // them rather than interpreting a merely processed scan as committed.
+        startup_recovery::Ack startupRecoveryAckLocked() const {
+            startup_recovery::Ack ack;
+            ack.supported = cfg_.event_recovery_en || !full_refresh_gate_advertised_;
+            ack.advertised_or_event = cfg_.event_recovery_en || full_refresh_gate_advertised_;
+            ack.required = ack.advertised_or_event;
+            ack.minimum = required_full_refresh_min_seq_;
+            ack.target = required_full_refresh_target_seq_;
+            ack.stamp = required_full_refresh_stamp_ns_;
+            ack.map = required_full_refresh_ack_map_version_;
+            ack.boundary_map = event_recovery_min_map_version_;
+            ack.target_acked = required_full_refresh_acked_;
+            ack.latest_target = latest_full_refresh_request_seq_;
+            ack.latest_acked = latest_full_refresh_request_acked_;
+            return ack;
+        }
+
+        startup_recovery::Before captureStartupRecoveryBeforeMain(bool& wait_for_ack) {
+            wait_for_ack = false;
+            startup_recovery::Before before;
+            std::unique_lock<std::mutex> activation_lock(
+                    brake_activation_mutex_, std::try_to_lock);
+            if (!activation_lock) {
+                // A competing activator may not have published its true edge
+                // or armed the Full-ACK gate yet. Do not start the first path
+                // in that gap; never block this timer on the brake search.
+                const auto snapshot = planner_ptr_->getCommittedSharedTrajectorySnapshot();
+                wait_for_ack = startup_recovery::mustWaitForActivation(
+                        machine_state_.load(std::memory_order_acquire) == GENERATE_TRAJ,
+                        snapshot.empty, snapshot.generation);
+                return before;
+            }
+            if (!startup_recovery_pending_) return before;
+            before.armed = true;
+            before.announced = trajectory_guard_recovery_announced_.load(std::memory_order_acquire);
+            before.revision = brake_activation_revision_;
+            before.generating_from_rest = machine_state_.load(std::memory_order_acquire) == GENERATE_TRAJ;
+            const auto snapshot = planner_ptr_->getCommittedSharedTrajectorySnapshot();
+            before.empty_snapshot = snapshot.empty;
+            before.generation = snapshot.generation;
+            before.no_active_brake = !safety_brake_active_.load(std::memory_order_acquire);
+            {
+                std::lock_guard<std::mutex> lock(latest_cmd_mutex_);
+                before.no_prior_command = !last_published_cmd_valid_;
+            }
+            const auto goal = getGoalDemandSnapshot();
+            before.goal_queued = goal.queued_revision;
+            before.goal_accepted = goal.accepted_revision;
+            before.no_pending_goal = !goal.pending_or_updating;
+            double map_age, map_limit, speed;
+            before.map_fresh = mapFreshEnoughForMotion(
+                    map_ptr_->getMapHealthSnapshot(), map_age, map_limit, speed);
+            // The expected corridor retry is consumed by PlanFromRest. It must
+            // be clear AFTER success, not be forbidden before that work runs.
+            before.no_recovery_demand = !stop.load(std::memory_order_acquire) &&
+                    !finish_plan.load(std::memory_order_acquire) &&
+                    !safety_revalidation_requested_.load(std::memory_order_acquire);
+            {
+                std::lock_guard<std::mutex> lock(full_refresh_mutex_);
+                before.ack = startupRecoveryAckLocked();
+                before.event_requested = event_recovery_requested_.load(std::memory_order_acquire);
+                before.event_completed = event_recovery_completed_.load(std::memory_order_acquire);
+            }
+            // Invalid goal/topology evidence cannot suppress the very main-FSM
+            // work needed to consume it. Only the supported missing Full ACK
+            // holds the no-trajectory solver, establishing ACK-before-planning.
+            wait_for_ack = startup_recovery::mustWaitForAck(before);
+            return before;
+        }
+
+        void tryCompleteStartupRecovery(const startup_recovery::Before& before) {
+            if (!startup_recovery::mayPlan(before)) return;
+            std::unique_lock<std::mutex> activation_lock(
+                    brake_activation_mutex_, std::try_to_lock);
+            if (!activation_lock || !startup_recovery_pending_ ||
+                brake_activation_revision_ != before.revision ||
+                !trajectory_guard_recovery_pub_) return;
+            startup_recovery::After after;
+            after.armed = startup_recovery_pending_;
+            after.announced = trajectory_guard_recovery_announced_.load(std::memory_order_acquire);
+            after.revision = brake_activation_revision_;
+            after.following = machine_state_.load(std::memory_order_acquire) == FOLLOW_TRAJ;
+            after.no_active_brake = !safety_brake_active_.load(std::memory_order_acquire);
+            after.no_recovery_demand = !stop.load(std::memory_order_acquire) &&
+                    !finish_plan.load(std::memory_order_acquire) &&
+                    !safety_revalidation_requested_.load(std::memory_order_acquire) &&
+                    !planner_ptr_->trajectoryGuardRejectionPending() &&
+                    !planner_ptr_->topologyRetryPending();
+            const auto snapshot = planner_ptr_->getCommittedSharedTrajectorySnapshot();
+            const auto health = map_ptr_->getMapHealthSnapshot();
+            after.generation = snapshot.generation;
+            after.map = health.map_version;
+            after.immutable_map = map_ptr_->immutablePlannerSnapshotEnabled();
+            double map_age, map_limit, speed;
+            after.map_fresh = mapFreshEnoughForMotion(health, map_age, map_limit, speed);
+            CmdTraj::Sample sample;
+            after.valid_current_sample = !snapshot.empty &&
+                    planner_ptr_->getOneCommandSample(sample, snapshot.generation);
+            after.sample_finite = after.valid_current_sample &&
+                    sample.pvaj.array().isFinite().all() && std::isfinite(sample.trajectory_time) &&
+                    std::isfinite(sample.start_wt) && sample.start_wt == snapshot.start_wt;
+            after.sample_finished = sample.finished;
+            after.sample_on_backup = sample.on_backup;
+            TrajectorySafetyResult certificate;
+            bool certificate_valid;
+            {
+                std::lock_guard<std::mutex> lock(safety_mutex_);
+                certificate = safety_certificate_;
+                certificate_valid = safety_certificate_valid_;
+            }
+            after.explicit_safe = certificate_valid &&
+                    certificate.status == TrajectorySafetyStatus::SAFE &&
+                    !certificate.used_clearance_escape && !certificate.used_initial_footprint_egress;
+            after.exact_current_certificate = certificate.trajectory_generation == snapshot.generation &&
+                    certificate.map_version == health.map_version &&
+                    std::isfinite(certificate.checked_from_tt) &&
+                    std::isfinite(certificate.checked_to_tt) &&
+                    certificate.checked_from_tt <= sample.trajectory_time &&
+                    certificate.checked_to_tt >= sample.trajectory_time;
+
+            // This short transaction pairs with exact ACK/request callbacks and
+            // event-request publication. Do not retain safety_mutex_ here.
+            std::lock_guard<std::mutex> refresh_lock(full_refresh_mutex_);
+            after.ack = startupRecoveryAckLocked();
+            after.event_requested = event_recovery_requested_.load(std::memory_order_acquire);
+            after.event_completed = event_recovery_completed_.load(std::memory_order_acquire);
+            const auto goal = getGoalDemandSnapshot();
+            after.goal_queued = goal.queued_revision;
+            after.goal_accepted = goal.accepted_revision;
+            after.no_pending_goal = !goal.pending_or_updating;
+            after.final_evidence_current =
+                    planner_ptr_->getCommittedTrajectoryGeneration() == snapshot.generation &&
+                    map_ptr_->getMapHealthSnapshot().map_version == health.map_version &&
+                    machine_state_.load(std::memory_order_acquire) == FOLLOW_TRAJ &&
+                    !safety_brake_active_.load(std::memory_order_acquire) &&
+                    !safety_revalidation_requested_.load(std::memory_order_acquire) &&
+                    !stop.load(std::memory_order_acquire) && !finish_plan.load(std::memory_order_acquire) &&
+                    !planner_ptr_->trajectoryGuardRejectionPending() &&
+                    !planner_ptr_->topologyRetryPending();
+            if (!startup_recovery::mayComplete(before, after)) return;
+
+            bool expected = true;
+            if (!trajectory_guard_recovery_announced_.compare_exchange_strong(
+                        expected, false, std::memory_order_acq_rel)) return;
+            startup_recovery_pending_ = false;
+            if (cfg_.event_recovery_en) {
+                ros_ptr_->info(
+                        " -- [EVENT_RECOVERY_PATH_READY] request_seq={} stamp_ns={} "
+                        "ack_map={} certified_map={} generation_before=0 generation_after={}",
+                        after.ack.target, after.ack.stamp, after.ack.map,
+                        after.map, after.generation);
+            }
+            clearFullRefreshRecoveryGateLocked();
+            std_msgs::msg::Bool inactive;
+            inactive.data = false;
+            trajectory_guard_recovery_pub_->publish(inactive);
+            ros_ptr_->info(" -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=false");
+            ros_ptr_->info(" -- [TRAJ_GUARD_STARTUP_RECOVERED] revision={} gen={} map={} ack_required={}",
+                           after.revision, after.generation, after.map, after.ack.required);
+        }
+
         void mainFsmTimerCallback() {
             super_utils::thread_cpu_profile::report();
             const super_utils::thread_cpu_profile::Scope cpu_scope(
@@ -4086,6 +4277,9 @@ namespace fsm {
                 activateEmergencyBrake("main_pre_uncertified");
                 return;
             }
+            bool startup_wait_for_ack = false;
+            const auto startup_before = captureStartupRecoveryBeforeMain(startup_wait_for_ack);
+            if (startup_wait_for_ack) return;
             {
                 const super_utils::thread_cpu_profile::Scope main_cpu_scope(
                         super_utils::thread_cpu_profile::Stage::FsmMainCore);
@@ -4101,7 +4295,9 @@ namespace fsm {
                 !safety_brake_active_.load(std::memory_order_acquire) &&
                 !refreshSafetyCertificate("main_post")) {
                 activateEmergencyBrake("main_post_uncertified");
+                return;
             }
+            tryCompleteStartupRecovery(startup_before);
         }
 
     };
