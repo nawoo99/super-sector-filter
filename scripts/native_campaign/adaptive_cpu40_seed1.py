@@ -82,7 +82,7 @@ SMALL_POOL_MATCH_FIELDS = (
     'static_pc_latched_once', 'static_latched_preflight_sha256',
     'optimizer_phase_memory_trace', 'optimizer_clearance_gate_first', 'time_reference_folder',
     'max_same_mode_reference_time_ratio', 'max_mission_time_ratio',
-    'logical_cpus', 'frozen_normal_sha256')
+    'logical_cpus', 'frozen_normal_sha256', 'callback_trace')
 
 
 def small_pool_profile_reference_audit(plan, reference_plan, summaries):
@@ -575,6 +575,8 @@ def main():
                         default=['full', 'adaptive'])
     parser.add_argument('--compose', action='store_true')
     parser.add_argument('--profile-cpu', action='store_true')
+    parser.add_argument('--callback-trace', action='store_true',
+                        help='Diagnostic wall-time callback spans; separate from untraced CPU evidence')
     parser.add_argument('--skip-backup-diagnostic-replay', action='store_true',
                         help='Skip discarded optimizer replay equally in all modes')
     parser.add_argument('--skip-unobserved-path-publication', action='store_true',
@@ -698,6 +700,7 @@ def main():
     if event.sha(event.NORMAL) != event.NORMAL_SHA:
         raise RuntimeError('Frozen Normal observations changed')
     os.environ['SUPER_CPU_PROFILE'] = '1' if args.profile_cpu else '0'
+    os.environ['SUPER_CALLBACK_TRACE'] = '1' if args.callback_trace else '0'
     os.environ['SUPER_SKIP_BACKUP_DIAGNOSTIC_REPLAY'] = (
         '1' if args.skip_backup_diagnostic_replay else '0')
     os.environ['SUPER_SKIP_UNOBSERVED_PATH_PUBLICATION'] = (
@@ -777,7 +780,7 @@ def main():
         backup=BACKUP, mean_cpu_reduction_target_pct=args.mean_cpu_reduction_target_pct,
         threshold_scope='Predeclared engineering objective; not statistical significance',
         cumulative_cpu_also_reported=True, max_mission_time_ratio=1.10,
-        compose=args.compose, cpu_profile=args.profile_cpu,
+        compose=args.compose, cpu_profile=args.profile_cpu, callback_trace=args.callback_trace,
         skip_backup_diagnostic_replay=args.skip_backup_diagnostic_replay,
         skip_unobserved_path_publication=args.skip_unobserved_path_publication,
         fast_occupied_box_scan=args.fast_occupied_box_scan,
@@ -990,7 +993,8 @@ def main():
                     })
                 result['candidate'] = args.candidate
                 result['cpu_profile'] = args.profile_cpu
-                result['cpu_comparison_instrumented'] = args.compare_occupied_box_scan
+                result['callback_trace'] = args.callback_trace
+                result['cpu_comparison_instrumented'] = args.compare_occupied_box_scan or args.callback_trace
                 result['compose'] = args.compose
                 result['dds_cloud_payload_mib_s'] = row.get('dds_cloud_payload_mib_s')
                 result['algorithm_cpu_scope'] = row.get('algorithm_cpu_scope')

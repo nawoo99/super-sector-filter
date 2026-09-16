@@ -34,6 +34,7 @@
 #include "fsm/command_publication_policy.hpp"
 #include "fsm/path_publication_policy.hpp"
 #include <super_utils/thread_cpu_profile.hpp>
+#include <super_utils/callback_timing_trace.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 #include <ros_interface/ros2/ros2_interface.hpp>
@@ -98,6 +99,7 @@ namespace fsm {
         bool raw_cloud_in_process_injection_en_{false};
 
         rclcpp::TimerBase::SharedPtr execution_timer_, replan_timer_, cmd_timer_;
+        super_utils::callback_timing_trace::State main_trace_, replan_trace_, command_trace_;
         rclcpp::CallbackGroup::SharedPtr exec_cbk_group_, map_cbk_group_, replan_cbk_group_, cmd_cbk_group_, goal_cbk_group_;
         rclcpp::CallbackGroup::SharedPtr guard_cloud_cbk_group_;
         rclcpp::CallbackGroup::SharedPtr frontend_risk_cbk_group_;
@@ -3752,6 +3754,7 @@ namespace fsm {
         }
 
         void pubCmdTimerCallback() {
+            const super_utils::callback_timing_trace::Scope wall_trace(command_trace_, "FsmCommand");
             const super_utils::thread_cpu_profile::Scope cpu_scope(
                     super_utils::thread_cpu_profile::Stage::FsmCommandCallback);
             if (stop) {
@@ -4088,6 +4091,7 @@ namespace fsm {
         }
 
         void replanTimerCallback() {
+            const super_utils::callback_timing_trace::Scope wall_trace(replan_trace_, "FsmReplan", 0);
             const super_utils::thread_cpu_profile::Scope cpu_scope(
                     super_utils::thread_cpu_profile::Stage::FsmReplanCallback);
             if (safety_brake_active_.load(std::memory_order_acquire)) {
@@ -4366,6 +4370,7 @@ namespace fsm {
         }
 
         void mainFsmTimerCallback() {
+            const super_utils::callback_timing_trace::Scope wall_trace(main_trace_, "FsmMain");
             super_utils::thread_cpu_profile::report();
             const super_utils::thread_cpu_profile::Scope cpu_scope(
                     super_utils::thread_cpu_profile::Stage::FsmMainCallback);

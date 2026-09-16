@@ -1,6 +1,23 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-16: C21 3-worker seed1 각5회 검증 통과(4단계 완료).**
+> C20의57.57ms 실패 보존. 시각연결계측 추가 후2-worker Full진단3회에서는 미재현.
+> 통제executor시험은 두 blocking callback 동시점유시2worker110.18ms/3worker10.31ms를
+> 보였으나 과거실패 원인의 확정 재현은 아님. 예방적으로 세모드 공통 side worker2→3.
+> planner/맵/센서/안전/주기는 그대로. trace기본OFF,프로파일ON과OFF집계분리.
+> 전달6조건+실제RViz통과. ON3회와OFF15회 모두완주·접촉0,재시도·실패대체0.
+> **OFF Full/Sector/Adaptive 각각5/5; odometry max17.73/14.78/16.09ms로50ms 기준통과.**
+> 평균시간38.152/39.320/38.452초,평균CPU .538817/.352015/.370185코어.
+> Adaptive 평균CPU31.30%·누적30.90%감소. 9801은27.88%로매회30%충족아님;40%미달.
+> A Full복구2/1/2/1/1회 총7/7인증완료;전체품질gate true,시간비모두1.10이내.
+> Python107 및 인증함수추출 일반/ASan+UBSan각1403검사 통과.
+> 결과 `results/c21_callback_timing_20260916/validation_3workers/verification.json`,
+> 전체비교 `results/c21_callback_timing_20260916/comparison/summary_ko.md`, 상세 `docs/c21_callback_timing_20260916.md`, §8.97.
+> 기존실패/Normal/Stress보존·합산금지. seed1유한표본이며hard real-time/전체맵보장아님.
+> 다음은공통3worker후보동결후Normal대표5맵소규모검증. 이번엔seed1만,로컬커밋만/push없음.
+
+> [!IMPORTANT]
 > **2026-09-16: C20 인증 교체 경쟁 수정 완료, seed1 반복검증은 주기 실패로 중단.**
 > 최신 인증 덮어쓰기 방지·VERSION_CHANGED 최대1회 재검사(진입후4ms 협조적예산),
 > 실제 기하 실패/시간초과는 정지 유지. 첫 검사에 새 시간제한/안전완화 없음.

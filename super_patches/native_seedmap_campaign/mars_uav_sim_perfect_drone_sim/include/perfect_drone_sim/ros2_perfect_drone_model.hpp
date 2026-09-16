@@ -21,6 +21,7 @@
 // dependency. Standalone/front-end targets retain their existing dependencies.
 #ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
 #include <super_utils/thread_cpu_profile.hpp>
+#include <super_utils/callback_timing_trace.hpp>
 #endif
 #include "tf2_ros/transform_broadcaster.h"
 #include <chrono>
@@ -247,6 +248,9 @@ namespace perfect_drone {
     };
 
     class PerfectDrone : public rclcpp::Node {
+#ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
+        super_utils::callback_timing_trace::State odom_trace_;
+#endif
         std::shared_ptr<tf2_ros::TransformBroadcaster> br_map_ego_;
 
         Config cfg_;
@@ -1382,6 +1386,7 @@ namespace perfect_drone {
 
         void publishOdom() {
 #ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
+            const super_utils::callback_timing_trace::Scope wall_trace(odom_trace_, "SimOdom");
             super_utils::thread_cpu_profile::Scope cpu_scope(
                     super_utils::thread_cpu_profile::Stage::SimOdom);
 #endif

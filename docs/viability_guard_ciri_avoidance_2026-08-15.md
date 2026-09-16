@@ -5999,3 +5999,61 @@ Evidence and every attempted flight are retained in
 Details: `docs/c20_certificate_refresh_20260916.md`; complete numeric inventory:
 `comparison/summary_ko.md`. Runtime remains C20; no larger campaign or historical
 pooling. Frozen Normal SHA unchanged. Local commit only, no push.
+
+### 8.97 C21 callback timestamps and common three-worker seed1 validation (2026-09-16)
+
+User requested diagnosis/retest until step4 produces valid results. C20 failed
+run9603 remains untouched. Observer now retains bounded long-gap events and both
+maximum contexts with source stamp, monotonic receipt and epoch correlation.
+Clock domains are never subtracted. Existing timing distributions/50ms maximum
+and20ms p99 thresholds are unchanged. Default-OFF C++ callback scopes report
+SimOdom/FsmMain/Command/Replan wall-time spans or start gaps above20ms. OFF has
+no clock/atomic/output work. Diagnostic traces are not pooled into CPU evidence.
+
+Serial Release build3packages passed in8m6s. Transport6cases and actual RViz
+late/reconnect passed. Fixed two-worker traced/profiled Full diagnostic9700–9702
+all completed/contact0; time38.17/38.92/39.06s and receipt maxima11.34/11.85/12.52ms.
+The original57.57ms did not recur. Long replans also occurred with healthy odometry;
+replan duration alone does not identify the historical cause.
+
+A real rclcpp controlled capacity test used the same two overlapping100ms
+blocking callbacks and10ms odometry timer: two workers max110.184ms vs three
+workers10.306ms. This demonstrates worker exhaustion, NOT a replay or proof of
+the untraced historical flight. Preventive candidate: common side worker2→3 in
+all modes, existing environment option only; global default unchanged. No planner
+policy, sensor/map geometry/rate, safety clearance, or Full/ACK/new-path change.
+
+New prospective validation9800 ON3 +9801–9805 OFF15 passed without any retry,
+replacement, runtime hash change, or threshold relaxation. Every flight completed
+with0contact; all source/recovery/resource/speed/timing checks and paired A/F≤1.10
+and historical per-mode time guardrails passed. OFF eachmode5/5 completed:
+
+| seed1 OFF | Full | Sector | Adaptive |
+|---|---:|---:|---:|
+| Mean mission s | 38.152 | 39.320 | 38.452 |
+| Mean experiment CPU cores | .538817 | .352015 | .370185 |
+| Mean accumulated CPU core-s | 21.415059 | 14.373238 | 14.797914 |
+| Maximum odometry receipt gap ms | 17.735 | 14.783 | 16.090 |
+| Contact runs / attempts | 0/5 | 0/5 | 0/5 |
+
+Adaptive reductions31.30% mean /30.90% accumulated; mean mission is0.30s longer.
+First OFF pair is27.88% and retained, so not every run meets30%; original40%
+objective still unmet. CPU includes simulator and other experiment processes,
+excludes external observer; it is not pure planner or whole-host CPU. Cgroup
+window is slightly wider than mission. A recovery2/1/2/1/1 all7closed after exact
+fresh Full frame, committed map ACK and certified new path. No avoided-collision
+claim. Source10Hz, observed odometry≈100Hz; actual FSM/command counts validated
+in separate ON preflight, not inferred from OFF message counts.
+
+Python107, trace normal/ASan+UBSan, extracted certificate normal/ASan+UBSan each
+1,403assertions/300thread-interleavings pass. These fixture tests are not physical
+geometry proof. Frozen Normal SHA unchanged, no leftover flight processes.
+Runtime changes mirrored and local commit only; no push or Co-Authored-By footer.
+
+Step4 is complete for this finite seed1 candidate; no hard real-time/population
+or other-map guarantee. Historical57.57ms cause remains unconfirmed. Next: freeze
+the three-worker candidate and small validation across representative Normal maps,
+not an immediate large campaign or pooling with historical Normal/Stress.
+Evidence: `results/c21_callback_timing_20260916/validation_3workers/verification.json`;
+all metrics `results/c21_callback_timing_20260916/comparison/summary_ko.md`;
+details `docs/c21_callback_timing_20260916.md`.

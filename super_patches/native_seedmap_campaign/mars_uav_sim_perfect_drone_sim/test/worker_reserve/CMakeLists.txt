@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.8)
+project(worker_reserve_test)
+set(CMAKE_CXX_STANDARD 17)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+add_executable(worker_reserve_test worker_reserve_test.cpp)
+ament_target_dependencies(worker_reserve_test rclcpp)

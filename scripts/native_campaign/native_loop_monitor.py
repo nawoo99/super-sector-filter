@@ -580,7 +580,7 @@ class LoopMonitor(Node):
         if self.message_intervals:
             self.message_intervals['command'].observe(
                 int(msg.header.stamp.sec) * 1000000000 + int(msg.header.stamp.nanosec),
-                time.monotonic_ns())
+                time.monotonic_ns(), time.time_ns())
         self.latest_command = {
             "position": self.vector3(msg.position),
             "velocity": self.vector3(msg.velocity),
@@ -823,7 +823,7 @@ class LoopMonitor(Node):
         if self.message_intervals:
             self.message_intervals['odometry'].observe(
                 int(msg.header.stamp.sec) * 1000000000 + int(msg.header.stamp.nanosec),
-                time.monotonic_ns())
+                time.monotonic_ns(), time.time_ns())
         p = msg.pose.pose.position
         position = np.array([p.x, p.y, p.z], dtype=np.float32)
         if self.last_position is not None:

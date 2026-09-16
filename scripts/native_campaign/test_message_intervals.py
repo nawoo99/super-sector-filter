@@ -37,3 +37,37 @@ def test_repeat_backward_and_overflow_are_visible():
 def test_invalid_capacity():
     with pytest.raises(ValueError):
         MessageIntervals(0)
+
+
+def test_gap_context_keeps_clock_domains_separate():
+    counter = MessageIntervals(event_threshold_ns=20_000_000)
+    counter.observe(1_000_000_000, 200_000_000, 9_000_000_000)
+    counter.observe(1_057_000_000, 260_000_000, 8_000_000_000)
+    out = counter.summary()
+    assert out['receipt_interval']['max_ms'] == 60
+    assert out['header_interval']['max_ms'] == 57
+    event = out['gap_events'][0]
+    assert event['message_index'] == 2
+    assert event['previous_receipt_epoch_ns'] == 9_000_000_000
+    assert event['receipt_epoch_ns'] == 8_000_000_000
+    assert event['receipt_delta_ns'] == 60_000_000
+    assert out['max_receipt_context'] == event
+
+
+def test_events_bounded_but_maximum_not_lost_on_overflow():
+    counter = MessageIntervals(capacity=1, event_capacity=1, event_threshold_ns=20)
+    for stamp in (0, 20, 50, 90):
+        counter.observe(stamp, stamp)
+    out = counter.summary()
+    assert out['gap_events_total'] == 2
+    assert out['gap_events_dropped'] == 1
+    assert len(out['gap_events']) == 1
+    assert out['max_header_context']['header_delta_ns'] == 40
+    assert out['max_receipt_context']['receipt_epoch_ns'] is None
+    assert out['intervals_dropped'] == 2
+
+
+@pytest.mark.parametrize('options', [dict(event_capacity=0), dict(event_threshold_ns=0)])
+def test_invalid_event_limits(options):
+    with pytest.raises(ValueError):
+        MessageIntervals(**options)

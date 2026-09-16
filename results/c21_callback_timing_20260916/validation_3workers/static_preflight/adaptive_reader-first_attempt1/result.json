@@ -1,0 +1,175 @@
+{
+  "valid": true,
+  "command": [
+    "/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_adaptive_node",
+    "--ros-args",
+    "-p",
+    "drone_config:=seed1.yaml",
+    "-p",
+    "super_config:=static_seedmaps_guard_viability_tight_v7_event_recovery_v1.yaml",
+    "-p",
+    "filter_arguments:=adaptive;45;--stats-json;/root/super-sector-filter/results/c21_callback_timing_20260916/validation_3workers/static_preflight/adaptive_reader-first_attempt1/frontend_stats.json;--event-recovery;--full-refresh-generation-ack;--reliable-output;--replan-fail-streak-open;3;--max-publish-hz;0;--full-open-extra-max-points;0;--trajectory-guard-hold-s;0;--map-commit-refresh-age-s;0;--map-commit-pre-stale-full-age-s;0;--sensor-acquisition;--near-field-radius-m;0;--near-field-speed-gain-s;0;--near-field-max-radius-m;0"
+  ],
+  "ros_domain_id": "190",
+  "no_fsm": false,
+  "composition": "adaptive",
+  "fixture_publishes_no_goals_or_commands": true,
+  "poll_ms": 1,
+  "two_phase": false,
+  "durable": true,
+  "latched_once": true,
+  "reader_qos": "durable",
+  "sequence": "reader-first",
+  "expected_sha256": "b3064409563b3d41cdc5f982a058b2df7a776627cae7cf367086176bccd6439f",
+  "phases": [
+    "one_shot_geometry_published",
+    "reader_first_static_geometry",
+    "reader_first_steady_no_republish",
+    "subscriber_1_to_2",
+    "subscriber_2_to_1_retained_without_republish",
+    "subscriber_1_to_0_to_1"
+  ],
+  "effective_poll_ms": 0,
+  "publisher_actual_qos": {
+    "reliability": "reliable",
+    "durability": "transient_local",
+    "history": "keep_last",
+    "depth": 1
+  },
+  "offered_qos": {
+    "reliability": 1,
+    "durability": 1,
+    "history": 3,
+    "depth": 0
+  },
+  "graph_qos_verified": {
+    "reliability": true,
+    "durability": true,
+    "history": false,
+    "depth": false
+  },
+  "latched_geometry_stamp_ns": 1789554250916375998,
+  "geometry_sha256": "b3064409563b3d41cdc5f982a058b2df7a776627cae7cf367086176bccd6439f",
+  "geometry_layout": {
+    "width": 241490,
+    "height": 1,
+    "point_step": 32,
+    "row_step": 7727680,
+    "is_bigendian": false,
+    "is_dense": true,
+    "fields": [
+      {
+        "name": "x",
+        "offset": 0,
+        "datatype": 7,
+        "count": 1
+      },
+      {
+        "name": "y",
+        "offset": 4,
+        "datatype": 7,
+        "count": 1
+      },
+      {
+        "name": "z",
+        "offset": 8,
+        "datatype": 7,
+        "count": 1
+      },
+      {
+        "name": "intensity",
+        "offset": 16,
+        "datatype": 7,
+        "count": 1
+      }
+    ]
+  },
+  "geometry_validated_clouds": 3,
+  "reader_first_geometry_valid": true,
+  "reader_first_geometry_sha256": "b3064409563b3d41cdc5f982a058b2df7a776627cae7cf367086176bccd6439f",
+  "clouds": {
+    "first": [
+      {
+        "elapsed_s": 3.6607600268907845,
+        "points": 241490,
+        "point_step": 32,
+        "bytes": 7727680,
+        "frame": "world",
+        "sha256": "b3064409563b3d41cdc5f982a058b2df7a776627cae7cf367086176bccd6439f",
+        "stamp_ns": 1789554250916375998
+      }
+    ],
+    "second": [
+      {
+        "elapsed_s": 9.019899365957826,
+        "points": 241490,
+        "point_step": 32,
+        "bytes": 7727680,
+        "frame": "world",
+        "sha256": "b3064409563b3d41cdc5f982a058b2df7a776627cae7cf367086176bccd6439f",
+        "stamp_ns": 1789554250916375998
+      }
+    ],
+    "reconnected": [
+      {
+        "elapsed_s": 10.290755826979876,
+        "points": 241490,
+        "point_step": 32,
+        "bytes": 7727680,
+        "frame": "world",
+        "sha256": "b3064409563b3d41cdc5f982a058b2df7a776627cae7cf367086176bccd6439f",
+        "stamp_ns": 1789554250916375998
+      }
+    ]
+  },
+  "bootstrap_publications": null,
+  "publication_records": [],
+  "sensor_cadence_hz": [
+    10.005681,
+    10.003528
+  ],
+  "scope": "No-goal static-map transport smoke; no flight/performance claim",
+  "elapsed_s": 14.962969762040302,
+  "no_flight_observation": {
+    "command_messages": 0,
+    "odom_messages": 1102,
+    "initial_position": [
+      0.0,
+      0.0,
+      1.5
+    ],
+    "max_position_delta_m": 0.0,
+    "first_odom_receipt_ns": 1066086807123976,
+    "last_odom_receipt_ns": 1066097813299387
+  },
+  "simulator_exit_code": 0,
+  "exact_child_reaped": true,
+  "latched_once_audit": {
+    "valid": true,
+    "checks": {
+      "complete_geometry": true,
+      "exact_sha256": true,
+      "all_readers_same_stamp": true,
+      "publication_count_one": true,
+      "no_static_timers": true,
+      "no_static_poll_callbacks": true,
+      "cumulative_summaries_steady_at_least5s": true
+    },
+    "initial": {
+      "publications": 1,
+      "points": 241490,
+      "bytes": 7727680,
+      "stamp_ns": 1789554250916375998,
+      "timers_created": 0,
+      "poll_callbacks": 0
+    },
+    "publication_count": 1,
+    "summary_count": 3,
+    "observation_before_shutdown_s": 11.006778985029086,
+    "steady_summary_span_s": 6.019476381,
+    "one_publication": true,
+    "no_static_timers": true,
+    "no_static_poll_callbacks": true,
+    "all_readers_same_stamp": true
+  }
+}
