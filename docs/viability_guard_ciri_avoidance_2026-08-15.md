@@ -5830,3 +5830,25 @@ One pre-launch runner path-resolution failure and one test-only QWidget capture
 limitation are retained and documented separately; neither is a flight failure.
 Next: align profiling/accounting windows and attribute map/snapshot plus common
 executor costs; preserve safety/cadence. Full details in CPU40 document.
+
+2026-09-16 C19 follow-up: aligned-window accounting with conservative boundaries,
+then an optional common clearance-gate-first short circuit in Exp+Backup. No
+objective/gradient/tolerance or safety/cadence change. A separate old Backup
+uninitialized diagnostic pair was initialized to zero; in mixed-weight configs
+this also removes undefined rejection behavior, so repaired-OFF is the test
+baseline, not historical undefined output. O3 and ASan/UBSan each pass1792
+evaluations/arm,131712 output comparisons and672 disabled-diagnostic checks.
+109Python tests,25.1s release build, six fresh transport arms and actual RViz
+late/reconnect pass. Additive raw CPU/read timestamps leave existing accounting
+formulas/read counts intact; preserve C18 originals and all current raw evidence.
+
+run9320: Full37.61s/.525725cores/20.700615core-s; Adaptive39.00s/.358067cores/
+14.483161core-s. Each1/1complete/contact0, all auditsPASS, no retries.
+Mean31.8908%, cumulative30.0351%;40%unmet, no unprofiled or broad campaign.
+Full/A main+command≈100.0024/100.0016Hz; source10Hz andodom100Hz retained.
+Adaptive1recovery closes on fresh Full frame16/mapACK16/certifiedmap29/gen2→3,
+no outstanding cycles. F33/A32goal repeats coalesced; zero-poll static thread
+remains included. Improvement of0.44percentage points vsC18 is not isolated
+causality/repeatability; mixed-corpus9.42% is not whole-flight savings. Preserve
+defaultOFF and Normal data. Next requires actual remaining ROS/frontend/common
+cost attribution, not more ungrounded scalar tuning or weakened safety.

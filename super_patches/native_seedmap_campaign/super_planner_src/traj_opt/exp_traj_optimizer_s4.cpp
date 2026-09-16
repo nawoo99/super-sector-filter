@@ -23,6 +23,7 @@
 
 #include <traj_opt/exp_traj_optimizer_s4.h>
 #include <traj_opt/passage_centering.hpp>
+#include <traj_opt/clearance_gate_policy.hpp>
 #include <utils/header/optimizer_phase_memory.hpp>
 #include <utils/optimization/lbfgs.h>
 #include <ros_interface/ros_interface.hpp>
@@ -98,6 +99,8 @@ void ExpTrajOpt::constraintsFunctional(const VecDf &T,
 
     const auto &piece_num = T.size();
 
+    const bool clearance_gate_first = clearance_gate_policy::enabled();
+    bool clearance_zero_gate_skipped = false;
     const double integralFrac = 1.0 / integralResolution;
     VecDf max_pena(8);
     max_pena.setZero();
@@ -155,42 +158,50 @@ void ExpTrajOpt::constraintsFunctional(const VecDf &T,
             if (weightClr > 0.0 && clearanceMargin > 0.0 && K > 0) {
                 double nearestViola = -std::numeric_limits<double>::infinity();
                 Vec3f nearestNormal = Vec3f::Zero();
-                for (int k = 0; k < K; ++k) {
-                    const Vec3f outerNormal =
-                            hPolys[L].block<1, 3>(k, 0);
-                    const double normalNorm = outerNormal.norm();
-                    if (normalNorm <= 1.0e-9) {
-                        continue;
-                    }
-                    const double violaClr =
-                            (outerNormal.dot(pos) + hPolys[L](k, 3)) /
-                            normalNorm + clearanceMargin;
-                    if (violaClr > nearestViola) {
-                        nearestViola = violaClr;
-                        nearestNormal = outerNormal / normalNorm;
-                    }
-                }
                 double clearanceGate = 1.0;
                 Vec3f clearanceGateGradVel = Vec3f::Zero();
-                if (clearanceSpeedGate > 0.0) {
-                    const double lowSqr = clearanceSpeedGate * clearanceSpeedGate;
-                    const double highSpeed = clearanceSpeedGate +
-                            std::max(0.0, clearanceSpeedTransition);
-                    const double highSqr = highSpeed * highSpeed;
-                    const double speedSqr = vel.squaredNorm();
-                    if (speedSqr >= highSqr) {
-                        clearanceGate = 0.0;
-                    } else if (speedSqr > lowSqr && highSqr > lowSqr) {
-                        const double t = (highSqr - speedSqr) /
-                                (highSqr - lowSqr);
-                        clearanceGate = t * t * (3.0 - 2.0 * t);
-                        const double dGateDSpeedSqr =
-                                -6.0 * t * (1.0 - t) /
-                                (highSqr - lowSqr);
-                        clearanceGateGradVel =
-                                2.0 * dGateDSpeedSqr * vel;
+                const auto compute_clearance_gate = [&]() {
+                    if (clearanceSpeedGate > 0.0) {
+                        const double lowSqr = clearanceSpeedGate * clearanceSpeedGate;
+                        const double highSpeed = clearanceSpeedGate +
+                                std::max(0.0, clearanceSpeedTransition);
+                        const double highSqr = highSpeed * highSpeed;
+                        const double speedSqr = vel.squaredNorm();
+                        if (speedSqr >= highSqr) {
+                            clearanceGate = 0.0;
+                        } else if (speedSqr > lowSqr && highSqr > lowSqr) {
+                            const double t = (highSqr - speedSqr) /
+                                    (highSqr - lowSqr);
+                            clearanceGate = t * t * (3.0 - 2.0 * t);
+                            const double dGateDSpeedSqr =
+                                    -6.0 * t * (1.0 - t) /
+                                    (highSqr - lowSqr);
+                            clearanceGateGradVel =
+                                    2.0 * dGateDSpeedSqr * vel;
+                        }
                     }
+                };
+                if (clearance_gate_first) compute_clearance_gate();
+                if (!clearance_gate_first || clearanceGate > 0.0) {
+                    for (int k = 0; k < K; ++k) {
+                        const Vec3f outerNormal =
+                                hPolys[L].block<1, 3>(k, 0);
+                        const double normalNorm = outerNormal.norm();
+                        if (normalNorm <= 1.0e-9) {
+                            continue;
+                        }
+                        const double violaClr =
+                                (outerNormal.dot(pos) + hPolys[L](k, 3)) /
+                                normalNorm + clearanceMargin;
+                        if (violaClr > nearestViola) {
+                            nearestViola = violaClr;
+                            nearestNormal = outerNormal / normalNorm;
+                        }
+                    }
+                } else if (clearanceGate == 0.0) {
+                    clearance_zero_gate_skipped = true;
                 }
+                if (!clearance_gate_first) compute_clearance_gate();
                 double violaClrPena, violaClrPenaD;
                 if (clearanceGate > 0.0 &&
                     gcopter::smoothedL1(nearestViola, smoothFactor,
@@ -328,6 +339,8 @@ void ExpTrajOpt::constraintsFunctional(const VecDf &T,
 
     /* 3) log all violations */
     pena_log.tail(7) = max_pena.tail(7);
+    if (clearance_zero_gate_skipped)
+        clearance_gate_policy::reportSkipOnce<clearance_gate_policy::Optimizer::Exp>();
 }
 
 
@@ -979,6 +992,8 @@ void ExpTrajOpt::logPassageBalance(
 ExpTrajOpt::ExpTrajOpt(const traj_opt::Config &cfg, const ros_interface::RosInterface::Ptr &ros_ptr) :
         cfg_(cfg),
         ros_ptr_(ros_ptr) {
+    ros_ptr_->info("[OPT_CLEARANCE_GATE_FIRST] optimizer=exp enabled={} objective_unchanged=1",
+                   static_cast<int>(clearance_gate_policy::enabled()));
     /// Use time as log file name
     //    auto now = std::chrono::system_clock::now();
     //    std::time_t t = std::chrono::system_clock::to_time_t(now);

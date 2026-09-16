@@ -23,6 +23,7 @@
 
 #include <traj_opt/backup_traj_optimizer_s4.h>
 #include <traj_opt/passage_centering.hpp>
+#include <traj_opt/clearance_gate_policy.hpp>
 #include <utils/header/color_msg_utils.hpp>
 #include <utils/header/optimizer_phase_memory.hpp>
 
@@ -99,11 +100,16 @@ void BackupTrajOpt::constraintsFunctional(const Eigen::VectorXd &T,
     Eigen::Matrix<double, 8, 1> beta0, beta1, beta2, beta3, beta4;
     Eigen::Vector3d outerNormal;
 
-    double violaPos, violaVel, violaAcc, violaJer, violaOmg, violaThrust;
+    // Diagnostic baseline repair: disabled attitude/thrust penalties still
+    // reach the max-violation log below. Never read uninitialized values there.
+    // The active flatness branch overwrites both before use, as before.
+    double violaPos, violaVel, violaAcc, violaJer, violaOmg{0.0}, violaThrust{0.0};
     double violaPosPenaD, violaVelPenaD, violaAccPenaD, violaJerPenaD, violaOmgPenaD, violaThrustPenaD;
     double violaPosPena, violaVelPena, violaAccPena, violaJerPena, violaOmgPena, violaThrustPena;
     double node, pena;
     const auto pieceNum = T.size();
+    const bool clearance_gate_first = clearance_gate_policy::enabled();
+    bool clearance_zero_gate_skipped = false;
     const double integralFrac = 1.0 / integralResolution;
     double pos_penna_log = 0.0;
     double max_pos_viola_log = 0.0;
@@ -173,43 +179,51 @@ void BackupTrajOpt::constraintsFunctional(const Eigen::VectorXd &T,
             if (weightClr > 0.0 && clearanceMargin > 0.0 && K > 0) {
                 double nearestViola = -std::numeric_limits<double>::infinity();
                 Eigen::Vector3d nearestNormal = Eigen::Vector3d::Zero();
-                for (int k = 0; k < K; ++k) {
-                    const Eigen::Vector3d faceNormal =
-                            hPoly.block<1, 3>(k, 0);
-                    const double normalNorm = faceNormal.norm();
-                    if (normalNorm <= 1.0e-9) {
-                        continue;
-                    }
-                    const double violaClr =
-                            (faceNormal.dot(pos) + hPoly(k, 3)) /
-                            normalNorm + clearanceMargin;
-                    if (violaClr > nearestViola) {
-                        nearestViola = violaClr;
-                        nearestNormal = faceNormal / normalNorm;
-                    }
-                }
                 double clearanceGate = 1.0;
                 Eigen::Vector3d clearanceGateGradVel =
                         Eigen::Vector3d::Zero();
-                if (clearanceSpeedGate > 0.0) {
-                    const double lowSqr = clearanceSpeedGate * clearanceSpeedGate;
-                    const double highSpeed = clearanceSpeedGate +
-                            std::max(0.0, clearanceSpeedTransition);
-                    const double highSqr = highSpeed * highSpeed;
-                    const double speedSqr = vel.squaredNorm();
-                    if (speedSqr >= highSqr) {
-                        clearanceGate = 0.0;
-                    } else if (speedSqr > lowSqr && highSqr > lowSqr) {
-                        const double t = (highSqr - speedSqr) /
-                                (highSqr - lowSqr);
-                        clearanceGate = t * t * (3.0 - 2.0 * t);
-                        const double dGateDSpeedSqr =
-                                -6.0 * t * (1.0 - t) /
-                                (highSqr - lowSqr);
-                        clearanceGateGradVel =
-                                2.0 * dGateDSpeedSqr * vel;
+                const auto compute_clearance_gate = [&]() {
+                    if (clearanceSpeedGate > 0.0) {
+                        const double lowSqr = clearanceSpeedGate * clearanceSpeedGate;
+                        const double highSpeed = clearanceSpeedGate +
+                                std::max(0.0, clearanceSpeedTransition);
+                        const double highSqr = highSpeed * highSpeed;
+                        const double speedSqr = vel.squaredNorm();
+                        if (speedSqr >= highSqr) {
+                            clearanceGate = 0.0;
+                        } else if (speedSqr > lowSqr && highSqr > lowSqr) {
+                            const double t = (highSqr - speedSqr) /
+                                    (highSqr - lowSqr);
+                            clearanceGate = t * t * (3.0 - 2.0 * t);
+                            const double dGateDSpeedSqr =
+                                    -6.0 * t * (1.0 - t) /
+                                    (highSqr - lowSqr);
+                            clearanceGateGradVel =
+                                    2.0 * dGateDSpeedSqr * vel;
+                        }
                     }
+                };
+                if (clearance_gate_first) compute_clearance_gate();
+                if (!clearance_gate_first || clearanceGate > 0.0) {
+                    for (int k = 0; k < K; ++k) {
+                        const Eigen::Vector3d faceNormal =
+                                hPoly.block<1, 3>(k, 0);
+                        const double normalNorm = faceNormal.norm();
+                        if (normalNorm <= 1.0e-9) {
+                            continue;
+                        }
+                        const double violaClr =
+                                (faceNormal.dot(pos) + hPoly(k, 3)) /
+                                normalNorm + clearanceMargin;
+                        if (violaClr > nearestViola) {
+                            nearestViola = violaClr;
+                            nearestNormal = faceNormal / normalNorm;
+                        }
+                    }
+                } else if (clearanceGate == 0.0) {
+                    clearance_zero_gate_skipped = true;
                 }
+                if (!clearance_gate_first) compute_clearance_gate();
                 double violaClrPena, violaClrPenaD;
                 if (clearanceGate > 0.0 &&
                     gcopter::smoothedL1(nearestViola, smoothFactor,
@@ -336,6 +350,8 @@ void BackupTrajOpt::constraintsFunctional(const Eigen::VectorXd &T,
     pena_log(5) = 0.0;
     pena_log(6) = max_omg_viola_log;
     pena_log(7) = max_thr_viola_log;
+    if (clearance_zero_gate_skipped)
+        clearance_gate_policy::reportSkipOnce<clearance_gate_policy::Optimizer::Backup>();
 }
 
 
@@ -791,6 +807,8 @@ void BackupTrajOpt::logPassageBalance(
 
 BackupTrajOpt::BackupTrajOpt(const traj_opt::Config &cfg, const ros_interface::RosInterface::Ptr &ros_ptr)
         : cfg_(cfg), ros_ptr_(ros_ptr) {
+    ros_ptr_->info("[OPT_CLEARANCE_GATE_FIRST] optimizer=backup enabled={} objective_unchanged=1",
+                   static_cast<int>(clearance_gate_policy::enabled()));
     using namespace std;
 
     cfg_ = cfg;

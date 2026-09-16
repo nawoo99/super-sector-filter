@@ -51,6 +51,23 @@ def cpu_busy(before, after):
     return 100*(total-delta['idle']-delta['iowait'])/total
 
 
+def timed_process_iter():
+    """Bracket the existing process_iter read, without a second CPU read.
+
+    psutil fills proc.info while advancing this iterator. Timing inside the
+    ordinary for-loop body would start too late to bracket that CPU read.
+    """
+    iterator = iter(psutil.process_iter(['pid', 'name', 'create_time', 'cpu_times']))
+    while True:
+        before = time.monotonic()
+        try:
+            proc = next(iterator)
+        except StopIteration:
+            return
+        after = time.monotonic()
+        yield proc, before, after
+
+
 class GPU:
     class Util(C.Structure):
         _fields_ = [('gpu', C.c_uint), ('memory', C.c_uint)]
@@ -107,17 +124,24 @@ class Profiler:
         core_busy = [cpu_busy(a,b) for a,b in zip(self.previous_cpus, cpus)]
         groups = list(Path('/sys/fs/cgroup').glob(f'super_sector_filter_{os.getpid()}_seed1_run{RUN}_*'))
         members, counters = {}, {}
+        group_cumulative = []
         for group in groups:
             try:
+                read_before = time.monotonic()
                 counters[str(group)] = search.campaign.read_cpu_usage_usec(str(group))
+                read_after = time.monotonic()
+                group_cumulative.append(dict(
+                    path=str(group), usage_usec=counters[str(group)],
+                    read_monotonic_start_s=read_before,
+                    read_monotonic_end_s=read_after))
                 for p in group.rglob('cgroup.procs'):
                     for text in p.read_text().split():
                         members[int(text)] = p.parent.name
             except FileNotFoundError:
                 continue
         procs, threads = {}, {}
-        process_values, thread_values = [], []
-        for proc in psutil.process_iter(['pid', 'name', 'create_time', 'cpu_times']):
+        process_values, thread_values, process_cumulative = [], [], []
+        for proc, read_before, read_after in timed_process_iter():
             try:
                 v = proc.info
                 key = (v['pid'], v['create_time'])
@@ -128,11 +152,21 @@ class Profiler:
                 pct = None if previous is None else max(0., seconds-previous)/dt*100
                 procs[key] = seconds
                 item = dict(pid=v['pid'], name=v['name'], cpu_pct_one_core=pct,
-                            scope=members.get(v['pid'], 'outside_experiment'))
+                            scope=members.get(v['pid'], 'outside_experiment'),
+                            create_time=v['create_time'],
+                            cpu_user_s=v['cpu_times'].user,
+                            cpu_system_s=v['cpu_times'].system,
+                            cpu_total_s=seconds,
+                            read_monotonic_start_s=read_before,
+                            read_monotonic_end_s=read_after)
                 if pct is not None:
                     process_values.append(item)
                 if v['pid'] not in members:
                     continue
+                # Include first observations even though the legacy percentage
+                # list correctly omits them until a previous reading exists.
+                process_cumulative.append({k: value for k, value in item.items()
+                                           if k != 'cpu_pct_one_core'})
                 for t in proc.threads():
                     tk = (v['pid'], v['create_time'], t.id)
                     seconds_t = t.user_time+t.system_time
@@ -162,6 +196,9 @@ class Profiler:
             host_cpu_pct=st.mean(core_busy), host_per_logical_cpu_pct=core_busy,
             cgroup_paths=list(counters), cgroup_interval_cores=group_cores if group_valid else None,
             experiment_processes=scope, experiment_threads=thread_values,
+            raw_cpu_counters_version=1,
+            cgroup_cpu_cumulative=group_cumulative,
+            experiment_process_cumulative=process_cumulative,
             experiment_proc_sum_cores=sum(p['cpu_pct_one_core'] for p in scope)/100,
             visible_process_top10=sorted(process_values, key=lambda p:p['cpu_pct_one_core'], reverse=True)[:10],
             available_memory_mib=psutil.virtual_memory().available/2**20,

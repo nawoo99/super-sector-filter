@@ -78,7 +78,7 @@ SMALL_POOL_MATCH_FIELDS = (
     'dedicated_static_pc_executor', 'headless_parameter_services', 'static_pc_durable',
     'frontend_dedicated_executor', 'effective_frontend_executor', 'static_pc_cached_executor',
     'static_pc_latched_once', 'static_latched_preflight_sha256',
-    'optimizer_phase_memory_trace', 'time_reference_folder',
+    'optimizer_phase_memory_trace', 'optimizer_clearance_gate_first', 'time_reference_folder',
     'max_same_mode_reference_time_ratio', 'max_mission_time_ratio',
     'logical_cpus', 'frozen_normal_sha256')
 
@@ -160,6 +160,9 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
         checks[mode + '_static_cached_executor'] = (
             not plan.get('static_pc_cached_executor') or
             row.get('static_cached_executor_audit', {}).get('valid') is True)
+        checks[mode + '_optimizer_clearance_gate_first'] = (
+            not plan.get('optimizer_clearance_gate_first') or
+            row.get('optimizer_clearance_gate_audit', {}).get('valid') is True)
     ftime = summaries.get('full', {}).get('mission_time_s')
     atime = summaries.get('adaptive', {}).get('mission_time_s')
     checks['paired_mission_time'] = (
@@ -462,6 +465,29 @@ def static_latched_audit(stack, profile=None):
                 scope='No static timer/poll; retained executor CPU remains in total; separate bound delivery preflight required')
 
 
+def optimizer_clearance_gate_audit(stack, enabled):
+    """Require both actual optimizer settings and exercised zero-gate branches.
+
+    This verifies code-path coverage, not numerical equivalence or safety;
+    those require the separate production-bound corpus and flight guards.
+    """
+    settings = re.findall(
+        r'\[OPT_CLEARANCE_GATE_FIRST\] optimizer=(\w+) enabled=([01]) '
+        r'objective_unchanged=([01])(?:\s|$)', stack)
+    skips = re.findall(r'\[OPT_CLEARANCE_GATE_SKIP\] optimizer=(\w+) gate=0(?:\s|$)', stack)
+    expected = {'exp', 'backup'}
+    checks = dict(
+        both_settings_once=(len(settings) == 2 and {s[0] for s in settings} == expected),
+        effective_settings=bool(settings) and all(
+            flag == str(int(enabled)) and unchanged == '1'
+            for _, flag, unchanged in settings),
+        both_zero_gate_branches=(len(skips) == 2 and set(skips) == expected)
+            if enabled else not skips)
+    return dict(valid=all(checks.values()), enabled=enabled, checks=checks,
+                settings=settings, skipped_optimizers=skips,
+                scope='One-time branch coverage; objective equivalence is tested separately')
+
+
 def comparison(results):
     modes = {r['mode']: r for r in results}
     if not {'full', 'adaptive'} <= modes.keys():
@@ -564,6 +590,8 @@ def main():
                         help='Cache executable entities only in existing static-PC executor, preserving legacy 1ms timer and QoS')
     parser.add_argument('--no-optimizer-phase-memory-trace', action='store_true',
                         help='Disable per-solve diagnostic /proc reads and logs equally in both modes; retain external resource guards')
+    parser.add_argument('--optimizer-clearance-gate-first', action='store_true',
+                        help='Skip only an unused nearest-face calculation when its existing speed gate is zero; common to both optimizers/modes')
     parser.add_argument('--time-reference-folder', type=Path,
                         help='Predeclare same-mode <=1.10 mission-time guard and CPU reference')
     parser.add_argument('--small-pool-profile-reference', type=Path,
@@ -672,6 +700,8 @@ def main():
         '1' if args.dedicated_static_pc_executor else '0')
     os.environ['SUPER_OPTIMIZER_PHASE_MEMORY_TRACE'] = (
         '0' if args.no_optimizer_phase_memory_trace else '1')
+    os.environ['SUPER_OPT_CLEARANCE_GATE_FIRST'] = (
+        '1' if args.optimizer_clearance_gate_first else '0')
     runtime = Path('/root/super_ws/src/SUPER')
     profiles = {'full': args.full_config, 'sector': args.sector_config,
                 'adaptive': args.adaptive_config}
@@ -693,6 +723,7 @@ def main():
                   Path('/root/super_ws/install/super_planner/lib/libsuper.a'),
                   Path(recovery_audit.__file__).resolve(),
                   Path(stage_profile.__file__).resolve(),
+                  Path(diagnostic.__file__).resolve(),
                   Path(__file__).resolve().with_name('native_loop_monitor.py'),
                   Path(__file__).resolve().with_name('message_intervals.py'),
                   Path(__file__).resolve()})
@@ -704,6 +735,10 @@ def main():
         files.add(runtime / 'rog_map/include/rog_map/snapshot_line_query.hpp')
     if args.snapshot_neighbor_cache:
         files.add(runtime / 'rog_map/include/rog_map/snapshot_neighborhood_cache.hpp')
+    if args.optimizer_clearance_gate_first:
+        files.update({runtime / 'super_planner/include/traj_opt/clearance_gate_policy.hpp',
+                      runtime / 'super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp',
+                      runtime / 'super_planner/src/traj_opt/backup_traj_optimizer_s4.cpp'})
     hashes = {str(p): event.sha(p) for p in sorted(files)}
     frozen_policy = diagnostic.search.frozen_policy()
     diagnostic.RUN = args.run
@@ -747,6 +782,7 @@ def main():
         dedicated_static_pc_executor=args.dedicated_static_pc_executor,
         static_pc_cached_executor=args.static_pc_cached_executor,
         optimizer_phase_memory_trace=not args.no_optimizer_phase_memory_trace,
+        optimizer_clearance_gate_first=args.optimizer_clearance_gate_first,
         time_reference_folder=str(args.time_reference_folder) if args.time_reference_folder else None,
         max_same_mode_reference_time_ratio=1.10 if references else None,
         effective_run_options=effective_options,
@@ -811,6 +847,13 @@ def main():
                 result['source_acquisition']['checks']['optimizer_phase_trace_setting'] = (
                     row.get('optimizer_phase_trace_enabled') is
                     (not args.no_optimizer_phase_memory_trace))
+                # Older binaries predate this marker. Once present, check OFF
+                # as well as ON; an accidental opt-in must not become control.
+                if args.optimizer_clearance_gate_first or '[OPT_CLEARANCE_GATE_FIRST]' in stack:
+                    result['optimizer_clearance_gate_audit'] = optimizer_clearance_gate_audit(
+                        stack, args.optimizer_clearance_gate_first)
+                    result['source_acquisition']['checks']['optimizer_clearance_gate_first'] = (
+                        result['optimizer_clearance_gate_audit']['valid'])
                 result['source_acquisition']['checks']['static_pc_poll_setting'] = (
                     f'[STATIC_PC_POLL_SETTINGS] poll_ms={0 if args.static_pc_latched_once else args.static_pc_poll_ms} '
                     f'bootstrap_once={int(args.static_pc_latched_once or args.static_pc_poll_ms == 100)}' in stack)

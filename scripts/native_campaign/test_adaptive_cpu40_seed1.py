@@ -6,9 +6,37 @@ from adaptive_cpu40_seed1 import (SMALL_POOL_MATCH_FIELDS, comparison,
                                  static_two_phase_audit, goal_identity_audit,
                                  headless_parameter_audit, frontend_executor_audit,
                                  static_cached_executor_audit, static_latched_audit,
-                                 latched_preflight_asset_paths)
+                                 latched_preflight_asset_paths, optimizer_clearance_gate_audit)
 from pathlib import Path
 import static_latched_preflight
+
+
+def test_clearance_gate_audit_requires_both_settings_and_real_branch_coverage():
+    settings = ''.join(f'[OPT_CLEARANCE_GATE_FIRST] optimizer={kind} enabled=1 objective_unchanged=1\n'
+                       for kind in ('exp', 'backup'))
+    skips = ''.join(f'[OPT_CLEARANCE_GATE_SKIP] optimizer={kind} gate=0\n'
+                    for kind in ('exp', 'backup'))
+    assert optimizer_clearance_gate_audit(settings + skips, True)['valid']
+    assert optimizer_clearance_gate_audit(settings.replace('enabled=1', 'enabled=0'), False)['valid']
+    for text in ('', settings, settings + skips + skips,
+                 (settings + skips).replace('optimizer=backup', 'optimizer=exp'),
+                 (settings + skips).replace('enabled=1', 'enabled=0'),
+                 (settings + skips).replace('objective_unchanged=1', 'objective_unchanged=0'),
+                 (settings + skips).replace('objective_unchanged=1', 'objective_unchanged=10'),
+                 (settings + skips).replace('gate=0\n', 'gate=0junk\n')):
+        assert not optimizer_clearance_gate_audit(text, True)['valid']
+    assert not optimizer_clearance_gate_audit(settings + skips, False)['valid']
+
+
+def test_clearance_gate_profile_reference_requires_both_runtime_audits():
+    plan, reference, summaries = profile_reference_fixture()
+    plan['optimizer_clearance_gate_first'] = reference['optimizer_clearance_gate_first'] = True
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+    for row in summaries.values():
+        row['optimizer_clearance_gate_audit'] = dict(valid=True)
+    assert small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+    reference['optimizer_clearance_gate_first'] = False
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
 
 
 def test_latched_asset_inventory_resolves_binding_names_to_absolute_paths():

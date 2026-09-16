@@ -1,0 +1,43 @@
+Starting >>> super_planner
+--- stderr: super_planner
+** WARNING ** io features related to pcap will be disabled
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/backup_traj_optimizer_s4.cpp: In member function ‘double traj_opt::BackupTrajOpt::optimize(geometry_utils::Trajectory&, const double&)’:
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/backup_traj_optimizer_s4.cpp:568:27: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  568 |         for (int i = 0; i < opt_vars.given_init_ps.size(); i++) {
+      |                         ~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp: In member function ‘bool traj_opt::ExpTrajOpt::processCorridorWithGuideTraj()’:
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp:587:23: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  587 |     for (int i = 0; i < opt_vars.guide_path.size(); i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp: In member function ‘bool traj_opt::ExpTrajOpt::setInitPsAndTs(const vec_Vec3f&, const std::vector<double>&)’:
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp:711:31: warning: comparison of integer expressions of different signedness: ‘Eigen::EigenBase<Eigen::Matrix<double, -1, 1> >::Index’ {aka ‘long int’} and ‘std::vector<double>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  711 |     if (opt_vars.times.size() != init_ts.size()) {
+      |         ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp:714:32: warning: comparison of integer expressions of different signedness: ‘Eigen::Index’ {aka ‘long int’} and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  714 |     if (opt_vars.points.cols() != init_ps.size()) {
+      |         ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp: In member function ‘double traj_opt::ExpTrajOpt::optimize(geometry_utils::Trajectory&, const double&)’:
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp:750:27: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  750 |         for (int i = 0; i < opt_vars.init_ps.size(); i++) {
+      |                         ~~^~~~~~~~~~~~~~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp: In member function ‘bool traj_opt::ExpTrajOpt::optimize(const StatePVAJ&, const StatePVAJ&, super_utils::vec_E<Eigen::Matrix<double, 3, 1> >&, const std::vector<double>&, geometry_utils::PolytopeVec&, geometry_utils::Trajectory&)’:
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp:1145:24: warning: comparison of integer expressions of different signedness: ‘long int’ and ‘std::vector<geometry_utils::Polytope>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1145 |     for (long i = 0; i < sfcs.size(); i++) {
+      |                      ~~^~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp:1191:28: warning: comparison of integer expressions of different signedness: ‘long int’ and ‘std::vector<geometry_utils::Polytope>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1191 |         for (long i = 0; i < sfcs.size(); i++) {
+      |                          ~~^~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp: In member function ‘bool traj_opt::ExpTrajOpt::optimize(const StatePVAJ&, const StatePVAJ&, geometry_utils::PolytopeVec&, const vec_Vec3f&, const VecDf&, geometry_utils::Trajectory&)’:
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp:1249:24: warning: comparison of integer expressions of different signedness: ‘long int’ and ‘std::vector<geometry_utils::Polytope>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1249 |     for (long i = 0; i < sfcs.size(); i++) {
+      |                      ~~^~~~~~~~~~~~~
+/root/super_ws/src/SUPER/super_planner/src/traj_opt/exp_traj_optimizer_s4.cpp:1294:28: warning: comparison of integer expressions of different signedness: ‘long int’ and ‘std::vector<geometry_utils::Polytope>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1294 |         for (long i = 0; i < sfcs.size(); i++) {
+      |                          ~~^~~~~~~~~~~~~
+---
+Finished <<< super_planner [18.2s]
+Starting >>> perfect_drone_sim
+Finished <<< perfect_drone_sim [6.71s]
+
+Summary: 2 packages finished [25.1s]
+  1 package had stderr output: super_planner

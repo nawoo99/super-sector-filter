@@ -1049,3 +1049,121 @@ Evidence: final candidate folder, `static_latched_preflight/acceptance.json`,
 `c18_profile_analysis.log`, `executor_preflight/c18_timing.json`, and the three
 static-latched preflight directories. C18 is a validated exploratory interface
 option, not a frozen production-profile change or a40%-saving result.
+
+### Candidate19 prospective contract: inactive clearance-term short circuit
+
+C18 offline accounting result (`c18_latched_static_profile_run9319/window_alignment/`):
+over the same approximately30s report windows, profiled exclusive totals are
+Full0.441002/Adaptive0.241248cores. Nominal composed-process counter bounds are
+0.477664–0.514997 /0.307127–0.330445; allowing unknown read time until the next
+sampling pass widens them to0.458331–0.534664 /0.298133–0.344769. Do not interpret
+the stage-subtracted remainder as pure waste or a strict physical uninstrumented
+CPU bound: active scopes are charged at completion and report fields are loaded
+individually. No boundary interpolation or guessed absolute cgroup CSV origin.
+Map+snapshot totals0.281690/0.119595cores are already input-sensitive, whereas
+EXP+BACK optimization0.055763/0.050730cores is mostly common. The new read-only
+analysis and15 initial unit tests preserve all original C18 artifacts.
+
+Following the user's approval to continue, first audit C18 accounting over the
+same report window, retaining sampling-boundary and completion-counter caveats.
+Do not subtract whole-flight totals from inner-window stages as exact overhead.
+Map updates are the largest cost but mostly input-dependent; accelerating them
+can save Full more than Adaptive. Prefer a bounded common redundant calculation.
+
+Both trajectory optimizers currently scan every SFC face for the soft clearance
+term before computing its speed gate. In the active profiles the gate is exactly
+zero at speeds >=2m/s (1.5m/s threshold plus0.5m/s transition). The resulting
+nearest-face values are then unused. New default-off opt-in
+`SUPER_OPT_CLEARANCE_GATE_FIRST=1` evaluates the existing gate first and skips
+only this unused nearest-face scan. Keep the objective, gradient accumulation,
+position/passage penalties, solver tolerances/iterations, collision checks and
+all input/control cadences unchanged. Apply identically to Full and Adaptive.
+No change to source geometry, v7, loop24 or frozen Normal results.
+
+Require production-bound differential tests of costs/gradients/diagnostics,
+including active/zero/disabled gates, threshold boundaries and invalid inputs,
+before a single-job release build. Since composed executable hashes change,
+renew the six static-map transport arms and actual RViz reader evidence in a
+new C19 manifest; do not relabel C18's old bindings. Then run seed1 Full and
+Adaptive once each (run9320), C18 options plus this one opt-in, with the same
+C5 time and paired-time gates and complete cgroup accounting. Retain every
+failure; no automatic retries. Only a valid profiled >=40% result triggers
+matching unprofiled confirmation. This small optimization is not a promise
+that the40% objective will be reached.
+
+Pre-flight test inspection also found a pre-existing diagnostic bug in Backup:
+`violaOmg` and `violaThrust` were uninitialized when their constraints were
+disabled, yet always read into penalty-log slots6/7. Repair those diagnostic
+initial values to zero separately from the optional short circuit, in both
+OFF/ON paths. Do not claim bit-equivalence to historical undefined log values.
+The cost/gradient arithmetic is unchanged. In the current profiles both
+attitude/thrust weights are negative, so these diagnostic slots do not affect
+final acceptance. In other configurations with exactly one positive weight,
+the old undefined slot could also affect optimizer rejection; zero-initializing
+it repairs that undefined behavior, not a promise of universal historical
+behavior preservation. Differential tests include these mixed-weight cases
+against the repaired baseline and compare all defined outputs, including
+the formerly undefined disabled-constraint logs. C19 is therefore one optional
+performance change plus this disclosed diagnostic correctness repair.
+
+C19 preflight: production-extracted optimized and ASan/UBSan corpora each pass
+on the first attempt:896 input cases times2 optimizers per OFF/ON arm,
+131712 output doubles, all cost/gradient/penalty-log fields compared. Each
+build's complete OFF/ON binary output is identical; NaN-class checks are stated
+separately, not a cross-compiler NaN-payload guarantee.672 disabled-flatness
+zero-log checks pass, including mixed weights. A small alternating constraints
+microbenchmark reports9.42% CPU reduction; it is not end-to-end flight evidence.
+Release single-job build succeeds in25.1s. All six new static transport arms and
+actual RViz late/reconnect (render target visually inspected) pass; new binding
+manifest is `c19_static_latched_preflight/acceptance.json`.
+
+The external observer now additionally saves raw cumulative CPU, the actual
+brackets around its existing reads, and process creation identity. Existing
+percentage/summary arithmetic, read count, sampling rate and cgroup scope are
+unchanged. The offline analyzer uses these fields without interpolating and
+rejects reset/missing/reused-PID evidence instead of falling back to clipped
+percentages. C18 fallback reproduces80 earlier numerical bound/chain fields;
+its original files remain untouched.109 focused Python tests pass before flight.
+
+### C19 result (run9320; 2026-09-16)
+
+One attempt per mode, no retries. All source/recovery, resource, speed, C5 time,
+paired-time, callback/odom cadence, static delivery, identity and actual
+optimizer-branch audits PASS. Default opt-in remainsOFF.
+
+| Mode | Complete/contact | Mission s | Mean used cores | Whole20CPU % | CPU core-s |
+|---|---|---:|---:|---:|---:|
+| Full | 1/1,0 | 37.61 | 0.525725 | 2.6286 | 20.700615 |
+| Adaptive | 1/1,0 | 39.00 | 0.358067 | 1.7903 | 14.483161 |
+
+Mean reduction31.8908%, cumulative30.0351%; **40% remains unmet**.
+A/Fmission1.036958. Main/command callbacks100.0024/100.0016Hz; source10Hz,
+odom100Hz retained. Both optimizers actually exercised the gated skip in both
+modes. Adaptive's one exact Full-frame/map-ACK/new-certified-generation recovery
+closes with no outstanding cycles (frame16, ACKmap16, certifiedmap29, gen2→3).
+Goal repeats coalesced F33/A32. Retained static executor sampled0core-s in both
+modes and remains included in total CPU. Normal dataset SHA unchanged.
+
+Relative saving moved from C18's31.4506% to31.8908% (+0.4403 percentage points),
+not a demonstrated repeatable or isolated causal effect. Full mean fell2.61%
+and Adaptive mean3.24%, but mission times rose and Full cumulativeCPU actually
+rose0.10%. Distinct n1 trajectories/workloads remain confounded. The mixed
+constraints microbenchmark's9.42% reduction must NOT be presented as whole-flight
+savings. No >=40% unprofiled confirmation or broad map campaign was triggered.
+
+Same-window raw-counter analysis is in the candidate's `window_alignment/`.
+Composed-process counter bounds areF0.468408–0.501010/A0.303398–0.324024cores;
+completion-attributed exclusive stagesF0.430620/A0.241374. The difference still
+includes useful uninstrumented callbacks, ROS/DDS/profiling overhead and scope
+boundary attribution, not automatically removable waste. Map+snapshot remains
+F0.277795/A0.110890; EXP+BACK optimizationF0.056796/A0.049712cores. Small scalar
+short circuits cannot plausibly remove the remaining target gap alone.
+At fixed Full mean, Adaptive would need another0.042632core removed; an equal
+common reduction in both modes would need0.106580core. These are algebraic
+thresholds, not attainable-speedup claims. Do not hunt repeated lucky n1 runs,
+slow Full, omit processes, change angles, or lower safety/control/sensor rates.
+
+Evidence: `c19_clearance_gate_profile_run9320/`, `c19_controller.log`,
+`c19_profile_analysis.log`, `c19_window_alignment.log`,
+`clearance_gate_preflight/`, `c19_static_latched_preflight/`,
+`build_candidate19.log`. Runtime edits were mirrored; no upstream push.
