@@ -5775,3 +5775,16 @@ late/second receipt with both old/new publishers; matching Reliable/TL readers
 pass both full geometry/reconnect arms. All children cleanexit0, exactSHA. The
 publisher-only prototype remainsOFF/ineligible; do not call it a compatibility
 fix or use it to bless C13 two-phase CPU data. Raw successes AND failures saved.
+
+#### C16 dedicated frontend executor (run9317)
+
+Default-off executor isolation, actual component/lifecycle six cases PASS,
+2min simulator build and58 Python tests PASS. Full37.82s/.599322cores/
+23.788350core-s; Adaptive40.92s/.402191cores/17.264246core-s. Each1/1 complete,
+contact0; all quality/timing/source/recovery/identity gates PASS. Mean32.8923%,
+cumulative27.4256%; **40% unmet, no demonstrated improvement over C15 n1**.
+Adaptive3 exact recovery cycles; dedicated executor actualTID3003371 measured
+.014028cores, included in total. F33/A34 retransmissions coalesced. No retry.
+Next small ablation returns frontendOFF and tries cached-entity executor only
+for existing static-PC thread, retaining1ms/QoS/payload/callback behavior. No
+static/RViz interface migration is authorized by the unanswered user question.

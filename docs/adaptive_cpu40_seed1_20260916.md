@@ -796,3 +796,65 @@ CPU claim follows. Graph discovery omits history/depth here (UNKNOWN/0); those
 fields are explicitly unverified in graph evidence, while publisher's own
 get_actual_qos confirms actual settings. All raw failures are retained in
 `static_durable_preflight/ROS_FINDINGS.md` and `matrix_summary.json`.
+
+## Candidate16 prospective: dedicated frontend callback executor
+
+C15 still has an approximate extra pooled residual of0.02008cores (inferred
+pooled TIDs minus measured non-overlapping pool scopes, slightly different
+windows). Even deleting that entire budget projects only≈35.69% reduction, not
+40%; an additional executor also costs CPU. This is a bounded scheduling
+experiment, not a promised target result.
+
+Default-off `SUPER_FRONTEND_DEDICATED_EXECUTOR=1` moves the existing Adaptive
+frontend node from the shared two-worker executor to an ordinary single-threaded
+executor. Its existing default callback group already serialized callbacks.
+Callbacks, timers, QoS, latest-only cloud worker, acquisition metadata, and exact
+Full request-before-map-enqueue/ACK/close conditions stay unchanged. Full has no
+frontend and receives no dummy worker. All new thread CPU remains in the same
+experimental cgroup total; an actual in-thread role/TID marker supports diagnosis.
+
+The helper retains the node until join, handles cancel-before-spin startup,
+propagates non-shutdown exceptions, and resets executor ownership before
+simulator closures/filter cloud worker/FSM-map teardown. Independent source
+review passed; it is not a complete middleware/deadlock proof. Focused real
+component and lifecycle tests precede simulation. Existing source/control timing,
+resource/safety/time/identity gates remain, with actual new-thread coverage
+checked in profiling and a matching profiled reference for unprofiled runs.
+
+Static durable and two-phase remainOFF. A possible migration of static-map
+visualization and RViz to the successfully tested canonical reliable/durable
+interface was separately asked of the user; no response or authorization is
+assumed, and it is not part of this candidate.
+
+### Candidate16 measured result (run9317)
+
+All six first-execution real-component/lifecycle helper cases passed, including
+shared two-worker control, dedicated frontend, both ACK/close arrival orders,
+32 immediate start/stop cycles, invalid context, shutdown and injected callback
+exception. Thread-allocation failure was not dynamically injected. Runtime/mirror
+fingerprints match; simulator build passed in2min,58 focused Python tests pass.
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 37.82 | 0.599322 | 23.788350 |
+| Adaptive | 1/1,0 | 40.92 | 0.402191 | 17.264246 |
+
+Mean reduction32.8923%, cumulative27.4256%, A/Ftime1.081967. All acceptance
+checks pass; Adaptive3 exact completed recovery cycles, no outstanding cycle.
+F33/A34 retransmissions coalesced. Actual frontend executor TID3003371 measured
+0.014028cores over34.217s with full sample coverage; its CPU remains included.
+Main/command callbacks≈100Hz, odometry/source cadence gates pass. No retry.
+
+**40% unmet.** Compared with C15, this n1 result does not establish a CPU benefit
+from separating the frontend: both absolute CPU means increased, relative mean
+saving changed little, cumulative saving declined. Do not promote C16 as an
+improvement or subtract its dedicated-thread cost. Keep defaultOFF. Evidence:
+`c16_frontend_executor_profile/`, `frontend_cpu_preflight/c16_proposal/`,
+`executor_preflight/c16_timing.json`.
+
+Next proposed C17 returns to C15 settings (frontend dedicatedOFF) and substitutes
+only the existing static-PC executor class with the installed cached-entity
+StaticSingleThreadedExecutor in both modes. It must retain legacy1ms polling,
+callback body, QoS, payload, thread ownership and all other executors. This is
+independent of the unanswered static/RViz QoS migration question, not approval
+for that migration. A small overhead ablation, not a prediction of40%.

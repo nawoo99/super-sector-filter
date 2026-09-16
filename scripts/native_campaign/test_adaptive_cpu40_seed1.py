@@ -4,7 +4,7 @@ from adaptive_cpu40_seed1 import (SMALL_POOL_MATCH_FIELDS, comparison,
                                  small_pool_profile_reference_audit,
                                  DEMAND_REASONS, demand_reason_audit,
                                  static_two_phase_audit, goal_identity_audit,
-                                 headless_parameter_audit)
+                                 headless_parameter_audit, frontend_executor_audit)
 
 
 def pair():
@@ -323,4 +323,32 @@ def test_headless_profile_reference_needs_effective_setting_evidence():
     assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
     for row in summaries.values():
         row['headless_parameter_audit'] = dict(valid=True)
+    assert small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+
+
+def test_frontend_executor_cpu_is_measured_on_actual_thread_not_assumed():
+    marker = ('[FRONTEND_EXECUTOR_SETTINGS] dedicated=1 executor=single '
+              'node=native_sector_cpp existing_default_group=1 callbacks_qos_cadence_unchanged=1')
+    role = dict(role='frontend_event_executor', tids=[19], unambiguous=True,
+                mean_used_cores=.005, eligible_interval_s=20., observed_interval_s=20.)
+    profile = dict(processes=[dict(thread_roles=dict(roles=[role]))])
+    assert frontend_executor_audit(marker, profile)['valid']
+    assert frontend_executor_audit(marker)['valid']
+    assert not frontend_executor_audit(marker)['thread_cpu_measured']
+    for bad in ('', marker + marker, marker.replace('dedicated=1', 'dedicated=0')):
+        assert not frontend_executor_audit(bad, profile)['valid']
+    for key, value in [('tids', [19, 20]), ('unambiguous', False),
+                       ('mean_used_cores', float('nan')), ('mean_used_cores', None),
+                       ('eligible_interval_s', 4.), ('observed_interval_s', 17.)]:
+        changed = copy.deepcopy(profile)
+        changed['processes'][0]['thread_roles']['roles'][0][key] = value
+        assert not frontend_executor_audit(marker, changed)['valid']
+    assert not frontend_executor_audit(marker, {})['valid']
+
+
+def test_frontend_profile_reference_requires_adaptive_evidence_not_full_dummy_work():
+    plan, reference, summaries = profile_reference_fixture()
+    plan['frontend_dedicated_executor'] = reference['frontend_dedicated_executor'] = True
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+    summaries['adaptive']['frontend_executor_audit'] = dict(valid=True)
     assert small_pool_profile_reference_audit(plan, reference, summaries)['valid']

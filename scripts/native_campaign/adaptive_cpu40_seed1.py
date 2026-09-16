@@ -68,6 +68,7 @@ SMALL_POOL_MATCH_FIELDS = (
     'snapshot_neighbor_cache', 'static_pc_poll_ms', 'static_pc_two_phase', 'side_executor_threads',
     'monitor_intervals', 'guarded_demand_replan', 'extended_demand_lease', 'goal_retransmit_identity',
     'dedicated_static_pc_executor', 'headless_parameter_services', 'static_pc_durable',
+    'frontend_dedicated_executor', 'effective_frontend_executor',
     'optimizer_phase_memory_trace', 'time_reference_folder',
     'max_same_mode_reference_time_ratio', 'max_mission_time_ratio',
     'logical_cpus', 'frozen_normal_sha256')
@@ -141,6 +142,9 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
         checks[mode + '_headless_parameter_settings'] = (
             not plan.get('headless_parameter_services') or
             row.get('headless_parameter_audit', {}).get('valid') is True)
+        checks[mode + '_frontend_executor'] = (
+            not plan.get('frontend_dedicated_executor') or mode == 'full' or
+            row.get('frontend_executor_audit', {}).get('valid') is True)
     ftime = summaries.get('full', {}).get('mission_time_s')
     atime = summaries.get('adaptive', {}).get('mission_time_s')
     checks['paired_mission_time'] = (
@@ -303,6 +307,33 @@ def headless_parameter_audit(stack, mode):
                 scope='Composed nodes only; remote parameter services/events unavailable under opt-in; external mission node unchanged')
 
 
+def frontend_executor_audit(stack, profile=None):
+    marker = ('[FRONTEND_EXECUTOR_SETTINGS] dedicated=1 executor=single '
+              'node=native_sector_cpp existing_default_group=1 callbacks_qos_cadence_unchanged=1')
+    checks = dict(single_dedicated_marker=stack.count(marker) == 1,
+                  no_shared_marker='[FRONTEND_EXECUTOR_SETTINGS] dedicated=0 ' not in stack)
+    role = None
+    if profile is not None:
+        roles = [r for process in profile.get('processes', [])
+                 for r in process.get('thread_roles', {}).get('roles', [])
+                 if r.get('role') == 'frontend_event_executor']
+        checks['actual_profiled_executor_thread'] = False
+        if len(roles) == 1:
+            role = roles[0]
+            cpu = role.get('mean_used_cores')
+            eligible = role.get('eligible_interval_s', 0)
+            observed = role.get('observed_interval_s', 0)
+            checks['actual_profiled_executor_thread'] = (
+                role.get('unambiguous') is True and len(role.get('tids', [])) == 1 and
+                isinstance(cpu, (int, float)) and math.isfinite(cpu) and cpu >= 0 and
+                isinstance(eligible, (int, float)) and math.isfinite(eligible) and eligible >= 5 and
+                isinstance(observed, (int, float)) and math.isfinite(observed) and
+                .9 * eligible <= observed <= eligible + 1e-6)
+    return dict(valid=all(checks.values()), checks=checks, actual_thread=role,
+                thread_cpu_measured=profile is not None,
+                scope='Adaptive-specific executor; its CPU remains included in the experiment total, never subtracted')
+
+
 def comparison(results):
     modes = {r['mode']: r for r in results}
     if not {'full', 'adaptive'} <= modes.keys():
@@ -394,6 +425,8 @@ def main():
                         help='Paired mission creation-ID retransmission and healthy receiver coalescing')
     parser.add_argument('--headless-parameter-services', action='store_true',
                         help='Disable unused remote parameter services/events in all composed nodes; retain local startup parameters')
+    parser.add_argument('--frontend-dedicated-executor', action='store_true',
+                        help='Move existing composed frontend callbacks to one dedicated executor; Full has no frontend and gets no dummy work')
     parser.add_argument('--dedicated-static-pc-executor', action='store_true')
     parser.add_argument('--no-optimizer-phase-memory-trace', action='store_true',
                         help='Disable per-solve diagnostic /proc reads and logs equally in both modes; retain external resource guards')
@@ -419,6 +452,8 @@ def main():
         parser.error('--goal-retransmit-identity requires --guarded-demand-replan')
     if args.headless_parameter_services and not args.compose:
         parser.error('--headless-parameter-services requires --compose')
+    if args.frontend_dedicated_executor and not args.compose:
+        parser.error('--frontend-dedicated-executor requires --compose')
     if args.static_pc_two_phase and (args.static_pc_poll_ms != 1 or not args.compose):
         parser.error('--static-pc-two-phase requires --static-pc-poll-ms 1 and --compose')
     if args.side_executor_threads < 4 and not (
@@ -482,6 +517,7 @@ def main():
     os.environ['SUPER_GUARDED_DEMAND_EXTENDED_LEASE'] = '1' if args.extended_demand_lease else '0'
     os.environ['SUPER_GOAL_RETRANSMIT_IDENTITY'] = '1' if args.goal_retransmit_identity else '0'
     os.environ['SUPER_HEADLESS_PARAMETER_SERVICES'] = '1' if args.headless_parameter_services else '0'
+    os.environ['SUPER_FRONTEND_DEDICATED_EXECUTOR'] = '0'  # Set explicitly per mode below.
     os.environ['SUPER_STATIC_PC_DEDICATED_EXECUTOR'] = (
         '1' if args.dedicated_static_pc_executor else '0')
     os.environ['SUPER_OPTIMIZER_PHASE_MEMORY_TRACE'] = (
@@ -547,6 +583,9 @@ def main():
         extended_demand_lease=args.extended_demand_lease,
         goal_retransmit_identity=args.goal_retransmit_identity,
         headless_parameter_services=args.headless_parameter_services,
+        frontend_dedicated_executor=args.frontend_dedicated_executor,
+        effective_frontend_executor={mode: bool(args.frontend_dedicated_executor and mode != 'full')
+                                     for mode in args.modes},
         dedicated_static_pc_executor=args.dedicated_static_pc_executor,
         optimizer_phase_memory_trace=not args.no_optimizer_phase_memory_trace,
         time_reference_folder=str(args.time_reference_folder) if args.time_reference_folder else None,
@@ -578,6 +617,8 @@ def main():
             writer.writeheader()
             stream.flush()
             for mode in args.modes:
+                os.environ['SUPER_FRONTEND_DEDICATED_EXECUTOR'] = (
+                    '1' if args.frontend_dedicated_executor and mode != 'full' else '0')
                 profiler.mode, profiler.phase = mode, 'baseline'
                 diagnostic.save(root / 'status.json', dict(pid=os.getpid(), state='RUNNING',
                     candidate=args.candidate, mode=mode, phase='baseline'))
@@ -661,6 +702,12 @@ def main():
                     result['headless_parameter_audit'] = headless_parameter_audit(stack, mode)
                     result['source_acquisition']['checks']['headless_parameter_settings'] = (
                         result['headless_parameter_audit']['valid'])
+                if args.frontend_dedicated_executor and mode != 'full':
+                    result['frontend_dedicated_executor'] = True
+                    result['frontend_executor_audit'] = frontend_executor_audit(
+                        stack, stage_profile.summarize(root, mode, args.run) if args.profile_cpu else None)
+                    result['source_acquisition']['checks']['frontend_executor_settings'] = (
+                        result['frontend_executor_audit']['valid'])
                 if args.side_executor_threads < 4:
                     result['small_pool_timing'] = small_pool_timing_audit(
                         result.get('message_intervals', {}), row.get('sensor_hz'),

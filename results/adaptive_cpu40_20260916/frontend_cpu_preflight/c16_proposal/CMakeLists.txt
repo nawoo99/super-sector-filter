@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.16)
+project(frontend_executor_preflight LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 17)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(PCL REQUIRED)
+find_package(mission_planner REQUIRED)
+find_package(rog_map REQUIRED)
+add_executable(frontend_executor_test
+  /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/test/frontend_executor_test.cpp)
+target_include_directories(frontend_executor_test PRIVATE
+  /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/include)
+ament_target_dependencies(frontend_executor_test PUBLIC rclcpp mission_planner rog_map)
+target_link_libraries(frontend_executor_test PUBLIC mission_planner::native_sector_cpp_component)
+target_compile_options(frontend_executor_test PRIVATE -Wall -Wextra -Wpedantic)
