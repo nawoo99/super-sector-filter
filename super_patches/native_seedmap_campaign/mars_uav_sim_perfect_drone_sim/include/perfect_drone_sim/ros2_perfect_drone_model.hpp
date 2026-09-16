@@ -15,6 +15,7 @@
 #include "perfect_drone_sim/config.hpp"
 #include "perfect_drone_sim/common_execution_policy.hpp"
 #include "perfect_drone_sim/static_pc_two_phase_policy.hpp"
+#include "perfect_drone_sim/static_pc_durable_policy.hpp"
 // Only the composed Full/Adaptive targets have the shared planner profiler
 // dependency. Standalone/front-end targets retain their existing dependencies.
 #ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
@@ -249,6 +250,7 @@ namespace perfect_drone {
         std::shared_ptr<marsim::MarsimRender> render_ptr_;
         double sys_start_t;
         int static_pc_poll_ms_{1};
+        bool static_pc_durable_en_{false};
         common_execution_policy::StaticPcPolicy static_pc_policy_;
         static_pc_two_phase::Policy static_pc_two_phase_policy_;
         std::chrono::steady_clock::time_point static_pc_policy_start_;
@@ -360,6 +362,14 @@ namespace perfect_drone {
                     if (local_cloud_observer_) local_cloud_observer_(cloud);
                 };
             }
+            static_pc_poll_ms_ = common_execution_policy::parseStaticPcPollMs(
+                    std::getenv("SUPER_STATIC_PC_POLL_MS"));
+            static_pc_two_phase_policy_ = static_pc_two_phase::Policy(
+                    static_pc_two_phase::parseEnabled(
+                            std::getenv("SUPER_STATIC_PC_TWO_PHASE"), static_pc_poll_ms_));
+            static_pc_durable_en_ = static_pc_durable::parseEnabled(
+                    std::getenv("SUPER_STATIC_PC_DURABLE"), static_pc_poll_ms_,
+                    static_pc_two_phase_policy_.enabled());
             // TODO: The current implementation uses a lenient QoS configuration for message transmission.
             const rclcpp::QoS qos(rclcpp::QoS(100)
                                           .best_effort()
@@ -451,7 +461,39 @@ namespace perfect_drone {
                         "/cloud_registered", cloud_qos);
             }
 
-            global_pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/global_pc", qos);
+            if (static_pc_durable_en_) {
+                // Humble rejects TransientLocal with intra-process enabled.
+                // Disable it for static geometry ONLY; acquired sensor paths,
+                // odometry, command QoS and all publication timers are unchanged.
+                rclcpp::PublisherOptions global_options;
+                global_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+                const auto global_qos = rclcpp::QoS(rclcpp::KeepLast(1))
+                        .reliable().transient_local();
+                global_pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+                        "/global_pc", global_qos, global_options);
+            } else {
+                global_pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/global_pc", qos);
+            }
+            const auto global_actual_qos = global_pc_pub_->get_actual_qos();
+            const char* global_actual_reliability =
+                    global_actual_qos.reliability() == rclcpp::ReliabilityPolicy::Reliable
+                    ? "reliable" : global_actual_qos.reliability() == rclcpp::ReliabilityPolicy::BestEffort
+                    ? "best_effort" : "unknown";
+            const char* global_actual_durability =
+                    global_actual_qos.durability() == rclcpp::DurabilityPolicy::TransientLocal
+                    ? "transient_local" : global_actual_qos.durability() == rclcpp::DurabilityPolicy::Volatile
+                    ? "volatile" : "unknown";
+            const char* global_actual_history =
+                    global_actual_qos.history() == rclcpp::HistoryPolicy::KeepLast
+                    ? "keep_last" : global_actual_qos.history() == rclcpp::HistoryPolicy::KeepAll
+                    ? "keep_all" : "unknown";
+            RCLCPP_INFO(this->get_logger(),
+                        "[STATIC_PC_DURABLE_SETTINGS] enabled=%d actual_qos=1 reliability=%s durability=%s "
+                        "history=%s depth=%zu intra_process=%s publication_schedule=%s other_qos_unchanged=1",
+                        static_pc_durable_en_, global_actual_reliability, global_actual_durability,
+                        global_actual_history, global_actual_qos.depth(),
+                        static_pc_durable_en_ ? "disabled" : "node_default",
+                        static_pc_durable_en_ ? "legacy" : "existing");
             if (side_entry_v1_cfg_.enabled) {
                 side_entry_v1_marker_pub_ =
                         this->create_publisher<visualization_msgs::msg::Marker>(
@@ -508,16 +550,11 @@ namespace perfect_drone {
             );
 
             global_pc_pub_cbk_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-            static_pc_poll_ms_ = common_execution_policy::parseStaticPcPollMs(
-                    std::getenv("SUPER_STATIC_PC_POLL_MS"));
-            static_pc_two_phase_policy_ = static_pc_two_phase::Policy(
-                    static_pc_two_phase::parseEnabled(
-                            std::getenv("SUPER_STATIC_PC_TWO_PHASE"), static_pc_poll_ms_));
             static_pc_policy_start_ = std::chrono::steady_clock::now();
             RCLCPP_INFO(this->get_logger(),
                         "[STATIC_PC_POLL_SETTINGS] poll_ms=%d bootstrap_once=%d "
-                        "complete_geometry=1 qos_unchanged=1",
-                        static_pc_poll_ms_, static_pc_poll_ms_ == 100);
+                        "complete_geometry=1 qos_unchanged=%d",
+                        static_pc_poll_ms_, static_pc_poll_ms_ == 100, !static_pc_durable_en_);
             global_pc_pub_timer_ = this->create_wall_timer(
                     std::chrono::milliseconds(static_pc_poll_ms_),
                     std::bind(&PerfectDrone::publishGlobalPCFast, this),

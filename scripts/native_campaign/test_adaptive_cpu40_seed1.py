@@ -3,7 +3,8 @@ from adaptive_cpu40_seed1 import (SMALL_POOL_MATCH_FIELDS, comparison,
                                  reference_comparison, small_pool_timing_audit,
                                  small_pool_profile_reference_audit,
                                  DEMAND_REASONS, demand_reason_audit,
-                                 static_two_phase_audit, goal_identity_audit)
+                                 static_two_phase_audit, goal_identity_audit,
+                                 headless_parameter_audit)
 
 
 def pair():
@@ -300,3 +301,26 @@ def test_goal_coalescing_must_be_exercised_in_both_compared_modes():
     assert comparison(rows)['target_met']
     rows[0]['goal_retransmit_exercised'] = False
     assert not comparison(rows)['target_met']
+
+
+def test_headless_effective_settings_require_all_composed_nodes_and_one_marker():
+    for mode, count in [('full', 3), ('adaptive', 4)]:
+        log = (f'[HEADLESS_PARAMETER_SETTINGS] enabled=1 mode={mode} nodes={count} '
+               'parameter_services_nodes=0 parameter_event_publisher_nodes=0 '
+               'local_parameters_preserved=1 default_off=1')
+        assert headless_parameter_audit(log, mode)['valid']
+        for bad in ('', log + '\n' + log, log.replace('enabled=1', 'enabled=0'),
+                    log.replace('services_nodes=0', 'services_nodes=1'),
+                    log.replace('publisher_nodes=0', 'publisher_nodes=1'),
+                    log.replace(f'nodes={count} ', 'nodes=2 '),
+                    log.replace('local_parameters_preserved=1', 'local_parameters_preserved=0')):
+            assert not headless_parameter_audit(bad, mode)['valid'], bad
+
+
+def test_headless_profile_reference_needs_effective_setting_evidence():
+    plan, reference, summaries = profile_reference_fixture()
+    plan['headless_parameter_services'] = reference['headless_parameter_services'] = True
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+    for row in summaries.values():
+        row['headless_parameter_audit'] = dict(valid=True)
+    assert small_pool_profile_reference_audit(plan, reference, summaries)['valid']

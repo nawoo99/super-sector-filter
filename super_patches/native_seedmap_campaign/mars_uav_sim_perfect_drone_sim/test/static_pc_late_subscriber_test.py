@@ -16,7 +16,9 @@ import subprocess
 import time
 
 import rclpy
-from rclpy.qos import qos_profile_sensor_data
+from ament_index_python.packages import get_package_prefix
+from rclpy.qos import (qos_profile_sensor_data, QoSProfile,
+                      ReliabilityPolicy, DurabilityPolicy, HistoryPolicy)
 from sensor_msgs.msg import PointCloud2
 
 
@@ -29,6 +31,10 @@ def main():
                         help='1 is the untouched legacy control; 100 is the candidate')
     parser.add_argument('--two-phase', action='store_true',
                         help='retain legacy1ms startup, then100ms; requires --poll-ms1')
+    parser.add_argument('--durable', action='store_true',
+                        help='Plan A: global-PC reliable/transient-local only; legacy1ms schedule')
+    parser.add_argument('--reader-qos', choices=('legacy', 'durable'), default='legacy',
+                        help='legacy is current best-effort/volatile; durable is reliable/transient-local')
     parser.add_argument('--sequence', choices=('late', 'reader-first'), default='late',
                         help='reader-first preserves bootstrap reader readiness before later transitions')
     parser.add_argument('--expected-sha256',
@@ -36,27 +42,38 @@ def main():
     args = parser.parse_args()
     if args.two_phase and args.poll_ms != 1:
         parser.error('--two-phase requires --poll-ms 1')
+    if args.durable and (args.poll_ms != 1 or args.two_phase):
+        parser.error('--durable requires --poll-ms 1 and --two-phase disabled')
+    if args.durable and not args.expected_sha256:
+        parser.error('--durable requires --expected-sha256 from a successful actual legacy geometry sample')
     args.out_dir.mkdir(parents=True, exist_ok=True)
     log_path = args.out_dir / 'simulator.log'
     result_path = args.out_dir / 'result.json'
     if log_path.exists() or result_path.exists():
         raise SystemExit('refusing to overwrite previous integration-test artifacts')
-    if 'ROS_DOMAIN_ID' not in os.environ:
-        raise SystemExit('set a dedicated ROS_DOMAIN_ID before this no-flight test')
+    if os.environ.get('ROS_DOMAIN_ID') != '190':
+        raise SystemExit('set the dedicated ROS_DOMAIN_ID=190 before this no-flight test')
 
     env = dict(os.environ, SUPER_STATIC_PC_POLL_MS=str(args.poll_ms),
-               SUPER_STATIC_PC_TWO_PHASE='1' if args.two_phase else '0')
-    command = ['ros2', 'run', 'perfect_drone_sim', 'perfect_drone_node',
+               SUPER_STATIC_PC_TWO_PHASE='1' if args.two_phase else '0',
+               SUPER_STATIC_PC_DURABLE='1' if args.durable else '0')
+    binary = Path(get_package_prefix('perfect_drone_sim')) / 'lib/perfect_drone_sim/perfect_drone_node'
+    command = [str(binary),
                '--ros-args', '-p', f'config_name:={args.config}']
     result = dict(valid=False, command=command, ros_domain_id=os.environ['ROS_DOMAIN_ID'],
                   no_fsm=True, no_commands_published=True, poll_ms=args.poll_ms,
-                  two_phase=args.two_phase, sequence=args.sequence,
+                  two_phase=args.two_phase, durable=args.durable,
+                  reader_qos=args.reader_qos, sequence=args.sequence,
                   expected_sha256=args.expected_sha256, phases=[])
     process = None
     node = None
     subscriptions = []
     received = {'first': [], 'second': [], 'reconnected': []}
     started = time.monotonic()
+    total_deadline = started + 90.0
+    reader_qos = (qos_profile_sensor_data if args.reader_qos == 'legacy' else
+                  QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE,
+                             durability=DurabilityPolicy.TRANSIENT_LOCAL))
     rclpy.init()
 
     def log_text():
@@ -65,6 +82,8 @@ def main():
     def wait_for(predicate, timeout_s, reason):
         deadline = time.monotonic() + timeout_s
         while time.monotonic() < deadline:
+            if time.monotonic() >= total_deadline:
+                raise RuntimeError('hard90s fixture deadline exceeded')
             if process.poll() is not None:
                 raise RuntimeError(f'simulator exited early: {process.returncode}')
             if predicate():
@@ -75,6 +94,8 @@ def main():
     def spin_for(duration):
         end = time.monotonic() + duration
         while time.monotonic() < end:
+            if time.monotonic() >= total_deadline:
+                raise RuntimeError('hard90s fixture deadline exceeded')
             if process.poll() is not None:
                 raise RuntimeError(f'simulator exited early: {process.returncode}')
             rclpy.spin_once(node, timeout_sec=.02)
@@ -118,7 +139,7 @@ def main():
 
     def subscribe(label):
         subscription = node.create_subscription(
-            PointCloud2, '/global_pc', callback(label), qos_profile_sensor_data)
+            PointCloud2, '/global_pc', callback(label), reader_qos)
         subscriptions.append(subscription)
         return subscription
 
@@ -130,6 +151,46 @@ def main():
                                        env=env, start_new_session=True)
             wait_for(lambda: f'[STATIC_PC_POLL_SETTINGS] poll_ms={args.poll_ms} ' in log_text(),
                      20, 'effective static polling settings')
+            durable_marker = f'[STATIC_PC_DURABLE_SETTINGS] enabled={int(args.durable)} '
+            wait_for(lambda: durable_marker in log_text(), 5, 'effective static durability settings')
+            actual_marker = re.search(
+                re.escape(durable_marker) + r'actual_qos=1 reliability=(\w+) durability=(\w+) '
+                r'history=(\w+) depth=(\d+)', log_text())
+            if actual_marker is None:
+                raise RuntimeError('publisher get_actual_qos marker missing')
+            actual = dict(zip(('reliability', 'durability', 'history', 'depth'), actual_marker.groups()))
+            actual['depth'] = int(actual['depth'])
+            result['publisher_actual_qos'] = actual
+            expected_actual = dict(reliability='reliable' if args.durable else 'best_effort',
+                                   durability='transient_local' if args.durable else 'volatile',
+                                   history='keep_last', depth=1 if args.durable else 100)
+            if actual != expected_actual:
+                raise RuntimeError(f'publisher actual QoS differs from expected: {actual}')
+            wait_for(lambda: bool(node.get_publishers_info_by_topic('/global_pc')),
+                     5, 'global-PC publisher discovery')
+            publishers = node.get_publishers_info_by_topic('/global_pc')
+            if len(publishers) != 1:
+                raise RuntimeError(f'isolated domain has {len(publishers)} global-PC publishers')
+            offered = publishers[0].qos_profile
+            result['offered_qos'] = dict(
+                reliability=int(offered.reliability), durability=int(offered.durability),
+                history=int(offered.history), depth=int(offered.depth))
+            expected_reliability = (ReliabilityPolicy.RELIABLE if args.durable else
+                                    ReliabilityPolicy.BEST_EFFORT)
+            expected_durability = (DurabilityPolicy.TRANSIENT_LOCAL if args.durable else
+                                  DurabilityPolicy.VOLATILE)
+            if offered.reliability != expected_reliability or offered.durability != expected_durability:
+                raise RuntimeError(f'actual publisher QoS differs from requested profile: {result["offered_qos"]}')
+            # FastDDS graph discovery may omit history/depth even though the
+            # publisher's own get_actual_qos() above reports them correctly.
+            # Unknown graph fields are disclosed, never treated as verified.
+            history_known = offered.history not in (HistoryPolicy.UNKNOWN, HistoryPolicy.SYSTEM_DEFAULT)
+            depth_known = offered.depth > 0
+            result['graph_qos_verified'] = dict(reliability=True, durability=True,
+                                                history=history_known, depth=depth_known)
+            if ((history_known and offered.history != HistoryPolicy.KEEP_LAST) or
+                    (depth_known and offered.depth != expected_actual['depth'])):
+                raise RuntimeError(f'known graph history/depth contradict publisher actual QoS: {result["offered_qos"]}')
             if args.sequence == 'reader-first':
                 wait_for(lambda: bool(received['first']), 10, 'reader-first static geometry')
                 result['phases'].append('reader_first_static_geometry')
@@ -191,7 +252,7 @@ def main():
                 raise RuntimeError('bootstrap not exactly once')
             cadence = [float(value) for value in re.findall(
                 r'\[SENSOR_CADENCE_SUMMARY\].*? hz=([0-9.]+)', log_text())]
-            if not cadence or not 9.0 <= cadence[-1] <= 11.0:
+            if not cadence or not 9.5 <= cadence[-1] <= 10.5:
                 raise RuntimeError(f'source cadence missing or outside smoke range: {cadence}')
             result.update(valid=True, clouds=received,
                           bootstrap_publications=1 if args.poll_ms == 100 else None,
@@ -202,10 +263,12 @@ def main():
         result['clouds'] = received
     finally:
         if process is not None and process.poll() is None:
-            os.killpg(process.pid, signal.SIGINT)
+            # Direct simulator child, not ros2-run/launch: one SIGINT only.
+            process.send_signal(signal.SIGINT)
             try:
                 process.wait(timeout=8)
             except subprocess.TimeoutExpired:
+                result['forced_cleanup'] = True
                 os.killpg(process.pid, signal.SIGTERM)
                 try:
                     process.wait(timeout=3)
@@ -219,6 +282,10 @@ def main():
         rclpy.shutdown()
         result['elapsed_s'] = time.monotonic() - started
         result['simulator_exit_code'] = process.returncode if process else None
+        result['exact_child_reaped'] = process is not None and process.poll() is not None
+        if result['simulator_exit_code'] != 0 or result.get('forced_cleanup'):
+            result['valid'] = False
+            result['cleanup_error'] = 'direct child did not exit cleanly after one SIGINT'
         result_path.write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result, indent=2))
     return 0 if result['valid'] else 1

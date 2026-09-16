@@ -732,3 +732,67 @@ parameters, source/control periods and safety gates. This changes remote
 introspection availability under an explicit headless-only opt-in, not the
 planner's physical observation contract. Static durable transport and extra
 frontend residual attribution remain separate unimplemented proposals.
+
+## Candidate15 prospective: headless parameter-service bookkeeping
+
+`SUPER_HEADLESS_PARAMETER_SERVICES=1` is a new strict opt-in for composed
+Full/Adaptive nodes. It disables remote parameter RPC services and parameter
+event publishers in the configuration/FSM/simulator nodes, plus Adaptive's
+frontend node. Local startup overrides and declare/get/set, clock settings,
+all mission/source/odom/control/recovery topics, periods and callbacks remain.
+The external mission node is unchanged. Remote parameter introspection and
+runtime RPC updates are intentionally unavailable in this headless-only mode;
+default behavior is retained. The marker reports actual constructed-node option
+counts (3Full/4Adaptive), not merely requested environment values.
+
+The measured unexplained Adaptive cost lies mainly in the shared callback pool,
+but unused parameter entities are a hypothesis, not a proven attribution. This
+candidate is applied equally to both modes and retains all C14 acceptance gates.
+Profiled n1 remains exploratory, and40% still requires unprofiled confirmation.
+
+A separately disabled `SUPER_STATIC_PC_DURABLE` transport prototype is compiled
+in the same build to avoid redundant compilation. It changes only global static
+geometry QoS, not acquired LiDAR. CPU runner forcibly sets this prototype OFF;
+its future no-flight initial/late/reconnect tests are NOT part of C15's change.
+It must pass its own tests before any proposed timer optimization is considered.
+
+### Candidate15 measured result (run9316)
+
+Actual ROS helper passed37checks (local overrides/declare/get/set preserved;
+default6remote services/event publisher present and real RPC works; explicitly
+headless node discovered with those endpoints absent). Simulator build passed
+6min1s.56focused Python audit/accounting tests pass. One flight per mode, no retry:
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 37.68 | 0.579887 | 22.907750 |
+| Adaptive | 1/1,0 | 40.54 | 0.393000 | 16.346015 |
+
+Mean reduction32.2281%, cumulative28.6442%, A/Ftime1.07590. All source/resource/
+speed/recovery/time/timing/identity/effective-option gates pass. F35/A28 goal
+retransmissions coalesced, Adaptive2 exact completed recovery cycles. **40% not
+met**. Observed n1 CPU gap improved; changing paths/workload means this is not a
+confidence interval or isolated causal estimate. Headless marker confirms3/4
+constructed nodes with parameter services/events disabled; separate mission
+node unchanged. Static durable/two-phase bothOFF and source geometry unchanged.
+
+Evidence:`c15_headless_parameters_profile/`, `executor_preflight/c15_timing.json`.
+The next prospective scheduling-only experiment is to move Adaptive's existing
+frontend callback group to a dedicated ordinary single-threaded executor. CPU
+of that new thread must remain in the total; moving cost is not a saving. Check
+the remaining C15 residual and protocol/lifetime constraints before applying it.
+
+### Separate static durable transport preflight: not adopted
+
+Six actual no-flight domain190 arms, each first attempt, all direct children
+cleanexit0/reaped; source≈10Hz. Legacy publisher+existing BE/volatile readers
+fails late and second-reader phases. Reliable/TL publisher+the same old readers
+also fails both arms. Reliable/TL publisher AND readers pass both reader-first
+and late-arm second-reader/disconnect/reconnect sequences. Every received full
+geometry matches the legacy241490-point SHA. This proves a bounded successful
+durable-reader diagnostic, NOT preservation of old-reader late compatibility.
+Publisher-only prototype staysOFF/ineligible; no coarse timer implementation or
+CPU claim follows. Graph discovery omits history/depth here (UNKNOWN/0); those
+fields are explicitly unverified in graph evidence, while publisher's own
+get_actual_qos confirms actual settings. All raw failures are retained in
+`static_durable_preflight/ROS_FINDINGS.md` and `matrix_summary.json`.

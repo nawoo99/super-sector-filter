@@ -67,7 +67,7 @@ SMALL_POOL_MATCH_FIELDS = (
     'fast_occupied_box_scan', 'compare_occupied_box_scan', 'snapshot_line_query',
     'snapshot_neighbor_cache', 'static_pc_poll_ms', 'static_pc_two_phase', 'side_executor_threads',
     'monitor_intervals', 'guarded_demand_replan', 'extended_demand_lease', 'goal_retransmit_identity',
-    'dedicated_static_pc_executor',
+    'dedicated_static_pc_executor', 'headless_parameter_services', 'static_pc_durable',
     'optimizer_phase_memory_trace', 'time_reference_folder',
     'max_same_mode_reference_time_ratio', 'max_mission_time_ratio',
     'logical_cpus', 'frozen_normal_sha256')
@@ -138,6 +138,9 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
         checks[mode + '_goal_identity_exercised'] = (
             not plan.get('goal_retransmit_identity') or
             row.get('goal_retransmit_exercised') is True)
+        checks[mode + '_headless_parameter_settings'] = (
+            not plan.get('headless_parameter_services') or
+            row.get('headless_parameter_audit', {}).get('valid') is True)
     ftime = summaries.get('full', {}).get('mission_time_s')
     atime = summaries.get('adaptive', {}).get('mission_time_s')
     checks['paired_mission_time'] = (
@@ -287,6 +290,19 @@ def goal_identity_audit(stack):
                 scope='Explicit creation-ID linkage and exercised coverage; not proof that every repeat may safely be suppressed')
 
 
+def headless_parameter_audit(stack, mode):
+    """Effective constructed-node settings; local parameter semantics tested separately."""
+    rows = re.findall(
+        r'\[HEADLESS_PARAMETER_SETTINGS\] enabled=([01]) mode=(full|adaptive) '
+        r'nodes=(\d+) parameter_services_nodes=(\d+) '
+        r'parameter_event_publisher_nodes=(\d+) local_parameters_preserved=([01]) '
+        r'default_off=([01])', stack)
+    expected_mode = 'full' if mode == 'full' else 'adaptive'
+    expected = ('1', expected_mode, '3' if mode == 'full' else '4', '0', '0', '1', '1')
+    return dict(valid=rows == [expected], settings=rows,
+                scope='Composed nodes only; remote parameter services/events unavailable under opt-in; external mission node unchanged')
+
+
 def comparison(results):
     modes = {r['mode']: r for r in results}
     if not {'full', 'adaptive'} <= modes.keys():
@@ -376,6 +392,8 @@ def main():
                         help='Opt in to 0.5s maximum dispatch age; rolling safety evidence and timer cadence unchanged')
     parser.add_argument('--goal-retransmit-identity', action='store_true',
                         help='Paired mission creation-ID retransmission and healthy receiver coalescing')
+    parser.add_argument('--headless-parameter-services', action='store_true',
+                        help='Disable unused remote parameter services/events in all composed nodes; retain local startup parameters')
     parser.add_argument('--dedicated-static-pc-executor', action='store_true')
     parser.add_argument('--no-optimizer-phase-memory-trace', action='store_true',
                         help='Disable per-solve diagnostic /proc reads and logs equally in both modes; retain external resource guards')
@@ -399,6 +417,8 @@ def main():
         parser.error('--extended-demand-lease requires --guarded-demand-replan')
     if args.goal_retransmit_identity and not args.guarded_demand_replan:
         parser.error('--goal-retransmit-identity requires --guarded-demand-replan')
+    if args.headless_parameter_services and not args.compose:
+        parser.error('--headless-parameter-services requires --compose')
     if args.static_pc_two_phase and (args.static_pc_poll_ms != 1 or not args.compose):
         parser.error('--static-pc-two-phase requires --static-pc-poll-ms 1 and --compose')
     if args.side_executor_threads < 4 and not (
@@ -454,11 +474,14 @@ def main():
     os.environ['SUPER_SNAPSHOT_NEIGHBOR_CACHE'] = '1' if args.snapshot_neighbor_cache else '0'
     os.environ['SUPER_STATIC_PC_POLL_MS'] = str(args.static_pc_poll_ms)
     os.environ['SUPER_STATIC_PC_TWO_PHASE'] = '1' if args.static_pc_two_phase else '0'
+    # Separate transport prototype is not yet validated for CPU campaign use.
+    os.environ['SUPER_STATIC_PC_DURABLE'] = '0'
     os.environ['SUPER_SIDE_EXECUTOR_THREADS'] = str(args.side_executor_threads)
     os.environ['SUPER_MONITOR_INTERVALS'] = '1' if args.monitor_intervals else '0'
     os.environ['SUPER_GUARDED_DEMAND_REPLAN'] = '1' if args.guarded_demand_replan else '0'
     os.environ['SUPER_GUARDED_DEMAND_EXTENDED_LEASE'] = '1' if args.extended_demand_lease else '0'
     os.environ['SUPER_GOAL_RETRANSMIT_IDENTITY'] = '1' if args.goal_retransmit_identity else '0'
+    os.environ['SUPER_HEADLESS_PARAMETER_SERVICES'] = '1' if args.headless_parameter_services else '0'
     os.environ['SUPER_STATIC_PC_DEDICATED_EXECUTOR'] = (
         '1' if args.dedicated_static_pc_executor else '0')
     os.environ['SUPER_OPTIMIZER_PHASE_MEMORY_TRACE'] = (
@@ -515,6 +538,7 @@ def main():
         snapshot_neighbor_cache=args.snapshot_neighbor_cache,
         static_pc_poll_ms=args.static_pc_poll_ms,
         static_pc_two_phase=args.static_pc_two_phase,
+        static_pc_durable=False,
         static_pc_delivery_scope=('Startup-ready CPU diagnostic only; late-reader preservation unresolved'
                                   if args.static_pc_two_phase else 'Legacy static publication'),
         side_executor_threads=args.side_executor_threads,
@@ -522,6 +546,7 @@ def main():
         guarded_demand_replan=args.guarded_demand_replan,
         extended_demand_lease=args.extended_demand_lease,
         goal_retransmit_identity=args.goal_retransmit_identity,
+        headless_parameter_services=args.headless_parameter_services,
         dedicated_static_pc_executor=args.dedicated_static_pc_executor,
         optimizer_phase_memory_trace=not args.no_optimizer_phase_memory_trace,
         time_reference_folder=str(args.time_reference_folder) if args.time_reference_folder else None,
@@ -589,6 +614,8 @@ def main():
                 result['source_acquisition']['checks']['static_pc_poll_setting'] = (
                     f'[STATIC_PC_POLL_SETTINGS] poll_ms={args.static_pc_poll_ms} '
                     f'bootstrap_once={int(args.static_pc_poll_ms == 100)}' in stack)
+                result['source_acquisition']['checks']['static_pc_durable_disabled'] = (
+                    '[STATIC_PC_DURABLE_SETTINGS] enabled=0 ' in stack)
                 if args.compose or mode == 'full':
                     result['source_acquisition']['checks']['side_executor_setting'] = (
                         f'[COMMON_EXECUTOR_SETTINGS] side_threads={args.side_executor_threads} ' in stack)
@@ -629,6 +656,11 @@ def main():
                     result['goal_retransmit_exercised'] = result['goal_identity_audit']['valid']
                     result['source_acquisition']['checks']['goal_identity_audit'] = (
                         result['goal_identity_audit']['valid'])
+                if args.headless_parameter_services:
+                    result['headless_parameter_services'] = True
+                    result['headless_parameter_audit'] = headless_parameter_audit(stack, mode)
+                    result['source_acquisition']['checks']['headless_parameter_settings'] = (
+                        result['headless_parameter_audit']['valid'])
                 if args.side_executor_threads < 4:
                     result['small_pool_timing'] = small_pool_timing_audit(
                         result.get('message_intervals', {}), row.get('sensor_hz'),

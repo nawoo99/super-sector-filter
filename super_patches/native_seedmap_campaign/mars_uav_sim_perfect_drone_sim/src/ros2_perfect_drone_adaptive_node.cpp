@@ -9,6 +9,7 @@
  */
 
 #include "perfect_drone_sim/ros2_perfect_drone_model.hpp"
+#include "perfect_drone_sim/headless_parameter_policy.hpp"
 #include <super_utils/thread_cpu_profile.hpp>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
@@ -57,9 +58,14 @@ int main(int argc, char **argv) {
       std::getenv("SUPER_STATIC_PC_DEDICATED_EXECUTOR");
   const bool dedicated_static_pc_executor = static_pc_executor_setting &&
       std::strcmp(static_pc_executor_setting, "1") == 0;
+  const bool headless_parameter_services =
+      perfect_drone::headless_parameter_policy::enabled(
+          std::getenv("SUPER_HEADLESS_PARAMETER_SERVICES"));
 
   rclcpp::NodeOptions intra_process_options;
   intra_process_options.use_intra_process_comms(true);
+  perfect_drone::headless_parameter_policy::apply(
+      intra_process_options, headless_parameter_services);
   auto configuration_node = std::make_shared<rclcpp::Node>(
       "perfect_drone_adaptive_config", intra_process_options);
   RCLCPP_INFO(configuration_node->get_logger(),
@@ -120,6 +126,8 @@ int main(int argc, char **argv) {
 
   rclcpp::NodeOptions simulator_options;
   simulator_options.use_intra_process_comms(true);
+  perfect_drone::headless_parameter_policy::apply(
+      simulator_options, headless_parameter_services);
   simulator_options.parameter_overrides(
       {rclcpp::Parameter("config_name", drone_config)});
   perfect_drone::AcquisitionProvider acquisition_provider =
@@ -138,6 +146,9 @@ int main(int argc, char **argv) {
   auto simulator = std::make_shared<perfect_drone::PerfectDrone>(
       filter.submit_cloud, false, simulator_options,
       std::move(acquisition_provider), std::move(acquired_observer));
+  perfect_drone::headless_parameter_policy::reportEffectiveOptions(
+      configuration_node->get_logger(), "adaptive", headless_parameter_services,
+      {configuration_node.get(), fsm_node.get(), simulator.get(), filter.node.get()});
 
   RCLCPP_INFO(configuration_node->get_logger(),
               "raw and filtered DDS disabled: acquired source -> frontend -> "

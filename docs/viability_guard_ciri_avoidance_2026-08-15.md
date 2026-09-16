@@ -5758,3 +5758,20 @@ Bothcomplete/contact0, all source/resource/speed/recovery/time/timing/identity
 audits pass, no retry. Mean26.9756%, cumulative22.8901%, **40% still unmet**.
 F34/A33retransmissions coalesced;5freshIDs/targets retained each. C13two-phaseOFF.
 Next headless-only common parameter-service overhead ablation is prospective.
+
+#### C15 headless options and static transport diagnosis (run9316)
+
+C15 Full37.68s/.579887cores/22.907750core-s, Adaptive40.54s/.393000cores/
+16.346015core-s. Bothcomplete/contact0; all acceptance gates pass, no retry.
+Mean32.2281%, cumulative28.6442%; **40% unmet**. Effective constructed-node
+parameter-service/event options verified (3Full/4Adaptive); actual helper37checks
+and6min1s simulator build passed. Local startup parameters remain available;
+remote parameter RPC/events are deliberately absent only under headless opt-in.
+F35/A28coalesced retransmissions; Adaptive2exact recovery cycles. Next frontend
+executor isolation remains a proposal pending C15 residual analysis.
+
+Separate static durable QoS six-arm no-flight matrix: unchanged BE readers fail
+late/second receipt with both old/new publishers; matching Reliable/TL readers
+pass both full geometry/reconnect arms. All children cleanexit0, exactSHA. The
+publisher-only prototype remainsOFF/ineligible; do not call it a compatibility
+fix or use it to bless C13 two-phase CPU data. Raw successes AND failures saved.

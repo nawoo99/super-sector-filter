@@ -1,0 +1,269 @@
+{
+  "scope": "Actual static-PC no-flight transport matrix; no automatic retries",
+  "legacy_reader_candidate_pass": false,
+  "all_cases_complete": true,
+  "cases": [
+    {
+      "case": "ros_control_reader_first_attempt1",
+      "complete": true,
+      "valid": false,
+      "durable_publisher": false,
+      "reader_qos": "legacy",
+      "sequence": "reader-first",
+      "phases": [
+        "reader_first_static_geometry",
+        "reader_first_waited_past_bootstrap_window"
+      ],
+      "error": "timeout waiting for second persistent subscriber",
+      "received": {
+        "first": 5,
+        "second": 0,
+        "reconnected": 0
+      },
+      "geometry_sha256": "b3064409563b3d41cdc5f982a058b2df7a776627cae7cf367086176bccd6439f",
+      "geometry_validated_clouds": 5,
+      "publisher_actual_qos": {
+        "reliability": "best_effort",
+        "durability": "volatile",
+        "history": "keep_last",
+        "depth": 100
+      },
+      "graph_qos": {
+        "reliability": 2,
+        "durability": 2,
+        "history": 3,
+        "depth": 0
+      },
+      "graph_qos_verified": {
+        "reliability": true,
+        "durability": true,
+        "history": false,
+        "depth": false
+      },
+      "source_cadence_hz_last": 10.000863,
+      "source_cadence_pass": true,
+      "clean_exit": true,
+      "elapsed_s": 16.16336482297629,
+      "global_pc_publish_log_count": 22
+    },
+    {
+      "case": "ros_control_late_attempt1",
+      "complete": true,
+      "valid": false,
+      "durable_publisher": false,
+      "reader_qos": "legacy",
+      "sequence": "late",
+      "phases": [
+        "bootstrap_without_subscribers"
+      ],
+      "error": "timeout waiting for first persistent late subscriber",
+      "received": {
+        "first": 0,
+        "second": 0,
+        "reconnected": 0
+      },
+      "geometry_sha256": null,
+      "geometry_validated_clouds": 0,
+      "publisher_actual_qos": {
+        "reliability": "best_effort",
+        "durability": "volatile",
+        "history": "keep_last",
+        "depth": 100
+      },
+      "graph_qos": {
+        "reliability": 2,
+        "durability": 2,
+        "history": 3,
+        "depth": 0
+      },
+      "graph_qos_verified": {
+        "reliability": true,
+        "durability": true,
+        "history": false,
+        "depth": false
+      },
+      "source_cadence_hz_last": 10.001546,
+      "source_cadence_pass": true,
+      "clean_exit": true,
+      "elapsed_s": 11.12601343402639,
+      "global_pc_publish_log_count": 28
+    },
+    {
+      "case": "ros_durable_legacy_reader_first_attempt1",
+      "complete": true,
+      "valid": false,
+      "durable_publisher": true,
+      "reader_qos": "legacy",
+      "sequence": "reader-first",
+      "phases": [
+        "reader_first_static_geometry",
+        "reader_first_waited_past_bootstrap_window"
+      ],
+      "error": "timeout waiting for second persistent subscriber",
+      "received": {
+        "first": 8,
+        "second": 0,
+        "reconnected": 0
+      },
+      "geometry_sha256": "b3064409563b3d41cdc5f982a058b2df7a776627cae7cf367086176bccd6439f",
+      "geometry_validated_clouds": 8,
+      "publisher_actual_qos": {
+        "reliability": "reliable",
+        "durability": "transient_local",
+        "history": "keep_last",
+        "depth": 1
+      },
+      "graph_qos": {
+        "reliability": 1,
+        "durability": 1,
+        "history": 3,
+        "depth": 0
+      },
+      "graph_qos_verified": {
+        "reliability": true,
+        "durability": true,
+        "history": false,
+        "depth": false
+      },
+      "source_cadence_hz_last": 10.00128,
+      "source_cadence_pass": true,
+      "clean_exit": true,
+      "elapsed_s": 16.242827591951936,
+      "global_pc_publish_log_count": 20
+    },
+    {
+      "case": "ros_durable_legacy_late_attempt1",
+      "complete": true,
+      "valid": false,
+      "durable_publisher": true,
+      "reader_qos": "legacy",
+      "sequence": "late",
+      "phases": [
+        "bootstrap_without_subscribers"
+      ],
+      "error": "timeout waiting for first persistent late subscriber",
+      "received": {
+        "first": 0,
+        "second": 0,
+        "reconnected": 0
+      },
+      "geometry_sha256": null,
+      "geometry_validated_clouds": 0,
+      "publisher_actual_qos": {
+        "reliability": "reliable",
+        "durability": "transient_local",
+        "history": "keep_last",
+        "depth": 1
+      },
+      "graph_qos": {
+        "reliability": 1,
+        "durability": 1,
+        "history": 3,
+        "depth": 0
+      },
+      "graph_qos_verified": {
+        "reliability": true,
+        "durability": true,
+        "history": false,
+        "depth": false
+      },
+      "source_cadence_hz_last": 10.003744,
+      "source_cadence_pass": true,
+      "clean_exit": true,
+      "elapsed_s": 11.199962337967008,
+      "global_pc_publish_log_count": 17
+    },
+    {
+      "case": "ros_durable_reader_first_attempt1",
+      "complete": true,
+      "valid": true,
+      "durable_publisher": true,
+      "reader_qos": "durable",
+      "sequence": "reader-first",
+      "phases": [
+        "reader_first_static_geometry",
+        "reader_first_waited_past_bootstrap_window",
+        "subscriber_1_to_2",
+        "subscriber_2_to_1",
+        "subscriber_1_to_0_to_1"
+      ],
+      "error": null,
+      "received": {
+        "first": 8,
+        "second": 1,
+        "reconnected": 1
+      },
+      "geometry_sha256": "b3064409563b3d41cdc5f982a058b2df7a776627cae7cf367086176bccd6439f",
+      "geometry_validated_clouds": 10,
+      "publisher_actual_qos": {
+        "reliability": "reliable",
+        "durability": "transient_local",
+        "history": "keep_last",
+        "depth": 1
+      },
+      "graph_qos": {
+        "reliability": 1,
+        "durability": 1,
+        "history": 3,
+        "depth": 0
+      },
+      "graph_qos_verified": {
+        "reliability": true,
+        "durability": true,
+        "history": false,
+        "depth": false
+      },
+      "source_cadence_hz_last": 10.002446,
+      "source_cadence_pass": true,
+      "clean_exit": true,
+      "elapsed_s": 7.287843093043193,
+      "global_pc_publish_log_count": 19
+    },
+    {
+      "case": "ros_durable_late_attempt1",
+      "complete": true,
+      "valid": true,
+      "durable_publisher": true,
+      "reader_qos": "durable",
+      "sequence": "late",
+      "phases": [
+        "bootstrap_without_subscribers",
+        "late_subscriber_0_to_1",
+        "subscriber_1_to_2",
+        "subscriber_2_to_1",
+        "subscriber_1_to_0_to_1"
+      ],
+      "error": null,
+      "received": {
+        "first": 3,
+        "second": 1,
+        "reconnected": 1
+      },
+      "geometry_sha256": "b3064409563b3d41cdc5f982a058b2df7a776627cae7cf367086176bccd6439f",
+      "geometry_validated_clouds": 5,
+      "publisher_actual_qos": {
+        "reliability": "reliable",
+        "durability": "transient_local",
+        "history": "keep_last",
+        "depth": 1
+      },
+      "graph_qos": {
+        "reliability": 1,
+        "durability": 1,
+        "history": 3,
+        "depth": 0
+      },
+      "graph_qos_verified": {
+        "reliability": true,
+        "durability": true,
+        "history": false,
+        "depth": false
+      },
+      "source_cadence_hz_last": 10.003248,
+      "source_cadence_pass": true,
+      "clean_exit": true,
+      "elapsed_s": 7.292337881983258,
+      "global_pc_publish_log_count": 30
+    }
+  ]
+}

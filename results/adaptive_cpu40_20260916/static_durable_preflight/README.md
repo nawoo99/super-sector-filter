@@ -1,9 +1,19 @@
-# Static geometry transport: bounded next proposal (NOT APPLIED)
+# Static geometry transport: Plan A findings and proposal history
 
-2026-09-16. Source-only design; no compilation, ROS execution, flight, or runtime
-change was performed. This is a common Full/Adaptive simulator infrastructure
-candidate, not an Adaptive algorithm advantage. Source10Hz, angular acquisition,
-odom100Hz, planner/control and safety gates remain untouched.
+UPDATE: Plan A was subsequently authorized, built by root and tested in six
+no-flight arms. Existing best-effort-reader compatibility still FAILS; keep
+the default-off flag0. Reliable/transient-local reader diagnostics pass but
+do not replace that criterion. See `ROS_FINDINGS.md` and `matrix_summary.json`.
+Plan B and the edge-policy prototype remain NOT APPLIED. The original design
+below is retained as proposal history.
+
+The following source-only design was written on2026-09-16 before implementation;
+its original proposed sequence is retained below. Plan A's later implementation,
+optimized/sanitizer tests and six actual ROS arms are recorded in the files above.
+This is a common Full/Adaptive simulator infrastructure candidate, not an
+Adaptive algorithm advantage. Source10Hz, angular acquisition, odom100Hz,
+planner/control and safety gates remain untouched. No flight was run for this
+transport matrix, and default durable0 remains required after compatibility failed.
 
 ## Important compatibility limit
 
