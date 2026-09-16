@@ -505,3 +505,25 @@ dedicated static executor and2general workers, preserving traceON and all source
 guard settings. In addition to earlier small-pool gates, inspect receiver gaps
 as well as producer-header gaps, and require a matching profiled preflight before
 accepting an unprofiled small-pool confirmation.
+
+### Candidate10 measured result (run9311)
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 36.84 | 0.648614 | 24.920355 |
+| Adaptive | 1/1,0 | 39.34 | 0.478033 | 19.869999 |
+
+Mean reduction26.2993%, cumulative20.2660%, A/Ftime1.06786; all original and
+small-pool guards pass, no retry. **40% unmet**. Main/command callbacks measured
+100.0035Hz Full/100.0027Hz Adaptive; odom receiptp99/max10.521/11.572ms and
+10.614/11.247ms. Source10Hz preserved. Adaptive2exact committed FullACK→newpath→
+Sector cycles, no outstanding cycle or ACK timeout. Its maximum command-message
+gap340.015ms corresponds to logged fail-closed brake rejection/suppression followed
+by a certified stationary hold withcmd_age=.340s; callback/odom100Hz does not mean
+uninterrupted100Hz command messages. See `executor_preflight/c10_timing.json`.
+
+Exclusive middle-window profile totals F0.4474/A0.2651cores, while whole-flight
+cgroup means F0.6486/A0.4780; windows differ and this residual is not pure executor
+cost. C11 disables only optional per-solve optimizer memory diagnostics equally
+in both modes, retaining external memory/cgroup guards and all operational logs.
+Demand cap remains0.25,2workers+dedicated-static retained; profile stays ON.
