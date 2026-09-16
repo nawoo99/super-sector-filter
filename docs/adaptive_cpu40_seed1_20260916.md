@@ -381,3 +381,48 @@ global-PC callback group to a dedicated single-thread executor. It retains the
 exact1ms timer, geometry, QoS and bootstrap behavior; defaults off with no extra
 thread. Cancellation/join precedes object teardown. This is a later candidate,
 **off for C7**, not a claimed fix for existing best-effort map delivery failures.
+
+### Candidate7 observed result and disqualifying lifecycle finding (run9308)
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 38.12 | 0.875257 | 34.663321 |
+| Adaptive | 1/1,0 | 39.43 | 0.574662 | 23.432585 |
+
+Observed mean reduction34.3436%, cumulative32.3995%, A/Ftime1.03437;
+all automated source/recovery/resource/speed/time audits pass, no retry.
+**Not adopted, and below40%.** Full's last periodic counters show0skips/526checks;
+Adaptive315skips/569checks,258renewal attempts. These exclude early-gated timer
+callbacks and the final<5s tail; reason lines are not rejection histograms.
+
+Read-only diagnosis found a pre-existing recovery lifecycle hole: Full's initial
+PlanFromRest clearance rejection announces recovery, brake construction fails
+without a fresh state, and later ordinary PlanFromRest succeeds. The announcement
+is cleared only by successful active-brake recovery, so remains true for this
+flight. This blocks every new demand lease in Full; the sampled NEW_GOAL reason
+merely reflects its never-initialized successful-goal record. Thus the new common
+optimization did not function in both modes, and34.34% is not accepted as a fair
+comparison of the intended optimized policy. Repair must preserve Full-refresh/
+new-path release requirements, not just remove a recovery gate.
+
+### Candidate8 independent common-overhead ablation
+
+While the lifecycle repair is reviewed, run the already-built dedicated static-PC
+executor with C5's policy (guarded-demand OFF),1ms original static timer,10general
+threads and unchanged geometry/QoS. Both modes use the same dedicated executor.
+This isolates the prepared execution change without the defective demand lease.
+C5 same-mode<=1.10 and matched A/F<=1.10 guards remain.
+
+Run9309 result: Full39.36s/0.821220cores/33.353473core-s;
+Adaptive43.92s/0.672997cores/30.936708core-s; both completed/contact0,
+source/recovery/resource/speed checks pass, no retry. Mean reduction18.0491%,
+cumulative7.2459%, A/Ftime1.11585 **fails1.10 guardrail**, though both same-mode
+C5time guards pass. Not adopted as a final candidate. No guarantee inferred for
+best-effort global-PC delivery from these flights. Runtime option stays off.
+
+C9 will first repair the narrowly identified startup announcement lifecycle,
+then retest demand with C7's original10thread pool/dedicated-static OFF. A new
+prospective acceptance coverage check requires the common demand optimization
+to have actually skipped at least once in BOTH modes; absence is not a collision
+or unsafe-flight verdict, but cannot establish this intended common-policy
+comparison. C7's original raw summary is preserved unchanged.

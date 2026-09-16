@@ -5648,3 +5648,32 @@ Late persistent subscribers/full geometry and bounded received-message interval
 audits are required. See dated result subdirectories for hashes/rawlogs and
 strict Full-source→exact-mapACK→new-path→Sector cycle audits. Stress search stays
 stopped; no safety superiority/generalization claim from these seed1 n1 trials.
+
+#### Follow-up through C8 (2026-09-16)
+
+The static100ms experiment above was rejected before CPU flights: one-shot
+full-map delivery failed in controlled late/early-reader tests; legacy1ms was
+retained. C6 actually tests4executor threads, not100ms polling.
+
+| Candidate | Run | F/A mission s | F/A mean cores | F/A core-s | Mean reduction | Cumulative reduction |
+|---|---:|---|---|---|---:|---:|
+| C6 executor4, legacy static | 9307 | 39.23/43.37 | 0.861363/0.735408 | 35.778029/32.933434 | 14.62% | 7.95% |
+| C7 guarded demand, executor10 | 9308 | 38.12/39.43 | 0.875257/0.574662 | 34.663321/23.432585 | 34.34% | 32.40% |
+| C8 dedicated static executor, demand OFF | 9309 | 39.36/43.92 | 0.821220/0.672997 | 33.353473/30.936708 | 18.05% | 7.25% |
+
+All complete/contact0, original quality/source/recovery checks pass, no retries.
+C6/C8 fail the predeclared A/Ftime<=1.10 requirement. C7 exposes a lifecycle bug:
+startup clearance rejection announces recovery, brake creation fails without a
+usable state, then ordinary initial planning succeeds but recovery announcement
+never clears. This prevents Full demand leases (0skips) while Adaptive skips315
+of569last-periodic checks. Thus34.34% is observational, not an adopted fair common
+optimization comparison. Subsequent acceptance requires demand exercised in both
+modes, and a narrow startup completion repair must preserve exact FullACK before
+newpath before Sector release. No existing failed result is overwritten.
+
+C7 build and immutable-only renewal restriction pass; mutable unversioned map
+changes cannot earn skip evidence. Pure41gate/21nonfinite ASan/UBSan tests,
+actualFsm17checks/2000concurrentqueues/4earlyoutcomes and46Python checks pass.
+These are not successful solver-commit or callback-race integration proofs.
+C9 is being implemented/reviewed; no target achievement claimed. All defaults
+remain off and production profiles unchanged. Details in dedicated CPU40 doc.

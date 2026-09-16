@@ -68,8 +68,16 @@ def comparison(results):
         r.get('cpu_comparison_instrumented', False) for r in (f, a))
     out['requires_unprofiled_confirmation'] = any(
         r.get('cpu_profile', False) for r in (f, a))
+    demand_requested = any('guarded_demand_replan_active' in
+                           r['source_acquisition']['checks'] for r in (f, a))
+    # Coverage, not a safety certificate: a sticky recovery state prevented
+    # every Full lease in C7. Do not accept that as the intended common-policy
+    # comparison even if its numerical threshold were to pass.
+    out['common_demand_exercise_pass'] = not demand_requested or all(
+        r.get('demand_replan_exercised') is True for r in (f, a))
     out['measured_threshold_pass'] = bool(safe and out['mission_time_guardrail_pass']
                                          and out['per_mode_reference_time_guardrail_pass']
+                                         and out['common_demand_exercise_pass']
                                          and not out['cpu_comparison_instrumented']
                                          and reduction is not None and reduction >= 40.)
     out['target_met'] = (out['measured_threshold_pass']
@@ -103,6 +111,8 @@ def main():
                         help='Bounded received-message interval statistics on existing monitor subscriptions')
     parser.add_argument('--guarded-demand-replan', action='store_true')
     parser.add_argument('--dedicated-static-pc-executor', action='store_true')
+    parser.add_argument('--no-optimizer-phase-memory-trace', action='store_true',
+                        help='Disable per-solve diagnostic /proc reads and logs equally in both modes; retain external resource guards')
     parser.add_argument('--time-reference-folder', type=Path,
                         help='Predeclare same-mode <=1.10 mission-time guard and CPU reference')
     parser.add_argument('--full-config', default=diagnostic.search.PROFILES['full'])
@@ -156,6 +166,8 @@ def main():
     os.environ['SUPER_GUARDED_DEMAND_REPLAN'] = '1' if args.guarded_demand_replan else '0'
     os.environ['SUPER_STATIC_PC_DEDICATED_EXECUTOR'] = (
         '1' if args.dedicated_static_pc_executor else '0')
+    os.environ['SUPER_OPTIMIZER_PHASE_MEMORY_TRACE'] = (
+        '0' if args.no_optimizer_phase_memory_trace else '1')
     runtime = Path('/root/super_ws/src/SUPER')
     profiles = {'full': args.full_config, 'sector': args.sector_config,
                 'adaptive': args.adaptive_config}
@@ -187,6 +199,7 @@ def main():
     profiler = diagnostic.Profiler(root / 'telemetry.jsonl')
     effective_options = {
         mode: dict(diagnostic.search.OPTIONS,
+                   optimizer_phase_memory_trace=not args.no_optimizer_phase_memory_trace,
                    sensor_acquisition=True,
                    sensor_planner_intra_process=args.compose,
                    adaptive_event_recovery=mode == 'adaptive') for mode in args.modes}
@@ -207,6 +220,7 @@ def main():
         monitor_intervals=args.monitor_intervals,
         guarded_demand_replan=args.guarded_demand_replan,
         dedicated_static_pc_executor=args.dedicated_static_pc_executor,
+        optimizer_phase_memory_trace=not args.no_optimizer_phase_memory_trace,
         time_reference_folder=str(args.time_reference_folder) if args.time_reference_folder else None,
         max_same_mode_reference_time_ratio=1.10 if references else None,
         effective_run_options=effective_options,

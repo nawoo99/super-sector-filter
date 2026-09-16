@@ -70,3 +70,16 @@ def test_reference_mean_and_total_cpu_are_reported_independently():
     assert round(out['mean_cpu_reduction_pct']) == 45
     assert round(out['cumulative_cpu_reduction_pct'], 2) == 41.67
     assert out['mission_time_guardrail_pass']
+
+
+def test_common_demand_optimization_requires_execution_in_both_modes():
+    rows = copy.deepcopy(pair())
+    for row in rows:
+        row['source_acquisition']['checks']['guarded_demand_replan_active'] = True
+        row['demand_replan_exercised'] = True
+    assert comparison(rows)['target_met']
+    rows[0]['demand_replan_exercised'] = False
+    out = comparison(rows)
+    assert not out['common_demand_exercise_pass']
+    assert not out['target_met']
+    assert out['safety_and_quality_pass']
