@@ -30,6 +30,7 @@
 
 #include "fsm/fsm.h"
 #include "fsm/startup_recovery_completion_policy.hpp"
+#include "fsm/async_certified_recovery.hpp"
 #include "fsm/brake_motion_estimate_policy.hpp"
 #include "fsm/command_publication_policy.hpp"
 #include "fsm/path_publication_policy.hpp"
@@ -71,6 +72,7 @@
 namespace fsm {
     namespace demand_policy = super_planner::demand_replan;
     namespace startup_recovery = super_planner::startup_recovery;
+    namespace async_recovery = super_planner::async_recovery;
     class FsmRos2 : public Fsm {
 
         rclcpp::Node::SharedPtr nh_;
@@ -152,6 +154,7 @@ namespace fsm {
         double brake_duration_s_{0.0};
         double brake_velocity_limit_mps_{0.0};
         std::uint64_t brake_source_generation_{0};
+        std::uint64_t brake_command_revision_{0};  // protected by safety_mutex_
         double brake_yaw_{0.0};
         std::string brake_reason_{};
         // A fresh current-body hazard may shorten one already-active brake.
@@ -174,6 +177,30 @@ namespace fsm {
         // state-selection failure, not an alternative active-brake completion.
         std::uint64_t brake_activation_revision_{0};
         bool startup_recovery_pending_{false};
+
+        struct AsyncRecoveryRequest {
+            async_recovery::Identity identity;
+            Vec3f goal{Vec3f::Zero()};
+            double goal_yaw{NAN};
+            bool new_goal{false};
+        };
+        struct AsyncRecoveryResult {
+            AsyncRecoveryRequest request;
+            int ret_code{super_utils::FAILED};
+            bool goal_valid{false}, rejected{true}, computed{false};
+            std::uint64_t generation_after{0};
+        };
+        async_recovery::SingleFlight<AsyncRecoveryRequest, AsyncRecoveryResult>
+                async_recovery_slot_;
+        std::uint64_t async_recovery_next_id_{0};  // main-callback-owned
+        std::uint64_t async_recovery_dispatched_{0}, async_recovery_completed_{0},
+                async_recovery_discarded_{0};
+
+        static bool asyncCertifiedRecoveryEnabled() {
+            static const bool enabled = async_recovery::enabledSetting(
+                    std::getenv("SUPER_ASYNC_CERTIFIED_RECOVERY"));
+            return enabled;
+        }
 
         struct RefreshProcessAck {
             std::uint64_t stamp_ns{0};
@@ -2370,7 +2397,14 @@ namespace fsm {
             // and still agrees with the tracked vehicle. Guard suppression
             // deliberately stops normal command publication, so a boolean
             // "was ever published" flag alone is not a validity condition.
-            planner_ptr_->getRobotState(robot_state_);
+            if (asyncCertifiedRecoveryEnabled()) {
+                // The stopped recovery optimizer owns the planner's mutable
+                // RobotState. Brake selection needs only its own odometry
+                // copy and must not overwrite that planner cache mid-solve.
+                robot_state_ = map_ptr_->getRobotState();
+            } else {
+                planner_ptr_->getRobotState(robot_state_);
+            }
             const double selection_wt = ros_ptr_->getSimTime();
             const bool odom_position_ready = robot_state_.rcv &&
                     std::isfinite(robot_state_.rcv_time) &&
@@ -2885,6 +2919,8 @@ namespace fsm {
                     return false;
                 }
                 brake_pos_traj_ = brake_trajectory;
+                ++brake_command_revision_;
+                if (brake_command_revision_ == 0) ++brake_command_revision_;
                 brake_yaw_traj_ = yaw_trajectory;
                 // A stationary fallback has already satisfied the same
                 // odometry position/stability predicates required below.
@@ -2970,7 +3006,9 @@ namespace fsm {
             return true;
         }
 
-        bool getBrakeSample(CmdTraj::Sample &sample) {
+        bool getBrakeSample(CmdTraj::Sample &sample,
+                            async_recovery::BrakeCommandIdentity* identity = nullptr,
+                            double* velocity_limit = nullptr) {
             std::lock_guard<std::mutex> lock(safety_mutex_);
             if (!safety_brake_active_.load(std::memory_order_relaxed) ||
                 brake_pos_traj_.empty()) {
@@ -2990,6 +3028,8 @@ namespace fsm {
             sample.on_backup = true;
             sample.yaw = brake_yaw_;
             sample.yaw_dot = 0.0;
+            if (identity) *identity = {brake_command_revision_, brake_source_generation_, brake_start_wt_};
+            if (velocity_limit) *velocity_limit = brake_velocity_limit_mps_;
             if (sample.finished) {
                 sample.pvaj.col(1).setZero();
                 sample.pvaj.col(2).setZero();
@@ -3004,9 +3044,288 @@ namespace fsm {
             return brake_velocity_limit_mps_;
         }
 
+        // Caller owns activation -> full-refresh -> safety -> pending-goal
+        // locks, or (for read-only fields) the corresponding earlier locks.
+        async_recovery::Identity asyncRecoveryIdentityLocked(
+                const std::uint64_t id, const std::uint64_t generation_before) const {
+            async_recovery::Identity identity;
+            identity.id = id;
+            identity.brake_revision = brake_activation_revision_;
+            identity.generation_before = generation_before;
+            identity.goal_queued = queued_goal_revision_;
+            identity.goal_accepted = accepted_goal_revision_;
+            identity.event_requested = event_recovery_requested_.load(std::memory_order_acquire);
+            identity.event_completed = event_recovery_completed_.load(std::memory_order_acquire);
+            identity.ack = startupRecoveryAckLocked();
+            return identity;
+        }
+
+        // No planner getRobotState(): that legacy accessor also writes the
+        // optimizer's mutable cache. This read is safe while its solve runs.
+        bool asyncRecoveryStablePoseLocked() const {
+            const auto odom = map_ptr_->getRobotState();
+            const double now = ros_ptr_->getSimTime();
+            return odom.rcv && std::isfinite(odom.rcv_time) &&
+                    now >= odom.rcv_time && now - odom.rcv_time <= 0.1 &&
+                    odom.p.array().isFinite().all() &&
+                    (odom.p - brake_stop_position_).norm() <= 0.15 &&
+                    brake_stability_started_ &&
+                    (odom.p - brake_stability_anchor_).norm() <= 0.03 &&
+                    now >= brake_stability_start_wt_ &&
+                    now - brake_stability_start_wt_ >= 0.25;
+        }
+
+        // Runs inside the EXISTING mutually-exclusive replan callback, after
+        // its CPU/timing scopes. It never changes the FSM state, clears a brake,
+        // emits a command polynomial, or closes Full sensing. Planner
+        // visualization remains unchanged. Committed candidates remain
+        // inaccessible to ordinary commands because the certified hold stays
+        // active until main-side finalization, and Ready reserves this executor.
+        bool serviceAsyncCertifiedRecovery() {
+            if (!asyncCertifiedRecoveryEnabled()) return false;
+            const auto request = async_recovery_slot_.begin();
+            if (!request) return async_recovery_slot_.busy();
+            AsyncRecoveryResult result;
+            result.request = *request;
+            bool may_compute = false;
+            {
+                std::unique_lock<std::mutex> activation(brake_activation_mutex_, std::try_to_lock);
+                if (activation) {
+                    const auto health = map_ptr_->getMapHealthSnapshot();
+                    double age = 0.0;
+                    std::lock_guard<std::mutex> refresh(full_refresh_mutex_);
+                    std::lock_guard<std::mutex> safety(safety_mutex_);
+                    std::lock_guard<std::mutex> goal(pending_goal_mutex_);
+                    const auto current = asyncRecoveryIdentityLocked(
+                            request->identity.id, request->identity.generation_before);
+                    may_compute = async_recovery::sameDemand(request->identity, current) &&
+                            !stop.load(std::memory_order_acquire) &&
+                            safety_brake_active_.load(std::memory_order_acquire) &&
+                            safety_brake_finished_.load(std::memory_order_acquire) &&
+                            !pending_goal_.valid && !goal_update_in_progress_ &&
+                            asyncRecoveryStablePoseLocked() && mapFreshForGuard(health, age) &&
+                            (!health.update_in_progress || map_ptr_->immutablePlannerSnapshotEnabled()) &&
+                            (!current.ack.required || health.map_version >= current.ack.map) &&
+                            planner_ptr_->getCommittedTrajectoryGeneration() ==
+                                    request->identity.generation_before;
+                    if (may_compute) planner_ptr_->setCertifiedStopForReroute(true);
+                }
+            }
+            if (may_compute) {
+                try {
+                    const super_utils::thread_cpu_profile::Scope compute_scope(
+                            super_utils::thread_cpu_profile::Stage::FsmReplanCore);
+                    rog_map::RobotState optimizer_state;
+                    planner_ptr_->getRobotState(optimizer_state);
+                    result.ret_code = planner_ptr_->PlanFromRest(
+                            request->goal, request->goal_yaw, request->new_goal);
+                    result.computed = true;
+                    result.goal_valid = planner_ptr_->goalValid();
+                    result.rejected = planner_ptr_->consumeTrajectoryGuardRejection();
+                    result.generation_after = planner_ptr_->getCommittedTrajectoryGeneration();
+                    // This executor is the sole planner/log writer during the
+                    // reservation; no result contains an unbounded SFC cloud.
+                    recordLatestReplanLog();
+                } catch (const std::exception& error) {
+                    result.ret_code = super_utils::FAILED;
+                    result.rejected = true;
+                    ros_ptr_->error(" -- [ASYNC_RECOVERY_RESULT] id={} exception={} action=retain_hold",
+                                    request->identity.id, error.what());
+                }
+            }
+            async_recovery_slot_.finish(std::move(result));
+            return true;
+        }
+
+        bool finishAsyncCertifiedRecovery(const AsyncRecoveryResult& result) {
+            const auto& before = result.request.identity;
+            std::unique_lock<std::mutex> activation(brake_activation_mutex_, std::try_to_lock);
+            if (!activation) return false;  // Retry this receipt; do not wait on brake construction.
+
+            // Only main performs the live geometric certificate refresh. No
+            // success from an old worker is substituted for current evidence.
+            bool refreshed = false;
+            if (result.computed && (result.ret_code == super_utils::SUCCESS || result.ret_code == super_utils::FINISH) &&
+                result.goal_valid && !result.rejected &&
+                before.brake_revision == brake_activation_revision_ &&
+                safety_brake_active_.load(std::memory_order_acquire) &&
+                safety_brake_finished_.load(std::memory_order_acquire) &&
+                asyncRecoveryStablePoseLocked()) {
+                refreshed = refreshSafetyCertificate("async_brake_recovery");
+            }
+            const auto snapshot = planner_ptr_->getCommittedSharedTrajectorySnapshot();
+            CmdTraj::Sample sample;
+            const bool sample_valid = !snapshot.empty &&
+                    planner_ptr_->getOneCommandSample(sample, result.generation_after) &&
+                    sample.pvaj.array().isFinite().all() &&
+                    std::isfinite(sample.trajectory_time) && std::isfinite(sample.start_wt) &&
+                    std::isfinite(sample.yaw) && std::isfinite(sample.yaw_dot);
+            mars_quadrotor_msgs::msg::PolynomialTrajectory message;
+            bool velocity_valid = false;
+            if (refreshed && sample_valid && !sample.finished && snapshot.pos_traj && snapshot.yaw_traj) {
+                const double limit = planner_ptr_->getConfiguredMaxVelocity();
+                const double maximum = snapshot.pos_traj->getMaxVelRate();
+                velocity_valid = std::isfinite(limit) && limit > 0.0 &&
+                        std::isfinite(maximum) && maximum <= limit * 1.001;
+                if (velocity_valid) fillPolynomialTrajectory(
+                        *snapshot.pos_traj, *snapshot.yaw_traj, message, false, snapshot.generation);
+            }
+            bool completed = false;
+            std::string recovered_reason;
+            std::uint64_t certified_map = 0;
+            {
+                std::lock_guard<std::mutex> refresh(full_refresh_mutex_);
+                std::lock_guard<std::mutex> safety(safety_mutex_);
+                std::lock_guard<std::mutex> goal(pending_goal_mutex_);
+                const auto current = asyncRecoveryIdentityLocked(before.id, before.generation_before);
+                const auto health = map_ptr_->getMapHealthSnapshot();
+                double age = 0.0;
+                async_recovery::Completion proof;
+                proof.successful = result.computed &&
+                        (result.ret_code == super_utils::SUCCESS || result.ret_code == super_utils::FINISH);
+                proof.rejected = result.rejected;
+                proof.goal_valid = result.goal_valid;
+                proof.brake_active = safety_brake_active_.load(std::memory_order_acquire);
+                proof.brake_finished = safety_brake_finished_.load(std::memory_order_acquire);
+                proof.stable_pose = asyncRecoveryStablePoseLocked();
+                proof.no_pending_goal = !pending_goal_.valid && !goal_update_in_progress_;
+                proof.not_stopped = !stop.load(std::memory_order_acquire);
+                proof.map_fresh = mapFreshForGuard(health, age) &&
+                        (!health.update_in_progress || map_ptr_->immutablePlannerSnapshotEnabled());
+                proof.certificate_safe = refreshed && safety_certificate_valid_ && safety_certificate_.safe();
+                proof.certificate_current = safety_certificate_.trajectory_generation == result.generation_after &&
+                        safety_certificate_.map_version == health.map_version &&
+                        !safety_revalidation_requested_.load(std::memory_order_acquire) &&
+                        safety_certificate_.checked_from_tt <= sample.trajectory_time &&
+                        safety_certificate_.checked_to_tt >= sample.trajectory_time;
+                proof.sample_valid = sample_valid && snapshot.generation == result.generation_after;
+                proof.sample_finished = sample.finished;
+                proof.velocity_valid = velocity_valid;
+                proof.result_generation = result.generation_after;
+                proof.current_generation = planner_ptr_->getCommittedTrajectoryGeneration();
+                proof.current_map = health.map_version;
+                completed = async_recovery::mayComplete(before, current, proof);
+                if (completed) {
+                    recovered_reason = brake_reason_;
+                    certified_map = health.map_version;
+                    gi_.new_goal = false;
+                    plan_from_rest_.store(true, std::memory_order_release);
+                    finish_plan.store(result.ret_code == super_utils::FINISH, std::memory_order_release);
+                    // ChangeState itself relocks pending_goal_mutex_. Preserve
+                    // its invalidation inside this already-owned transaction.
+                    if (goalRetransmitIdentityEnabled()) invalidateGoalRetransmissionTokenLocked();
+                    machine_state_.store(FOLLOW_TRAJ, std::memory_order_release);
+                    brake_pos_traj_ = Trajectory{};
+                    brake_yaw_traj_ = Trajectory{};
+                    brake_velocity_limit_mps_ = 0.0;
+                    brake_source_generation_ = 0;
+                    brake_stability_started_ = false;
+                    safety_brake_finished_.store(false, std::memory_order_release);
+                    safety_brake_active_.store(false, std::memory_order_release);
+                    active_brake_body_replaced_ = false;
+                    // Command publication uses this same safety lock. The
+                    // exact certified path is published before releasing it.
+                    mpc_cmd_pub_->publish(message);
+                    if (cfg_.event_recovery_en) {
+                        ros_ptr_->info(
+                                " -- [EVENT_RECOVERY_PATH_READY] request_seq={} stamp_ns={} "
+                                "ack_map={} certified_map={} generation_before={} generation_after={}",
+                                current.ack.target, current.ack.stamp, current.ack.map,
+                                certified_map, before.generation_before, result.generation_after);
+                    }
+                    bool expected = true;
+                    if (trajectory_guard_recovery_announced_.compare_exchange_strong(
+                                expected, false, std::memory_order_acq_rel)) {
+                        clearFullRefreshRecoveryGateLocked();
+                        std_msgs::msg::Bool inactive;
+                        inactive.data = false;
+                        trajectory_guard_recovery_pub_->publish(inactive);
+                        ros_ptr_->info(" -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=false");
+                    }
+                }
+            }
+            if (completed) {
+                ++async_recovery_completed_;
+                ros_ptr_->pubReplanStatus(true);
+                ros_ptr_->info(" -- [TRAJ_GUARD_RECOVERED] trigger={} gen={} map={}",
+                               recovered_reason, result.generation_after, certified_map);
+            } else {
+                ++async_recovery_discarded_;
+                if (result.computed) ros_ptr_->pubReplanStatus(false);
+            }
+            ros_ptr_->info(" -- [ASYNC_RECOVERY_RESULT] id={} computed={} completed={} "
+                           "revision={} generation_before={} generation_after={} "
+                           "dispatched_total={} completed_total={} discarded_total={}",
+                           before.id, result.computed, completed, before.brake_revision,
+                           before.generation_before, result.generation_after,
+                           async_recovery_dispatched_, async_recovery_completed_, async_recovery_discarded_);
+            async_recovery_slot_.release(before.id);
+            return completed;
+        }
+
+        bool tryAsyncCertifiedRecovery() {
+            if (const auto result = async_recovery_slot_.completed())
+                return finishAsyncCertifiedRecovery(*result);
+            if (async_recovery_slot_.busy()) return false;
+            std::unique_lock<std::mutex> activation(brake_activation_mutex_, std::try_to_lock);
+            if (!activation || stop.load(std::memory_order_acquire) ||
+                !safety_brake_active_.load(std::memory_order_acquire) ||
+                !safety_brake_finished_.load(std::memory_order_acquire)) return false;
+            const auto health = map_ptr_->getMapHealthSnapshot();
+            double age = 0.0;
+            if (!mapFreshForGuard(health, age) ||
+                (health.update_in_progress && !map_ptr_->immutablePlannerSnapshotEnabled()) ||
+                !fullRefreshRecoveryGateSatisfied(health)) return false;
+            robot_state_ = map_ptr_->getRobotState();
+            const double now = ros_ptr_->getSimTime();
+            if (!robot_state_.rcv || !std::isfinite(robot_state_.rcv_time) ||
+                now < robot_state_.rcv_time || now - robot_state_.rcv_time > 0.1 ||
+                !robot_state_.p.array().isFinite().all() ||
+                (robot_state_.p - brake_stop_position_).norm() > 0.15) {
+                brake_stability_started_ = false;
+                return false;
+            }
+            if (!brake_stability_started_ ||
+                (robot_state_.p - brake_stability_anchor_).norm() > 0.03) {
+                brake_stability_anchor_ = robot_state_.p;
+                brake_stability_start_wt_ = now;
+                brake_stability_started_ = true;
+                return false;
+            }
+            if (now - brake_stability_start_wt_ < 0.25 ||
+                now - brake_recovery_last_attempt_wt_ < 0.5 || !mapReadyForPlanning()) return false;
+            // Same pending-goal admission as the old GENERATE_TRAJ branch,
+            // performed by main, never by the optimizer executor.
+            tryConsumePendingGoal();
+            if (closeToGoal(0.1)) return false;
+            AsyncRecoveryRequest request;
+            {
+                std::lock_guard<std::mutex> refresh(full_refresh_mutex_);
+                std::lock_guard<std::mutex> safety(safety_mutex_);
+                std::lock_guard<std::mutex> goal(pending_goal_mutex_);
+                if (pending_goal_.valid || goal_update_in_progress_) return false;
+                request.identity = asyncRecoveryIdentityLocked(
+                        ++async_recovery_next_id_, planner_ptr_->getCommittedTrajectoryGeneration());
+                if (!async_recovery::ready(request.identity)) return false;
+                request.goal = gi_.goal_p;
+                request.goal_yaw = gi_.goal_yaw;
+                request.new_goal = gi_.new_goal;
+                if (!async_recovery_slot_.submit(request)) return false;
+                brake_recovery_last_attempt_wt_ = now;
+                ++async_recovery_dispatched_;
+            }
+            ros_ptr_->info(" -- [ASYNC_RECOVERY_REQUEST] id={} revision={} generation_before={} "
+                           "request_seq={} stamp_ns={} ack_map={}",
+                           request.identity.id, request.identity.brake_revision,
+                           request.identity.generation_before, request.identity.ack.target,
+                           request.identity.ack.stamp, request.identity.ack.map);
+            return false;
+        }
+
         bool tryRecoverFromEmergencyBrake() {
             const super_utils::thread_cpu_profile::Scope cpu_scope(
                     super_utils::thread_cpu_profile::Stage::GuardRecover);
+            if (asyncCertifiedRecoveryEnabled()) return tryAsyncCertifiedRecovery();
             if (!safety_brake_active_.load(std::memory_order_acquire) ||
                 !safety_brake_finished_.load(std::memory_order_acquire)) {
                 return false;
@@ -3478,6 +3797,9 @@ namespace fsm {
                 (!cfg_.trajectory_guard_en || cfg_.trajectory_guard_full_refresh_ack_sla_s <= 0.0)) {
                 throw std::runtime_error("Event recovery requires certified guard and Full commit ACK");
             }
+            if (asyncCertifiedRecoveryEnabled() && !cfg_.trajectory_guard_en) {
+                throw std::runtime_error("Async certified recovery requires trajectory guard");
+            }
             // Keep map commits schedulable while planner optimization is
             // running. Planner map-reading frontends take an explicit shared
             // map transaction; the writer takes the matching exclusive lock.
@@ -3490,6 +3812,8 @@ namespace fsm {
             // 初始化Planner
             ros_ptr_ = std::make_shared<ros_interface::Ros2Interface>(nh_);
             planner_ptr_ = std::make_shared<SuperPlanner>(cfg_path, ros_ptr_, map_ptr_);
+            ros_ptr_->info(" -- [ASYNC_CERTIFIED_RECOVERY] enabled={} executor=existing_replan "
+                           "main_finalization=true default_off=true", asyncCertifiedRecoveryEnabled());
             if (cfg_.trajectory_guard_en) {
                 const rclcpp::QoS guard_recovery_qos(
                         rclcpp::QoS(1).reliable().keep_last(1)
@@ -3763,13 +4087,31 @@ namespace fsm {
 
             if (safety_brake_active_.load(std::memory_order_acquire)) {
                 CmdTraj::Sample brake_sample;
-                if (!getBrakeSample(brake_sample)) {
+                async_recovery::BrakeCommandIdentity brake_identity;
+                double sampled_brake_limit = 0.0;
+                const bool async_handoff = asyncCertifiedRecoveryEnabled();
+                if (!getBrakeSample(brake_sample,
+                                    async_handoff ? &brake_identity : nullptr,
+                                    async_handoff ? &sampled_brake_limit : nullptr)) {
                     return;
                 }
                 if (!commandVelocityWithinLimit(
                             brake_sample, "emergency_brake",
-                            getBrakeVelocityLimit())) {
+                            async_handoff ? sampled_brake_limit : getBrakeVelocityLimit())) {
                     return;
+                }
+                // A worker result can become a fresh ordinary path between
+                // sampling this brake and publication. Pair the final check
+                // and both messages with main's recovery-release transaction.
+                // A replacement brake can share source generation/start time,
+                // hence the separate monotonic, safety-lock-owned revision.
+                std::unique_lock<std::mutex> publication_lock(safety_mutex_, std::defer_lock);
+                if (async_handoff) {
+                    publication_lock.lock();
+                    if (!async_recovery::mayPublishBrake(
+                                safety_brake_active_.load(std::memory_order_relaxed),
+                                brake_identity,
+                                {brake_command_revision_, brake_source_generation_, brake_start_wt_})) return;
                 }
                 mars_quadrotor_msgs::msg::PolynomialTrajectory heartbeat;
                 getOneHeartBeatMsg(heartbeat, brake_sample, true);
@@ -4094,6 +4436,7 @@ namespace fsm {
             const super_utils::callback_timing_trace::Scope wall_trace(replan_trace_, "FsmReplan", 0);
             const super_utils::thread_cpu_profile::Scope cpu_scope(
                     super_utils::thread_cpu_profile::Stage::FsmReplanCallback);
+            if (serviceAsyncCertifiedRecovery()) return;
             if (safety_brake_active_.load(std::memory_order_acquire)) {
                 return;
             }

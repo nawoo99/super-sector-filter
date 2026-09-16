@@ -6173,3 +6173,83 @@ counts, plus every available compute/resource metric. Report missing CPU/time
 for abortedrun explicitly; do not infer Adaptive100% success or completedn5.
 Recommend diagnose/fixmemorygrowth then fresh75, preservingthiscohort andN5ON2.
 Details docs/c23_normal_comparison_20260916.md; ready_maps/report_partial.
+
+### 8.100 C24: async certified recovery and fresh Normal n5 validation (2026-09-17)
+
+User explicitly authorized continuing diagnosis, fixes and each-map n5 without
+further questions. Scope is five frozen Normal maps seed1/3/5/7/9, three modes,
+75 primary OFF flights; no automatic n20 extension. C23's failed/partial cohort
+and C22's old strict time-gate failures remain unchanged and separate.
+
+C23 N5 Full main callback97.586Hz was linked to synchronous stopped-recovery
+PlanFromRest inside the100Hz main callback. Added default-OFF environment opt-in
+SUPER_ASYNC_CERTIFIED_RECOVERY=1: single-flight Pending/Computing/Ready mailbox
+on the existing replan executor. Main retains live safety checks/certified hold;
+release requires exact brake revision, pending/accepted goal identity, Full
+observation/ACK, fresh map, current new generation, safe certificate, stable
+pose and finite velocity-bounded command. Ready reserves planning until main
+consumes the result. No new thread, reduced callback rate or dummy heartbeat.
+Review also found/fixed old brake-command publication after recovery handoff:
+recheck exact sampled brake identity and publish under the same safety lock.
+Normal and ASan/UBSan helper suites each142077 checks passed before ROS build.
+
+Memory failure remains causally unresolved: old N3 Adaptive process is gone.
+Separate diagnostic probes memory_probe01(OFF3) and memory_probe02(ON Adaptive1)
+completed without the RSS runaway; these are not primary cohort observations.
+Defensive code fixes cover allocation-free Astar parent-chain cycle/node-limit
+validation before materialization, all-occupied corridor seed rejection and
+backup trailing-pop underflow. Each normal/sanitized suite266594 checks passed.
+Do not claim these establish the original root cause. Original runtime backup
+is preservation/runtime_before.tgz under results/c24_normal_validation_20260916,
+SHA256 1b82b1d6b11111611e5ae0b5736c846823068afbc9bed6b3f0109aae1e211298.
+
+Prospective C24 controller performs fresh static transport30/actual RViz5 tests,
+then ON15 and independent OFF75, with frozen runtime/options/maps/evidence and
+exact map/mode/repetition coverage. Mission time is a reported outcome. Sector
+completion/contact outcomes are retained in ON/OFF rather than requiring a
+lucky clean preflight; Full/Adaptive completion/contact and all measurement,
+source/recovery/timing/resource guards remain mandatory. No automatic retries
+or failure replacement. New source changes require a fresh iteration.
+
+Owned composed process RSS>4608MiB triggers a diagnostic contamination marker
+before bounded gdb stack capture(20s), then owned-child shutdown. Original
+attempts/outcomes remain, but that triplet's cost metrics are excluded as
+invalid with explicit missing values, never used as accepted performance data.
+Python137 regression tests passed. Initial ROS compile caught unqualified enum
+names in async additions; corrected/mirrored and serial Release rebuild underway.
+Full details/status will be recorded in docs/c24_normal_validation_20260917.md.
+Primary75 not yet started/completed at this preparation checkpoint; no push.
+
+Preparation update: serial Release build succeeded (2packages,6min19s), Python169
+checks passed. Exact Sector identity consistency is now separated from absent
+optimization opportunity only under its explicit comparison option; original
+strict/exercise fields remain available. Full/Adaptive/default strict unchanged.
+Started results/c24_normal_validation_20260917/iteration01, base-run18000,
+async opt-in applied identically to all flight modes. Static verification first;
+ON15/OFF75 not yet complete. No runtime/script edits during the frozen iteration.
+
+ON checkpoint: all30 DDS/5 actual RViz checks and15 profiled flights passed.
+All15 completed/contact0 with timing/source/recovery/resource gates valid.
+N5 Full50.23s, actualmain/command99.998862Hz; old97.586Hz miss not observed here.
+N1 Sector2 and Adaptive1 async recoveries were observed with exact identity/ACK
+handoff and no discarded result; larger-map recoveries also exercised. OFF75
+started, report_preflight remains separate. No memory causal-resolution claim.
+
+Final C24 checkpoint: iteration01 COMPLETE, exact ON15 and independent OFF75
+with each of5maps ×3modes ×5 repetitions accounted. All75 completed/contact0;
+allrun/resource/source/recovery/speed/timing gates pass, no retries/replacement
+or contamination. No current flight/controller remains. Static+ON+OFF elapsed
+116.36min. Primary report_validation5 has75runs/5cohorts/warnings0; separateON
+report_preflight has15runs/warnings0. Frozen inputs/old Normal stay unchanged.
+
+Equal-run meanCPU cores Full/Sector/Adaptive=.695766910/.419272875/.448593329;
+mean measurement-window core-s=30.80633612/19.10560964/20.60157584.
+Adaptive relative reductions35.5253% meanCPU and33.1255% cumulativeCPU; not40%.
+Meanmissiontime42.0208/43.4560/43.6700s. Sector is also25/25/contact0: these
+Normal data do not establish Adaptive safety superiority over Sector. Finite
+observed100% is not a population guarantee. ONactualmain99.923137–99.999579Hz,
+command99.998117–99.999579Hz; OFFodom is separately labelled, not actualFSM.
+Memoryrunaway not reproduced; preventive rejectbranches didnotfire in the
+audited logs, so original memory cause remains unresolved. Detailed map tables
+and all metricdefinitions: docs/c24_normal_results_20260917.md. Runtime edits
+mirrored, sourcebackup retained, no automaticn20 or push.

@@ -82,7 +82,8 @@ SMALL_POOL_MATCH_FIELDS = (
     'static_pc_latched_once', 'static_latched_preflight_sha256',
     'optimizer_phase_memory_trace', 'optimizer_clearance_gate_first', 'time_reference_folder',
     'max_same_mode_reference_time_ratio', 'max_mission_time_ratio',
-    'logical_cpus', 'frozen_normal_sha256', 'callback_trace', 'event_body_heading')
+    'logical_cpus', 'frozen_normal_sha256', 'callback_trace', 'event_body_heading',
+    'async_certified_recovery')
 
 
 def heading_policy_audit(stack, mode, enabled):
@@ -91,6 +92,13 @@ def heading_policy_audit(stack, mode, enabled):
                                          else ('0', '1') if mode == 'adaptive' else ('0', '0')]
     return dict(valid=records == expected, records=records, expected=expected,
                 scope='Source acquisition center policy; aperture and Full recovery unchanged')
+
+
+def async_recovery_setting_audit(stack, enabled):
+    records = re.findall(r'\[ASYNC_CERTIFIED_RECOVERY\] enabled=(true|false)\b', stack)
+    expected = ['true' if enabled else 'false']
+    return dict(valid=records == expected, records=records, expected=expected,
+                scope='Runtime opt-in evidence; recovery certification audited separately')
 
 
 def small_pool_profile_reference_audit(plan, reference_plan, summaries):
@@ -146,6 +154,24 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
             row.get('strict_recovery_audit', {}).get('valid') is True and
             row.get('strict_recovery_audit', {}).get('mode') == mode and
             not row.get('cpu_comparison_instrumented', False))
+        if mode == 'sector' and plan.get('sector_outcomes_as_metrics') is True:
+            # Fixed-sector safety/completion are comparison outcomes. A
+            # contact does not invalidate its independently checked timer and
+            # source measurements. Preserve the strict safety result above.
+            checks['sector_comparison_measurement'] = (
+                row.get('mode') == 'sector' and row.get('cpu_profile') is True and
+                all(row.get(k) is True for k in ('run_valid','resource_valid','speed_limit_valid')) and
+                bool(source_checks) and all(v is True for v in source_checks.values()) and
+                row.get('strict_recovery_audit', {}).get('valid') is True and
+                row.get('strict_recovery_audit', {}).get('mode') == 'sector' and
+                not row.get('cpu_comparison_instrumented', False))
+            checks['sector_identity_consistency'] = (
+                row.get('goal_identity_audit', {}).get('identity_consistency_valid') is True and
+                source_checks.get('goal_identity_consistency') is True)
+            contact = row.get('safety_collisions')
+            checks['sector_known_outcome'] = (
+                type(row.get('success')) is bool and type(contact) in (int, float) and
+                math.isfinite(contact) and contact >= 0 and int(contact) == contact)
         if mode == 'sector':
             checks['sector_fixed_source'] = source_checks.get('fixed_sector_never_full') is True
         checks[mode + '_profile_timing'] = (
@@ -178,6 +204,11 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
         checks[mode + '_optimizer_clearance_gate_first'] = (
             not plan.get('optimizer_clearance_gate_first') or
             row.get('optimizer_clearance_gate_audit', {}).get('valid') is True)
+        checks[mode + '_async_certified_recovery'] = (
+            not plan.get('async_certified_recovery') or
+            (row.get('async_certified_recovery') is True and
+             row.get('async_recovery_setting_audit', {}).get('valid') is True and
+             source_checks.get('async_certified_recovery_setting') is True))
     if {'full', 'adaptive'} <= modes:
         ftime = summaries.get('full', {}).get('mission_time_s')
         atime = summaries.get('adaptive', {}).get('mission_time_s')
@@ -189,11 +220,16 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
     # Preserve the original checks (and the default strict behavior). This
     # option never relaxes callback, source, safety, or runtime matching gates.
     time_as_metric = plan.get('mission_time_as_metric') is True
+    sector_outcomes_as_metrics = plan.get('sector_outcomes_as_metrics') is True
     acceptance_checks = {k: v for k, v in checks.items()
                          if not (time_as_metric and
-                                 (k == 'paired_mission_time' or k.endswith('_reference_time')))}
+                                 (k == 'paired_mission_time' or k.endswith('_reference_time')))
+                         and not (sector_outcomes_as_metrics and k in (
+                             'sector_safe_source', 'sector_demand_exercised',
+                             'sector_goal_identity_exercised'))}
     return dict(valid=all(acceptance_checks.values()), checks=checks,
                 acceptance_checks=acceptance_checks, mission_time_as_metric=time_as_metric,
+                sector_outcomes_as_metrics=sector_outcomes_as_metrics,
                 modes_audited=sorted(modes),
                 paired_mission_time_applicable={'full', 'adaptive'} <= modes,
                 scope='Matched profiled finite-run timing preflight; not a real-time or safety guarantee')
@@ -337,10 +373,34 @@ def goal_identity_audit(stack):
             for stamp, gen, version, queued, accepted, total in coalesced),
         coalesced_counter=bool(coalesced) and
             [row[-1] for row in coalesced] == list(range(1, len(coalesced) + 1)))
+    # A blocked comparison Sector may have no healthy coalescing opportunity.
+    # Keep the original exercise proof unchanged; this separate proof still
+    # requires real, consistent producer evidence and checks EVERY observed
+    # coalescing record, including malformed records missed by the parser.
+    consistency_checks = dict(
+        producer_serialized=checks['producer_serialized'],
+        receiver_enabled=checks['receiver_enabled'],
+        producer_identity_consistent=checks['producer_identity_consistent'],
+        producer_records_complete=stack.count('[MISSION_GOAL_IDENTITY]') == len(publications),
+        coalesced_records_complete=stack.count('[GOAL_RETRANSMIT_COALESCED]') == len(coalesced),
+        observed_coalesced_identity_linkage=all(
+            stamp in repeated and all(v > 0 for v in (gen, version, queued, accepted))
+            for stamp, gen, version, queued, accepted, total in coalesced),
+        observed_coalesced_counter=(
+            [row[-1] for row in coalesced] == list(range(1, len(coalesced) + 1))))
     return dict(valid=all(checks.values()), checks=checks,
+                identity_consistency_valid=all(consistency_checks.values()),
+                identity_consistency_checks=consistency_checks,
                 publications=len(publications), creation_identities=len(issued),
                 repeated_identities=len(repeated), coalesced=len(coalesced),
                 scope='Explicit creation-ID linkage and exercised coverage; not proof that every repeat may safely be suppressed')
+
+
+def goal_identity_admission_valid(audit, mode, sector_outcomes_as_metrics=False):
+    """Only explicit comparison Sector may lack healthy optimization opportunities."""
+    field = ('identity_consistency_valid'
+             if mode == 'sector' and sector_outcomes_as_metrics is True else 'valid')
+    return audit.get(field) is True
 
 
 def headless_parameter_audit(stack, mode):
@@ -620,6 +680,8 @@ def main():
     parser.add_argument('--static-latched-preflight', type=Path,
                         help='Current six-arm plus actual-RViz accepted evidence manifest required for latched mode')
     parser.add_argument('--side-executor-threads', type=int, choices=range(2, 17), default=10)
+    parser.add_argument('--async-certified-recovery', action='store_true',
+                        help='Move certified-stop planning compute off the100Hz main callback; retain main safety finalization')
     parser.add_argument('--monitor-intervals', action='store_true',
                         help='Bounded received-message interval statistics on existing monitor subscriptions')
     parser.add_argument('--guarded-demand-replan', action='store_true')
@@ -644,6 +706,8 @@ def main():
                         help='Passed matching same-mode-set profiled preflight required for unprofiled pools below4')
     parser.add_argument('--mission-time-as-metric', action='store_true',
                         help='Comparison-only admission: retain time checks as outcomes, not preflight gates')
+    parser.add_argument('--sector-outcomes-as-metrics', action='store_true',
+                        help='Fixed Sector completion/contact remain outcomes; require its source/resource/timing evidence')
     parser.add_argument('--full-config', default=diagnostic.search.PROFILES['full'])
     parser.add_argument('--sector-config', default=diagnostic.search.PROFILES['sector'])
     parser.add_argument('--adaptive-config', default=event.PROFILE)
@@ -730,6 +794,7 @@ def main():
     os.environ['SUPER_CPU_PROFILE'] = '1' if args.profile_cpu else '0'
     os.environ['SUPER_CALLBACK_TRACE'] = '1' if args.callback_trace else '0'
     os.environ['SUPER_EVENT_BODY_ALIGNED_SECTOR'] = '1' if args.event_body_heading else '0'
+    os.environ['SUPER_ASYNC_CERTIFIED_RECOVERY'] = '1' if args.async_certified_recovery else '0'
     os.environ['SUPER_SKIP_BACKUP_DIAGNOSTIC_REPLAY'] = (
         '1' if args.skip_backup_diagnostic_replay else '0')
     os.environ['SUPER_SKIP_UNOBSERVED_PATH_PUBLICATION'] = (
@@ -813,6 +878,7 @@ def main():
         cumulative_cpu_also_reported=True, max_mission_time_ratio=1.10,
         compose=args.compose, cpu_profile=args.profile_cpu, callback_trace=args.callback_trace,
         event_body_heading=args.event_body_heading,
+        async_certified_recovery=args.async_certified_recovery,
         skip_backup_diagnostic_replay=args.skip_backup_diagnostic_replay,
         skip_unobserved_path_publication=args.skip_unobserved_path_publication,
         fast_occupied_box_scan=args.fast_occupied_box_scan,
@@ -852,6 +918,7 @@ def main():
         exploratory_tuning=True, not_pooled_with_previous_results=True)
     profile_reference_audit = None
     plan['mission_time_as_metric'] = args.mission_time_as_metric
+    plan['sector_outcomes_as_metrics'] = args.sector_outcomes_as_metrics
     if profile_reference_plan is not None:
         profile_reference_audit = small_pool_profile_reference_audit(
             plan, profile_reference_plan, profile_reference_summaries)
@@ -908,6 +975,12 @@ def main():
                 stack = (root / 'artifacts' /
                     f'{args.map}_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
                 result['event_body_heading'] = args.event_body_heading
+                result['async_certified_recovery'] = args.async_certified_recovery
+                if args.async_certified_recovery or '[ASYNC_CERTIFIED_RECOVERY]' in stack:
+                    result['async_recovery_setting_audit'] = async_recovery_setting_audit(
+                        stack, args.async_certified_recovery)
+                    result['source_acquisition']['checks']['async_certified_recovery_setting'] = (
+                        result['async_recovery_setting_audit']['valid'])
                 if args.event_body_heading or '[SECTOR_HEADING_POLICY]' in stack:
                     result['heading_policy_audit'] = heading_policy_audit(stack, mode, args.event_body_heading)
                     result['source_acquisition']['checks']['heading_policy'] = result['heading_policy_audit']['valid']
@@ -981,7 +1054,11 @@ def main():
                     result['goal_identity_audit'] = goal_identity_audit(stack)
                     result['goal_retransmit_exercised'] = result['goal_identity_audit']['valid']
                     result['source_acquisition']['checks']['goal_identity_audit'] = (
-                        result['goal_identity_audit']['valid'])
+                        goal_identity_admission_valid(result['goal_identity_audit'], mode,
+                                                      args.sector_outcomes_as_metrics))
+                    if mode == 'sector' and args.sector_outcomes_as_metrics:
+                        result['source_acquisition']['checks']['goal_identity_consistency'] = (
+                            result['goal_identity_audit']['identity_consistency_valid'])
                 if args.headless_parameter_services:
                     result['headless_parameter_services'] = True
                     result['headless_parameter_audit'] = headless_parameter_audit(stack, mode)

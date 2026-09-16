@@ -22,6 +22,7 @@
 */
 
 #include <path_search/astar.h>
+#include <path_search/parent_chain.hpp>
 
 using namespace color_text;
 using namespace super_utils;
@@ -203,12 +204,16 @@ namespace path_search {
         cfg_.visual_process = en;
     }
 
-    void Astar::retrievePath(GridNodePtr current, vector<GridNodePtr> &path) {
-        path.push_back(current);
-        while (current->father_ptr != NULL) {
-            current = current->father_ptr;
-            path.push_back(current);
+    bool Astar::retrievePath(GridNodePtr current, vector<GridNodePtr> &path) {
+        const auto result = parent_chain::reconstruct(
+                current, grid_node_buffer_.size(), path);
+        if (result != parent_chain::Result::SUCCESS) {
+            ros_ptr_->error(
+                    " -- [ASTAR_PARENT_CHAIN_REJECT] reason={} node_limit={} action=no_path",
+                    parent_chain::resultName(result), grid_node_buffer_.size());
+            return false;
         }
+        return true;
     }
 
     void Astar::ConvertNodePathToPointPath(const vector<GridNodePtr> &node_path, rog_map::vec_Vec3f &point_path) {
@@ -395,7 +400,10 @@ namespace path_search {
             if (current->id_g(0) == endPtr->id_g(0) &&
                 current->id_g(1) == endPtr->id_g(1) &&
                 current->id_g(2) == endPtr->id_g(2)) {
-                retrievePath(current, node_path);
+                if (!retrievePath(current, node_path)) {
+                    out_path.clear();
+                    return NO_PATH;
+                }
                 if (start_pt_out_local_map) {
                     rog_map::Vec3i start_idx_g;
                     posToGlobalIndex(start_pt, start_idx_g);
@@ -416,7 +424,10 @@ namespace path_search {
                         local_goal = current;
                     }
                 }
-                retrievePath(local_goal, node_path);
+                if (!retrievePath(local_goal, node_path)) {
+                    out_path.clear();
+                    return NO_PATH;
+                }
                 if (start_pt_out_local_map) {
                     node_path.push_back(startPtr);
                 }
@@ -597,7 +608,10 @@ namespace path_search {
                 cout << rog_map::RED << " -- [A*] Frontier queue is empty, return." << rog_map::RESET << endl;
                 return NO_PATH;
             }
-            retrievePath(local_goal, node_path);
+            if (!retrievePath(local_goal, node_path)) {
+                out_path.clear();
+                return NO_PATH;
+            }
             if (start_pt_out_local_map) {
                 node_path.push_back(startPtr);
             }
@@ -678,7 +692,10 @@ namespace path_search {
             globalIndexToPos(current->id_g, cur_pos);
             rog_map::GridType cur_inf_type = map_ptr_->getInfGridType(cur_pos);
             if (md_.unknown_as_occ && cur_inf_type != OCCUPIED && cur_inf_type != UNKNOWN) {
-                retrievePath(current, node_path);
+                if (!retrievePath(current, node_path)) {
+                    out_path.clear();
+                    return NO_PATH;
+                }
                 ConvertNodePathToPointPath(node_path, out_path);
 //                double time_2 = ros_ptr_->getSimTime();
                 //                    printf("\033[34m Escape: A star iter:%d, time:%.3f ms\033[0m\n", num_iter, (time_2 - time_1).toSec() * 1000);
@@ -686,7 +703,10 @@ namespace path_search {
             }
 
             if (md_.unknown_as_free && cur_inf_type != OCCUPIED) {
-                retrievePath(current, node_path);
+                if (!retrievePath(current, node_path)) {
+                    out_path.clear();
+                    return NO_PATH;
+                }
                 ConvertNodePathToPointPath(node_path, out_path);
 //                double time_2 = ros_ptr_->getSimTime();
                 //                    printf("\033[34m Escape: A star iter:%d, time:%.3f ms\033[0m\n", num_iter, (time_2 - time_1).toSec() * 1000);

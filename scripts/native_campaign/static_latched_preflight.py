@@ -30,6 +30,8 @@ INSTALL = Path("/root/super_ws/install/perfect_drone_sim")
 EXECUTABLES = {"standalone": "perfect_drone_node", "full": "perfect_drone_full_node",
                "adaptive": "perfect_drone_adaptive_node"}
 BINDING_PATHS = {
+    "planner_async_recovery_policy": Path('/root/super_ws/src/SUPER/super_planner/include/fsm/async_certified_recovery.hpp'),
+    "planner_fsm_source": Path('/root/super_ws/src/SUPER/super_planner/include/ros_interface/ros2/fsm_ros2.hpp'),
     "frontend_component": Path('/root/super_ws/install/mission_planner/lib/libnative_sector_cpp_component.so'),
     "frontend_source": Path('/root/super_ws/src/SUPER/mission_planner/Apps/native_sector_cpp.cpp'),
     "frontend_heading_policy": Path('/root/super_ws/src/SUPER/mission_planner/include/mission_planner/sector_heading_policy.hpp'),

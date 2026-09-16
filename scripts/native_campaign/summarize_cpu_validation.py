@@ -223,6 +223,8 @@ def load_runs(campaign_roots, repo):
     for path in paths:
         folder = path.parent
         plan = read_json(folder / "plan.json")
+        diagnostic_contamination = read_json(folder / 'diagnostic_contamination.json')
+        contaminated = diagnostic_contamination.get('contaminated') is True
         if not plan:
             warnings.append(f"Skipped {path}: no adjacent plan.json; not assumed to be compatible.")
             continue
@@ -288,6 +290,19 @@ def load_runs(campaign_roots, repo):
             metrics["physical_wire_mib_s"] = None
             metrics["cpu_energy_j"] = None
             metrics["planner_callback_latency_ms_mean_unprofiled"] = None
+            if contaminated:
+                # Ptrace deliberately pauses a process. Retain every attempt
+                # and its known outcome; do not silently drop the failed slot
+                # or claim its observed costs are comparable primary data.
+                outcome_fields = {'success', 'safety_collisions', 'static_pcd_collisions',
+                    'infrastructure_failure', 'resource_valid', 'speed_limit_valid',
+                    'attempt_count', 'retry_count', 'contact_event_count'}
+                metrics = {key: value if key in outcome_fields else None
+                           for key, value in metrics.items()}
+                metrics['run_valid'] = 0
+                metrics['diagnostic_contaminated'] = 1
+                warnings.append(f"{row.get('run')}/{mode}: diagnostic-contaminated triplet; "
+                                "attempt/outcomes retained, comparative cost/timing fields N/A")
             runs.append(dict(map=row.get("map"), mode=mode, run=row.get("run"),
                              candidate=plan.get("candidate", "unknown"), cpu_profile=profile,
                              source=str(path), summary_source=str(folder / f"{mode}_summary.json"),

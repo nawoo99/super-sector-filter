@@ -134,7 +134,7 @@ namespace path_search {
         RET_CODE setup(const rog_map::Vec3f &start_pt, const rog_map::Vec3f &goal_pt, const int &flag,
                        const double &searching_horizon = 9999);
 
-        void retrievePath(GridNodePtr current, vector<GridNodePtr> &path);
+        bool retrievePath(GridNodePtr current, vector<GridNodePtr> &path);
 
         void ConvertNodePathToPointPath(const vector<GridNodePtr> &node_path, rog_map::vec_Vec3f &point_path);
 

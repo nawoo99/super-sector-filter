@@ -133,6 +133,18 @@ class ArtifactTests(unittest.TestCase):
         self.assertEqual(metrics, {})
         self.assertIn("bounds invalid", warning)
 
+    def test_diagnostic_capture_invalidates_cost_not_outcome_or_attempt(self):
+        (self.folder / 'diagnostic_contamination.json').write_text(json.dumps(
+            {'contaminated':True,'reason':'ptrace after memory runaway threshold'}))
+        runs, warnings = report.load_runs([self.root], self.root)
+        self.assertEqual(len(runs), 1)
+        self.assertEqual(runs[0]['metrics']['success'], 1)
+        self.assertEqual(runs[0]['metrics']['safety_collisions'], 0)
+        self.assertEqual(runs[0]['metrics']['run_valid'], 0)
+        self.assertIsNone(runs[0]['metrics']['end_to_end_cpu_cores_mean'])
+        self.assertIsNone(runs[0]['metrics']['mission_time_s'])
+        self.assertTrue(any('diagnostic-contaminated' in s for s in warnings))
+
     def test_missing_nonfinite_fractional_perf_bounds_rejected(self):
         for value in (None, "", "nan", "inf", "1.5"):
             with self.subTest(value=value):

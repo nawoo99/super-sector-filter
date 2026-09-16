@@ -22,6 +22,7 @@
 */
 
 #include <super_core/super_planner.h>
+#include <super_core/planner_sequence_guards.hpp>
 #include <memory>
 #include <algorithm>
 #include <chrono>
@@ -3730,7 +3731,12 @@ namespace super_planner {
             last_pos = cur_pos;
             eval_t += cfg_.sample_traj_dt;
         }
-        eval_ps.pop_back();
+        if (!sequence_guards::discardTrailingSampleKeepingSeed(eval_ps)) {
+            ros_ptr_->warn(
+                    " -- [BACKUP_SEED_REJECT] reason=insufficient_samples samples={} action=failed",
+                    eval_ps.size());
+            return FAILED;
+        }
         seed_point = eval_ps.back().second;
         seed_point_t = eval_ps.back().first;
 

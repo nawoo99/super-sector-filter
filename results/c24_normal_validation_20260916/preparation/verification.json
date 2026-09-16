@@ -1,0 +1,29 @@
+{
+  "schema": "c24-preparation-verification-v1",
+  "scope": "Checks observed before freezing iteration01; not primary flight outcomes",
+  "runtime_backup": {
+    "path": "../preservation/runtime_before.tgz",
+    "sha256": "1b82b1d6b11111611e5ae0b5736c846823068afbc9bed6b3f0109aae1e211298"
+  },
+  "release_build": {
+    "packages": ["super_planner", "perfect_drone_sim"],
+    "executor": "sequential",
+    "parallel_jobs": 1,
+    "exit_code": 0,
+    "elapsed_s": 379,
+    "note": "First build rejected unqualified enum additions; names qualified and final two-package build succeeded. Original compiler failure not counted as flight attempt."
+  },
+  "python_regression": {
+    "command": "python3 -m pytest -q scripts/native_campaign/test_c24_normal_validation.py scripts/native_campaign/test_c24_runtime_admission.py scripts/native_campaign/test_c24_sector_outcome_metrics.py scripts/native_campaign/test_adaptive_cpu40_seed1.py scripts/native_campaign/test_summarize_cpu_validation.py scripts/native_campaign/test_static_latched_preflight.py scripts/native_campaign/test_c22_normal_campaign.py scripts/native_campaign/test_c23_normal_comparison.py",
+    "passed": 169,
+    "failed": 0,
+    "elapsed_s": 1.84
+  },
+  "cpp_helpers": {
+    "async_certified_recovery": {"normal_checks": 142077, "asan_ubsan_checks": 142077},
+    "planner_sequence_guards": {"normal_checks": 266594, "asan_ubsan_checks": 266594},
+    "scope": "Standalone helper tests, including deterministic brake-publication interleavings and exhaustive small parent graphs; not a full-runtime sanitizer or real-time proof."
+  },
+  "source_and_mirror_equal": true,
+  "historical_normal_sha256": "b40f880271a52f4b3332bfe67afe3d489cf8c6d444ac0c72ed30d9e9cd445ec5"
+}

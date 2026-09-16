@@ -22,6 +22,7 @@
 */
 
 #include <super_core/corridor_generator.h>
+#include <super_core/planner_sequence_guards.hpp>
 #include <cmath>
 
 using namespace super_utils;
@@ -165,11 +166,17 @@ namespace super_planner {
         Polytope temp_poly, temp_poly_fix_p;
         int max_loop = 1000;
         int cnt_loop = 0;
-        first_id = 0;
-
-        while(first_id < path.size() && map_ptr_->isOccupiedInflate(path[first_id])) {
-            first_id++;
+        const auto first_unoccupied = sequence_guards::firstUnoccupiedIndex(
+                path, [this](const Vec3f& point) {
+                    return map_ptr_->isOccupiedInflate(point);
+                });
+        if (first_unoccupied == path.size()) {
+            ros_ptr_->warn(
+                    " -- [CORRIDOR_SEED_REJECT] reason=all_path_points_occupied points={} action=no_corridor",
+                    path.size());
+            return false;
         }
+        first_id = static_cast<int>(first_unoccupied);
 
         if(first_id!=0){
             shifted_start_pt = path[first_id];

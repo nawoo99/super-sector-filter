@@ -1,6 +1,28 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-17 C24 완료: 정적검증35건·ON15·OFF75 모두 통과. 실행 중 캠페인 없음.**
+> 최신 요청은 질문 없이 N1–N5(seed1/3/5/7/9) × Full/Sector/Adaptive ×5를 계속 진행하는 것.
+> 아래 C23의 답변 대기 상태는 해제됨. 과거 실패 기록은 그대로 보존하며 소급 합격 처리하지 않음.
+> N5의 synchronous PlanFromRest가 100Hz main callback을 막는 경로를 확인하여,
+> 기본 OFF `SUPER_ASYNC_CERTIFIED_RECOVERY=1` 후보를 구현. 기존 replan executor에서 계산하고
+> main에서 정확한 brake/goal/Full ACK/map/generation/안전 인증을 확인한 후에만 정지를 해제함.
+> Astar parent chain cycle/상한, corridor 전부점유, backup seed underflow 방어도 추가함.
+> 이들은 확인된 코드 결함이나 C23 메모리 급증의 직접 원인으로 확정한 것은 아님.
+> 기존 소스 보존 및 진단 4회(OFF3+ON1) 완료. 그 진단에서는 급증 미재현; 본시험에 혼합 금지.
+> Release 빌드/Python169검사, 정적 DDS30/RViz5, ON15 후 독립 OFF75 완료. 실패 대체·자동 n20 없음.
+> Full/Adaptive 안전·완주 실패 및 계측 실패는 진단/수정 후 새 iteration. Sector 결과는 비교값으로 보존.
+> owned process RSS>4608MiB면 오염 마커 후 제한시간 stack 수집, 해당 triplet 성능값 채택 금지.
+> OFF 맵별·모드별5/5 완주·접촉0, 총75/75. 모든측정/소스/복구/속도/자원gate true; retry0.
+> Adaptive 평균 실험CPU35.5253%·누적CPU33.1255% 감소(Full 대비,25회씩 평균). 40%목표 미달.
+> Sector도25/25·접촉0이므로 이 Normal 결과만으로 Adaptive 안전우위 주장 불가.
+> 메모리급증은 미재현했지만 원인함수확정/영구해결로 표현 금지; 방어거절 분기 실제발동0.
+> 상세 §8.100 및 `docs/c24_normal_results_20260917.md`, 프로토콜 `docs/c24_normal_validation_20260917.md`.
+> 정적+ON+OFF 실제116.36분. 원본자료/ON·OFF 분리보존, 현재단계n20미실행. push 없음.
+> 현재 `results/c24_normal_validation_20260917/iteration01/status.json`, base-run18000.
+> ON15 모두 완주·접촉0; N5 Full50.23초/main·command99.998862Hz. ON/OFF 합산 금지.
+
+> [!IMPORTANT]
 > **2026-09-16 C23: 비교 중단 — N3 Adaptive 메모리 급증. 현재 실행 중 캠페인 없음.**
 > N1–N5=seed1/3/5/7/9, 본시험 OFF75회만 실행; n20 자동확장 없음.
 > 새 요청은 비교 실험으로 해석하고 시간 +10%는 중단 조건 대신 결과 지표로 기록한다고 안내함.

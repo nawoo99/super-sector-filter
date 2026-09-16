@@ -1,0 +1,101 @@
+{
+  "schema": "c24-independent-final-evidence-audit-v1",
+  "auditor": "memory_rootcause_audit",
+  "audit_date_local": "2026-09-17",
+  "campaign": "results/c24_normal_validation_20260917/iteration01",
+  "scope": "Independent read-only verification of frozen files, planned flight identities, evidence gates, report coverage, denominators, and CPU arithmetic; no flights or runtime changes.",
+  "passed": true,
+  "substantive_issues": [],
+  "frozen_files": {
+    "verified_count": 862,
+    "verified_bytes": 567512096,
+    "changed_count": 0,
+    "missing_count": 0,
+    "all_hashes_match": true,
+    "historical_normal_path": "/root/share/here/90_raw_normal_300_rows.csv",
+    "historical_normal_sha256": "b40f880271a52f4b3332bfe67afe3d489cf8c6d444ac0c72ed30d9e9cd445ec5",
+    "historical_normal_unchanged": true,
+    "this_new_audit_artifact_in_verified_inventory": false
+  },
+  "coverage": {
+    "maps": ["seed1", "seed3", "seed5", "seed7", "seed9"],
+    "modes": ["full", "sector", "adaptive"],
+    "off": {
+      "triplets": 25,
+      "flights": 75,
+      "unique_identities": 75,
+      "runs_per_map_mode": 5,
+      "completed_flights": 75,
+      "contact_flights": 0,
+      "profile_enabled": false,
+      "exact_planned_coverage": true
+    },
+    "on": {
+      "triplets": 5,
+      "flights": 15,
+      "unique_identities": 15,
+      "runs_per_map_mode": 1,
+      "completed_flights": 15,
+      "contact_flights": 0,
+      "profile_enabled": true,
+      "exact_planned_coverage": true
+    },
+    "extra_raw_folders": 0,
+    "missing_raw_folders": 0,
+    "all_attempt_counts_equal_one": true,
+    "all_retry_counts_equal_zero": true,
+    "retry_count_total": 0,
+    "diagnostic_contamination_marker_count": 0
+  },
+  "gates": {
+    "fresh_static_manifests_verified": 5,
+    "static_transport_cases": 30,
+    "actual_rviz_cases": 5,
+    "fresh_static_gates_equal_stored": true,
+    "fresh_on_phase_gate_equal_stored": true,
+    "fresh_off_phase_gate_equal_stored": true,
+    "all_strict_triplet_checks_true": true,
+    "sector_exercise_exception_needed": false,
+    "completed_command_count": 70,
+    "all_command_returncodes_zero": true,
+    "history_invalid_entry_count": 0
+  },
+  "report_verification": {
+    "off_report_run_count": 75,
+    "on_report_run_count": 15,
+    "report_identities_equal_raw": true,
+    "on_off_cohorts_separate": true,
+    "warning_count": 0,
+    "all_run_valid_flags_true": true,
+    "one_protocol_fingerprint_per_map_cohort": true,
+    "off_all_metrics_rows": 20175,
+    "on_all_metrics_rows": 20250,
+    "total_all_metrics_rows": 40425,
+    "all_off_metric_n_plus_missing_equal_five": true,
+    "all_on_metric_n_plus_missing_equal_one": true,
+    "cpu_mission_and_accounting_window_denominators_complete": true,
+    "unavailable_autonomy_only_cpu_and_physical_wire_bandwidth_remain_na": true,
+    "cpu_core_seconds_divided_by_accounting_duration_match_all_90_rows": true,
+    "cpu_core_mean_max_absolute_recalculation_error": 0,
+    "cpu_report_means_and_reduction_ratios_match_raw": true,
+    "cpu_scope_correctly_includes_simulator_frontend_planner_mission_and_launch": true,
+    "cpu_scope_correctly_excludes_external_observer": true,
+    "accounting_duration_distinguished_from_mission_duration": true
+  },
+  "limits": {
+    "sector_completed_off": 25,
+    "sector_completed_on": 5,
+    "sector_contact_flights_off": 0,
+    "sector_contact_flights_on": 0,
+    "adaptive_safety_superiority_established_by_this_campaign": false,
+    "population_level_safety_guarantee_established": false,
+    "original_40_percent_mean_cpu_target_met_per_map": false,
+    "adaptive_mean_cpu_reduction_per_map_rounded_percent": {
+      "seed1": 30.95,
+      "seed3": 39.09,
+      "seed5": 37.43,
+      "seed7": 35.50,
+      "seed9": 34.05
+    }
+  }
+}
