@@ -16,6 +16,7 @@
 #include "perfect_drone_sim/common_execution_policy.hpp"
 #include "perfect_drone_sim/static_pc_two_phase_policy.hpp"
 #include "perfect_drone_sim/static_pc_durable_policy.hpp"
+#include "perfect_drone_sim/static_pc_latched_policy.hpp"
 // Only the composed Full/Adaptive targets have the shared planner profiler
 // dependency. Standalone/front-end targets retain their existing dependencies.
 #ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
@@ -23,6 +24,8 @@
 #endif
 #include "tf2_ros/transform_broadcaster.h"
 #include <chrono>
+#include <atomic>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <cstdint>
@@ -251,6 +254,9 @@ namespace perfect_drone {
         double sys_start_t;
         int static_pc_poll_ms_{1};
         bool static_pc_durable_en_{false};
+        bool static_pc_latched_en_{false};
+        static_pc_latched::Evidence static_pc_latched_evidence_;
+        std::atomic<std::uint64_t> static_pc_latched_poll_callbacks_{0};
         common_execution_policy::StaticPcPolicy static_pc_policy_;
         static_pc_two_phase::Policy static_pc_two_phase_policy_;
         std::chrono::steady_clock::time_point static_pc_policy_start_;
@@ -370,6 +376,10 @@ namespace perfect_drone {
             static_pc_durable_en_ = static_pc_durable::parseEnabled(
                     std::getenv("SUPER_STATIC_PC_DURABLE"), static_pc_poll_ms_,
                     static_pc_two_phase_policy_.enabled());
+            static_pc_latched_en_ = static_pc_latched::parseEnabled(
+                    std::getenv("SUPER_STATIC_PC_LATCHED_ONCE"), static_pc_durable_en_,
+                    static_pc_poll_ms_, static_pc_two_phase_policy_.enabled(),
+                    std::getenv("SUPER_STATIC_PC_CACHED_EXECUTOR"));
             // TODO: The current implementation uses a lenient QoS configuration for message transmission.
             const rclcpp::QoS qos(rclcpp::QoS(100)
                                           .best_effort()
@@ -408,6 +418,9 @@ namespace perfect_drone {
             cfg_ = Config(cfg_path);
             side_entry_v1_cfg_.load(cfg_path);
             side_entry_v1_cfg_.validate();
+            if (static_pc_latched_en_ && side_entry_v1_cfg_.enabled)
+                throw std::invalid_argument(
+                        "latched static geometry is not enabled for side-entry event scenarios");
             sensor_burst_dropout_cfg_.load(cfg_path);
             sensor_burst_dropout_cfg_.validate();
             if (const char *fixed_render_time =
@@ -464,7 +477,8 @@ namespace perfect_drone {
             if (static_pc_durable_en_) {
                 // Humble rejects TransientLocal with intra-process enabled.
                 // Disable it for static geometry ONLY; acquired sensor paths,
-                // odometry, command QoS and all publication timers are unchanged.
+                // odometry and command QoS remain unchanged. The separate
+                // explicitly authorized latched opt-in changes static timers.
                 rclcpp::PublisherOptions global_options;
                 global_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
                 const auto global_qos = rclcpp::QoS(rclcpp::KeepLast(1))
@@ -493,7 +507,8 @@ namespace perfect_drone {
                         static_pc_durable_en_, global_actual_reliability, global_actual_durability,
                         global_actual_history, global_actual_qos.depth(),
                         static_pc_durable_en_ ? "disabled" : "node_default",
-                        static_pc_durable_en_ ? "legacy" : "existing");
+                        static_pc_latched_en_ ? "latched_once" :
+                            (static_pc_durable_en_ ? "legacy" : "existing"));
             if (side_entry_v1_cfg_.enabled) {
                 side_entry_v1_marker_pub_ =
                         this->create_publisher<visualization_msgs::msg::Marker>(
@@ -554,12 +569,14 @@ namespace perfect_drone {
             RCLCPP_INFO(this->get_logger(),
                         "[STATIC_PC_POLL_SETTINGS] poll_ms=%d bootstrap_once=%d "
                         "complete_geometry=1 qos_unchanged=%d",
-                        static_pc_poll_ms_, static_pc_poll_ms_ == 100, !static_pc_durable_en_);
-            global_pc_pub_timer_ = this->create_wall_timer(
-                    std::chrono::milliseconds(static_pc_poll_ms_),
-                    std::bind(&PerfectDrone::publishGlobalPCFast, this),
-                    global_pc_pub_cbk_group
-            );
+                        static_pc_latched_en_ ? 0 : static_pc_poll_ms_,
+                        static_pc_latched_en_ || static_pc_poll_ms_ == 100, !static_pc_durable_en_);
+            if (!static_pc_latched_en_) {
+                global_pc_pub_timer_ = this->create_wall_timer(
+                        std::chrono::milliseconds(static_pc_poll_ms_),
+                        std::bind(&PerfectDrone::publishGlobalPCFast, this),
+                        global_pc_pub_cbk_group);
+            }
 
             if (static_pc_two_phase_policy_.enabled()) {
                 // Same mutually-exclusive group owns both timers and the
@@ -584,6 +601,10 @@ namespace perfect_drone {
             );
 
             sys_start_t = this->get_clock()->now().seconds();
+            // Geometry and all state are initialized, and no executor can spin
+            // this node until construction returns. DDS retains this one sample
+            // for matching late/reconnecting readers while publisher is alive.
+            if (static_pc_latched_en_) publishLatchedGlobalPC();
         }
 
         double getSensingRate() {
@@ -612,6 +633,18 @@ namespace perfect_drone {
         }
 
         void reportSensorCadence() const {
+            if (static_pc_latched_en_) {
+                RCLCPP_INFO(this->get_logger(),
+                        "[STATIC_PC_LATCHED_SUMMARY] enabled=1 publications=%lu points=%lu "
+                        "bytes=%lu stamp_ns=%ld timers_created=%d poll_callbacks=%lu",
+                        static_cast<unsigned long>(static_pc_latched_evidence_.publications),
+                        static_cast<unsigned long>(static_pc_latched_evidence_.points),
+                        static_cast<unsigned long>(static_pc_latched_evidence_.bytes),
+                        static_cast<long>(static_pc_latched_evidence_.stamp_ns),
+                        static_cast<int>(bool(global_pc_pub_timer_)) +
+                            static_cast<int>(bool(global_pc_slow_pub_timer_)),
+                        static_cast<unsigned long>(static_pc_latched_poll_callbacks_.load(std::memory_order_relaxed)));
+            }
             double span_s = 0.0;
             if (first_sensor_frame_time_ && last_sensor_frame_time_) {
                 span_s = std::chrono::duration<double>(
@@ -1222,7 +1255,72 @@ namespace perfect_drone {
             }
         }
 
+        void publishLatchedGlobalPC() {
+            if (!static_pc_latched_en_ || static_pc_latched_evidence_.publications != 0 ||
+                global_pc_pub_timer_ || global_pc_slow_pub_timer_)
+                throw std::logic_error("invalid latched static publication state");
+            const auto context = this->get_node_base_interface()->get_context();
+            if (!rclcpp::ok(context))
+                throw std::runtime_error("context stopped before latched static publication");
+            pcl::PointCloud<marsim::PointType>::Ptr global_map(new pcl::PointCloud<marsim::PointType>);
+            render_ptr_->getGlobalMap(global_map);
+            if (!global_map || global_map->empty())
+                throw std::runtime_error("latched static geometry is empty or failed to load");
+            sensor_msgs::msg::PointCloud2 pc_msg;
+            pcl::toROSMsg(*global_map, pc_msg);
+            pc_msg.header.frame_id = "world";
+            const auto stamp = this->get_clock()->now();
+            pc_msg.header.stamp = stamp;
+            if (pc_msg.point_step == 0 || pc_msg.data.empty() ||
+                pc_msg.data.size() != static_cast<std::uint64_t>(pc_msg.row_step) * pc_msg.height ||
+                static_cast<std::uint64_t>(pc_msg.width) * pc_msg.height != global_map->size())
+                throw std::runtime_error("malformed latched static geometry");
+            const std::array<std::string, 4> field_names{{"x", "y", "z", "intensity"}};
+            const std::array<std::uint32_t, 4> field_offsets{{0, 4, 8, 16}};
+            if (pc_msg.fields.size() != field_names.size())
+                throw std::runtime_error("unexpected latched XYZI field count");
+            for (std::size_t i = 0; i < field_names.size(); ++i) {
+                const auto& field = pc_msg.fields[i];
+                if (field.name != field_names[i] || field.offset != field_offsets[i] ||
+                    field.datatype != sensor_msgs::msg::PointField::FLOAT32 || field.count != 1)
+                    throw std::runtime_error("unexpected latched XYZI field layout");
+            }
+            static_pc_latched::canonicalizeXyziTailPadding(pc_msg.data, pc_msg.point_step);
+            RCLCPP_INFO(this->get_logger(),
+                    "[STATIC_PC_LATCHED_SERIALIZATION] point_step=32 tail_zeroed_bytes=12 "
+                    "declared_fields_and_homogeneous_bytes_unchanged=1");
+            auto evidence = static_pc_latched_evidence_;
+            evidence.published(global_map->size(), pc_msg.data.size(), stamp.nanoseconds());
+            if (!rclcpp::ok(context))
+                throw std::runtime_error("context stopped before latched static publish call");
+            global_pc_pub_->publish(pc_msg);
+            // Humble publish may quietly return when context is invalid. A
+            // local publish return is not a DDS delivery proof; readers verify
+            // full bytes/layout and this exact timestamp in separate tests.
+            if (!rclcpp::ok(context))
+                throw std::runtime_error("context stopped during latched static publication");
+            static_pc_latched_evidence_ = evidence;
+            RCLCPP_INFO(this->get_logger(),
+                    "[STATIC_PC_LATCHED_PUBLICATION] publications=%lu points=%lu bytes=%lu "
+                    "stamp_ns=%ld timers_created=%d poll_callbacks=%lu complete_geometry=1",
+                    static_cast<unsigned long>(static_pc_latched_evidence_.publications),
+                    static_cast<unsigned long>(static_pc_latched_evidence_.points),
+                    static_cast<unsigned long>(static_pc_latched_evidence_.bytes),
+                    static_cast<long>(static_pc_latched_evidence_.stamp_ns),
+                    static_cast<int>(bool(global_pc_pub_timer_)) +
+                        static_cast<int>(bool(global_pc_slow_pub_timer_)),
+                    static_cast<unsigned long>(static_pc_latched_poll_callbacks_.load(std::memory_order_relaxed)));
+        }
+
+        void rejectLatchedPoll() {
+            if (static_pc_latched_en_) {
+                static_pc_latched_poll_callbacks_.fetch_add(1, std::memory_order_relaxed);
+                throw std::logic_error("legacy static poll called in latched-once mode");
+            }
+        }
+
         void publishGlobalPCFast() {
+            rejectLatchedPoll();
             // A callback selected before cancel may arrive after handoff.
             if (!static_pc_two_phase_policy_.fastActive()) return;
             publishGlobalPC();
@@ -1230,12 +1328,14 @@ namespace perfect_drone {
         }
 
         void publishGlobalPCSlow() {
+            rejectLatchedPoll();
             if (!static_pc_two_phase_policy_.coarseActive()) return;
             publishGlobalPC();
             advanceStaticPcTwoPhase();
         }
 
         void publishGlobalPC() {
+            rejectLatchedPoll();
 #ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
             super_utils::thread_cpu_profile::Scope cpu_scope(
                     super_utils::thread_cpu_profile::Stage::SimStaticCloud);

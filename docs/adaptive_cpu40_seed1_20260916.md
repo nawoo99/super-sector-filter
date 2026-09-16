@@ -933,3 +933,119 @@ larger static-map/RViz interface migration is still awaiting the user's answer;
 even that common-cost change alone does not guarantee40%. Small mission/frontend
 cached-executor proposals remain read-only, with limited ceilings documented in
 `frontend_cpu_preflight/MISSION_AND_FRONTEND_CACHED_STE_REVIEW.md`.
+
+### Candidate18 prospective contract (user-approved interface migration)
+
+The user's subsequent “ㅇㅇ 진행해봐” authorizes migrating both `/global_pc`
+publisher and its actual RViz readers. This is a new interface contract, not a
+retroactive pass for C13 or the failed old-reader compatibility arms. Start with
+C15 options (dedicated frontend OFF, cached static executor OFF). New opt-in
+`SUPER_STATIC_PC_LATCHED_ONCE=1` requires durable1, requested poll1, two-phase0,
+cached-executor0, and static geometry without side-entry events. Existing defaults
+and all four legacy RViz profiles remain unchanged. Four explicit durable view
+profiles request Reliable/TransientLocal/KeepLast1.
+
+Publish the complete PCD once after renderer construction and node startup state
+are ready, retain the publisher's DDS history, and do not create either static
+poll timer. Preserve point order, geometry and the original publication stamp.
+Empty/incomplete geometry, invalid opt-in combinations or shutdown during
+publication fail closed. Existing sensor-cadence reports expose cumulative
+publications1/timers0/poll-callbacks0; no new observation timer is introduced.
+Keep the existing dedicated static executor thread and include its entire CPU
+in experiment totals. LiDAR10Hz, odometry/control100Hz, planner/safety policy,
+source-acquisition45-degree half angle and mission remain unchanged.
+
+Before flight require six real transport arms (standalone/Full/Adaptive times
+reader-first/late), each covering added and reconnected readers, exact geometry
+SHA and same original stamp, sustained unchanged counters, cadence, no mission
+commands and clean child shutdown. Additionally require actual RViz PointCloud2
+plugin delivery/display on late connection and restart. Bind raw evidence and
+current runtime/config/binary hashes in a fail-closed acceptance manifest.
+Legacy volatile readers are not claimed compatible with the new one-shot mode.
+
+Then seed1 Full/Adaptive run9319, one attempt each, with all earlier safety,
+quality, timing and C5 time-reference gates. Runtime audit checks actual static
+timer/callback absence and full executor-thread CPU coverage. Only a passed
+profiled >=40% pair can trigger matching reversed-order unprofiled confirmation;
+neither stage is a population-level or other-map claim. No automatic retries,
+no discarded failures, no reduced rates or safety checks. Before these tests,
+40% remains unmet; common-cost removal alone does not guarantee that target.
+
+### C18 first transport failure and bounded repair
+
+The first build passed in5min57s. Standalone reader-first/late passed, but Full
+reader-first failed the fixed complete-payload SHA gate. Stop the matrix; do
+not run CPU flights or label it a transport success. Separate captured-payload
+diagnostics showed bit-identical first20 bytes for every one of241490 points;
+only76 unused tail bytes differed. PCL1.12 PointXYZI leaves its final12 bytes
+uninitialized and its serializer copies them. Both captures produce the original
+fixed full-wire SHA after zeroing only offsets20..31. Declared XYZI field SHA
+is identical, with no tolerances, sorting or discarded points.
+
+Repair only the opted-in one-shot serialized copy: verify exact XYZI metadata,
+32-byte stride and complete data, then zero unused tail padding. Keep all
+declared values, homogeneous bytes, ordering, size, renderer and legacy path
+unchanged. Full-wire acceptance SHA is NOT relaxed or replaced. Original failed
+arm and diagnostic failure remain preserved. See
+`static_latched_once_preflight/PADDING_DIAGNOSIS.md`, captured-data comparison
+JSON/program and raw result/logs. Optimized and ASan/UBSan39 checks pass;
+82 focused Python checks and23 fixture checks pass. Rebuild and all six final
+transport arms plus actual RViz are required anew before run9319.
+
+### C18 final result (run9319; 2026-09-16)
+
+Rebuild passed in5min54s. All six final `*_canonical_attempt1` transport arms
+passed: complete fixed SHA, identical retained stamp, added/reconnected readers,
+one publication, zero timers/polls,10Hz, stationary odometry/no commands, clean
+exit0. Actual RViz PointCloud2 late/reconnect also passed. The first SDK capture
+used QWidget::grab, which omitted the embedded Ogre surface despite correct
+message/Points status; retain that evidence but do not use its blank screenshot
+as rendering proof. Test-only capture was changed to the actual RenderWindow;
+`actual_rviz_render_capture_attempt1` has visible complete map screenshots and
+both reader lifecycles passing. Production binaries/configs did not change for
+this test-tool correction. Acceptance manifest binds all final evidence and
+runtime/config/binary hashes; stale or partial evidence is rejected.
+
+A runner integration error treated symbolic binding names as file paths and
+stopped before any simulator/flight launch (`c18_controller.log`, empty original
+output directory preserved). Correct name→absolute-path resolution and its
+regression test;83 Python tests pass. Actual flights then run once per mode in
+`c18_latched_static_profile_run9319`, with no flight retries.
+
+| Mode | Complete/contact | Mission s | Mean used cores | Whole20CPU % | CPU core-s |
+|---|---|---:|---:|---:|---:|
+| Full | 1/1,0 | 36.63 | 0.539836 | 2.6992 | 20.679809 |
+| Adaptive | 1/1,0 | 37.82 | 0.370055 | 1.8503 | 14.571253 |
+
+**Mean reduction31.4506%, cumulative29.5387%; target40% still unmet.**
+A/Fmission1.032487 and both C5 same-mode time gates pass. All source/recovery,
+resource, speed, geometry, cadence, identity and delivery checks pass. Main and
+command callbacks≈99.9995Hz; source≈10Hz and odometry≈100Hz. Both modes report
+one static publication and no timer/poll. Retained static executor TIDs3063417/
+3064306 show0.0 sampled core-seconds over29.16/29.18s with full eligible sample
+coverage; their CPU remains included, not subtracted. This is sampling evidence,
+not a claim of mathematically zero physical cost. F33/A30 goal repeats coalesced;
+Adaptive one exact recovery cycle closes after fresh Full observation, committed
+map ACK and new certified trajectory, with no outstanding cycles.
+
+The intended static polling overhead was removed. Absolute mean CPU is lower
+than C15 in this pair, but n1 trajectory/workload differences prevent claiming an
+isolated causal saving or improved relative percentage (C15 was32.23%). No
+unprofiled confirmation was triggered below40%, and no extra lucky-run search.
+Default flags and legacy profiles remain unchanged; use explicit matched durable
+viewers with the new publisher. Normal dataset SHA and backup remain unchanged.
+
+Next measured-cost targets: profile-window map update F0.235383/A0.099221cores,
+snapshot/commit-health0.046307/0.020374, renderer0.051401/0.018039. Planner solve
+and common ROS execution costs persist. Profile windows (~30s) differ from
+whole-experiment cgroup windows; do not subtract them as exact residuals. First
+align windows and attribute remaining executor/middleware work, then choose an
+exact-semantics optimization. Do not cut safety/rates or slow Full. At unchanged
+Full cost,40% would require another0.046153cores (12.47% of current Adaptive)
+removed; a common equally-sized reduction would require0.115383cores. Those are
+algebraic thresholds, not a promise that the next change can achieve them.
+
+Evidence: final candidate folder, `static_latched_preflight/acceptance.json`,
+`c18_profile_analysis.log`, `executor_preflight/c18_timing.json`, and the three
+static-latched preflight directories. C18 is a validated exploratory interface
+option, not a frozen production-profile change or a40%-saving result.

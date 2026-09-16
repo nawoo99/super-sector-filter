@@ -5,7 +5,19 @@ from adaptive_cpu40_seed1 import (SMALL_POOL_MATCH_FIELDS, comparison,
                                  DEMAND_REASONS, demand_reason_audit,
                                  static_two_phase_audit, goal_identity_audit,
                                  headless_parameter_audit, frontend_executor_audit,
-                                 static_cached_executor_audit)
+                                 static_cached_executor_audit, static_latched_audit,
+                                 latched_preflight_asset_paths)
+from pathlib import Path
+import static_latched_preflight
+
+
+def test_latched_asset_inventory_resolves_binding_names_to_absolute_paths():
+    validation = dict(runtime_sha256=dict.fromkeys(static_latched_preflight.BINDING_PATHS, 'a' * 64),
+                      evidence_sha256={'/tmp/latched-test-evidence.json': 'b' * 64})
+    paths = latched_preflight_asset_paths(validation)
+    assert all(path.is_absolute() for path in paths)
+    assert Path('/tmp/latched-test-evidence.json') in paths
+    assert set(static_latched_preflight.BINDING_PATHS.values()) <= paths
 
 
 def pair():
@@ -16,6 +28,74 @@ def pair():
                  end_to_end_cpu_core_s=120., mission_time_s=60.),
             dict(common, mode='adaptive', end_to_end_cpu_cores_mean=1.1,
                  end_to_end_cpu_core_s=70., mission_time_s=62.)]
+
+
+def latched_fixture():
+    counters = 'publications=1 points=241490 bytes=7727680 stamp_ns=1000000000 timers_created=0 poll_callbacks=0'
+    stack = ('[STATIC_PC_POLL_SETTINGS] poll_ms=0 bootstrap_once=1\n'
+             '[STATIC_PC_LATCHED_SERIALIZATION] point_step=32 tail_zeroed_bytes=12 '
+             'declared_fields_and_homogeneous_bytes_unchanged=1\n'
+             '[STATIC_PC_DURABLE_SETTINGS] enabled=1 actual_qos=1 reliability=reliable '
+             'durability=transient_local history=keep_last depth=1 intra_process=disabled '
+             'publication_schedule=latched_once other_qos_unchanged=1\n'
+             '[1.000000000] [STATIC_PC_LATCHED_PUBLICATION] ' + counters + ' complete_geometry=1\n' +
+             '[6.000000000] [STATIC_PC_LATCHED_SUMMARY] enabled=1 ' + counters + '\n' +
+             '[11.000000000] [STATIC_PC_LATCHED_SUMMARY] enabled=1 ' + counters + '\n')
+    profile = dict(processes=[dict(stages=[], thread_roles=dict(roles=[dict(
+        role='sim_static_cloud_executor', tids=[123], unambiguous=True,
+        mean_used_cores=0., eligible_interval_s=10., observed_interval_s=10.)]))])
+    return stack, profile
+
+
+def test_latched_runtime_accepts_zero_thread_cpu_but_requires_coverage():
+    stack, profile = latched_fixture()
+    assert static_latched_audit(stack, profile)['valid']
+    assert static_latched_audit(stack)['valid']
+    assert not static_latched_audit(stack)['thread_cpu_measured']
+    assert not static_latched_audit(stack, {})['valid']
+    profile['processes'][0]['thread_roles']['roles'][0]['observed_interval_s'] = 8.
+    assert not static_latched_audit(stack, profile)['valid']
+
+
+def test_latched_runtime_rejects_missing_or_changed_actual_counters():
+    stack, profile = latched_fixture()
+    for before, after in [('publications=1', 'publications=2'), ('timers_created=0', 'timers_created=1'),
+                          ('poll_callbacks=0', 'poll_callbacks=1'), ('stamp_ns=1000000000', 'stamp_ns=0'),
+                          ('points=241490', 'points=1'), ('bytes=7727680', 'bytes=32'),
+                          ('[11.000000000]', '[10.999999999]'), ('complete_geometry=1', ''),
+                          ('history=keep_last', 'history=keep_all'), ('depth=1', 'depth=2'),
+                          ('publication_schedule=latched_once', 'publication_schedule=legacy')]:
+        assert not static_latched_audit(stack.replace(before, after), profile)['valid'], before
+    assert not static_latched_audit(stack + stack, profile)['valid']
+    assert not static_latched_audit(stack + '\n[STATIC_PC_PUBLICATION]', profile)['valid']
+    # A single later report changing stamp is also rejected.
+    assert not static_latched_audit(stack.rsplit('stamp_ns=1000000000', 1)[0] +
+                                   'stamp_ns=2000000000 timers_created=0 poll_callbacks=0')['valid']
+    profile['processes'][0]['stages'] = [dict(stage='sim_static_cloud_callback', calls=1, clock_errors=0)]
+    assert not static_latched_audit(stack, profile)['valid']
+
+
+def test_latched_target_requires_explicit_delivery_validation_for_both_modes():
+    rows = copy.deepcopy(pair())
+    for row in rows:
+        row['static_pc_latched_once'] = True
+    assert not comparison(rows)['target_met']
+    rows[0]['static_pc_delivery_validated'] = True
+    assert not comparison(rows)['target_met']
+    rows[1]['static_pc_delivery_validated'] = True
+    assert comparison(rows)['target_met']
+
+
+def test_latched_profile_reference_requires_delivery_and_runtime_audit():
+    plan, reference, summaries = profile_reference_fixture()
+    plan['static_pc_latched_once'] = reference['static_pc_latched_once'] = True
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+    for row in summaries.values():
+        row['static_pc_delivery_validated'] = True
+        row['static_latched_audit'] = dict(valid=True)
+    assert small_pool_profile_reference_audit(plan, reference, summaries)['valid']
+    reference['static_latched_preflight_sha256'] = 'different'
+    assert not small_pool_profile_reference_audit(plan, reference, summaries)['valid']
 
 
 def test_mean_target_and_cumulative_are_distinct():

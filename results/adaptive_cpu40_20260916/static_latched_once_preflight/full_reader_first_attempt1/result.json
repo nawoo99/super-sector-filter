@@ -1,0 +1,80 @@
+{
+  "valid": false,
+  "command": [
+    "/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_full_node",
+    "--ros-args",
+    "-p",
+    "drone_config:=seed1.yaml",
+    "-p",
+    "super_config:=static_seedmaps_guard_viability_tight_v7.yaml"
+  ],
+  "ros_domain_id": "190",
+  "no_fsm": false,
+  "composition": "full",
+  "fixture_publishes_no_goals_or_commands": true,
+  "poll_ms": 1,
+  "two_phase": false,
+  "durable": true,
+  "latched_once": true,
+  "reader_qos": "durable",
+  "sequence": "reader-first",
+  "expected_sha256": "b3064409563b3d41cdc5f982a058b2df7a776627cae7cf367086176bccd6439f",
+  "phases": [
+    "one_shot_geometry_published"
+  ],
+  "effective_poll_ms": 0,
+  "publisher_actual_qos": {
+    "reliability": "reliable",
+    "durability": "transient_local",
+    "history": "keep_last",
+    "depth": 1
+  },
+  "offered_qos": {
+    "reliability": 1,
+    "durability": 1,
+    "history": 3,
+    "depth": 0
+  },
+  "graph_qos_verified": {
+    "reliability": true,
+    "durability": true,
+    "history": false,
+    "depth": false
+  },
+  "error": "geometry SHA differs from legacy control in phase first",
+  "clouds": {
+    "first": [
+      {
+        "elapsed_s": 3.659077717922628,
+        "points": 241490,
+        "point_step": 32,
+        "bytes": 7727680,
+        "frame": "world",
+        "sha256": "a0f56169a90e4d097ac1ae409bb9058835a9b97ede7fc3d7c1148107ce01b44c",
+        "stamp_ns": 1789530192511963454
+      }
+    ],
+    "second": [],
+    "reconnected": []
+  },
+  "elapsed_s": 3.933497763937339,
+  "no_flight_observation": {
+    "command_messages": 0,
+    "odom_messages": 2,
+    "initial_position": [
+      0.0,
+      0.0,
+      1.5
+    ],
+    "max_position_delta_m": 0.0,
+    "first_odom_receipt_ns": 1042028402096869,
+    "last_odom_receipt_ns": 1042028408710825
+  },
+  "simulator_exit_code": 0,
+  "exact_child_reaped": true,
+  "latched_once_audit": {
+    "valid": false,
+    "error": "one initial latched publication and at least two cumulative summaries required",
+    "observation_before_shutdown_s": 0.028647202998399734
+  }
+}

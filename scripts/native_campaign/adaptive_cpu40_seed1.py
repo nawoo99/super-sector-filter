@@ -21,12 +21,20 @@ import event_recovery_seed1_smoke as event
 import sensor_acquisition_seed1_smoke as source
 import audit_cpu40_recovery as recovery_audit
 import analyze_thread_cpu_profile as stage_profile
+import static_latched_preflight
 from analyze_cylinder_only_stress_full_gate import quality_valid
 
 BACKUP = 'results/adaptive_cpu40_backup_20260916_aloDDu/runtime_before.tar.gz'
 FLIGHT_NAMES = {'fsm_node', 'perfect_drone_node', 'perfect_drone_full_node',
                 'perfect_drone_frontend_node', 'perfect_drone_adaptive_node',
                 'source_acquisition_test'}
+
+
+def latched_preflight_asset_paths(validation):
+    """The validator's runtime hashes use binding names; evidence uses paths."""
+    return ({static_latched_preflight.BINDING_PATHS[name]
+             for name in validation['runtime_sha256']} |
+            {Path(path) for path in validation['evidence_sha256']})
 
 
 def small_pool_timing_audit(intervals, sensor_hz, profile=None):
@@ -69,6 +77,7 @@ SMALL_POOL_MATCH_FIELDS = (
     'monitor_intervals', 'guarded_demand_replan', 'extended_demand_lease', 'goal_retransmit_identity',
     'dedicated_static_pc_executor', 'headless_parameter_services', 'static_pc_durable',
     'frontend_dedicated_executor', 'effective_frontend_executor', 'static_pc_cached_executor',
+    'static_pc_latched_once', 'static_latched_preflight_sha256',
     'optimizer_phase_memory_trace', 'time_reference_folder',
     'max_same_mode_reference_time_ratio', 'max_mission_time_ratio',
     'logical_cpus', 'frozen_normal_sha256')
@@ -134,8 +143,11 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
             not plan.get('guarded_demand_replan') or
             row.get('demand_replan_exercised') is True)
         checks[mode + '_static_delivery_preservation'] = (
-            not plan.get('static_pc_two_phase') or
+            not (plan.get('static_pc_two_phase') or plan.get('static_pc_latched_once')) or
             row.get('static_pc_delivery_validated') is True)
+        checks[mode + '_static_latched_runtime'] = (
+            not plan.get('static_pc_latched_once') or
+            row.get('static_latched_audit', {}).get('valid') is True)
         checks[mode + '_goal_identity_exercised'] = (
             not plan.get('goal_retransmit_identity') or
             row.get('goal_retransmit_exercised') is True)
@@ -375,6 +387,81 @@ def static_cached_executor_audit(stack, profile=None):
                 scope='Executor class only; unchanged legacy 1ms timer and QoS; full thread CPU included')
 
 
+def static_latched_audit(stack, profile=None):
+    """Actual one-shot counters plus the retained executor's full thread CPU.
+
+    This is a per-flight schedule audit; delivery additionally needs the bound
+    six-arm/actual-RViz preflight. The idle executor is never subtracted.
+    """
+    def records(marker):
+        out = []
+        for line in stack.splitlines():
+            if marker not in line:
+                continue
+            prefix, body = line.split(marker, 1)
+            row = dict(re.findall(r'(\w+)=([^\s]+)', body))
+            stamps = re.findall(r'\[(\d+)\.(\d{1,9})\]', prefix)
+            if stamps:
+                sec, fraction = stamps[-1]
+                row['_ns'] = int(sec) * 10**9 + int(fraction.ljust(9, '0'))
+            out.append(row)
+        return out
+
+    initial = records('[STATIC_PC_LATCHED_PUBLICATION]')
+    reports = records('[STATIC_PC_LATCHED_SUMMARY]')
+    checks = dict(single_publication=len(initial) == 1,
+                  cumulative_reports=len(reports) >= 2,
+                  no_legacy_publication=('[STATIC_PC_PUBLICATION]' not in stack and
+                                         'Publish global map size:' not in stack),
+                  static_timer_disabled='[STATIC_PC_POLL_SETTINGS] poll_ms=0 bootstrap_once=1' in stack,
+                  actual_durable_qos=('[STATIC_PC_DURABLE_SETTINGS] enabled=1 actual_qos=1 reliability=reliable '
+                                      'durability=transient_local history=keep_last depth=1 intra_process=disabled '
+                                      'publication_schedule=latched_once other_qos_unchanged=1' in stack),
+                  deterministic_padding=('[STATIC_PC_LATCHED_SERIALIZATION] point_step=32 tail_zeroed_bytes=12 '
+                                         'declared_fields_and_homogeneous_bytes_unchanged=1' in stack),
+                  unchanged_counters=False, steady_span=False)
+    baseline = None
+    span = None
+    fields = ('publications', 'points', 'bytes', 'stamp_ns', 'timers_created', 'poll_callbacks')
+    if len(initial) == 1 and len(reports) >= 2:
+        try:
+            baseline = {k: int(initial[0][k]) for k in fields}
+            checks['unchanged_counters'] = (
+                initial[0].get('complete_geometry') == '1' and
+                baseline['publications'] == 1 and baseline['points'] == 241490 and
+                baseline['bytes'] == 7727680 and baseline['stamp_ns'] > 0 and
+                baseline['timers_created'] == baseline['poll_callbacks'] == 0 and
+                all(r.get('enabled') == '1' and
+                    {k: int(r[k]) for k in fields} == baseline for r in reports))
+            stamps = [r['_ns'] for r in reports]
+            span = (stamps[-1] - stamps[0]) / 1e9
+            checks['steady_span'] = span >= 5 and all(b >= a for a, b in zip(stamps, stamps[1:]))
+        except (KeyError, ValueError, TypeError):
+            pass
+    role = None
+    if profile is not None:
+        roles = [r for p in profile.get('processes', [])
+                 for r in p.get('thread_roles', {}).get('roles', [])
+                 if r.get('role') == 'sim_static_cloud_executor']
+        checks['actual_profiled_executor_thread'] = False
+        if len(roles) == 1:
+            role = roles[0]
+            cpu, eligible, observed = (role.get(k) for k in
+                ('mean_used_cores', 'eligible_interval_s', 'observed_interval_s'))
+            checks['actual_profiled_executor_thread'] = (
+                role.get('unambiguous') is True and len(role.get('tids', [])) == 1 and
+                all(isinstance(v, (int, float)) and math.isfinite(v) for v in (cpu, eligible, observed)) and
+                cpu >= 0 and eligible >= 5 and .9 * eligible <= observed <= eligible + 1e-6)
+        stages = [s for p in profile.get('processes', []) for s in p.get('stages', [])
+                  if s.get('stage') == 'sim_static_cloud_callback']
+        checks['no_profiled_poll_callbacks'] = all(
+            s.get('calls') == 0 and s.get('clock_errors') == 0 for s in stages)
+    return dict(valid=all(checks.values()), checks=checks, initial=baseline,
+                summary_count=len(reports), steady_summary_span_s=span, actual_thread=role,
+                thread_cpu_measured=profile is not None,
+                scope='No static timer/poll; retained executor CPU remains in total; separate bound delivery preflight required')
+
+
 def comparison(results):
     modes = {r['mode']: r for r in results}
     if not {'full', 'adaptive'} <= modes.keys():
@@ -416,7 +503,7 @@ def comparison(results):
     # legacy still fail the declared late-reader preservation test. Measure its
     # CPU effect without promoting an unresolved delivery prototype to success.
     out['static_delivery_preservation_pass'] = all(
-        not r.get('static_pc_two_phase', False) or
+        not (r.get('static_pc_two_phase', False) or r.get('static_pc_latched_once', False)) or
         r.get('static_pc_delivery_validated') is True for r in (f, a))
     out['common_goal_identity_exercise_pass'] = all(
         not r.get('goal_retransmit_identity', False) or
@@ -456,6 +543,10 @@ def main():
     parser.add_argument('--static-pc-poll-ms', type=int, choices=(1, 100), default=1)
     parser.add_argument('--static-pc-two-phase', action='store_true',
                         help='Preserve legacy1ms startup; after5.1s use100ms subscriber polling')
+    parser.add_argument('--static-pc-latched-once', action='store_true',
+                        help='Opt-in publisher AND reader contract: durable complete map once, no static timer')
+    parser.add_argument('--static-latched-preflight', type=Path,
+                        help='Current six-arm plus actual-RViz accepted evidence manifest required for latched mode')
     parser.add_argument('--side-executor-threads', type=int, choices=range(2, 17), default=10)
     parser.add_argument('--monitor-intervals', action='store_true',
                         help='Bounded received-message interval statistics on existing monitor subscriptions')
@@ -503,6 +594,17 @@ def main():
         parser.error('--static-pc-cached-executor requires composed dedicated legacy 1ms static-PC executor')
     if args.static_pc_two_phase and (args.static_pc_poll_ms != 1 or not args.compose):
         parser.error('--static-pc-two-phase requires --static-pc-poll-ms 1 and --compose')
+    latched_preflight = None
+    if args.static_pc_latched_once:
+        if not (args.compose and args.dedicated_static_pc_executor and args.static_pc_poll_ms == 1
+                and not args.static_pc_two_phase and not args.static_pc_cached_executor
+                and args.static_latched_preflight):
+            parser.error('Latched mode requires composed dedicated executor, requested poll1, no two-phase/cache, and preflight')
+        latched_preflight = static_latched_preflight.validate_manifest(args.static_latched_preflight)
+        if not latched_preflight['valid']:
+            parser.error('Latched delivery preflight invalid: ' + json.dumps(latched_preflight))
+    elif args.static_latched_preflight:
+        parser.error('--static-latched-preflight requires --static-pc-latched-once')
     if args.side_executor_threads < 4 and not (
             args.dedicated_static_pc_executor and args.monitor_intervals):
         parser.error('Pools below4 require --dedicated-static-pc-executor and --monitor-intervals')
@@ -556,8 +658,8 @@ def main():
     os.environ['SUPER_SNAPSHOT_NEIGHBOR_CACHE'] = '1' if args.snapshot_neighbor_cache else '0'
     os.environ['SUPER_STATIC_PC_POLL_MS'] = str(args.static_pc_poll_ms)
     os.environ['SUPER_STATIC_PC_TWO_PHASE'] = '1' if args.static_pc_two_phase else '0'
-    # Separate transport prototype is not yet validated for CPU campaign use.
-    os.environ['SUPER_STATIC_PC_DURABLE'] = '0'
+    os.environ['SUPER_STATIC_PC_DURABLE'] = '1' if args.static_pc_latched_once else '0'
+    os.environ['SUPER_STATIC_PC_LATCHED_ONCE'] = '1' if args.static_pc_latched_once else '0'
     os.environ['SUPER_SIDE_EXECUTOR_THREADS'] = str(args.side_executor_threads)
     os.environ['SUPER_MONITOR_INTERVALS'] = '1' if args.monitor_intervals else '0'
     os.environ['SUPER_GUARDED_DEMAND_REPLAN'] = '1' if args.guarded_demand_replan else '0'
@@ -575,6 +677,10 @@ def main():
                 'adaptive': args.adaptive_config}
     files = {runtime / 'super_planner/config' / name for name in profiles.values()}
     files.update(reference_files)
+    if latched_preflight:
+        files.add(args.static_latched_preflight.resolve())
+        files.add(Path(static_latched_preflight.__file__).resolve())
+        files.update(latched_preflight_asset_paths(latched_preflight))
     files.update({runtime / 'mars_uav_sim/perfect_drone_sim/config/seed1.yaml',
                   runtime / 'mars_uav_sim/perfect_drone_sim/pcd/seed_maps/seed1.pcd',
                   runtime / 'mission_planner/data/loop24.txt',
@@ -622,8 +728,12 @@ def main():
         snapshot_neighbor_cache=args.snapshot_neighbor_cache,
         static_pc_poll_ms=args.static_pc_poll_ms,
         static_pc_two_phase=args.static_pc_two_phase,
-        static_pc_durable=False,
-        static_pc_delivery_scope=('Startup-ready CPU diagnostic only; late-reader preservation unresolved'
+        static_pc_durable=args.static_pc_latched_once,
+        static_pc_latched_once=args.static_pc_latched_once,
+        static_latched_preflight_sha256=(latched_preflight['manifest_sha256'] if latched_preflight else None),
+        static_pc_delivery_scope=('New durable reader contract, validated six-arm transport and actual RViz; legacy volatile reader NOT supported'
+                                  if args.static_pc_latched_once else
+                                  'Startup-ready CPU diagnostic only; late-reader preservation unresolved'
                                   if args.static_pc_two_phase else 'Legacy static publication'),
         side_executor_threads=args.side_executor_threads,
         monitor_intervals=args.monitor_intervals,
@@ -702,10 +812,10 @@ def main():
                     row.get('optimizer_phase_trace_enabled') is
                     (not args.no_optimizer_phase_memory_trace))
                 result['source_acquisition']['checks']['static_pc_poll_setting'] = (
-                    f'[STATIC_PC_POLL_SETTINGS] poll_ms={args.static_pc_poll_ms} '
-                    f'bootstrap_once={int(args.static_pc_poll_ms == 100)}' in stack)
-                result['source_acquisition']['checks']['static_pc_durable_disabled'] = (
-                    '[STATIC_PC_DURABLE_SETTINGS] enabled=0 ' in stack)
+                    f'[STATIC_PC_POLL_SETTINGS] poll_ms={0 if args.static_pc_latched_once else args.static_pc_poll_ms} '
+                    f'bootstrap_once={int(args.static_pc_latched_once or args.static_pc_poll_ms == 100)}' in stack)
+                result['source_acquisition']['checks']['static_pc_durable_setting'] = (
+                    f'[STATIC_PC_DURABLE_SETTINGS] enabled={int(args.static_pc_latched_once)} ' in stack)
                 if args.compose or mode == 'full':
                     result['source_acquisition']['checks']['side_executor_setting'] = (
                         f'[COMMON_EXECUTOR_SETTINGS] side_threads={args.side_executor_threads} ' in stack)
@@ -719,6 +829,15 @@ def main():
                         stack, stage_profile.summarize(root, mode, args.run) if args.profile_cpu else None)
                     result['source_acquisition']['checks']['static_pc_two_phase'] = (
                         result['static_pc_two_phase_audit']['valid'])
+                if args.static_pc_latched_once:
+                    result['static_pc_latched_once'] = True
+                    result['static_latched_audit'] = static_latched_audit(
+                        stack, stage_profile.summarize(root, mode, args.run) if args.profile_cpu else None)
+                    result['static_latched_preflight'] = static_latched_preflight.validate_manifest(
+                        args.static_latched_preflight)
+                    result['static_pc_delivery_validated'] = result['static_latched_preflight']['valid']
+                    result['source_acquisition']['checks']['static_latched_runtime'] = result['static_latched_audit']['valid']
+                    result['source_acquisition']['checks']['static_latched_delivery'] = result['static_pc_delivery_validated']
                 if args.static_pc_cached_executor:
                     result['static_pc_cached_executor'] = True
                     result['static_cached_executor_audit'] = static_cached_executor_audit(

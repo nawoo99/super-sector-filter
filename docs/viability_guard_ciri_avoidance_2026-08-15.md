@@ -5808,3 +5808,25 @@ races. Brake-candidate SAFE is a different status; recovery-only motion anchors
 explain infinity fields. Keep guards/passive-stability conditions. Perfect-tracking
 simulator position freezing with stale velocity does not validate real dynamics.
 Evidence in `frontend_cpu_preflight/C16_RECOVERY_CAUSAL_AUDIT.md`.
+
+2026-09-16 C18 follow-up: user approved the static publisher/actual-reader QoS
+migration. New default-off latched-once path publishes full geometry once with
+Reliable/TransientLocal/KeepLast1 and creates no static timer. Four explicit
+durable RViz variants preserve old configs/defaults. PCL uninitialized tail
+padding caused first Full transport SHA failure; captured data proved all
+declared values identical, only76 unused bytes differed. Canonicalize those
+12 tail bytes per serialized point only under the new flag; strict original SHA
+remains. Preserve original failures. Final six transport arms and actual RViz
+late/reconnect/render-target screenshots pass;39 optimized+sanitizer checks,
+83 Python checks and23 fixture checks pass. Main/source/control paths unchanged.
+
+run9319 `c18_latched_static_profile_run9319`: Full36.63s/.539836cores/
+20.679809core-s; Adaptive37.82s/.370055cores/14.571253core-s. Both1/1 complete,
+contact0, all acceptance gates pass; A/Ftime1.032487. Mean31.4506%, cumulative
+29.5387%, **40% unmet**. Each static executor has0 sampled CPU and no callbacks,
+but is retained and included in totals. Adaptive1 exact recovery cycle closes;
+F33/A30 retransmissions coalesced. No flight retry/unprofiled confirmation.
+One pre-launch runner path-resolution failure and one test-only QWidget capture
+limitation are retained and documented separately; neither is a flight failure.
+Next: align profiling/accounting windows and attribute map/snapshot plus common
+executor costs; preserve safety/cadence. Full details in CPU40 document.
