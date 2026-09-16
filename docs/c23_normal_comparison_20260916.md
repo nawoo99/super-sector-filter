@@ -125,6 +125,7 @@ N5 Full FSM 평균97.59Hz도 합격 기준을 결정하거나 수정하기 전�
 이후75회를 처음부터 재검증한다. 정상 진행 시 실험만의 예상 시간은 약1시간40분–2시간이며,
 원인 조사/수정 시간은 아직 확정할 수 없다. 현재 실행 중인 비행은 없다. GitHub push는 하지 않았다.
 
-최종 검증: Python123개 테스트 통과, git diff --check 통과, 기존 Normal SHA256
+최종 검증: Python123개 테스트 통과, 코드/문서 범위 git diff --check 통과, 기존 Normal SHA256
 `b40f880271a52f4b3332bfe67afe3d489cf8c6d444ac0c72ed30d9e9cd445ec5` 유지.
 N5 ON2회와 callback 단계별 자료는 `report_profiled_partial`에 별도로 저장했다.
+원본 CSV의 CRLF와 로그의 trailing whitespace는 증거 보존을 위해 수정하지 않았다.
