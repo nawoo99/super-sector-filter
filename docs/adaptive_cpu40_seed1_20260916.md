@@ -482,3 +482,26 @@ callback counters and relies on the separate profiled validation plus its own
 source/odometry audit; command message gaps alone cannot distinguish intentional
 holds from delayed callbacks. These checks are not hard real-time guarantees.
 The limits were specified before any2worker flight;48Python tests now pass.
+
+### Candidate9 measured result (run9310)
+
+| Mode | Complete/contact | Mission s | Mean used cores | CPU core-s |
+|---|---|---:|---:|---:|
+| Full | 1/1,0 | 36.88 | 0.713513 | 27.430641 |
+| Adaptive | 1/1,0 | 38.72 | 0.580143 | 23.527604 |
+
+Mean reduction18.6920%, cumulative14.2287%, A/Ftime1.04989. All declared
+safety/resource/speed/source/recovery/time and common-demand execution checks
+pass; no retry. **40% unmet.** Full startup pendingrevision1/gen0 is completed
+after42.5ms with explicit newgen1/map13. Last periodic counters Full294skips/
+523checks/253renewals, Adaptive309/582/277: common optimization now works in both.
+Counters exclude early-gated ticks/final partial reporting interval. Adaptive's
+single completed recovery has exact FullACKmap16 then newpathgen3→4/certmap26
+before false/release. Its new startup-completion branch was not exercised here.
+
+C7's34.34% is superseded for adoption by the fair functioning-policy C9 result,
+not used as a final savings claim. C10 will test the same demand policy with
+dedicated static executor and2general workers, preserving traceON and all source/
+guard settings. In addition to earlier small-pool gates, inspect receiver gaps
+as well as producer-header gaps, and require a matching profiled preflight before
+accepting an unprofiled small-pool confirmation.
