@@ -1,0 +1,9 @@
+Optimized and ASan+UBSan runs both returned:
+decision_cases=41 nonfinite_cases=21 guard_ticks=101 command_ticks=101 demand_ticks=15 solves=5 skips=10
+demand_replan_policy_test=PASS
+
+API patch dry-run:
+git apply --check 01_evidence_api_proposal.patch 02_fsm_hookup_proposal.patch
+exit_code=0
+
+No patch applied to runtime; no ROS/workspace compile or flight validation done.

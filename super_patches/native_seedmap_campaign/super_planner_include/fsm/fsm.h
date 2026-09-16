@@ -44,7 +44,7 @@
 namespace fsm {
     class Fsm {
     protected:
-        bool stop{false};
+        std::atomic_bool stop{false};
 
 
         vector<string> log_time_str{
@@ -66,7 +66,7 @@ namespace fsm {
 
         // params
         std::atomic_bool started_{false};
-        bool plan_from_rest_{false};
+        std::atomic_bool plan_from_rest_{false};
 
         struct GoalInfo {
             bool new_goal{false};
@@ -79,7 +79,34 @@ namespace fsm {
             Quatf goal_q{Quatf::Identity()};
             bool valid{false};
         } pending_goal_;
-        std::mutex pending_goal_mutex_;
+        mutable std::mutex pending_goal_mutex_;
+        std::uint64_t queued_goal_revision_{0};
+        std::uint64_t accepted_goal_revision_{0};
+        bool goal_update_in_progress_{false};
+
+        struct GoalDemandSnapshot {
+            std::uint64_t queued_revision{0};
+            std::uint64_t accepted_revision{0};
+            bool pending_or_updating{true};
+        };
+
+        GoalDemandSnapshot getGoalDemandSnapshot() const {
+            std::lock_guard<std::mutex> lock(pending_goal_mutex_);
+            return {queued_goal_revision_, accepted_goal_revision_,
+                    pending_goal_.valid || goal_update_in_progress_};
+        }
+
+        // Keeps the existing goal-processing work outside the queue mutex but
+        // prevents its consume-to-accept gap from qualifying for a solver skip.
+        struct GoalUpdateScope {
+            Fsm& fsm;
+            bool accepted{false};
+            ~GoalUpdateScope() {
+                std::lock_guard<std::mutex> lock(fsm.pending_goal_mutex_);
+                if (accepted) ++fsm.accepted_goal_revision_;
+                fsm.goal_update_in_progress_ = false;
+            }
+        };
 
         mutable std::mutex map_readiness_log_mutex_;
         mutable rog_map::MapHealthClock::time_point last_map_readiness_log_time_{};
@@ -171,14 +198,22 @@ namespace fsm {
 
         int recordLatestReplanLog();
         /* Callback functions */
-        bool finish_plan = false;
+        std::atomic_bool finish_plan{false};
         double system_start_time_;
 
         bool traj_finish_{false};
 
         void WriteTimeToLog();
 
-        void callReplanOnce();
+        struct MovingReplanOutcome {
+            bool attempted{false};
+            bool successful{false};
+            bool finished{false};
+            std::uint64_t committed_generation{0};
+            rog_map::MapHealthClock::time_point committed_time{};
+        };
+
+        MovingReplanOutcome callReplanOnce();
 
         void callMainFsmOnce();
 

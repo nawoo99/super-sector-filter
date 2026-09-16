@@ -1771,6 +1771,83 @@ namespace super_planner {
         return false;
     }
 
+    demand_replan::StopViabilityReceipt SuperPlanner::renewCommittedStopViability(
+            const double now_wt, const std::uint64_t expected_generation,
+            const std::uint64_t expected_map_version,
+            const double required_until_tt) const {
+        const thread_cpu_profile::Scope cpu_scope(
+                thread_cpu_profile::Stage::PlannerStopViability);
+        demand_replan::StopViabilityReceipt receipt;
+        if (!cfg_.trajectory_guard_en || !cfg_.guard_viability_en ||
+            // Mutable-map slides/partial updates can change occupancy without
+            // a committed version increment between individual stop checks.
+            // This skip-only receipt requires immutable publication semantics.
+            !map_ptr_->immutablePlannerSnapshotEnabled() ||
+            expected_generation == 0 || expected_map_version == 0 ||
+            !std::isfinite(now_wt) || !std::isfinite(required_until_tt) ||
+            !std::isfinite(cfg_.guard_viability_sample_dt_s) ||
+            cfg_.guard_viability_sample_dt_s <= 0.0 ||
+            !std::isfinite(cfg_.guard_viability_horizon_s) ||
+            cfg_.guard_viability_horizon_s <= 0.0) {
+            return receipt;
+        }
+        const auto snapshot = cmd_traj_info_.sharedSnapshot();
+        const auto health_before = map_ptr_->getMapHealthSnapshot();
+        if (snapshot.empty || !snapshot.pos_traj ||
+            snapshot.generation != expected_generation ||
+            health_before.map_version != expected_map_version ||
+            (health_before.update_in_progress &&
+             !map_ptr_->immutablePlannerSnapshotEnabled())) {
+            return receipt;
+        }
+        const double from_tt = now_wt - snapshot.start_wt;
+        const double until_tt = std::min(
+                snapshot.total_duration, from_tt + cfg_.guard_viability_horizon_s);
+        if (!std::isfinite(snapshot.start_wt) ||
+            !std::isfinite(snapshot.total_duration) ||
+            !std::isfinite(from_tt) || !std::isfinite(until_tt) ||
+            from_tt < 0.0 || from_tt >= snapshot.total_duration ||
+            required_until_tt < from_tt || until_tt < required_until_tt) {
+            return receipt;
+        }
+        receipt.trajectory_generation = snapshot.generation;
+        receipt.map_version = health_before.map_version;
+        receipt.start_wt = snapshot.start_wt;
+        receipt.checked_from_tt = from_tt;
+        receipt.checked_until_tt = from_tt;
+        receipt.sample_dt_s = cfg_.guard_viability_sample_dt_s;
+        // Revision 1 means the EXISTING sampled stop policy: unknown=false,
+        // CLEARANCE_MARGIN accepted by certifiedStopExistsFrom. It is not
+        // equivalent to the stricter runtime emergency-brake certificate.
+        receipt.policy_revision = 1;
+        for (double tt = from_tt;;) {
+            StatePVAJ state;
+            // Unlike the legacy bool loop's skipped getState failures, a
+            // skip-only receipt requires every requested state to be checked.
+            if (!snapshot.pos_traj->getState(tt, state) ||
+                !state.array().isFinite().all() ||
+                !certifiedStopExistsFrom(state, snapshot.generation, nullptr, false)) {
+                return receipt;
+            }
+            ++receipt.sample_count;
+            receipt.checked_until_tt = tt;
+            if (tt >= until_tt) break;
+            const double next_tt = std::min(until_tt, tt + receipt.sample_dt_s);
+            if (!std::isfinite(next_tt) || next_tt <= tt) return receipt;
+            tt = next_tt;
+        }
+        const auto health_after = map_ptr_->getMapHealthSnapshot();
+        if (health_after.map_version != health_before.map_version ||
+            (health_after.update_in_progress &&
+             !map_ptr_->immutablePlannerSnapshotEnabled()) ||
+            cmd_traj_info_.generation() != snapshot.generation) {
+            return receipt;
+        }
+        receipt.every_state_evaluated = true;
+        receipt.valid = true;
+        return receipt;
+    }
+
     bool SuperPlanner::candidateStopsViable(
             const Trajectory &pos_traj,
             double checked_from_tt,
@@ -2520,9 +2597,13 @@ namespace super_planner {
     RET_CODE
     SuperPlanner::ReplanOnce(const Vec3f &goal_p,
                              const double &goal_yaw,
-                             const bool &new_goal) {
+                             const bool &new_goal,
+                             std::uint64_t *committed_generation_out,
+                             rog_map::MapHealthClock::time_point *committed_time_out) {
         TimeConsuming replan_total_t("ReplanOnce", false);
         std::lock_guard<std::mutex> guard(replan_lock_);
+        if (committed_generation_out) *committed_generation_out = 0;
+        if (committed_time_out) *committed_time_out = {};
 
         // Certified vertical and direct-goal recoveries are complete
         // rest-to-rest manoeuvres. Do not let the normal 15 Hz moving-state
@@ -2605,6 +2686,10 @@ namespace super_planner {
                 !commitTrajectoryCandidate(std::move(candidate), "ReplanOnce/with_backup")) {
                 return FAILED;
             }
+            if (committed_generation_out)
+                *committed_generation_out = cmd_traj_info_.generation();
+            if (committed_time_out)
+                *committed_time_out = rog_map::MapHealthClock::now();
             last_exp_traj_info_ = exp_traj_info;
             robot_on_backup_traj_ = false;
             gi_.new_goal = false;
@@ -2645,6 +2730,10 @@ namespace super_planner {
                 !commitTrajectoryCandidate(std::move(candidate), "ReplanOnce/no_backup")) {
                 return FAILED;
             }
+            if (committed_generation_out)
+                *committed_generation_out = cmd_traj_info_.generation();
+            if (committed_time_out)
+                *committed_time_out = rog_map::MapHealthClock::now();
             last_exp_traj_info_ = exp_traj_info;
             robot_on_backup_traj_ = false;
             gi_.new_goal = false;

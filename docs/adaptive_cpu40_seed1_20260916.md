@@ -336,3 +336,48 @@ unlike stricter runtime emergency braking; no continuous stop-safety theorem.
 Before flight also compare each mode's duration against C5 (<=1.10) in addition
 to the matched A/Ftime guard, and report reference cumulativeCPU differences.
 Design/prototypes in `demand_replan_preflight/`; not flight-validated yet.
+
+## Candidate7 implementation: guarded demand-driven ordinary replanning
+
+`SUPER_GUARDED_DEMAND_REPLAN=1` defaults off. It preserves15Hz demand checks,
+100Hz guards/commands and source settings. Intentional solve deferral is bounded
+by0.25s from the last successful ordinary solve's dispatch, with one timer tick,
+scheduling allowance, configured solve budget and command-handoff reserve.
+Only an actual own-generation commit can earn a lease; failure/NO_NEED/another
+callback's commit cannot. Over-budget dispatch-to-own-commit cannot earn one.
+There is no hard real-time guarantee against OS stalls.
+
+Explicit SAFE geometry/current map, remaining EXP-before-backup/trajectory
+coverage, finite clocks, no goal queue/update, unhandled recovery, rejection,
+brake or revalidation are required. Goal metadata uses its existing mutex and
+a consume-to-accept RAII scope; event completion is published atomically only
+after existing main-FSM handling. Final state is rechecked. Backwards simulator
+time invalidates the lease. The weaker legacy same-map coalescer is bypassed
+while the new policy is enabled, so rejection cannot silently fall through.
+
+Skip-only stop-viability renewal checks every requested state in the configured
+2s horizon and actual final endpoint against an unchanged map/generation; an
+unevaluated/nonfinite state invalidates its receipt. At most one renewal occurs
+per demand check, on the replanning callback, and evidence/time is recollected
+afterward. This does not alter normal candidate acceptance or relax the existing
+sampled stop policy. The unknown/clearance caveat described above still applies.
+
+Two independent code reviews addressed pending-event and commit-attribution
+races before application. Pure helper:41gate cases,21nonfinite cases, boundary
+checks and fake100Hz cadence preservation; optimized and ASan/UBSan pass.
+These are not flight proof. The workspace build passed in6min43s; a final
+immutable-only renewal restriction rebuilt successfully in28.2s. Renewal is
+disabled for mutable map backends because slides/partial updates can change
+occupancy without a committed-map version increment. Immutable profiles used
+here are supported. Actual-Fsm metadata integration checks passed:17checks,
+2000concurrent enqueues and4actual early moving-replan outcomes. Successful
+solver-commit attribution and mixed-map/state-evaluation renewal failures were
+reviewed in code, not dynamically integration-tested.45Python tests pass.
+Runner now requires same-mode reference time<=1.10 (C5) for this candidate,
+alongside matchedA/F<=1.10. Same-mode mean/cumulativeCPU are also recorded.
+
+A separate opt-in `SUPER_STATIC_PC_DEDICATED_EXECUTOR=1` routes the existing
+global-PC callback group to a dedicated single-thread executor. It retains the
+exact1ms timer, geometry, QoS and bootstrap behavior; defaults off with no extra
+thread. Cancellation/join precedes object teardown. This is a later candidate,
+**off for C7**, not a claimed fix for existing best-effort map delivery failures.

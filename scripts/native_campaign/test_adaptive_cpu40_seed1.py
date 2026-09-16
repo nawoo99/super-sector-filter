@@ -1,5 +1,5 @@
 import copy
-from adaptive_cpu40_seed1 import comparison
+from adaptive_cpu40_seed1 import comparison, reference_comparison
 
 
 def pair():
@@ -51,3 +51,22 @@ def test_profiled_threshold_requires_unprofiled_confirmation():
     assert out['measured_threshold_pass']
     assert out['requires_unprofiled_confirmation']
     assert not out['target_met']
+
+
+def test_both_modes_slowing_together_cannot_pass_reference_guard():
+    rows = pair()
+    for row in rows:
+        reference = dict(row, mission_time_s=row['mission_time_s'] / 1.2)
+        row['reference_comparison'] = reference_comparison(row, reference)
+    out = comparison(rows)
+    assert out['mission_time_guardrail_pass']
+    assert not out['per_mode_reference_time_guardrail_pass']
+    assert not out['target_met']
+
+
+def test_reference_mean_and_total_cpu_are_reported_independently():
+    full, adaptive = pair()
+    out = reference_comparison(adaptive, full)
+    assert round(out['mean_cpu_reduction_pct']) == 45
+    assert round(out['cumulative_cpu_reduction_pct'], 2) == 41.67
+    assert out['mission_time_guardrail_pass']

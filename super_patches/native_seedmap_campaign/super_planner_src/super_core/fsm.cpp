@@ -65,29 +65,33 @@ namespace fsm {
         return ret_code;
     }
 
-    void Fsm::callReplanOnce() {
+    Fsm::MovingReplanOutcome Fsm::callReplanOnce() {
         if (stop) {
-            return;
+            return {};
         }
 
         if (machine_state_ != FOLLOW_TRAJ) {
-            return;
+            return {};
         }
 
         if (finish_plan) {
-            return;
+            return {};
         }
 
         if (plan_from_rest_) {
             plan_from_rest_ = false;
-            return;
+            return {};
         }
 
         planner_ptr_->getMap()->getNearestInfCellNot(GridType::OCCUPIED, gi_.goal_p, gi_.goal_p, 3.0);
 
         TimeConsuming replan_once_time("replan_once_time", false);
 
-        RET_CODE ret_code = planner_ptr_->ReplanOnce(gi_.goal_p, gi_.goal_yaw, gi_.new_goal);
+        std::uint64_t committed_generation = 0;
+        rog_map::MapHealthClock::time_point committed_time{};
+        RET_CODE ret_code = planner_ptr_->ReplanOnce(
+                gi_.goal_p, gi_.goal_yaw, gi_.new_goal,
+                &committed_generation, &committed_time);
         ros_ptr_->pubReplanStatus(ret_code != FAILED && ret_code != EMER);
         if (ret_code == FAILED) {
 //            cout << YELLOW << " -- [Fsm] ReplanOnce failed." << RESET << endl;
@@ -107,6 +111,8 @@ namespace fsm {
         // save on log
         recordLatestReplanLog();
         WriteTimeToLog();
+        return {true, ret_code == SUCCESS || ret_code == FINISH,
+                ret_code == FINISH, committed_generation, committed_time};
     }
 
     void Fsm::callMainFsmOnce() {
@@ -255,6 +261,7 @@ namespace fsm {
             pending_goal_.goal_p = p;
             pending_goal_.goal_q = q;
             pending_goal_.valid = true;
+            ++queued_goal_revision_;
         }
         started_.store(true, std::memory_order_release);
     }
@@ -279,8 +286,10 @@ namespace fsm {
             }
             pending_goal = pending_goal_;
             pending_goal_.valid = false;
+            goal_update_in_progress_ = true;
         }
 
+        GoalUpdateScope goal_update{*this};
         auto click_point = pending_goal.goal_p;
         if (cfg_.click_height > -5) {
             click_point.z() = cfg_.click_height;
@@ -323,6 +332,7 @@ namespace fsm {
         gi_.new_goal = true;
         finish_plan = false;
         plan_from_rest_ = false;
+        goal_update.accepted = true;
         return true;
     }
 

@@ -28,6 +28,16 @@ FLIGHT_NAMES = {'fsm_node', 'perfect_drone_node', 'perfect_drone_full_node',
                 'source_acquisition_test'}
 
 
+def reference_comparison(result, reference):
+    ratio = result['mission_time_s'] / reference['mission_time_s']
+    return dict(mission_time_ratio=ratio, mission_time_guardrail_pass=ratio <= 1.10,
+                mean_cpu_reduction_pct=100 * (1 - result['end_to_end_cpu_cores_mean'] /
+                                               reference['end_to_end_cpu_cores_mean']),
+                cumulative_cpu_reduction_pct=100 * (1 - result['end_to_end_cpu_core_s'] /
+                                                     reference['end_to_end_cpu_core_s']),
+                scope='Same-mode predeclared exploratory reference; not an isolated causal ablation')
+
+
 def comparison(results):
     modes = {r['mode']: r for r in results}
     if not {'full', 'adaptive'} <= modes.keys():
@@ -51,11 +61,15 @@ def comparison(results):
     # protracted stationary operation as the requested performance success.
     out['safety_and_quality_pass'] = safe
     out['mission_time_guardrail_pass'] = out['mission_time_ratio'] <= 1.10
+    out['per_mode_reference_time_guardrail_pass'] = all(
+        r.get('reference_comparison', {}).get('mission_time_guardrail_pass', True)
+        for r in (f, a))
     out['cpu_comparison_instrumented'] = any(
         r.get('cpu_comparison_instrumented', False) for r in (f, a))
     out['requires_unprofiled_confirmation'] = any(
         r.get('cpu_profile', False) for r in (f, a))
     out['measured_threshold_pass'] = bool(safe and out['mission_time_guardrail_pass']
+                                         and out['per_mode_reference_time_guardrail_pass']
                                          and not out['cpu_comparison_instrumented']
                                          and reduction is not None and reduction >= 40.)
     out['target_met'] = (out['measured_threshold_pass']
@@ -87,6 +101,10 @@ def main():
     parser.add_argument('--side-executor-threads', type=int, choices=range(4, 17), default=10)
     parser.add_argument('--monitor-intervals', action='store_true',
                         help='Bounded received-message interval statistics on existing monitor subscriptions')
+    parser.add_argument('--guarded-demand-replan', action='store_true')
+    parser.add_argument('--dedicated-static-pc-executor', action='store_true')
+    parser.add_argument('--time-reference-folder', type=Path,
+                        help='Predeclare same-mode <=1.10 mission-time guard and CPU reference')
     parser.add_argument('--full-config', default=diagnostic.search.PROFILES['full'])
     parser.add_argument('--sector-config', default=diagnostic.search.PROFILES['sector'])
     parser.add_argument('--adaptive-config', default=event.PROFILE)
@@ -97,6 +115,21 @@ def main():
         parser.error('--compare-occupied-box-scan requires --fast-occupied-box-scan')
     if args.snapshot_neighbor_cache and not args.snapshot_line_query:
         parser.error('--snapshot-neighbor-cache requires --snapshot-line-query')
+    if args.guarded_demand_replan and not args.time_reference_folder:
+        parser.error('--guarded-demand-replan requires --time-reference-folder')
+    references = {}
+    reference_files = []
+    if args.time_reference_folder:
+        for mode in args.modes:
+            path = (args.time_reference_folder / f'{mode}_summary.json').resolve()
+            reference = json.loads(path.read_text())
+            if reference.get('success') is not True or any(
+                    not isinstance(reference.get(key), (int, float)) or
+                    not math.isfinite(reference[key]) or reference[key] <= 0
+                    for key in ('mission_time_s', 'end_to_end_cpu_cores_mean', 'end_to_end_cpu_core_s')):
+                parser.error(f'Invalid successful reference: {path}')
+            references[mode] = reference
+            reference_files.append(path)
     root = args.output
     root.mkdir(parents=True, exist_ok=False)
     campaign = diagnostic.search.campaign
@@ -120,10 +153,14 @@ def main():
     os.environ['SUPER_STATIC_PC_POLL_MS'] = str(args.static_pc_poll_ms)
     os.environ['SUPER_SIDE_EXECUTOR_THREADS'] = str(args.side_executor_threads)
     os.environ['SUPER_MONITOR_INTERVALS'] = '1' if args.monitor_intervals else '0'
+    os.environ['SUPER_GUARDED_DEMAND_REPLAN'] = '1' if args.guarded_demand_replan else '0'
+    os.environ['SUPER_STATIC_PC_DEDICATED_EXECUTOR'] = (
+        '1' if args.dedicated_static_pc_executor else '0')
     runtime = Path('/root/super_ws/src/SUPER')
     profiles = {'full': args.full_config, 'sector': args.sector_config,
                 'adaptive': args.adaptive_config}
     files = {runtime / 'super_planner/config' / name for name in profiles.values()}
+    files.update(reference_files)
     files.update({runtime / 'mars_uav_sim/perfect_drone_sim/config/seed1.yaml',
                   runtime / 'mars_uav_sim/perfect_drone_sim/pcd/seed_maps/seed1.pcd',
                   runtime / 'mission_planner/data/loop24.txt',
@@ -168,6 +205,10 @@ def main():
         static_pc_poll_ms=args.static_pc_poll_ms,
         side_executor_threads=args.side_executor_threads,
         monitor_intervals=args.monitor_intervals,
+        guarded_demand_replan=args.guarded_demand_replan,
+        dedicated_static_pc_executor=args.dedicated_static_pc_executor,
+        time_reference_folder=str(args.time_reference_folder) if args.time_reference_folder else None,
+        max_same_mode_reference_time_ratio=1.10 if references else None,
         effective_run_options=effective_options,
         runtime_policy_note='Inherited base policy only; effective_run_options and profiles override it. Source acquisition follows native 10Hz cadence, not inherited filter-rate hint.',
         logical_cpus=os.cpu_count(), runtime_policy=frozen_policy,
@@ -206,6 +247,8 @@ def main():
                         event.sha(p) != digest for p, digest in hashes.items()):
                     raise RuntimeError('Source/config/binary changed during candidate')
                 result = diagnostic.summarize(profiler, row)
+                if references:
+                    result['reference_comparison'] = reference_comparison(result, references[mode])
                 result['source_acquisition'] = source.audit_source(root / 'artifacts', args.run, mode)
                 result['strict_recovery_audit'] = recovery_audit.audit_file(
                     root / 'artifacts' / f'seed1_run{args.run}_{mode}.attempt1.stack.log', mode)
@@ -219,6 +262,9 @@ def main():
                 if args.compose or mode == 'full':
                     result['source_acquisition']['checks']['side_executor_setting'] = (
                         f'[COMMON_EXECUTOR_SETTINGS] side_threads={args.side_executor_threads} ' in stack)
+                    result['source_acquisition']['checks']['static_pc_executor_setting'] = (
+                        '[STATIC_PC_EXECUTOR_SETTINGS] '
+                        f'dedicated={int(args.dedicated_static_pc_executor)} ' in stack)
                 if args.monitor_intervals:
                     monitor_result = json.loads((root / 'artifacts' /
                         f'seed1_run{args.run}_{mode}.json').read_text())
@@ -229,6 +275,12 @@ def main():
                             x.get('messages', 0) > 1 and x.get('intervals_dropped', 1) == 0
                             and x.get('backward_receipts', 1) == 0
                             for x in intervals.values()))
+                if args.guarded_demand_replan:
+                    result['source_acquisition']['checks']['guarded_demand_replan_active'] = (
+                        '[GUARDED_DEMAND_REPLAN] enabled=true max_dispatch_interval=0.25 ' in stack)
+                    reports = re.findall(r'\[DEMAND_REPLAN\] checks=(\d+) skips=(\d+) renewals=(\d+)', stack)
+                    result['demand_replan_reports'] = reports
+                    result['demand_replan_exercised'] = bool(reports) and max(int(r[1]) for r in reports) > 0
                 if args.skip_backup_diagnostic_replay or args.fast_occupied_box_scan or args.snapshot_line_query:
                     stack = (root / 'artifacts' /
                         f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')

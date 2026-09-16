@@ -1,0 +1,316 @@
+--- a/super_planner/include/ros_interface/ros2/fsm_ros2.hpp
++++ b/super_planner/include/ros_interface/ros2/fsm_ros2.hpp
+@@ -67,6 +67,7 @@
+ 
+ 
+ namespace fsm {
++    namespace demand_policy = super_planner::demand_replan;
+     class FsmRos2 : public Fsm {
+ 
+         rclcpp::Node::SharedPtr nh_;
+@@ -81,6 +82,7 @@
+                 cloud_process_ack_sub_;
+         rclcpp::Subscription<std_msgs::msg::UInt64>::SharedPtr event_recovery_request_sub_;
+         std::atomic<std::uint64_t> event_recovery_requested_{0};
++        std::atomic<std::uint64_t> event_recovery_completed_{0};
+         std::uint64_t event_recovery_handled_{0};
+         std::uint64_t event_recovery_min_map_version_{0};
+         std::uint64_t event_recovery_not_before_stamp_ns_{0};
+@@ -123,6 +125,17 @@
+         std::uint64_t last_successful_replan_generation_{0};
+         rog_map::MapHealthClock::time_point last_successful_replan_time_{};
+         std::uint64_t same_map_replan_skips_{0};
++        // Replan-callback-owned bookkeeping; no new timer or worker.
++        bool demand_has_ordinary_success_{false};
++        bool demand_failure_since_success_{true};
++        std::uint64_t demand_success_generation_{0};
++        GoalDemandSnapshot demand_success_goal_{};
++        std::uint64_t demand_success_event_request_{0};
++        rog_map::MapHealthClock::time_point demand_success_dispatch_{};
++        demand_policy::StopViabilityReceipt demand_viability_receipt_{};
++        std::uint64_t demand_checks_{0}, demand_skips_{0}, demand_renewals_{0};
++        rog_map::MapHealthClock::time_point demand_last_report_{};
++        double demand_last_observed_sim_wt_{std::numeric_limits<double>::quiet_NaN()};
+         std::uint64_t shadow_last_enqueued_map_version_{0};
+         Trajectory brake_pos_traj_{};
+         Trajectory brake_yaw_traj_{};
+@@ -3468,6 +3481,13 @@
+                 exit(0);
+             }
+ 
++            if (demandReplanEnabled()) {
++                ros_ptr_->info(
++                        " -- [GUARDED_DEMAND_REPLAN] enabled=true max_dispatch_interval=0.25 "
++                        "demand_timer_hz={} guard_command_hz=100 legacy_coalescer=bypassed "
++                        "stop_policy=sampled_unknown_allowed_clearance_margin_allowed",
++                        cfg_.replan_rate);
++            }
+             if (cfg_.timer_en) {
+                 execution_timer_ = nh_->create_wall_timer(
+                         std::chrono::milliseconds(10),
+@@ -3633,6 +3653,197 @@
+             }
+         }
+ 
++        static bool demandReplanEnabled() {
++            static const bool enabled = [] {
++                const char* setting = std::getenv("SUPER_GUARDED_DEMAND_REPLAN");
++                return setting && std::strcmp(setting, "1") == 0;
++            }();
++            return enabled;
++        }
++
++        bool demandRefreshPending() const {
++            std::lock_guard<std::mutex> lock(full_refresh_mutex_);
++            return required_full_refresh_min_seq_ != 0 ||
++                    (full_refresh_gate_advertised_ &&
++                     latest_full_refresh_request_seq_ != 0 &&
++                     !latest_full_refresh_request_acked_);
++        }
++
++        bool demandEventPending() const {
++            return cfg_.event_recovery_en &&
++                    event_recovery_requested_.load(std::memory_order_acquire) >
++                    event_recovery_completed_.load(std::memory_order_acquire);
++        }
++
++        static bool sameGoalDemand(const GoalDemandSnapshot& a,
++                                   const GoalDemandSnapshot& b) {
++            return !a.pending_or_updating && !b.pending_or_updating &&
++                    a.queued_revision == b.queued_revision &&
++                    a.accepted_revision == b.accepted_revision;
++        }
++
++        demand_policy::Evidence collectDemandEvidence() {
++            demand_policy::Evidence e;
++            const double now_wt = ros_ptr_->getSimTime();
++            e.simulation_clock_monotonic = std::isfinite(now_wt) &&
++                    (!std::isfinite(demand_last_observed_sim_wt_) ||
++                     now_wt >= demand_last_observed_sim_wt_);
++            if (!e.simulation_clock_monotonic) {
++                demand_has_ordinary_success_ = false;
++                demand_failure_since_success_ = true;
++                demand_viability_receipt_.valid = false;
++            }
++            if (std::isfinite(now_wt)) demand_last_observed_sim_wt_ = now_wt;
++            const auto goal = getGoalDemandSnapshot();
++            const auto event_request = event_recovery_requested_.load(std::memory_order_acquire);
++            const auto snapshot = planner_ptr_->getCommittedSharedTrajectorySnapshot();
++            const auto health = map_ptr_->getMapHealthSnapshot();
++            TrajectorySafetyResult certificate;
++            bool certificate_valid;
++            {
++                std::lock_guard<std::mutex> lock(safety_mutex_);
++                certificate = safety_certificate_;
++                certificate_valid = safety_certificate_valid_;
++            }
++            double map_age, map_limit, speed;
++            e.map_fresh_for_motion = mapFreshEnoughForMotion(health, map_age, map_limit, speed);
++            e.enforcement_enabled = cfg_.trajectory_guard_en;
++            e.viability_enabled = planner_ptr_->stopViabilityEnabled();
++            e.ordinary_follow = machine_state_.load(std::memory_order_acquire) == FOLLOW_TRAJ;
++            e.stop_finished_or_plan_from_rest = stop.load(std::memory_order_acquire) ||
++                    finish_plan.load(std::memory_order_acquire) ||
++                    plan_from_rest_.load(std::memory_order_acquire);
++            e.pending_or_updating_goal = goal.pending_or_updating;
++            e.goal_matches_successful_commit = sameGoalDemand(goal, demand_success_goal_);
++            e.recovery_pending = trajectory_guard_recovery_announced_.load(std::memory_order_acquire) ||
++                    event_request != demand_success_event_request_ ||
++                    demandEventPending() || demandRefreshPending();
++            e.brake_or_revalidation_pending = safety_brake_active_.load(std::memory_order_acquire) ||
++                    safety_revalidation_requested_.load(std::memory_order_acquire);
++            e.failure_or_rejection_since_success = demand_failure_since_success_ ||
++                    planner_ptr_->trajectoryGuardRejectionPending() ||
++                    planner_ptr_->topologyRetryPending();
++            e.special_escape_certificate = certificate.used_clearance_escape ||
++                    certificate.used_initial_footprint_egress;
++            e.certificate_explicitly_safe = certificate_valid &&
++                    certificate.status == TrajectorySafetyStatus::SAFE;
++            e.certificate_generation = certificate.trajectory_generation;
++            e.certificate_map_version = certificate.map_version;
++            e.certificate_from_tt = certificate.checked_from_tt;
++            e.certificate_until_tt = certificate.checked_to_tt;
++            e.has_successful_ordinary_commit = demand_has_ordinary_success_;
++            e.last_successful_generation = demand_success_generation_;
++            e.generation = snapshot.generation;
++            e.map_version = health.map_version;
++            e.steady_now_s = std::chrono::duration<double>(
++                    rog_map::MapHealthClock::now().time_since_epoch()).count();
++            e.last_successful_dispatch_steady_s = std::chrono::duration<double>(
++                    demand_success_dispatch_.time_since_epoch()).count();
++            e.trajectory_start_wt = snapshot.start_wt;
++            e.trajectory_time_s = now_wt - snapshot.start_wt;
++            e.trajectory_duration_s = snapshot.empty ? 0.0 : snapshot.total_duration;
++            e.has_appended_backup = snapshot.has_appended_backup;
++            e.appended_backup_start_tt = snapshot.backup_traj_start_tt;
++            e.has_carry_backup = snapshot.has_carry_backup;
++            e.carry_backup_start_tt = snapshot.carry_backup_start_tt;
++            e.carry_backup_end_tt = snapshot.carry_backup_end_tt;
++            CmdTraj::Sample sample;
++            if (!snapshot.empty &&
++                planner_ptr_->getOneCommandSample(sample, snapshot.generation)) {
++                e.sample_finished = sample.finished;
++                e.sample_on_backup = sample.on_backup;
++            }
++            e.receipt = demand_viability_receipt_;
++            const auto final_health = map_ptr_->getMapHealthSnapshot();
++            e.final_evidence_current = final_health.map_version == health.map_version &&
++                    planner_ptr_->getCommittedTrajectoryGeneration() == snapshot.generation &&
++                    sameGoalDemand(goal, getGoalDemandSnapshot()) &&
++                    event_recovery_requested_.load(std::memory_order_acquire) == event_request &&
++                    machine_state_.load(std::memory_order_acquire) == FOLLOW_TRAJ &&
++                    !stop.load(std::memory_order_acquire) &&
++                    !finish_plan.load(std::memory_order_acquire) &&
++                    !plan_from_rest_.load(std::memory_order_acquire) &&
++                    !safety_brake_active_.load(std::memory_order_acquire) &&
++                    !safety_revalidation_requested_.load(std::memory_order_acquire) &&
++                    !trajectory_guard_recovery_announced_.load(std::memory_order_acquire) &&
++                    !planner_ptr_->trajectoryGuardRejectionPending() &&
++                    !planner_ptr_->topologyRetryPending() &&
++                    !demandEventPending() && !demandRefreshPending();
++            return e;
++        }
++
++        bool tryDeferOrdinaryReplan() {
++            if (!demandReplanEnabled()) return false;
++            demand_policy::Policy policy;
++            policy.enabled = true;
++            policy.demand_timer_period_s = cfg_.replan_rate > 0.0
++                    ? std::floor(1000.0 / cfg_.replan_rate) / 1000.0 : 0.0;
++            policy.solve_budget_s = planner_ptr_->configuredReplanForwardDt();
++            policy.viability_sample_dt_s = planner_ptr_->stopViabilitySampleDt();
++            auto evidence = collectDemandEvidence();
++            auto decision = demand_policy::decide(policy, evidence);
++            ++demand_checks_;
++            if (decision.needsRenewal()) {
++                ++demand_renewals_;
++                demand_viability_receipt_ = planner_ptr_->renewCommittedStopViability(
++                        ros_ptr_->getSimTime(), evidence.generation, evidence.map_version,
++                        decision.required_until_tt);
++                evidence = collectDemandEvidence();
++                evidence.renewal_attempted = true;
++                decision = demand_policy::decide(policy, evidence);
++            }
++            if (decision.skip()) ++demand_skips_;
++            const auto now = rog_map::MapHealthClock::now();
++            if (demand_last_report_.time_since_epoch().count() == 0 ||
++                std::chrono::duration<double>(now - demand_last_report_).count() >= 5.0) {
++                demand_last_report_ = now;
++                ros_ptr_->info(
++                        " -- [DEMAND_REPLAN] checks={} skips={} renewals={} "
++                        "reason={} gen={} map={} required_until={:.3f} checked_until={:.3f}",
++                        demand_checks_, demand_skips_, demand_renewals_,
++                        demand_policy::reasonName(decision.reason), evidence.generation,
++                        evidence.map_version, decision.required_until_tt,
++                        evidence.receipt.checked_until_tt);
++            }
++            return decision.skip();
++        }
++
++        void recordDemandReplanOutcome(
++                const MovingReplanOutcome& outcome, const bool candidate_rejected,
++                const GoalDemandSnapshot& goal_before,
++                const std::uint64_t event_before,
++                const rog_map::MapHealthClock::time_point dispatch) {
++            // Do not manufacture a lease from SUCCESS/NO_NEED, an unrelated
++            // concurrent PlanFromRest commit, or a goal/recovery update.
++            const double dispatch_to_commit_s = std::chrono::duration<double>(
++                    outcome.committed_time - dispatch).count();
++            if (!outcome.attempted || !outcome.successful || outcome.finished ||
++                outcome.committed_generation == 0 || candidate_rejected ||
++                outcome.committed_time.time_since_epoch().count() == 0 ||
++                !std::isfinite(dispatch_to_commit_s) || dispatch_to_commit_s < 0.0 ||
++                dispatch_to_commit_s > planner_ptr_->configuredReplanForwardDt() ||
++                planner_ptr_->getCommittedTrajectoryGeneration() != outcome.committed_generation ||
++                !sameGoalDemand(goal_before, getGoalDemandSnapshot()) ||
++                event_recovery_requested_.load(std::memory_order_acquire) != event_before ||
++                machine_state_.load(std::memory_order_acquire) != FOLLOW_TRAJ ||
++                stop.load(std::memory_order_acquire) || finish_plan.load(std::memory_order_acquire) ||
++                plan_from_rest_.load(std::memory_order_acquire) ||
++                safety_brake_active_.load(std::memory_order_acquire) ||
++                safety_revalidation_requested_.load(std::memory_order_acquire) ||
++                trajectory_guard_recovery_announced_.load(std::memory_order_acquire) ||
++                planner_ptr_->trajectoryGuardRejectionPending() ||
++                planner_ptr_->topologyRetryPending() ||
++                demandEventPending() || demandRefreshPending()) {
++                return;
++            }
++            demand_has_ordinary_success_ = true;
++            demand_failure_since_success_ = false;
++            demand_success_generation_ = outcome.committed_generation;
++            demand_success_goal_ = goal_before;
++            demand_success_event_request_ = event_before;
++            demand_success_dispatch_ = dispatch;
++        }
++
+         void replanTimerCallback() {
+             const super_utils::thread_cpu_profile::Scope cpu_scope(
+                     super_utils::thread_cpu_profile::Stage::FsmReplanCallback);
+@@ -3660,7 +3871,13 @@
+                                 : std::chrono::duration<double>(
+                                           replan_now -
+                                           last_successful_replan_time_).count();
+-                if (cfg_.trajectory_guard_same_map_replan_coalesce_en &&
++                if (demandReplanEnabled() && tryDeferOrdinaryReplan()) {
++                    return;
++                }
++                // The new policy replaces, not stacks with, the weaker legacy
++                // map/generation/age-only coalescer while explicitly enabled.
++                if (!demandReplanEnabled() &&
++                    cfg_.trajectory_guard_same_map_replan_coalesce_en &&
+                     cfg_.trajectory_guard_same_map_replan_min_interval_s > 0.0 &&
+                     replan_health.map_version != 0 &&
+                     last_successful_replan_map_version_ ==
+@@ -3680,13 +3897,28 @@
+                     return;
+                 }
+             }
++            const bool demand_enabled = demandReplanEnabled();
++            const auto demand_goal_before = demand_enabled
++                    ? getGoalDemandSnapshot() : GoalDemandSnapshot{};
++            const auto demand_event_before = demand_enabled
++                    ? event_recovery_requested_.load(std::memory_order_acquire) : 0;
++            const auto demand_dispatch = demand_enabled
++                    ? rog_map::MapHealthClock::now() : rog_map::MapHealthClock::time_point{};
++            MovingReplanOutcome demand_outcome;
+             {
+                 const super_utils::thread_cpu_profile::Scope replan_cpu_scope(
+                         super_utils::thread_cpu_profile::Stage::FsmReplanCore);
+-                callReplanOnce();
++                demand_outcome = callReplanOnce();
+             }
+             const bool candidate_rejected = cfg_.trajectory_guard_en &&
+                     planner_ptr_->consumeTrajectoryGuardRejection();
++            if (demand_enabled) {
++                // Pessimistic until all existing post-replan safety checks pass.
++                // A failed/absent commit never updates the dispatch timestamp.
++                demand_has_ordinary_success_ = false;
++                demand_failure_since_success_ = true;
++                demand_viability_receipt_.valid = false;
++            }
+             if (candidate_rejected && machine_state_ != FOLLOW_TRAJ) {
+                 activateEmergencyBrake("candidate_rejected_without_safe_follow");
+                 return;
+@@ -3697,6 +3929,11 @@
+                 activateEmergencyBrake("replan_post_uncertified");
+                 return;
+             }
++            if (demand_enabled) {
++                recordDemandReplanOutcome(demand_outcome, candidate_rejected,
++                                          demand_goal_before, demand_event_before,
++                                          demand_dispatch);
++            }
+             if (cfg_.trajectory_guard_en &&
+                 cfg_.trajectory_guard_same_map_replan_coalesce_en &&
+                 !candidate_rejected &&
+@@ -3726,8 +3963,10 @@
+                         !safety_brake_active_.load(std::memory_order_acquire)) {
+                         ros_ptr_->info(" -- [EVENT_RECOVERY_STOP_REQUEST] request={}", request);
+                         activateEmergencyBrake("event_recovery_request");
++                        event_recovery_completed_.store(request, std::memory_order_release);
+                         return;
+                     }
++                    event_recovery_completed_.store(request, std::memory_order_release);
+                 }
+             }
+             // 2026-08-19: isolated diagnostic, gated only on the subscription

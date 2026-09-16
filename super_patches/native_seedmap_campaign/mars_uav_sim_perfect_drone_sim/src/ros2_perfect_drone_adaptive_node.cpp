@@ -20,6 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
+#include <atomic>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -51,6 +52,10 @@ int main(int argc, char **argv) {
   const auto side_executor_threads =
       perfect_drone::common_execution_policy::parseSideExecutorThreads(
           std::getenv("SUPER_SIDE_EXECUTOR_THREADS"));
+  const char* static_pc_executor_setting =
+      std::getenv("SUPER_STATIC_PC_DEDICATED_EXECUTOR");
+  const bool dedicated_static_pc_executor = static_pc_executor_setting &&
+      std::strcmp(static_pc_executor_setting, "1") == 0;
 
   rclcpp::NodeOptions intra_process_options;
   intra_process_options.use_intra_process_comms(true);
@@ -59,6 +64,10 @@ int main(int argc, char **argv) {
   RCLCPP_INFO(configuration_node->get_logger(),
               "[COMMON_EXECUTOR_SETTINGS] side_threads=%zu default_threads=10",
               side_executor_threads);
+  RCLCPP_INFO(configuration_node->get_logger(),
+              "[STATIC_PC_EXECUTOR_SETTINGS] dedicated=%d single_thread=1 "
+              "timer_geometry_qos_unchanged=1",
+              dedicated_static_pc_executor);
   configuration_node->declare_parameter("drone_config",
                                         std::string{"lidar_sim.yaml"});
   configuration_node->declare_parameter("super_config",
@@ -142,12 +151,38 @@ int main(int argc, char **argv) {
                                    simulator->get_node_base_interface());
   side_executor.add_callback_group(simulator->odomTimerCbkGroup(),
                                    simulator->get_node_base_interface());
-  side_executor.add_callback_group(simulator->globalPcPubCbkGroup(),
-                                   simulator->get_node_base_interface());
+  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> static_pc_executor;
+  if (dedicated_static_pc_executor) {
+    static_pc_executor =
+        std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+    static_pc_executor->add_callback_group(simulator->globalPcPubCbkGroup(),
+                                           simulator->get_node_base_interface());
+  } else {
+    side_executor.add_callback_group(simulator->globalPcPubCbkGroup(),
+                                     simulator->get_node_base_interface());
+  }
   side_executor.add_node(fsm_node);
   side_executor.add_node(filter.node);
   side_executor.add_node(configuration_node);
   std::thread side_thread([&side_executor]() { side_executor.spin(); });
+  std::thread static_pc_thread;
+  std::atomic_bool static_pc_executor_failed{false};
+  if (static_pc_executor) {
+    static_pc_thread = std::thread([&]() {
+      try {
+        static_pc_executor->spin();
+      } catch (const std::exception& error) {
+        // A signal may invalidate the ROS context between timer dispatch and
+        // count_subscribers. Treat only that shutdown race as normal teardown.
+        if (rclcpp::ok()) {
+          static_pc_executor_failed.store(true, std::memory_order_release);
+          RCLCPP_ERROR(configuration_node->get_logger(),
+                       "static-PC executor failed: %s", error.what());
+          rclcpp::shutdown();
+        }
+      }
+    });
+  }
 
   rclcpp::executors::SingleThreadedExecutor render_executor;
   render_executor.add_callback_group(simulator->localPcCbkGroup(),
@@ -155,7 +190,9 @@ int main(int argc, char **argv) {
   render_executor.spin();
 
   side_executor.cancel();
+  if (static_pc_executor) static_pc_executor->cancel();
   side_thread.join();
+  if (static_pc_thread.joinable()) static_pc_thread.join();
   simulator->reportSensorCadence();
   // Release the simulator's frontend closures before stopping the frontend
   // worker; its direct sink keeps the map alive until that worker has joined.
@@ -165,5 +202,5 @@ int main(int argc, char **argv) {
   fsm_node.reset();
   configuration_node.reset();
   rclcpp::shutdown();
-  return 0;
+  return static_pc_executor_failed.load(std::memory_order_acquire) ? 1 : 0;
 }

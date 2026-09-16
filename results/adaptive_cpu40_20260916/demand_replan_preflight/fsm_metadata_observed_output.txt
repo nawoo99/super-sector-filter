@@ -1,0 +1,11 @@
+Command:
+source /opt/ros/humble/setup.bash
+source /root/super_ws/install/setup.bash
+bash results/adaptive_cpu40_20260916/demand_replan_preflight/compile_fsm_metadata.sh
+
+Observed exit code: 0
+metadata_checks=17 concurrent_enqueues=2000 actual_early_replan_gates=4
+demand_replan_fsm_metadata_test=PASS
+
+The actual libsuper.a from the completed C7 package build was linked. No ROS
+node, map, solver or flight was initialized. This test is not sanitizer-enabled.

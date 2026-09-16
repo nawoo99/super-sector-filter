@@ -37,6 +37,7 @@
 
 
 #include <super_core/config.hpp>
+#include <super_core/demand_replan_policy.hpp>
 #include <ros_interface/ros1/ros1_interface.hpp>
 #include <data_structure/base/trajectory.h>
 
@@ -262,6 +263,29 @@ namespace super_planner {
 
         CmdTraj::Snapshot getCommittedTrajectorySnapshot() const;
 
+        // Skip-only evidence: does not modify the committed trajectory, normal
+        // candidate acceptance, or the current stop-viability policy.
+        CmdTraj::SharedSnapshot getCommittedSharedTrajectorySnapshot() const {
+            return cmd_traj_info_.sharedSnapshot();
+        }
+
+        demand_replan::StopViabilityReceipt renewCommittedStopViability(
+                double now_wt, std::uint64_t expected_generation,
+                std::uint64_t expected_map_version,
+                double required_until_tt) const;
+
+        bool stopViabilityEnabled() const { return cfg_.guard_viability_en; }
+        double stopViabilitySampleDt() const { return cfg_.guard_viability_sample_dt_s; }
+        double configuredReplanForwardDt() const { return cfg_.replan_forward_dt; }
+
+        bool trajectoryGuardRejectionPending() const {
+            return trajectory_guard_rejection_pending_.load(std::memory_order_acquire);
+        }
+
+        bool topologyRetryPending() const {
+            return guard_corridor_retry_pending_.load(std::memory_order_acquire);
+        }
+
         std::uint64_t getCommittedTrajectoryGeneration() const;
 
         bool trajectoryGuardEnabled() const {
@@ -339,7 +363,9 @@ namespace super_planner {
         RET_CODE
         ReplanOnce(const Vec3f &goal_p,
                    const double &goal_yaw,
-                   const bool &new_goal);
+                   const bool &new_goal,
+                   std::uint64_t *committed_generation_out = nullptr,
+                   rog_map::MapHealthClock::time_point *committed_time_out = nullptr);
 
     private:
         bool trajectoryValidationEnabled() const {
