@@ -73,7 +73,7 @@ per-algorithm power and energy are not measured.
 ## Execution and status
 
 Controller: `scripts/native_campaign/run_c22_normal_campaign.py`.
-Active root: `results/c22_normal_five_20260916/iteration02`.
+Active root: `results/c22_normal_five_20260916/iteration03` (short-lease candidate).
 The controller writes immutable plans, per-triplet acceptance, phase gates,
 phase-specific all-metric reports and an atomic `status.json`.
 
@@ -90,3 +90,52 @@ The reference calculation now keeps all ten rows, discloses historical contact
 counts, and takes their upper median without filtering the contact observation.
 Current-flight acceptance is unchanged. The initial error log and partial
 reference files are retained; iteration02 starts a new prospective cohort.
+
+### Iteration02: first flight-stage rejection
+
+All five maps passed static transport and RViz proof. Instrumented N1/N2 triplets
+passed. N3(seed5) completed all three modes with contact0 and valid source,
+resource, speed, recovery and odometry gates, but Adaptive43.94s/Full37.83s =
+1.1615 exceeded the unchanged paired time1.10 gate (Sector41.44s). Controller
+stopped after nine preflight flights, before any n5/n20 OFF flight. N4/N5
+preflight flights have not run. This is not a completion/contact failure.
+
+Adaptive had five certified Full cycles, including startup. Its four moving
+episodes reported CLEARANCE_MARGIN, not VERSION_CHANGED. Full dwell durations
+were approximately0.359/0.711/0.381/0.944/0.883s; these do not include the whole
+deceleration/reacceleration loss. Paths F/S/A221.488/223.004/227.048m also differ.
+Full had one accepted brake; Sector three; Adaptive five. Limited observations,
+path selection, repeated braking and solver scheduling all remain possible
+contributors; the logs do not prove a single cause of the entire time gap.
+
+Next diagnostic, declared before execution: seed5 F/S/A one instrumented flight
+each, common replan lease shortened from the opt-in0.5s to its existing0.25s
+default. No runtime source/binary changes, speed/map/safety/publication/Full-ACK-
+new-path gates unchanged. Hypothesis: less deferred replanning can reduce stale
+path use and braking; this is not established until measured. Diagnostic is
+separate, not a replacement pilot row. If adopted, start a new full five-map
+preflight/pilot before considering n20. A failure is retained and investigated.
+
+### Short-lease diagnostic and iteration03 candidate
+
+Diagnostic `diagnostic_lease025_seed5`, run10250, ON only:
+
+| seed5 | Full | Sector | Adaptive |
+|---|---:|---:|---:|
+| Time s | 40.55 | 42.63 | 42.75 |
+| CPU cores (instrumented) | 0.660145 | 0.422426 | 0.439510 |
+| Cumulative CPU core-s (instrumented) | 27.875458 | 18.763855 | 19.546003 |
+| Accepted brakes | 1 | 3 | 4 |
+| Contact events | 0 | 0 | 0 |
+
+All three completed with valid contracts; A/F1.0543. Adaptive is1.19s faster
+than iteration02 and has one fewer Full cycle, but Full is2.72s slower and takes
+a longer path. The improved ratio is therefore NOT proof of eliminating the
+original delay; n1 cannot establish causality. CPU savings are instrumented
+diagnostic only, not final OFF results. All old observations remain.
+
+Iteration03 prospectively adopts the existing common0.25s lease as a conservative
+candidate (less deferred replanning), not a proven fix. It reruns every static,
+five-map ON preflight and OFF n5 slot before n20. No runtime/source/binary/map
+changes; only the common environment option changes. Keep the original timing
+gates unless the user explicitly authorizes a prospective protocol change.

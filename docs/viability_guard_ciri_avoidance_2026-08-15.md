@@ -6084,3 +6084,21 @@ Live status: `results/c22_normal_five_20260916/iteration02/status.json`.
 Protocol: `docs/c22_normal_five_20260916.md`. Do not claim the n5/n20 flights
 complete based on the plan or this in-progress entry. Runtime needs no new mirror
 because it has not changed in this preparation. No push/Co-Authored-By footer.
+
+Update: iteration02 static checks passed for every map, ON preflight N1/N2
+passed, N3(seed5) F/S/A37.83/41.44/43.94s all completed/contact0, but A/F1.1615
+failed the unchanged1.10 time gate. All source/resource/speed/odometry/recovery
+checks passed (N3 maximum odometry receipt gaps F10.961/S12.044/A11.450ms).
+Controller stopped after9 ON flights; OFF pilot/confirmation0. N4/N5 ON not run.
+Adaptive had five closed Full recovery cycles and four moving CLEARANCE_MARGIN
+events, not a C20 VERSION_CHANGED recurrence. Longer/different paths and braking
+remain contributors; do not claim a single proven timing cause.
+
+Separate diagnostic run10250 shortened the common existing dispatch lease from
+0.5 to0.25s: F40.55/S42.63/A42.75s, all completed/contact0/contracts valid; A
+cycles4. Full also slowed and lengthened its path, so a passing ratio is not
+proof of solving the delay. Instrumented CPU and all raw data retained separately.
+Iteration03 prospectively tests the common0.25s candidate from all static/ON/n5
+steps, with unchanged gates pending explicit user direction about the time gate.
+117 Python tests pass. No runtime binary/source/map change or build needed.
+Current status is now `results/c22_normal_five_20260916/iteration03/status.json`.

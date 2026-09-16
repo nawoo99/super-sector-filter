@@ -1,0 +1,677 @@
+[INFO] [1789557439.938862976] [perfect_drone_adaptive_config]: [COMMON_EXECUTOR_SETTINGS] side_threads=2 default_threads=10
+[INFO] [1789557439.939027193] [perfect_drone_adaptive_config]: [STATIC_PC_EXECUTOR_SETTINGS] dedicated=1 single_thread=1 timer_geometry_qos_unchanged=1
+Load config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7_event_recovery_v1.yaml
+[0;32m Load param fsm/timer_en success: [0;0m1
+[0;32m Load param super_planner/detailed_log_en success: [0;0m0
+[0;32m Load param super_planner/detailed_log_max_entries success: [0;0m64
+[0;32m Load param fsm/click_goal_en success: [0;0m1
+[0;32m Load param fsm/click_yaw_en success: [0;0m1
+[0;32m Load param fsm/replan_rate success: [0;0m15
+[0;32m Load param fsm/click_height success: [0;0m1.5
+[0;32m Load param fsm/cmd_topic success: [0;0m/planning/pos_cmd
+[0;32m Load param fsm/mpc_cmd_topic success: [0;0m/planning_cmd/poly_traj
+[0;32m Load param fsm/click_goal_topic success: [0;0m/planning/click_goal
+[0;32m Load param fsm/map_readiness/enable success: [0;0m1
+[0;32m Load param fsm/map_readiness/min_accepted_scans success: [0;0m5
+[0;32m Load param fsm/map_readiness/min_committed_scans success: [0;0m5
+[0;32m Load param fsm/map_readiness/max_commit_lag_scans success: [0;0m5
+[0;32m Load param fsm/map_readiness/min_scan_span_s success: [0;0m1
+[0;32m Load param fsm/map_readiness/max_cloud_age_s success: [0;0m0.75
+[0;32m Load param fsm/map_readiness/max_map_age_s success: [0;0m0.55
+[0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[0;32m Load param fsm/event_recovery/enable success: [0;0m1
+[0;33m Load param fsm/trajectory_guard/same_map_replan_coalesce_enable failed, use default value: [0;0m0
+[0;33m Load param fsm/trajectory_guard/same_map_replan_min_interval_s failed, use default value: [0;0m0
+[0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[0;32m Load param fsm/trajectory_guard/max_map_age_s success: [0;0m0.75
+[0;32m Load param fsm/trajectory_guard/brake_trigger_map_age_s success: [0;0m0.55
+[0;32m Load param fsm/trajectory_guard/brake_trigger_high_speed_map_age_s success: [0;0m0.5
+[0;32m Load param fsm/trajectory_guard/brake_trigger_low_speed_mps success: [0;0m2.5
+[0;32m Load param fsm/trajectory_guard/brake_trigger_high_speed_mps success: [0;0m3.5
+[0;32m Load param fsm/trajectory_guard/full_refresh_ack_sla_s success: [0;0m0.75
+[0;32m Load param fsm/trajectory_guard/raw_cloud/enable success: [0;0m0
+[0;33m Load param fsm/trajectory_guard/raw_cloud/source_topic failed, use default value: [0;0m
+[0;32m Load param fsm/trajectory_guard/raw_cloud/max_age_s success: [0;0m0.75
+[0;32m Load param fsm/trajectory_guard/raw_cloud/clearance_m success: [0;0m0.3
+[0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0
+[0;33m Load param fsm/trajectory_guard/brake_min_duration_s failed, use default value: [0;0m0.4
+[0;32m Load param fsm/trajectory_guard/brake_max_duration_s success: [0;0m3
+[0;32m Load param fsm/trajectory_guard/brake_max_acc_mps2 success: [0;0m20
+[0;32m Load param fsm/trajectory_guard/brake_max_jerk_mps3 success: [0;0m120
+[0;32m Load param fsm/trajectory_guard/brake_command_max_age_s success: [0;0m0.1
+[0;32m Load param fsm/trajectory_guard/brake_command_max_position_error_m success: [0;0m0.5
+[0;32m Load param fsm/trajectory_guard/brake_command_max_velocity_error_mps success: [0;0m2
+[0;32m Load param fsm/trajectory_guard/brake_retry_interval_s success: [0;0m0.1
+[0;32m Load param fsm/trajectory_guard/unknown_as_occupied success: [0;0m1
+[0;33m Load param fsm/trajectory_guard/raw_cloud/ciri_shadow_en failed, use default value: [0;0m0
+[0;33m Load param fsm/trajectory_guard/raw_cloud/accum_window_s failed, use default value: [0;0m1.5
+[0;33m Load param fsm/trajectory_guard/raw_cloud/ciri_min_points failed, use default value: [0;0m200
+[0;33m Load param fsm/trajectory_guard/raw_cloud/ciri_voxel_m failed, use default value: [0;0m0.1
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_shadow_en failed, use default value: [0;0m0
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_clearance_m failed, use default value: [0;0m0.2
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_horizon_s failed, use default value: [0;0m1
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_sample_dt_s failed, use default value: [0;0m0.01
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_min_interval_s failed, use default value: [0;0m0.1
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_min_points failed, use default value: [0;0m200
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_voxel_m failed, use default value: [0;0m0
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_test_replay_mode failed, use default value: [0;0m0
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_enforce_en failed, use default value: [0;0m0
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_result_max_age_s failed, use default value: [0;0m0.2
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_max_sequence_lag failed, use default value: [0;0m1
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_egress_tolerance_m failed, use default value: [0;0m0.005
+[0;33m Load param fsm/trajectory_guard/raw_cloud/near_field_egress_min_progress_m failed, use default value: [0;0m0.02
+[0;33m Load param fsm/trajectory_guard/frontend_risk/shadow_en failed, use default value: [0;0m0
+[0;33m Load param fsm/trajectory_guard/frontend_risk/enforce_en failed, use default value: [0;0m0
+[0;33m Load param fsm/trajectory_guard/frontend_risk/topic failed, use default value: [0;0m/planning/trajectory_risk_verdict
+[0;33m Load param fsm/trajectory_guard/frontend_risk/result_max_age_s failed, use default value: [0;0m0.2
+[0;33m Load param fsm/trajectory_guard/frontend_risk/source_max_age_s failed, use default value: [0;0m0.75
+[0;33m Load param fsm/trajectory_guard/frontend_risk/current_body_enforce_en failed, use default value: [0;0m0
+[0;33m Load param fsm/trajectory_guard/frontend_risk/current_body_result_max_age_s failed, use default value: [0;0m0.15
+[0;33m Load param fsm/trajectory_guard/frontend_risk/current_body_source_max_age_s failed, use default value: [0;0m0.2
+[0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[0;32m Load param super_planner/visualization_en success: [0;0m0
+[0;32m Load param rog_map/resolution success: [0;0m0.05
+Load config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7_event_recovery_v1.yaml
+[0;32m Load param rog_map/esdf/resolution success: [0;0m0.1
+[0;32m Load param rog_map/esdf/enable success: [0;0m0
+[0;32m Load param rog_map/esdf/local_update_box success: [0;0m[5 5 3 ]
+[0;32m Load param rog_map/load_pcd_en success: [0;0m0
+[0;32m Load param rog_map/map_sliding/enable success: [0;0m0
+[0;32m Load param rog_map/map_sliding/threshold success: [0;0m3
+[0;32m Load param rog_map/fix_map_origin success: [0;0m[0 0 1.5 ]
+[0;32m Load param rog_map/frontier_extraction_en success: [0;0m0
+[0;32m Load param rog_map/ros_callback/enable success: [0;0m1
+[0;32m Load param rog_map/ros_callback/cloud_topic success: [0;0m/cloud_sector
+[0;32m Load param rog_map/ros_callback/cloud_reliable success: [0;0m1
+[0;32m Load param rog_map/ros_callback/odom_topic success: [0;0m/lidar_slam/odom
+[0;32m Load param rog_map/ros_callback/odom_timeout success: [0;0m2
+[0;32m Load param rog_map/visualization/enable success: [0;0m0
+[0;32m Load param rog_map/visualization/use_dynamic_reconfigure success: [0;0m0
+[0;32m Load param rog_map/visualization/pub_unknown_map_en success: [0;0m0
+[0;32m Load param rog_map/visualization/frame_id success: [0;0mworld
+[0;32m Load param rog_map/visualization/time_rate success: [0;0m2
+[0;32m Load param rog_map/visualization/frame_rate success: [0;0m0
+[0;32m Load param rog_map/visualization/range success: [0;0m[15 15 4 ]
+[0;32m Load param rog_map/resolution success: [0;0m0.05
+[0;32m Load param rog_map/inflation_resolution success: [0;0m0.1
+[0;32m Load param rog_map/unk_inflation_en success: [0;0m0
+[0;32m Load param rog_map/unk_inflation_step success: [0;0m1
+[0;32m Load param rog_map/inflation_step success: [0;0m3
+[0;32m Load param rog_map/intensity_thresh success: [0;0m-10
+[0;32m Load param rog_map/map_size success: [0;0m[70 70 6 ]
+[0;32m Load param rog_map/point_filt_num success: [0;0m1
+[0;32m Load param rog_map/raycasting/enable success: [0;0m0
+[0;32m Load param rog_map/raycasting/batch_update_size success: [0;0m1
+[0;32m Load param rog_map/raycasting/unk_thresh success: [0;0m1
+[0;32m Load param rog_map/raycasting/p_hit success: [0;0m0.9
+[0;32m Load param rog_map/raycasting/p_miss success: [0;0m0.49
+[0;32m Load param rog_map/raycasting/p_min success: [0;0m0.12
+[0;32m Load param rog_map/raycasting/p_max success: [0;0m0.98
+[0;32m Load param rog_map/raycasting/p_occ success: [0;0m0.85
+[0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[0;32m Load param rog_map/raycasting/p_free success: [0;0m0.499
+[0;32m Load param rog_map/raycasting/ray_range success: [0;0m[0.5 100 ]
+[0;33m Load param rog_map/raycasting/observed_mark_range_max failed, use default value: [0;0m10
+[0;32m Load param rog_map/raycasting/local_update_box success: [0;0m[100 100 5 ]
+[0;32m Load param rog_map/virtual_ground_height success: [0;0m-0.1
+[0;32m Load param rog_map/virtual_ceil_height success: [0;0m3.5
+[32m -- [RM-Config] inflation_resolution: 0.1[0m
+ -- [ROG-Map] Init, resetMapSize: ORIGIN_AT_CORNER.
+ -- [ROG-Map] Init, resetMapSize: virtual_ceil_height: 3.1500000000000004, virtual_ground_height: 0.25.
+[34m	[ROG] n_free: 1[0m
+[34m	[ROG] n_occ: 1[0m
+[34m	[ROG] l_hit: 2.19722[0m
+[34m	[ROG] l_miss: -0.0400053[0m
+[34m	[ROG] l_min: -1.99243[0m
+[34m	[ROG] l_max: 3.89182[0m
+[34m	[ROG] l_occ: 1.7346[0m
+[34m	[ROG] l_free: -0.00399995[0m
+[33m -- [Inf-Map] Clear all local map.[0m
+[32m -- [CounterMap] Init successfully -- .[0m
+[32m	resolution: 0.1[0m
+[32m	map_sliding_en: 0[0m
+[32m	local_map_size_i: 709 709  69[0m
+[32m	local_map_size_d: 70.9 70.9  6.9[0m
+[33m -- [Inf-Map] Clear all local map.[0m
+[32m -- [InfMap] Init successfully -- .[0m
+[32m	resolution: 0.1[0m
+[32m	map_sliding_en: 0[0m
+[32m	local_map_size_i: 709 709  69[0m
+[32m	local_map_size_d: 70.9 70.9  6.9[0m
+[ProbMap] virtual_ceil_height: 3.15
+[ProbMap] virtual_ground_height: 0.25
+[33m -- [ProbMap] Map sliding disabled, set origin to [  0   0 1.5] -- [0m
+[33m -- [Prob-Map] Clear all local map.[0m
+[32m -- [ProbMap] Init successfully -- .[0m
+[32m	resolution: 0.05[0m
+[32m	map_sliding_en: 0[0m
+[32m	local_map_size_i: 1401 1401  121[0m
+[32m	local_map_size_d: 70.05 70.05  6.05[0m
+[38;2;000;128;000m -- [ROGMap] Immutable planner snapshot enabled (fixed occupancy-only map).
+[0m -- [ROG_MAP_OCCUPIED_BOX_SCAN] fast=false compare=false immutable=true comparison_overhead=false
+ -- [ROG_MAP_SNAPSHOT_LINE_QUERY] enabled=false immutable=true active=false changed_publication=reject
+ -- [ROG_MAP_SNAPSHOT_NEIGHBOR_CACHE] enabled=false immutable=true line_query=false active=false entries=4096 max_neighbors=512 bytes_per_thread=88136 publication_check=required
+Load config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7_event_recovery_v1.yaml
+Load config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7_event_recovery_v1.yaml
+[0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[0;32m Load param traj_opt/exp_traj/pos_constraint_type success: [0;0m1
+[0;33m Load param traj_opt/exp_traj/piece_num failed, use default value: [0;0m1
+[0;33m Load param traj_opt/exp_traj/uniform_time_en failed, use default value: [0;0m0
+[0;32m Load param traj_opt/exp_traj/block_energy_cost success: [0;0m0
+[0;32m Load param traj_opt/exp_traj/opt_accuracy success: [0;0m5e-06
+[0;33m Load param traj_opt/exp_traj/max_iterations failed, use default value: [0;0m2048
+[0;32m Load param traj_opt/exp_traj/integral_reso success: [0;0m15
+[0;32m Load param traj_opt/exp_traj/smooth_eps success: [0;0m0.01
+[0;32m Load param traj_opt/boundary/max_vel success: [0;0m7
+[0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[0;33m Load param traj_opt/exp_traj/penna_scale failed, use default value: [0;0m-1
+[0;32m Load param traj_opt/exp_traj/penna_t success: [0;0m1e+07
+[0;33m Load param traj_opt/exp_traj/penna_ts failed, use default value: [0;0m-1
+[0;32m Load param traj_opt/exp_traj/penna_pos success: [0;0m5e+09
+[0;32m Load param traj_opt/exp_traj/penna_clr success: [0;0m1e+06
+[0;32m Load param traj_opt/exp_traj/clearance_margin success: [0;0m0.1
+[0;32m Load param traj_opt/exp_traj/clearance_speed_gate success: [0;0m1.5
+[0;32m Load param traj_opt/exp_traj/clearance_speed_transition success: [0;0m0.5
+[0;33m Load param traj_opt/exp_traj/penna_passage_center failed, use default value: [0;0m-1
+[0;33m Load param traj_opt/exp_traj/passage_center_max_width failed, use default value: [0;0m0
+[0;33m Load param traj_opt/exp_traj/passage_center_min_opposition_cos failed, use default value: [0;0m0.9
+[0;33m Load param traj_opt/exp_traj/passage_center_min_horizontal_normal failed, use default value: [0;0m0.8
+[0;33m Load param traj_opt/exp_traj/passage_center_deadband failed, use default value: [0;0m0.15
+[0;33m Load param traj_opt/exp_traj/passage_center_log_en failed, use default value: [0;0m0
+[0;32m Load param traj_opt/exp_traj/penna_vel success: [0;0m5e+08
+[0;32m Load param traj_opt/exp_traj/penna_acc success: [0;0m5e+08
+[0;32m Load param traj_opt/exp_traj/penna_jerk success: [0;0m-5e+08
+[0;32m Load param traj_opt/exp_traj/penna_attract success: [0;0m5e+08
+[0;32m Load param traj_opt/exp_traj/penna_omg success: [0;0m-1
+[0;32m Load param traj_opt/exp_traj/penna_thr success: [0;0m-1
+Load config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7_event_recovery_v1.yaml
+[0;32m Load param traj_opt/switch/print_optimizer_log success: [0;0m0
+[0;32m Load param traj_opt/flatness/mass success: [0;0m1.64
+[0;32m Load param traj_opt/flatness/dh success: [0;0m0.35
+[0;32m Load param traj_opt/flatness/dv success: [0;0m0.35
+[0;32m Load param traj_opt/flatness/grav success: [0;0m9.81
+[0;32m Load param traj_opt/flatness/cp success: [0;0m0.001
+[0;32m Load param traj_opt/flatness/v_eps success: [0;0m0.0001
+[0;32m Load param traj_opt/switch/save_log_en success: [0;0m0
+[0;32m Load param traj_opt/backup_traj/pos_constraint_type success: [0;0m2
+[0;32m Load param traj_opt/backup_traj/piece_num success: [0;0m2
+[0;32m Load param traj_opt/backup_traj/uniform_time_en success: [0;0m1
+[0;32m Load param traj_opt/backup_traj/block_energy_cost success: [0;0m1
+[0;32m Load param traj_opt/backup_traj/opt_accuracy success: [0;0m1e-05
+[0;33m Load param traj_opt/backup_traj/max_iterations failed, use default value: [0;0m2048
+[0;32m Load param traj_opt/backup_traj/integral_reso success: [0;0m12
+[0;32m Load param traj_opt/backup_traj/smooth_eps success: [0;0m0.01
+[0;32m Load param traj_opt/boundary/max_vel success: [0;0m7
+[0;32m Load param traj_opt/boundary/max_acc success: [0;0m20
+[0;32m Load param traj_opt/boundary/max_jerk success: [0;0m120
+[0;32m Load param traj_opt/boundary/max_omg success: [0;0m2.5
+[0;32m Load param traj_opt/boundary/max_acc_thr success: [0;0m17
+[0;32m Load param traj_opt/boundary/min_acc_thr success: [0;0m6
+[0;32m Load param traj_opt/boundary/penna_margin success: [0;0m0.05
+[0;33m Load param traj_opt/backup_traj/penna_scale failed, use default value: [0;0m-1
+[0;32m Load param traj_opt/backup_traj/penna_t success: [0;0m100
+[0;32m Load param traj_opt/backup_traj/penna_ts success: [0;0m1e+07
+[0;32m Load param traj_opt/backup_traj/penna_pos success: [0;0m1e+10
+[0;32m Load param traj_opt/backup_traj/penna_clr success: [0;0m1e+06
+[0;32m Load param traj_opt/backup_traj/clearance_margin success: [0;0m0.1
+[0;32m Load param traj_opt/backup_traj/clearance_speed_gate success: [0;0m1.5
+[0;32m Load param traj_opt/backup_traj/clearance_speed_transition success: [0;0m0.5
+[0;33m Load param traj_opt/backup_traj/penna_passage_center failed, use default value: [0;0m-1
+[0;33m Load param traj_opt/backup_traj/passage_center_max_width failed, use default value: [0;0m0
+[0;33m Load param traj_opt/backup_traj/passage_center_min_opposition_cos failed, use default value: [0;0m0.9
+[0;33m Load param traj_opt/backup_traj/passage_center_min_horizontal_normal failed, use default value: [0;0m0.8
+[0;33m Load param traj_opt/backup_traj/passage_center_deadband failed, use default value: [0;0m0.15
+[0;33m Load param traj_opt/backup_traj/passage_center_log_en failed, use default value: [0;0m0
+[0;32m Load param traj_opt/backup_traj/penna_vel success: [0;0m1e+08
+[0;32m Load param traj_opt/backup_traj/penna_acc success: [0;0m1e+08
+[0;32m Load param traj_opt/backup_traj/penna_jerk success: [0;0m-1e+06
+[0;33m Load param traj_opt/backup_traj/penna_attract failed, use default value: [0;0m-1
+[0;32m Load param traj_opt/backup_traj/penna_omg success: [0;0m-1
+[0;32m Load param traj_opt/backup_traj/penna_thr success: [0;0m-1
+[0;32m Load param super_planner/print_log success: [0;0m0
+[0;32m Load param super_planner/detailed_log_en success: [0;0m0
+[0;32m Load param super_planner/visualization_en success: [0;0m0
+[0;32m Load param super_planner/backup_traj_en success: [0;0m1
+[0;32m Load param super_planner/goal_vel_en success: [0;0m0
+[0;32m Load param super_planner/goal_yaw_en success: [0;0m0
+[0;32m Load param super_planner/visual_process success: [0;0m0
+[0;32m Load param super_planner/use_fov_cut success: [0;0m0
+[0;33m Load param super_planner/fov_horizontal_angle failed, use default value: [0;0m-1
+[0;33m Load param super_planner/fov_center_heading failed, use default value: [0;0m0
+[0;32m Load param super_planner/frontend_in_known_free success: [0;0m0
+[0;32m Load param fsm/trajectory_guard/enable success: [0;0m1
+[0;32m Load param fsm/trajectory_guard/shadow success: [0;0m0
+[0;32m Load param fsm/trajectory_guard/validation_sample_dt_s success: [0;0m0.005
+[0;32m Load param fsm/trajectory_guard/shadow_min_interval_s success: [0;0m0
+[0;32m Load param fsm/trajectory_guard/additional_clearance_m success: [0;0m0
+[0;32m Load param fsm/trajectory_guard/escape_max_duration_s success: [0;0m1
+[0;32m Load param fsm/trajectory_guard/unknown_as_occupied success: [0;0m1
+[0;32m Load param fsm/trajectory_guard/escape_entry_grace_s success: [0;0m0
+[0;32m Load param fsm/trajectory_guard/initial_footprint_egress_enable success: [0;0m1
+[0;32m Load param super_planner/safe_corridor_line_max_length success: [0;0m6
+[0;32m Load param super_planner/sensing_horizon success: [0;0m-1
+[0;32m Load param super_planner/obs_skip_num success: [0;0m2
+[0;32m Load param super_planner/replan_forward_dt success: [0;0m0.1
+[0;32m Load param super_planner/corridor_bound_dis success: [0;0m0.8
+[0;32m Load param super_planner/corridor_line_max_length success: [0;0m1
+[0;32m Load param super_planner/planning_horizon success: [0;0m7
+[0;32m Load param super_planner/receding_dis success: [0;0m1
+[0;32m Load param super_planner/robot_r success: [0;0m0.2
+[0;32m Load param super_planner/corridor_use_inflated_obstacles success: [0;0m0
+[0;32m Load param super_planner/corridor_use_inflated_seed_lines success: [0;0m0
+[0;32m Load param super_planner/corridor_guard_retry_inflated success: [0;0m1
+[0;32m Load param super_planner/guard_corridor_retry_alternate_every success: [0;0m4
+[0;32m Load param super_planner/guard_topology_reroute/enable success: [0;0m1
+[0;32m Load param super_planner/guard_topology_reroute/radius_m success: [0;0m0.8
+[0;32m Load param super_planner/guard_topology_reroute/growth_m success: [0;0m0
+[0;32m Load param super_planner/guard_topology_reroute/max_radius_m success: [0;0m0.8
+[0;32m Load param super_planner/guard_topology_reroute/max_zones success: [0;0m6
+[0;32m Load param super_planner/guard_topology_reroute/max_stop_speed_mps success: [0;0m0.2
+[0;32m Load param super_planner/guard_topology_reroute/escalate_every_rejects success: [0;0m3
+[0;32m Load param super_planner/guard_topology_reroute/collision_merge_m success: [0;0m0.5
+[0;32m Load param super_planner/guard_topology_reroute/start_clearance_m success: [0;0m0.3
+[0;32m Load param super_planner/guard_topology_reroute/block_spacing_m success: [0;0m1
+[0;32m Load param super_planner/guard_topology_reroute/direction_merge_angle_deg success: [0;0m30
+[0;32m Load param super_planner/guard_topology_reroute/no_path_reset_attempts success: [0;0m3
+[0;32m Load param super_planner/guard_topology_reroute/vertical_recovery_enable success: [0;0m1
+[0;32m Load param super_planner/guard_topology_reroute/vertical_recovery_lift_m success: [0;0m0.6
+[0;32m Load param super_planner/guard_topology_reroute/vertical_recovery_trigger_distance_m success: [0;0m0.75
+[0;32m Load param super_planner/guard_topology_reroute/local_escape_enable success: [0;0m1
+[0;32m Load param super_planner/guard_topology_reroute/local_escape_distance_m success: [0;0m0.6
+[0;32m Load param super_planner/guard_topology_reroute/local_escape_attempts success: [0;0m4
+[0;32m Load param super_planner/guard_topology_reroute/episode_progress_reset_m success: [0;0m2
+[0;32m Load param super_planner/guard_topology_reroute/saturation_vertical_attempts success: [0;0m1
+[0;32m Load param super_planner/guard_topology_reroute/base_no_path_vertical_attempts success: [0;0m1
+[0;32m Load param super_planner/guard_direct_goal_fallback/enable success: [0;0m1
+[0;32m Load param super_planner/guard_direct_goal_fallback/max_distance_m success: [0;0m3
+[0;32m Load param super_planner/guard_direct_goal_fallback/min_duration_s success: [0;0m1
+[0;32m Load param super_planner/guard_viability/enable success: [0;0m1
+[0;32m Load param super_planner/guard_viability/horizon_s success: [0;0m2
+[0;32m Load param super_planner/guard_viability/sample_dt_s success: [0;0m0.3
+[0;32m Load param super_planner/guard_viability/brake_max_acc_mps2 success: [0;0m20
+[0;32m Load param super_planner/guard_viability/brake_max_jerk_mps3 success: [0;0m120
+[0;32m Load param super_planner/guard_viability/brake_min_duration_s success: [0;0m0.4
+[0;32m Load param super_planner/guard_viability/brake_max_duration_s success: [0;0m3
+[0;32m Load param super_planner/guard_viability/brake_attempts success: [0;0m12
+[0;32m Load param super_planner/guard_viability/speed_scale_step success: [0;0m1.25
+[0;32m Load param super_planner/guard_viability/speed_scale_max success: [0;0m3
+[0;32m Load param super_planner/guard_viability/max_retries success: [0;0m4
+[0;32m Load param super_planner/corridor_min_margin success: [0;0m0.2
+[0;32m Load param super_planner/corridor_pref_margin success: [0;0m0.3
+[0;32m Load param super_planner/iris_iter_num success: [0;0m2
+[0;32m Load param super_planner/yaw_mode success: [0;0m1
+[0;32m Load param super_planner/mpc_horizon success: [0;0m15
+[0;32m Load param super_planner/yaw_dot_max success: [0;0m3
+[0;32m Load param rog_map/resolution success: [0;0m0.05
+[INFO] [1789557441.696403456] [fsm_node]: [OPT_CLEARANCE_GATE_FIRST] optimizer=exp enabled=0 objective_unchanged=1
+[INFO] [1789557441.696502859] [fsm_node]: [OPT_CLEARANCE_GATE_FIRST] optimizer=backup enabled=0 objective_unchanged=1
+[INFO] [1789557441.696528803] [fsm_node]:  -- [TRAJ_GUARD] mode=enforce sample_dt=0.0050s shadow_min_interval=0.000s inflation_radius=0.300m robot_r=0.200m additional_clearance=0.000m hard_clearance=0.300m clearance_offsets=0
+[38;2;050;205;050m -- [Viz] Set resolution_ to 0.05
+[0m[38;2;050;205;050m -- [Viz] Set visualization_en_ to false
+[0mLoad config file: /root/super_ws/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7_event_recovery_v1.yaml
+[0;32m Load param astar/map_voxel_num success: [0;0m[500 500 100 ]
+[0;32m Load param astar/allow_diag success: [0;0m1
+[0;32m Load param astar/debug_visualization_en success: [0;0m0
+[0;32m Load param astar/heu_type success: [0;0m2
+[0;32m Load param astar/visual_process success: [0;0m0
+[32m -- [RM] Init Astar-map.[0m
+[34m	map index size: 250 250  50[0m
+[34m	map vox_num: 501 501 101[0m
+[INFO] [1789557443.729764395] [fsm_node]:  -- [FULL_REFRESH_ACK_GATE] listening sla=0.750s
+[33m -- [Fsm] CLICKGOAL ENABLE.[0m
+[INFO] [1789557443.733618083] [native_sector_cpp]: adaptive mode, half-angle 45.0 deg, input /cloud_registered, publish cap 0.00 Hz, commit refresh 0.000 s, full-open extra budget 0, guard witness disabled radius 0.00 m, direct input enabled, risk verdict disabled, body tier 0.000 m/0.150 s
+[INFO] [1789557443.734065830] [native_sector_cpp]: filtered DDS disabled: source metadata checked before direct latest-only map handoff; Full request precedes cloud enqueue
+[WARN] [1789557443.734631058] [perfect_tracking]:  -- [MissionPlanner] Load config by file name: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed7.yaml
+Load config file: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed7.yaml
+[0;32m Load param mesh_resource success: [0;0mpackage://perfect_drone_sim/meshes/yunque-M.dae
+[0;32m Load param init_position/x success: [0;0m0
+[0;32m Load param init_position/y success: [0;0m0
+[0;32m Load param init_position/z success: [0;0m1.5
+[0;32m Load param init_yaw success: [0;0m0
+[0;32m Load param sensing_rate success: [0;0m10
+Load config file: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed7.yaml
+[0;33m Load param side_entry_v1/enabled failed, use default value: [0;0m0
+[0;33m Load param side_entry_v2/enabled failed, use default value: [0;0m0
+[0;33m Load param side_entry_v3/enabled failed, use default value: [0;0m0
+[0;33m Load param side_entry_v4/enabled failed, use default value: [0;0m0
+[0;33m Load param side_entry_v5/enabled failed, use default value: [0;0m0
+[0;33m Load param side_entry_v6/enabled failed, use default value: [0;0m0
+[0;33m Load param side_entry_v7/enabled failed, use default value: [0;0m0
+[0;33m Load param side_entry_v0/speed_min_mps failed, use default value: [0;0m2
+[0;33m Load param side_entry_v0/yaw_velocity_mismatch_min_deg failed, use default value: [0;0m50
+[0;33m Load param side_entry_v0/require_yaw_velocity_mismatch failed, use default value: [0;0m1
+[0;33m Load param side_entry_v0/hold_s failed, use default value: [0;0m0.02
+[0;33m Load param side_entry_v0/qualifying_samples failed, use default value: [0;0m0
+[0;33m Load param side_entry_v0/prediction_s failed, use default value: [0;0m0.8
+[0;33m Load param side_entry_v0/require_velocity_inside failed, use default value: [0;0m1
+[0;33m Load param side_entry_v0/fixed_center_enabled failed, use default value: [0;0m0
+[0;33m Load param side_entry_v0/fixed_center_x failed, use default value: [0;0m22.5
+[0;33m Load param side_entry_v0/fixed_center_y failed, use default value: [0;0m23
+[0;33m Load param side_entry_v0/trigger_distance_min_m failed, use default value: [0;0m0.8
+[0;33m Load param side_entry_v0/trigger_distance_max_m failed, use default value: [0;0m3.5
+[0;33m Load param side_entry_v0/trigger_waypoint_x failed, use default value: [0;0m24
+[0;33m Load param side_entry_v0/trigger_waypoint_y failed, use default value: [0;0m24
+[0;33m Load param side_entry_v0/trigger_waypoint_radius_m failed, use default value: [0;0m2
+[0;33m Load param side_entry_v0/trap_waypoint_radius_m failed, use default value: [0;0m2
+[0;33m Load param side_entry_v0/sector_half_angle_deg failed, use default value: [0;0m45
+[0;33m Load param side_entry_v0/angular_margin_deg failed, use default value: [0;0m2
+[0;33m Load param side_entry_v0/max_nudge_deg failed, use default value: [0;0m20
+[0;33m Load param side_entry_v0/radius_m failed, use default value: [0;0m0.25
+[0;33m Load param side_entry_v0/height_m failed, use default value: [0;0m3
+[0;33m Load param side_entry_v0/point_spacing_m failed, use default value: [0;0m0.05
+[0;33m Load param side_entry_v0/z_spacing_m failed, use default value: [0;0m0.1
+[0;33m Load param side_entry_v0/sensing_horizon_m failed, use default value: [0;0m15
+[0;33m Load param side_entry_v0/intensity failed, use default value: [0;0m14545
+Load config file: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed7.yaml
+[0;33m Load param sensor_burst_dropout/enabled failed, use default value: [0;0m0
+[0;33m Load param sensor_burst_dropout/warmup_s failed, use default value: [0;0m1
+[0;33m Load param sensor_burst_dropout/period_s failed, use default value: [0;0m2
+[0;33m Load param sensor_burst_dropout/duration_s failed, use default value: [0;0m0.5
+[0;33m Load param sensor_burst_dropout/phase_s failed, use default value: [0;0m0
+Load config file: /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/config/seed7.yaml
+[0;32m Load param sensing_blind success: [0;0m0.1
+[0;32m Load param sensing_horizon success: [0;0m15
+[0;32m Load param sensing_rate success: [0;0m10
+[0;32m Load param lidar_type success: [0;0m2
+[0;32m Load param pcd_name success: [0;0mseed_maps/seed7.pcd
+[0;32m Load param is_360lidar success: [0;0m1
+[0;32m Load param polar_resolution success: [0;0m0.4
+[0;33m Load param fx failed, use default value: [0;0m250
+[0;33m Load param fy failed, use default value: [0;0m250
+[0;33m Load param line_number failed, use default value: [0;0m64
+[0;32m Load param downsample_res success: [0;0m0.1
+[0;33m Load param yaw_fov failed, use default value: [0;0m360
+[0;32m Load param vertical_fov success: [0;0m178
+[0;32m Load param depth_image_en success: [0;0m0
+[0;33m Load param inf_point_en failed, use default value: [0;0m0
+[0;32m Load param print_time_consumption success: [0;0m0
+GLAD init success
+Load shader frome: /root/super_ws/src/SUPER/mars_uav_sim/marsim_render/config/pattern/360camera.vs
+Now initing the point cloud data: 
+Number of points = 83.886X 10000
+Load data finish 
+========== OpenGL Info ==========
+Vendor: NVIDIA Corporation
+Renderer: NVIDIA GeForce RTX 3050 Ti Laptop GPU/PCIe/SSE2
+OpenGL Version: 3.3.0 NVIDIA 550.144.03
+GLSL Version: 3.30 NVIDIA via Cg compiler
+========== OpenGL Info ==========
+[INFO] [1789557444.684691446] [perfect_tracking]: [STATIC_PC_DURABLE_SETTINGS] enabled=1 actual_qos=1 reliability=reliable durability=transient_local history=keep_last depth=1 intra_process=disabled publication_schedule=latched_once other_qos_unchanged=1
+[INFO] [1789557444.684770979] [perfect_tracking]: [STATIC_PC_POLL_SETTINGS] poll_ms=0 bootstrap_once=1 complete_geometry=1 qos_unchanged=0
+[INFO] [1789557444.712774565] [perfect_tracking]: [STATIC_PC_LATCHED_SERIALIZATION] point_step=32 tail_zeroed_bytes=12 declared_fields_and_homogeneous_bytes_unchanged=1
+[INFO] [1789557444.727096751] [perfect_tracking]: [STATIC_PC_LATCHED_PUBLICATION] publications=1 points=838860 bytes=26843520 stamp_ns=1789557444709617295 timers_created=0 poll_callbacks=0 complete_geometry=1
+[INFO] [1789557444.728460278] [perfect_drone_adaptive_config]: [HEADLESS_PARAMETER_SETTINGS] enabled=1 mode=adaptive nodes=4 parameter_services_nodes=0 parameter_event_publisher_nodes=0 local_parameters_preserved=1 default_off=1
+[INFO] [1789557444.728481759] [perfect_drone_adaptive_config]: raw and filtered DDS disabled: acquired source -> frontend -> ROG-Map use SharedPtr handoff; exact Full ACK gate unchanged
+[INFO] [1789557444.728549872] [perfect_drone_adaptive_config]: [STATIC_PC_EXECUTOR_KIND] cached_entities=0 executor=single callbacks_qos_cadence_unchanged=1 mode=adaptive
+[INFO] [1789557444.728582404] [perfect_drone_adaptive_config]: [FRONTEND_EXECUTOR_SETTINGS] dedicated=0 executor=shared node=native_sector_cpp existing_default_group=1 callbacks_qos_cadence_unchanged=1
+[INFO] [1789557444.789334510] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=1 cycle=0 full=0 stamp_ns=1789557444784887197 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4640 bytes=148480 half_angle_deg=45.000
+Publish local map size: 4640
+[INFO] [1789557444.886316106] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=2 cycle=0 full=0 stamp_ns=1789557444884898289 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4608 bytes=147456 half_angle_deg=45.000
+Publish local map size: 4608
+[INFO] [1789557444.987110514] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=3 cycle=0 full=0 stamp_ns=1789557444984973987 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4607 bytes=147424 half_angle_deg=45.000
+Publish local map size: 4607
+[INFO] [1789557445.086827737] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=4 cycle=0 full=0 stamp_ns=1789557445084903103 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4605 bytes=147360 half_angle_deg=45.000
+Publish local map size: 4605
+[INFO] [1789557445.187314875] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=5 cycle=0 full=0 stamp_ns=1789557445185011544 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4615 bytes=147680 half_angle_deg=45.000
+Publish local map size: 4615
+[INFO] [1789557445.286647966] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=6 cycle=0 full=0 stamp_ns=1789557445284944415 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4646 bytes=148672 half_angle_deg=45.000
+Publish local map size: 4646
+[INFO] [1789557445.387063195] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=7 cycle=0 full=0 stamp_ns=1789557445384947959 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4639 bytes=148448 half_angle_deg=45.000
+Publish local map size: 4639
+[INFO] [1789557445.486689577] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=8 cycle=0 full=0 stamp_ns=1789557445484967701 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4625 bytes=148000 half_angle_deg=45.000
+Publish local map size: 4625
+[INFO] [1789557445.586433278] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=9 cycle=0 full=0 stamp_ns=1789557445585132889 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4598 bytes=147136 half_angle_deg=45.000
+Publish local map size: 4598
+[INFO] [1789557445.686710557] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=10 cycle=0 full=0 stamp_ns=1789557445684913773 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4640 bytes=148480 half_angle_deg=45.000
+Publish local map size: 4640
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 1.003] Current state: INIT[0m
+[INFO] [1789557445.787148814] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=11 cycle=0 full=0 stamp_ns=1789557445784934683 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4646 bytes=148672 half_angle_deg=45.000
+Publish local map size: 4646
+[INFO] [1789557445.887969189] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=12 cycle=0 full=0 stamp_ns=1789557445884918659 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4640 bytes=148480 half_angle_deg=45.000
+Publish local map size: 4640
+[INFO] [1789557445.986309500] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=13 cycle=0 full=0 stamp_ns=1789557445984859342 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4605 bytes=147360 half_angle_deg=45.000
+Publish local map size: 4605
+[INFO] [1789557446.086882191] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=14 cycle=0 full=0 stamp_ns=1789557446084911200 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4614 bytes=147648 half_angle_deg=45.000
+Publish local map size: 4614
+[INFO] [1789557446.187057988] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=15 cycle=0 full=0 stamp_ns=1789557446184918678 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4605 bytes=147360 half_angle_deg=45.000
+Publish local map size: 4605
+[INFO] [1789557446.287115783] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=16 cycle=0 full=0 stamp_ns=1789557446284922338 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557446.386299585] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=17 cycle=0 full=0 stamp_ns=1789557446385008530 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4604 bytes=147328 half_angle_deg=45.000
+Publish local map size: 4604
+[INFO] [1789557446.487104425] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=18 cycle=0 full=0 stamp_ns=1789557446484961660 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4615 bytes=147680 half_angle_deg=45.000
+Publish local map size: 4615
+[INFO] [1789557446.586259082] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=19 cycle=0 full=0 stamp_ns=1789557446584909380 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4640 bytes=148480 half_angle_deg=45.000
+Publish local map size: 4640
+[INFO] [1789557446.686381507] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=20 cycle=0 full=0 stamp_ns=1789557446684957378 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4640 bytes=148480 half_angle_deg=45.000
+Publish local map size: 4640
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 2.013] Current state: INIT[0m
+[INFO] [1789557446.787011023] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=21 cycle=0 full=0 stamp_ns=1789557446784996640 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557446.886766142] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=22 cycle=0 full=0 stamp_ns=1789557446884859516 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557446.987124801] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=23 cycle=0 full=0 stamp_ns=1789557446984889251 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557447.086421354] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=24 cycle=0 full=0 stamp_ns=1789557447085034536 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4621 bytes=147872 half_angle_deg=45.000
+Publish local map size: 4621
+[INFO] [1789557447.187030651] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=25 cycle=0 full=0 stamp_ns=1789557447185018283 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4604 bytes=147328 half_angle_deg=45.000
+Publish local map size: 4604
+[INFO] [1789557447.286857669] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=26 cycle=0 full=0 stamp_ns=1789557447284848282 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557447.387060780] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=27 cycle=0 full=0 stamp_ns=1789557447385069502 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4599 bytes=147168 half_angle_deg=45.000
+Publish local map size: 4599
+[INFO] [1789557447.486825795] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=28 cycle=0 full=0 stamp_ns=1789557447484956220 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4640 bytes=148480 half_angle_deg=45.000
+Publish local map size: 4640
+[INFO] [1789557447.587684653] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=29 cycle=0 full=0 stamp_ns=1789557447584960221 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4605 bytes=147360 half_angle_deg=45.000
+Publish local map size: 4605
+[INFO] [1789557447.686786237] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=30 cycle=0 full=0 stamp_ns=1789557447685002256 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4620 bytes=147840 half_angle_deg=45.000
+Publish local map size: 4620
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 3.013] Current state: INIT[0m
+[INFO] [1789557447.787464871] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=31 cycle=0 full=0 stamp_ns=1789557447784932952 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4601 bytes=147232 half_angle_deg=45.000
+Publish local map size: 4601
+[INFO] [1789557447.886457482] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=32 cycle=0 full=0 stamp_ns=1789557447884865325 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4594 bytes=147008 half_angle_deg=45.000
+Publish local map size: 4594
+[INFO] [1789557447.986845843] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=33 cycle=0 full=0 stamp_ns=1789557447984931045 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4647 bytes=148704 half_angle_deg=45.000
+Publish local map size: 4647
+[INFO] [1789557448.086916475] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=34 cycle=0 full=0 stamp_ns=1789557448085018055 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4623 bytes=147936 half_angle_deg=45.000
+Publish local map size: 4623
+[INFO] [1789557448.187542337] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=35 cycle=0 full=0 stamp_ns=1789557448184896695 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4601 bytes=147232 half_angle_deg=45.000
+Publish local map size: 4601
+[INFO] [1789557448.287587798] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=36 cycle=0 full=0 stamp_ns=1789557448284897514 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4599 bytes=147168 half_angle_deg=45.000
+Publish local map size: 4599
+[INFO] [1789557448.387510292] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=37 cycle=0 full=0 stamp_ns=1789557448384840260 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4641 bytes=148512 half_angle_deg=45.000
+Publish local map size: 4641
+[INFO] [1789557448.486991720] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=38 cycle=0 full=0 stamp_ns=1789557448484875532 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557448.586272059] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=39 cycle=0 full=0 stamp_ns=1789557448584873551 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4615 bytes=147680 half_angle_deg=45.000
+Publish local map size: 4615
+[INFO] [1789557448.687035697] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=40 cycle=0 full=0 stamp_ns=1789557448684824432 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4641 bytes=148512 half_angle_deg=45.000
+Publish local map size: 4641
+[INFO] [1789557448.734285460] [native_sector_cpp]: frames=40 published=40 kept 100.0% (4622/4622 pts/input-frame)
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 4.023] Current state: INIT[0m
+[INFO] [1789557448.786934810] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=41 cycle=0 full=0 stamp_ns=1789557448784899825 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4599 bytes=147168 half_angle_deg=45.000
+Publish local map size: 4599
+[INFO] [1789557448.887090188] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=42 cycle=0 full=0 stamp_ns=1789557448884915392 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4646 bytes=148672 half_angle_deg=45.000
+Publish local map size: 4646
+[INFO] [1789557448.986880620] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=43 cycle=0 full=0 stamp_ns=1789557448984828811 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4619 bytes=147808 half_angle_deg=45.000
+Publish local map size: 4619
+[INFO] [1789557449.086635590] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=44 cycle=0 full=0 stamp_ns=1789557449084833249 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4640 bytes=148480 half_angle_deg=45.000
+Publish local map size: 4640
+[INFO] [1789557449.186740439] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=45 cycle=0 full=0 stamp_ns=1789557449184872198 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4640 bytes=148480 half_angle_deg=45.000
+Publish local map size: 4640
+[INFO] [1789557449.286793779] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=46 cycle=0 full=0 stamp_ns=1789557449284970041 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4626 bytes=148032 half_angle_deg=45.000
+Publish local map size: 4626
+[INFO] [1789557449.386900686] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=47 cycle=0 full=0 stamp_ns=1789557449384873050 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4640 bytes=148480 half_angle_deg=45.000
+Publish local map size: 4640
+ -- [MARSIM] Running FPS: 479.090
+[INFO] [1789557449.486986637] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=48 cycle=0 full=0 stamp_ns=1789557449484896804 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4646 bytes=148672 half_angle_deg=45.000
+Publish local map size: 4646
+[INFO] [1789557449.586956589] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=49 cycle=0 full=0 stamp_ns=1789557449585001759 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4625 bytes=148000 half_angle_deg=45.000
+Publish local map size: 4625
+[INFO] [1789557449.686534335] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=50 cycle=0 full=0 stamp_ns=1789557449684916420 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4621 bytes=147872 half_angle_deg=45.000
+Publish local map size: 4621
+[INFO] [1789557449.686698549] [perfect_tracking]: [STATIC_PC_LATCHED_SUMMARY] enabled=1 publications=1 points=838860 bytes=26843520 stamp_ns=1789557444709617295 timers_created=0 poll_callbacks=0
+[INFO] [1789557449.686715945] [perfect_tracking]: [SENSOR_CADENCE_SUMMARY] frames=50 span_s=4.897201 hz=10.005716 raw_published=0 direct_handoffs=50 payload_bytes=7397856 side_entry_v1_enabled=0 side_entry_v1_spawned=0 side_entry_v1_injected_frames=0
+[INFO] [1789557449.686733154] [perfect_tracking]: [SENSOR_BURST_DROPOUT_SUMMARY] enabled=0 warmup_s=1.000000 period_s=2.000000 duration_s=0.500000 phase_s=0.000000 phase_env_override=0 rendered=50 delivered=50 dropped=0 bursts=0 max_consecutive_dropped=0 max_delivered_gap_s=0.100858 dropped_payload_bytes=0
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 5.023] Current state: INIT[0m
+[INFO] [1789557449.786399711] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=51 cycle=0 full=0 stamp_ns=1789557449784817458 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4605 bytes=147360 half_angle_deg=45.000
+Publish local map size: 4605
+[INFO] [1789557449.886275690] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=52 cycle=0 full=0 stamp_ns=1789557449884944645 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4605 bytes=147360 half_angle_deg=45.000
+Publish local map size: 4605
+[INFO] [1789557449.987161645] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=53 cycle=0 full=0 stamp_ns=1789557449984889557 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4598 bytes=147136 half_angle_deg=45.000
+Publish local map size: 4598
+[INFO] [1789557450.086689298] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=54 cycle=0 full=0 stamp_ns=1789557450084813771 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4600 bytes=147200 half_angle_deg=45.000
+Publish local map size: 4600
+[INFO] [1789557450.186533772] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=55 cycle=0 full=0 stamp_ns=1789557450184968002 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4599 bytes=147168 half_angle_deg=45.000
+Publish local map size: 4599
+[INFO] [1789557450.286015356] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=56 cycle=0 full=0 stamp_ns=1789557450284844119 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557450.387343150] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=57 cycle=0 full=0 stamp_ns=1789557450384813106 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4621 bytes=147872 half_angle_deg=45.000
+Publish local map size: 4621
+[INFO] [1789557450.486296227] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=58 cycle=0 full=0 stamp_ns=1789557450484872540 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4608 bytes=147456 half_angle_deg=45.000
+Publish local map size: 4608
+[INFO] [1789557450.586630367] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=59 cycle=0 full=0 stamp_ns=1789557450584865128 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557450.687472685] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=60 cycle=0 full=0 stamp_ns=1789557450684814696 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4593 bytes=146976 half_angle_deg=45.000
+Publish local map size: 4593
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 6.023] Current state: INIT[0m
+[INFO] [1789557450.786794858] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=61 cycle=0 full=0 stamp_ns=1789557450784921118 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4638 bytes=148416 half_angle_deg=45.000
+Publish local map size: 4638
+[INFO] [1789557450.886659974] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=62 cycle=0 full=0 stamp_ns=1789557450884852783 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4603 bytes=147296 half_angle_deg=45.000
+Publish local map size: 4603
+[INFO] [1789557450.987322361] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=63 cycle=0 full=0 stamp_ns=1789557450984947921 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4603 bytes=147296 half_angle_deg=45.000
+Publish local map size: 4603
+[INFO] [1789557451.087139497] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=64 cycle=0 full=0 stamp_ns=1789557451084817345 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4646 bytes=148672 half_angle_deg=45.000
+Publish local map size: 4646
+[INFO] [1789557451.186637203] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=65 cycle=0 full=0 stamp_ns=1789557451184907212 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4605 bytes=147360 half_angle_deg=45.000
+Publish local map size: 4605
+[INFO] [1789557451.286697799] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=66 cycle=0 full=0 stamp_ns=1789557451284813398 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4647 bytes=148704 half_angle_deg=45.000
+Publish local map size: 4647
+[INFO] [1789557451.387359536] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=67 cycle=0 full=0 stamp_ns=1789557451384812560 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4599 bytes=147168 half_angle_deg=45.000
+Publish local map size: 4599
+[INFO] [1789557451.486778027] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=68 cycle=0 full=0 stamp_ns=1789557451484800572 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4647 bytes=148704 half_angle_deg=45.000
+Publish local map size: 4647
+[INFO] [1789557451.586186925] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=69 cycle=0 full=0 stamp_ns=1789557451584907898 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4608 bytes=147456 half_angle_deg=45.000
+Publish local map size: 4608
+[INFO] [1789557451.686347340] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=70 cycle=0 full=0 stamp_ns=1789557451684794912 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4620 bytes=147840 half_angle_deg=45.000
+Publish local map size: 4620
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 7.033] Current state: INIT[0m
+[INFO] [1789557451.787219478] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=71 cycle=0 full=0 stamp_ns=1789557451784907043 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4620 bytes=147840 half_angle_deg=45.000
+Publish local map size: 4620
+[INFO] [1789557451.886288194] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=72 cycle=0 full=0 stamp_ns=1789557451884913884 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557451.987271873] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=73 cycle=0 full=0 stamp_ns=1789557451984959273 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4608 bytes=147456 half_angle_deg=45.000
+Publish local map size: 4608
+[INFO] [1789557452.087192521] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=74 cycle=0 full=0 stamp_ns=1789557452084837191 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4623 bytes=147936 half_angle_deg=45.000
+Publish local map size: 4623
+[INFO] [1789557452.187186735] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=75 cycle=0 full=0 stamp_ns=1789557452184819886 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4647 bytes=148704 half_angle_deg=45.000
+Publish local map size: 4647
+[INFO] [1789557452.286930728] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=76 cycle=0 full=0 stamp_ns=1789557452284798013 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4607 bytes=147424 half_angle_deg=45.000
+Publish local map size: 4607
+[INFO] [1789557452.386780185] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=77 cycle=0 full=0 stamp_ns=1789557452384918530 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4625 bytes=148000 half_angle_deg=45.000
+Publish local map size: 4625
+[INFO] [1789557452.486541506] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=78 cycle=0 full=0 stamp_ns=1789557452484842071 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4640 bytes=148480 half_angle_deg=45.000
+Publish local map size: 4640
+[INFO] [1789557452.587301323] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=79 cycle=0 full=0 stamp_ns=1789557452584949511 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4641 bytes=148512 half_angle_deg=45.000
+Publish local map size: 4641
+[INFO] [1789557452.686802999] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=80 cycle=0 full=0 stamp_ns=1789557452684791241 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4639 bytes=148448 half_angle_deg=45.000
+Publish local map size: 4639
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 8.033] Current state: INIT[0m
+[INFO] [1789557452.786859414] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=81 cycle=0 full=0 stamp_ns=1789557452784839254 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4621 bytes=147872 half_angle_deg=45.000
+Publish local map size: 4621
+[INFO] [1789557452.886565015] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=82 cycle=0 full=0 stamp_ns=1789557452884800928 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4599 bytes=147168 half_angle_deg=45.000
+Publish local map size: 4599
+[INFO] [1789557452.986787037] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=83 cycle=0 full=0 stamp_ns=1789557452984813182 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4640 bytes=148480 half_angle_deg=45.000
+Publish local map size: 4640
+[INFO] [1789557453.086472496] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=84 cycle=0 full=0 stamp_ns=1789557453084804690 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4626 bytes=148032 half_angle_deg=45.000
+Publish local map size: 4626
+[INFO] [1789557453.187193941] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=85 cycle=0 full=0 stamp_ns=1789557453184919613 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4620 bytes=147840 half_angle_deg=45.000
+Publish local map size: 4620
+[INFO] [1789557453.287319910] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=86 cycle=0 full=0 stamp_ns=1789557453284883793 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557453.386893234] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=87 cycle=0 full=0 stamp_ns=1789557453384864389 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4614 bytes=147648 half_angle_deg=45.000
+Publish local map size: 4614
+[INFO] [1789557453.486211273] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=88 cycle=0 full=0 stamp_ns=1789557453484768589 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557453.586101269] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=89 cycle=0 full=0 stamp_ns=1789557453584842455 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557453.687440540] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=90 cycle=0 full=0 stamp_ns=1789557453684922819 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4605 bytes=147360 half_angle_deg=45.000
+Publish local map size: 4605
+[INFO] [1789557453.734791786] [native_sector_cpp]: frames=90 published=90 kept 100.0% (4622/4622 pts/input-frame)
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 9.043] Current state: INIT[0m
+[INFO] [1789557453.786464762] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=91 cycle=0 full=0 stamp_ns=1789557453784797997 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4639 bytes=148448 half_angle_deg=45.000
+Publish local map size: 4639
+[INFO] [1789557453.886824193] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=92 cycle=0 full=0 stamp_ns=1789557453884945886 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4594 bytes=147008 half_angle_deg=45.000
+Publish local map size: 4594
+[INFO] [1789557453.987478977] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=93 cycle=0 full=0 stamp_ns=1789557453984796533 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4641 bytes=148512 half_angle_deg=45.000
+Publish local map size: 4641
+[INFO] [1789557454.087763287] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=94 cycle=0 full=0 stamp_ns=1789557454084913503 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4641 bytes=148512 half_angle_deg=45.000
+Publish local map size: 4641
+[INFO] [1789557454.186643706] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=95 cycle=0 full=0 stamp_ns=1789557454184887385 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4646 bytes=148672 half_angle_deg=45.000
+Publish local map size: 4646
+[INFO] [1789557454.287287456] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=96 cycle=0 full=0 stamp_ns=1789557454284824703 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4614 bytes=147648 half_angle_deg=45.000
+Publish local map size: 4614
+[INFO] [1789557454.387176697] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=97 cycle=0 full=0 stamp_ns=1789557454384851739 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4637 bytes=148384 half_angle_deg=45.000
+Publish local map size: 4637
+[INFO] [1789557454.486509128] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=98 cycle=0 full=0 stamp_ns=1789557454484810461 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4607 bytes=147424 half_angle_deg=45.000
+Publish local map size: 4607
+[INFO] [1789557454.586454479] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=99 cycle=0 full=0 stamp_ns=1789557454584825951 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4621 bytes=147872 half_angle_deg=45.000
+Publish local map size: 4621
+ -- [MARSIM] Running FPS: 506.646
+[INFO] [1789557454.688943540] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=100 cycle=0 full=0 stamp_ns=1789557454684891289 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4638 bytes=148416 half_angle_deg=45.000
+Publish local map size: 4638
+[INFO] [1789557454.689028536] [perfect_tracking]: [STATIC_PC_LATCHED_SUMMARY] enabled=1 publications=1 points=838860 bytes=26843520 stamp_ns=1789557444709617295 timers_created=0 poll_callbacks=0
+[INFO] [1789557454.689037122] [perfect_tracking]: [SENSOR_CADENCE_SUMMARY] frames=100 span_s=9.899610 hz=10.000394 raw_published=0 direct_handoffs=100 payload_bytes=14792928 side_entry_v1_enabled=0 side_entry_v1_spawned=0 side_entry_v1_injected_frames=0
+[INFO] [1789557454.689046629] [perfect_tracking]: [SENSOR_BURST_DROPOUT_SUMMARY] enabled=0 warmup_s=1.000000 period_s=2.000000 duration_s=0.500000 phase_s=0.000000 phase_env_override=0 rendered=100 delivered=100 dropped=0 bursts=0 max_consecutive_dropped=0 max_delivered_gap_s=0.102489 dropped_payload_bytes=0
+[33m -- [Fsm] Wait for goal.[0m
+[32m -- [Fsm 10.043] Current state: INIT[0m
+[INFO] [1789557454.787507259] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=101 cycle=0 full=0 stamp_ns=1789557454784908383 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4605 bytes=147360 half_angle_deg=45.000
+Publish local map size: 4605
+[INFO] [1789557454.886606778] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=102 cycle=0 full=0 stamp_ns=1789557454884950474 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4641 bytes=148512 half_angle_deg=45.000
+Publish local map size: 4641
+[INFO] [1789557454.986651633] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=103 cycle=0 full=0 stamp_ns=1789557454984799975 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4593 bytes=146976 half_angle_deg=45.000
+Publish local map size: 4593
+[INFO] [1789557455.087175494] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=104 cycle=0 full=0 stamp_ns=1789557455084819240 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4639 bytes=148448 half_angle_deg=45.000
+Publish local map size: 4639
+[INFO] [1789557455.186683772] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=105 cycle=0 full=0 stamp_ns=1789557455184842662 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4605 bytes=147360 half_angle_deg=45.000
+Publish local map size: 4605
+[INFO] [1789557455.286922329] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=106 cycle=0 full=0 stamp_ns=1789557455284762011 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4599 bytes=147168 half_angle_deg=45.000
+Publish local map size: 4599
+[INFO] [1789557455.386350670] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=107 cycle=0 full=0 stamp_ns=1789557455384760122 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4604 bytes=147328 half_angle_deg=45.000
+Publish local map size: 4604
+[INFO] [1789557455.487357291] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=108 cycle=0 full=0 stamp_ns=1789557455484884786 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4621 bytes=147872 half_angle_deg=45.000
+Publish local map size: 4621
+[INFO] [1789557455.586389736] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=109 cycle=0 full=0 stamp_ns=1789557455584818991 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4633 bytes=148256 half_angle_deg=45.000
+Publish local map size: 4633
+[INFO] [1789557455.686927880] [perfect_tracking]: [SENSOR_ACQUISITION_FRAME] frame=110 cycle=0 full=0 stamp_ns=1789557455684965118 width=225 height=445 readback_pixels=200250 conversion_rays=28800 generated_points=4621 bytes=147872 half_angle_deg=45.000
+Publish local map size: 4621
+[INFO] [1789557455.736228051] [rclcpp]: signal_handler(signum=2)
+[INFO] [1789557455.736814540] [perfect_tracking]: [STATIC_PC_LATCHED_SUMMARY] enabled=1 publications=1 points=838860 bytes=26843520 stamp_ns=1789557444709617295 timers_created=0 poll_callbacks=0
+[INFO] [1789557455.736833192] [perfect_tracking]: [SENSOR_CADENCE_SUMMARY] frames=110 span_s=10.897594 hz=10.002208 raw_published=0 direct_handoffs=110 payload_bytes=16270080 side_entry_v1_enabled=0 side_entry_v1_spawned=0 side_entry_v1_injected_frames=0
+[INFO] [1789557455.736840786] [perfect_tracking]: [SENSOR_BURST_DROPOUT_SUMMARY] enabled=0 warmup_s=1.000000 period_s=2.000000 duration_s=0.500000 phase_s=0.000000 phase_env_override=0 rendered=110 delivered=110 dropped=0 bursts=0 max_consecutive_dropped=0 max_delivered_gap_s=0.102489 dropped_payload_bytes=0
+Retained replan num: 0, total recorded: 0, dropped: 0, retained length: 0, average retained computation time: 0 ms
+[31mError: Could not open file for writing.
+[0m

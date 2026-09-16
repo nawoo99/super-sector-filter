@@ -69,6 +69,14 @@ def test_missing_or_failed_evidence_never_passes(tmp_path):
     assert not all(flight_checks({},False).values())
 
 
+def test_short_lease_applies_to_every_map_mode_and_phase(tmp_path):
+    commands = build_plan(tmp_path, 12000, extended_lease=False)
+    flights = [c for c in commands if 'path' in c]
+    assert len(flights) == 130
+    assert all('--extended-demand-lease' not in c['command'] for c in flights)
+    assert all('--guarded-demand-replan' in c['command'] for c in flights)
+
+
 def test_historical_timing_keeps_contact_rows_without_safety_claim(tmp_path):
     make_references(tmp_path)
     row = json.loads((tmp_path/'references/seed9/sector_summary.json').read_text())

@@ -2,11 +2,15 @@
 
 > [!IMPORTANT]
 > **2026-09-16: C22 Normal 5맵 × 3모드 n5 → 별도 n20 캠페인 진행 중. 완료 아님.**
+> **갱신: iteration02 ON9회 모두완주·접촉0이나 seed5 A43.94/F37.83=1.162로 시간기준실패.**
+> OFF n5/n20는0회. 원인 후보는 CLEARANCE_MARGIN 제동·재가속/경로차이;주기실패아님.
+> 공통유예0.25초 진단ON3회 F40.55/S42.63/A42.75초·접촉0, A복구5→4이나 Full도느려져
+> 원인해결확정아님. iteration03에서0.25초 후보 고정 후 전체 사전검사/pilot부터 재시작.
 > N1–N5=seed1/3/5/7/9, 초기 후보는 C21 공통3worker 그대로. 맵·planner 변경 없음.
 > 실행기/정적검증/CPU 관측기의 seed1 고정 경로를 맵별로 수정, Python116검사 통과.
 > 맵별 전달6조건+실제RViz 후 ON15회, OFF pilot75회; 전부통과할때만 별도 OFF300회.
 > 실패 보존·자동재시도/실패대체 금지; 수정 시 새 iteration에서 pilot부터 재시작.
-> 현재 `results/c22_normal_five_20260916/iteration02/status.json` 확인.
+> 현재 `results/c22_normal_five_20260916/iteration03/status.json` 확인.
 > iteration01은 과거 시간참조 검사 오류로 시험/비행0회 종료. 과거 seed9 Sector접촉1회는
 > 삭제하지 않고 시간중앙값 계산에도 포함. 현재 안전·50ms·시간비1.10 기준은 그대로.
 > CPU 평균/누적, 메모리, GPU장치전체, 포인트/논리payload, 주파수, 전환/인증 모두 보존.
