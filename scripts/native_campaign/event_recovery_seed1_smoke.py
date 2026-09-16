@@ -24,12 +24,12 @@ def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def audit_recovery(folder, run):
-    files = list(folder.glob(f'seed1_run{run}_adaptive*.filt_stats.json'))
+def audit_recovery(folder, run, map_name='seed1'):
+    files = list(folder.glob(f'{map_name}_run{run}_adaptive*.filt_stats.json'))
     if len(files) != 1:
         raise RuntimeError(f'Expected one frontend statistics file, got {files}')
     stats = json.loads(files[0].read_text())
-    stack = folder / f'seed1_run{run}_adaptive.attempt1.stack.log'
+    stack = folder / f'{map_name}_run{run}_adaptive.attempt1.stack.log'
     text = stack.read_text(errors='replace')
     pattern = (r'\[EVENT_RECOVERY_PATH_READY\] request_seq=(\d+) stamp_ns=(\d+) '
                r'ack_map=(\d+) certified_map=(\d+) generation_before=(\d+) generation_after=(\d+)')

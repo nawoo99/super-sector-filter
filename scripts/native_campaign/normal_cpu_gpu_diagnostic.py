@@ -100,8 +100,9 @@ class GPU:
 
 
 class Profiler:
-    def __init__(self, output):
+    def __init__(self, output, map_name='seed1'):
         self.output = output
+        self.map_name = map_name
         self.gpu = GPU()
         self.phase = 'baseline'
         self.mode = None
@@ -122,7 +123,7 @@ class Profiler:
         if len(cpus) != len(self.previous_cpus):
             raise RuntimeError('Logical CPU topology changed during diagnostic')
         core_busy = [cpu_busy(a,b) for a,b in zip(self.previous_cpus, cpus)]
-        groups = list(Path('/sys/fs/cgroup').glob(f'super_sector_filter_{os.getpid()}_seed1_run{RUN}_*'))
+        groups = list(Path('/sys/fs/cgroup').glob(f'super_sector_filter_{os.getpid()}_{self.map_name}_run{RUN}_*'))
         members, counters = {}, {}
         group_cumulative = []
         for group in groups:

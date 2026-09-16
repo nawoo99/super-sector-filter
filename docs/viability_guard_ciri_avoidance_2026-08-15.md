@@ -6057,3 +6057,30 @@ not an immediate large campaign or pooling with historical Normal/Stress.
 Evidence: `results/c21_callback_timing_20260916/validation_3workers/verification.json`;
 all metrics `results/c21_callback_timing_20260916/comparison/summary_ko.md`;
 details `docs/c21_callback_timing_20260916.md`.
+
+### 8.98 C22: prospective five-map n5 → independent n20 campaign (2026-09-16; in progress)
+
+User authorized Normal N1–N5 (seed1/3/5/7/9), Full/Sector/Adaptive five runs per
+map/mode, investigation/fix/restart on a problem, then twenty additional runs per
+map/mode only after the pilot passes. All computational evidence must be retained.
+The initial runtime is unchanged C21 with common three side workers.
+
+Before flight, generalized map-bound static proof, cgroup observer lookup,
+source/recovery audit and stage log paths; 116 Python checks pass. Each map has
+six actual DDS transport tests plus real RViz reconnect before profiled preflight.
+ON15, OFF pilot75 and separate OFF confirmation300 are prospective counts, not
+completed results. CPU, cumulative CPU, host/background, process/thread, memory,
+map timings, logical payload, frequencies and certified switches are recorded;
+scope/missing-data limitations from C21 remain. No threshold relaxation or
+replacement of failures. Corrections require a fresh iteration/pilot.
+
+Iteration01 failed during historical time-reference preparation before any test
+or flight. The old Normal seed9 Sector includes one contact run; requiring all
+historical timing rows to be contact-free was inappropriate. Iteration02 keeps
+all ten rows for the historical upper-median time reference, discloses contacts
+and does not change current-flight acceptance. Both iterations are retained.
+
+Live status: `results/c22_normal_five_20260916/iteration02/status.json`.
+Protocol: `docs/c22_normal_five_20260916.md`. Do not claim the n5/n20 flights
+complete based on the plan or this in-progress entry. Runtime needs no new mirror
+because it has not changed in this preparation. No push/Co-Authored-By footer.

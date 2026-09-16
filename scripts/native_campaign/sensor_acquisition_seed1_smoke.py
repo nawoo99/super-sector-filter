@@ -17,8 +17,8 @@ from analyze_cylinder_only_stress_full_gate import quality_valid
 BACKUP = 'results/sensor_acquisition_v2_backup_20260916_fsDc9a/runtime_before.tar.gz'
 
 
-def audit_source(folder, run, mode):
-    log = (folder/f'seed1_run{run}_{mode}.attempt1.stack.log').read_text(errors='replace')
+def audit_source(folder, run, mode, map_name='seed1'):
+    log = (folder/f'{map_name}_run{run}_{mode}.attempt1.stack.log').read_text(errors='replace')
     pattern = (r'\[SENSOR_ACQUISITION_FRAME\] frame=(\d+) cycle=(\d+) full=(\d+) '
                r'stamp_ns=(\d+) width=(\d+) height=(\d+) readback_pixels=(\d+) '
                r'conversion_rays=(\d+) generated_points=(\d+) bytes=(\d+) half_angle_deg=([\d.]+)')
@@ -31,7 +31,7 @@ def audit_source(folder, run, mode):
             'full_readback_size': all(f['readback_pixels']==2*900*f['height'] for f in frames),
             'full_ray_count': all(f['conversion_rays']==128*900 for f in frames),
         }, frames=frames)
-    stats = json.loads((folder/f'seed1_run{run}_{mode}.attempt1.filt_stats.json').read_text())
+    stats = json.loads((folder/f'{map_name}_run{run}_{mode}.attempt1.filt_stats.json').read_text())
     checks = {
         'source_mode_enabled': stats.get('sensor_acquisition_enabled') is True,
         'source_frames_observed': bool(frames),
@@ -44,7 +44,7 @@ def audit_source(folder, run, mode):
         'fixed_sector_never_full': mode != 'sector' or all(not f['full'] for f in frames),
     }
     if mode == 'adaptive':
-        event = previous.audit_recovery(folder,run)
+        event = previous.audit_recovery(folder,run,map_name)
         checks.update(event['checks'])
         full_stamps = {f['stamp_ns']:f for f in frames if f['full']}
         checks['every_recovery_ack_from_generated_full'] = all(

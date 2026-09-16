@@ -32,9 +32,9 @@ FLIGHT_NAMES = {'fsm_node', 'perfect_drone_node', 'perfect_drone_full_node',
                 'source_acquisition_test'}
 
 
-def latched_preflight_asset_paths(validation):
+def latched_preflight_asset_paths(validation, context=None):
     """The validator's runtime hashes use binding names; evidence uses paths."""
-    return ({static_latched_preflight.BINDING_PATHS[name]
+    return ({static_latched_preflight.spec(context)['paths'][name]
              for name in validation['runtime_sha256']} |
             {Path(path) for path in validation['evidence_sha256']})
 
@@ -184,6 +184,10 @@ def small_pool_profile_reference_audit(plan, reference_plan, summaries):
 
 def reference_comparison(result, reference):
     ratio = result['mission_time_s'] / reference['mission_time_s']
+    if reference.get('time_only') is True:
+        return dict(mission_time_ratio=ratio, mission_time_guardrail_pass=ratio <= 1.10,
+                    mean_cpu_reduction_pct=None, cumulative_cpu_reduction_pct=None,
+                    scope='Historical same-map/mode timing ceiling only; older policy CPU is not a comparison control')
     return dict(mission_time_ratio=ratio, mission_time_guardrail_pass=ratio <= 1.10,
                 mean_cpu_reduction_pct=100 * (1 - result['end_to_end_cpu_cores_mean'] /
                                                reference['end_to_end_cpu_cores_mean']),
@@ -400,12 +404,13 @@ def static_cached_executor_audit(stack, profile=None):
                 scope='Executor class only; unchanged legacy 1ms timer and QoS; full thread CPU included')
 
 
-def static_latched_audit(stack, profile=None):
+def static_latched_audit(stack, profile=None, geometry=None):
     """Actual one-shot counters plus the retained executor's full thread CPU.
 
     This is a per-flight schedule audit; delivery additionally needs the bound
     six-arm/actual-RViz preflight. The idle executor is never subtracted.
     """
+    geometry = geometry or static_latched_preflight.EXPECTED_GEOMETRY
     def records(marker):
         out = []
         for line in stack.splitlines():
@@ -441,8 +446,8 @@ def static_latched_audit(stack, profile=None):
             baseline = {k: int(initial[0][k]) for k in fields}
             checks['unchanged_counters'] = (
                 initial[0].get('complete_geometry') == '1' and
-                baseline['publications'] == 1 and baseline['points'] == 241490 and
-                baseline['bytes'] == 7727680 and baseline['stamp_ns'] > 0 and
+                baseline['publications'] == 1 and baseline['points'] == geometry['points'] and
+                baseline['bytes'] == geometry['bytes'] and baseline['stamp_ns'] > 0 and
                 baseline['timers_created'] == baseline['poll_callbacks'] == 0 and
                 all(r.get('enabled') == '1' and
                     {k: int(r[k]) for k in fields} == baseline for r in reports))
@@ -569,6 +574,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--run', type=int, required=True)
     parser.add_argument('--candidate', required=True)
+    parser.add_argument('--map', choices=tuple(static_latched_preflight.MAP_GEOMETRIES), default='seed1')
     parser.add_argument('--mean-cpu-reduction-target-pct', type=float, default=40.,
                         help='Predeclared engineering threshold, not statistical significance (default40)')
     parser.add_argument('--modes', nargs='+', choices=('full', 'sector', 'adaptive'),
@@ -621,6 +627,7 @@ def main():
     parser.add_argument('--sector-config', default=diagnostic.search.PROFILES['sector'])
     parser.add_argument('--adaptive-config', default=event.PROFILE)
     args = parser.parse_args()
+    map_context = static_latched_preflight.map_context(args.map)
     if (not math.isfinite(args.mean_cpu_reduction_target_pct) or
             not 0 <= args.mean_cpu_reduction_target_pct <= 100):
         parser.error('--mean-cpu-reduction-target-pct must be finite and within [0,100]')
@@ -652,7 +659,7 @@ def main():
                 and not args.static_pc_two_phase and not args.static_pc_cached_executor
                 and args.static_latched_preflight):
             parser.error('Latched mode requires composed dedicated executor, requested poll1, no two-phase/cache, and preflight')
-        latched_preflight = static_latched_preflight.validate_manifest(args.static_latched_preflight)
+        latched_preflight = static_latched_preflight.validate_manifest(args.static_latched_preflight, map_context)
         if not latched_preflight['valid']:
             parser.error('Latched delivery preflight invalid: ' + json.dumps(latched_preflight))
     elif args.static_latched_preflight:
@@ -670,7 +677,7 @@ def main():
         for mode in args.modes:
             path = (args.time_reference_folder / f'{mode}_summary.json').resolve()
             reference = json.loads(path.read_text())
-            if reference.get('mode') != mode or reference.get('success') is not True or any(
+            if reference.get('map') != args.map or reference.get('mode') != mode or reference.get('success') is not True or any(
                     not isinstance(reference.get(key), (int, float)) or
                     not math.isfinite(reference[key]) or reference[key] <= 0
                     for key in ('mission_time_s', 'end_to_end_cpu_cores_mean', 'end_to_end_cpu_core_s')):
@@ -735,9 +742,9 @@ def main():
     if latched_preflight:
         files.add(args.static_latched_preflight.resolve())
         files.add(Path(static_latched_preflight.__file__).resolve())
-        files.update(latched_preflight_asset_paths(latched_preflight))
-    files.update({runtime / 'mars_uav_sim/perfect_drone_sim/config/seed1.yaml',
-                  runtime / 'mars_uav_sim/perfect_drone_sim/pcd/seed_maps/seed1.pcd',
+        files.update(latched_preflight_asset_paths(latched_preflight, map_context))
+    files.update({runtime / f'mars_uav_sim/perfect_drone_sim/config/{args.map}.yaml',
+                  runtime / f'mars_uav_sim/perfect_drone_sim/pcd/seed_maps/{args.map}.pcd',
                   runtime / 'mission_planner/data/loop24.txt',
                   Path('/root/super_ws/install/marsim_render/lib/libmarsim_render.so'),
                   Path('/root/super_ws/install/mission_planner/lib/libnative_sector_cpp_component.so'),
@@ -767,7 +774,7 @@ def main():
     hashes = {str(p): event.sha(p) for p in sorted(files)}
     frozen_policy = diagnostic.search.frozen_policy()
     diagnostic.RUN = args.run
-    profiler = diagnostic.Profiler(root / 'telemetry.jsonl')
+    profiler = diagnostic.Profiler(root / 'telemetry.jsonl', map_name=args.map)
     effective_options = {
         mode: dict(diagnostic.search.OPTIONS,
                    optimizer_phase_memory_trace=not args.no_optimizer_phase_memory_trace,
@@ -776,7 +783,7 @@ def main():
                    adaptive_event_recovery=mode == 'adaptive') for mode in args.modes}
     plan = dict(
         schema='adaptive-cpu40-seed1-exploratory-v1', candidate=args.candidate,
-        map='seed1', run=args.run, modes=args.modes, profiles=profiles,
+        map=args.map, run=args.run, modes=args.modes, profiles=profiles,
         backup=BACKUP, mean_cpu_reduction_target_pct=args.mean_cpu_reduction_target_pct,
         threshold_scope='Predeclared engineering objective; not statistical significance',
         cumulative_cpu_also_reported=True, max_mission_time_ratio=1.10,
@@ -815,7 +822,7 @@ def main():
         runtime_policy_note='Inherited base policy only; effective_run_options and profiles override it. Source acquisition follows native 10Hz cadence, not inherited filter-rate hint.',
         logical_cpus=os.cpu_count(), runtime_policy=frozen_policy,
         asset_sha256=hashes, baseline_seconds=12,
-        common_parameters_unchanged='seed1/loop24/v7,45deg-half-angle,0.4deg/10Hz sensor',
+        common_parameters_unchanged=f'{args.map}/loop24/v7,45deg-half-angle,0.4deg/10Hz sensor',
         frozen_normal_sha256=event.NORMAL_SHA, no_automatic_retry=True,
         exploratory_tuning=True, not_pooled_with_previous_results=True)
     profile_reference_audit = None
@@ -848,7 +855,7 @@ def main():
                 profiler.phase = 'flight'
                 diagnostic.save(root / 'status.json', dict(pid=os.getpid(), state='RUNNING',
                     candidate=args.candidate, mode=mode, phase='flight'))
-                row = campaign.run_one('seed1', mode, args.run, **options,
+                row = campaign.run_one(args.map, mode, args.run, **options,
                     artifacts_dir=str(root / 'artifacts'),
                     seedmap_super_config_override=profiles[mode])
                 writer.writerow(row)
@@ -863,13 +870,17 @@ def main():
                 result = diagnostic.summarize(profiler, row)
                 if references:
                     result['reference_comparison'] = reference_comparison(result, references[mode])
-                result['source_acquisition'] = source.audit_source(root / 'artifacts', args.run, mode)
+                result['source_acquisition'] = source.audit_source(root / 'artifacts', args.run, mode, args.map)
+                result['source_acquisition']['checks']['telemetry_map_scope'] = (
+                    bool(result.get('processes')) and bool(result.get('threads_sorted_by_mean')) and
+                    result.get('cgroup_interval_cores', {}).get('n', 0) >= 5 and
+                    result.get('cgroup_interval_cores', {}).get('mean', 0) > 0)
                 result['strict_recovery_audit'] = recovery_audit.audit_file(
-                    root / 'artifacts' / f'seed1_run{args.run}_{mode}.attempt1.stack.log', mode)
+                    root / 'artifacts' / f'{args.map}_run{args.run}_{mode}.attempt1.stack.log', mode)
                 result['source_acquisition']['checks']['strict_source_recovery_audit'] = (
                     result['strict_recovery_audit']['valid'])
                 stack = (root / 'artifacts' /
-                    f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
+                    f'{args.map}_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
                 result['source_acquisition']['checks']['optimizer_phase_trace_setting'] = (
                     row.get('optimizer_phase_trace_enabled') is
                     (not args.no_optimizer_phase_memory_trace))
@@ -895,27 +906,28 @@ def main():
                     result['static_pc_two_phase'] = True
                     result['static_pc_delivery_validated'] = False
                     result['static_pc_two_phase_audit'] = static_two_phase_audit(
-                        stack, stage_profile.summarize(root, mode, args.run) if args.profile_cpu else None)
+                        stack, stage_profile.summarize(root, mode, args.run, args.map) if args.profile_cpu else None)
                     result['source_acquisition']['checks']['static_pc_two_phase'] = (
                         result['static_pc_two_phase_audit']['valid'])
                 if args.static_pc_latched_once:
                     result['static_pc_latched_once'] = True
                     result['static_latched_audit'] = static_latched_audit(
-                        stack, stage_profile.summarize(root, mode, args.run) if args.profile_cpu else None)
+                        stack, stage_profile.summarize(root, mode, args.run, args.map) if args.profile_cpu else None,
+                        geometry=map_context['geometry'])
                     result['static_latched_preflight'] = static_latched_preflight.validate_manifest(
-                        args.static_latched_preflight)
+                        args.static_latched_preflight, map_context)
                     result['static_pc_delivery_validated'] = result['static_latched_preflight']['valid']
                     result['source_acquisition']['checks']['static_latched_runtime'] = result['static_latched_audit']['valid']
                     result['source_acquisition']['checks']['static_latched_delivery'] = result['static_pc_delivery_validated']
                 if args.static_pc_cached_executor:
                     result['static_pc_cached_executor'] = True
                     result['static_cached_executor_audit'] = static_cached_executor_audit(
-                        stack, stage_profile.summarize(root, mode, args.run) if args.profile_cpu else None)
+                        stack, stage_profile.summarize(root, mode, args.run, args.map) if args.profile_cpu else None)
                     result['source_acquisition']['checks']['static_cached_executor_settings'] = (
                         result['static_cached_executor_audit']['valid'])
                 if args.monitor_intervals:
                     monitor_result = json.loads((root / 'artifacts' /
-                        f'seed1_run{args.run}_{mode}.json').read_text())
+                        f'{args.map}_run{args.run}_{mode}.json').read_text())
                     intervals = monitor_result.get('message_intervals', {})
                     result['message_intervals'] = intervals
                     result['source_acquisition']['checks']['message_interval_audit_present'] = (
@@ -948,13 +960,13 @@ def main():
                 if args.frontend_dedicated_executor and mode != 'full':
                     result['frontend_dedicated_executor'] = True
                     result['frontend_executor_audit'] = frontend_executor_audit(
-                        stack, stage_profile.summarize(root, mode, args.run) if args.profile_cpu else None)
+                        stack, stage_profile.summarize(root, mode, args.run, args.map) if args.profile_cpu else None)
                     result['source_acquisition']['checks']['frontend_executor_settings'] = (
                         result['frontend_executor_audit']['valid'])
                 if args.side_executor_threads < 4:
                     result['small_pool_timing'] = small_pool_timing_audit(
                         result.get('message_intervals', {}), row.get('sensor_hz'),
-                        stage_profile.summarize(root, mode, args.run) if args.profile_cpu else None)
+                        stage_profile.summarize(root, mode, args.run, args.map) if args.profile_cpu else None)
                     result['source_acquisition']['checks']['small_pool_timing'] = result['small_pool_timing']['valid']
                     if not args.profile_cpu:
                         result['small_pool_profile_reference'] = profile_reference_audit
@@ -962,7 +974,7 @@ def main():
                             profile_reference_audit is not None and profile_reference_audit['valid'])
                 if args.skip_backup_diagnostic_replay or args.fast_occupied_box_scan or args.snapshot_line_query:
                     stack = (root / 'artifacts' /
-                        f'seed1_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
+                        f'{args.map}_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
                 if args.skip_backup_diagnostic_replay:
                     result['source_acquisition']['checks']['backup_replay_skip_active'] = (
                         '[BACKUP_DIAGNOSTIC_REPLAY] skip=true' in stack)

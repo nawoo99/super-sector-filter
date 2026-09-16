@@ -49,6 +49,37 @@ AUDIT_CHECKS = ("complete_geometry", "exact_sha256", "all_readers_same_stamp",
                 "cumulative_summaries_steady_at_least5s")
 QOS = {"reliability": "reliable", "durability": "transient_local", "history": "keep_last", "depth": 1}
 
+# Independent canonical XYZI expectations derived from the frozen ASCII XYZ
+# backgrounds (xyz, homogeneous1, missing intensity0, zero tail padding).
+# Each must ALSO pass actual six-arm DDS and actual RViz verification.
+MAP_GEOMETRIES = {
+    'seed1': (241490, EXPECTED_SHA256),
+    'seed3': (444850, 'e4713ddd834a41adeabb3c3a535746a5e51cfb9917705fb47942b4f06f4ec1fd'),
+    'seed5': (635500, 'b0fdf7706d62e21549124ca552a25e8db43155061413bf76d66480269159d982'),
+    'seed7': (838860, 'b33865379ffd5a318ef79d5a89fd2148b9da8b50c6853d62ccfb2e99d7ec9802'),
+    'seed9': (1042220, '3c0efe025ec5ba6335ade66ec19e3609575f7fbb098b95a205ea2a4a47491fd4'),
+}
+
+
+def map_context(map_name='seed1'):
+    if map_name not in MAP_GEOMETRIES:
+        raise ValueError('Unsupported frozen Normal map: ' + map_name)
+    points, digest = MAP_GEOMETRIES[map_name]
+    paths = dict(BINDING_PATHS)
+    if map_name != 'seed1':
+        paths.pop('seed1_config')
+        paths.pop('seed1_pcd')
+        paths[map_name + '_config'] = RUNTIME / 'config' / (map_name + '.yaml')
+        paths[map_name + '_pcd'] = RUNTIME / 'pcd/seed_maps' / (map_name + '.pcd')
+    return dict(map=map_name, geometry=dict(sha256=digest, points=points,
+                bytes=points * 32, point_step=32, frame='world'), paths=paths)
+
+
+def spec(context):
+    # Preserve existing seed1 fixtures/legacy evidence without mutable globals
+    # for new maps; callers carry explicit independent contexts.
+    return context if context is not None else dict(map='seed1', geometry=EXPECTED_GEOMETRY, paths=BINDING_PATHS)
+
 
 class InvalidEvidence(ValueError):
     pass
@@ -128,24 +159,25 @@ def records(text: str, marker: str) -> list[dict]:
     return result
 
 
-def counters(record: dict, *, strings: bool = False) -> dict:
+def counters(record: dict, *, strings: bool = False, context=None) -> dict:
     require(type(record) is dict, "counter object required")
     result = {key: integer(record.get(key), key, allow_string=strings) for key in COUNTER_KEYS}
     require(result["publications"] == 1 and result["timers_created"] == 0 and result["poll_callbacks"] == 0,
             "one publication and zero timers/polls required")
-    require(result["points"] == EXPECTED_POINTS and result["bytes"] == EXPECTED_BYTES and result["stamp_ns"] > 0,
+    geometry = spec(context)['geometry']
+    require(result["points"] == geometry['points'] and result["bytes"] == geometry['bytes'] and result["stamp_ns"] > 0,
             "unexpected static geometry or nonpositive test timestamp")
     return result
 
 
-def audit_log(path: Path) -> dict:
+def audit_log(path: Path, context=None) -> dict:
     text = path.read_text(errors="strict")
     initial = records(text, "[STATIC_PC_LATCHED_PUBLICATION]")
     summaries = records(text, "[STATIC_PC_LATCHED_SUMMARY]")
     require(len(initial) == 1 and len(summaries) >= 2, "need exactly one publication and >=2 summaries")
-    base = counters(initial[0], strings=True)
+    base = counters(initial[0], strings=True, context=context)
     require(initial[0].get("complete_geometry") == "1", "complete-geometry marker absent")
-    require(all(item.get("enabled") == "1" and counters(item, strings=True) == base for item in summaries),
+    require(all(item.get("enabled") == "1" and counters(item, strings=True, context=context) == base for item in summaries),
             "cumulative publisher evidence changed")
     stamps = [integer(item.get("_log_stamp_ns"), "summary timestamp") for item in summaries]
     require(all(b >= a for a, b in zip(stamps, stamps[1:])), "summary clock moved backwards")
@@ -175,9 +207,9 @@ def audit_log(path: Path) -> dict:
             "cadence_hz": float(cadence[-1]["hz"]), "last_summary": summaries[-1]}
 
 
-def check_geometry(cloud: dict, baseline: dict, *, rviz: bool = False) -> None:
+def check_geometry(cloud: dict, baseline: dict, *, rviz: bool = False, context=None) -> None:
     require(type(cloud) is dict, "geometry object required")
-    for key, expected in EXPECTED_GEOMETRY.items():
+    for key, expected in spec(context)['geometry'].items():
         value = cloud.get(key)
         if type(expected) is int:
             value = integer(value, f"geometry.{key}")
@@ -186,10 +218,10 @@ def check_geometry(cloud: dict, baseline: dict, *, rviz: bool = False) -> None:
             "readers did not receive the one retained publication timestamp")
 
 
-def check_layout(layout: dict) -> None:
+def check_layout(layout: dict, context=None) -> None:
     width = integer(layout.get("width"), "layout.width")
     height = integer(layout.get("height"), "layout.height")
-    require(width > 0 and height > 0 and width * height == EXPECTED_POINTS, "layout point dimensions")
+    require(width > 0 and height > 0 and width * height == spec(context)['geometry']['points'], "layout point dimensions")
     require(integer(layout.get("point_step"), "layout.point_step") == 32 and
             integer(layout.get("row_step"), "layout.row_step") == width * 32, "layout byte dimensions")
     require(type(layout.get("is_bigendian")) is bool and type(layout.get("is_dense")) is bool, "layout flags")
@@ -204,27 +236,28 @@ def no_error(result: dict) -> None:
     require(not result.get("error") and not result.get("cleanup_error"), "error retained in passing evidence")
 
 
-def check_command(command: Any, composition: str, bindings: dict) -> None:
+def check_command(command: Any, composition: str, bindings: dict, context=None) -> None:
     require(type(command) is list and all(isinstance(item, str) for item in command) and bool(command), "command absent")
     require(Path(command[0]).resolve() == Path(bindings[f"binary_{composition}"]["path"]).resolve(), "wrong simulator binary")
-    config_arg = "config_name:=seed1.yaml" if composition == "standalone" else "drone_config:=seed1.yaml"
-    require(config_arg in command, "not the required seed1 configuration")
+    config_arg = ('config_name:=' if composition == 'standalone' else 'drone_config:=') + spec(context)['map'] + '.yaml'
+    require(config_arg in command, "not the required map configuration")
 
 
-def validate_transport(result: dict, log: dict, bindings: dict) -> tuple[str, str]:
+def validate_transport(result: dict, log: dict, bindings: dict, context=None) -> tuple[str, str]:
+    geometry = spec(context)['geometry']
     no_error(result)
     pair = (result.get("composition"), result.get("sequence"))
     require(pair in PAIRS, "unexpected transport case")
     mode, sequence = pair
     for key, value in {"latched_once": True, "durable": True, "reader_qos": "durable", "poll_ms": 1,
                        "effective_poll_ms": 0, "two_phase": False, "fixture_publishes_no_goals_or_commands": True,
-                       "exact_child_reaped": True, "expected_sha256": EXPECTED_SHA256}.items():
+                       "exact_child_reaped": True, "expected_sha256": geometry['sha256']}.items():
         require(result.get(key) == value and type(result.get(key)) is type(value), f"transport.{key}")
     require(result.get("no_fsm") is (mode == "standalone"), "FSM scope mismatch")
     require(str(result.get("ros_domain_id")) == "190", "wrong isolated transport domain")
     require(integer(result.get("simulator_exit_code"), "simulator exit") == 0 and result.get("forced_cleanup", False) is False,
             "transport child cleanup not clean")
-    check_command(result.get("command"), mode, bindings)
+    check_command(result.get("command"), mode, bindings, context)
     require(result.get("publisher_actual_qos") == QOS, "transport publisher actual QoS")
     graph = result.get("graph_qos_verified", {})
     offered = result.get("offered_qos", {})
@@ -237,7 +270,7 @@ def validate_transport(result: dict, log: dict, bindings: dict) -> tuple[str, st
     audit = result.get("latched_once_audit", {})
     require(audit.get("valid") is True and all(audit.get("checks", {}).get(key) is True for key in AUDIT_CHECKS),
             "detailed transport audit absent or failed")
-    require(counters(audit.get("initial")) == log["counters"], "audit/log counters mismatch")
+    require(counters(audit.get("initial"), context=context) == log["counters"], "audit/log counters mismatch")
     require(integer(audit.get("publication_count"), "publication_count") == 1 and
             integer(audit.get("summary_count"), "summary_count") == log["summary_count"], "audit/log counts mismatch")
     require(number(audit.get("observation_before_shutdown_s"), "observation") >= 5 and
@@ -248,11 +281,11 @@ def validate_transport(result: dict, log: dict, bindings: dict) -> tuple[str, st
     require(set(clouds) == {"first", "second", "reconnected"}, "missing or extra reader phase")
     for phase, samples in clouds.items():
         require(type(samples) is list and len(samples) == 1, f"{phase}: exactly one retained sample required")
-        check_geometry(samples[0], log["counters"])
-    require(result.get("geometry_sha256") == EXPECTED_SHA256 and result.get("geometry_validated_clouds") == 3,
+        check_geometry(samples[0], log["counters"], context=context)
+    require(result.get("geometry_sha256") == geometry['sha256'] and result.get("geometry_validated_clouds") == 3,
             "phase-local geometry validation incomplete")
     require(integer(result.get("latched_geometry_stamp_ns"), "retained timestamp") == log["counters"]["stamp_ns"], "retained timestamp mismatch")
-    check_layout(result.get("geometry_layout", {}))
+    check_layout(result.get("geometry_layout", {}), context)
     phases = result.get("phases", [])
     required_phases = ["one_shot_geometry_published"] + (
         ["reader_first_static_geometry", "reader_first_steady_no_republish"] if sequence == "reader-first" else
@@ -260,7 +293,7 @@ def validate_transport(result: dict, log: dict, bindings: dict) -> tuple[str, st
         "subscriber_1_to_2", "subscriber_2_to_1_retained_without_republish", "subscriber_1_to_0_to_1"]
     require(phases == required_phases, "transport sequence evidence mismatch")
     if sequence == "reader-first":
-        require(result.get("reader_first_geometry_valid") is True and result.get("reader_first_geometry_sha256") == EXPECTED_SHA256,
+        require(result.get("reader_first_geometry_valid") is True and result.get("reader_first_geometry_sha256") == geometry['sha256'],
                 "reader-first geometry not independently validated")
     motion = result.get("no_flight_observation", {})
     require(integer(motion.get("command_messages"), "commands") == 0 and integer(motion.get("odom_messages"), "odom") >= 2,
@@ -279,7 +312,8 @@ def validate_transport(result: dict, log: dict, bindings: dict) -> tuple[str, st
     return pair
 
 
-def validate_probe(probe: dict, baseline: dict, bindings: dict) -> None:
+def validate_probe(probe: dict, baseline: dict, bindings: dict, context=None) -> None:
+    geometry = spec(context)['geometry']
     require(probe.get("screenshot_method") == "rviz_render_window_capture",
             "actual Ogre render-target screenshot required, not QWidget capture")
     no_error(probe)
@@ -287,10 +321,10 @@ def validate_probe(probe: dict, baseline: dict, bindings: dict) -> None:
             "not a witness of the actual RViz display")
     require(integer(probe.get("rviz_received_messages"), "RViz messages") == 1 and
             integer(probe.get("own_global_pc_endpoints"), "RViz endpoints") == 1, "RViz reader count")
-    require(probe.get("expected_sha256") == EXPECTED_SHA256 and probe.get("expected_points") == EXPECTED_POINTS,
+    require(probe.get("expected_sha256") == geometry['sha256'] and probe.get("expected_points") == geometry['points'],
             "RViz expected geometry mismatch")
-    check_geometry(probe.get("geometry", {}), baseline, rviz=True)
-    check_layout(probe["geometry"])
+    check_geometry(probe.get("geometry", {}), baseline, rviz=True, context=context)
+    check_layout(probe["geometry"], context)
     require(probe.get("configured_reader_qos") == QOS, "RViz configured QoS")
     graph = probe.get("requested_qos_graph", {})
     require(graph.get("reliability") == 1 and graph.get("durability") == 1, "RViz actual requested QoS")
@@ -302,7 +336,7 @@ def validate_probe(probe: dict, baseline: dict, bindings: dict) -> None:
     require(type(statuses) is list and statuses and all(type(s) is dict and s.get("level") != 2 for s in statuses),
             "RViz status missing/error")
     require(any(s.get("name") == "Points" and s.get("level") == 0 and
-                re.fullmatch(r"Showing \[241490\] points from \[1\] messages", s.get("value", ""))
+                s.get('value') == f"Showing [{geometry['points']}] points from [1] messages"
                 for s in statuses), "actual RViz complete Points status absent")
     configured_path = Path(probe.get("config", "")).resolve()
     accepted = [record for key, record in bindings.items() if key.startswith("installed_view_") and key != "installed_view_launcher"]
@@ -310,18 +344,19 @@ def validate_probe(probe: dict, baseline: dict, bindings: dict) -> None:
                 for record in accepted), "RViz used unbound or modified config")
 
 
-def validate_rviz(result: dict, log: dict, probes: dict, bindings: dict) -> None:
+def validate_rviz(result: dict, log: dict, probes: dict, bindings: dict, context=None) -> None:
+    geometry = spec(context)['geometry']
     no_error(result)
     require(result.get("schema") == "static-latched-rviz-v1", "wrong RViz evidence schema")
     for key in ("publisher_no_republish", "no_fsm", "no_goals_or_commands_published", "actual_rviz"):
         require(result.get(key) is True, f"RViz scope.{key}")
     require(integer(result.get("reader_restarts"), "reader restarts") == 1 and result.get("ros_domain_id") == 191,
             "RViz reconnect/domain proof")
-    require(result.get("expected_sha256") == EXPECTED_SHA256 and result.get("expected_points") == EXPECTED_POINTS,
+    require(result.get("expected_sha256") == geometry['sha256'] and result.get("expected_points") == geometry['points'],
             "RViz expected reference mismatch")
-    check_command(result.get("simulator_command"), "standalone", bindings)
-    require(counters(result.get("publication_counters")) == log["counters"] and
-            counters(result.get("latched_summary"), strings=True) == log["counters"], "RViz publication/log mismatch")
+    check_command(result.get("simulator_command"), "standalone", bindings, context)
+    require(counters(result.get("publication_counters"), context=context) == log["counters"] and
+            counters(result.get("latched_summary"), strings=True, context=context) == log["counters"], "RViz publication/log mismatch")
     require(number(result.get("steady_summary_span_s"), "RViz summary span") == log["steady_summary_span_s"] and
             number(result.get("observation_before_shutdown_s"), "RViz observation") >= 5, "RViz steady observation")
     for kind in ("viewer_cleanup", "simulator_cleanup"):
@@ -333,12 +368,14 @@ def validate_rviz(result: dict, log: dict, probes: dict, bindings: dict) -> None
     expected_probes = []
     for phase in ("late", "reconnected"):
         require(result.get(phase) == probes[phase], f"{phase} embedded/external RViz evidence mismatch")
-        validate_probe(probes[phase], log["counters"], bindings)
+        validate_probe(probes[phase], log["counters"], bindings, context)
         expected_probes.append(dict(probes[phase], phase=phase))
     require(result.get("probes") == expected_probes, "RViz probes list mismatch")
 
 
-def _validate_document(document: dict) -> dict:
+def _validate_document(document: dict, context=None) -> dict:
+    contract = spec(context)
+    binding_paths = contract['paths']
     checks = {}
     errors = []
     evidence_hashes = {}
@@ -355,12 +392,13 @@ def _validate_document(document: dict) -> dict:
             return None
 
     check("schema", lambda: require(document.get("schema") == SCHEMA, "unsupported schema"))
-    check("expected_geometry", lambda: require(document.get("expected_geometry") == EXPECTED_GEOMETRY, "reference geometry changed"))
+    check("map", lambda: require(document.get('map', 'seed1') == contract['map'], 'map identity mismatch'))
+    check("expected_geometry", lambda: require(document.get("expected_geometry") == contract['geometry'], "reference geometry changed"))
     bindings = document.get("bindings", {})
-    check("binding_inventory", lambda: require(type(bindings) is dict and set(bindings) == set(BINDING_PATHS), "missing/extra bound runtime artifacts"))
+    check("binding_inventory", lambda: require(type(bindings) is dict and set(bindings) == set(binding_paths), "missing/extra bound runtime artifacts"))
     if type(bindings) is not dict:
         bindings = {}
-    for name, expected_path in BINDING_PATHS.items():
+    for name, expected_path in binding_paths.items():
         path = check(f"binding:{name}", lambda name=name, expected_path=expected_path:
                      checked_file(bindings.get(name), expected_path=expected_path))
         if path:
@@ -379,7 +417,7 @@ def _validate_document(document: dict) -> dict:
         def one_transport(record=record):
             result_path = checked_file(record["result"])
             log_path = checked_file(record["log"], expected_path=result_path.parent / "simulator.log")
-            pair = validate_transport(read_json(result_path), audit_log(log_path), bindings)
+            pair = validate_transport(read_json(result_path), audit_log(log_path, context), bindings, context)
             require(list(pair) == record.get("case"), "manifest case label differs from actual evidence")
             seen.append(pair)
             seen_paths.append(str(result_path))
@@ -407,7 +445,7 @@ def _validate_document(document: dict) -> dict:
                     with asset.open("rb") as stream:
                         require(stream.read(8) == b"\x89PNG\r\n\x1a\n" and asset.stat().st_size > 32, "RViz screenshot not PNG")
                     require(Path(probes[phase].get("screenshot", "")).resolve() == asset, "RViz screenshot path mismatch")
-        validate_rviz(read_json(path), audit_log(log_path), probes, bindings)
+        validate_rviz(read_json(path), audit_log(log_path, context), probes, bindings, context)
         evidence_hashes[str(path)] = record["result"]["sha256"]
         evidence_hashes[str(log_path)] = record["log"]["sha256"]
     check("actual_rviz_late_reconnect", rviz_case)
@@ -416,12 +454,12 @@ def _validate_document(document: dict) -> dict:
             "scope": "No-flight transport and actual RViz reader migration; not flight/CPU/safety certification"}
 
 
-def validate_manifest(path: str | Path) -> dict:
+def validate_manifest(path: str | Path, context=None) -> dict:
     """Return structured invalid on missing/malformed/tampered/stale evidence."""
     try:
         path = Path(path).resolve(strict=True)
         before = file_sha256(path)
-        result = _validate_document(read_json(path))
+        result = _validate_document(read_json(path), context)
         require(file_sha256(path) == before, "manifest changed during validation")
         result["manifest_sha256"] = before
         return result
@@ -430,7 +468,7 @@ def validate_manifest(path: str | Path) -> dict:
                 "errors": [str(error)], "manifest_sha256": None, "evidence_sha256": {}, "runtime_sha256": {}}
 
 
-def create_manifest(transport_paths: list[str | Path], rviz_path: str | Path, output: str | Path) -> dict:
+def create_manifest(transport_paths: list[str | Path], rviz_path: str | Path, output: str | Path, context=None) -> dict:
     output = Path(output)
     require(not output.exists(), f"refusing to overwrite manifest: {output}")
     transports = []
@@ -441,21 +479,21 @@ def create_manifest(transport_paths: list[str | Path], rviz_path: str | Path, ou
                            "log": file_record(path.parent / "simulator.log")})
     rviz_path = Path(rviz_path)
     document = {"schema": SCHEMA, "created_utc": datetime.now(timezone.utc).isoformat(),
-                "expected_geometry": EXPECTED_GEOMETRY,
-                "bindings": {name: file_record(path) for name, path in BINDING_PATHS.items()},
+                "map": spec(context)['map'], "expected_geometry": spec(context)['geometry'],
+                "bindings": {name: file_record(path) for name, path in spec(context)['paths'].items()},
                 "transports": transports, "rviz": {"result": file_record(rviz_path),
                     "log": file_record(rviz_path.parent / "simulator.log"),
                     "probes": {phase: {kind: file_record(rviz_path.parent / (phase + suffix))
                                 for kind, suffix in (("result", ".json"), ("screenshot", ".png"), ("log", ".log"))}
                                for phase in ("late", "reconnected")}}}
-    validation = _validate_document(document)
+    validation = _validate_document(document, context)
     require(validation["valid"], "preflight rejected: " + "; ".join(validation["errors"]))
     # Exclusive creation is the final anti-overwrite guard; do not create dirs or
     # a misleading manifest at all when detailed evidence has failed validation.
     with output.open("x") as stream:
         json.dump(document, stream, indent=2, sort_keys=True, allow_nan=False)
         stream.write("\n")
-    return validate_manifest(output)
+    return validate_manifest(output, context)
 
 
 def main(argv=None) -> int:
@@ -465,12 +503,15 @@ def main(argv=None) -> int:
     create.add_argument("--transport", action="append", required=True, type=Path)
     create.add_argument("--rviz", required=True, type=Path)
     create.add_argument("--output", required=True, type=Path)
+    create.add_argument('--map', choices=tuple(MAP_GEOMETRIES), default='seed1')
     validate = commands.add_parser("validate")
     validate.add_argument("path", type=Path)
+    validate.add_argument('--map', choices=tuple(MAP_GEOMETRIES), default='seed1')
     args = parser.parse_args(argv)
     try:
-        result = (create_manifest(args.transport, args.rviz, args.output) if args.action == "create"
-                  else validate_manifest(args.path))
+        context = map_context(args.map)
+        result = (create_manifest(args.transport, args.rviz, args.output, context) if args.action == "create"
+                  else validate_manifest(args.path, context))
     except (OSError, ValueError, KeyError, TypeError) as error:
         result = {"valid": False, "schema": SCHEMA, "checks": {"create": False}, "errors": [str(error)]}
     print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))

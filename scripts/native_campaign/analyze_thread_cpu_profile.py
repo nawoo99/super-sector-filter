@@ -59,14 +59,14 @@ def role_cpu_summary(log, telemetry, mode, pid, start_s, end_s):
     return dict(roles=result, interval_scope='Wholly enclosed /proc sample intervals; not exact stage boundaries or whole-flight cgroup window')
 
 
-def summarize(folder, mode, run):
+def summarize(folder, mode, run, map_name='seed1'):
     folder = Path(folder)
     telemetry = [json.loads(line) for line in (folder / 'telemetry.jsonl').read_text().splitlines()]
     times = [r['monotonic_s'] for r in telemetry
              if r['mode'] == mode and r['campaign_active']]
     if not times:
         return {'available': False, 'reason': 'no observed flight interval'}
-    log = (folder / 'artifacts' / f'seed1_run{run}_{mode}.attempt1.stack.log').read_text(errors='replace')
+    log = (folder / 'artifacts' / f'{map_name}_run{run}_{mode}.attempt1.stack.log').read_text(errors='replace')
     reports = {}
     for match in PATTERN.finditer(log):
         pid, ns, final, stage, calls, inclusive, exclusive, errors = match.groups()
@@ -110,7 +110,7 @@ def main():
     parser.add_argument('folder', type=Path)
     args = parser.parse_args()
     plan = json.loads((args.folder / 'plan.json').read_text())
-    report = {mode: summarize(args.folder, mode, plan['run']) for mode in plan['modes']}
+    report = {mode: summarize(args.folder, mode, plan['run'], plan.get('map', 'seed1')) for mode in plan['modes']}
     (args.folder / 'thread_cpu_summary.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
 
