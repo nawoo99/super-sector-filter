@@ -1,0 +1,169 @@
+{
+  "valid": true,
+  "command": [
+    "/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_node",
+    "--ros-args",
+    "-p",
+    "config_name:=seed7.yaml"
+  ],
+  "ros_domain_id": "190",
+  "no_fsm": true,
+  "composition": "standalone",
+  "fixture_publishes_no_goals_or_commands": true,
+  "poll_ms": 1,
+  "two_phase": false,
+  "durable": true,
+  "latched_once": true,
+  "reader_qos": "durable",
+  "sequence": "late",
+  "expected_sha256": "b33865379ffd5a318ef79d5a89fd2148b9da8b50c6853d62ccfb2e99d7ec9802",
+  "phases": [
+    "one_shot_geometry_published",
+    "one_shot_without_subscribers",
+    "late_subscriber_0_to_1",
+    "subscriber_1_to_2",
+    "subscriber_2_to_1_retained_without_republish",
+    "subscriber_1_to_0_to_1"
+  ],
+  "effective_poll_ms": 0,
+  "publisher_actual_qos": {
+    "reliability": "reliable",
+    "durability": "transient_local",
+    "history": "keep_last",
+    "depth": 1
+  },
+  "offered_qos": {
+    "reliability": 1,
+    "durability": 1,
+    "history": 3,
+    "depth": 0
+  },
+  "graph_qos_verified": {
+    "reliability": true,
+    "durability": true,
+    "history": false,
+    "depth": false
+  },
+  "latched_geometry_stamp_ns": 1789559090670955423,
+  "geometry_sha256": "b33865379ffd5a318ef79d5a89fd2148b9da8b50c6853d62ccfb2e99d7ec9802",
+  "geometry_layout": {
+    "width": 838860,
+    "height": 1,
+    "point_step": 32,
+    "row_step": 26843520,
+    "is_bigendian": false,
+    "is_dense": true,
+    "fields": [
+      {
+        "name": "x",
+        "offset": 0,
+        "datatype": 7,
+        "count": 1
+      },
+      {
+        "name": "y",
+        "offset": 4,
+        "datatype": 7,
+        "count": 1
+      },
+      {
+        "name": "z",
+        "offset": 8,
+        "datatype": 7,
+        "count": 1
+      },
+      {
+        "name": "intensity",
+        "offset": 16,
+        "datatype": 7,
+        "count": 1
+      }
+    ]
+  },
+  "geometry_validated_clouds": 3,
+  "clouds": {
+    "first": [
+      {
+        "elapsed_s": 1.4666868911590427,
+        "points": 838860,
+        "point_step": 32,
+        "bytes": 26843520,
+        "frame": "world",
+        "sha256": "b33865379ffd5a318ef79d5a89fd2148b9da8b50c6853d62ccfb2e99d7ec9802",
+        "stamp_ns": 1789559090670955423
+      }
+    ],
+    "second": [
+      {
+        "elapsed_s": 1.5817346151452512,
+        "points": 838860,
+        "point_step": 32,
+        "bytes": 26843520,
+        "frame": "world",
+        "sha256": "b33865379ffd5a318ef79d5a89fd2148b9da8b50c6853d62ccfb2e99d7ec9802",
+        "stamp_ns": 1789559090670955423
+      }
+    ],
+    "reconnected": [
+      {
+        "elapsed_s": 2.886291888076812,
+        "points": 838860,
+        "point_step": 32,
+        "bytes": 26843520,
+        "frame": "world",
+        "sha256": "b33865379ffd5a318ef79d5a89fd2148b9da8b50c6853d62ccfb2e99d7ec9802",
+        "stamp_ns": 1789559090670955423
+      }
+    ]
+  },
+  "bootstrap_publications": null,
+  "publication_records": [],
+  "sensor_cadence_hz": [
+    10.000965,
+    9.997212
+  ],
+  "scope": "No-goal static-map transport smoke; no flight/performance claim",
+  "elapsed_s": 12.241983121959493,
+  "no_flight_observation": {
+    "command_messages": 0,
+    "odom_messages": 1099,
+    "initial_position": [
+      0.0,
+      0.0,
+      1.5
+    ],
+    "max_position_delta_m": 0.0,
+    "first_odom_receipt_ns": 1070926568644394,
+    "last_odom_receipt_ns": 1070937574162473
+  },
+  "simulator_exit_code": 0,
+  "exact_child_reaped": true,
+  "latched_once_audit": {
+    "valid": true,
+    "checks": {
+      "complete_geometry": true,
+      "exact_sha256": true,
+      "all_readers_same_stamp": true,
+      "publication_count_one": true,
+      "no_static_timers": true,
+      "no_static_poll_callbacks": true,
+      "cumulative_summaries_steady_at_least5s": true
+    },
+    "initial": {
+      "publications": 1,
+      "points": 838860,
+      "bytes": 26843520,
+      "stamp_ns": 1789559090670955423,
+      "timers_created": 0,
+      "poll_callbacks": 0
+    },
+    "publication_count": 1,
+    "summary_count": 3,
+    "observation_before_shutdown_s": 11.007124528987333,
+    "steady_summary_span_s": 6.038822908,
+    "one_publication": true,
+    "no_static_timers": true,
+    "no_static_poll_callbacks": true,
+    "all_readers_same_stamp": true
+  }
+}

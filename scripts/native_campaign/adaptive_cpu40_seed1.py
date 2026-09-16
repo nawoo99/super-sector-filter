@@ -82,7 +82,15 @@ SMALL_POOL_MATCH_FIELDS = (
     'static_pc_latched_once', 'static_latched_preflight_sha256',
     'optimizer_phase_memory_trace', 'optimizer_clearance_gate_first', 'time_reference_folder',
     'max_same_mode_reference_time_ratio', 'max_mission_time_ratio',
-    'logical_cpus', 'frozen_normal_sha256', 'callback_trace')
+    'logical_cpus', 'frozen_normal_sha256', 'callback_trace', 'event_body_heading')
+
+
+def heading_policy_audit(stack, mode, enabled):
+    records = re.findall(r'\[SECTOR_HEADING_POLICY\] body_aligned_event=(\d+) velocity_center=(\d+)', stack)
+    expected = [] if mode == 'full' else [('1', '0') if mode == 'adaptive' and enabled
+                                         else ('0', '1') if mode == 'adaptive' else ('0', '0')]
+    return dict(valid=records == expected, records=records, expected=expected,
+                scope='Source acquisition center policy; aperture and Full recovery unchanged')
 
 
 def small_pool_profile_reference_audit(plan, reference_plan, summaries):
@@ -580,6 +588,8 @@ def main():
     parser.add_argument('--modes', nargs='+', choices=('full', 'sector', 'adaptive'),
                         default=['full', 'adaptive'])
     parser.add_argument('--compose', action='store_true')
+    parser.add_argument('--event-body-heading', action='store_true',
+                        help='Opt-in event Adaptive body-forward center matching Fixed Sector')
     parser.add_argument('--profile-cpu', action='store_true')
     parser.add_argument('--callback-trace', action='store_true',
                         help='Diagnostic wall-time callback spans; separate from untraced CPU evidence')
@@ -708,6 +718,7 @@ def main():
         raise RuntimeError('Frozen Normal observations changed')
     os.environ['SUPER_CPU_PROFILE'] = '1' if args.profile_cpu else '0'
     os.environ['SUPER_CALLBACK_TRACE'] = '1' if args.callback_trace else '0'
+    os.environ['SUPER_EVENT_BODY_ALIGNED_SECTOR'] = '1' if args.event_body_heading else '0'
     os.environ['SUPER_SKIP_BACKUP_DIAGNOSTIC_REPLAY'] = (
         '1' if args.skip_backup_diagnostic_replay else '0')
     os.environ['SUPER_SKIP_UNOBSERVED_PATH_PUBLICATION'] = (
@@ -750,6 +761,8 @@ def main():
                   Path('/root/super_ws/install/mission_planner/lib/libnative_sector_cpp_component.so'),
                   Path('/root/super_ws/install/mission_planner/lib/mission_planner/waypoint_mission'),
                   runtime / 'mission_planner/Apps/ros2_waypoint_mission.cpp',
+                  runtime / 'mission_planner/Apps/native_sector_cpp.cpp',
+                  runtime / 'mission_planner/include/mission_planner/sector_heading_policy.hpp',
                   Path('/root/super_ws/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_full_node'),
                   Path('/root/super_ws/install/rog_map/lib/librog_map.a'),
                   Path('/root/super_ws/install/super_planner/lib/libsuper.a'),
@@ -788,6 +801,7 @@ def main():
         threshold_scope='Predeclared engineering objective; not statistical significance',
         cumulative_cpu_also_reported=True, max_mission_time_ratio=1.10,
         compose=args.compose, cpu_profile=args.profile_cpu, callback_trace=args.callback_trace,
+        event_body_heading=args.event_body_heading,
         skip_backup_diagnostic_replay=args.skip_backup_diagnostic_replay,
         skip_unobserved_path_publication=args.skip_unobserved_path_publication,
         fast_occupied_box_scan=args.fast_occupied_box_scan,
@@ -881,6 +895,10 @@ def main():
                     result['strict_recovery_audit']['valid'])
                 stack = (root / 'artifacts' /
                     f'{args.map}_run{args.run}_{mode}.attempt1.stack.log').read_text(errors='replace')
+                result['event_body_heading'] = args.event_body_heading
+                if args.event_body_heading or '[SECTOR_HEADING_POLICY]' in stack:
+                    result['heading_policy_audit'] = heading_policy_audit(stack, mode, args.event_body_heading)
+                    result['source_acquisition']['checks']['heading_policy'] = result['heading_policy_audit']['valid']
                 result['source_acquisition']['checks']['optimizer_phase_trace_setting'] = (
                     row.get('optimizer_phase_trace_enabled') is
                     (not args.no_optimizer_phase_memory_trace))

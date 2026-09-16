@@ -131,7 +131,7 @@ def make_references(root):
             save(dest / f'{mode}_summary.json', row)
 
 
-def build_plan(root, base_run, extended_lease=True):
+def build_plan(root, base_run, extended_lease=True, event_body_heading=False):
     commands = [c for map_name in MAPS for c in static_commands(root, map_name)]
     for stage in ('preflight', 'pilot5', 'confirm20'):
         count = 1 if stage == 'preflight' else 5 if stage == 'pilot5' else 20
@@ -145,6 +145,8 @@ def build_plan(root, base_run, extended_lease=True):
                 base = common_args(root)
                 if not extended_lease:
                     base.remove('--extended-demand-lease')
+                if event_body_heading:
+                    base.append('--event-body-heading')
                 base[base.index('--candidate') + 1] = f'c22_{root.name}_{stage}'
                 base[base.index('--side-executor-threads') + 1] = '3'
                 base[base.index('--static-latched-preflight') + 1] = str(root / 'static_preflight' / map_name / 'acceptance.json')
@@ -180,11 +182,12 @@ def main():
     parser.add_argument('--base-run', type=int, default=10000)
     parser.add_argument('--dispatch-lease', type=float, choices=(0.25, 0.5), default=0.5,
                         help='Common existing policy in all modes, frozen before this iteration')
+    parser.add_argument('--event-body-heading', action='store_true')
     args = parser.parse_args()
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=False)
     make_references(root)
-    commands = build_plan(root, args.base_run, args.dispatch_lease == 0.5)
+    commands = build_plan(root, args.base_run, args.dispatch_lease == 0.5, args.event_body_heading)
     for phase, count in (('preflight', 1), ('pilot5', 5), ('confirm20', 20)):
         save(root / phase / 'plan.json', dict(maps=list(MAPS), phase=phase,
              profile_preflight_runs_per_mode=count if phase == 'preflight' else 0,
@@ -208,6 +211,7 @@ def main():
         profiled_preflight_runs_per_map_mode=1, initial_total_flights=390,
         static_no_flight_tests_per_map=7, mode_orders=ORDERS, side_executor_threads=3,
         common_dispatch_lease_s=args.dispatch_lease,
+        event_body_heading=args.event_body_heading,
         pilot_and_confirmation_not_pooled=True, old_normal_or_c21_not_pooled=True,
         no_automatic_retry=True, stop_on_any_contract_safety_completion_or_paired_time_failure=True,
         modifications_require_new_iteration_from_pilot=True, discard_failed_attempts=False,

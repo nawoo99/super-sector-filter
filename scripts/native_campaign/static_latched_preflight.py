@@ -30,6 +30,9 @@ INSTALL = Path("/root/super_ws/install/perfect_drone_sim")
 EXECUTABLES = {"standalone": "perfect_drone_node", "full": "perfect_drone_full_node",
                "adaptive": "perfect_drone_adaptive_node"}
 BINDING_PATHS = {
+    "frontend_component": Path('/root/super_ws/install/mission_planner/lib/libnative_sector_cpp_component.so'),
+    "frontend_source": Path('/root/super_ws/src/SUPER/mission_planner/Apps/native_sector_cpp.cpp'),
+    "frontend_heading_policy": Path('/root/super_ws/src/SUPER/mission_planner/include/mission_planner/sector_heading_policy.hpp'),
     "runtime_model": RUNTIME / "include/perfect_drone_sim/ros2_perfect_drone_model.hpp",
     "runtime_latched_policy": RUNTIME / "include/perfect_drone_sim/static_pc_latched_policy.hpp",
     "runtime_durable_policy": RUNTIME / "include/perfect_drone_sim/static_pc_durable_policy.hpp",

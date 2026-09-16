@@ -4,6 +4,7 @@
 
 #include <mission_planner/native_sector_cpp.hpp>
 #include <mission_planner/event_recovery_latch.hpp>
+#include <mission_planner/sector_heading_policy.hpp>
 
 #include <nav_msgs/msg/odometry.hpp>
 #include <mars_quadrotor_msgs/msg/polynomial_trajectory.hpp>
@@ -23,6 +24,7 @@
 #include <cmath>
 #include <condition_variable>
 #include <cstdint>
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <deque>
@@ -488,6 +490,8 @@ public:
         filtered_cloud_sink_(std::move(filtered_cloud_sink)),
         guard_cloud_observer_(std::move(guard_cloud_observer)),
         armed_(options_.mode == "legacy-trigger") {
+    body_aligned_event_sector_ = options_.event_recovery &&
+        native_sector::exactBodyHeadingOptIn(std::getenv("SUPER_EVENT_BODY_ALIGNED_SECTOR"));
     if (options_.event_recovery &&
         (options_.mode != "adaptive" || !options_.full_refresh_generation_ack_en ||
          !options_.risk_verdict_topic.empty() || !options_.guard_witness_topic.empty())) {
@@ -500,6 +504,11 @@ public:
          (options_.mode != "adaptive" && options_.replan_guard_en))) {
       throw std::runtime_error("sensor acquisition requires typed direct input, zero near-field exception, no raw-risk and event-only Adaptive (or fixed Sector without replan guard)");
     }
+    RCLCPP_INFO(get_logger(), "[SECTOR_HEADING_POLICY] body_aligned_event=%d velocity_center=%d",
+                body_aligned_event_sector_ ? 1 : 0,
+                native_sector::usesVelocityHeading(
+                    options_.mode == "adaptive" || options_.mode == "velocity",
+                    body_aligned_event_sector_) ? 1 : 0);
     start_time_s_ = nowSeconds();
     const auto sensor_qos =
         rclcpp::QoS(rclcpp::KeepLast(1)).best_effort().durability_volatile();
@@ -680,9 +689,7 @@ public:
     const super_utils::thread_cpu_profile::Scope cpu_scope(
         super_utils::thread_cpu_profile::Stage::FrontendAcquisition);
     std::lock_guard<std::mutex> lock(state_mutex_);
-    const double center =
-        ((options_.mode == "adaptive" || options_.mode == "velocity") && velocity_yaw_)
-            ? *velocity_yaw_ : yaw_;
+    const double center = sectorCenterLocked();
     return {options_.sensor_acquisition, effectiveFullOpen(),
             event_recovery_.cycle, center, options_.half_angle_deg};
   }
@@ -693,6 +700,16 @@ public:
   }
 
 private:
+  // Caller holds state_mutex_. One selector is shared by source acquisition,
+  // legacy cloud filtering and diagnostics so their reported axes cannot drift.
+  double sectorCenterLocked() const {
+    return native_sector::sectorHeading(
+        options_.mode == "adaptive" || options_.mode == "velocity",
+        body_aligned_event_sector_, velocity_yaw_, yaw_);
+  }
+
+  bool body_aligned_event_sector_{false};
+
   bool statefulMode() const {
     return options_.mode == "adaptive" || options_.mode == "trigger" ||
            options_.mode == "legacy-trigger";
@@ -2294,11 +2311,7 @@ private:
           rounded(angle_delta(bearing - *velocity_yaw_) * 180.0 / kPi);
     }
     static_probe_first_horizontal_distance_m_ = rounded(std::hypot(dx, dy));
-    const double filter_center =
-        ((options_.mode == "adaptive" || options_.mode == "velocity") &&
-         velocity_yaw_)
-            ? *velocity_yaw_
-            : yaw_;
+    const double filter_center = sectorCenterLocked();
     static_probe_first_center_in_sector_ =
         std::abs(angle_delta(bearing - filter_center)) <= half_angle_rad_;
     static_probe_first_effective_full_open_ = effectiveFullOpen();
@@ -2532,11 +2545,7 @@ private:
       return;
     }
     const bool swap_bytes = msg->is_bigendian != hostIsBigEndian();
-    const double center =
-        ((options_.mode == "adaptive" || options_.mode == "velocity") &&
-         velocity_yaw_)
-            ? *velocity_yaw_
-            : yaw_;
+    const double center = sectorCenterLocked();
     const double heading_x = std::cos(center);
     const double heading_y = std::sin(center);
     const double near_radius =
@@ -2710,6 +2719,7 @@ private:
                : 0.2);
     integer("frames", frames_);
     boolean("event_recovery_enabled", options_.event_recovery);
+    boolean("event_recovery_body_heading", body_aligned_event_sector_);
     boolean("sensor_acquisition_enabled", options_.sensor_acquisition);
     boolean("direct_output_enabled", static_cast<bool>(filtered_cloud_sink_));
     integer("direct_output_events", direct_output_events_);

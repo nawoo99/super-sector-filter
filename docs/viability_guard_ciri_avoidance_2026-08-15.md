@@ -6102,3 +6102,24 @@ Iteration03 prospectively tests the common0.25s candidate from all static/ON/n5
 steps, with unchanged gates pending explicit user direction about the time gate.
 117 Python tests pass. No runtime binary/source/map change or build needed.
 Current status is now `results/c22_normal_five_20260916/iteration03/status.json`.
+
+Further update: iteration03 reached N4 but A45.43/F40.58=1.1195 failed the time
+guard, all12 ON flights completed/contact0; OFF0. N4 similar path lengths but
+brakes F0/S4/A6. The common0.25s change is not a sufficient fix.
+
+Source inspection found Fixed Sector uses body yaw while event Adaptive uses
+velocity yaw retained below1.5m/s. Added default-OFF body-axis opt-in to event
+Adaptive only, with a shared tested selector for acquisition/filter/diagnostics.
+No map/aperture/planner/brake/certificate/ACK change. Legacy off behavior exact.
+Preserved old source/shared library tar (SHA in C22 document), built only
+mission_planner95s; heading normal/ASan+UBSan60013 checks each and Python118 pass.
+Runtime edits mirrored to mission_planner_Apps/include/tests corresponding paths.
+Static proof now also binds the frontend shared library/source/helper.
+
+Separate N4 heading probe12350 passed DDS/RViz and all flight gates, F/S/A
+47.30/47.22/43.03s contact0; brakes6/5/3. A improved relative to prior45.43s/6,
+but Full changed from40.58s/0 without a logic change. Report variability and do
+not infer causality/statistical significance from this n1. Adopt as a prospective
+candidate, not as a proven solution: iteration04 body-axis ON/common0.25s starts
+all static/ON/pilot checks again before independent n20. Current status moves to
+`results/c22_normal_five_20260916/iteration04/status.json`. No push.

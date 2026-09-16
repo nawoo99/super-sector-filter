@@ -6,6 +6,7 @@ import static_latched_preflight as static
 from run_c22_normal_campaign import (MAPS, build_plan, campaign_gate, flight_checks, triplet_audit, make_references)
 from sensor_acquisition_seed1_smoke import audit_source
 from event_recovery_seed1_smoke import audit_recovery
+from adaptive_cpu40_seed1 import heading_policy_audit
 
 
 def test_map_contexts_are_independent_and_bound():
@@ -77,11 +78,34 @@ def test_short_lease_applies_to_every_map_mode_and_phase(tmp_path):
     assert all('--guarded-demand-replan' in c['command'] for c in flights)
 
 
+def test_body_heading_candidate_applies_to_all_prospective_slots(tmp_path):
+    commands = build_plan(tmp_path, 14000, extended_lease=False, event_body_heading=True)
+    flights = [c for c in commands if 'path' in c]
+    assert len(flights) == 130
+    assert all('--event-body-heading' in c['command'] for c in flights)
+    assert all('--extended-demand-lease' not in c['command'] for c in flights)
+
+
 def test_historical_timing_keeps_contact_rows_without_safety_claim(tmp_path):
     make_references(tmp_path)
     row = json.loads((tmp_path/'references/seed9/sector_summary.json').read_text())
     assert row['time_only'] is True
     assert row['reference_provenance']['historical_contact_runs'] == 1
+
+
+def test_heading_policy_is_explicit_and_mode_bound():
+    body = '[SECTOR_HEADING_POLICY] body_aligned_event=1 velocity_center=0'
+    velocity = '[SECTOR_HEADING_POLICY] body_aligned_event=0 velocity_center=1'
+    sector = '[SECTOR_HEADING_POLICY] body_aligned_event=0 velocity_center=0'
+    assert heading_policy_audit(body, 'adaptive', True)['valid']
+    assert heading_policy_audit(velocity, 'adaptive', False)['valid']
+    assert heading_policy_audit(sector, 'sector', True)['valid']
+    assert heading_policy_audit(sector, 'sector', False)['valid']
+    assert heading_policy_audit('', 'full', True)['valid']
+    for text, mode, enabled in [(body, 'full', True), (body, 'sector', True),
+                                (velocity, 'adaptive', True), ('', 'adaptive', True),
+                                (body + '\n' + body, 'adaptive', True)]:
+        assert not heading_policy_audit(text, mode, enabled)['valid']
 
 
 def test_source_and_event_audits_use_map_name(tmp_path):

@@ -73,7 +73,7 @@ per-algorithm power and energy are not measured.
 ## Execution and status
 
 Controller: `scripts/native_campaign/run_c22_normal_campaign.py`.
-Active root: `results/c22_normal_five_20260916/iteration03` (short-lease candidate).
+Active root: `results/c22_normal_five_20260916/iteration04` (body-aligned event candidate).
 The controller writes immutable plans, per-triplet acceptance, phase gates,
 phase-specific all-metric reports and an atomic `status.json`.
 
@@ -139,3 +139,51 @@ candidate (less deferred replanning), not a proven fix. It reruns every static,
 five-map ON preflight and OFF n5 slot before n20. No runtime/source/binary/map
 changes; only the common environment option changes. Keep the original timing
 gates unless the user explicitly authorizes a prospective protocol change.
+
+### Iteration03 stopped at N4; heading-axis ablation
+
+N1/N2/N3 instrumented triplets passed. N3 F/S/A42.19/40.85/41.95s; although A
+was1.99s faster than iteration02, Full was4.36s slower, so do not present the
+ratio change alone as an optimization. N4(seed7) F/S/A40.58/44.12/45.43s completed
+with contact0 and all source/resource/speed/timing/recovery gates passed, but
+A/F1.1195 failed the1.10 gate. Twelve ON flights, zero OFF pilot/confirmation.
+N5 ON not run. Max odometry receipt gaps F11.168/S15.823/A11.266ms. Paths
+F228.342/S228.037/A228.555m were similar, while accepted brakes F0/S4/A6 differed.
+The six A failures were real CLEARANCE_MARGIN reports, not version races.
+Shorter replanning deferral is not a sufficient demonstrated fix.
+
+Code inspection found a comparison confound: fixed Sector uses body yaw, but
+event Adaptive uses velocity yaw, retained below1.5m/s. This is not yet proven
+to cause the observed delay; previous artifacts do not contain the heading
+time series. A default-OFF option, `SUPER_EVENT_BODY_ALIGNED_SECTOR=1`, now makes
+event Adaptive use the same body axis as fixed Sector. Source acquisition,
+legacy filtering and diagnostic probe use one tested selector. No aperture,
+map, dynamics, guard/certificate, stop/recovery/ACK or Full policy change.
+No unseen points become available in narrow mode. No planner code changes.
+
+Preservation before modification:
+`body_heading_candidate/preservation/frontend_before.tgz`, SHA256
+`2f015e3bfd80955019d6fd39cd15733ba09fefe6c125cf3e882d7e3090884d0e`.
+New component build95s; normal and ASan/UBSan heading tests each60,013 checks;
+Python118 pass. Static proofs now explicitly bind the frontend shared library
+and source/helper as well as executable hashes, and must be regenerated.
+
+Prospective next diagnostic: seed7 three-mode n1, instrumented, common0.25s
+lease, all other iteration03 options fixed; event body axis enabled only where
+applicable. It includes new six-condition DDS and actual RViz tests. A successful
+diagnostic is not an n5/n20 qualification and cannot erase previous failures.
+`run_c22_heading_probe.py` stops and retains evidence on any failure. CPU savings
+remain supplemental ON measurements; do not combine with OFF results.
+
+The seed7 body-heading probe (run12350) passed new DDS/RViz proof and all three
+flight contracts, contact0. F/S/A47.30/47.22/43.03s; accepted brakes6/5/3. Adaptive
+decreased from45.43s and6 brakes in iteration03 to43.03s and3 brakes, but the
+unchanged Full logic varied from40.58s/0 brakes to47.30s/6 brakes. This illustrates
+flight-to-flight trajectory variation; n1 is not causal/statistical proof of the
+heading change's benefit. The candidate now removes the known heading-axis
+confound and has a plausible measured improvement to test prospectively.
+
+Iteration04 freezes event body-heading ON, common0.25s lease, three side workers,
+all maps/modes and the same safety/timing/time guards. Redo every map-specific
+static proof, ON preflight and OFF n5; expand only if that complete cohort passes.
+No old success replaces a new planned slot. No threshold relaxation authorized.
