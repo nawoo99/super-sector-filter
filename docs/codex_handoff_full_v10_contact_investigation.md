@@ -1,6 +1,19 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-17 C25 준비 완료: 사용자 승인으로 동일 C24 후보 Normal 독립 OFF300 검증.**
+> 범위는 현재 코드·설정·맵 고정 및 Normal N1–N5(seed1/3/5/7/9) ×3모드 ×20회뿐이다.
+> C24 frozen862개 파일과 ON/OFF 새 audit/저장gate 일치 모두 확인; runtime 변경 없음.
+> 새 실행기/집중 Python107검사 통과. 먼저 새 DDS30/RViz5와 ON15 후 OFF300 실행 예정.
+> 기존 C24 OFF75/ON15와 합산 금지; 완료 여부는 아래 status의 실제 state로 확인한다.
+> 새 경로 `results/c25_normal_confirmation_20260917/iteration01/status.json`, base-run21000.
+> 자동 retry/실패 대체/Stress 탐색/추가 CPU 튜닝/push 없음. Full/Adaptive 결과 실패는
+> 현재 triplet 종료 후, 계측/소스/복구/자원 오류는 즉시 중단하며 모든 기록을 보존한다.
+> 기본값 OFF async 후보를 3모드 공통 명시적으로 유지. raw-cloud CIRI shadow 기본 false 유지.
+> 이전 CPU35.53%/누적33.13%는 n5 결과이며 40% 달성으로 표현 금지.
+> 프로토콜 `docs/c25_normal_confirmation_20260917.md`; 전체 약6~8시간 예상, 아직300회 완료 아님.
+
+> [!IMPORTANT]
 > **2026-09-17 C24 완료: 정적검증35건·ON15·OFF75 모두 통과. 실행 중 캠페인 없음.**
 > 최신 요청은 질문 없이 N1–N5(seed1/3/5/7/9) × Full/Sector/Adaptive ×5를 계속 진행하는 것.
 > 아래 C23의 답변 대기 상태는 해제됨. 과거 실패 기록은 그대로 보존하며 소급 합격 처리하지 않음.

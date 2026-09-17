@@ -6253,3 +6253,34 @@ Memoryrunaway not reproduced; preventive rejectbranches didnotfire in the
 audited logs, so original memory cause remains unresolved. Detailed map tables
 and all metricdefinitions: docs/c24_normal_results_20260917.md. Runtime edits
 mirrored, sourcebackup retained, no automaticn20 or push.
+
+### 8.101 C25: frozen C24 candidate and independent Normal OFF300 (2026-09-17)
+
+User approved only next steps1–2: freeze the current candidate/settings, then
+Normal N1–N5(seed1/3/5/7/9) × Full/Sector/Adaptive ×20 independent repetitions.
+No runtime/planner/algorithm/map changes, stress search, further CPU tuning,
+or GitHub push are included. C24 OFF75/ON15 and older failures stay separate.
+
+New C25 controller imports C24 gates/memory sentinel without modifying its
+frozen files. Admission independently verifies all862 original input/evidence
+hashes plus fresh ON/OFF audits matching saved gates, exact counts and the
+same async-enabled candidate/options. Preparation passed all admission checks
+and107 focused Python tests. Runtime source/binaries/maps remain unchanged.
+
+Prospective protocol docs/c25_normal_confirmation_20260917.md specifies fresh
+static DDS30/actual RViz5, fresh ON15, then independent OFF300. OFF map order
+uses repeat modulo5: each map occupies each of5 execution positions4 times.
+Mode permutations rotate3–4 times each, not perfect mode-order balance.
+All compute/resource/source/recovery metrics remain logged; ON/OFF costs are
+separate. Sector completion/contact are comparison outcomes, not a safe-only
+preflight filter. Full/Adaptive must complete/contact0 with all original gates.
+
+Failures are retained; no automatic retry/replacement or runtime modification.
+Outcome stop boundary is after current triplet; measurement/resource failures
+stop immediately. Owned composed RSS>4608MiB uses the same bounded20s stack
+capture/contamination policy. Any failed version cannot be called OFF300
+complete. Original CPU40 target remains unmet in C24; reduction is descriptive
+and not a run-selection gate. No population100% or resolved-memory-root-cause
+claim. Target results/c25_normal_confirmation_20260917/iteration01, base-run21000,
+same candidate c24_iteration01; preparation only at this checkpoint, execution
+state comes from status.json. Estimated total6–8hours including new checks.
