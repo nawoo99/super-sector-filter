@@ -6284,3 +6284,20 @@ and not a run-selection gate. No population100% or resolved-memory-root-cause
 claim. Target results/c25_normal_confirmation_20260917/iteration01, base-run21000,
 same candidate c24_iteration01; preparation only at this checkpoint, execution
 state comes from status.json. Estimated total6–8hours including new checks.
+
+Launch preparation correction: iteration01 stopped at its first static DDS
+command because the shell did not source the workspace and could not import
+mars_quadrotor_msgs. Zero flights were attempted. The failed status/plan/log/
+frozen inputs remain untouched. Source /opt/ros/humble/setup.bash and
+/root/super_ws/install/setup.bash; verify ROS imports, then use a new
+iteration02 with the identical controller/protocol/runtime/maps/candidate.
+This is an environment setup correction, not a flight retry or code tuning.
+The protocol shell example presupposes an initialized ROS workspace; include
+these source lines when executing it from a fresh shell. Actual status path
+is results/c25_normal_confirmation_20260917/iteration02/status.json.
+
+Actual launch checkpoint: initialized-workspace imports passed; iteration02
+started10:42KST with controller PID3935880 / PTY84333. First standalone
+reader-first and late DDS cases both valid/returncode0. Fresh static checks
+continue; ON15/OFF300 not yet completed. Frozen runtime and original C24 files
+unchanged. Local preparation commit513fe63, no push.

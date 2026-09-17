@@ -1,12 +1,17 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
-> **2026-09-17 C25 준비 완료: 사용자 승인으로 동일 C24 후보 Normal 독립 OFF300 검증.**
+> **2026-09-17 C25 진행 중: 동일 C24 후보 Normal 독립 OFF300, iteration02.**
 > 범위는 현재 코드·설정·맵 고정 및 Normal N1–N5(seed1/3/5/7/9) ×3모드 ×20회뿐이다.
 > C24 frozen862개 파일과 ON/OFF 새 audit/저장gate 일치 모두 확인; runtime 변경 없음.
 > 새 실행기/집중 Python107검사 통과. 먼저 새 DDS30/RViz5와 ON15 후 OFF300 실행 예정.
 > 기존 C24 OFF75/ON15와 합산 금지; 완료 여부는 아래 status의 실제 state로 확인한다.
-> 새 경로 `results/c25_normal_confirmation_20260917/iteration01/status.json`, base-run21000.
+> 현재 경로 `results/c25_normal_confirmation_20260917/iteration02/status.json`, base-run21000.
+> iteration01은 첫 정적검사에서 workspace 미source로 mars_quadrotor_msgs import 실패;
+> 비행0회, 실패/동결파일 모두 보존. source /opt/ros/humble/setup.bash 및 install/setup.bash
+> 환경 설정만 로드해 iteration02를 새로 시작하며 runtime/실행기/프로토콜은 변경하지 않음.
+> 10:42 KST 실제 시작, controller PID3935880 / PTY84333. 첫 standalone DDS2건 통과.
+> 정적 검사 진행 중이며 아직 ON15/OFF300 완료 아님. 최신실적은 status/raw 자료를 확인.
 > 자동 retry/실패 대체/Stress 탐색/추가 CPU 튜닝/push 없음. Full/Adaptive 결과 실패는
 > 현재 triplet 종료 후, 계측/소스/복구/자원 오류는 즉시 중단하며 모든 기록을 보존한다.
 > 기본값 OFF async 후보를 3모드 공통 명시적으로 유지. raw-cloud CIRI shadow 기본 false 유지.
