@@ -6341,3 +6341,68 @@ OFF300 confirmed: Full/Adaptiveeach100/100complete/contact0; Sector100/100
 complete but N5 r01_run22004 contact1. ON15 and OFF300 stay separate. Original
 records unchanged, no newmap pooling, no population100% or statistically
 established safety superiority from that onecontact. No currentcampaign/push.
+
+### 8.103 G1–G5 manual one-command OFF75 runner, no flights launched (2026-09-18)
+
+User now requests a command they will execute themselves: five new maps,
+Full/Sector/Adaptive each five runs, save completion/contact/computation metrics.
+Implemented an isolated runtime perfect_drone_sim scripts adapter/controller/
+contact observer and tests, mirrored to perfect_drone_sim_scripts/test plus a
+repo convenience launcher. No planner/algorithm/sensor/binary/old helper changes.
+
+Command: `bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh`.
+It sources ROS Humble and current workspace, validates original C25 frozen1396
+files and exact G1–G5 manifest/assets, runs fresh DDS30+actualRViz5, separate
+profiled ON15, then unprofiled primary OFF75. Per-map new ON evidence is required
+for the identical OFF policy; old Normal observations/ON profiles are not reused
+or pooled. Default new timestamp/PID result folder and independent child scratch
+paths prevent cross-run overwrite; no automatic resume/retry/replacement/n20.
+
+New geometry registration derives canonical PCL PointXYZI transport records from
+actual ASCII PCD and validates map SHA identities. These offline expected hashes
+are not a substitute for the future DDS/RViz acceptance checks. Existing loop24,
+v7 configs, C24 async candidate/common3 workers/0.25s policy are preserved. No
+fabricated historical successful time reference; mission time is descriptive.
+
+Observer wraps the hash-pinned existing monitor, has no planner/control output,
+records all received mission odometry and sphere(radius0.2m)-finite-cylinder
+distance against all410 cylinders. Contact episode means entry into the union
+of solids until exit, not frames or number of simultaneously touched objects.
+Analytic contact/geometry/trajectory hashes and legacy sampled-PCD outcomes are
+both retained. Legacy finite-nearest None handling can leave its contact latch
+set after exit and undercount re-entry; no old evidence is rewritten. Primary
+new-map counts use the independent analytic observer. Received-sample results
+are not continuous swept collision proof; missing/incomplete audit is unknown,
+never zero. Audit completion means observer completion, not mission success.
+
+Full/Adaptive failure/contact stops after the current mode triplet; Sector
+outcomes stay in the comparison. Existing measurement/source/recovery/timing/
+resource gates remain, including RSS4608MiB sentinel/contamination policy.
+Interrupted logs and supplemental trajectory evidence are preserved even if no
+usable raw row returns. Invalid retry/infrastructure/contaminated cost rows are
+not included as valid performance in the main table. Whole experiment cgroup
+CPU includes simulator; observer excluded, no planner-only or physical-wire claim.
+
+Controller writes summary_by_map.md/csv per triplet; report_test5 contains all
+captured metrics/distributions/reductions and report_preflight remains separate.
+Unique child scratch path is excluded from legacy report policy fingerprint only
+within this adapter; map/assets/actual runtime options still bind comparisons.
+Manual --report rebuilds reports without flying. Existing output path is refused.
+
+Final offline dry run at results/gapfree_n5_preparation_20260918/dry_run02
+passed, exact plan90flights=separate15+primary75, actual_flights_started=0 and
+stateDRY_RUN_ONLY. No newmap flight/contact/completion claims can be made yet.
+Protocol docs/gapfree_n5_manual_campaign_20260918.md documents scope, counts,
+metric semantics, stop conditions and approximate2–5hour duration (newmap times
+not measured). No GitHub push or active flight campaign initiated by this turn.
+
+Preparation dry_run01 is retained before report-cost-admission hardening;
+only dry_run02 contains the final controller/source fingerprints. Synthetic
+report-only fault injection confirmed invalid retry/infra/resource/speed-cost
+rows no longer enter detailed CPU averages either: source rows/outcomes/contact
+metadata remain, costs are N/A with n_missing. Legacy report files are untouched.
+
+Final regression:67offline tests passed in55.84s, covering original mapgeometry,
+newcontact observer, isolated child differential, exact campaign coverage,
+failure retention and report-only synthetic aggregation. Bash syntax/help and
+final dry-run passed. Actual newmap flights remain0; user launches separately.

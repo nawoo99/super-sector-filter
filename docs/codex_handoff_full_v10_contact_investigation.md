@@ -1,6 +1,21 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-18: G1–G5 수동 한 줄 실행기 준비 완료. 새 맵 실제 비행은 아직0회.**
+> 사용자가 직접 명령을 입력할 예정이므로 이번에는 시뮬레이션을 시작하지 않았다.
+> `bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh`
+> 새 DDS30/RViz5와 별도 ON15 확인 후 Full/Sector/Adaptive ×5맵 ×5회=본시험 OFF75.
+> 실행마다 `results/gapfree_n5_날짜_시간_PID/`에 맵별 결과표/원본/전지표/접촉·odom 저장.
+> Full/Adaptive 미완주·접촉은 현재 triplet 후, 계측·소스·자원 실패는 즉시 중단/보존.
+> Sector 성과는 비교값으로 보존; 자동 retry/실패 대체/기존 Normal 합산/n20/push 없음.
+> 원기둥 형상+기체 반지름0.2m의 수신 pose 표본 접촉 episode를 별도 기록한다.
+> 기존 sampled-PCD 관측도 보존하되 재진입 횟수 한계를 구분; 연속 swept 충돌 증명 아님.
+> planner/센서/알고리즘/바이너리는 변경하지 않고 hash-pinned 기존 helper를 새 adapter에서 사용.
+> 최종 dry-run 통과: `results/gapfree_n5_preparation_20260918/dry_run02/status.json`.
+> `DRY_RUN_ONLY`는 완주·안전 검증 결과가 아니다. 사용자가 실행하면 최신 상태를 새 폴더에서 확인.
+> 상세 `docs/gapfree_n5_manual_campaign_20260918.md` 및 §8.103. 아래 맵 생성 기록은 그대로 유효.
+
+> [!IMPORTANT]
 > **2026-09-18: 지름1m·강제 minimum gap1m 제거한 G1–G5 생성 완료, 비행0회.**
 > 사용자는 새5맵과 추후 모드별5회를 원하지만 이번에는 '일단 맵만' 명시. ROS 미실행.
 > gapfree_d1_m01..05, 각410개·높이3m·64×64m, 균일 난수 nonoverlap 배치.
