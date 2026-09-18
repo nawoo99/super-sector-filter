@@ -22,6 +22,7 @@
 */
 
 #include "rog_map/rog_map.h"
+#include "rog_map/diagnostic_trace.hpp"
 #include "rog_map/occupied_box_scan.hpp"
 #include "rog_map/snapshot_line_query.hpp"
 #include "rog_map/snapshot_neighborhood_cache.hpp"
@@ -282,6 +283,28 @@ void ROGMap::publishCommittedSnapshot(const std::uint64_t version) {
         // it is no longer "never observed".
         setSnapshotBit(next->probability.known_pages, raw_known_mutable_pages, hash_id,
                        !ProbMap::isUnknown(prob));
+        if (contact_trace::enabled()) {
+            Vec3f position;
+            hashIdToPos(hash_id, position);
+            if (contact_trace::inRoi(position.x(), position.y(), position.z())) {
+                try {
+                    auto fields = contact_trace::stream();
+                    fields << "\"map_version\":" << version
+                           << ",\"hash_id\":" << hash_id
+                           << ",\"position\":["
+                           << contact_trace::number(position.x()) << ','
+                           << contact_trace::number(position.y()) << ','
+                           << contact_trace::number(position.z()) << ']'
+                           << ",\"log_odds\":" << contact_trace::number(prob)
+                           << ",\"occupied\":"
+                           << (ProbMap::isOccupied(prob) ? "true" : "false")
+                           << ",\"known\":"
+                           << (!ProbMap::isUnknown(prob) ? "true" : "false");
+                    contact_trace::submit("map_snapshot_raw_delta", fields.str());
+                } catch (...) {
+                }
+            }
+        }
     }
     for (const int hash_id : inf_dirty) {
         setSnapshotBit(next->inflation.occupied_pages, inf_mutable_pages, hash_id,
@@ -291,6 +314,17 @@ void ROGMap::publishCommittedSnapshot(const std::uint64_t version) {
     next->map_empty = map_empty_;
     std::shared_ptr<const PublishedMapSnapshot> immutable_next = next;
     std::atomic_store_explicit(&published_snapshot_, immutable_next, std::memory_order_release);
+    if (contact_trace::enabled()) {
+        try {
+            auto fields = contact_trace::stream();
+            fields << "\"map_version\":" << version
+                   << ",\"raw_dirty\":" << raw_dirty.size()
+                   << ",\"inflation_dirty\":" << inf_dirty.size()
+                   << ",\"map_empty\":" << (map_empty_ ? "true" : "false");
+            contact_trace::submit("map_snapshot_commit", fields.str());
+        } catch (...) {
+        }
+    }
 }
 
 bool ROGMap::insideLocalMap(const Vec3f& pos) const {

@@ -6406,3 +6406,77 @@ Final regression:67offline tests passed in55.84s, covering original mapgeometry,
 newcontact observer, isolated child differential, exact campaign coverage,
 failure retention and report-only synthetic aggregation. Bash syntax/help and
 final dry-run passed. Actual newmap flights remain0; user launches separately.
+
+### 8.104 G1/G4 contact reproduction and observation-only diagnostic overlay (2026-09-18)
+
+The “no new-map flights” state in §8.103 was superseded by two manual user
+runs. `results/gapfree_n5_20260918_110107_690945` completed exactly the first
+G1 profiled triplet, then stopped: Full and Sector had zero analytic contact,
+while Adaptive completed with one 170ms contact episode (minimum clearance
+-0.115130m) against cylinder68. No OFF75 run started. The second independent
+manual run `results/gapfree_n5_20260918_130318_768999` passed all40 static
+checks and the G1–G3 preflight triplets, then stopped after the complete G4
+triplet. G4 Full completed/contact0; Sector completed/contact1; Adaptive
+completed/contact1. Adaptive minimum clearance was -0.138736m at cylinder169
+center(-20.058447,-23.440861), and the failed verification check was exactly
+`adaptive:zero_contact`. This is an intended safety-gate stop, not a Python or
+launch crash. Both stopped result trees remain immutable evidence.
+
+The user requested modification only and will run the next flight manually.
+No planner decision, safety threshold, profile, map, obstacle or mission was
+changed. Added an opt-in, default-OFF asynchronous JSONL trace selected only by
+`SUPER_G1_CONTACT_TRACE_DIR`; the ROI center is independently configurable by
+`SUPER_CONTACT_TRACE_CENTER_X/Y` so G1 is no longer hard-coded. Ground-truth
+coordinates select records only and are never fed into planning or safety.
+The bounded writer uses a4096-record/16MiB queue,1MiB record cap,256MiB file
+cap, exclusive creation, drop/error counters and graceful footer.
+
+The diagnostic chain now retains: (1) pre-injection renderer point samples and
+sensor pose/acquisition mode; (2) post-sector map input point samples; (3)
+near-range/intensity/temporal/out-of-map/duplicate-hit accounting; (4) ROI
+probability hit/miss state transitions and committed snapshot deltas; (5)
+trajectory guard query and physical-body results, including the intentional
+difference between configured and effective `unknown_as_occupied`; (6) commands
+only after actual ROS publication; and (7) external odometry, PositionCommand
+and complete PolynomialTrajectory coefficients. Trace exceptions and queue
+drops do not alter return values. CPU/timing from this run is diagnostic-only
+and cannot enter the primary mode comparison.
+
+A separate exactly-one-flight runner copies the failed triplet's effective
+Adaptive options and environment, prohibits retry, refuses existing result
+folders, preserves the original install/config/map hashes, waits for the
+external observer, enforces the existing4608MiB owned-RSS guard and labels the
+result DIAGNOSTIC_CONTACT/NO_CONTACT/INVALID. It was generalized to take the
+selected map from the supplied baseline plan. G4 trace center and baseline
+were admitted with prepare-only at
+`results/gapfree_contact_diagnostic_g4_prepared_20260918`; status is
+PREPARED_ONLY and actual_flights=0.
+
+The original `/root/super_ws/install` was not rebuilt. Diagnostic packages
+were compiled into `/root/super_ws/g1_contact_diag_20260918/install` in
+rog_map→super_planner→perfect_drone_sim order. Existing project CMake files had
+hard-coded `CMAKE_PREFIX_PATH` assignments that silently selected old
+dependencies; those assignments were removed so the colcon/ament ordered
+overlay is honored. Configure output and package-prefix probes confirmed all
+three diagnostic packages resolve to the separate prefix. The final Adaptive
+binary contains all eight trace record families and differs from the original
+binary, as expected. Standalone C++ trace tests, Python recorder/runner20 tests,
+full C++ package builds and G4 prepare-only passed. No simulator/node/flight was
+launched by this modification session.
+
+Manual next command (exactly one G4 Adaptive diagnostic flight, no retry):
+
+```bash
+python3 /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/scripts/run_g1_contact_diagnostic.py \
+  --output /root/super-sector-filter/results/gapfree_contact_diag_g4_$(date +%Y%m%d_%H%M%S) \
+  --baseline /root/super-sector-filter/results/gapfree_n5_20260918_130318_768999/preflight/gapfree_d1_m04/r01_run30003 \
+  --diagnostic-install /root/super_ws/g1_contact_diag_20260918/install \
+  --trace-center-x -20.058447 --trace-center-y -23.440861 \
+  --run-id 31004 --run
+```
+
+Do not use this one diagnostic observation as a replacement trial or combine
+its cost with ON/OFF campaign results. Analyze whether the relevant cylinder
+was absent at render time, removed by sector acquisition, admitted/erased in
+the map, missed by the effective known-space guard, or absent from the
+published polynomial before any algorithm change or campaign restart.

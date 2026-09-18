@@ -17,8 +17,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g -fPIC")
 add_compile_options(-DQT_NO_VERSION_TAGGING)
 add_definitions(-DROOT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/\")
 
-# for CLION to search the package
-set(CMAKE_PREFIX_PATH ../../../../install)
+# Do not override the ordered colcon/ament underlay and overlay prefixes.
+# A hard-coded legacy install here prevents a separate diagnostic build from
+# selecting its matching super_planner and rog_map artifacts.
 
 ## ROS Related packages
 find_package(ament_cmake REQUIRED)

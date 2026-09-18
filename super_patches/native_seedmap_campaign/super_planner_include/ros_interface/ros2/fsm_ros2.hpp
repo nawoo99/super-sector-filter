@@ -36,6 +36,7 @@
 #include "fsm/path_publication_policy.hpp"
 #include <super_utils/thread_cpu_profile.hpp>
 #include <super_utils/callback_timing_trace.hpp>
+#include <rog_map/diagnostic_trace.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 #include <ros_interface/ros2/ros2_interface.hpp>
@@ -3455,10 +3456,48 @@ namespace fsm {
 
         void recordPublishedCommand(
                 const mars_quadrotor_msgs::msg::PositionCommand &command) {
-            std::lock_guard<std::mutex> lock(latest_cmd_mutex_);
-            last_published_cmd_ = command;
-            last_published_cmd_wt_ = ros_ptr_->getSimTime();
-            last_published_cmd_valid_ = true;
+            {
+                std::lock_guard<std::mutex> lock(latest_cmd_mutex_);
+                last_published_cmd_ = command;
+                last_published_cmd_wt_ = ros_ptr_->getSimTime();
+                last_published_cmd_valid_ = true;
+            }
+            // Called only after cmd_pub_->publish(), so this row describes a
+            // command that was actually handed to ROS rather than a prepared
+            // sample later rejected by a safety transaction.
+            if (rog_map::contact_trace::enabled()) {
+                try {
+                    const auto health = map_ptr_->getMapHealthSnapshot();
+                    auto fields = rog_map::contact_trace::stream();
+                    fields << "\"stamp_sec\":" << command.header.stamp.sec
+                           << ",\"stamp_nanosec\":" << command.header.stamp.nanosec
+                           << ",\"trajectory_id\":" << command.trajectory_id
+                           << ",\"trajectory_flag\":" << command.trajectory_flag
+                           << ",\"committed_generation_now\":"
+                           << planner_ptr_->getCommittedTrajectoryGeneration()
+                           << ",\"map_version_now\":" << health.map_version
+                           << ",\"map_update_in_progress\":"
+                           << (health.update_in_progress ? "true" : "false")
+                           << ",\"position\":["
+                           << rog_map::contact_trace::number(command.position.x) << ','
+                           << rog_map::contact_trace::number(command.position.y) << ','
+                           << rog_map::contact_trace::number(command.position.z) << ']'
+                           << ",\"velocity\":["
+                           << rog_map::contact_trace::number(command.velocity.x) << ','
+                           << rog_map::contact_trace::number(command.velocity.y) << ','
+                           << rog_map::contact_trace::number(command.velocity.z) << ']'
+                           << ",\"acceleration\":["
+                           << rog_map::contact_trace::number(command.acceleration.x) << ','
+                           << rog_map::contact_trace::number(command.acceleration.y) << ','
+                           << rog_map::contact_trace::number(command.acceleration.z) << ']'
+                           << ",\"yaw\":"
+                           << rog_map::contact_trace::number(command.yaw)
+                           << ",\"yaw_dot\":"
+                           << rog_map::contact_trace::number(command.yaw_dot);
+                    rog_map::contact_trace::submit("published_position_command", fields.str());
+                } catch (...) {
+                }
+            }
         }
 
     public:

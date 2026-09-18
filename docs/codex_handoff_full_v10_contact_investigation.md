@@ -1,6 +1,25 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-18: G1/G4 Adaptive 접촉 재현, 진단 전용 수정·별도 빌드 완료. 비행은 사용자가 실행.**
+> 기존의 “새 맵 비행 0회” 배너는 더 이상 최신 상태가 아니다. 사용자가 수동 캠페인을
+> 두 번 실행했다. 첫 실행 `gapfree_n5_20260918_110107_690945`은 G1 triplet에서
+> Full/Sector 접촉0, Adaptive 접촉1로 중단했다. 두 번째
+> `gapfree_n5_20260918_130318_768999`은 G1–G3 preflight를 통과한 뒤 G4에서
+> Full0/Sector1/Adaptive1 접촉으로 중단했다. 모두 완주했지만 Adaptive zero-contact
+> gate 실패이며 실행기 오류가 아니다. 실패 자료를 삭제하거나 성공으로 대체하지 말 것.
+> planner 의사결정·파라미터·맵은 바꾸지 않고 기본 OFF 진단 기록만 추가했다. 렌더 원점군,
+> 맵 입력, hit/miss와 snapshot delta, guard query의 effective/configured unknown 정책,
+> 실제 발행 명령 및 외부 trajectory/odom을 같은 시간축으로 저장한다. G1 하드코딩을 제거해
+> 환경변수로 ROI 중심을 선택한다. 기존 install은 유지하고 진단본만
+> `/root/super_ws/g1_contact_diag_20260918/install`에 빌드했다. 두 패키지의 hard-coded
+> CMAKE_PREFIX_PATH도 제거해 실제 overlay rog_map/super_planner가 선택됨을 확인했다.
+> C++ standalone 및 Python20검사, 전체 진단 빌드 통과. G4 prepare-only는
+> `results/gapfree_contact_diagnostic_g4_prepared_20260918`, actual_flights=0.
+> 다음은 사용자가 아래 §8.104의 G4 Adaptive 1회 명령을 직접 실행하는 것. 자동 retry,
+> 75회 재시작, 알고리즘 튜닝, 본 CPU/안전성 표 합산은 금지. 상세 §8.104.
+
+> [!IMPORTANT]
 > **2026-09-18: G1–G5 수동 한 줄 실행기 준비 완료. 새 맵 실제 비행은 아직0회.**
 > 사용자가 직접 명령을 입력할 예정이므로 이번에는 시뮬레이션을 시작하지 않았다.
 > `bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh`

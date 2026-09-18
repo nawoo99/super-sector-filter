@@ -22,8 +22,60 @@
 */
 
 #include <rog_map/prob_map.h>
+#include <rog_map/diagnostic_trace.hpp>
 using namespace rog_map;
 using namespace super_utils;
+
+namespace {
+const char* gridTypeName(const GridType type) noexcept {
+    switch (type) {
+        case GridType::OCCUPIED: return "occupied";
+        case GridType::KNOWN_FREE: return "known_free";
+        case GridType::UNKNOWN: return "unknown";
+        default: return "undefined";
+    }
+}
+
+void traceMapInputCloud(const PointCloud& cloud, const Pose& pose,
+                        const std::uint64_t payload_bytes,
+                        const std::uint32_t point_step) noexcept {
+    if (!contact_trace::enabled()) return;
+    try {
+        std::size_t roi_count = 0;
+        std::size_t retained_count = 0;
+        constexpr std::size_t kPointCap = 4096;
+        auto fields = contact_trace::stream();
+        fields << "\"cloud_points\":" << cloud.size()
+               << ",\"payload_bytes\":" << payload_bytes
+               << ",\"point_step\":" << point_step
+               << ",\"sensor_position\":["
+               << contact_trace::number(pose.first.x()) << ','
+               << contact_trace::number(pose.first.y()) << ','
+               << contact_trace::number(pose.first.z()) << ']'
+               << ",\"roi_points\":[";
+        bool first = true;
+        for (const auto& point : cloud) {
+            if (!contact_trace::inRoi(point.x, point.y, point.z)) continue;
+            ++roi_count;
+            if (retained_count >= kPointCap) continue;
+            if (!first) fields << ',';
+            first = false;
+            fields << '[' << contact_trace::number(point.x) << ','
+                   << contact_trace::number(point.y) << ','
+                   << contact_trace::number(point.z) << ','
+                   << contact_trace::number(point.intensity) << ']';
+            ++retained_count;
+        }
+        fields << "],\"roi_count\":" << roi_count
+               << ",\"roi_retained\":" << retained_count
+               << ",\"roi_truncated\":"
+               << (roi_count > retained_count ? "true" : "false");
+        contact_trace::submit("map_input_cloud", fields.str());
+    } catch (...) {
+        // Diagnostic output must never affect map processing.
+    }
+}
+}  // namespace
 
 void ProbMap::initProbMap() {
     static bool init_once{false};
@@ -319,6 +371,7 @@ ProbMapUpdateResult ProbMap::updateProbMap(
         const PointCloud& cloud, const Pose& pose,
         std::uint64_t payload_bytes, std::uint32_t point_step) {
     ProbMapUpdateResult result;
+    traceMapInputCloud(cloud, pose, payload_bytes, point_step);
     TimeConsuming tc("updateMap", false);
     const Vec3f& pos = pose.first;
     time_consuming_[4] = cloud.size();
@@ -624,6 +677,7 @@ void ProbMap::probabilisticMapFromCache() {
 
 void ProbMap::hitPointUpdate(const Vec3f& pos, const int& hash_id, const int& hit_num) {
     float& ret = occupancy_buffer_[hash_id];
+    const float before_probability = ret;
     GridType from_type = UNDEFINED;
 
     if (isOccupied(ret)) {
@@ -669,10 +723,28 @@ void ProbMap::hitPointUpdate(const Vec3f& pos, const int& hash_id, const int& hi
             fcnt_map_->updateFrontierCounter(id_g, false);
         }
     }
+    if (contact_trace::enabled() && contact_trace::inRoi(pos.x(), pos.y(), pos.z())) {
+        try {
+            auto fields = contact_trace::stream();
+            fields << "\"operation\":\"hit\",\"position\":["
+                   << contact_trace::number(pos.x()) << ','
+                   << contact_trace::number(pos.y()) << ','
+                   << contact_trace::number(pos.z()) << ']'
+                   << ",\"hash_id\":" << hash_id
+                   << ",\"count\":" << hit_num
+                   << ",\"before_log_odds\":" << contact_trace::number(before_probability)
+                   << ",\"after_log_odds\":" << contact_trace::number(ret)
+                   << ",\"from\":\"" << gridTypeName(from_type)
+                   << "\",\"to\":\"" << gridTypeName(to_type) << '\"';
+            contact_trace::submit("map_probability_update", fields.str());
+        } catch (...) {
+        }
+    }
 }
 
 void ProbMap::missPointUpdate(const Vec3f& pos, const int& hash_id, const int& hit_num) {
     float& ret = occupancy_buffer_[hash_id];
+    const float before_probability = ret;
     GridType from_type;
     if (isOccupied(ret)) {
         from_type = GridType::OCCUPIED;
@@ -718,9 +790,34 @@ void ProbMap::missPointUpdate(const Vec3f& pos, const int& hash_id, const int& h
             fcnt_map_->updateFrontierCounter(id_g, true);
         }
     }
+    if (contact_trace::enabled() && contact_trace::inRoi(pos.x(), pos.y(), pos.z())) {
+        try {
+            auto fields = contact_trace::stream();
+            fields << "\"operation\":\"miss\",\"position\":["
+                   << contact_trace::number(pos.x()) << ','
+                   << contact_trace::number(pos.y()) << ','
+                   << contact_trace::number(pos.z()) << ']'
+                   << ",\"hash_id\":" << hash_id
+                   << ",\"count\":" << hit_num
+                   << ",\"before_log_odds\":" << contact_trace::number(before_probability)
+                   << ",\"after_log_odds\":" << contact_trace::number(ret)
+                   << ",\"from\":\"" << gridTypeName(from_type)
+                   << "\",\"to\":\"" << gridTypeName(to_type) << '\"';
+            contact_trace::submit("map_probability_update", fields.str());
+        } catch (...) {
+        }
+    }
 }
 
 void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odom) {
+    const bool trace_enabled = contact_trace::enabled();
+    std::size_t trace_roi_input = 0;
+    std::size_t trace_roi_intensity_rejected = 0;
+    std::size_t trace_roi_temporal_rejected = 0;
+    std::size_t trace_roi_outside_map = 0;
+    std::size_t trace_roi_near_range_rejected = 0;
+    std::size_t trace_roi_duplicate_hit = 0;
+    std::size_t trace_roi_hit_inserted = 0;
     // bounding box of updated region
     raycast_data_.cache_box_min = cur_odom;
     raycast_data_.cache_box_max = cur_odom;
@@ -741,14 +838,19 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
     // 1) process all non-inf points, update occupied probability
     int temperol_cnt{0};
     for (const auto& pcl_p : input_cloud) {
+        const bool trace_roi_point = trace_enabled &&
+                contact_trace::inRoi(pcl_p.x, pcl_p.y, pcl_p.z);
+        if (trace_roi_point) ++trace_roi_input;
         // 1.1) intensity filter
         if (cfg_.intensity_thresh > 0 &&
             pcl_p.intensity < cfg_.intensity_thresh) {
+            if (trace_roi_point) ++trace_roi_intensity_rejected;
             continue;
         }
 
         // 1.2) temporal filter
         if (temperol_cnt++ % cfg_.point_filt_num) {
+            if (trace_roi_point) ++trace_roi_temporal_rejected;
             continue;
         }
 
@@ -760,6 +862,7 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
             if (insideLocalMap(p)) {
                 double sqrdis = (p - cur_odom).squaredNorm();
                 if(sqrdis<cfg_.sqr_raycast_range_min){
+                    if (trace_roi_point) ++trace_roi_near_range_rejected;
                     continue;
                 }
                 posToGlobalIndex(p, pt_id_g);
@@ -768,6 +871,7 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
                         raycast_data_.sparse_update_counts.find(hit_hash);
                 if (sparse_it != raycast_data_.sparse_update_counts.end() &&
                     sparse_it->second.hit_cnt > 0) {
+                    if (trace_roi_point) ++trace_roi_duplicate_hit;
                     // The probability cache is voxel-indexed and a single
                     // p_hit=0.9 observation already crosses the configured
                     // occupied threshold (p_occ=0.85).  Repeating the same
@@ -780,6 +884,7 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
                     continue;
                 }
                 insertUpdateCandidate(pt_id_g, true);
+                if (trace_roi_point) ++trace_roi_hit_inserted;
                 // record cache box size;
                 raycast_data_.cache_box_min = raycast_data_.cache_box_min.cwiseMin(p);
                 raycast_data_.cache_box_max = raycast_data_.cache_box_max.cwiseMax(p);
@@ -819,6 +924,9 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
                     }
                     insertUpdateCandidate(cur_ray_id_g, false);
                 }
+            }
+            else if (trace_roi_point) {
+                ++trace_roi_outside_map;
             }
             continue;
         }
@@ -891,6 +999,26 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
                 }
                 insertUpdateCandidate(cur_ray_id_g, false);
             }
+        }
+    }
+    if (trace_enabled) {
+        try {
+            auto fields = contact_trace::stream();
+            fields << "\"raycasting_enabled\":" << (cfg_.raycasting_en ? "true" : "false")
+                   << ",\"input_points\":" << input_cloud.size()
+                   << ",\"sensor_position\":["
+                   << contact_trace::number(cur_odom.x()) << ','
+                   << contact_trace::number(cur_odom.y()) << ','
+                   << contact_trace::number(cur_odom.z()) << ']'
+                   << ",\"roi_input\":" << trace_roi_input
+                   << ",\"roi_intensity_rejected\":" << trace_roi_intensity_rejected
+                   << ",\"roi_temporal_rejected\":" << trace_roi_temporal_rejected
+                   << ",\"roi_outside_map\":" << trace_roi_outside_map
+                   << ",\"roi_near_range_rejected\":" << trace_roi_near_range_rejected
+                   << ",\"roi_duplicate_hit\":" << trace_roi_duplicate_hit
+                   << ",\"roi_hit_inserted\":" << trace_roi_hit_inserted;
+            contact_trace::submit("map_raycast_summary", fields.str());
+        } catch (...) {
         }
     }
 }

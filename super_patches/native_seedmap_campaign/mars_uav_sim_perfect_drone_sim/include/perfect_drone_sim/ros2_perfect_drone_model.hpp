@@ -22,6 +22,7 @@
 #ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
 #include <super_utils/thread_cpu_profile.hpp>
 #include <super_utils/callback_timing_trace.hpp>
+#include <rog_map/diagnostic_trace.hpp>
 #endif
 #include "tf2_ros/transform_broadcaster.h"
 #include <chrono>
@@ -772,6 +773,61 @@ namespace perfect_drone {
             const auto cur_t = sensor_fixed_render_time_s_.value_or(
                     this->get_clock()->now().seconds());
             render_ptr_->renderOnceInWorld(scan_position, scan_rotation, cur_t, local_map);
+#ifdef SUPER_SIM_CPU_PROFILE_SUPPORT
+            // Opt-in diagnostic evidence from the renderer output before any
+            // synthetic injection, PointCloud2 conversion, filtering, or map
+            // update.  It is never consulted by acquisition or flight logic.
+            if (rog_map::contact_trace::enabled()) {
+                try {
+                    std::size_t roi_count = 0;
+                    std::size_t retained_count = 0;
+                    constexpr std::size_t kPointCap = 4096;
+                    auto fields = rog_map::contact_trace::stream();
+                    fields << "\"frame\":" << (sensor_frame_count_ + 1)
+                           << ",\"stamp_ns\":" << acquisition_stamp.nanoseconds()
+                           << ",\"acquisition_enabled\":"
+                           << (acquisition.enabled ? "true" : "false")
+                           << ",\"full\":" << (acquisition.full ? "true" : "false")
+                           << ",\"cycle\":" << acquisition.cycle
+                           << ",\"center_yaw_rad\":"
+                           << rog_map::contact_trace::number(acquisition.center_yaw_rad)
+                           << ",\"half_angle_deg\":"
+                           << rog_map::contact_trace::number(acquisition.half_angle_deg)
+                           << ",\"sensor_position\":["
+                           << rog_map::contact_trace::number(scan_position.x()) << ','
+                           << rog_map::contact_trace::number(scan_position.y()) << ','
+                           << rog_map::contact_trace::number(scan_position.z()) << ']'
+                           << ",\"sensor_quaternion_xyzw\":["
+                           << rog_map::contact_trace::number(scan_rotation.x()) << ','
+                           << rog_map::contact_trace::number(scan_rotation.y()) << ','
+                           << rog_map::contact_trace::number(scan_rotation.z()) << ','
+                           << rog_map::contact_trace::number(scan_rotation.w()) << ']'
+                           << ",\"rendered_points\":" << local_map->size()
+                           << ",\"roi_points\":[";
+                    bool first = true;
+                    for (const auto& point : *local_map) {
+                        if (!rog_map::contact_trace::inRoi(point.x, point.y, point.z))
+                            continue;
+                        ++roi_count;
+                        if (retained_count >= kPointCap) continue;
+                        if (!first) fields << ',';
+                        first = false;
+                        fields << '[' << rog_map::contact_trace::number(point.x) << ','
+                               << rog_map::contact_trace::number(point.y) << ','
+                               << rog_map::contact_trace::number(point.z) << ','
+                               << rog_map::contact_trace::number(point.intensity) << ']';
+                        ++retained_count;
+                    }
+                    fields << "],\"roi_count\":" << roi_count
+                           << ",\"roi_retained\":" << retained_count
+                           << ",\"roi_truncated\":"
+                           << (roi_count > retained_count ? "true" : "false");
+                    rog_map::contact_trace::submit("sensor_render_cloud", fields.str());
+                } catch (...) {
+                    // Observation must not change the renderer handoff.
+                }
+            }
+#endif
             appendSideEntryV1(position_, local_map);
             auto pc_msg = std::make_shared<sensor_msgs::msg::PointCloud2>();
             pcl::toROSMsg(*local_map, *pc_msg);

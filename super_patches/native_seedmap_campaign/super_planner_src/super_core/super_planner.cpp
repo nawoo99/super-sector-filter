@@ -23,6 +23,7 @@
 
 #include <super_core/super_planner.h>
 #include <super_core/planner_sequence_guards.hpp>
+#include <rog_map/diagnostic_trace.hpp>
 #include <memory>
 #include <algorithm>
 #include <chrono>
@@ -245,6 +246,28 @@ namespace super_planner {
                 thread_cpu_profile::Stage::PlannerValidateGeometry);
         TrajectorySafetyResult result;
         result.trajectory_generation = trajectory_generation;
+        if (rog_map::contact_trace::enabled()) {
+            try {
+                auto fields = rog_map::contact_trace::stream();
+                fields << "\"trajectory_generation\":" << trajectory_generation
+                       << ",\"checked_from_tt_requested\":"
+                       << rog_map::contact_trace::number(checked_from_tt)
+                       << ",\"allow_initial_clearance_escape\":"
+                       << (allow_initial_clearance_escape ? "true" : "false")
+                       << ",\"effective_unknown_as_occupied\":"
+                       << (unknown_as_occupied ? "true" : "false")
+                       << ",\"configured_unknown_as_occupied\":"
+                       << (cfg_.trajectory_guard_unknown_as_occupied ? "true" : "false")
+                       << ",\"hard_current_pose_present\":"
+                       << (hard_current_pose != nullptr ? "true" : "false")
+                       << ",\"force_initial_footprint\":"
+                       << (test_force_initial_footprint_occupancy ? "true" : "false")
+                       << ",\"trajectory_empty\":"
+                       << (trajectory.empty() ? "true" : "false");
+                rog_map::contact_trace::submit("trajectory_validation_start", fields.str());
+            } catch (...) {
+            }
+        }
         if (!trajectoryValidationEnabled()) {
             result.status = TrajectorySafetyStatus::DISABLED;
             return result;
@@ -414,6 +437,53 @@ namespace super_planner {
             previous_point = next_point;
         }
 
+        if (rog_map::contact_trace::enabled()) {
+            try {
+                std::size_t roi_count = 0;
+                std::size_t retained_count = 0;
+                constexpr std::size_t kQueryCap = 4096;
+                auto fields = rog_map::contact_trace::stream();
+                fields << "\"trajectory_generation\":" << trajectory_generation
+                       << ",\"effective_unknown_as_occupied\":"
+                       << (unknown_as_occupied ? "true" : "false")
+                       << ",\"configured_unknown_as_occupied\":"
+                       << (cfg_.trajectory_guard_unknown_as_occupied ? "true" : "false")
+                       << ",\"query_count\":" << map_queries.size()
+                       << ",\"roi_queries\":[";
+                bool first = true;
+                for (const auto& query : map_queries) {
+                    if (!rog_map::contact_trace::inRoi(
+                                query.physical_center.x(), query.physical_center.y(),
+                                query.physical_center.z()) &&
+                        !rog_map::contact_trace::inRoi(
+                                query.point.x(), query.point.y(), query.point.z()))
+                        continue;
+                    ++roi_count;
+                    if (retained_count >= kQueryCap) continue;
+                    if (!first) fields << ',';
+                    first = false;
+                    fields << "{\"point\":["
+                           << rog_map::contact_trace::number(query.point.x()) << ','
+                           << rog_map::contact_trace::number(query.point.y()) << ','
+                           << rog_map::contact_trace::number(query.point.z())
+                           << "],\"physical_center\":["
+                           << rog_map::contact_trace::number(query.physical_center.x()) << ','
+                           << rog_map::contact_trace::number(query.physical_center.y()) << ','
+                           << rog_map::contact_trace::number(query.physical_center.z())
+                           << "],\"tt\":" << rog_map::contact_trace::number(query.tt)
+                           << ",\"hard_body_clearance\":"
+                           << (query.hard_body_clearance ? "true" : "false") << '}';
+                    ++retained_count;
+                }
+                fields << "],\"roi_query_count\":" << roi_count
+                       << ",\"roi_query_retained\":" << retained_count
+                       << ",\"roi_query_truncated\":"
+                       << (roi_count > retained_count ? "true" : "false");
+                rog_map::contact_trace::submit("trajectory_validation_queries", fields.str());
+            } catch (...) {
+            }
+        }
+
         // Trajectory evaluation and voxel traversal above are immutable CPU
         // work. Hold the shared map transaction only while reading the prepared
         // voxel set, so map commits are not stalled for the full validation.
@@ -449,12 +519,41 @@ namespace super_planner {
                 : hard_current_pose;
         const auto physical_body_occupied =
                 [this, &map_config, hard_current_pose, footprint_origin,
-                 allow_initial_clearance_escape,
+                allow_initial_clearance_escape,
                  test_force_initial_footprint_occupancy, &result](
                         const Vec3f &point,
                         const bool allow_initial_footprint_mask) {
+            const auto trace_body_query = [&](const char* verdict,
+                                              const char* reason,
+                                              const std::size_t occupied_count,
+                                              const double nearest_distance) noexcept {
+                if (!rog_map::contact_trace::enabled() ||
+                    !rog_map::contact_trace::inRoi(point.x(), point.y(), point.z()))
+                    return;
+                try {
+                    auto fields = rog_map::contact_trace::stream();
+                    fields << "\"point\":["
+                           << rog_map::contact_trace::number(point.x()) << ','
+                           << rog_map::contact_trace::number(point.y()) << ','
+                           << rog_map::contact_trace::number(point.z()) << ']'
+                           << ",\"verdict\":\"" << verdict
+                           << "\",\"reason\":\"" << reason
+                           << "\",\"occupied_candidates\":" << occupied_count
+                           << ",\"nearest_occupied_distance\":"
+                           << rog_map::contact_trace::number(nearest_distance)
+                           << ",\"robot_radius\":"
+                           << rog_map::contact_trace::number(cfg_.robot_r)
+                           << ",\"initial_footprint_mask_allowed\":"
+                           << (allow_initial_footprint_mask ? "true" : "false");
+                    rog_map::contact_trace::submit(
+                            "trajectory_physical_body_query", fields.str());
+                } catch (...) {
+                }
+            };
             if (point.z() <= map_config.virtual_ground_height + cfg_.robot_r ||
                 point.z() >= map_config.virtual_ceil_height - cfg_.robot_r) {
+                trace_body_query("occupied", "vertical_bound", 0,
+                                 std::numeric_limits<double>::quiet_NaN());
                 return true;
             }
             vec_E<Vec3f> occupied_points;
@@ -470,9 +569,11 @@ namespace super_planner {
                 (point - *footprint_origin).norm() <= cfg_.robot_r) {
                 occupied_points.push_back(*footprint_origin);
             }
+            double nearest_distance = std::numeric_limits<double>::infinity();
             for (const auto &occupied_point : occupied_points) {
                 const double candidate_distance =
                         (occupied_point - point).norm();
+                nearest_distance = std::min(nearest_distance, candidate_distance);
                 if (candidate_distance <= cfg_.robot_r + 1.0e-9) {
                     const double initial_distance =
                             footprint_origin != nullptr
@@ -502,9 +603,13 @@ namespace super_planner {
                         result.used_initial_footprint_egress = true;
                         continue;
                     }
+                    trace_body_query("occupied", "raw_occupied_voxel",
+                                     occupied_points.size(), nearest_distance);
                     return true;
                 }
             }
+            trace_body_query("clear", "no_raw_occupied_voxel_within_body",
+                             occupied_points.size(), nearest_distance);
             return false;
         };
         // The per-segment DDA emits a voxel centre and the exact polynomial
@@ -529,8 +634,48 @@ namespace super_planner {
             if (expired()) return result;
             const auto &query = map_queries[query_index];
             const auto &point = query.point;
+            const auto trace_guard_query = [&](const char* verdict,
+                                               const bool unobserved,
+                                               const bool inflated_occupied,
+                                               const bool physical_occupied) noexcept {
+                if (!rog_map::contact_trace::enabled() ||
+                    (!rog_map::contact_trace::inRoi(
+                             point.x(), point.y(), point.z()) &&
+                     !rog_map::contact_trace::inRoi(
+                             query.physical_center.x(), query.physical_center.y(),
+                             query.physical_center.z())))
+                    return;
+                try {
+                    auto fields = rog_map::contact_trace::stream();
+                    fields << "\"trajectory_generation\":" << trajectory_generation
+                           << ",\"map_version\":" << result.map_version
+                           << ",\"query_index\":" << query_index
+                           << ",\"tt\":" << rog_map::contact_trace::number(query.tt)
+                           << ",\"point\":["
+                           << rog_map::contact_trace::number(point.x()) << ','
+                           << rog_map::contact_trace::number(point.y()) << ','
+                           << rog_map::contact_trace::number(point.z()) << ']'
+                           << ",\"physical_center\":["
+                           << rog_map::contact_trace::number(query.physical_center.x()) << ','
+                           << rog_map::contact_trace::number(query.physical_center.y()) << ','
+                           << rog_map::contact_trace::number(query.physical_center.z()) << ']'
+                           << ",\"hard_body_clearance\":"
+                           << (query.hard_body_clearance ? "true" : "false")
+                           << ",\"effective_unknown_as_occupied\":"
+                           << (unknown_as_occupied ? "true" : "false")
+                           << ",\"unobserved\":" << (unobserved ? "true" : "false")
+                           << ",\"inflated_occupied\":"
+                           << (inflated_occupied ? "true" : "false")
+                           << ",\"physical_occupied\":"
+                           << (physical_occupied ? "true" : "false")
+                           << ",\"verdict\":\"" << verdict << '\"';
+                    rog_map::contact_trace::submit("trajectory_guard_query", fields.str());
+                } catch (...) {
+                }
+            };
             if (!map_ptr_->insideLocalMap(point)) {
                 result.status = TrajectorySafetyStatus::OUT_OF_MAP;
+                trace_guard_query("out_of_map", false, false, false);
             } else {
                 // The inflated grid is the efficient continuous-path guard,
                 // but its coarser voxelization can disagree with the raw
@@ -551,6 +696,7 @@ namespace super_planner {
                                     cfg_.trajectory_guard_escape_max_duration_s;
                     if (physical_body_occupied(query.physical_center,
                                                footprint_mask_window)) {
+                        trace_guard_query("occupied_hard_body", false, false, true);
                         result.status = TrajectorySafetyStatus::OCCUPIED;
                         result.first_collision_tt = query.tt;
                         result.first_collision_pos = point;
@@ -583,6 +729,7 @@ namespace super_planner {
                     }
                 }
                 if (guard_unobserved) {
+                    trace_guard_query("unobserved", true, false, false);
                     result.status = TrajectorySafetyStatus::UNOBSERVED;
                     result.first_collision_tt = query.tt;
                     result.first_collision_pos = point;
@@ -609,6 +756,7 @@ namespace super_planner {
                     }
                 }
                 if (!guard_occupied) {
+                    trace_guard_query("safe", false, false, false);
                     continue;
                 }
 
@@ -621,6 +769,7 @@ namespace super_planner {
                         query.physical_center, footprint_mask_window);
                 if (physical_occupied) {
                     result.status = TrajectorySafetyStatus::OCCUPIED;
+                    trace_guard_query("occupied", false, true, true);
                 } else if (allow_initial_clearance_escape &&
                            !clearance_escape_completed &&
                            (query_index == 0 ||
@@ -646,9 +795,11 @@ namespace super_planner {
                         first_clearance_violation_tt = query.tt;
                         first_clearance_violation_pos = point;
                     }
+                    trace_guard_query("clearance_escape_prefix", false, true, false);
                     continue;
                 } else {
                     result.status = TrajectorySafetyStatus::CLEARANCE_MARGIN;
+                    trace_guard_query("clearance_margin", false, true, false);
                 }
             }
             result.first_collision_tt = query.tt;
@@ -698,6 +849,26 @@ namespace super_planner {
             return result;
         }
         result.status = TrajectorySafetyStatus::SAFE;
+        if (rog_map::contact_trace::enabled()) {
+            try {
+                auto fields = rog_map::contact_trace::stream();
+                fields << "\"trajectory_generation\":" << trajectory_generation
+                       << ",\"map_version\":" << result.map_version
+                       << ",\"status\":\""
+                       << trajectorySafetyStatusName(result.status) << '\"'
+                       << ",\"checked_from_tt\":"
+                       << rog_map::contact_trace::number(result.checked_from_tt)
+                       << ",\"checked_to_tt\":"
+                       << rog_map::contact_trace::number(result.checked_to_tt)
+                       << ",\"checked_samples\":" << result.checked_samples
+                       << ",\"effective_unknown_as_occupied\":"
+                       << (unknown_as_occupied ? "true" : "false")
+                       << ",\"configured_unknown_as_occupied\":"
+                       << (cfg_.trajectory_guard_unknown_as_occupied ? "true" : "false");
+                rog_map::contact_trace::submit("trajectory_validation_result", fields.str());
+            } catch (...) {
+            }
+        }
         return result;
     }
 

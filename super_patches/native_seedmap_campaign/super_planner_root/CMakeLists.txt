@@ -23,8 +23,9 @@ add_definitions(-DUSE_ROS2)
 string(TOUPPER $ENV{ROS_DISTRO} ROS_VERSION)
 message(STATUS "ROS version: ${ROS_VERSION}")
 
-# for CLION to search the package, user should change to his/her own relative location
-set(CMAKE_PREFIX_PATH ../../../install)
+# Do not override CMAKE_PREFIX_PATH: colcon/ament supplies the ordered
+# underlay and overlay prefixes.  A hard-coded legacy install here silently
+# selected the old rog_map during isolated diagnostic builds.
 include_directories(
         SYSTEM
         include
