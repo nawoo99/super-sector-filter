@@ -6301,3 +6301,43 @@ started10:42KST with controller PID3935880 / PTY84333. First standalone
 reader-first and late DDS cases both valid/returncode0. Fresh static checks
 continue; ON15/OFF300 not yet completed. Frozen runtime and original C24 files
 unchanged. Local preparation commit513fe63, no push.
+
+### 8.102 Diameter1m gap-free G1–G5 maps only (2026-09-18)
+
+User approved5 new static cylinder maps with no forced1m minimum surface gap,
+nonoverlap, geometric mission connectivity with body/safety allowance and gap
+distribution/density logging. Diameter fixed1m. Last sentence limited current
+scope to map creation: no ROS flight, pilot or stress campaign launched.
+Future5maps ×3modes ×5runs=75 remains a plan, not completed observations.
+
+Created gapfree_d1_m01..05, count410/height3m/64×64m unchanged; diameter1m and
+placement differ from older Normal. Each uniform sequential random placement
+enforces disjoint circles only. No3m/2.5m protected pockets, cleared route tube,
+wall primitives or dynamic obstacles. Full loop24 offline geometry is required:
+body radius0.2m plus continuous-segment margin≥0.35m, existing0.1m grid uses
+conservative0.45m node margin. Result paths never become planner input and do
+not certify v7 dynamics, braking or safety/completion.
+
+Fixed base seeds2026091801..05, with+1000003 for subsequent geometric attempts.
+51layouts considered,5 accepted,46 rejected geometrically; allseed/reasons
+disclosed. Acceptance attempts14/5/1/18/13, not flight outcome selection.
+Actualmin surface gaps.004059/.001694/.002173/.001629/.001135m; nearestgap
+means.8731/.8679/.8417/.8002/.8915m. Each density410/4096=.10009765625 per m²;
+XY obstacle area fraction7.8617%. Full410nearestvalues,quantiles,histograms,
+SD and offline route/cylinder data saved. No claim that every gap is passable.
+
+New offline generator/test written under runtime perfect_drone_sim then mirrored
+using perfect_drone_sim_scripts/test/config/pcd namespaces. New YAMLs only are
+copied to install share/config; no rebuild or existing parameter/binary changes.
+11Python tests and5 independent actualPCD audits passed:800730points each,
+finiteXYZI,z0..3,radius deviation<1e-6m. OldC25frozen1396 input/evidence files
+verified unchanged before/after. Existing dirty cylinder status/raw preserved.
+Details docs/gapfree_d1_maps_20260918.md; allresult artifacts andfigures under
+results/gapfree_d1_maps_20260918. New map measurement identity/static acceptance
+still needs future runner preparation, not Normal-only runner name substitution.
+
+Prior C25 iteration02 actually completed9/17 17:07KST after6.413hours. Exact
+OFF300 confirmed: Full/Adaptiveeach100/100complete/contact0; Sector100/100
+complete but N5 r01_run22004 contact1. ON15 and OFF300 stay separate. Original
+records unchanged, no newmap pooling, no population100% or statistically
+established safety superiority from that onecontact. No currentcampaign/push.

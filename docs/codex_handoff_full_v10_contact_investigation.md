@@ -1,6 +1,21 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-18: 지름1m·강제 minimum gap1m 제거한 G1–G5 생성 완료, 비행0회.**
+> 사용자는 새5맵과 추후 모드별5회를 원하지만 이번에는 '일단 맵만' 명시. ROS 미실행.
+> gapfree_d1_m01..05, 각410개·높이3m·64×64m, 균일 난수 nonoverlap 배치.
+> 넓은 시작/waypoint 보호 공간 및 경로 주변 비움 없음. 실제 최소 표면 간격1.1~4.1mm.
+> 최근접 분포/분위수/히스토그램·밀도 기록. body radius0.2+margin≥0.35m의
+> offline 각loop24 leg/연속 선분 연결 확인, 경로는 planner에 공급하지 않음.
+> 기존 generator/helper 재사용, 신규 offline script/test만 runtime에서 작성·mirror.
+> Python11검사 및 독립 PCD5검사 통과; PCD800730points/map. C25동결1396파일 변경0.
+> docs/gapfree_d1_maps_20260918.md, results/gapfree_d1_maps_20260918/manifest.json 및 그림.
+> 이 맵의 Full/Adaptive 완주·안전이나 Sector 대비우위는 미검증. 후속75회 아직 미실행.
+> **C25는 완료:** 9/17 17:07KST OFF300/ON15 완료. Full/Adaptive각100/100접촉0;
+> Sector100/100완주이나 N5 r01_run22004접촉1. 아래 '진행 중'은 과거 launch checkpoint.
+> 현재 추가 비행/캠페인 없음. planner/algorithm/sensor/binary 변경 및 push 없음.
+
+> [!IMPORTANT]
 > **2026-09-17 C25 진행 중: 동일 C24 후보 Normal 독립 OFF300, iteration02.**
 > 범위는 현재 코드·설정·맵 고정 및 Normal N1–N5(seed1/3/5/7/9) ×3모드 ×20회뿐이다.
 > C24 frozen862개 파일과 ON/OFF 새 audit/저장gate 일치 모두 확인; runtime 변경 없음.

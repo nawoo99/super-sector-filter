@@ -1,0 +1,30 @@
+{
+  "schema": "gapfree-d1-offline-verification-v1",
+  "flight_runs": 0,
+  "python_tests": {
+    "command": "PYTHONNOUSERSITE=1 python3 -m pytest -q mars_uav_sim/perfect_drone_sim/test/test_gen_gapfree_d1_maps.py",
+    "workdir": "/root/super_ws/src/SUPER",
+    "passed": 11,
+    "failed": 0,
+    "skipped_after_generation": 0
+  },
+  "independent_pcd_audit": {
+    "maps_passed": 5,
+    "actual_data_rows_per_map": 800730,
+    "header_points_match": true,
+    "finite_xyzi": true,
+    "height_range_m": [0, 3],
+    "intensity": 1,
+    "analytic_diameter_m": 1,
+    "max_abs_radius_error_m": 5.895873514405459e-7,
+    "radius_error_tolerance_m": 1e-6,
+    "method": "Read actual PCD rows independently, group410 cylinders x31 height rows x63 angles, compare with serialized analytical centers/radii"
+  },
+  "existing_c25_preservation": {
+    "inventory": "/root/super-sector-filter/results/c25_normal_confirmation_20260917/iteration02/frozen_inputs_and_evidence.json",
+    "verified_files": 1396,
+    "changed_files_before_generation": [],
+    "changed_files_after_generation": []
+  },
+  "scope": "Geometry/assets only; no DDS/RViz flight validation, dynamics certification or success/contact outcome for these new maps"
+}
