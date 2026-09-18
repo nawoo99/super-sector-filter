@@ -37,6 +37,15 @@ MANIFEST = REPO/'results/gapfree_d1_maps_20260918/manifest.json'
 PROTOCOL = REPO/'docs/gapfree_n5_manual_campaign_20260918.md'
 PRIOR_INVENTORY = REPO/'results/c25_normal_confirmation_20260917/iteration02/frozen_inputs_and_evidence.json'
 PRIMARY_CONTACT_NOTE = 'Analytic static finite cylinders, body sphere radius0.2m, received odometry samples; not continuous swept collision proof'
+OBSERVATION_ONLY_SOURCE_PATHS = frozenset({
+    str(RUNTIME_PATH) for RUNTIME_PATH in (
+        Path('/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/include/perfect_drone_sim/ros2_perfect_drone_model.hpp'),
+        Path('/root/super_ws/src/SUPER/rog_map/src/rog_map/prob_map.cpp'),
+        Path('/root/super_ws/src/SUPER/rog_map/src/rog_map/rog_map.cpp'),
+        Path('/root/super_ws/src/SUPER/super_planner/include/ros_interface/ros2/fsm_ros2.hpp'),
+        Path('/root/super_ws/src/SUPER/super_planner/src/super_core/super_planner.cpp'),
+    )
+})
 
 
 def build_plan(root, base_run=30000):
@@ -139,7 +148,33 @@ def trajectory_evidence_valid(path, doc):
         return False
 
 
-def phase_gate(commands, phase):
+def contact_only_failure(audit):
+    """True only when known Full/Adaptive contact is the entire audit failure."""
+    checks = audit.get('acceptance_checks', {})
+    if not isinstance(checks, dict):
+        return False
+    failed = {name for name, passed in checks.items() if passed is not True}
+    if not failed:
+        return False
+    tolerated = set()
+    for mode in ('full', 'adaptive'):
+        outcome = audit.get('outcomes', {}).get(mode, {})
+        analytic = outcome.get('analytic_contact_episodes')
+        sampled = base.number(outcome.get('safety_collisions'))
+        observed = ((type(analytic) is int and analytic > 0)
+                    or (sampled is not None and sampled > 0))
+        evidence_ok = checks.get(mode + ':analytic_contact_evidence') is True
+        trajectory_ok = checks.get(mode + ':full_recorded_odometry') is True
+        if observed and evidence_ok and trajectory_ok:
+            tolerated.update((mode + ':zero_contact', mode + ':analytic_zero_contact'))
+    return failed <= tolerated
+
+
+def audit_accepted(audit, continue_after_contact=False):
+    return audit.get('valid') is True or (continue_after_contact and contact_only_failure(audit))
+
+
+def phase_gate(commands, phase, continue_after_contact=False):
     planned = [c for c in commands if c.get('phase') == phase]
     expected = {(m,r,mode) for m in MAPS for r in range(1,COUNTS[phase]+1) for mode in MODES}
     actual = [(c['map'],c['repeat'],m) for c in planned for m in c['modes']]
@@ -148,11 +183,18 @@ def phase_gate(commands, phase):
     for item in planned:
         fresh = triplet_audit(item)
         stored = base.load_document(Path(item['path'])/'triplet_verification.json')
-        records.append(dict(name=item['name'], valid=fresh['valid'] is True and fresh==stored))
+        stored_match = fresh == stored
+        records.append(dict(name=item['name'],
+            valid=stored_match and audit_accepted(fresh, continue_after_contact),
+            strict_valid=stored_match and fresh['valid'] is True,
+            contact_only_continued=(stored_match and fresh['valid'] is not True
+                                    and continue_after_contact and contact_only_failure(fresh))))
     checks = dict(exact_coverage=len(actual)==len(expected) and set(actual)==expected,
                   unique_identities=len(identities)==len(set(identities)),
                   fresh_stored_audits_match=bool(records) and all(r['valid'] for r in records))
-    return dict(valid=base.explicit_true_checks(checks), phase=phase, checks=checks,
+    return dict(valid=base.explicit_true_checks(checks),
+                strict_valid=bool(records) and all(r['strict_valid'] for r in records),
+                continue_after_contact=continue_after_contact, phase=phase, checks=checks,
                 expected_flights=len(expected), planned_triplets=len(planned), records=records)
 
 
@@ -329,11 +371,20 @@ def freeze_sources(root):
     if not old:
         raise RuntimeError('Missing previous frozen runtime inventory')
     changed=base.changed_inputs(old)
-    if changed:
-        raise RuntimeError('Existing C25 source/evidence changed; cannot silently claim same candidate: '+repr(changed))
+    unexpected=[path for path in changed if path not in OBSERVATION_ONLY_SOURCE_PATHS]
+    if unexpected:
+        raise RuntimeError('Existing C25 source/evidence changed; cannot silently claim same candidate: '+repr(unexpected))
     # Verify all old evidence once and hold runtime/source/config/binary inputs
     # throughout this campaign; completed old flight observations are not reused.
     frozen={p:h for p,h in old.items() if not p.startswith(str(REPO/'results'))}
+    observation_overlay=[]
+    for name in sorted(OBSERVATION_ONLY_SOURCE_PATHS):
+        path=Path(name)
+        if name in frozen and path.is_file():
+            current=base.sha(path)
+            observation_overlay.append(dict(path=name,baseline_sha256=frozen[name],current_sha256=current,
+                executed_by_primary_campaign=False,installed_binary_remains_frozen=True))
+            frozen[name]=current
     manifest=base.read(MANIFEST)
     for row in manifest['maps']:
         for p,h in row['assets_sha256'].items():
@@ -344,6 +395,7 @@ def freeze_sources(root):
     paths += [REPO/'scripts/native_campaign/run_gapfree_n5.sh']
     base.freeze_files(frozen,paths)
     return frozen,dict(previous_files_verified=len(old),previous_changed_files=changed,
+                        admitted_unbuilt_observation_source_changes=observation_overlay,
                         original_normal_preserved=True,maps_manifest_sha256=base.sha(MANIFEST))
 
 
@@ -352,7 +404,12 @@ def main(argv=None):
     parser.add_argument('--output',type=Path)
     parser.add_argument('--dry-run',action='store_true',help='Offline check and plan only; no ROS processes')
     parser.add_argument('--report',type=Path,help='Rebuild reports of an existing result folder; no flight')
+    parser.add_argument('--continue-after-contact',action='store_true',
+        help='Retain contact outcomes and continue; all non-contact failures still stop')
+    parser.add_argument('--continue-after-failure',action='store_true',
+        help='Best-effort scheduling: retain and continue after flight/static/process/resource/measurement failures')
     args=parser.parse_args(argv)
+    continue_after_contact = args.continue_after_contact or args.continue_after_failure
     support.register_maps()
     if args.report:
         if args.output or args.dry_run:parser.error('--report is independent of --output/--dry-run')
@@ -380,8 +437,18 @@ def main(argv=None):
     def status(state,**extra):
         base.save(root/'status.json',dict(state=state,pid=os.getpid(),current=current,completed=history,
             requested_off_flights=75,requested_on_flights=15,automatic_retry=False,
-            audited_off_flights=3*sum(e.get('phase')=='test5' and e.get('valid') is True for e in history),
+            continue_after_contact=continue_after_contact,
+            continue_after_failure=args.continue_after_failure,
+            audited_off_flights=3*sum(e.get('phase')=='test5' and e.get('accepted_for_coverage') is True for e in history),
             elapsed_s=time.monotonic()-started,updated_local=datetime.now().astimezone().isoformat(),**extra))
+    def update_progress(context):
+        try:return write_progress(root)
+        except Exception as exc:
+            if not args.continue_after_failure:raise
+            path=root/'progress_errors.json';document=base.load_document(path)
+            errors=document.get('errors',[]) if isinstance(document,dict) else []
+            errors.append(dict(context=context,error=repr(exc),time_local=datetime.now().astimezone().isoformat()))
+            base.save(path,dict(errors=errors));return []
     def interrupted(signum,_frame):raise InterruptedError('Interrupted by signal '+str(signum))
     handlers={sig:signal.signal(sig,interrupted) for sig in (signal.SIGINT,signal.SIGTERM)}
     try:
@@ -399,15 +466,20 @@ def main(argv=None):
             profiled_preflight_flights=15,unprofiled_primary_flights=75,static_dds_cases=30,rviz_cases=5,
             no_retry=True,no_replacement=True,all_failures_retained=True,no_runtime_tuning=True,
             primary_contact_scope=PRIMARY_CONTACT_NOTE,pcd_contact_is_secondary=True,
-            full_adaptive_outcome_stop_boundary='After current triplet; at most2 remaining simulated modes',
-            measurement_source_resource_failure_stops=True,sector_outcomes_as_metrics=True,
+            continue_after_contact=continue_after_contact,
+            continue_after_failure=args.continue_after_failure,
+            full_adaptive_outcome_stop_boundary=('Contact is retained and campaign continues; non-contact failures stop'
+                if args.continue_after_contact and not args.continue_after_failure else
+                ('All trial failures are retained and scheduling continues; frozen-input changes and user interruption stop'
+                 if args.continue_after_failure else 'After current triplet; at most2 remaining simulated modes')),
+            measurement_source_resource_failure_stops=not args.continue_after_failure,sector_outcomes_as_metrics=True,
             async_certified_recovery=True,side_executor_threads=3,dispatch_lease_s=.25,
             mission_time_as_metric=True,historical_time_references=None,
             old_cohorts_not_pooled=True,primary_cpu_scope='Whole experiment cgroup, including simulator; observer excluded',
             original_cpu40_target_not_a_gate=True,frozen_sha256=frozen))
         base.freeze_files(frozen,[root/'plan.json',root/'admission.json',*(root/p/'plan.json' for p in PHASES)])
         base.save(root/'frozen_inputs_and_evidence.json',frozen)
-        write_progress(root)
+        update_progress('initial')
         if args.dry_run:
             status('DRY_RUN_ONLY',planned_flights=90,actual_flights_started=0)
             print('DRY RUN PASS: static35 + separateON15 + primaryOFF75; no ROS launched',flush=True)
@@ -419,15 +491,28 @@ def main(argv=None):
             if changed:raise RuntimeError('Frozen inputs changed: '+repr(changed))
             if item['phase']!=previous_phase:
                 if previous_phase=='static':
-                    validations={m:base.static.validate_manifest(root/'static_preflight'/m/'acceptance.json',base.static.map_context(m)) for m in MAPS}
-                    base.save(root/'static_gate.json',validations)
-                    if not all(v.get('valid') is True for v in validations.values()):raise RuntimeError('Static transport/RViz gate failed')
+                    try:
+                        validations={m:base.static.validate_manifest(root/'static_preflight'/m/'acceptance.json',base.static.map_context(m)) for m in MAPS}
+                        base.save(root/'static_gate.json',validations)
+                        static_valid=all(v.get('valid') is True for v in validations.values())
+                    except Exception as exc:
+                        static_valid=False
+                        base.save(root/'static_gate.json',dict(valid=False,error=repr(exc)))
+                    if not static_valid and not args.continue_after_failure:
+                        raise RuntimeError('Static transport/RViz gate failed')
                 else:
-                    gate=phase_gate(commands,previous_phase)
-                    base.save(root/(previous_phase+'_gate.json'),gate);reports(root)
-                    if gate['valid'] is not True:raise RuntimeError('Fresh ON15 gate failed; OFF75 not started')
+                    try:
+                        gate=phase_gate(commands,previous_phase,continue_after_contact)
+                    except Exception as exc:
+                        gate=dict(valid=False,phase=previous_phase,error=repr(exc))
+                    base.save(root/(previous_phase+'_gate.json'),gate)
+                    try:reports(root)
+                    except Exception as exc:base.save(root/(previous_phase+'_report_error.json'),dict(error=repr(exc)))
+                    if gate['valid'] is not True and not args.continue_after_failure:
+                        raise RuntimeError('Fresh ON15 measurement/completion gate failed; OFF75 not started')
                 previous_phase=item['phase']
             status('RUNNING');print('START',item['name'],flush=True)
+            execution_error=None;memory_runaway=False
             try:
                 # The common campaign lock covers static rendering too. Flight
                 # child owns that same lock itself for its whole triplet.
@@ -436,35 +521,82 @@ def main(argv=None):
                         common=stack.enter_context(open(base.event.diagnostic.search.campaign.LOCK_PATH,'a'))
                         fcntl.flock(common,fcntl.LOCK_EX|fcntl.LOCK_NB)
                     code=base.execute(item,root,env)
-            except base.MemoryRunawayError:
-                history.append(dict(name=item['name'],phase=item['phase'],returncode=None,valid=False,diagnostic_contaminated=True))
+            except InterruptedError:
                 raise
+            except Exception as exc:
+                if not args.continue_after_failure:
+                    if isinstance(exc,base.MemoryRunawayError):
+                        history.append(dict(name=item['name'],phase=item['phase'],returncode=None,
+                            valid=False,diagnostic_contaminated=True,execution_error=repr(exc)))
+                    raise
+                code=None;execution_error=repr(exc);memory_runaway=isinstance(exc,base.MemoryRunawayError)
             entry=dict(name=item['name'],phase=item['phase'],returncode=code);history.append(entry)
+            if execution_error is not None:
+                entry.update(valid=False,accepted_for_coverage=False,execution_error=execution_error,
+                    diagnostic_contaminated=memory_runaway)
+                update_progress(item['name']+':execution_error')
+                print('FINISH_RETAINED_FAILURE',json.dumps(entry),flush=True);status('RUNNING')
+                continue
             if 'path' in item:
-                folder=Path(item['path']);audit=triplet_audit(item)
+                folder=Path(item['path'])
+                try:audit=triplet_audit(item)
+                except Exception as exc:
+                    if not args.continue_after_failure:raise
+                    entry.update(valid=False,accepted_for_coverage=False,audit_error=repr(exc))
+                    update_progress(item['name']+':audit_error')
+                    print('FINISH_RETAINED_FAILURE',json.dumps(entry),flush=True);status('RUNNING')
+                    continue
                 base.save(folder/'triplet_verification.json',audit)
-                entry.update(valid=audit['valid'],outcome_failures=audit['outcome_failures'])
+                accepted=audit_accepted(audit,continue_after_contact)
+                entry.update(valid=audit['valid'],accepted_for_coverage=accepted,
+                    contact_only_continued=(accepted and audit['valid'] is not True),
+                    outcome_failures=audit['outcome_failures'])
                 if item['phase']=='preflight':
-                    base.save(folder/'thread_cpu_summary.json',{m:base.stages.summarize(folder,m,item['run'],item['map'])
-                              for m in MODES if (folder/f'{m}_summary.json').is_file()})
-                write_progress(root)
-                if code or not audit['valid']:raise RuntimeError('Flight gate failed; all attempts retained: '+item['name'])
-                base.freeze_files(frozen,[folder/'plan.json',folder/'raw.csv',folder/'status.json',folder/'triplet_verification.json',
+                    try:
+                        base.save(folder/'thread_cpu_summary.json',{m:base.stages.summarize(folder,m,item['run'],item['map'])
+                                  for m in MODES if (folder/f'{m}_summary.json').is_file()})
+                    except Exception as exc:
+                        if not args.continue_after_failure:raise
+                        entry['thread_cpu_summary_error']=repr(exc)
+                update_progress(item['name']+':complete')
+                if (code or not accepted) and not args.continue_after_failure:
+                    raise RuntimeError('Flight measurement/completion gate failed; all attempts retained: '+item['name'])
+                evidence=[folder/'plan.json',folder/'raw.csv',folder/'status.json',folder/'triplet_verification.json',
                     *(folder/f'{m}_summary.json' for m in MODES),*(contact_file(folder,item['map'],item['run'],m) for m in MODES),
-                    *(folder/'artifacts'/f"{item['map']}_run{item['run']}_{m}.attempt1.odometry.csv" for m in MODES)])
-            elif code:raise RuntimeError('Static verification failed: '+item['name'])
+                    *(folder/'artifacts'/f"{item['map']}_run{item['run']}_{m}.attempt1.odometry.csv" for m in MODES)]
+                base.freeze_files(frozen,evidence if not args.continue_after_failure else [p for p in evidence if p.is_file()])
+            elif code and not args.continue_after_failure:raise RuntimeError('Static verification failed: '+item['name'])
             elif item['name'].startswith('accept_'):
                 path=root/'static_preflight'/item['map']/'acceptance.json'
-                validation=base.static.validate_manifest(path,base.static.map_context(item['map']))
-                if not validation['valid']:raise RuntimeError('Static manifest failed: '+item['map'])
-                base.freeze_files(frozen,[path,*map(Path,validation['evidence_sha256'])])
+                try:validation=base.static.validate_manifest(path,base.static.map_context(item['map']))
+                except Exception as exc:
+                    validation=dict(valid=False,error=repr(exc),evidence_sha256={})
+                entry['valid']=validation.get('valid') is True
+                if not entry['valid'] and not args.continue_after_failure:
+                    raise RuntimeError('Static manifest failed: '+item['map'])
+                evidence=[path,*map(Path,validation.get('evidence_sha256',{}))]
+                base.freeze_files(frozen,evidence if not args.continue_after_failure else [p for p in evidence if p.is_file()])
             base.save(root/'frozen_inputs_and_evidence.json',frozen)
             print('FINISH',json.dumps(entry),flush=True);status('RUNNING')
-        gate=phase_gate(commands,'test5');base.save(root/'test5_gate.json',gate)
-        if not gate['valid'] or base.changed_inputs(frozen):raise RuntimeError('Final exact75/frozen evidence gate failed')
-        if any(r['state']!='WRITTEN' for r in reports(root)):raise RuntimeError('Flights finished but reports incomplete')
-        status('COMPLETE',completed_off_flights=75,completed_on_flights=15)
-        print('COMPLETE:',root/'summary_by_map.md',flush=True)
+        try:gate=phase_gate(commands,'test5',continue_after_contact)
+        except Exception as exc:gate=dict(valid=False,phase='test5',error=repr(exc))
+        base.save(root/'test5_gate.json',gate)
+        changed=base.changed_inputs(frozen)
+        if changed:raise RuntimeError('Frozen evidence changed: '+repr(changed))
+        try:report_records=reports(root)
+        except Exception as exc:
+            report_records=[dict(phase='all',state='REPORT_ERROR',error=repr(exc))]
+            base.save(root/'report_error.json',report_records[0])
+        report_ok=all(r['state']=='WRITTEN' for r in report_records)
+        if (not gate['valid'] or not report_ok) and not args.continue_after_failure:
+            raise RuntimeError('Final exact75 evidence/report gate failed')
+        retained=any(e.get('returncode') not in (0,None) or e.get('valid') is False
+                     or e.get('execution_error') or e.get('audit_error') for e in history)
+        retained=retained or not gate.get('valid',False) or not report_ok
+        status('COMPLETE_WITH_RETAINED_FAILURES' if retained else 'COMPLETE',
+            completed_off_flights=75 if gate.get('valid') else None,
+            scheduled_off_flights=75,scheduled_on_flights=15,retained_failures=retained)
+        print('FINISHED:',root/'summary_by_map.md',flush=True)
     except BaseException as exc:
         status('STOPPED_FOR_DIAGNOSIS',error=repr(exc))
         try:reports(root)

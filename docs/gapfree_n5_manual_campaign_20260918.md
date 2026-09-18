@@ -6,6 +6,20 @@ planner, 알고리즘, 센서 정책, 실행 바이너리 및 이전 실험 자�
 
 ## 한 번에 실행
 
+현재 선택한 **끝까지 실행·실패 보존 모드**는 다음 명령이다.
+
+```bash
+bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh --continue-after-failure
+```
+
+이 옵션은 접촉, 미완주, 로그/계측 누락, 속도·자원 검사 실패, child 프로세스
+오류를 성공으로 바꾸지 않는다. 해당 회차를 실패/무효/N/A로 저장한 뒤 다음 예정
+회차를 계속한다. source·map·동결 evidence hash가 실행 중 바뀌거나 사용자가
+Ctrl+C/SIGTERM을 보내는 경우에는 계속하지 않는다. RSS guard도 비활성화하지
+않으며, runaway 회차를 중단·오염 표기한 다음 다음 회차로 넘어간다.
+
+기존 fail-closed 실행은 다음과 같다.
+
 ```bash
 bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh
 ```
@@ -58,7 +72,8 @@ bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh --repor
 예상은 **약2–5시간**이나 신규 맵 비행 시간은 아직 모른다. 기존 Normal의 동일
 규모 C24는 약116분이었다. 이 실행은 추가 원기둥 관측기를 사용하고, 회차별 최대
 비행180초 및 초기화/사전검사 시간이 있으므로 timeout이 많으면5시간 이상 걸릴
-수 있다. 오류가 발생하면 아래 기준대로 일찍 중단한다. 사전15회를 포함하면
+수 있다. 기본 실행은 오류가 발생하면 아래 기준대로 일찍 중단한다. 선택한
+`--continue-after-failure` 실행은 오류를 보존하고 다음 회차를 계속한다. 사전15회를 포함하면
 실제 비행 계획은90회이며, 사용자가 요청한 주 비교 표의 분모는75회다.
 
 ## 저장 자료
@@ -105,6 +120,8 @@ Full/Adaptive의 기존 PCD any-contact gate도 그대로 유지한다.
 
 ## 중단·보존 원칙
 
+`--continue-after-failure`가 없을 때 아래 fail-closed 원칙을 적용한다.
+
 - Full/Adaptive 미완주 또는 접촉: **현재3모드 묶음 종료 후 중단**. 실패 뒤 최대2개
   모드의 시뮬레이션이 더 실행될 수 있다. 안전0/100% 달성으로 간주하지 않는다.
 - Sector 미완주/접촉: 비교 결과로 기록하고 계속한다. 단 계측/소스/복구/자원 문제는
@@ -120,8 +137,17 @@ Full/Adaptive의 기존 PCD any-contact gate도 그대로 유지한다.
   보존한다. 실패해서 빨리 종료한 회차를 완주 대비 CPU 절감으로 해석하지 않는다.
 - 추가 runtime 튜닝, 실패 교체, n20 확대, 자동 GitHub push는 하지 않는다.
 
+`--continue-after-failure`에서는 위 실패도 다음 회차 실행을 막지 않는다. 다만
+결과의 엄격한 `valid` 값과 원래 실패 사유는 그대로 유지한다. 하나라도 실패나
+보고서 누락이 있으면 최종 상태는 `COMPLETE_WITH_RETAINED_FAILURES`이며, 이는
+성공 캠페인이 아니라 **예정한 순회를 마친 불완전 캠페인**이라는 뜻이다.
+실제 생성되지 않은 raw 행은 실패0이나 접촉0으로 채우지 않는다.
+
 새 파일은 runtime의 perfect_drone_sim/scripts·test에서 작성 후 대응 mirror 및
-repo 편의 launcher로 복사한다. 기존 C25 동결1396파일을 그대로 검증하며 새
-어댑터는 hash-pinned 기존 실행/계측 helper를 재사용한다. geometry와 실행 정책은
+repo 편의 launcher로 복사한다. 기존 C25 동결1396파일을 검증하며 새 어댑터는
+hash-pinned 기존 실행/계측 helper를 재사용한다. 2026-09-18 진단용 C++ source5개는
+별도 overlay에만 빌드되었고 이 캠페인은 원본 `/root/super_ws/install` 바이너리를
+계속 사용한다. 이 source 차이는 `admission.json`에 baseline/current hash와 함께
+명시하며 원본 설치 바이너리 hash 불일치는 허용하지 않는다. geometry와 실행 정책은
 ON/OFF 매칭 및 보고서 fingerprint에 포함한다. child별 임시 작업 폴더 경로만
 보고서 정책 fingerprint에서 제외한다.

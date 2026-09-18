@@ -6480,3 +6480,33 @@ its cost with ON/OFF campaign results. Analyze whether the relevant cylinder
 was absent at render time, removed by sector acquisition, admitted/erased in
 the map, missed by the effective known-space guard, or absent from the
 published polynomial before any algorithm change or campaign restart.
+
+### 8.105 Gap-free G1–G5 best-effort scheduler (2026-09-18)
+
+The user chose to complete the existing five-repeat comparison even when an
+individual trial contacts, does not complete, loses required logs, violates a
+speed/resource measurement gate, or returns a child-process error. Added the
+explicit `--continue-after-failure` controller option. It changes scheduling
+only: every observed failure, strict `valid` value, partial artifact and N/A
+cost remains unchanged, and no retry or replacement is introduced. The
+narrower/default fail-closed behavior remains available when the option is
+omitted.
+
+Resource guards remain enabled. A runaway trial is terminated and marked
+contaminated before scheduling the next item; it is not admitted to performance
+averages. Missing rows are never synthesized as completion or zero contact.
+Frozen source/map/evidence changes and SIGINT/SIGTERM still stop the campaign.
+If any retained failure or report error exists after scheduling, final status
+is `COMPLETE_WITH_RETAINED_FAILURES`, not `COMPLETE`.
+
+The primary campaign continues to execute the frozen original
+`/root/super_ws/install` binaries. Five observation-only source files changed
+for the separate §8.104 overlay, so their baseline/current hashes are now
+explicitly admitted and pinned in `admission.json`; an original installed
+binary mismatch is still rejected. Offline policy/unit tests passed (37), and
+a broad-policy dry-run planned static checks plus ON15/OFF75 with
+`actual_flights_started=0`. The user-run command is:
+
+```bash
+bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh --continue-after-failure
+```

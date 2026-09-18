@@ -1,6 +1,17 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-18: G1–G5 수동 캠페인에 실패 보존·계속 실행 모드 추가, 비행은 사용자가 실행.**
+> `run_gapfree_n5.py --continue-after-failure`는 접촉·미완주·로그/계측 누락·속도/
+> 자원·child 프로세스 실패를 원래 실패/무효 상태로 저장하고 다음 예정 회차로
+> 진행한다. 실패를 성공이나0으로 바꾸지 않으며 retry/replacement도 하지 않는다.
+> source/map/frozen-evidence 변경과 Ctrl+C/SIGTERM은 계속 중단한다. 원본 install
+> 바이너리를 유지하고 앞 절의 진단 source5개 차이만 admission에 명시적으로 기록한다.
+> offline37검사 및 broad-policy dry-run 통과, actual_flights=0. 사용자 명령은
+> `bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh --continue-after-failure`.
+> 기본 무옵션 실행의 fail-closed 의미는 유지된다. 상세 §8.105 및 수동 실행 문서.
+
+> [!IMPORTANT]
 > **2026-09-18: G1/G4 Adaptive 접촉 재현, 진단 전용 수정·별도 빌드 완료. 비행은 사용자가 실행.**
 > 기존의 “새 맵 비행 0회” 배너는 더 이상 최신 상태가 아니다. 사용자가 수동 캠페인을
 > 두 번 실행했다. 첫 실행 `gapfree_n5_20260918_110107_690945`은 G1 triplet에서
