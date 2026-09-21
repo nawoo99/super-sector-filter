@@ -261,6 +261,7 @@ def main():
     files.update({runtime / f'mars_uav_sim/perfect_drone_sim/config/{args.map}.yaml',
                   runtime / f'mars_uav_sim/perfect_drone_sim/pcd/seed_maps/{args.map}.pcd',
                   runtime / 'mission_planner/data/loop24.txt',
+                  runtime / 'mission_planner/launch/benchmark_seedmap.launch.py',
                   Path('/root/super_ws/install/marsim_render/lib/libmarsim_render.so'),
                   Path('/root/super_ws/install/mission_planner/lib/libnative_sector_cpp_component.so'),
                   Path('/root/super_ws/install/mission_planner/lib/mission_planner/waypoint_mission'),
@@ -299,6 +300,7 @@ def main():
                    optimizer_phase_memory_trace=not args.no_optimizer_phase_memory_trace,
                    sensor_acquisition=True,
                    sensor_planner_intra_process=args.compose,
+                   observer_ready_before_mission=True,
                    adaptive_event_recovery=mode == 'adaptive') for mode in args.modes}
     plan = dict(
         gapfree_scratch_directory=campaign.TMPDIR,
@@ -347,6 +349,11 @@ def main():
         runtime_policy_note='Inherited base policy only; effective_run_options and profiles override it. Source acquisition follows native 10Hz cadence, not inherited filter-rate hint.',
         logical_cpus=os.cpu_count(), runtime_policy=frozen_policy,
         asset_sha256=hashes, baseline_seconds=12,
+        observer_ready_before_mission=True,
+        observer_ready_definition=(
+            'gapfree observer recorded its first valid odometry sample before '
+            'waypoint_mission process creation'
+        ),
         common_parameters_unchanged=f'{args.map}/loop24/v7,45deg-half-angle,0.4deg/10Hz sensor',
         frozen_normal_sha256=event.NORMAL_SHA, no_automatic_retry=True,
         exploratory_tuning=True, not_pooled_with_previous_results=True)

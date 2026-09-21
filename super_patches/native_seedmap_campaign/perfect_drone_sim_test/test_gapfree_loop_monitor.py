@@ -99,6 +99,7 @@ def test_wrapper_preserves_native_output_and_writes_complete_sample_audit(tmp_pa
     pcd = tmp_path / "gapfree_d1_m01.pcd"
     cylinders = tmp_path / "gapfree_d1_m01_cylinders.csv"
     out = tmp_path / "gapfree_d1_m01_run1_full.attempt1.json"
+    ready = tmp_path / "observer.ready.json"
     pcd.write_text("synthetic PCD for observer test")
     cylinders.write_text("x,y,r,role\n0,0,0.5,test\n")
     source = f'''import json, time
@@ -125,6 +126,7 @@ with open(ARGS.out_json, 'w') as stream:
     base = tmp_path / "fake_base.py"
     base.write_bytes(source)
     monkeypatch.setenv("GAPFREE_BASE_MONITOR", str(base))
+    monkeypatch.setenv(monitor.READY_FILE_ENV, str(ready))
     original_split = monitor.split_base_source
     monkeypatch.setattr(monitor, "split_base_source", lambda source, filename:
                         original_split(source, filename, hashlib.sha256(source).hexdigest()))
@@ -139,5 +141,9 @@ with open(ARGS.out_json, 'w') as stream:
     assert audit["native_monitor_counters_unchanged"] is True
     assert len(out.with_suffix(".odometry.csv").read_text().splitlines()) == 5
     assert audit["odometry_sha256"] == monitor.sha256(out.with_suffix(".odometry.csv"))
+    readiness = json.loads(ready.read_text())
+    assert readiness["schema"] == "gapfree-observer-odom-ready-v1"
+    assert readiness["recorded_samples"] == 1
+    assert readiness["first_position_m"] == [1.0, 0.0, 1.5]
     with pytest.raises(FileExistsError):
         monitor.main()

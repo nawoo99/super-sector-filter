@@ -24,6 +24,7 @@ BASE_SHA256 = "f11777e680e4d4279c8d34ca7dfd86c55e98c9a7f6cd835e801a1f8a877f0813"
 DEFAULT_BASE = Path("/root/super-sector-filter/scripts/native_campaign/native_loop_monitor.py")
 BODY_RADIUS_M = 0.2
 CYLINDER_HEIGHT_M = 3.0
+READY_FILE_ENV = "SUPER_LOOP_MONITOR_READY_FILE"
 
 
 def sha256(path):
@@ -32,6 +33,15 @@ def sha256(path):
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def write_ready_file(path, value):
+    """Atomically acknowledge that the first odometry sample was recorded."""
+    path = Path(path)
+    temporary = path.with_name(path.name + ".tmp")
+    with temporary.open("x") as stream:
+        json.dump(value, stream, allow_nan=False)
+    os.replace(temporary, path)
 
 
 def load_cylinders(pcd_path):
@@ -204,6 +214,11 @@ def main():
                          "x_m", "y_m", "z_m", "vx_mps", "vy_mps", "vz_mps", "clearance_m"])
 
         class GapfreeLoopMonitor(original_class):
+            def __init__(self):
+                super().__init__()
+                self._ready_file = os.environ.get(READY_FILE_ENV)
+                self._ready_written = False
+
             def odom_callback(self, msg):
                 p, v = msg.pose.pose.position, msg.twist.twist.linear
                 position, velocity = [p.x, p.y, p.z], [v.x, v.y, v.z]
@@ -218,6 +233,16 @@ def main():
                 if clearance is None:
                     return  # Invalid evidence cannot enter the legacy float/point index.
                 super().odom_callback(msg)
+                if self._ready_file and not self._ready_written:
+                    write_ready_file(self._ready_file, {
+                        "schema": "gapfree-observer-odom-ready-v1",
+                        "pid": os.getpid(),
+                        "epoch_s": time.time(),
+                        "recorded_samples": audit.samples,
+                        "first_position_m": position,
+                        "first_velocity_mps": velocity,
+                    })
+                    self._ready_written = True
 
         namespace["LoopMonitor"] = GapfreeLoopMonitor
         completed = False

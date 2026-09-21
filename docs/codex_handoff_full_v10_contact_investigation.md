@@ -1,6 +1,20 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-21: Gap-free G5 관측기를 미션보다 먼저 준비하도록 수정, 새 ON 3모드 1회 완료.**
+> 기존 runner는 launch 후4초 뒤 observer를 시작했지만 waypoint mission은3초 뒤
+> 자동 시작해 초기 약1초를 관측하지 못했다. Gap-free 전용 경로에서는 launch 내부
+> mission을 끄고, observer가 첫 유효 odometry를 원점에서 기록한 READY 파일을 만든
+> 뒤 동일 waypoint_mission을 별도 시작한다. planner/센서/맵/안전판단은 변경하지 않았다.
+> 새 결과 `results/gapfree_g5_observer_ready_20260921_104214/preflight`: 세 모드 모두
+> 첫 pose `(0,0,1.5)`, 완주. Full/Adaptive analytic contact0, Sector contact1
+> (cylinder320, 약0.220초). 이전 G5 Adaptive 접촉1은 이번 n=1에서 재현되지 않았지만
+> 확률적 결과를 오류로 소급 취소하지 않는다. 첫 시도 `..._103943`은 Adaptive 안전
+> 결과는 유효했으나 별도 mission 로그가 stack audit에서 빠져 중단된 진단 실행이며,
+> append/tee 결합 후 재실행에서 모든 source/recovery/timing gate가 통과했다.
+> 상세 §8.106. 이 1회는 population 안전성이나 최종 모드 우위를 확정하지 않는다.
+
+> [!IMPORTANT]
 > **2026-09-18: G1–G5 수동 캠페인에 실패 보존·계속 실행 모드 추가, 비행은 사용자가 실행.**
 > `run_gapfree_n5.py --continue-after-failure`는 접촉·미완주·로그/계측 누락·속도/
 > 자원·child 프로세스 실패를 원래 실패/무효 상태로 저장하고 다음 예정 회차로

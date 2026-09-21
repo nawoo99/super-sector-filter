@@ -6510,3 +6510,54 @@ a broad-policy dry-run planned static checks plus ON15/OFF75 with
 ```bash
 bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh --continue-after-failure
 ```
+
+### 8.106 G5 observer-ready-before-mission correction and n=1 recheck (2026-09-21)
+
+The G5 failure audit found a measurement-order defect. `native_campaign.py`
+started the complete benchmark launch, slept four seconds, and only then
+started `native_loop_monitor.py`; the launch-owned waypoint mission started
+after its configured three-second delay. Consequently the old observer first
+subscribed about one second after mission motion began. The old G5 Adaptive
+trace began already stopped in contact near cylinder199, so that contact is
+real at the observed poses, but its entry and the corresponding initial windows
+of Full/Sector were missing. Therefore the prior cross-mode zero-contact
+comparison was not a complete start-to-finish observation.
+
+Corrected only orchestration/measurement. `benchmark_seedmap.launch.py` now has
+a default-true `use_waypoint_mission` launch argument. The Gap-free adapter sets
+it false, starts the observer, waits until the observer has recorded its first
+valid odometry sample and atomically written `gapfree-observer-odom-ready-v1`,
+and only then creates the same `waypoint_mission` process with the unchanged
+`waypoint.yaml` and `loop24.txt`. Generic/manual launch behavior remains true by
+default. The separately started mission log is tee-appended into the stack log
+so the existing creation-identity/source audit sees both producer and receiver
+records. READY evidence is retained with the other per-attempt artifacts.
+No planner, map, sensor acquisition, trajectory guard, recovery or safety
+parameter was changed.
+
+Offline checks passed: 46 Gap-free adapter/controller tests and 56 legacy
+campaign/CPU-audit tests. The first actual correction run at
+`results/gapfree_g5_observer_ready_20260921_103943` recorded Adaptive from the
+origin and completed/contact0, but stopped before Full/Sector because the first
+version kept the mission producer log separate (`goal_identity_audit=false`).
+This diagnostic run is retained and not pooled. Log composition was corrected,
+then a new complete profiled triplet ran at
+`results/gapfree_g5_observer_ready_20260921_104214/preflight` (run31005).
+
+All three READY records and first trajectory rows are position `(0,0,1.5)`,
+velocity zero. All three completed with all source/recovery/timing/resource/
+speed checks true and no retry. Full:50.81s, analytic contact0, minimum cylinder
+clearance0.275603m. Adaptive:48.97s, contact0, minimum0.277300m. Fixed Sector:
+48.81s, one analytic episode/22 samples, minimum -0.2m against zero-based
+cylinder index320 centered `(-0.375437,2.080295)`, observed from6.3351s to
+6.5550s (~0.220s). Thus this single corrected run has the intended qualitative
+pattern Full/Adaptive safe and Sector contact, while every mode completes.
+
+The profiled n=1 CPU observation was Full0.666776, Adaptive0.433094 and
+Sector0.415751 mean cores; Adaptive measured reduction35.05% and cumulative
+reduction37.06% versus Full. It remains diagnostic ON evidence and explicitly
+requires unprofiled confirmation; do not report it as a final CPU estimate.
+Likewise one safe Adaptive run does not invalidate the old G5 Adaptive contact
+or establish population-level safety. Any new G1–G5 cohort must use this
+observer-ready protocol for every mode and must not pool the incompletely
+observed 2026-09-18 cohort as equivalent safety trials.

@@ -46,6 +46,13 @@ def generate_launch_description():
         description=('experimental simulator/frontend/SUPER composition with '
                      'direct latest-only acquired-cloud delivery')
     )
+    declare_waypoint_mission_cmd = DeclareLaunchArgument(
+        'use_waypoint_mission', default_value='true',
+        description=(
+            'start waypoint_mission inside this launch; measurement runners '
+            'may disable it and start the mission after their observer is ready'
+        )
+    )
 
     waypoint_data = LaunchConfiguration('waypoint_data')
     drone_config = LaunchConfiguration('drone_config')
@@ -55,6 +62,7 @@ def generate_launch_description():
     use_sensor_frontend = LaunchConfiguration('use_sensor_frontend')
     use_integrated_full = LaunchConfiguration('use_integrated_full')
     use_sensor_planner = LaunchConfiguration('use_sensor_planner')
+    use_waypoint_mission = LaunchConfiguration('use_waypoint_mission')
     external_simulator = PythonExpression([
         "'", use_sensor_frontend, "' != 'true' and '",
         use_integrated_full, "' != 'true' and '",
@@ -75,11 +83,13 @@ def generate_launch_description():
     ld.add_action(declare_sensor_frontend_cmd)
     ld.add_action(declare_integrated_full_cmd)
     ld.add_action(declare_sensor_planner_cmd)
+    ld.add_action(declare_waypoint_mission_cmd)
 
     mission_planner = Node(
         package='mission_planner',
         executable='waypoint_mission',
         output='log',
+        condition=IfCondition(use_waypoint_mission),
         parameters=[{
             'config_name': 'waypoint.yaml',
             'data_name': waypoint_data,

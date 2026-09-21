@@ -2292,13 +2292,19 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             ),
             resource_violation_hold_s=DEFAULT_RESOURCE_VIOLATION_HOLD_S,
             resource_preflight_stable_s=DEFAULT_RESOURCE_PREFLIGHT_STABLE_S,
-            resource_preflight_timeout_s=DEFAULT_RESOURCE_PREFLIGHT_TIMEOUT_S):
+            resource_preflight_timeout_s=DEFAULT_RESOURCE_PREFLIGHT_TIMEOUT_S,
+            observer_ready_before_mission=False):
     is_ref = (map_name == "seed11")  # SUPER public dense MARSIM example
     is_map0 = (map_name == "map0")  # SUPER paper's own Zenodo-released map
     is_seed12 = (map_name == "seed12")
     is_seed13 = (map_name == "seed13")
     is_dynamic = is_seed12 or is_seed13
     is_recovery = map_name in ("seed14", "seed15")
+    if observer_ready_before_mission and (is_ref or is_map0 or is_recovery):
+        raise ValueError(
+            "observer_ready_before_mission currently supports benchmark_seedmap "
+            "launches only"
+        )
     # Paper-matched speed sweep on the seed1..10 filter ablation itself:
     # "sector_v10" -> filter mode "sector" run under static_seedmaps_paper_v10.yaml
     # (max_acc=20 m/s^2, max_vel=10) instead of the default static_seedmaps.yaml
@@ -2499,6 +2505,9 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             scenario_event_json,
             scenario_trace_csv,
             mission_event_json,
+            mission_log,
+            reference_monitor_log,
+            reference_stack_log,
             ready_json,
             ready_json + ".tmp",
             cgroup_trace_csv,
@@ -2903,8 +2912,15 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 f"drone_config:={drone_config_name} "
                 f"super_config:={seedmap_super_config}"
             )
+            if observer_ready_before_mission:
+                # The launch stack must produce odometry before the observer
+                # can become ready, but waypoint_mission must not publish a
+                # goal until that first sample has been recorded.  Start the
+                # same mission node explicitly after the observer handshake.
+                launch_cmd += " use_waypoint_mission:=false"
             if is_seedmap_observed or seedmap_super_config_override:
-                launch_cmd += f" > {reference_stack_log} 2>&1"
+                redirection = ">>" if observer_ready_before_mission else ">"
+                launch_cmd += f" {redirection} {reference_stack_log} 2>&1"
             if integrated_filter_active:
                 encoded_filter_arguments = ";".join(
                     [base_mode, f"{filter_half_angle_deg:.9g}",
@@ -3268,10 +3284,51 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
             mon_cmd = build_loop_monitor_command(
                 wps, switch, timeout, out_json, monitor_options
             )
+            if observer_ready_before_mission:
+                mon_cmd = (
+                    f"SUPER_LOOP_MONITOR_READY_FILE={ready_json!r} " + mon_cmd
+                )
             mon_proc = spawn_process_group(
                 ["bash", "-c", f"{ROS_ENV} && {mon_cmd}"],
             )
             monitor_pattern = "native_loop_monitor.py"
+
+            if observer_ready_before_mission:
+                ready_deadline = time.monotonic() + 30.0
+                while (
+                    mon_proc.poll() is None
+                    and not os.path.exists(ready_json)
+                    and time.monotonic() < ready_deadline
+                ):
+                    time.sleep(0.05)
+                if mon_proc.poll() is not None or not os.path.exists(ready_json):
+                    retry_reasons.append(
+                        "loop monitor did not record first odometry before mission"
+                    )
+                    log(
+                        f"  {tag} attempt {attempt}/{attempt_max}: loop monitor "
+                        "did not reach odometry READY before mission -> retry"
+                    )
+                    kill_group(mon_proc)
+                    kill_group(filt_proc)
+                    kill_group(scenario_proc)
+                    kill_group(recovery_mission_proc)
+                    kill_group(launch_proc)
+                    kill_all()
+                    if cgroup_meter is not None:
+                        cgroup_meter.cleanup()
+                    continue
+                mission_cmd = (
+                    "ros2 run mission_planner waypoint_mission --ros-args "
+                    "-p config_name:=waypoint.yaml "
+                    f"-p data_name:={waypoint_data_name} "
+                    f"2>&1 | tee -a {reference_stack_log} > {mission_log}"
+                )
+                reference_mission_proc = spawn_process_group(
+                    ["bash", "-c", f"{ROS_ENV} && {mission_cmd}"],
+                )
+                if cgroup_meter is not None:
+                    cgroup_meter.assign_tree(reference_mission_proc.pid, "stack")
 
         monitor_cpu = CpuMeter(monitor_pattern)
         # The shell waits on the Python child, so sampling the wrapper PID
@@ -3298,6 +3355,13 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                 break
             if filt_proc is not None and filt_proc.poll() is not None:
                 runtime_process_failure = "filter exited during mission"
+                break
+            if (
+                observer_ready_before_mission
+                and reference_mission_proc is not None
+                and reference_mission_proc.poll() is not None
+            ):
+                runtime_process_failure = "deferred waypoint_mission exited during mission"
                 break
         if runtime_process_failure is not None or runtime_resource_failure is not None:
             if cgroup_meter is not None:
@@ -3335,6 +3399,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                     perf_trace_csv,
                     reference_monitor_log,
                     mission_log,
+                    ready_json,
                     scenario_event_json,
                 ):
                     if os.path.exists(source):
@@ -3547,7 +3612,7 @@ def run_one(map_name, mode, run, attempt_max=3, artifacts_dir=None,
                         "stack.log", "memory.csv", "cgroup.csv", "filt.log",
                         "filt_stats.json", "performance.csv",
                         "reference_monitor.log", "mission.log",
-                        "scenario_event.json",
+                        "ready.json", "scenario_event.json",
                     ):
                         source = os.path.join(
                             TMPDIR, f"{evidence_prefix}.{suffix}"

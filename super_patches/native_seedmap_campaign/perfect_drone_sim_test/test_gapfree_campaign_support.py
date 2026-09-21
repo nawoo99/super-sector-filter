@@ -135,6 +135,19 @@ class AdapterTests(unittest.TestCase):
              "campaign = diagnostic.search.campaign\n    campaign.LOOP_MON = str(MONITOR)\n    campaign.TMPDIR = tempfile.mkdtemp(prefix='gapfree_n5_', dir='/tmp')\n    os.environ['GAPFREE_BASE_MONITOR'] = str(LEGACY_DIR / 'native_loop_monitor.py')\n"),
             ("Path(__file__).resolve().with_name('native_loop_monitor.py')", "LEGACY_DIR / 'native_loop_monitor.py'"),
             ("Path(__file__).resolve().with_name('message_intervals.py')", "LEGACY_DIR / 'message_intervals.py'"),
+            ("                  runtime / 'mission_planner/data/loop24.txt',\n",
+             "                  runtime / 'mission_planner/data/loop24.txt',\n"
+             "                  runtime / 'mission_planner/launch/benchmark_seedmap.launch.py',\n"),
+            ("                   sensor_planner_intra_process=args.compose,\n",
+             "                   sensor_planner_intra_process=args.compose,\n"
+             "                   observer_ready_before_mission=True,\n"),
+            ('        asset_sha256=hashes, baseline_seconds=12,\n',
+             '        asset_sha256=hashes, baseline_seconds=12,\n'
+             '        observer_ready_before_mission=True,\n'
+             '        observer_ready_definition=(\n'
+             "            'gapfree observer recorded its first valid odometry sample before '\n"
+             "            'waypoint_mission process creation'\n"
+             '        ),\n'),
             ('    hashes = {str(p): event.sha(p) for p in sorted(files)}',
              "    files.update({MANIFEST, LEGACY_CHILD, Path(support.__file__).resolve(), MONITOR})\n    files.update(Path(path) for path in map_admission['assets_sha256'])\n    hashes = {str(p): event.sha(p) for p in sorted(files)}"),
             ('    plan = dict(\n',
