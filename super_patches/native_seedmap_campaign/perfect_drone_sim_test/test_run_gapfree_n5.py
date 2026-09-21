@@ -52,6 +52,28 @@ def test_fresh_map_bound_static_and_exact75_primary(tmp_path):
             assert c['command'][2:4]==['static','create']
 
 
+def test_g5_only_plan_keeps_fresh_profile_and_exact_n5(tmp_path):
+    selected=(controller.MAPS[-1],)
+    plan=controller.build_plan(tmp_path,maps=selected)
+    static=[c for c in plan if c['phase']=='static']
+    flights=[c for c in plan if 'path' in c]
+    assert len(static)==8 and len(flights)==6
+    assert {c['map'] for c in plan}==set(selected)
+    assert sum(len(c['modes']) for c in flights if c['phase']=='preflight')==3
+    assert sum(len(c['modes']) for c in flights if c['phase']=='test5')==15
+    assert sum('--profile-cpu' in c['command'] for c in flights)==1
+    assert sum('--small-pool-profile-reference' in c['command'] for c in flights)==5
+    assert {c['run'] for c in flights if c['phase']=='test5'}=={
+        30104,30114,30124,30134,30144}
+
+
+def test_selected_map_validation_rejects_empty_duplicate_and_unknown(tmp_path):
+    with pytest.raises(ValueError):controller.build_plan(tmp_path,maps=())
+    with pytest.raises(ValueError):controller.build_plan(
+        tmp_path,maps=(controller.MAPS[-1],controller.MAPS[-1]))
+    with pytest.raises(ValueError):controller.build_plan(tmp_path,maps=('unknown',))
+
+
 @pytest.mark.parametrize('field,value',[
     ('audit_valid',False),('completion',False),('samples',0),('samples',True),
     ('robot_radius_m',.1),('contact_episodes',None),('contact_episodes',-1),
@@ -180,7 +202,7 @@ def test_best_effort_main_retains_process_and_resource_failures(tmp_path,monkeyp
              modes=list(controller.MODES),path=str(root/'test5/x/r01'),candidate='test',command=[]),
     ]
     monkeypatch.setattr(controller,'MAPS',('x',))
-    monkeypatch.setattr(controller,'build_plan',lambda _root:commands)
+    monkeypatch.setattr(controller,'build_plan',lambda _root,**_kwargs:commands)
     monkeypatch.setattr(controller,'freeze_sources',lambda _root:({},{}))
     monkeypatch.setattr(controller.support,'register_maps',lambda:None)
     monkeypatch.setattr(controller.base,'changed_inputs',lambda _frozen:[])
@@ -192,8 +214,8 @@ def test_best_effort_main_retains_process_and_resource_failures(tmp_path,monkeyp
     monkeypatch.setattr(controller,'triplet_audit',lambda _item:dict(valid=False,
         acceptance_checks={'full:success':False},outcomes={},outcome_failures={}))
     monkeypatch.setattr(controller,'phase_gate',lambda *_args,**_kwargs:dict(valid=False,strict_valid=False))
-    monkeypatch.setattr(controller,'write_progress',lambda _root:[])
-    monkeypatch.setattr(controller,'reports',lambda _root:[dict(phase='all',state='REPORT_ERROR')])
+    monkeypatch.setattr(controller,'write_progress',lambda _root,*_args:[])
+    monkeypatch.setattr(controller,'reports',lambda _root,*_args:[dict(phase='all',state='REPORT_ERROR')])
     for key in tuple(os.environ):
         if key.startswith('SUPER_'):monkeypatch.delenv(key)
 

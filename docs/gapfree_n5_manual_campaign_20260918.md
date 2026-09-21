@@ -12,6 +12,20 @@ planner, 알고리즘, 센서 정책, 실행 바이너리 및 이전 실험 자�
 bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh --continue-after-failure
 ```
 
+맵 5(G5)만 각 모드5회 실행할 때는 다음 명령을 사용한다.
+
+```bash
+bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh \
+  --maps gapfree_d1_m05 \
+  --continue-after-failure
+```
+
+이 선택 실행은 현재 source·정책으로 맵5 profiler-ON 예비3회를 새로 만든 뒤,
+그 참조와 해시가 일치하는 profiler-OFF 본시험15회(3모드×5회)를 수행한다. 과거
+예비시험 폴더를 재사용하지 않는다. 예비3회는 callback/실행 건전성 확인용이며
+본시험 완주율·접촉률·연산량 표본 수에는 포함하지 않는다. 예상 시간은 약
+25–40분이며 timeout과 실패 회차에 따라 늘어날 수 있다.
+
 이 옵션은 접촉, 미완주, 로그/계측 누락, 속도·자원 검사 실패, child 프로세스
 오류를 성공으로 바꾸지 않는다. 해당 회차를 실패/무효/N/A로 저장한 뒤 다음 예정
 회차를 계속한다. source·map·동결 evidence hash가 실행 중 바뀌거나 사용자가
@@ -40,6 +54,8 @@ ROS Humble와 현재 workspace 환경을 자동으로 source한다. 기존 시�
 ```bash
 bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh --dry-run
 ```
+
+맵5 선택 계획만 확인하려면 위 명령에 `--maps gapfree_d1_m05`를 추가한다.
 
 중단된 결과의 표만 다시 만들려면(비행 미실행):
 
@@ -151,3 +167,9 @@ hash-pinned 기존 실행/계측 helper를 재사용한다. 2026-09-18 진단용
 명시하며 원본 설치 바이너리 hash 불일치는 허용하지 않는다. geometry와 실행 정책은
 ON/OFF 매칭 및 보고서 fingerprint에 포함한다. child별 임시 작업 폴더 경로만
 보고서 정책 fingerprint에서 제외한다.
+
+2026-09-21 선택 실행부터 `native_campaign.py`와
+`benchmark_seedmap.launch.py`의 observer-ready mission-start 오케스트레이션 변경도
+현재 해시로 명시·동결한다. 이는 첫 유효 odometry 관측 후 미션을 시작하기 위한
+계측 순서 변경이며 planner 알고리즘 변경이 아니다. 그 밖의 과거 동결 입력 변경은
+계속 fail-closed로 거부한다.

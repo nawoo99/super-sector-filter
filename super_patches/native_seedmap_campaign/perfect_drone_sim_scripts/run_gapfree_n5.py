@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manual G1-G5 campaign: fresh transport/ON15, then OFF75 with complete records.
+"""Manual gapfree campaign: fresh transport/profile, then n=5 with complete records.
 
 Execute only when invoked by the user. Dry-run does offline validation and
 writes the exact plan without launching ROS. Reuse existing runtime policy.
@@ -46,13 +46,20 @@ OBSERVATION_ONLY_SOURCE_PATHS = frozenset({
         Path('/root/super_ws/src/SUPER/super_planner/src/super_core/super_planner.cpp'),
     )
 })
+CAMPAIGN_ORCHESTRATION_SOURCE_PATHS = frozenset({
+    str(REPO/'scripts/native_campaign/native_campaign.py'),
+    '/root/super_ws/src/SUPER/mission_planner/launch/benchmark_seedmap.launch.py',
+})
 
 
-def build_plan(root, base_run=30000):
+def build_plan(root, base_run=30000, maps=None):
     if type(base_run) is not int or base_run < 1:
         raise ValueError('Positive integer base-run required')
+    maps = tuple(MAPS if maps is None else maps)
+    if not maps or len(maps) != len(set(maps)) or not set(maps) <= set(MAPS):
+        raise ValueError('Non-empty unique gapfree map selection required')
     commands = []
-    for name in MAPS:
+    for name in maps:
         for item in base.static_commands(root, name):
             if item['name'].startswith('accept_'):
                 item['command'] = [sys.executable, str(SCRIPTS/'gapfree_campaign_support.py'),
@@ -60,8 +67,8 @@ def build_plan(root, base_run=30000):
             commands.append(dict(item, map=name))
     for phase in PHASES:
         for repeat in range(COUNTS[phase]):
-            shift = repeat % len(MAPS)
-            for name in MAPS[shift:] + MAPS[:shift]:
+            shift = repeat % len(maps)
+            for name in maps[shift:] + maps[:shift]:
                 index = MAPS.index(name)
                 run = base_run + (0 if phase == 'preflight' else 100) + repeat*10 + index
                 folder = root/phase/name/f'r{repeat+1:02d}_run{run}'
@@ -174,9 +181,10 @@ def audit_accepted(audit, continue_after_contact=False):
     return audit.get('valid') is True or (continue_after_contact and contact_only_failure(audit))
 
 
-def phase_gate(commands, phase, continue_after_contact=False):
+def phase_gate(commands, phase, continue_after_contact=False, maps=None):
+    maps = tuple(MAPS if maps is None else maps)
     planned = [c for c in commands if c.get('phase') == phase]
-    expected = {(m,r,mode) for m in MAPS for r in range(1,COUNTS[phase]+1) for mode in MODES}
+    expected = {(m,r,mode) for m in maps for r in range(1,COUNTS[phase]+1) for mode in MODES}
     actual = [(c['map'],c['repeat'],m) for c in planned for m in c['modes']]
     identities = [(c['map'],c['run'],m) for c in planned for m in c['modes']]
     records = []
@@ -204,7 +212,8 @@ def mean_sd(values):
                 sd=statistics.stdev(values) if len(values)>1 else None)
 
 
-def write_progress(root):
+def write_progress(root, maps=None):
+    maps = tuple(MAPS if maps is None else maps)
     observations=[]
     for raw_path in sorted((root/'test5').rglob('raw.csv')):
         with raw_path.open(newline='') as stream:
@@ -230,7 +239,8 @@ def write_progress(root):
     keys={'mission_time_s':'mission_time_s','cpu_cores':'end_to_end_cpu_cores_mean',
           'cpu_core_s':'end_to_end_cpu_core_s','input_mib_s':'map_payload_mib_s',
           'input_bytes':'map_payload_bytes_total','map_ms':'total_ms_mean'}
-    for index,name in enumerate(MAPS,1):
+    for name in maps:
+        index = MAPS.index(name) + 1
         for mode in MODES:
             rows=[r for r in observations if r['map']==name and r['mode']==mode]
             known=[r for r in rows if r['contact_known']]
@@ -344,8 +354,9 @@ def report_load_runs(campaign_roots, repo):
     return runs, warnings
 
 
-def reports(root):
-    write_progress(root)
+def reports(root, maps=None):
+    maps = tuple(MAPS if maps is None else maps)
+    write_progress(root, maps)
     records=[]
     for phase in PHASES:
         if not any((root/phase).rglob('raw.csv')):
@@ -371,19 +382,25 @@ def freeze_sources(root):
     if not old:
         raise RuntimeError('Missing previous frozen runtime inventory')
     changed=base.changed_inputs(old)
-    unexpected=[path for path in changed if path not in OBSERVATION_ONLY_SOURCE_PATHS]
+    admitted_paths=OBSERVATION_ONLY_SOURCE_PATHS|CAMPAIGN_ORCHESTRATION_SOURCE_PATHS
+    unexpected=[path for path in changed if path not in admitted_paths]
     if unexpected:
         raise RuntimeError('Existing C25 source/evidence changed; cannot silently claim same candidate: '+repr(unexpected))
     # Verify all old evidence once and hold runtime/source/config/binary inputs
     # throughout this campaign; completed old flight observations are not reused.
     frozen={p:h for p,h in old.items() if not p.startswith(str(REPO/'results'))}
-    observation_overlay=[]
-    for name in sorted(OBSERVATION_ONLY_SOURCE_PATHS):
+    source_overlay=[]
+    for name in sorted(admitted_paths):
         path=Path(name)
         if name in frozen and path.is_file():
             current=base.sha(path)
-            observation_overlay.append(dict(path=name,baseline_sha256=frozen[name],current_sha256=current,
-                executed_by_primary_campaign=False,installed_binary_remains_frozen=True))
+            orchestration=name in CAMPAIGN_ORCHESTRATION_SOURCE_PATHS
+            source_overlay.append(dict(path=name,baseline_sha256=frozen[name],current_sha256=current,
+                classification=('observer_ready_campaign_orchestration' if orchestration
+                                else 'observation_only_unbuilt_source'),
+                executed_by_primary_campaign=orchestration,
+                planner_algorithm_changed=False,
+                installed_binary_remains_frozen=not orchestration))
             frozen[name]=current
     manifest=base.read(MANIFEST)
     for row in manifest['maps']:
@@ -395,7 +412,7 @@ def freeze_sources(root):
     paths += [REPO/'scripts/native_campaign/run_gapfree_n5.sh']
     base.freeze_files(frozen,paths)
     return frozen,dict(previous_files_verified=len(old),previous_changed_files=changed,
-                        admitted_unbuilt_observation_source_changes=observation_overlay,
+                        admitted_source_changes=source_overlay,
                         original_normal_preserved=True,maps_manifest_sha256=base.sha(MANIFEST))
 
 
@@ -408,14 +425,22 @@ def main(argv=None):
         help='Retain contact outcomes and continue; all non-contact failures still stop')
     parser.add_argument('--continue-after-failure',action='store_true',
         help='Best-effort scheduling: retain and continue after flight/static/process/resource/measurement failures')
+    parser.add_argument('--maps',nargs='+',choices=MAPS,default=list(MAPS),
+        help='Subset to execute; for example --maps gapfree_d1_m05 runs G5 only')
     args=parser.parse_args(argv)
+    selected_maps=tuple(dict.fromkeys(args.maps))
+    if len(selected_maps) != len(args.maps):
+        parser.error('--maps entries must be unique')
     continue_after_contact = args.continue_after_contact or args.continue_after_failure
     support.register_maps()
     if args.report:
         if args.output or args.dry_run:parser.error('--report is independent of --output/--dry-run')
         plan=base.load_document(args.report/'plan.json')
         if plan.get('schema')!='gapfree-n5-manual-v1':parser.error('Not a gapfree campaign result folder')
-        reports(args.report.resolve());return
+        report_maps=tuple(plan.get('maps',MAPS))
+        if not report_maps or len(report_maps)!=len(set(report_maps)) or not set(report_maps)<=set(MAPS):
+            parser.error('Invalid map selection in campaign plan')
+        reports(args.report.resolve(),report_maps);return
     root=(args.output or REPO/'results'/('gapfree_n5_'+datetime.now().strftime('%Y%m%d_%H%M%S')+f'_{os.getpid()}')).resolve()
     if root.exists():parser.error('Existing output refused; original attempts are never overwritten or resumed')
     if any(k.startswith('SUPER_') and k not in ('SUPER_CPU_PROFILE','SUPER_CALLBACK_TRACE') for k in os.environ):
@@ -434,15 +459,17 @@ def main(argv=None):
     sys.stdout,sys.stderr=Tee(previous_stdout),Tee(previous_stderr)
     started,history,current,frozen=time.monotonic(),[],None,{}
     env=dict(os.environ,SUPER_CPU_PROFILE='0',SUPER_CALLBACK_TRACE='0')
+    requested_off_flights=3*COUNTS['test5']*len(selected_maps)
+    requested_on_flights=3*COUNTS['preflight']*len(selected_maps)
     def status(state,**extra):
         base.save(root/'status.json',dict(state=state,pid=os.getpid(),current=current,completed=history,
-            requested_off_flights=75,requested_on_flights=15,automatic_retry=False,
+            requested_off_flights=requested_off_flights,requested_on_flights=requested_on_flights,automatic_retry=False,
             continue_after_contact=continue_after_contact,
             continue_after_failure=args.continue_after_failure,
             audited_off_flights=3*sum(e.get('phase')=='test5' and e.get('accepted_for_coverage') is True for e in history),
             elapsed_s=time.monotonic()-started,updated_local=datetime.now().astimezone().isoformat(),**extra))
     def update_progress(context):
-        try:return write_progress(root)
+        try:return write_progress(root,selected_maps)
         except Exception as exc:
             if not args.continue_after_failure:raise
             path=root/'progress_errors.json';document=base.load_document(path)
@@ -456,14 +483,15 @@ def main(argv=None):
         status('PREPARING')
         frozen,admission=freeze_sources(root)
         base.save(root/'admission.json',admission)
-        commands=build_plan(root)
+        commands=build_plan(root,maps=selected_maps)
         for phase in PHASES:
-            base.save(root/phase/'plan.json',dict(maps=list(MAPS),phase=phase,independent_cohort=True,
+            base.save(root/phase/'plan.json',dict(maps=list(selected_maps),phase=phase,independent_cohort=True,
                 profile_preflight_runs_per_mode=1 if phase=='preflight' else 0,
                 unprofiled_runs_per_mode=5 if phase=='test5' else 0,parent_plan=str(root/'plan.json')))
-        base.save(root/'plan.json',dict(schema='gapfree-n5-manual-v1',maps=list(MAPS),modes=list(MODES),
-            map_labels=dict(zip(MAPS,('G1','G2','G3','G4','G5'))),candidate=CANDIDATE,commands=commands,
-            profiled_preflight_flights=15,unprofiled_primary_flights=75,static_dds_cases=30,rviz_cases=5,
+        base.save(root/'plan.json',dict(schema='gapfree-n5-manual-v1',maps=list(selected_maps),modes=list(MODES),
+            map_labels={name:f'G{MAPS.index(name)+1}' for name in selected_maps},candidate=CANDIDATE,commands=commands,
+            profiled_preflight_flights=requested_on_flights,unprofiled_primary_flights=requested_off_flights,
+            static_dds_cases=6*len(selected_maps),rviz_cases=len(selected_maps),
             no_retry=True,no_replacement=True,all_failures_retained=True,no_runtime_tuning=True,
             primary_contact_scope=PRIMARY_CONTACT_NOTE,pcd_contact_is_secondary=True,
             continue_after_contact=continue_after_contact,
@@ -481,8 +509,9 @@ def main(argv=None):
         base.save(root/'frozen_inputs_and_evidence.json',frozen)
         update_progress('initial')
         if args.dry_run:
-            status('DRY_RUN_ONLY',planned_flights=90,actual_flights_started=0)
-            print('DRY RUN PASS: static35 + separateON15 + primaryOFF75; no ROS launched',flush=True)
+            status('DRY_RUN_ONLY',planned_flights=requested_on_flights+requested_off_flights,actual_flights_started=0)
+            print(f'DRY RUN PASS: maps={list(selected_maps)} separateON{requested_on_flights} '
+                  f'+ primaryOFF{requested_off_flights}; no ROS launched',flush=True)
             return
         previous_phase='static'
         for item in commands:
@@ -492,7 +521,7 @@ def main(argv=None):
             if item['phase']!=previous_phase:
                 if previous_phase=='static':
                     try:
-                        validations={m:base.static.validate_manifest(root/'static_preflight'/m/'acceptance.json',base.static.map_context(m)) for m in MAPS}
+                        validations={m:base.static.validate_manifest(root/'static_preflight'/m/'acceptance.json',base.static.map_context(m)) for m in selected_maps}
                         base.save(root/'static_gate.json',validations)
                         static_valid=all(v.get('valid') is True for v in validations.values())
                     except Exception as exc:
@@ -502,14 +531,16 @@ def main(argv=None):
                         raise RuntimeError('Static transport/RViz gate failed')
                 else:
                     try:
-                        gate=phase_gate(commands,previous_phase,continue_after_contact)
+                        gate=phase_gate(commands,previous_phase,continue_after_contact,selected_maps)
                     except Exception as exc:
                         gate=dict(valid=False,phase=previous_phase,error=repr(exc))
                     base.save(root/(previous_phase+'_gate.json'),gate)
-                    try:reports(root)
+                    try:reports(root,selected_maps)
                     except Exception as exc:base.save(root/(previous_phase+'_report_error.json'),dict(error=repr(exc)))
                     if gate['valid'] is not True and not args.continue_after_failure:
-                        raise RuntimeError('Fresh ON15 measurement/completion gate failed; OFF75 not started')
+                        raise RuntimeError(
+                            f'Fresh ON{requested_on_flights} measurement/completion gate failed; '
+                            f'OFF{requested_off_flights} not started')
                 previous_phase=item['phase']
             status('RUNNING');print('START',item['name'],flush=True)
             execution_error=None;memory_runaway=False
@@ -578,28 +609,29 @@ def main(argv=None):
                 base.freeze_files(frozen,evidence if not args.continue_after_failure else [p for p in evidence if p.is_file()])
             base.save(root/'frozen_inputs_and_evidence.json',frozen)
             print('FINISH',json.dumps(entry),flush=True);status('RUNNING')
-        try:gate=phase_gate(commands,'test5',continue_after_contact)
+        try:gate=phase_gate(commands,'test5',continue_after_contact,selected_maps)
         except Exception as exc:gate=dict(valid=False,phase='test5',error=repr(exc))
         base.save(root/'test5_gate.json',gate)
         changed=base.changed_inputs(frozen)
         if changed:raise RuntimeError('Frozen evidence changed: '+repr(changed))
-        try:report_records=reports(root)
+        try:report_records=reports(root,selected_maps)
         except Exception as exc:
             report_records=[dict(phase='all',state='REPORT_ERROR',error=repr(exc))]
             base.save(root/'report_error.json',report_records[0])
         report_ok=all(r['state']=='WRITTEN' for r in report_records)
         if (not gate['valid'] or not report_ok) and not args.continue_after_failure:
-            raise RuntimeError('Final exact75 evidence/report gate failed')
+            raise RuntimeError(f'Final exact{requested_off_flights} evidence/report gate failed')
         retained=any(e.get('returncode') not in (0,None) or e.get('valid') is False
                      or e.get('execution_error') or e.get('audit_error') for e in history)
         retained=retained or not gate.get('valid',False) or not report_ok
         status('COMPLETE_WITH_RETAINED_FAILURES' if retained else 'COMPLETE',
-            completed_off_flights=75 if gate.get('valid') else None,
-            scheduled_off_flights=75,scheduled_on_flights=15,retained_failures=retained)
+            completed_off_flights=requested_off_flights if gate.get('valid') else None,
+            scheduled_off_flights=requested_off_flights,scheduled_on_flights=requested_on_flights,
+            retained_failures=retained)
         print('FINISHED:',root/'summary_by_map.md',flush=True)
     except BaseException as exc:
         status('STOPPED_FOR_DIAGNOSIS',error=repr(exc))
-        try:reports(root)
+        try:reports(root,selected_maps)
         except BaseException as report_error:base.save(root/'report_error.json',dict(error=repr(report_error)))
         print('STOPPED; preserved results:',root,repr(exc),file=sys.stderr,flush=True)
         raise
