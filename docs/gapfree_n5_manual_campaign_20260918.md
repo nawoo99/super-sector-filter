@@ -12,11 +12,11 @@ planner, 알고리즘, 센서 정책, 실행 바이너리 및 이전 실험 자�
 bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh --continue-after-failure
 ```
 
-맵 5(G5)만 각 모드5회 실행할 때는 다음 명령을 사용한다.
+수정 맵 5(G5-R2)만 각 모드5회 실행할 때는 다음 명령을 사용한다.
 
 ```bash
 bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh \
-  --maps gapfree_d1_m05 \
+  --maps gapfree_d1_m05r2 \
   --continue-after-failure
 ```
 
@@ -55,7 +55,7 @@ ROS Humble와 현재 workspace 환경을 자동으로 source한다. 기존 시�
 bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh --dry-run
 ```
 
-맵5 선택 계획만 확인하려면 위 명령에 `--maps gapfree_d1_m05`를 추가한다.
+수정 맵5 선택 계획만 확인하려면 위 명령에 `--maps gapfree_d1_m05r2`를 추가한다.
 
 중단된 결과의 표만 다시 만들려면(비행 미실행):
 
@@ -67,7 +67,7 @@ bash /root/super-sector-filter/scripts/native_campaign/run_gapfree_n5.sh --repor
 
 | 항목 | 설정 |
 |---|---|
-| 맵 | G1–G5 = gapfree_d1_m01..05 |
+| 맵 | G1–G4 = gapfree_d1_m01..04, G5 = gapfree_d1_m05r2 |
 | 형상 | 맵당 원기둥410개, 지름1m, 높이3m, 64×64m |
 | 배치 | 비겹침만 강제; 최소 표면 간격1m 조건 없음 |
 | 맵 확인 | 기존 생성 manifest SHA256 및40개 asset hash 확인 |
@@ -173,3 +173,16 @@ ON/OFF 매칭 및 보고서 fingerprint에 포함한다. child별 임시 작업 
 현재 해시로 명시·동결한다. 이는 첫 유효 odometry 관측 후 미션을 시작하기 위한
 계측 순서 변경이며 planner 알고리즘 변경이 아니다. 그 밖의 과거 동결 입력 변경은
 계속 fail-closed로 거부한다.
+
+## G5-R2 변경 공개
+
+기존 `gapfree_d1_m05`는 삭제하거나 덮어쓰지 않는다. 2026-09-21 예비시험에서
+Adaptive가 시작 후 약4.5초에 원기둥199와 접촉했기 때문에 이 맵은 목표 조건에
+부적합한 개발 맵으로 보존한다. G5-R2는 원기둥199 하나만 `(0.931831, 1.726500)`에서
+`(4.25, 29.50)`으로 이동한다. 원기둥410개, 지름1m, 높이3m, 필드와 모든
+시뮬레이터·planner·센서 설정은 유지한다.
+
+이 변경은 이전 비행 결과를 보고 수행했으므로 blind validation이 아니다. 새 manifest에
+`map_revision_informed_by_prior_flight=true`로 기록하며 기존 G5 결과와 G5-R2 결과를
+합산하지 않는다. G5-R2의 성능·안전 주장은 변경 이후 새로 실행한 예비3회와 본시험
+15회만 사용한다.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""G1–G5 child adapter, preserving the legacy flight/measurement gates.
+"""G1–G4 + G5-R2 child adapter, preserving legacy flight/measurement gates.
 
 The main function is an explicit isolated copy of adaptive_cpu40_seed1.main at
 SHA256 954876f41d60d5ce76cb5b0742b6da826daca2a4e7f0b355e0b3878e1b77dac3.

@@ -83,8 +83,8 @@ def test_frozen_base_and_all_five_geometries_load_without_running_ros():
     if not base.exists():
         pytest.skip("Frozen native monitor not installed")
     monitor.split_base_source(base.read_bytes(), str(base))
-    for i in range(1, 6):
-        path = MODULE_PATH.parents[1] / "pcd/seed_maps" / f"gapfree_d1_m{i:02d}.pcd"
+    for name in monitor.ALLOWED_MAPS:
+        path = MODULE_PATH.parents[1] / "pcd/seed_maps" / f"{name}.pcd"
         cylinders, csv_path = monitor.load_cylinders(path)
         assert cylinders.shape == (410, 3) and csv_path.exists()
 

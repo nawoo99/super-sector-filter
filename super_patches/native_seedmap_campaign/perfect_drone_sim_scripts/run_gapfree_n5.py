@@ -28,12 +28,12 @@ sys.path.insert(0, str(SCRIPTS))
 import run_c24_normal_validation as base
 import gapfree_campaign_support as support
 
-MAPS = tuple(f'gapfree_d1_m{i:02d}' for i in range(1, 6))
+MAPS = support.MAPS
 MODES = ('full', 'sector', 'adaptive')
 PHASES = ('preflight', 'test5')
 COUNTS = dict(preflight=1, test5=5)
 CANDIDATE = 'c24_gapfree_d1_n5'
-MANIFEST = REPO/'results/gapfree_d1_maps_20260918/manifest.json'
+MANIFEST = support.MANIFEST
 PROTOCOL = REPO/'docs/gapfree_n5_manual_campaign_20260918.md'
 PRIOR_INVENTORY = REPO/'results/c25_normal_confirmation_20260917/iteration02/frozen_inputs_and_evidence.json'
 PRIMARY_CONTACT_NOTE = 'Analytic static finite cylinders, body sphere radius0.2m, received odometry samples; not continuous swept collision proof'
@@ -266,7 +266,7 @@ def write_progress(root, maps=None):
         writer.writeheader();writer.writerows(result)
     def fmt(value,digits=3):
         return 'N/A' if value is None else f'{value:.{digits}f}'
-    lines=['# G1–G5 본시험 진행/결과 (모드별 목표5회)', '',
+    lines=['# G1–G4 + G5-R2 본시험 진행/결과 (모드별 목표5회)', '',
         '본시험75회만 집계. ON15는 별도 report_preflight. 접촉 횟수는 정적 원기둥/기체 구 모델의 수신 odometry 표본 기준 진입 episode 수.',
         'CPU는 실험 cgroup 전체(시뮬레이터 포함), 평균 cores 및 측정구간 core-s. 접촉/미완료 시도도 보존. 오류/오염 회차 비용은 N/A.', '',
         '| 맵 | 모드 | 수행/목표 | 완주/수행 | 완주율(%) | 접촉 주행 | 접촉 횟수 | 접촉 미확인 | 시간(s) | 평균 CPU(cores) | 누적 CPU(core-s) |',
@@ -426,7 +426,7 @@ def main(argv=None):
     parser.add_argument('--continue-after-failure',action='store_true',
         help='Best-effort scheduling: retain and continue after flight/static/process/resource/measurement failures')
     parser.add_argument('--maps',nargs='+',choices=MAPS,default=list(MAPS),
-        help='Subset to execute; for example --maps gapfree_d1_m05 runs G5 only')
+        help='Subset to execute; for example --maps gapfree_d1_m05r2 runs revised G5 only')
     args=parser.parse_args(argv)
     selected_maps=tuple(dict.fromkeys(args.maps))
     if len(selected_maps) != len(args.maps):

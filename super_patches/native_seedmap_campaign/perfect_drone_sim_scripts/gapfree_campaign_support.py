@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only admission and map bindings for the frozen G1–G5 map suite.
+"""Read-only admission and map bindings for the frozen G1–G4 + G5-R2 suite.
 
 Canonical transport hashes describe PCL PointXYZI/ROS records, not ASCII bytes.
 Registering these expectations does not certify transport: fresh DDS/RViz
@@ -17,9 +17,9 @@ import numpy as np
 REPO = Path('/root/super-sector-filter')
 LEGACY_DIR = REPO / 'scripts/native_campaign'
 PACKAGE = Path('/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim')
-MANIFEST = REPO / 'results/gapfree_d1_maps_20260918/manifest.json'
-MANIFEST_SHA256 = 'e3e2ea0dcca7b74f687094a90692953ece56247d2f45b5eda46dc2fc062b7f73'
-MAPS = tuple(f'gapfree_d1_m{i:02d}' for i in range(1, 6))
+MANIFEST = REPO / 'results/gapfree_d1_maps_20260921_r2/manifest.json'
+MANIFEST_SHA256 = '0629290e1030c66299931d45b50ff67d559c0151c24aff213a85a37eb7a6bc12'
+MAPS = tuple(f'gapfree_d1_m{i:02d}' for i in range(1, 5)) + ('gapfree_d1_m05r2',)
 LEGACY_CHILD = LEGACY_DIR / 'adaptive_cpu40_seed1.py'
 LEGACY_CHILD_SHA256 = '954876f41d60d5ce76cb5b0742b6da826daca2a4e7f0b355e0b3878e1b77dac3'
 
@@ -78,13 +78,18 @@ def canonical_geometry(path):
 def validate_suite():
     """Validate the exact previously generated suite, including all asset copies."""
     if sha256(MANIFEST) != MANIFEST_SHA256:
-        raise ValueError('Frozen G1–G5 manifest changed')
+        raise ValueError('Frozen G1–G4 + G5-R2 manifest changed')
     if sha256(LEGACY_CHILD) != LEGACY_CHILD_SHA256:
         raise ValueError('Legacy child baseline changed; review adapter differential')
     document = json.loads(MANIFEST.read_text())
-    if (document.get('schema') != 'gapfree-diameter1-static-suite-v1'
+    if (document.get('schema') != 'gapfree-diameter1-static-suite-r2-v1'
             or tuple(row.get('map') for row in document.get('maps', [])) != MAPS):
-        raise ValueError('Expected exact ordered G1–G5 manifest')
+        raise ValueError('Expected exact ordered G1–G4 + G5-R2 manifest')
+    revision = document.get('revision', {})
+    if (revision.get('replacement_suite_member') != MAPS[-1]
+            or revision.get('planner_algorithm_sensor_changed') is not False
+            or revision.get('map_revision_informed_by_prior_flight') is not True):
+        raise ValueError('Missing disclosed G5-R2 revision provenance')
     bindings = {str(MANIFEST): MANIFEST_SHA256, str(LEGACY_CHILD): LEGACY_CHILD_SHA256}
     contexts = {}
     for row in document['maps']:

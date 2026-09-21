@@ -2,7 +2,7 @@
 """Supplement the frozen loop observer with sampled solid-cylinder contacts.
 
 The original observer and its output are left intact.  This wrapper is only for
-gapfree_d1_m01..m05 and emits a cylinder audit plus every received odometry
+gapfree_d1_m01..m04 or outcome-disclosed m05r2 and emits a cylinder audit plus every received odometry
 sample beside the original JSON.  Contacts are sphere/finite-cylinder
 intersections at received poses, not a continuous/swept collision proof.
 """
@@ -13,7 +13,6 @@ import json
 import math
 import os
 from pathlib import Path
-import re
 import sys
 import time
 
@@ -25,6 +24,7 @@ DEFAULT_BASE = Path("/root/super-sector-filter/scripts/native_campaign/native_lo
 BODY_RADIUS_M = 0.2
 CYLINDER_HEIGHT_M = 3.0
 READY_FILE_ENV = "SUPER_LOOP_MONITOR_READY_FILE"
+ALLOWED_MAPS = tuple(f"gapfree_d1_m{i:02d}" for i in range(1, 5)) + ("gapfree_d1_m05r2",)
 
 
 def sha256(path):
@@ -46,8 +46,8 @@ def write_ready_file(path, value):
 
 def load_cylinders(pcd_path):
     pcd_path = Path(pcd_path).resolve()
-    if not re.fullmatch(r"gapfree_d1_m0[1-5]\.pcd", pcd_path.name):
-        raise ValueError("Solid-cylinder observer is restricted to gapfree_d1_m01..m05")
+    if pcd_path.stem not in ALLOWED_MAPS or pcd_path.suffix != ".pcd":
+        raise ValueError("Solid-cylinder observer is restricted to the admitted gapfree suite")
     csv_path = pcd_path.with_name(pcd_path.stem + "_cylinders.csv")
     with csv_path.open(newline="") as stream:
         rows = [[float(row[k]) for k in ("x", "y", "r")]
