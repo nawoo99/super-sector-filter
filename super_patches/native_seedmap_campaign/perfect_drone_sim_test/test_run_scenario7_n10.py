@@ -83,7 +83,8 @@ def test_empty_progress_has_21_rows_and_no_fabricated_zero(tmp_path):
     assert all(r['cpu_cores_mean'] is None and r['contact_episodes'] is None for r in result)
     with (tmp_path/'summary_overall.csv').open() as stream:
         rows = list(csv.DictReader(stream))
-    assert len(rows) == 3 and all(r['planned'] == '70' for r in rows)
+    assert len(rows) == 9
+    assert {r['group']: r['planned'] for r in rows} == {'normal': '50', 'urban': '10', 'forest': '10'}
     assert (tmp_path/'adaptive_transitions_by_map.csv').is_file()
 
 
@@ -199,3 +200,49 @@ def test_contact_cache_is_bounded(tmp_path, monkeypatch):
     assert runner.contact_evidence(audit, name)[1]
     assert len(runner._CONTACT_EVIDENCE_CACHE) == 2
     assert ('older', name) not in runner._CONTACT_EVIDENCE_CACHE
+
+
+def test_mission_bindings_in_all_231_planned_flights(tmp_path):
+    with mock.patch.object(runner.base, 'static_commands', return_value=[]):
+        commands = runner.build_plan(tmp_path)
+    names = {item['map']: item['mission']['mission_file_basename'] for item in commands}
+    assert all(names[name] == 'loop24.txt' for name in runner.MAPS[:5])
+    assert names[runner.MAPS[5]] == 'urban_building_corners_v3.txt'
+    assert names[runner.MAPS[6]] == 'forest_wide_zigzag_v2.txt'
+    for item in commands:
+        assert item['mission'] == runner.mission_runtime.mission_binding(
+            runner.missions.mission_context(item['map']))
+        assert item['mission']['goal_count'] == 5
+
+
+def test_aggregation_policy_never_pools_all_seven():
+    policy = runner.aggregation_policy()
+    assert policy['groups'] == dict(normal=list(runner.MAPS[:5]),
+                                    urban=[runner.MAPS[5]], forest=[runner.MAPS[6]])
+    assert policy['all_seven_pooling'] is False
+    assert policy['profile_preflight_pooled'] is False
+    assert runner.aggregation_policy(runner.MAPS[-2:])['groups'] == {
+        'urban': [runner.MAPS[5]], 'forest': [runner.MAPS[6]]}
+
+
+def test_triplet_requires_same_mission_binding_and_observer_goal_count(tmp_path, monkeypatch):
+    name = runner.MAPS[5]
+    expected = runner.mission_runtime.mission_binding(runner.missions.mission_context(name))
+    item = dict(path=str(tmp_path), map=name, run=40005, phase='preflight',
+                modes=list(runner.MODES), mission=expected)
+    def prior_audit(*_):
+        return dict(acceptance_checks={'old_checks': True},
+                    outcomes={m: {'success': True} for m in runner.MODES}, outcome_failures={})
+    monkeypatch.setattr(runner.base, 'triplet_audit', prior_audit)
+    monkeypatch.setattr(runner, 'contact_evidence', lambda *_: ({'contact_episodes': 0}, True))
+    runner.base.save(tmp_path/'plan.json', {'scenario7_mission': expected})
+    for mode in runner.MODES:
+        runner.base.save(tmp_path/'artifacts'/f'{name}_run40005_{mode}.json',
+                         dict(success=True, n_waypoints=5, waypoints_reached=5))
+    assert runner.triplet_audit(item)['valid'] is True
+    runner.base.save(tmp_path/'plan.json', {'scenario7_mission': {'mission_file_basename': 'loop24.txt'}})
+    assert runner.triplet_audit(item)['acceptance_checks']['mission_binding'] is False
+    runner.base.save(tmp_path/'plan.json', {'scenario7_mission': expected})
+    runner.base.save(tmp_path/'artifacts'/f'{name}_run40005_full.json',
+                     dict(success=True, n_waypoints=5, waypoints_reached=4))
+    assert runner.triplet_audit(item)['acceptance_checks']['full:mission_goal_count'] is False

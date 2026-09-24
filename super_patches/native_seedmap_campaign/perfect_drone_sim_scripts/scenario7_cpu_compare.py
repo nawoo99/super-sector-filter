@@ -14,6 +14,7 @@ from pathlib import Path
 import shutil
 
 import scenario7_campaign_support as support
+import scenario7_mission_runtime as mission_runtime
 
 support.verify_baselines()
 import gapfree_cpu_compare as inherited
@@ -22,7 +23,8 @@ MONITOR = support.PACKAGE / 'scripts/scenario7_native_loop_monitor.py'
 OBSERVER_DEPENDENCIES = (support.PACKAGE / 'scripts/scenario7_geometry.py', support.GAPFREE_MONITOR)
 MAP_MATCH_FIELDS = ('scenario7_manifest_sha256', 'scenario7_geometry',
                     'scenario7_adapter_baseline_sha256', 'scenario7_gapfree_adapter_sha256',
-                    'scenario7_solid_geometry_sha256', 'scenario7_observer_sha256')
+                    'scenario7_solid_geometry_sha256', 'scenario7_observer_sha256',
+                    'scenario7_mission')
 SUPPLEMENTAL_SUFFIXES = ('solid_audit.json', 'odometry.csv')
 
 # Exact cardinalities prevent a source change from silently adapting new code.
@@ -32,17 +34,31 @@ MAIN_REPLACEMENTS = (
     ('gapfree_manifest_sha256=', 'scenario7_manifest_sha256=', 1),
     ('gapfree_geometry=', 'scenario7_geometry=', 1),
     ('gapfree_adapter_baseline_sha256=', 'scenario7_adapter_baseline_sha256=', 1),
+    ('    map_context = static_latched_preflight.map_context(args.map)',
+     '    map_context = static_latched_preflight.map_context(args.map)\n'
+     '    mission_context = mission_runtime.mission_context(args.map)', 1),
+    ("                  runtime / 'mission_planner/data/loop24.txt',",
+     "                  Path(mission_context['mission_file']),", 1),
     ('    files.update({MANIFEST, LEGACY_CHILD, Path(support.__file__).resolve(), MONITOR})',
      '    files.update({MANIFEST, LEGACY_CHILD, Path(support.__file__).resolve(), MONITOR})\n'
-     '    files.update(OBSERVER_DEPENDENCIES)', 1),
+     '    files.update(OBSERVER_DEPENDENCIES)\n'
+     '    files.update(mission_runtime.asset_paths(mission_context))', 1),
     ("        schema='adaptive-cpu40-seed1-exploratory-v1', candidate=args.candidate,",
      "        scenario7_gapfree_adapter_sha256=support.GAPFREE_ADAPTER_SHA256,\n"
      "        scenario7_solid_geometry_sha256=map_admission['maps'][args.map]['solid_geometry_sha256'],\n"
      "        scenario7_observer_sha256=support.sha256(MONITOR),\n"
+     "        scenario7_mission=mission_runtime.mission_binding(mission_context),\n"
      "        schema='adaptive-cpu40-seed1-exploratory-v1', candidate=args.candidate,", 1),
     ('gapfree observer recorded', 'scenario7 solid observer recorded', 1),
     ('solid_cylinder_audit', 'solid_obstacle_audit', 4),
     ('solid_cylinder_observation_valid', 'solid_obstacle_observation_valid', 1),
+    ("common_parameters_unchanged=f'{args.map}/loop24/v7,45deg-half-angle,0.4deg/10Hz sensor'",
+     "common_parameters_unchanged=f'{args.map}/{mission_context[\"mission\"]}/v7,45deg-half-angle,0.4deg/10Hz sensor'", 1),
+    ('                row = campaign.run_one(args.map, mode, args.run, **options,',
+     '                row = mission_runtime.run_one(campaign, mission_context, args.map, mode, args.run, **options,', 1),
+    ("                result['solid_obstacle_audit'] = solid_obstacle_audit",
+     "                result['solid_obstacle_audit'] = solid_obstacle_audit\n"
+     "                result['scenario7_mission'] = mission_runtime.mission_binding(mission_context)", 1),
 )
 
 
@@ -152,6 +168,7 @@ def build_main():
                      LEGACY_DIR=support.LEGACY_DIR, LEGACY_CHILD=support.LEGACY_CHILD,
                      PACKAGE=support.PACKAGE, MONITOR=MONITOR, register_maps=support.register_maps,
                      OBSERVER_DEPENDENCIES=OBSERVER_DEPENDENCIES,
+                     mission_runtime=mission_runtime,
                      small_pool_profile_reference_audit=small_pool_profile_reference_audit,
                      copy_supplemental_artifacts=copy_supplemental_artifacts,
                      preserve_supplemental_artifacts=preserve_supplemental_artifacts)

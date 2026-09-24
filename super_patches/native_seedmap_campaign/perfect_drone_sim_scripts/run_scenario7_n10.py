@@ -24,6 +24,8 @@ sys.path.insert(0, str(SCRIPTS))
 import run_gapfree_n5 as previous
 import scenario7_campaign_support as support
 import scenario7_native_loop_monitor as geometry
+import scenario7_missions as missions
+import scenario7_mission_runtime as mission_runtime
 
 base = previous.base
 REPO = previous.REPO
@@ -31,9 +33,19 @@ MAPS = support.MAPS
 MODES = ('full', 'sector', 'adaptive')
 PHASES = ('preflight', 'test10')
 COUNTS = {'preflight': 1, 'test10': 10}
-CANDIDATE = 'c24_scenario7_n10'
-SCHEMA = 'scenario7-n10-manual-v1'
-PROTOCOL = REPO / 'docs/scenario7_n10_manual_campaign_20260924.md'
+CANDIDATE = 'c24_scenario7_n10_missions_v2'
+SCHEMA = 'scenario7-n10-manual-v2'
+PROTOCOL = REPO / 'docs/scenario7_n10_grouped_missions_20260924.md'
+
+
+def aggregation_policy(maps=MAPS):
+    groups = {'normal': MAPS[:5], 'urban': (MAPS[5],), 'forest': (MAPS[6],)}
+    return dict(groups={group: [name for name in members if name in maps]
+                        for group, members in groups.items() if any(name in maps for name in members)},
+                all_seven_pooling=False, profile_preflight_pooled=False,
+                cost_mean='Arithmetic mean of valid observed runs within each group and mode; n and SD reported',
+                reduction_baseline='Full mean within the same group',
+                missing_values_are_not_zero=True)
 
 
 def selected_maps(values):
@@ -81,7 +93,8 @@ def build_plan(root, maps=MAPS, base_run=40000):
                 command += ['--modes', *order]
                 commands.append(dict(name=f'{phase}_{name}_r{repeat+1:02d}', phase=phase,
                     map=name, run=run, repeat=repeat+1, modes=list(order), path=str(folder),
-                    candidate=CANDIDATE, async_certified_recovery=True, command=command))
+                    candidate=CANDIDATE, async_certified_recovery=True,
+                    mission=mission_runtime.mission_binding(missions.mission_context(name)), command=command))
     return commands
 
 
@@ -165,8 +178,19 @@ def triplet_audit(item):
     audit = base.triplet_audit(folder, item['map'], item['run'], item['phase'] == 'preflight',
                               CANDIDATE, item['modes'], True)
     checks = dict(audit['acceptance_checks'])
+    child_plan = base.load_document(folder / 'plan.json')
+    expected_mission = item.get('mission', {})
+    checks['mission_binding'] = (bool(expected_mission)
+        and child_plan.get('scenario7_mission') == expected_mission)
     contacts = {}
     for mode in MODES:
+        native = base.load_document(folder / 'artifacts' / f"{item['map']}_run{item['run']}_{mode}.json")
+        count_goals = expected_mission.get('goal_count')
+        reached = native.get('waypoints_reached')
+        checks[mode+':mission_goal_count'] = (type(count_goals) is int and count_goals > 0
+            and type(native.get('n_waypoints')) is int and native['n_waypoints'] == count_goals
+            and type(reached) is int and 0 <= reached <= count_goals
+            and (native.get('success') is not True or reached == count_goals))
         doc, valid = contact_evidence(contact_file(folder, item['map'], item['run'], mode), item['map'])
         contacts[mode] = doc
         checks[mode+':solid_contact_evidence'] = valid
@@ -277,11 +301,41 @@ def summarize_rows(rows, label, name, mode, planned):
     return row
 
 
-def add_reductions(rows):
+REPORT_GROUP_MAPS = {'normal': MAPS[:5], 'urban': (MAPS[5],), 'forest': (MAPS[6],)}
+REPORT_GROUP_LABELS = {'normal': 'Normal (G1–G4, G5-R2)', 'urban': 'Urban', 'forest': 'Forest'}
+
+
+def report_groups(maps=MAPS):
+    maps = selected_maps(maps)
+    return {group: tuple(name for name in members if name in maps)
+            for group, members in REPORT_GROUP_MAPS.items() if any(name in maps for name in members)}
+
+
+def grouped_rows(records, maps=MAPS):
+    """Pool observed trials only within one scenario group and one mode."""
+    result = []
+    for group, members in report_groups(maps).items():
+        for mode in MODES:
+            selected = [r for r in records if r['map'] in members and r['mode'] == mode]
+            row = summarize_rows(selected, REPORT_GROUP_LABELS[group], group, mode, 10 * len(members))
+            row.update(group=group, maps_in_group=';'.join(members),
+                aggregation_scope='observed_trials_within_group_and_mode',
+                cost_weighting='arithmetic_mean_of_valid_observed_trials_not_equal_map_weighting',
+                recorded_runs_by_map=json.dumps({name: sum(r['map'] == name for r in selected)
+                                                for name in members}, sort_keys=True),
+                performance_valid_runs_by_map=json.dumps({name: sum(r['map'] == name and r['costs_valid']
+                                                                   for r in selected)
+                                                         for name in members}, sort_keys=True))
+            result.append(row)
+    add_reductions(result, scope_key='group')
+    return result
+
+
+def add_reductions(rows, scope_key='map'):
     for row in rows:
-        full = next(r for r in rows if r['map'] == row['map'] and r['mode'] == 'full')
+        full = next((r for r in rows if r[scope_key] == row[scope_key] and r['mode'] == 'full'), None)
         for metric in ('cpu_cores', 'cpu_core_s', 'input_mib_s', 'input_mib_per_run', 'map_ms'):
-            f, v = full[metric+'_mean'], row[metric+'_mean']
+            f, v = full[metric+'_mean'] if full else None, row[metric+'_mean']
             row[metric+'_reduction_vs_full_pct'] = 100 * (1-v/f) if f and v is not None else None
 
 
@@ -296,16 +350,47 @@ def fmt(value, digits=2):
     return 'N/A' if value is None else f'{value:.{digits}f}'
 
 
+def _group_metric(row, metric, digits=2):
+    return f"{fmt(row[metric+'_mean'], digits)} ± {fmt(row[metric+'_sd'], digits)} [n={row[metric+'_n']}]"
+
+
+def write_group_markdown(root, rows, maps):
+    lines = ['# Scenario-group results', '',
+        '본시험은 normal(G1–G4, G5-R2), urban, forest를 각각 집계한다. 세 그룹을 합친 평균은 만들지 않는다.',
+        'Normal은 선택된 normal 맵의 관측 회차를 합친다. 비용 평균은 유효 회차의 산술평균이며, 맵별 관측 수가 다르면 맵 균등 평균이 아니다.',
+        '각 값은 평균 ± 표본 표준편차 [n]다. 표본이 없으면 N/A, n=1의 표준편차도 N/A다. 누락 회차와 누락 지표를 0으로 채우지 않는다.',
+        '경유점 도달·접촉·실패 결과는 비용 유효 여부와 별도로 보존한다. profiler ON 예비주행은 본시험 평균에 포함하지 않는다.',
+        'Full 대비 감소율은 같은 그룹의 Full 평균을 기준으로 한다. detailed report는 report_test10/{normal,urban,forest}, report_preflight/{normal,urban,forest}에 분리한다.',
+        'summary_overall.csv는 summary_by_group.csv의 호환용 별칭이며 동일한 그룹별 행을 가진다.', '']
+    for group, members in report_groups(maps).items():
+        lines.append(f"- {group}: {', '.join(support.MAP_LABELS[name] for name in members)}; 모드별 계획 {10*len(members)}회")
+    lines += ['', '| 그룹 | 모드 | 기록/계획 | 경유점 도달 | 무접촉 완주 | 접촉 주행/확인 | 미확인 | 비용 유효 회차 |',
+              '|---|---|---:|---:|---:|---:|---:|---:|']
+    for row in rows:
+        lines.append(f"| {row['group']} | {row['mode']} | {row['recorded_runs']}/{row['planned']} | {row['goal_reached']} | {row['safe_completed']} | {row['contact_runs']}/{row['contact_known_runs']} | {row['contact_unknown_runs']} | {row['performance_valid_runs']} |")
+    lines += ['', '| 그룹 | 모드 | 시간(s) | CPU(cores) | CPU(core-s/run) | 입력(MiB/s) | 입력(MiB/run) | 맵(ms/frame) | CPU 감소(%) | 입력률 감소(%) |',
+              '|---|---|---|---|---|---|---|---|---:|---:|']
+    for row in rows:
+        values = [_group_metric(row, metric, 3 if metric in ('cpu_cores', 'input_mib_s') else 2)
+                  for metric in ('mission_time_s', 'cpu_cores', 'cpu_core_s', 'input_mib_s', 'input_mib_per_run', 'map_ms')]
+        lines.append(f"| {row['group']} | {row['mode']} | " + ' | '.join(values)
+                     + f" | {fmt(row['cpu_cores_reduction_vs_full_pct'])} | {fmt(row['input_mib_s_reduction_vs_full_pct'])} |")
+    lines += ['', '맵별 기록 수와 비용 유효 수는 CSV의 recorded_runs_by_map / performance_valid_runs_by_map에 기록한다.',
+              'Full 전환 및 복구 횟수는 유효한 해당 관측값의 n·합계·평균·표준편차를 별도로 제공하며, 비용 유효성으로 관측된 사건을 지우지 않는다.']
+    (root / 'summary_by_group.md').write_text('\n'.join(lines) + '\n')
+
+
 def write_progress(root, maps=MAPS):
+    maps = selected_maps(maps)
     records = observations(root)
     rows = [summarize_rows([r for r in records if r['map'] == name and r['mode'] == mode],
                           support.MAP_LABELS[name], name, mode, 10) for name in maps for mode in MODES]
     add_reductions(rows)
     write_csv(root / 'summary_by_map.csv', rows)
-    pooled = [summarize_rows([r for r in records if r['map'] in maps and r['mode'] == mode],
-                            'ALL', 'ALL', mode, 10*len(maps)) for mode in MODES]
-    add_reductions(pooled)
+    pooled = grouped_rows(records, maps)
+    write_csv(root / 'summary_by_group.csv', pooled)
     write_csv(root / 'summary_overall.csv', pooled)
+    write_group_markdown(root, pooled, maps)
     lines = ['# Seven-map n10 results', '',
         f'본시험만 집계: {len(maps)}개 맵 × 3모드 × 10회 = {30*len(maps)}회. profiler ON 예비주행은 별도.',
         '경유점 도달과 무접촉 완주를 분리한다. 접촉 미확인은 안전0회가 아니다. 접촉은 수신 pose 표본의 기체 구-고체 교차다.',
@@ -316,8 +401,9 @@ def write_progress(root, maps=MAPS):
     for r in rows:
         lines.append(f"| {r['map_label']} | {r['mode']} | {r['recorded_runs']}/{r['planned']} | {r['goal_reached']} | {r['safe_completed']} | {r['contact_runs']}/{r['contact_known_runs']} | {r['contact_unknown_runs']} | {fmt(r['mission_time_s_mean'])} | {fmt(r['cpu_cores_mean'],3)} | {fmt(r['cpu_core_s_mean'])} | {fmt(r['input_mib_s_mean'],3)} | {fmt(r['input_mib_per_run_mean'])} | {fmt(r['map_ms_mean'])} | {fmt(r['full_transitions_total'],0)} |")
     lines += ['', 'Full전환은 실제 source frame의 Sector→Full 관측 edge 수이며 초기 Full 상태는 전환으로 세지 않는다.',
-              'report_test10에는 GPU/메모리/수신주파수/계측 상세를 저장한다. 그 legacy 접촉값은 sampled-PCD 보조 지표다.',
-              'summary_overall.csv는 관측된 유효 회차를 합친 평균이며, 맵별 표본수가 다르면 맵 균등 평균과 다를 수 있다.']
+              'report_test10/{normal,urban,forest}에는 그룹별 GPU/메모리/수신주파수/계측 상세를 저장한다. 그 legacy 접촉값은 sampled-PCD 보조 지표다.',
+              'summary_by_group.csv/.md는 normal·urban·forest를 분리 집계한다. summary_overall.csv도 동일한 그룹별 행의 별칭이다. 7개 맵 전체 평균은 만들지 않는다.',
+              'Normal 비용은 관측된 유효 회차의 산술평균이며 맵별 표본수가 다르면 맵 균등 평균과 다를 수 있다.']
     (root / 'summary_by_map.md').write_text('\n'.join(lines)+'\n')
     transitions = [{k: r[k] for k in ('map_label', 'map', 'mode', 'recorded_runs', 'full_transitions_n',
                     'full_transitions_total', 'full_transitions_mean', 'full_transitions_sd',
@@ -326,23 +412,36 @@ def write_progress(root, maps=MAPS):
     return rows
 
 
+def _group_report_load_runs(campaign_roots, repo, members):
+    runs, warnings = previous.report_load_runs(campaign_roots, repo)
+    if any(run.get('map') not in members for run in runs):
+        raise ValueError('Detailed report contains a map outside its selected scenario group')
+    return runs, warnings
+
+
 def reports(root, maps=MAPS):
+    maps = selected_maps(maps)
     write_progress(root, maps)
     records = []
     for phase in PHASES:
-        if not any((root / phase).rglob('raw.csv')):
-            records.append(dict(phase=phase, state='NO_RAW_ROWS'))
-            continue
-        original_fp, original_load = base.reports.protocol_fingerprint, base.reports.load_runs
-        try:
-            base.reports.protocol_fingerprint = previous.report_protocol_fingerprint
-            base.reports.load_runs = previous.report_load_runs
-            base.reports.main(['--campaign', str(root / phase), '--output', str(root / ('report_'+phase))])
-            records.append(dict(phase=phase, state='WRITTEN'))
-        except Exception as exc:
-            records.append(dict(phase=phase, state='REPORT_ERROR', error=repr(exc)))
-        finally:
-            base.reports.protocol_fingerprint, base.reports.load_runs = original_fp, original_load
+        for group, members in report_groups(maps).items():
+            campaign_roots = [root / phase / name for name in members]
+            output = root / ('report_' + phase) / group
+            record = dict(phase=phase, group=group, maps=list(members), output=str(output))
+            if not any(path for folder in campaign_roots for path in folder.rglob('raw.csv')):
+                records.append(dict(record, state='NO_RAW_ROWS'))
+                continue
+            original_fp, original_load = base.reports.protocol_fingerprint, base.reports.load_runs
+            try:
+                base.reports.protocol_fingerprint = previous.report_protocol_fingerprint
+                base.reports.load_runs = lambda roots, repo, members=members: _group_report_load_runs(roots, repo, members)
+                arguments = [argument for folder in campaign_roots for argument in ('--campaign', str(folder))]
+                base.reports.main([*arguments, '--output', str(output)])
+                records.append(dict(record, state='WRITTEN'))
+            except (Exception, SystemExit) as exc:
+                records.append(dict(record, state='REPORT_ERROR', error=repr(exc)))
+            finally:
+                base.reports.protocol_fingerprint, base.reports.load_runs = original_fp, original_load
     base.save(root / 'report_status.json', dict(reports=records))
     return records
 
@@ -353,12 +452,20 @@ def freeze_sources(root, admission):
         if base.sha(name) != digest:
             raise RuntimeError('Scenario map evidence changed: '+name)
         base.freeze_files(frozen, [Path(name)])
+    mission_admission = missions.validate_missions()
+    if mission_admission.get('valid') is not True:
+        raise RuntimeError('Mission registry admission failed')
+    for name, digest in mission_admission['assets_sha256'].items():
+        if base.sha(name) != digest:
+            raise RuntimeError('Scenario mission evidence changed: '+name)
+        base.freeze_files(frozen, [Path(name)])
     paths = [PROTOCOL, support.MANIFEST, *SCRIPTS.glob('*scenario7*.py'), SCRIPTS / 'run_scenario7_n10.sh',
              REPO / 'scripts/native_campaign/run_scenario7_n10.sh',
              *(REPO / 'super_patches/native_seedmap_campaign/perfect_drone_sim_scripts').glob('*scenario7*'),
              *(SCRIPTS.parent / 'test').glob('test*scenario7*.py')]
     base.freeze_files(frozen, paths)
-    return frozen, dict(prior, scenario7=admission, no_planner_algorithm_change=True)
+    return frozen, dict(prior, scenario7=admission, scenario7_missions=mission_admission,
+                        no_planner_algorithm_change=True)
 
 
 def main(argv=None):
@@ -429,20 +536,33 @@ def main(argv=None):
         frozen, provenance = freeze_sources(root, admission)
         base.save(root / 'admission.json', provenance)
         commands = build_plan(root, maps)
+        selected_missions = {name: mission_runtime.mission_binding(missions.mission_context(name))
+                             for name in maps}
+        phase_plan_paths = []
         for phase in PHASES:
-            base.save(root / phase / 'plan.json', dict(maps=list(maps), phase=phase,
+            phase_plan = dict(maps=list(maps), phase=phase,
                 independent_cohort=True, parent_plan=str(root / 'plan.json'),
+                missions=selected_missions, aggregation=aggregation_policy(maps),
                 profile_preflight_runs_per_mode=1 if phase == 'preflight' else 0,
-                unprofiled_runs_per_mode=10 if phase == 'test10' else 0))
+                unprofiled_runs_per_mode=10 if phase == 'test10' else 0)
+            path = root / phase / 'plan.json'
+            base.save(path, phase_plan)
+            phase_plan_paths.append(path)
+            for name in maps:
+                path = root / phase / name / 'plan.json'
+                base.save(path, dict(phase_plan, map=name, maps=[name],
+                    missions={name: selected_missions[name]}, aggregation=aggregation_policy((name,))))
+                phase_plan_paths.append(path)
         base.save(root / 'plan.json', dict(schema=SCHEMA, maps=list(maps), modes=list(MODES),
             map_labels={m: support.MAP_LABELS[m] for m in maps}, candidate=CANDIDATE, commands=commands,
+            missions=selected_missions, aggregation=aggregation_policy(maps),
             profiled_preflight_flights=3*len(maps), unprofiled_primary_flights=30*len(maps),
             no_retry=True, no_replacement=True, all_failures_retained=True, old_cohorts_not_pooled=True,
             continue_after_failure=args.continue_after_failure,
             primary_contact_scope='Received-pose sphere intersections with solid cylinders/boxes; not swept proof',
             completion_definition='goal_reached; safe_complete additionally requires known zero solid contact',
             frozen_sha256=frozen))
-        base.freeze_files(frozen, [root / 'plan.json', root / 'admission.json', *(root / p / 'plan.json' for p in PHASES)])
+        base.freeze_files(frozen, [root / 'plan.json', root / 'admission.json', *phase_plan_paths])
         base.save(root / 'frozen_inputs_and_evidence.json', frozen)
         write_progress(root, maps)
         if args.dry_run:

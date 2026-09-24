@@ -1,5 +1,9 @@
 # G1–G5-R2 + Urban U1 + Forest F1: manual n10 campaign
 
+> **2026-09-24 후속 적용:** 이 문서는 초기 v1 설계 기록이다. 현재 실행 명령은
+> 도심 building-corners v3·숲 wide-zigzag v2 미션과 normal/urban/forest 분리 평균을
+> 사용한다. 최신 명령·판정·출력은 [그룹별 집계/미션 문서](scenario7_n10_grouped_missions_20260924.md)를 따른다.
+
 ## 실행
 
 ```bash
