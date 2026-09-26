@@ -12,10 +12,14 @@
 > false이고 `SUPER_STOPPED_DEPARTURE_V4=1`에서만 켜진다. CTest4/4, 신규 source5/5,
 > 기존 async source12/12 통과. G1 Full n=1은 53.69초, 5/5, 접촉0, 최소 body
 > clearance0.267m로 완주했고 ordinary2+emergency6 certificate/release 모두 P/V/A오차0.
-> 다만 CPU postprocessor가 실행 cwd의 상대경로를 잘못 사용해 비행 후 실패했으므로 parent
-> status는 `STOPPED_FOR_DIAGNOSIS` 그대로이고 재시험하지 않았다. 이 n=1은 기능 스모크이지
-> population/CPU 비교 근거가 아니다. 다음은 repo root에서 G1 3모드 n=1 fresh gate 후
-> G4/Urban 순서다. 상세 `docs/scenario7_stopped_departure_v4_20260927.md`, §8.109.
+> 첫 Full의 CPU postprocessor는 실행 cwd의 상대경로 문제로 비행 후 실패해 parent status를
+> 보존했고 재시험으로 대체하지 않았다. 이어 repo root에서 fresh G1 3모드 n=1을 무재시도로
+> 완료: Full47.61초/5·접촉0, Sector180.01초/2·접촉1, Adaptive55.00초/5·접촉0.
+> Adaptive effective Full open/close6/6, 모든6 refresh ACK commit. Full 대비 평균 end-to-end
+> CPU33.18%, map-update62.88%, sensor payload64.31% 감소했지만 시간15.52% 증가로 누적 CPU
+> 감소는24.46%뿐이라30% 목표/mission-time gate는 실패했다. 모든 source/timing gate와
+> release21회의 P/V/A오차0. 여전히 exploratory n=1이며 다음은 G4, 이후 조건부 Urban이다.
+> 상세 `docs/scenario7_stopped_departure_v4_20260927.md`, §8.109.
 
 > [!IMPORTANT]
 > **2026-09-26 후속: guard-contract v2도 안전성 검증 실패 — 안정판 아님.**

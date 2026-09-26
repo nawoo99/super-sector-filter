@@ -6720,3 +6720,20 @@ gate, then G4 and Urban if all completion/safety/source/timing checks pass.
 Detailed implementation and evidence boundaries are in
 `docs/scenario7_stopped_departure_v4_20260927.md` and
 `results/scenario7_stopped_departure_v4_g1_full_20260927_r2/flight_evidence_summary.json`.
+
+A subsequent fresh G1 three-mode n=1 gate was launched from the repository root
+and completed all summaries without retry. Full completed5/5 in47.61s/contact0;
+Fixed Sector timed out at180.01s with2/5/contact1; Adaptive completed5/5 in55.00s/
+contact0. Adaptive made six effective Full open/close transitions and all six
+Full-refresh requests had committed ACKs. All source-contract and small-pool
+timing checks passed; the21 total stopped-departure certificates matched21
+releases with zero logged P/V/A error.
+
+This is the desired qualitative G1 safety/completion separation, but the full
+compute objective did not pass. Versus Full, Adaptive reduced mean end-to-end
+CPU33.18%, algorithm mean CPU35.55%, sensor payload64.31%, algorithm delivery
+31.39% and map-update time62.88%. Mission time increased15.52%, leaving cumulative
+end-to-end CPU reduction24.46%, below the30% target; mission-time guardrail also
+failed. This remains exploratory n=1. Compact evidence:
+`results/scenario7_stopped_departure_v4_g1_triplet_20260927/functional_triplet_summary.json`.
+Next is fresh G4 n=1 and only then conditional Urban, not repeated campaign.

@@ -1,7 +1,7 @@
 # Scenario7 stopped-departure v4 functional smoke
 
-Status: G1 Full functional smoke passed; broader validation has not started.
-The candidate remains opt-in/default-off and is not promoted to a stable or
+Status: G1 Full functional smoke and fresh three-mode n=1 gate completed. The
+candidate remains opt-in/default-off and is not promoted to a stable or
 population-safe planner.
 
 ## Why v3 could not leave the start
@@ -96,10 +96,41 @@ root. The campaign status is therefore honestly preserved as
 comparison. A compact statement of the distinction is in
 `flight_evidence_summary.json` in the result directory.
 
+## Fresh G1 three-mode gate
+
+The next gate was run from the repository root without retry at
+`results/scenario7_stopped_departure_v4_g1_triplet_20260927/`. It completed all
+three planned modes and generated all summaries. Every source-contract and
+small-pool timing check passed.
+
+| Metric | Full | Fixed Sector | Adaptive |
+|---|---:|---:|---:|
+| Completion | 5/5 | 2/5 | 5/5 |
+| Safety contacts | 0 | 1 | 0 |
+| Mission time (s) | 47.61 | 180.01 | 55.00 |
+| Minimum body clearance (m) | 0.272 | -0.057 | 0.280 |
+| Mean end-to-end CPU (cores) | 0.7415 | 0.3128 | 0.4954 |
+| End-to-end CPU (core-s) | 38.5509 | 57.5709 | 29.1214 |
+| Sensor payload (MiB/s) | 10.2660 | 4.2830 | 3.6637 |
+| Algorithm delivery (MiB/s) | 10.9701 | 8.7161 | 7.5263 |
+| Map update (ms/frame) | 31.6701 | 6.3570 | 11.7554 |
+
+Adaptive opened effective Full six times and closed six times. All six refresh
+requests received committed acknowledgements; Full-open time duty was11.796%
+and point duty31.858%. It recovered the Sector failure while retaining lower
+cost than Full: mean end-to-end CPU -33.18%, algorithm mean CPU -35.55%, sensor
+payload -64.31%, algorithm-delivery payload -31.39% and map-update time -62.88%.
+
+The complete engineering objective is **not** passed: Adaptive took15.52%
+longer than Full, so end-to-end cumulative CPU fell only24.46%, below the30%
+target, and the mission-time guardrail failed. These are exploratory n=1 values,
+not confidence bounds. Across the triplet,21 staged certificates produced21
+releases and every logged P/V/A release error was exactly zero.
+
 ## Next gate
 
-Run a fresh G1 Full/Sector/Adaptive n=1 from the repository root so the
-postprocessor completes, retaining every failure without retry. If all source,
-timing, safety and completion gates pass, expand to G4 and Urban before any
-larger seven-map or repeated campaign. No result from this smoke should be
-pooled with v2/v3 or the established Normal tables.
+Preserve this G1 result and run fresh G4 three-mode n=1 next; run Urban only if
+G4 retains Full/Adaptive completion and zero contact. Diagnose any Full or
+Adaptive failure before expansion. Repeated or seven-map campaigns remain
+premature, and none of these observations should be pooled with v2/v3 or the
+established Normal tables.
