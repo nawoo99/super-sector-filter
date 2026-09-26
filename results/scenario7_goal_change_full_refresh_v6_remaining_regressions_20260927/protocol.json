@@ -1,0 +1,26 @@
+{
+  "schema": "scenario7-goal-change-full-refresh-v6-remaining-regressions-v1",
+  "frozen_before_flight": true,
+  "date": "2026-09-27",
+  "candidate": "c31_goal_change_full_refresh_v6",
+  "mode": "adaptive",
+  "runs": [
+    {"map": "gapfree_d1_m02", "run": 81530},
+    {"map": "gapfree_d1_m03", "run": 81531},
+    {"map": "gapfree_d1_m05r2", "run": 81532},
+    {"map": "forest_cluster_f01", "run": 81533}
+  ],
+  "automatic_retries": 0,
+  "replacement_runs": false,
+  "stop_on_first_failure": true,
+  "acceptance": {
+    "valid_runs": "4/4",
+    "completion": "5/5 in every run",
+    "safety_contacts": "0 in every run",
+    "speed_limit_valid": true,
+    "goal_change_v6_requests": "4 in every run",
+    "committed_full_refresh_ack_for_every_v6_request": true
+  },
+  "next_if_pass": "Freeze a two-stage seven-map, three-mode n=10 campaign: first five runs per cell, then five additional runs per cell",
+  "interpretation_limit": "Bounded regression gate only; failures are retained and are not replaced"
+}
