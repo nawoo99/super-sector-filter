@@ -227,6 +227,17 @@ namespace fsm {
                     asyncCertifiedRecoveryEnabled();
         }
 
+        static bool stoppedHoldV5SettingEnabled() {
+            static const bool enabled = async_from_rest::enabledSetting(
+                    std::getenv("SUPER_STOPPED_HOLD_V5"));
+            return enabled;
+        }
+
+        bool stoppedHoldV5Enabled() const {
+            return stoppedHoldV5SettingEnabled() &&
+                    stoppedDepartureV4Enabled();
+        }
+
         void refreshMainRobotState() override {
             if (asyncGenerateEnabled() &&
                 async_generate_quarantine_.load(std::memory_order_acquire)) {
@@ -2860,6 +2871,58 @@ namespace fsm {
                     }
                     if (stationary_candidate && certificate_is_current) {
                         certified_stationary_hold = true;
+                    } else if (stoppedHoldV5Enabled() &&
+                               stationary_candidate && passive_stop_stable &&
+                               (brake_safety.status ==
+                                        TrajectorySafetyStatus::CLEARANCE_MARGIN ||
+                                brake_safety.status ==
+                                        TrajectorySafetyStatus::UNOBSERVED)) {
+                        // A stopped vehicle can be physically clear while its
+                        // centre remains either unobserved or inside the
+                        // larger planning-inflation shell.  The old relaxed
+                        // UNOBSERVED retry accepted SAFE only, so a positive
+                        // body clearance plus CLEARANCE_MARGIN could never
+                        // enter recovery.  Re-run the entire stationary hold
+                        // with the stop-only deferred-margin policy.  This
+                        // still rejects every hard condition (raw OCCUPIED,
+                        // out of map, version/deadline failure).  Unknown is
+                        // relaxed only when it was the strict rejection.
+                        const bool relaxed_unknown_as_occupied =
+                                brake_safety.status !=
+                                        TrajectorySafetyStatus::UNOBSERVED;
+                        const auto hold_safety =
+                                planner_ptr_->validatePositionTrajectory(
+                                        candidate, 0.0, 0, false,
+                                        relaxed_unknown_as_occupied,
+                                        nullptr, false, nullptr,
+                                        std::chrono::steady_clock::time_point::max(),
+                                        nullptr,
+                                        stop_margin::ValidationPolicy::
+                                                DeferSoftMarginUntilHardChecksComplete);
+                        const auto hold_health_after =
+                                map_ptr_->getMapHealthSnapshot();
+                        double hold_map_age_s;
+                        const bool hold_map_is_fresh = mapFreshForGuard(
+                                hold_health_after, hold_map_age_s);
+                        const bool hold_is_admissible =
+                                stop_margin::admissibleStop(
+                                        hold_safety.safe(),
+                                        hold_safety.status ==
+                                                TrajectorySafetyStatus::
+                                                        CLEARANCE_MARGIN,
+                                        hold_safety.hard_checks_complete);
+                        if (hold_is_admissible && hold_map_is_fresh &&
+                            hold_safety.map_version ==
+                                    hold_health_after.map_version) {
+                            brake_safety = hold_safety;
+                            certified_map_age_s = hold_map_age_s;
+                            certificate_is_current = true;
+                            certified_stationary_hold = true;
+                            certified_stationary_margin_hold =
+                                    hold_safety.status ==
+                                            TrajectorySafetyStatus::
+                                                    CLEARANCE_MARGIN;
+                        }
                     } else if (stationary_candidate && passive_stop_stable &&
                                brake_safety.status ==
                                        TrajectorySafetyStatus::CLEARANCE_MARGIN &&
@@ -4532,6 +4595,11 @@ namespace fsm {
                 throw std::runtime_error(
                         "Stopped departure v4 requires guard plus both async planners");
             }
+            if (stoppedHoldV5SettingEnabled() &&
+                !stoppedDepartureV4SettingEnabled()) {
+                throw std::runtime_error(
+                        "Stopped hold v5 requires stopped departure v4");
+            }
             // Keep map commits schedulable while planner optimization is
             // running. Planner map-reading frontends take an explicit shared
             // map transaction; the writer takes the matching exclusive lock.
@@ -4551,6 +4619,10 @@ namespace fsm {
             ros_ptr_->info(" -- [STOPPED_DEPARTURE_V4] enabled={} "
                            "physical_origin=true prefix_from_zero=true shared_release=true "
                            "default_off=true", stoppedDepartureV4Enabled());
+            ros_ptr_->info(" -- [STOPPED_HOLD_V5] enabled={} "
+                           "stationary_only=true deferred_soft_margin=true "
+                           "hard_checks_required=true default_off=true",
+                           stoppedHoldV5Enabled());
             if (cfg_.trajectory_guard_en) {
                 const rclcpp::QoS guard_recovery_qos(
                         rclcpp::QoS(1).reliable().keep_last(1)

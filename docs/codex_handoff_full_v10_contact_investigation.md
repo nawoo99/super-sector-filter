@@ -1,6 +1,19 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-27 후속: stationary-hold v5는 Urban 1/2 성공, 새 분기 미발동 — 승격 금지.**
+> `SUPER_STOPPED_HOLD_V5=1`은 물리적으로 정지한 후보에 한해 전체 hard-query 완료 뒤
+> `CLEARANCE_MARGIN`을 허용하도록 별도 overlay에 구현했다. CTest4/4, 신규3/3,
+> v4 5/5, async12/12 통과. 그러나 Urban Adaptive 무재시도 2회는 첫 회
+> 71.88초/5·접촉0, 둘째 회180.01초/2·접촉1이었고 두 회 모두 새
+> `publish_physically_clear_margin_hold`가0회라 첫 성공을 v5 효과로 해석할 수 없다.
+> 둘째 회는 waypoint1→2의 큰 방향 변경 뒤에도45° Sector로 먼저 주행했고, guard가
+> TTC 약0.48초에서 위험을 찾은 뒤에야 Full이 열려 접촉했다. 이후 Full duty87.036%와
+> A* timeout1,141회는 접촉 근처 정지의 하류 결과다. 반복시험/timeout 튜닝 금지.
+> 다음은 정확한 새 goal에만 정지→Full committed ACK→새 경로 인증→Sector 복귀를
+> 강제하는 기본OFF 후보. 상세 `docs/scenario7_stopped_hold_v5_20260927.md`, §8.110.
+
+> [!IMPORTANT]
 > **2026-09-27 후속: v4 G4는 통과했지만 Urban Adaptive 정지 복구가 실패 — 승격 금지.**
 > Fresh G4 n=1은 Full/Sector/Adaptive 모두 5/5·접촉0, Adaptive Full 전환3/복귀3,
 > Full 대비 평균 CPU34.44%·누적 CPU38.22%·sensor payload67.24%·map update62.37%

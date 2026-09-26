@@ -6772,3 +6772,46 @@ before accepting CLEARANCE_MARGIN; OCCUPIED/out-of-map/version/deadline failures
 remain hard rejects. Exact compact evidence is in the G4 and Urban
 `functional_triplet_summary.json` files, with the full narrative in
 `docs/scenario7_stopped_departure_v4_20260927.md`.
+
+### 8.110 Stationary-hold v5 and earlier Urban turn failure (2026-09-27)
+
+Candidate c30 implements the bounded v4 follow-up under the exact default-off
+flag `SUPER_STOPPED_HOLD_V5=1`, which also requires v4. Only a physically stable
+stationary candidate whose strict result is `UNOBSERVED` or
+`CLEARANCE_MARGIN` is revalidated. It uses the existing
+`DeferSoftMarginUntilHardChecksComplete` traversal, relaxes unknown only for an
+original unknown result, and accepts a soft margin only with an explicit hard
+completion proof and a fresh identical map version. Hard collision, out-of-map,
+deadline and version failures are unchanged.
+
+A separate serial Release overlay was built at
+`/root/super_ws/scenario7_guard_v5_20260927/install`. Planner CTest4/4, new
+source contracts3/3, v4 contracts5/5 and inherited async source contracts12/12
+passed. Two pre-flight wrapper errors were corrected before any flight; they are
+not successful or failed planner trials.
+
+Urban Adaptive then ran twice without retry. Run81400 completed5/5 in71.88s,
+contact0, body clearance0.223m, with20 Full open/close cycles and20 committed
+ACKs. Run81401 timed out at180.01s after2/5 waypoints with one static-PCD contact
+and body clearance -0.148m. Both executions were valid and within the speed
+bound. Neither exercised `publish_physically_clear_margin_hold`: all21 logged
+stationary publications were the pre-existing `publish_certified_hold` action.
+The safe first observation therefore does not validate the causal v5 branch,
+and the candidate is not promoted.
+
+The retained failure begins before the old stationary-hold gap. On the large
+waypoint1-to-2 direction change, the new goal is accepted while the sensor still
+delivers a45-degree forward sector. Full does not open until the guard sees the
+newly mapped risk with about0.48s TTC; the external static-PCD observer records
+contact near `(21.996,9.721,1.553)` at6.976m/s. After stopping, Full remains open
+and the planner logs1,141 A* timeouts, explaining the87.036% Full duty and high
+CPU/payload as downstream liveness cost rather than a missing Full event.
+
+Do not replace this result with a third stochastic repeat or increase the A*
+timeout. The next isolated/default-off candidate must distinguish a genuinely
+new goal from an exact retransmission and, only while already following, force
+the intended transaction: certified stop, Full observation, exact committed
+map ACK, new-path certification, then Sector release. Full and Fixed Sector
+must remain unchanged. Compact run evidence and the full decision boundary are
+in `results/scenario7_stopped_hold_v5_urban_adaptive_20260927/functional_repeat_summary.json`
+and `docs/scenario7_stopped_hold_v5_20260927.md`.

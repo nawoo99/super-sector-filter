@@ -1,0 +1,85 @@
+{
+  "schema": "scenario7-stopped-hold-v5-functional-repeat-v1",
+  "date": "2026-09-27",
+  "candidate": "c30_stopped_hold_v5",
+  "scope": "Urban Adaptive exploratory repeats only",
+  "default_enabled": false,
+  "environment_opt_in": "SUPER_STOPPED_HOLD_V5=1",
+  "runs": [
+    {
+      "run": 81400,
+      "source": "results/scenario7_stopped_hold_v5_urban_adaptive_20260927_r1",
+      "success": true,
+      "waypoints": "5/5",
+      "mission_time_s": 71.88,
+      "safety_contacts": 0,
+      "minimum_body_clearance_m": 0.223,
+      "path_length_m": 270.349,
+      "maximum_speed_mps": 7.0,
+      "speed_limit_valid": true,
+      "guard_brake_successes": 20,
+      "guard_brake_rejections": 91,
+      "guard_recoveries": 20,
+      "full_open_transitions": 20,
+      "full_close_transitions": 20,
+      "committed_full_refresh_acks": 20,
+      "full_open_time_duty_pct": 23.31,
+      "full_open_point_duty_pct": 30.374,
+      "mean_end_to_end_cpu_cores": 0.4912194806833809,
+      "end_to_end_cpu_core_s": 36.214119,
+      "map_payload_mib_s": 3.256689765815544,
+      "map_update_ms_per_frame": 12.69812432807571,
+      "stationary_hold_actions": {
+        "publish_certified_hold": 20,
+        "publish_physically_clear_margin_hold": 0
+      }
+    },
+    {
+      "run": 81401,
+      "source": "results/scenario7_stopped_hold_v5_urban_adaptive_20260927_r2",
+      "success": false,
+      "waypoints": "2/5",
+      "mission_time_s": 180.01,
+      "safety_contacts": 1,
+      "minimum_body_clearance_m": -0.148,
+      "path_length_m": 112.446,
+      "maximum_speed_mps": 6.999,
+      "speed_limit_valid": true,
+      "guard_brake_successes": 1,
+      "guard_brake_rejections": 5,
+      "guard_recoveries": 1,
+      "full_open_transitions": 3,
+      "full_close_transitions": 2,
+      "committed_full_refresh_acks": 3,
+      "full_open_time_duty_pct": 87.036,
+      "full_open_point_duty_pct": 98.686,
+      "mean_end_to_end_cpu_cores": 1.3167366306121107,
+      "end_to_end_cpu_core_s": 240.261687,
+      "map_payload_mib_s": 30.58326236539851,
+      "map_update_ms_per_frame": 43.89041072883232,
+      "stationary_hold_actions": {
+        "publish_certified_hold": 1,
+        "publish_physically_clear_margin_hold": 0
+      },
+      "first_contact": {
+        "elapsed_s": 21.562334,
+        "position_m": [21.996204376220703, 9.720840454101562, 1.5526989698410034],
+        "speed_mps": 6.976498,
+        "nearest_static_point_m": [22.0, 9.699999809265137, 1.600000023841858]
+      },
+      "failure_sequence": {
+        "new_waypoint": 2,
+        "sector_half_angle_deg": 45,
+        "guard_detection_ttc_s": 0.48,
+        "full_open_was_after_guard_detection": true,
+        "post_stop_astar_timeouts": 1141
+      }
+    }
+  ],
+  "decision": {
+    "promoted": false,
+    "reason": "One of two valid no-retry repeats contacted and timed out, and neither repeat exercised the new physically-clear CLEARANCE_MARGIN acceptance action.",
+    "root_cause_update": "The retained failure begins at a large waypoint direction change while still sensing only the forward 45-degree sector. Full opens only after the guard detects mapped risk with about 0.48 seconds TTC. The later high Full duty and A-star timeout loop are downstream consequences.",
+    "next_candidate": "On a genuinely new goal while following, stop first, request Full, require an exact committed map refresh, certify the new path, then return to Sector."
+  }
+}
