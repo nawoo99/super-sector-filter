@@ -133,7 +133,14 @@ namespace geometry_utils {
             PolytopeVec sfcs_new(sfcs.begin() + start_id, sfcs.begin() + end_id + 1);
             if (sfcs_new.size() > 2) {
                 Polytope check_cand = sfcs_new[0], last_overlapped = sfcs_new[1];
+                int check_cand_id = 0, last_overlapped_id = 1;
+                Vec3f initial_interior;
+                if (!geometry_utils::findInterior(
+                        check_cand.CrossWith(last_overlapped).GetPlanes(), initial_interior)) {
+                    return false;
+                }
                 PolytopeVec sfcs_final;
+                sfcs_final.reserve(sfcs_new.size());
                 sfcs_final.push_back(sfcs_new[0]);
                 for (int i = 2; i < sfcs_new.size(); i++) {
                     Polytope cross_poly = check_cand.CrossWith(sfcs_new[i]);
@@ -141,14 +148,24 @@ namespace geometry_utils {
                     bool is_overlapped = geometry_utils::findInterior(cross_poly.GetPlanes(), interior_pt);
                     if (is_overlapped) {
                         last_overlapped = sfcs_new[i];
+                        last_overlapped_id = i;
                         if (last_overlapped.PointIsInside(path.back())) {
                             sfcs_final.push_back(last_overlapped);
                             break;
                         }
                     }
                     else {
+                        // Retrying against the last bridge is useful only if
+                        // that bridge advances the anchor. A disconnected (or
+                        // merely touching) pair otherwise repeats forever and
+                        // appends the same polytope until memory is exhausted.
+                        // Keep the caller's corridor unchanged on rejection.
+                        if (last_overlapped_id <= check_cand_id) {
+                            return false;
+                        }
                         sfcs_final.push_back(last_overlapped);
                         check_cand = last_overlapped;
+                        check_cand_id = last_overlapped_id;
                         i--;
                     }
                 }

@@ -23,6 +23,7 @@
 
 #include <super_core/super_planner.h>
 #include <super_core/planner_sequence_guards.hpp>
+#include <fsm/trajectory_handoff_guard.hpp>
 #include <rog_map/diagnostic_trace.hpp>
 #include <memory>
 #include <algorithm>
@@ -39,6 +40,30 @@ using namespace super_utils;
 
 namespace super_planner {
     namespace {
+        trajectory_handoff::Result compareTrajectoryHandoff(
+                const Trajectory& previous, const Trajectory& candidate,
+                const double absolute_wt) {
+            const auto sample_at = [](const Trajectory& trajectory,
+                                      const double wt,
+                                      StatePVAJ& state) {
+                if (trajectory.empty()) return false;
+                const double duration = trajectory.getTotalDuration();
+                const double tt = wt - trajectory.start_WT;
+                if (!std::isfinite(duration) || duration <= 0.0 ||
+                    !std::isfinite(tt) || tt < -1.0e-3) return false;
+                // Match CmdTraj::evaluate's terminal sampling semantics.
+                return trajectory.getState(std::clamp(tt, 0.0, duration), state);
+            };
+            return trajectory_handoff::compareAt<StatePVAJ>(
+                    absolute_wt,
+                    [&](const double wt, StatePVAJ& state) {
+                        return sample_at(previous, wt, state);
+                    },
+                    [&](const double wt, StatePVAJ& state) {
+                        return sample_at(candidate, wt, state);
+                    });
+        }
+
         bool skipBackupDiagnosticReplayEnabled() noexcept {
             // Opt-in common optimization, applied identically to Full and
             // Adaptive. Keep the legacy diagnostic replay when unset.
@@ -241,7 +266,8 @@ namespace super_planner {
             const Vec3f *hard_current_pose,
             const bool test_force_initial_footprint_occupancy,
             const Vec3f *initial_footprint_origin,
-            const std::chrono::steady_clock::time_point deadline) const {
+            const std::chrono::steady_clock::time_point deadline,
+            const initial_egress::Receipt *egress_receipt) const {
         const thread_cpu_profile::Scope cpu_scope(
                 thread_cpu_profile::Stage::PlannerValidateGeometry);
         TrajectorySafetyResult result;
@@ -520,7 +546,7 @@ namespace super_planner {
         const auto physical_body_occupied =
                 [this, &map_config, hard_current_pose, footprint_origin,
                 allow_initial_clearance_escape,
-                 test_force_initial_footprint_occupancy, &result](
+                 test_force_initial_footprint_occupancy, egress_receipt, &result](
                         const Vec3f &point,
                         const bool allow_initial_footprint_mask) {
             const auto trace_body_query = [&](const char* verdict,
@@ -591,6 +617,8 @@ namespace super_planner {
                             allow_initial_clearance_escape &&
                             footprint_origin != nullptr &&
                             hard_current_pose != nullptr &&
+                            (!egress_receipt || egress_receipt->contains(
+                                    {occupied_point.x(), occupied_point.y(), occupied_point.z()})) &&
                             initial_distance <= cfg_.robot_r + 1.0e-9 &&
                             // Never use the mask to move farther into a real
                             // hit. Membership is fixed to the footprint at
@@ -601,6 +629,8 @@ namespace super_planner {
                                     reference_distance;
                     if (inside_initial_footprint) {
                         result.used_initial_footprint_egress = true;
+                        result.initial_egress.retain(
+                                {occupied_point.x(), occupied_point.y(), occupied_point.z()});
                         continue;
                     }
                     trace_body_query("occupied", "raw_occupied_voxel",
@@ -693,7 +723,9 @@ namespace super_planner {
                 if (query.hard_body_clearance) {
                     const bool footprint_mask_window =
                             query.tt - checked_from_tt <=
-                                    cfg_.trajectory_guard_escape_max_duration_s;
+                                    cfg_.trajectory_guard_escape_max_duration_s &&
+                            (!egress_receipt || egress_receipt->usable(
+                                    trajectory_generation, trajectory.start_WT, query.tt));
                     if (physical_body_occupied(query.physical_center,
                                                footprint_mask_window)) {
                         trace_guard_query("occupied_hard_body", false, false, true);
@@ -764,7 +796,9 @@ namespace super_planner {
                 // when the physical body still clears raw occupied voxels.
                 const bool footprint_mask_window =
                         query.tt - checked_from_tt <=
-                                cfg_.trajectory_guard_escape_max_duration_s;
+                                cfg_.trajectory_guard_escape_max_duration_s &&
+                        (!egress_receipt || egress_receipt->usable(
+                                trajectory_generation, trajectory.start_WT, query.tt));
                 const bool physical_occupied = physical_body_occupied(
                         query.physical_center, footprint_mask_window);
                 if (physical_occupied) {
@@ -837,6 +871,16 @@ namespace super_planner {
                             clearance_escape_free_confirmation_s);
         }
         result.used_clearance_escape = clearance_escape_completed;
+        if (result.used_initial_footprint_egress && footprint_origin) {
+            auto& receipt = result.initial_egress;
+            receipt.generation = trajectory_generation;
+            receipt.origin = {footprint_origin->x(), footprint_origin->y(), footprint_origin->z()};
+            receipt.start_wt = trajectory.start_WT;
+            receipt.from_tt = checked_from_tt;
+            receipt.until_tt = std::min(result.clearance_escape_completed_tt,
+                    checked_from_tt + cfg_.trajectory_guard_escape_max_duration_s);
+            receipt.radius = cfg_.robot_r;
+        }
         if (expired()) return result;
         result.map_query_ms = std::chrono::duration<double, std::milli>(
                 std::chrono::steady_clock::now() - query_start).count();
@@ -885,11 +929,16 @@ namespace super_planner {
             return result;
         }
         const double checked_from_tt = now_wt - snapshot.start_wt;
+        const bool bound_egress = snapshot.initial_egress.usable(
+                snapshot.generation, snapshot.start_wt, checked_from_tt);
+        const auto& origin = snapshot.initial_egress.origin;
+        const Vec3f initial_pose(origin[0], origin[1], origin[2]);
         auto result = validatePositionTrajectory(snapshot.pos_traj,
                                                  checked_from_tt,
                                                  snapshot.generation,
-                                                 true, false, nullptr, false,
-                                                 nullptr, deadline);
+                                                 true, false, bound_egress ? &initial_pose : nullptr, false,
+                                                 bound_egress ? &initial_pose : nullptr, deadline,
+                                                 bound_egress ? &snapshot.initial_egress : nullptr);
         if (trajectoryValidationEnabled() &&
             cmd_traj_info_.generation() != snapshot.generation &&
             result.status == TrajectorySafetyStatus::SAFE) {
@@ -1822,6 +1871,53 @@ namespace super_planner {
                         " -- [TRAJ_GUARD_VIABILITY_SLOWDOWN] phase={} gen={} "
                         "scale={:.3f} retries={}",
                         phase, candidate_generation, scale, retry);
+            }
+        }
+
+        // The live refresh must use the exact narrow egress permission proven
+        // at admission. Otherwise a stopped escape can be committed forever
+        // but immediately rejected as OCCUPIED before the hold is released.
+        // Do not infer a new mask from the latest pose or extend its deadline.
+        if (safety.used_initial_footprint_egress) {
+            if (!plan_from_rest || !hard_current_pose || !safety.initial_egress.valid()) {
+                trajectory_guard_rejection_pending_.store(true, std::memory_order_release);
+                return false;
+            }
+            candidate.initial_egress = safety.initial_egress;
+        }
+        // A geometric certificate alone does not certify the transition from
+        // the command already being executed. In particular, stretching a
+        // candidate around a past start_WT or reusing an unscaled cached EXP
+        // can otherwise teleport the next command onto a different point of
+        // an individually collision-free path. ReplanOnce retains a prefix of
+        // the old command: equal absolute WT must yield continuous PVA.
+        // PlanFromRest has a separate stopped/brake-release contract and must
+        // not be compared to an obsolete pre-brake committed trajectory.
+        if (phase_name.rfind("ReplanOnce", 0) == 0) {
+            const auto previous = cmd_traj_info_.sharedSnapshot();
+            const double handoff_wt = ros_ptr_->getSimTime();
+            const auto handoff = previous.empty || !previous.pos_traj
+                    ? trajectory_handoff::Result{}
+                    : compareTrajectoryHandoff(*previous.pos_traj,
+                                               candidate.pos_traj, handoff_wt);
+            if (!handoff.continuous ||
+                cmd_traj_info_.generation() != previous.generation) {
+                trajectory_guard_rejection_pending_.store(
+                        true, std::memory_order_release);
+                if (rejected_segment_out) {
+                    *rejected_segment_out = "COMMAND_HANDOFF";
+                }
+                ros_ptr_->error(
+                        " -- [TRAJ_HANDOFF_REJECT] phase={} gen={} from_gen={} "
+                        "reason={} wt={:.9f} candidate_tt={:.6f} "
+                        "position_error_m={:.9f} velocity_error_mps={:.9f} "
+                        "acceleration_error_mps2={:.9f}",
+                        phase, candidate_generation, previous.generation,
+                        handoff.reason, handoff_wt,
+                        handoff_wt - candidate.pos_traj.start_WT,
+                        handoff.position_error_m, handoff.velocity_error_mps,
+                        handoff.acceleration_error_mps2);
+                return false;
             }
         }
 
@@ -2853,6 +2949,36 @@ namespace super_planner {
                 ros_ptr_->info(" -- [SUPER] in [ReplanOnce]: Replan a new exp traj success.");
             }
         } else if (exp_ret_code == NO_NEED) {
+            // The EXP cache predates candidate-only velocity/viability
+            // rescaling and may also extend along EXP after the committed
+            // command has entered its backup. Rebuilding a backup from that
+            // cache must not silently restore a different command state.
+            // Discard only the attempted reuse, retaining the certified old
+            // command so the existing stop/recovery policy stays in charge.
+            if (cfg_.trajectory_guard_en && !trajectoryGuardShadowEnabled()) {
+                const auto previous = cmd_traj_info_.sharedSnapshot();
+                const double reuse_wt = ros_ptr_->getSimTime();
+                const auto reuse = previous.empty || !previous.pos_traj
+                        ? trajectory_handoff::Result{}
+                        : compareTrajectoryHandoff(*previous.pos_traj,
+                                                   exp_traj_info.posTraj(),
+                                                   reuse_wt);
+                if (!reuse.continuous ||
+                    cmd_traj_info_.generation() != previous.generation) {
+                    trajectory_guard_rejection_pending_.store(
+                            true, std::memory_order_release);
+                    ros_ptr_->warn(
+                            " -- [TRAJ_EXP_CACHE_REUSE_REJECT] gen={} "
+                            "reason={} wt={:.9f} position_error_m={:.9f} "
+                            "velocity_error_mps={:.9f} "
+                            "acceleration_error_mps2={:.9f} "
+                            "action=retain_committed_command",
+                            previous.generation, reuse.reason, reuse_wt,
+                            reuse.position_error_m, reuse.velocity_error_mps,
+                            reuse.acceleration_error_mps2);
+                    return FAILED;
+                }
+            }
             if (cfg_.print_log)
                 ros_ptr_->info(" -- [SUPER] in [ReplanOnce]: No need to replan a new exp traj, use last one.");
         }

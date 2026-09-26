@@ -6561,3 +6561,45 @@ Likewise one safe Adaptive run does not invalidate the old G5 Adaptive contact
 or establish population-level safety. Any new G1–G5 cohort must use this
 observer-ready protocol for every mode and must not pool the incompletely
 observed 2026-09-18 cohort as equivalent safety trials.
+
+### 8.107 Scenario7 bounded repairs and failed repair smoke (2026-09-26)
+
+The September25 seven-map results were analyzed without overwriting any failed
+attempt. Four production files changed: polytope.h adds a progress/bridge check
+to stop SimplifySFC's disconnected-corridor infinite append; CmdTraj and planner
+carry a generation-bound initial-footprint egress receipt; moving replan commits
+and cached EXP reuse reject PVA-discontinuous handoffs. Exact initial hits,
+origin and expiry are retained; no rolling occupancy exemption is introduced.
+
+Versioned repair scripts bind a separate three-package build under
+`/root/super_ws/scenario7_repair_20260926/install`, retain the original install,
+optimize only exact PCD observer cell enumeration, and block missing/invalid
+profile references structurally before flight. Timing/safety/resource gates and
+automatic-retry prohibition remain unchanged. Offline230 Python tests plus
+optional real-PCD replay, C++ normal/ASan/UBSan tests, all package builds and
+static24 checks pass. Colcon's initial unwanted -j20 build exhausted memory;
+explicit MAKEFLAGS='-j1 -l1' rebuilt successfully without changing old binaries.
+
+New cohort `results/scenario7_repair_smoke_20260926_v1` took1720.57s: actual ON7
+and OFF6 flights. G4 Full/Sector/Adaptive all complete without contact in both
+phases. G1 Adaptive ON is safe but OFF contacts once while completing; Sector
+contacts once ON but is safe OFF. Urban Adaptive ON contacts and times out at
+180s; later Urban modes are unexecuted and OFF is BLOCKED_BY_PREFLIGHT. All
+failures remain retained. No G2/G3/G5/Forest retest or GitHub push occurred.
+
+Most importantly the candidate is NOT accepted: G1's OFF contact occurs during
+smooth generation122 backup execution while live certificates remain SAFE, and
+Urban penetrates building12 before recovery stops inside it. A* timeout is a
+downstream symptom, not justification to increase its budget. Configured unknown
+policy is true but candidate/live calls use false; live voxel/cloud evidence is
+insufficient to establish UNKNOWN versus incorrectly clear/missing occupancy.
+Footprint-egress is unexercised in this smoke, so the original r06 liveness fix
+is not yet closed-loop verified. Urban observer timing is restored to100.001Hz,
+header p99=10.405ms, but FSMmain97.525Hz still fails its gate. G1 ON Adaptive
+extra11.33s includes9.91s more recovery-active time, principally path failures.
+
+Full protocol and per-mode times are in
+`docs/scenario7_repair_results_20260926.md`; code/test scope was frozen in
+`docs/scenario7_repair_20260926.md`. Next is targeted sensor/map/certificate
+tracing at first backup/wall intrusion, not confirmation-scale repetitions or
+map changes to conceal the failures. CIRI remains shadow-only/default false.

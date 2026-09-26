@@ -101,6 +101,7 @@ namespace super_planner {
         bool used_clearance_escape{false};
         bool used_initial_footprint_egress{false};
         double clearance_escape_completed_tt{-1.0};
+        initial_egress::Receipt initial_egress;
 
         bool safe() const {
             return status == TrajectorySafetyStatus::SAFE ||
@@ -347,7 +348,8 @@ namespace super_planner {
                 bool test_force_initial_footprint_occupancy = false,
                 const Vec3f *initial_footprint_origin = nullptr,
                 std::chrono::steady_clock::time_point deadline =
-                        std::chrono::steady_clock::time_point::max()) const;
+                        std::chrono::steady_clock::time_point::max(),
+                const initial_egress::Receipt *egress_receipt = nullptr) const;
 
         TrajectorySafetyResult validateCommittedTrajectory(
                 double now_wt,

@@ -1,6 +1,23 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-26: Scenario7 수정 후보 검증 실패 — 안정판으로 승격하지 말 것.**
+> G4 SimplifySFC 무한 append, 초기 footprint 탈출의 commit/live 계약 불일치,
+> 시간 재조정/EXP 재사용 경로의 불연속 거부, Urban 관측기 지연과 누락 reference
+> 처리를 수정했다. 원본 install/기존 실패 결과는 보존하고 별도 repair overlay 사용.
+> Python230검사+실제 PCD 검사, C++ normal/sanitizer, 전체 빌드 및 static24검사 통과.
+> G1/G4/Urban 실제 ON7+OFF6=13회: G4 모든 주행 무접촉 완주, G1 Adaptive OFF는
+> 완주했으나 접촉1, Urban Adaptive ON은 접촉1+180초 미완주. Urban OFF는
+> BLOCKED_BY_PREFLIGHT로 비행하지 않았다. 이를 0% 완주 또는 접촉0으로 세지 말 것.
+> G1에서는 부드럽게 실행되는 backup 궤적이 원기둥을 침범하는 동안 live SAFE였다.
+> Urban도 건물 내부 진입 후 정지해 A*가 반복 실패했다. 미관측 정책 설정true와
+> 후보/live 검사에서의 실제 false 호출은 확인됐으나 당시 voxel 상태 증거는 부족하다.
+> 관측기 수신100.001Hz/p99 10.405ms는 회복; FSMmain97.525Hz와 안전 문제는 남음.
+> 초기 footprint receipt는 이번 주행에서 발동0회라 실제 r06 수정 검증은 미완료.
+> 상세 `docs/scenario7_repair_results_20260926.md`, §8.107. 210회 재시작보다
+> backup/벽 진입 직전 sensor→map→certificate 증거 수집과 안전 계약 수정이 우선.
+
+> [!IMPORTANT]
 > **2026-09-21: Gap-free G5 관측기를 미션보다 먼저 준비하도록 수정, 새 ON 3모드 1회 완료.**
 > 기존 runner는 launch 후4초 뒤 observer를 시작했지만 waypoint mission은3초 뒤
 > 자동 시작해 초기 약1초를 관측하지 못했다. Gap-free 전용 경로에서는 launch 내부

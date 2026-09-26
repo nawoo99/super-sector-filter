@@ -28,6 +28,7 @@
 #include <data_structure/exp_traj.h>
 #include <data_structure/backup_traj.h>
 #include <data_structure/base/trajectory.h>
+#include <fsm/initial_footprint_egress_receipt.hpp>
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -42,6 +43,7 @@ namespace super_planner {
     class CmdTraj{
     public:
         struct Candidate {
+            initial_egress::Receipt initial_egress;
             Trajectory pos_traj{};
             Trajectory yaw_traj{};
             double backup_traj_start_tt{std::numeric_limits<double>::infinity()};
@@ -52,6 +54,7 @@ namespace super_planner {
         };
 
         struct Snapshot {
+            initial_egress::Receipt initial_egress;
             Trajectory pos_traj{};
             Trajectory yaw_traj{};
             std::uint64_t generation{0};
@@ -66,6 +69,7 @@ namespace super_planner {
         };
 
         struct SharedSnapshot {
+            initial_egress::Receipt initial_egress;
             std::shared_ptr<const Trajectory> pos_traj;
             std::shared_ptr<const Trajectory> yaw_traj;
             std::uint64_t generation{0};
@@ -114,6 +118,7 @@ namespace super_planner {
         bool flag_empty_{true};
         bool flag_backup_traj_avilibale_{false};
         std::uint64_t generation_{0};
+        initial_egress::Receipt initial_egress_;
 
         static void setCarryBackupMetadata(const ExpTraj &exp, Candidate &candidate) {
             candidate.has_carry_backup = exp.getFirstPartBackupTraj(
@@ -139,6 +144,7 @@ namespace super_planner {
         void setEmpty() {
             std::lock_guard<std::mutex> lock(mtx_);
             flag_empty_ = true;
+            initial_egress_ = {};
             ++generation_;
         }
 
@@ -202,6 +208,8 @@ namespace super_planner {
             on_backup_start_TT_ = candidate.carry_backup_start_tt;
             on_backup_end_TT_ = candidate.carry_backup_end_tt;
             first_part_exp_has_backup_traj_ = candidate.has_carry_backup;
+            initial_egress_ = std::move(candidate.initial_egress);
+            initial_egress_.generation = generation_ + 1;
             return ++generation_;
         }
 
@@ -241,6 +249,7 @@ namespace super_planner {
         Snapshot snapshot() const {
             std::lock_guard<std::mutex> lock(mtx_);
             Snapshot out;
+            out.initial_egress = initial_egress_;
             out.generation = generation_;
             out.empty = flag_empty_ || pos_traj_->empty();
             out.pos_traj = *pos_traj_;
@@ -258,6 +267,7 @@ namespace super_planner {
         SharedSnapshot sharedSnapshot() const {
             std::lock_guard<std::mutex> lock(mtx_);
             SharedSnapshot out;
+            out.initial_egress = initial_egress_;
             out.generation = generation_;
             out.empty = flag_empty_ || pos_traj_->empty();
             out.pos_traj = pos_traj_;
