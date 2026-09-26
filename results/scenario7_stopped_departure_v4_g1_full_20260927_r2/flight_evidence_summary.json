@@ -1,0 +1,65 @@
+{
+  "schema": "scenario7-stopped-departure-v4-functional-smoke-v1",
+  "date": "2026-09-27",
+  "candidate": "c29_stopped_departure_v4",
+  "map": "gapfree_d1_m01",
+  "mode": "full",
+  "run": 81000,
+  "scope": "single functional smoke; not population safety or CPU-comparison evidence",
+  "flight": {
+    "started": true,
+    "success": true,
+    "run_valid": true,
+    "resource_valid": true,
+    "speed_limit_valid": true,
+    "mission_time_s": 53.69,
+    "waypoints_reached": 5,
+    "n_waypoints": 5,
+    "safety_collisions": 0,
+    "static_pcd_collisions": 0,
+    "static_pcd_min_distance_m": 0.467,
+    "robot_radius_m": 0.2,
+    "static_pcd_clearance_m": 0.267,
+    "max_odom_speed_3d_mps": 7.001798,
+    "speed_limit_mps": 7.0,
+    "speed_tolerance_mps": 0.01
+  },
+  "stopped_departure_contract": {
+    "startup_marker_valid": true,
+    "nearfield_async_marker_valid": true,
+    "full_source_360_audit_valid": true,
+    "strict_recovery_audit_valid": true,
+    "certificates": 8,
+    "releases": 8,
+    "ordinary_certificates": 2,
+    "emergency_certificates": 6,
+    "max_release_position_error_m": 0.0,
+    "max_release_velocity_error_mps": 0.0,
+    "max_release_acceleration_error_mps2": 0.0,
+    "first_release_generation": 1,
+    "first_release_map_version": 62
+  },
+  "cpu_observation": {
+    "algorithm_cpu_core_s": 43.788173,
+    "algorithm_cpu_cores_mean": 0.754485940341556,
+    "end_to_end_cpu_core_s": 46.584326,
+    "end_to_end_cpu_cores_mean": 0.8026646603247776,
+    "comparison_admissible": false,
+    "reason": "single Full-only diagnostic and postprocessor did not finish"
+  },
+  "postprocessing": {
+    "state": "FLIGHT_SUCCEEDED_POSTPROCESS_FAILED",
+    "campaign_status_preserved": "STOPPED_FOR_DIAGNOSIS",
+    "error": "relative perf_trace_csv was resolved from /root/super_ws instead of /root/super-sector-filter",
+    "flight_retried": false,
+    "full_summary_generated": false,
+    "raw_flight_evidence_preserved": true
+  },
+  "evidence": {
+    "raw_row": "raw.csv",
+    "monitor_result": "artifacts/gapfree_d1_m01_run81000_full.attempt1.json",
+    "stack_log": "artifacts/gapfree_d1_m01_run81000_full.attempt1.stack.log",
+    "odometry": "artifacts/gapfree_d1_m01_run81000_full.attempt1.odometry.csv",
+    "performance_trace": "artifacts/gapfree_d1_m01_run81000_full.attempt1.performance.csv"
+  }
+}

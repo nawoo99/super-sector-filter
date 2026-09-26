@@ -839,6 +839,8 @@ void ProbMap::missPointUpdate(const Vec3f& pos, const int& hash_id, const int& h
 
 void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odom) {
     const bool trace_enabled = contact_trace::enabled();
+    const double occupancy_min_range = cfg_.occupancyOnlyMinRange();
+    const double sqr_occupancy_min_range = occupancy_min_range * occupancy_min_range;
     std::size_t trace_roi_input = 0;
     std::size_t trace_roi_intensity_rejected = 0;
     std::size_t trace_roi_temporal_rejected = 0;
@@ -846,6 +848,7 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
     std::size_t trace_roi_near_range_rejected = 0;
     std::size_t trace_roi_duplicate_hit = 0;
     std::size_t trace_roi_hit_inserted = 0;
+    std::size_t trace_roi_near_hit_inserted = 0;
     // bounding box of updated region
     raycast_data_.cache_box_min = cur_odom;
     raycast_data_.cache_box_max = cur_odom;
@@ -889,7 +892,7 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
         if (!cfg_.raycasting_en) {
             if (insideLocalMap(p)) {
                 double sqrdis = (p - cur_odom).squaredNorm();
-                if(sqrdis<cfg_.sqr_raycast_range_min){
+                if(sqrdis<sqr_occupancy_min_range){
                     if (trace_roi_point) ++trace_roi_near_range_rejected;
                     continue;
                 }
@@ -911,6 +914,15 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
                 // record cache box size;
                 raycast_data_.cache_box_min = raycast_data_.cache_box_min.cwiseMin(p);
                 raycast_data_.cache_box_max = raycast_data_.cache_box_max.cwiseMax(p);
+
+                // A closer sensor-valid surface is occupied evidence, not a
+                // license to clear the robot's near field. In particular do
+                // not march backwards from ray_range[0] through this hit.
+                // Startup clearing and genuine raycasting remain unchanged.
+                if (sqrdis < cfg_.sqr_raycast_range_min || sqrdis == 0.0) {
+                    if (trace_roi_point) ++trace_roi_near_hit_inserted;
+                    continue;
+                }
 
                 // Mark the near-field approach to this hit as observed-free.
                 // Without this, no cell is ever recorded as confirmed-clear
@@ -1038,6 +1050,11 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
                    << ",\"roi_temporal_rejected\":" << trace_roi_temporal_rejected
                    << ",\"roi_outside_map\":" << trace_roi_outside_map
                    << ",\"roi_near_range_rejected\":" << trace_roi_near_range_rejected
+                   << ",\"occupancy_hit_min_range\":"
+                   << contact_trace::number(occupancy_min_range)
+                   << ",\"free_ray_min_range\":"
+                   << contact_trace::number(cfg_.raycast_range_min)
+                   << ",\"roi_near_hit_inserted\":" << trace_roi_near_hit_inserted
                    << ",\"roi_duplicate_hit\":" << trace_roi_duplicate_hit
                    << ",\"roi_hit_inserted\":" << trace_roi_hit_inserted;
             contact_trace::submit("map_raycast_summary", fields.str());

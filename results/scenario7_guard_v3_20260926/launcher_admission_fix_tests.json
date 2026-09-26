@@ -1,0 +1,56 @@
+{
+  "schema": "scenario7-v3-launcher-admission-fix-validation-v1",
+  "change": "Removed redundant launcher SUPER_ASYNC_GENERATE_TRAJ export; retained strict inherited-environment rejection and explicit controller/child execution setting.",
+  "production_cpp_changed": false,
+  "v2_changed": false,
+  "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/test/test_run_scenario7_guard_v3.py /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/test/test_run_scenario7_guard_v2.py /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/test/test_run_scenario7_repair.py /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/test/test_scenario7_preflight_control.py /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/test/test_scenario7_repair_runtime.py",
+  "attempts": [
+    {
+      "order": 1,
+      "tool_session": 72376,
+      "concurrent_with_real_dry_run": true,
+      "exit_code": 1,
+      "passed": 111,
+      "failed": 4,
+      "elapsed_s": 1.48,
+      "reason": "All four failures were admission tests receiving 'Another gapfree/scenario7 campaign is running' because the concurrently executing real dry-run correctly held the shared suite lock.",
+      "failed_tests": [
+        "test_run_scenario7_guard_v3.py::test_mocked_root_dry_run_never_executes_and_binds_new_schema",
+        "test_run_scenario7_guard_v3.py::test_launcher_environment_passes_real_top_level_admission",
+        "test_run_scenario7_guard_v2.py::test_dry_run_metadata_has_new_cohort_without_execution",
+        "test_run_scenario7_repair.py::test_dry_run_never_executes_and_freezes_actual_counts"
+      ]
+    },
+    {
+      "order": 2,
+      "tool_session": 5060,
+      "concurrent_with_real_dry_run": false,
+      "exit_code": 0,
+      "passed": 115,
+      "failed": 0,
+      "elapsed_s": 1.12,
+      "source_or_test_edits_since_attempt_1": false,
+      "reason": "Same command and unchanged sources, executed after the dry-run exited and released its lock. This successful rerun does not erase the first attempt."
+    }
+  ],
+  "real_dry_run": {
+    "root": "/root/super-sector-filter/results/scenario7_guard_contract_smoke_20260926_v3_g1_dry_b",
+    "state": "DRY_RUN_ONLY",
+    "exit_code": 0,
+    "actual_flights_started": 0,
+    "requested_on_flights": 3,
+    "requested_off_flights": 3,
+    "elapsed_s": 21.99528406886384,
+    "frozen_inventory_sha256": "b23ee89d224d45152bd08a3d412b9ed603e22379d6676a51cdb30047fddd58d6"
+  },
+  "stable_sources": {
+    "run_scenario7_guard_v3.sh_all_three_copies": "b52e34b12387839596c5cce019622757eb3bbda4c8a02a8b3b54e16fc24ff58e",
+    "test_run_scenario7_guard_v3.py_runtime_and_mirror": "b84e371583ad7d56c97d67f48fb3b1ec06e5691f9171d8c633d70524d8bf2058"
+  },
+  "notes": [
+    "The 36 targeted v3 tests also passed before the real dry-run (0.52 seconds).",
+    "Shell environment regression executes the actual launcher preamble with only ROS setup sourcing stubbed, then uses actual top-level admission with inventory/freezing and flight execution stubbed.",
+    "The separate real dry-run uses the actual built overlay and full, nonmocked admission/freezing; no ROS flights are started.",
+    "All source/test edits and mirror updates preceded the successful real dry-run freeze. This file is evidence-only."
+  ]
+}

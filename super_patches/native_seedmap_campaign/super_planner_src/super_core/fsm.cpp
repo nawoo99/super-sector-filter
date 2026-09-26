@@ -123,7 +123,7 @@ namespace fsm {
         static double fsm_start_time = ros_ptr_->getSimTime();
         double cur_t = (ros_ptr_->getSimTime() - fsm_start_time);
         static double last_print_t = 0.0;
-        planner_ptr_->getRobotState(robot_state_);
+        refreshMainRobotState();
 
         const bool odom_ready = robot_state_.rcv &&
                                 (ros_ptr_->getSimTime() - robot_state_.rcv_time) <= 0.1;
@@ -179,6 +179,7 @@ namespace fsm {
                     finish_plan = true;
                     return;
                 }
+                if (dispatchGenerateTrajectoryAsync()) return;
                 int retcode = planner_ptr_->PlanFromRest(gi_.goal_p, gi_.goal_yaw, gi_.new_goal);
                 // External sensing recovery must observe stopped-state planning
                 // failures too.  Previously only ReplanOnce published this

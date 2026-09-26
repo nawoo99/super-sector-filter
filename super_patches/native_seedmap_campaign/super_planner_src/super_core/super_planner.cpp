@@ -74,6 +74,17 @@ namespace super_planner {
             }();
             return enabled;
         }
+
+        bool stoppedDepartureV4Enabled() noexcept {
+            // Exact opt-in while the coordinated stopped-release contract is
+            // validated.  Legacy and v3 runs are byte-for-byte behavioral
+            // references when this variable is absent.
+            static const bool enabled = [] {
+                const char *value = std::getenv("SUPER_STOPPED_DEPARTURE_V4");
+                return value && value[0] == '1' && value[1] == '\0';
+            }();
+            return enabled;
+        }
     }
 
     const char *trajectorySafetyStatusName(const TrajectorySafetyStatus status) {
@@ -1735,6 +1746,12 @@ namespace super_planner {
         const std::string phase_name = phase ? phase : "";
         const bool plan_from_rest =
                 phase_name.rfind("PlanFromRest/", 0) == 0;
+        // A staged stopped candidate has not executed while the worker is
+        // solving.  Its certificate must therefore cover the departure
+        // prefix from relative time zero; solve elapsed time is irrelevant.
+        if (plan_from_rest && stoppedDepartureV4Enabled()) {
+            checked_from_tt = 0.0;
+        }
         const bool topology_recovery_candidate =
                 phase_name == "PlanFromRest/certified_local_escape" ||
                 phase_name == "PlanFromRest/certified_vertical_recovery";
@@ -1879,9 +1896,11 @@ namespace super_planner {
                 if (candidate.carry_backup_end_tt >= 0.0) {
                     candidate.carry_backup_end_tt *= incremental_scale;
                 }
-                checked_from_tt = std::clamp(
-                        ros_ptr_->getSimTime() - candidate.pos_traj.start_WT,
-                        0.0, candidate.pos_traj.getTotalDuration());
+                checked_from_tt = plan_from_rest && stoppedDepartureV4Enabled()
+                        ? 0.0
+                        : std::clamp(
+                                ros_ptr_->getSimTime() - candidate.pos_traj.start_WT,
+                                0.0, candidate.pos_traj.getTotalDuration());
                 // The rescaled candidate follows the exact same spatial path
                 // (time-scaling only stretches duration), so this re-check is
                 // defensive: it must remain safe, but is re-verified rather
@@ -1958,6 +1977,15 @@ namespace super_planner {
 
         const auto committed_generation =
                 cmd_traj_info_.commitCandidate(std::move(candidate));
+        stopped_departure_stage_.valid = false;
+        if (plan_from_rest && stoppedDepartureV4Enabled()) {
+            stopped_departure_stage_.valid = true;
+            stopped_departure_stage_.generation = committed_generation;
+            stopped_departure_stage_.map_version = safety.map_version;
+            stopped_departure_stage_.prepared_start_wt =
+                    cmd_traj_info_.sharedSnapshot().start_wt;
+            stopped_departure_stage_.certificate = safety;
+        }
         trajectory_guard_rejection_pending_.store(false,
                                                   std::memory_order_release);
         guard_corridor_retry_pending_.store(false, std::memory_order_release);
@@ -2779,10 +2807,13 @@ namespace super_planner {
                     guard_local_escape_direction_.z());
         }
 
-        if (tryCommitCertifiedLocalEscape(local_star_pt)) {
+        const Vec3f physical_start = robot_state_.p;
+        const Vec3f recovery_start = stoppedDepartureV4Enabled()
+                ? physical_start : local_star_pt;
+        if (tryCommitCertifiedLocalEscape(recovery_start)) {
             return SUCCESS;
         }
-        if (tryCommitCertifiedVerticalRecovery(local_star_pt)) {
+        if (tryCommitCertifiedVerticalRecovery(recovery_start)) {
             return SUCCESS;
         }
 
@@ -2790,11 +2821,18 @@ namespace super_planner {
         ExpTraj exp_traj_info;
         BackupTraj back_traj_info;
         last_exp_traj_info_.setEmpty();
-        local_start_p_ = local_star_pt;
+        // The free cell centre is only a discrete-search seed.  The actual
+        // commanded polynomial must start at the held odometry position.
+        local_start_p_ = stoppedDepartureV4Enabled()
+                ? physical_start : local_star_pt;
+        local_search_start_p_ = local_star_pt;
         RET_CODE exp_ret_code = generateExpTraj(last_exp_traj_info_, exp_traj_info);
         //GenerateRestToRestExpTraj(local_star_pt, exp_traj_info);
         if (exp_ret_code == FAILED) {
-            if (tryCommitCertifiedDirectGoalFallback(local_star_pt, goal_p)) {
+            if (tryCommitCertifiedDirectGoalFallback(
+                        stoppedDepartureV4Enabled() ? physical_start
+                                                    : local_star_pt,
+                        goal_p)) {
                 return SUCCESS;
             }
             ros_ptr_->warn(" -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with {}.",
@@ -3175,6 +3213,132 @@ namespace super_planner {
         return cmd_traj_info_.generation();
     }
 
+    StoppedDepartureRelease SuperPlanner::releaseStoppedDeparture(
+            const std::uint64_t expected_generation,
+            const std::uint64_t expected_map_version,
+            const double release_wt,
+            const StatePVAJ &held_pva) {
+        StoppedDepartureRelease out;
+        out.generation = expected_generation;
+        out.map_version = expected_map_version;
+        out.release_wt = release_wt;
+        if (!stoppedDepartureV4Enabled()) {
+            out.reason = "V4_DISABLED";
+            return out;
+        }
+        if (!std::isfinite(release_wt) ||
+            !held_pva.array().isFinite().all()) {
+            out.reason = "INVALID_RELEASE_INPUT";
+            return out;
+        }
+
+        // Serializes against every solver commit.  The FSM invokes this only
+        // after the worker has returned, and no geometric planning occurs in
+        // this critical section.
+        std::lock_guard<std::mutex> guard(replan_lock_);
+        if (!stopped_departure_stage_.valid ||
+            stopped_departure_stage_.generation != expected_generation) {
+            out.reason = "NO_MATCHING_STAGE";
+            return out;
+        }
+        const auto health = map_ptr_->getMapHealthSnapshot();
+        if (expected_map_version == 0 ||
+            stopped_departure_stage_.map_version != expected_map_version ||
+            health.map_version != expected_map_version ||
+            (health.update_in_progress &&
+             !map_ptr_->immutablePlannerSnapshotEnabled())) {
+            out.reason = "MAP_VERSION_CHANGED";
+            return out;
+        }
+        const auto before = cmd_traj_info_.sharedSnapshot();
+        if (before.empty || !before.pos_traj || !before.yaw_traj ||
+            before.generation != expected_generation ||
+            before.start_wt != stopped_departure_stage_.prepared_start_wt) {
+            out.reason = "TRAJECTORY_CHANGED";
+            return out;
+        }
+        if (before.initial_egress.valid() &&
+            !before.initial_egress.usable(expected_generation,
+                                           before.start_wt, 0.0)) {
+            out.reason = "EGRESS_RECEIPT_MISMATCH";
+            return out;
+        }
+        StatePVAJ candidate_zero;
+        if (!before.pos_traj->getState(0.0, candidate_zero) ||
+            !candidate_zero.array().isFinite().all()) {
+            out.reason = "INVALID_ZERO_SAMPLE";
+            return out;
+        }
+        const auto continuity = trajectory_handoff::comparePva(
+                held_pva, candidate_zero);
+        out.position_error_m = continuity.position_error_m;
+        out.velocity_error_mps = continuity.velocity_error_mps;
+        out.acceleration_error_mps2 =
+                continuity.acceleration_error_mps2;
+        if (!continuity.continuous) {
+            out.reason = continuity.reason;
+            return out;
+        }
+
+        ExpTraj rebased_exp = last_exp_traj_info_;
+        if (!rebased_exp.rebaseStartWallTime(release_wt)) {
+            out.reason = "EXP_CLOCK_REBASE_FAILED";
+            return out;
+        }
+        const double old_start_wt = before.start_wt;
+        if (!cmd_traj_info_.rebaseStoppedCandidate(expected_generation,
+                                                   release_wt)) {
+            out.reason = "COMMAND_CLOCK_REBASE_FAILED";
+            return out;
+        }
+        last_exp_traj_info_ = std::move(rebased_exp);
+        if (std::isfinite(guard_rest_to_rest_hold_until_wt_) &&
+            guard_rest_to_rest_hold_until_wt_ >= old_start_wt) {
+            guard_rest_to_rest_hold_until_wt_ += release_wt - old_start_wt;
+        }
+        stopped_departure_stage_.valid = false;
+        out.trajectory = cmd_traj_info_.sharedSnapshot();
+        out.accepted = !out.trajectory.empty &&
+                out.trajectory.generation == expected_generation &&
+                out.trajectory.start_wt == release_wt;
+        out.reason = out.accepted ? "RELEASED" : "POST_REBASE_MISMATCH";
+        if (out.accepted) {
+            ros_ptr_->info(
+                    " -- [STOPPED_DEPARTURE_RELEASE] gen={} map={} "
+                    "wt={:.9f} p_err={:.9f} v_err={:.9f} a_err={:.9f}",
+                    expected_generation, expected_map_version, release_wt,
+                    out.position_error_m, out.velocity_error_mps,
+                    out.acceleration_error_mps2);
+        }
+        return out;
+    }
+
+    bool SuperPlanner::getStoppedDepartureCertificate(
+            const std::uint64_t expected_generation,
+            const std::uint64_t expected_map_version,
+            TrajectorySafetyResult &certificate) {
+        if (!stoppedDepartureV4Enabled()) return false;
+        std::lock_guard<std::mutex> guard(replan_lock_);
+        const auto health = map_ptr_->getMapHealthSnapshot();
+        if (!stopped_departure_stage_.valid ||
+            stopped_departure_stage_.generation != expected_generation ||
+            stopped_departure_stage_.map_version != expected_map_version ||
+            health.map_version != expected_map_version ||
+            (health.update_in_progress &&
+             !map_ptr_->immutablePlannerSnapshotEnabled()) ||
+            cmd_traj_info_.generation() != expected_generation ||
+            !stopped_departure_stage_.certificate.safe() ||
+            stopped_departure_stage_.certificate.trajectory_generation !=
+                    expected_generation ||
+            stopped_departure_stage_.certificate.map_version !=
+                    expected_map_version ||
+            stopped_departure_stage_.certificate.checked_from_tt > 0.0) {
+            return false;
+        }
+        certificate = stopped_departure_stage_.certificate;
+        return true;
+    }
+
 
     void SuperPlanner::getModuleTimeConsuming(vector<double> &time) {
         time = time_consuming_;
@@ -3400,9 +3564,6 @@ namespace super_planner {
         // second, geometry part of the guide path
         ///=================The Second Part of Guide Path ================================================
 
-        double guide_path_length = geometry_utils::computePathLength(guide_path);
-        double temp_horizon = cfg_.planning_horizon - guide_path_length;
-
         vector<int> path_passed_waypoint_id;
         vec_Vec3f inside_poly_goals;
         vector<int> sfc_waypoint_ids;
@@ -3412,6 +3573,24 @@ namespace super_planner {
             guide_path.insert(guide_path.begin(), pos_init_state.col(0));
             guide_stamp.insert(guide_stamp.begin(), 0.0);
         }
+
+        // Preserve the physical optimizer boundary while allowing A* to
+        // begin at the free voxel selected above.  The connector is retained
+        // in the guide and corridor, so it is optimized and certified rather
+        // than silently skipped.
+        if (stoppedDepartureV4Enabled() && last_exp_traj_info.empty() &&
+            local_search_start_p_.array().isFinite().all() &&
+            (guide_path.back() - local_search_start_p_).norm() > 1.0e-9) {
+            const double connector_dt =
+                    (guide_path.back() - local_search_start_p_).norm() /
+                    std::max(1.0e-3, cfg_.exp_traj_cfg.max_vel);
+            guide_path.push_back(local_search_start_p_);
+            guide_stamp.push_back(guide_stamp.back() + connector_dt);
+        }
+
+        const double guide_path_length =
+                geometry_utils::computePathLength(guide_path);
+        double temp_horizon = cfg_.planning_horizon - guide_path_length;
 
         // if need a geometry path
         if (temp_horizon > cfg_.resolution * 2) {

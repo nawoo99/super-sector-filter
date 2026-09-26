@@ -6667,3 +6667,56 @@ GENERATE_TRAJ search from main while preserving hold/identity rules. Maps,
 missions, radii, budgets, gates and CIRI activation were not changed. Full record:
 `docs/scenario7_guard_v2_results_20260926.md`; diagnostic/review notes are under
 `results/scenario7_guard_v2_20260926/`. No GitHub push occurred.
+
+### 8.109 Stopped-departure physical origin and atomic release clock (2026-09-27)
+
+Prospective v3 exposed a deterministic G1 Full startup failure rather than a
+new safety success. It timed out at180.01s with0/5 waypoints, no movement and no
+PositionCommand messages. All1,362 async finalizations were rejected as
+`POSITION_DISCONTINUITY`, while main/command callbacks stayed about100Hz. The
+failure therefore was not a recurrence of the synchronous-main starvation.
+
+There were two independent causes. PlanFromRest replaced physical held position
+`(0,0,1.5)` with a0.05m voxel centre; corner-origin indexing imposes a minimum
+`sqrt(3)*0.025=0.043301m` offset, versus the unchanged1mm handoff tolerance.
+Observed minimum error was0.043510m. Separately, the candidate retained its
+solve-start wall clock until later release, producing nonzero V/A at handoff.
+A timestamp-only fix cannot remove the spatial discontinuity and tolerance
+relaxation would hide both defects.
+
+New candidate c29 is isolated in
+`/root/super_ws/scenario7_guard_v4_20260926/install` and enabled only by exact
+`SUPER_STOPPED_DEPARTURE_V4=1`; default remains false. The physical odometry
+point is now the optimizer boundary while the free voxel remains only the
+discrete search seed, with its connector retained in guide/corridor geometry.
+A staged full-prefix certificate begins at relative time zero and is bound to
+exact generation/map/trajectory identity. One shared release function serves
+ordinary async planning and certified emergency recovery, verifies held PVA
+with unchanged1mm/.01m/s/.1m/s2 tolerances, and atomically rebases CmdTraj,
+position/yaw, EXP, backup boundaries and initial-egress receipt. Message clocks
+are updated only after the final locked release immediately before publication.
+
+Serial builds completed in the separate overlay. Planner CTest4/4, new v4
+source contracts5/5, inherited async source contracts12/12 and runner checks
+passed; nine runtime/mirror pairs match. Original through v3 installs remain
+unchanged. Pre-flight admission attempts that rejected stale v3 static bindings,
+found missing overlay rog_map assets, or found the v4 child SOURCE binding did
+not start flights and are not planner outcomes.
+
+Fresh G1 Full functional smoke run81000 completed5/5 waypoints in53.69s with
+safety/static contacts0, minimum point distance0.467m/body clearance0.267m and
+valid speed bound. Eight full-prefix certificates had eight matching releases:
+ordinary2 and emergency6, every logged P/V/A release error exactly0. This one
+run therefore closes the deterministic v3 no-command symptom and exercises
+both shared-release call sites, but does not establish repeatability or
+population safety.
+
+The optional CPU summarizer failed only after the completed flight because its
+relative performance-CSV path was resolved from `/root/super_ws` instead of the
+repository root. Parent status remains `STOPPED_FOR_DIAGNOSIS`, no replacement
+flight was run, and the observed Full-only CPU numbers are not an admissible
+mode comparison. Next is a fresh repository-root G1 Full/Sector/Adaptive n=1
+gate, then G4 and Urban if all completion/safety/source/timing checks pass.
+Detailed implementation and evidence boundaries are in
+`docs/scenario7_stopped_departure_v4_20260927.md` and
+`results/scenario7_stopped_departure_v4_g1_full_20260927_r2/flight_evidence_summary.json`.

@@ -213,6 +213,31 @@ namespace super_planner {
             return ++generation_;
         }
 
+        // Re-anchor an admitted, but not-yet-released stopped trajectory to
+        // the actual publication clock.  Relative polynomial time and backup
+        // boundaries are unchanged.  The generation deliberately stays the
+        // same: callers must quarantine this generation until this bounded
+        // transaction succeeds and must separately prove that the map and
+        // stopped PVA still match the staged candidate.
+        bool rebaseStoppedCandidate(const std::uint64_t expected_generation,
+                                    const double release_wt) {
+            if (!std::isfinite(release_wt)) return false;
+            std::lock_guard<std::mutex> lock(mtx_);
+            if (flag_empty_ || !pos_traj_ || pos_traj_->empty() ||
+                generation_ != expected_generation) return false;
+            auto position = std::make_shared<Trajectory>(*pos_traj_);
+            auto yaw = std::make_shared<Trajectory>(*yaw_traj_);
+            position->start_WT = release_wt;
+            yaw->start_WT = release_wt;
+            pos_traj_ = std::const_pointer_cast<const Trajectory>(position);
+            yaw_traj_ = std::const_pointer_cast<const Trajectory>(yaw);
+            start_WT_ = release_wt;
+            if (initial_egress_.valid()) {
+                initial_egress_.start_wt = release_wt;
+            }
+            return true;
+        }
+
         bool setTrajectory(const ExpTraj &exp_traj, const BackupTraj &backup_traj) {
             Candidate candidate;
             if (!buildCandidate(exp_traj, backup_traj, candidate)) {

@@ -335,6 +335,14 @@ namespace fsm {
 
         void callMainFsmOnce();
 
+        // ROS2 may reserve the existing planning executor. Other frontends
+        // retain the synchronous path unless they explicitly override this.
+        virtual bool dispatchGenerateTrajectoryAsync() { return false; }
+
+        virtual void refreshMainRobotState() {
+            planner_ptr_->getRobotState(robot_state_);
+        }
+
         bool closeToGoal(const double &thresh_dis);
 
         void enqueueGoal(const Vec3f &p, const Quatf &q,

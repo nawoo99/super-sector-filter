@@ -1,6 +1,23 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-27 후속: v3 정지출발 고착 원인 2개를 v4에서 함께 수정, G1 Full 기능 스모크 통과.**
+> v3 G1 Full은 180.01초, 0/5 waypoint, 이동/PositionCommand 0, 비동기 결과
+> 1,362개 전부 `POSITION_DISCONTINUITY`였다. 원인은 (1) 실제 정지 위치를 0.05m
+> voxel center로 바꿔 최소43.301mm 공간 불연속을 만든 것과 (2) solve-start clock을
+> release 시점에 그대로 사용한 것이다. 별도 v4 overlay에서 실제 odom 위치를 optimizer
+> 경계로 보존하고 voxel은 검색 seed로만 사용하며, relative-time-zero 전체 prefix 인증 뒤
+> position/yaw/EXP/backup/egress receipt를 같은 release clock으로 rebase한다. ordinary와
+> emergency가 동일한 generation/map/PVA-bound release 함수를 사용한다. 기본값은 여전히
+> false이고 `SUPER_STOPPED_DEPARTURE_V4=1`에서만 켜진다. CTest4/4, 신규 source5/5,
+> 기존 async source12/12 통과. G1 Full n=1은 53.69초, 5/5, 접촉0, 최소 body
+> clearance0.267m로 완주했고 ordinary2+emergency6 certificate/release 모두 P/V/A오차0.
+> 다만 CPU postprocessor가 실행 cwd의 상대경로를 잘못 사용해 비행 후 실패했으므로 parent
+> status는 `STOPPED_FOR_DIAGNOSIS` 그대로이고 재시험하지 않았다. 이 n=1은 기능 스모크이지
+> population/CPU 비교 근거가 아니다. 다음은 repo root에서 G1 3모드 n=1 fresh gate 후
+> G4/Urban 순서다. 상세 `docs/scenario7_stopped_departure_v4_20260927.md`, §8.109.
+
+> [!IMPORTANT]
 > **2026-09-26 후속: guard-contract v2도 안전성 검증 실패 — 안정판 아님.**
 > no-raycast 중복 hit의 확률 증거 손실, coarse observed-free marker의 occupied
 > 삭제, 정지 검사의 조기 CLEARANCE_MARGIN 수락을 수정했다. 정지 policy revision=2는

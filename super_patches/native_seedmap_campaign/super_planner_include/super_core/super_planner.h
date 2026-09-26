@@ -113,6 +113,18 @@ namespace super_planner {
         }
     };
 
+    struct StoppedDepartureRelease {
+        bool accepted{false};
+        std::string reason{"not_attempted"};
+        std::uint64_t generation{0};
+        std::uint64_t map_version{0};
+        double release_wt{std::numeric_limits<double>::quiet_NaN()};
+        double position_error_m{std::numeric_limits<double>::infinity()};
+        double velocity_error_mps{std::numeric_limits<double>::infinity()};
+        double acceleration_error_mps2{std::numeric_limits<double>::infinity()};
+        CmdTraj::SharedSnapshot trajectory;
+    };
+
     const char *trajectorySafetyStatusName(TrajectorySafetyStatus status);
 
     class SuperPlanner {
@@ -142,7 +154,12 @@ namespace super_planner {
         std::mutex drone_state_mutex_;
         std::mutex replan_lock_;
 
+        // A stopped departure has two different points: the physical held
+        // position used as the optimizer boundary, and a free voxel centre
+        // used only to seed discrete search.  Conflating them created a
+        // deterministic sqrt(3)*resolution/2 command jump at map origins.
         Vec3f local_start_p_;
+        Vec3f local_search_start_p_;
 
         std::atomic_bool robot_on_backup_traj_{false};
         // use negative value to indicate the traj is not available
@@ -213,6 +230,14 @@ namespace super_planner {
         // tick and can splice incompatible polynomial orders.
         double guard_rest_to_rest_hold_until_wt_{-
                 std::numeric_limits<double>::infinity()};
+
+        struct StoppedDepartureStage {
+            bool valid{false};
+            std::uint64_t generation{0};
+            std::uint64_t map_version{0};
+            double prepared_start_wt{0.0};
+            TrajectorySafetyResult certificate;
+        } stopped_departure_stage_;
 
         struct ShadowValidationJob {
             CmdTraj::SharedSnapshot trajectory;
@@ -296,6 +321,22 @@ namespace super_planner {
         }
 
         std::uint64_t getCommittedTrajectoryGeneration() const;
+
+        // Finalize a worker-prepared PlanFromRest candidate at the actual
+        // main-thread release instant.  The worker already certified the full
+        // relative prefix from tt=0; this transaction accepts only the same
+        // map version and the same physical held PVA, then re-anchors every
+        // planner-owned executable clock without changing generation.
+        StoppedDepartureRelease releaseStoppedDeparture(
+                std::uint64_t expected_generation,
+                std::uint64_t expected_map_version,
+                double release_wt,
+                const StatePVAJ &held_pva);
+
+        bool getStoppedDepartureCertificate(
+                std::uint64_t expected_generation,
+                std::uint64_t expected_map_version,
+                TrajectorySafetyResult &certificate);
 
         bool trajectoryGuardEnabled() const {
             return cfg_.trajectory_guard_en;
