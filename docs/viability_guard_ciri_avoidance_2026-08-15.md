@@ -6858,3 +6858,25 @@ only if they pass, execute a predeclared Urban repetition cohort and report the
 Full-transition/time cost. Full record:
 `docs/scenario7_goal_change_full_refresh_v6_20260927.md`; compact evidence:
 `results/scenario7_goal_change_full_refresh_v6_urban_20260927/functional_summary.json`.
+
+The prescribed bounded regressions then passed without retry. G1 Adaptive
+completed5/5/contact0 in58.43s with0.233m body clearance; G4 completed5/5/
+contact0 in54.30s with0.266m clearance. Both had five distinct goal identities,
+exactly four v6 requests, no A* timeout, and matching total Full open/close and
+ACK counts (10/10 and8/8).
+
+Before further Urban execution, runs81520--81522 were frozen as an Adaptive-only
+n=3 gate with no retry/replacement and mandatory3/3 valid5/5/contact0 acceptance.
+It passed: mission times53.97/63.18/46.84s, contacts0/0/0, body clearances
+0.125/0.510/0.514m. All runs were source/resource/speed valid; each had exactly
+five distinct identities and four v6 requests, and every total Full request was
+committed and reclosed. Mean time was54.66s, mean end-to-end CPU0.5132 cores,
+map input3.7974MiB/s and map update13.3619ms/frame. The0.125m minimum margin
+remains a visible narrow observation.
+
+The initial two Adaptive runs and prospective n=3 gate are separate stages and
+must not be pooled into a post-hoc population guarantee. v6 remains default-off.
+The next decision is to freeze broader map-level validation before any further
+tuning, not to declare 100% safety from five Urban observations. Protocol and
+compact result are under
+`results/scenario7_goal_change_full_refresh_v6_urban_n3_20260927/`.

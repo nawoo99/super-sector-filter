@@ -97,10 +97,37 @@
     "async_source_contract": "12/12",
     "runtime_mirror_sha256_pairs_match": 6
   },
+  "bounded_regressions": {
+    "g1_adaptive": {
+      "run": 81510,
+      "source": "results/scenario7_goal_change_full_refresh_v6_g1_adaptive_20260927/raw.csv",
+      "completion": "5/5",
+      "safety_contacts": 0,
+      "mission_time_s": 58.43,
+      "body_clearance_m": 0.233,
+      "goal_change_v6_requests": 4,
+      "full_open_close": "10/10"
+    },
+    "g4_adaptive": {
+      "run": 81511,
+      "source": "results/scenario7_goal_change_full_refresh_v6_g4_adaptive_20260927/raw.csv",
+      "completion": "5/5",
+      "safety_contacts": 0,
+      "mission_time_s": 54.3,
+      "body_clearance_m": 0.266,
+      "goal_change_v6_requests": 4,
+      "full_open_close": "8/8"
+    }
+  },
+  "prospective_urban_n3": {
+    "protocol": "results/scenario7_goal_change_full_refresh_v6_urban_n3_20260927/protocol.json",
+    "result": "results/scenario7_goal_change_full_refresh_v6_urban_n3_20260927/result_summary.json",
+    "valid_complete_contact_free": "3/3"
+  },
   "decision": {
     "urban_failure_fixed_in_observed_adaptive_runs": true,
     "population_guarantee": false,
     "promoted": false,
-    "next_gate": "bounded G1 and G4 Adaptive regressions, then a predeclared Urban repetition cohort"
+    "next_gate": "freeze broader map-level validation before any new tuning"
   }
 }

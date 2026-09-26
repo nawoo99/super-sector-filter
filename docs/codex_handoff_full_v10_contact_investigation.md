@@ -1,7 +1,7 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
-> **2026-09-27 후속: goal-change Full-refresh v6가 Urban Adaptive 2/2를 복구했으나 아직 탐색 결과.**
+> **2026-09-27 후속: goal-change Full-refresh v6가 bounded/Urban gate를 통과했으나 아직 탐색 결과.**
 > `SUPER_GOAL_CHANGE_FULL_REFRESH_V6=1`은 FOLLOW 중 정확한 새 goal identity에만
 > 정지→Full committed ACK→새 경로 인증→Sector 복귀를 강제한다. 동일 goal 재전송은
 > 무시하고 Full/Sector에는 명시적으로 OFF, 기본값도 false다. 별도 overlay 빌드,
@@ -10,9 +10,12 @@
 > 4개의 waypoint 변경마다 v6 요청이1회 발생하고 각각 Full ACK/새 generation 뒤 해제됐다.
 > fresh 3모드에서는 Full54.74초/5·접촉0, Sector180.01초/1·접촉0,
 > Adaptive67.87초/5·접촉0. Adaptive 평균 CPU31.35%, map input55.89%, map update50.77%
-> 감소지만 시간23.99% 증가로 누적 CPU 감소는16.07%뿐이다. n=2 Adaptive/n=1 triplet이라
-> population100%나 최종 승격으로 해석 금지. 다음은 G1/G4 bounded regression 후 Urban
-> 사전고정 반복 cohort. 상세 `docs/scenario7_goal_change_full_refresh_v6_20260927.md`, §8.111.
+> 감소지만 시간23.99% 증가로 누적 CPU 감소는16.07%뿐이다. 이후 G1/G4 Adaptive도
+> 각5/5·접촉0, 새 goal 요청4/ACK완료로 통과했다. 비행 전에 고정한 Urban Adaptive
+> n=3(run81520--81522)도 3/3 모두5/5·접촉0, 평균54.66초이며 retry/replacement0이다.
+> 최초 탐색2회와 사전고정3회를 합쳐 population100%나 최종 승격으로 해석하면 안 된다.
+> 다음은 추가 튜닝 전 더 넓은 map-level 검증 범위를 먼저 동결하는 것. 상세
+> `docs/scenario7_goal_change_full_refresh_v6_20260927.md`, §8.111.
 
 > [!IMPORTANT]
 > **2026-09-27 후속: stationary-hold v5는 Urban 1/2 성공, 새 분기 미발동 — 승격 금지.**

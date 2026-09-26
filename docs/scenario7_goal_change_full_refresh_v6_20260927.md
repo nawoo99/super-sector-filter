@@ -110,5 +110,22 @@ acceptance only if all three runs are valid, complete 5/5 and record zero
 contact. Any first failure stops the gate for diagnosis. This small gate remains
 exploratory and cannot establish a population-level 100% rate.
 
+The gate subsequently passed 3/3 with no retry or replacement:
+
+| Run | Completion | Contact | Time | Body clearance | Full open/close | Full duty |
+|---:|---:|---:|---:|---:|---:|---:|
+| 81520 | 5/5 | 0 | 53.97 s | 0.125 m | 9/9 | 11.355% |
+| 81521 | 5/5 | 0 | 63.18 s | 0.510 m | 8/8 | 23.839% |
+| 81522 | 5/5 | 0 | 46.84 s | 0.514 m | 5/5 | 6.223% |
+
+Mean mission time was 54.66 s, mean end-to-end CPU 0.5132 cores, cumulative
+CPU 29.4057 core-s/run, map input 3.7974 MiB/s and map update 13.3619 ms/frame.
+Every run was source/resource/speed valid, had five distinct goal identities
+and exactly four v6 requests, committed every total Full request, and logged no
+A* timeout. The 0.125 m minimum clearance in run 81520 is positive but should
+remain visible as the narrowest observed margin.
+
 Compact evidence is stored in
 `results/scenario7_goal_change_full_refresh_v6_urban_20260927/functional_summary.json`.
+The prospective protocol and outcome are under
+`results/scenario7_goal_change_full_refresh_v6_urban_n3_20260927/`.
