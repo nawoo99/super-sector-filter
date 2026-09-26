@@ -1,0 +1,21 @@
+{
+  "candidate": "c32_configurable_astar_budget_v7",
+  "created_local": "2026-09-27",
+  "map": "urban_blocks_u01",
+  "mode": "full",
+  "runs": [81600, 81601, 81602],
+  "attempts_per_run": 1,
+  "replacement_runs": false,
+  "change": {
+    "astar_search_timeout_s": 0.25,
+    "previous_hardcoded_timeout_s": 0.1,
+    "scope": "same configured budget for Full, Sector, and Adaptive"
+  },
+  "pass_gate": {
+    "safe_completions": "3/3",
+    "contacts": 0,
+    "speed_violations": 0,
+    "infrastructure_retries": 0
+  },
+  "next_action": "Only after this gate passes, run a fresh seven-map three-mode n=10 campaign from repeat 1."
+}

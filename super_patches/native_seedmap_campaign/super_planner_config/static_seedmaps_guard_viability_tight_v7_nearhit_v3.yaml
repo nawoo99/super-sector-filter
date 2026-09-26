@@ -302,6 +302,10 @@ traj_opt:
 
 astar:
   map_voxel_num: [ 500, 500, 100 ]
+  # Urban block diagonals can exceed the upstream fixed 0.1 s budget while
+  # still having a valid route. Keep the search bounded, but allow the same
+  # deterministic budget in every compared sensing mode.
+  search_timeout_s: 0.25
   visual_process: false
   allow_diag: true
   # 0 DIAG; 1 MANHATTAN; 2 EUCLIDEAN

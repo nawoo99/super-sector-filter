@@ -1,0 +1,48 @@
+{
+  "candidate": "c32_configurable_astar_budget_v7_n10",
+  "created_local": "2026-09-27",
+  "objective": "Estimate Full, Fixed Sector, and Adaptive outcomes over seven fixed maps after replacing the fixed 0.1 s A* deadline with a common bounded 0.25 s budget.",
+  "maps": [
+    "gapfree_d1_m01",
+    "gapfree_d1_m02",
+    "gapfree_d1_m03",
+    "gapfree_d1_m04",
+    "gapfree_d1_m05r2",
+    "urban_blocks_u01",
+    "forest_cluster_f01"
+  ],
+  "modes": ["full", "sector", "adaptive"],
+  "repetitions_per_map_mode": 10,
+  "planned_triplets": 70,
+  "planned_flights": 210,
+  "stages": {
+    "stage1": "repetitions 1-5; all 35 triplets must pass infrastructure/source gates before stage2",
+    "stage2": "repetitions 6-10"
+  },
+  "mode_order": "Deterministic rotating order within every triplet.",
+  "attempts_per_flight": 1,
+  "replacement_runs": false,
+  "blocking_gate": "Stop on any infrastructure/source error, or any Full/Adaptive non-completion, contact, or speed violation. Retain Sector safety/non-completion as an outcome if the run is otherwise valid.",
+  "required_adaptive_contract": "Exactly four distinct goal-change Full-refresh requests and four certified returns to Sector per completed five-goal mission.",
+  "predeclared_metrics": [
+    "completion",
+    "contact runs and episodes",
+    "mission time",
+    "minimum static-PCD body clearance",
+    "end-to-end mean CPU cores",
+    "end-to-end cumulative CPU core-seconds",
+    "planner input MiB/s",
+    "map update time per frame",
+    "Adaptive Full-open transitions and refresh acknowledgements"
+  ],
+  "prior_evidence": {
+    "c31_stopped_reason": "Urban Full repeat 1 stopped safely at waypoint 3 after repeated 0.1 s A* timeouts; no contact or speed violation.",
+    "c32_urban_full_gate": "3/3 safe completions, 0 contacts, mean 53.57 s, no flight retries."
+  },
+  "reporting_groups": {
+    "normal": ["gapfree_d1_m01", "gapfree_d1_m02", "gapfree_d1_m03", "gapfree_d1_m04", "gapfree_d1_m05r2"],
+    "urban": ["urban_blocks_u01"],
+    "forest": ["forest_cluster_f01"]
+  },
+  "claim_limit": "Finite simulation evidence on the declared maps; not a population-level or real-world guarantee."
+}

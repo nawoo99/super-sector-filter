@@ -159,7 +159,7 @@ namespace path_search {
                                         rog_map::vec_Vec3f &out_path,
                                         const rog_map::vec_Vec3f &avoidance_centers,
                                         const std::vector<double> &avoidance_radii,
-                                        const double &time_out = 0.1);
+                                        const double &time_out = -1.0);
 
         /// @ brief: The escape path only for path search from prob map to inf map. from non-occupied point to
         ///          inf map free (or known freee) point . Aim to find a path from current point to (known) free point

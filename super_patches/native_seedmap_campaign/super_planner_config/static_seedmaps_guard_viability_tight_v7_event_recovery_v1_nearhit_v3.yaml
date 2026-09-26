@@ -332,6 +332,8 @@ traj_opt:
 
 astar:
   map_voxel_num: [ 500, 500, 100 ]
+  # Match the Full-mode bounded A* budget for a fair three-mode comparison.
+  search_timeout_s: 0.25
   visual_process: false
   allow_diag: true
   # 0 DIAG; 1 MANHATTAN; 2 EUCLIDEAN

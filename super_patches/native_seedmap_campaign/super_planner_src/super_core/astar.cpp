@@ -256,6 +256,8 @@ namespace path_search {
                                            const rog_map::vec_Vec3f &avoidance_centers,
                                            const std::vector<double> &avoidance_radii,
                                            const double &time_out) {
+        const double effective_time_out =
+                time_out > 0.0 ? time_out : cfg_.search_timeout_s;
         RET_CODE setup_ret = setup(start_pt, end_pt, flag, searching_horizon);
         if (setup_ret != SUCCESS) {
             return setup_ret;
@@ -578,14 +580,16 @@ namespace path_search {
                         }
                     }
             double time_2 = ros_ptr_->getSimTime();
-            if (!cfg_.visual_process && (time_2 - time_1) > time_out) {
+            if (!cfg_.visual_process &&
+                (time_2 - time_1) > effective_time_out) {
                 fmt::print(fg(fmt::color::indian_red),
-                           "Failed in A star path searching !!! {} seconds time limit exceeded.\n", time_out);
+                           "Failed in A star path searching !!! {} seconds time limit exceeded.\n",
+                           effective_time_out);
                 return TIME_OUT;
             }
         }
         double time_2 = ros_ptr_->getSimTime();
-        if ((time_2 - time_1) > time_out) {
+        if ((time_2 - time_1) > effective_time_out) {
             fmt::print(fg(fmt::color::indian_red), "Time consume in A star path finding is {} s, iter={}.\n",
                        (time_2 - time_1),
                        num_iter);
