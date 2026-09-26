@@ -1,0 +1,62 @@
+{
+  "schema": "scenario7-goal-change-full-refresh-v6-n10-two-stage-protocol-v1",
+  "frozen_before_flight": true,
+  "date": "2026-09-27",
+  "candidate": "c31_goal_change_full_refresh_v6_n10",
+  "maps": [
+    "gapfree_d1_m01",
+    "gapfree_d1_m02",
+    "gapfree_d1_m03",
+    "gapfree_d1_m04",
+    "gapfree_d1_m05r2",
+    "urban_blocks_u01",
+    "forest_cluster_f01"
+  ],
+  "modes": ["full", "sector", "adaptive"],
+  "runs_per_map_mode": 10,
+  "planned_triplets": 70,
+  "planned_flights": 210,
+  "base_run": 82000,
+  "run_formula": "82000 + repeat*10 + zero_based_map_index",
+  "mode_order_policy": "Deterministic rotation among F-S-A, S-A-F and A-F-S using (repeat+map_index-1) mod 3",
+  "stages": {
+    "stage1": {
+      "repeats": [1, 2, 3, 4, 5],
+      "planned_triplets": 35,
+      "planned_flights": 105,
+      "gate": "Every triplet must be source/resource/speed/infrastructure valid; Full and Adaptive must each complete 5/5 with zero contact"
+    },
+    "stage2": {
+      "repeats": [6, 7, 8, 9, 10],
+      "planned_triplets": 35,
+      "planned_flights": 105,
+      "start_condition": "stage1 gate passes exactly as frozen"
+    }
+  },
+  "failure_policy": {
+    "automatic_retries": 0,
+    "replacement_runs": false,
+    "full_or_adaptive_failure": "Stop for diagnosis after preserving the complete triplet",
+    "sector_failure_or_contact": "Retain as comparison outcome and continue if all validity checks pass",
+    "infrastructure_or_measurement_failure": "Stop for diagnosis; do not silently replace"
+  },
+  "measurements": [
+    "completion",
+    "safety contact episodes",
+    "mission time",
+    "mean and cumulative experiment CPU",
+    "input bandwidth",
+    "map update time",
+    "Adaptive Full open/close and committed ACK counts",
+    "source/resource/speed validity"
+  ],
+  "profiling": "CPU profiling enabled for every mode and run",
+  "aggregation": {
+    "normal": ["gapfree_d1_m01", "gapfree_d1_m02", "gapfree_d1_m03", "gapfree_d1_m04", "gapfree_d1_m05r2"],
+    "urban": ["urban_blocks_u01"],
+    "forest": ["forest_cluster_f01"],
+    "all_seven_pooling": false,
+    "missing_values_are_not_zero": true
+  },
+  "interpretation_limit": "Observed n=10 rates and computational measurements; not a formal population-level safety guarantee"
+}
