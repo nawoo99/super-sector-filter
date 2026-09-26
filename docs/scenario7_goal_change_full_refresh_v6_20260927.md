@@ -98,5 +98,17 @@ Urban repetition cohort and report both safety/completion and the increased
 Full-transition/time cost. Do not tune away or replace the retained v5 failure,
 the Sector timeout, or either v6 observation.
 
+The bounded regressions subsequently passed without retry. G1 completed 5/5 in
+58.43 s with contact 0 and 0.233 m body clearance; G4 completed 5/5 in 54.30 s
+with contact 0 and 0.266 m clearance. Each received five distinct goal
+identities, generated exactly four v6 requests, and committed every Full refresh
+without A* timeout. Their total Full open/close cycles were 10/10 and 8/8.
+
+Before further Urban flights, a prospective n=3 Adaptive-only gate was frozen:
+runs 81520--81522, no automatic retry or replacement, unchanged inputs, and
+acceptance only if all three runs are valid, complete 5/5 and record zero
+contact. Any first failure stops the gate for diagnosis. This small gate remains
+exploratory and cannot establish a population-level 100% rate.
+
 Compact evidence is stored in
 `results/scenario7_goal_change_full_refresh_v6_urban_20260927/functional_summary.json`.
