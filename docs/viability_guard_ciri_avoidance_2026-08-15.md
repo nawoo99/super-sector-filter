@@ -6737,3 +6737,38 @@ end-to-end CPU reduction24.46%, below the30% target; mission-time guardrail also
 failed. This remains exploratory n=1. Compact evidence:
 `results/scenario7_stopped_departure_v4_g1_triplet_20260927/functional_triplet_summary.json`.
 Next is fresh G4 n=1 and only then conditional Urban, not repeated campaign.
+
+G4 and conditional Urban were subsequently completed without automatic retry.
+G4 Full/Sector/Adaptive all completed5/5 with contact0 in55.61/48.78/53.23s.
+Adaptive performed3 effective Full open/close cycles with3 committed refresh
+ACKs. Relative to Full, mean/cumulative end-to-end CPU fell34.44/38.22%, sensor
+payload67.24%, algorithm-delivery payload36.59% and map update62.37%; mission
+time fell4.28%. This is a profiled exploratory n=1, and G4 has no Sector safety
+degradation, so it is neither population evidence nor the intended qualitative
+separation.
+
+Urban retained a narrower failure. Full completed5/5/contact0 in63.68s, while
+Sector and Adaptive both timed out at180s with0/5/contact0 after only about5.1m.
+Adaptive's initial stopped-departure release was exact and six normal
+generations followed. A guard OCCUPIED verdict at6.851m/s with15ms TTC then
+entered fail-closed stop. Full opened once, its refresh was committed, and it
+remained open for95.264% wall duty/99.498% point duty, excluding a missing-open
+or missing-ACK explanation.
+
+The perfect-drone model freezes at its last PositionCommand when publication is
+suppressed and therefore retains the last6.851m/s twist even though position
+difference is zero. The brake estimator correctly selected the independent
+zero position-difference speed. The actual liveness gap comes next: the stable
+pose has positive physical body clearance0.061m but lies inside the larger
+planning inflation. Strict validation returns UNOBSERVED; the existing
+unknown-relaxed retry returns CLEARANCE_MARGIN and accepts only SAFE. Therefore
+1,663 brake retries remain rejected and no recovery candidate is dispatched.
+
+This does not invalidate v4's departure-continuity repair, but it fails Urban
+Adaptive admission and blocks all repetition/confirmation campaigns. Preserve
+the run. The next candidate must use the existing stop-only deferred-margin
+traversal for the relaxed stationary hold and require `hard_checks_complete`
+before accepting CLEARANCE_MARGIN; OCCUPIED/out-of-map/version/deadline failures
+remain hard rejects. Exact compact evidence is in the G4 and Urban
+`functional_triplet_summary.json` files, with the full narrative in
+`docs/scenario7_stopped_departure_v4_20260927.md`.

@@ -127,10 +127,82 @@ target, and the mission-time guardrail failed. These are exploratory n=1 values,
 not confidence bounds. Across the triplet,21 staged certificates produced21
 releases and every logged P/V/A release error was exactly zero.
 
-## Next gate
+## Fresh G4 three-mode gate
 
-Preserve this G1 result and run fresh G4 three-mode n=1 next; run Urban only if
-G4 retains Full/Adaptive completion and zero contact. Diagnose any Full or
-Adaptive failure before expansion. Repeated or seven-map campaigns remain
-premature, and none of these observations should be pooled with v2/v3 or the
-established Normal tables.
+The conditional G4 gate ran without retry at
+`results/scenario7_stopped_departure_v4_g4_triplet_20260927/`. All modes
+completed 5/5 waypoints with zero contact, and all source-contract and
+small-pool timing checks passed.
+
+| Metric | Full | Fixed Sector | Adaptive |
+|---|---:|---:|---:|
+| Completion | 5/5 | 5/5 | 5/5 |
+| Safety contacts | 0 | 0 | 0 |
+| Mission time (s) | 55.61 | 48.78 | 53.23 |
+| Minimum body clearance (m) | 0.246 | 0.303 | 0.303 |
+| Mean end-to-end CPU (cores) | 0.7698 | 0.4819 | 0.5046 |
+| End-to-end CPU (core-s) | 46.4796 | 25.4017 | 28.7129 |
+| Sensor payload (MiB/s) | 10.5061 | 2.8655 | 3.4415 |
+| Algorithm delivery (MiB/s) | 11.3054 | 6.0541 | 7.1685 |
+| Map update (ms/frame) | 30.7111 | 10.4356 | 11.5568 |
+
+Adaptive opened and closed Full three times, with three committed refresh ACKs.
+Versus Full it reduced mean end-to-end CPU 34.44%, cumulative CPU 38.22%, sensor
+payload 67.24%, algorithm-delivery payload 36.59% and map-update time 62.37%,
+while finishing 4.28% faster. This passes the measured n=1 engineering
+thresholds, but the controller correctly leaves `target_met=false` because the
+profiled exploratory observation still requires an unprofiled confirmation.
+Across the triplet, 20 certificates produced 20 releases and every P/V/A
+release error was zero. G4 does not show Sector degradation and cannot by itself
+support the intended safety-superiority claim.
+
+## Urban three-mode gate and retained failure
+
+Because G4 passed the conditional gate, Urban ran once without retry at
+`results/scenario7_stopped_departure_v4_urban_triplet_20260927/`.
+
+| Metric | Full | Fixed Sector | Adaptive |
+|---|---:|---:|---:|
+| Completion | 5/5 | 0/5 | 0/5 |
+| Safety contacts | 0 | 0 | 0 |
+| Mission time (s) | 63.68 | 180.01 | 180.00 |
+| Path length (m) | 267.514 | 5.113 | 5.105 |
+| Minimum body clearance (m) | 0.489 | 0.162 | 0.061 |
+| Mean end-to-end CPU (cores) | 0.8418 | 0.3050 | 0.4853 |
+| End-to-end CPU (core-s) | 57.7226 | 56.4970 | 89.6809 |
+
+Full completed safely. Sector and Adaptive both stopped before waypoint 1 and
+timed out. Adaptive's 42.35% lower mean CPU is not an admissible performance
+success: its 2.83x mission time raised cumulative CPU by 55.37%. Its Full view
+opened once, received its committed map ACK, never closed, and occupied 95.264%
+of wall time / 99.498% of points. Thus the failure is not a missing Full-open
+event or missing refresh ACK.
+
+The exact sequence is deterministic in the retained trace. Initial stopped
+departure certification/release succeeded at generation 1/map 76 with zero
+P/V/A error, followed by six normal commits and about 5.1m of motion. At
+6.85m/s the guard detected an occupied trajectory point with TTC 0.015s and
+correctly entered fail-closed stop. The perfect-drone model then held position
+`(-3.742,3.416,2.067)` but continued publishing the last commanded odometry
+twist of 6.851m/s. The independent position-difference estimator correctly
+reported zero speed, so the stale twist did not create a false moving brake.
+
+After 0.25s of physical stability, however, strict stationary validation still
+returned `UNOBSERVED`. Its existing unknown-relaxed recheck accepted only
+`SAFE`; at this pose the raw body was clear by 0.061m but the larger planning
+inflation returned `CLEARANCE_MARGIN`. That combination was not admitted, so
+1,663 bounded brake retries stayed fail-closed, no emergency recovery was
+dispatched, and the already-open Full view could not help. This is a stationary
+hold recertification branch gap, separate from the v3/v4 departure continuity
+bug. It must be fixed with a full-query soft-margin completion proof rather
+than by changing the map, mission, radius or timeout.
+
+## Current decision
+
+v4 remains default-off and is **not promoted**. It repairs the deterministic
+departure discontinuity and passes G1/G4 functional gates, but Urban exposes a
+new, narrower post-stop liveness defect. Do not start repetitions or the
+seven-map campaign. The next bounded candidate should revalidate a physically
+stable hold with `DeferSoftMarginUntilHardChecksComplete`, accept a relaxed
+`CLEARANCE_MARGIN` only when every hard query and final map/deadline check has
+completed, then rerun Urban Adaptive first. Preserve all v4 results unchanged.

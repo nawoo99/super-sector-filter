@@ -1,6 +1,21 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-27 후속: v4 G4는 통과했지만 Urban Adaptive 정지 복구가 실패 — 승격 금지.**
+> Fresh G4 n=1은 Full/Sector/Adaptive 모두 5/5·접촉0, Adaptive Full 전환3/복귀3,
+> Full 대비 평균 CPU34.44%·누적 CPU38.22%·sensor payload67.24%·map update62.37%
+> 감소로 측정 gate를 통과했다. 이어 실행한 Urban은 Full63.68초/5·접촉0인 반면
+> Sector와 Adaptive 모두180초/0·접촉0이다. Adaptive는 초기 v4 certificate/release와
+> 5.1m 주행 후 TTC15ms 위험에서 fail-closed 정지했고, Full 전환1회와 committed ACK1회도
+> 정상이나 Full-open이95.264% 유지됐다. 정지 위치는 실제 body clearance0.061m이고
+> 위치차분 속도0인데 perfect-drone odom twist가 마지막6.851m/s로 고정됐다. 핵심 blocker는
+> strict stationary check가 UNOBSERVED인 뒤 unknown-relaxed check가 CLEARANCE_MARGIN을
+> 반환하면 기존 분기가 SAFE만 받아들이는 것이다. 그 결과 brake retry1,663회, recovery0,
+> 0/5 timeout. 단순 시간/맵/반경 튜닝이나 반복시험 금지. 다음은 full-query soft-margin
+> completion proof를 요구하는 좁은 stationary-hold 재인증 수정 후 Urban Adaptive부터 재검증.
+> 상세 `docs/scenario7_stopped_departure_v4_20260927.md`, §8.109와 compact G4/Urban JSON.
+
+> [!IMPORTANT]
 > **2026-09-27 후속: v3 정지출발 고착 원인 2개를 v4에서 함께 수정, G1 Full 기능 스모크 통과.**
 > v3 G1 Full은 180.01초, 0/5 waypoint, 이동/PositionCommand 0, 비동기 결과
 > 1,362개 전부 `POSITION_DISCONTINUITY`였다. 원인은 (1) 실제 정지 위치를 0.05m
