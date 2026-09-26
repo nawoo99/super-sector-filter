@@ -669,6 +669,34 @@ void ProbMap::probabilisticMapFromCache() {
         if (hit_cnt > 0) {
             hitPointUpdate(pos, hash_id, hit_cnt);
         }
+        else if (!cfg_.raycasting_en && isOccupied(occupancy_buffer_[hash_id])) {
+            // Occupancy-only maps use approximate observed-free markers to
+            // establish sensor coverage, not to contradict occupied evidence.
+            // In particular, the coarse observed DDA can emit a raw voxel
+            // centre that the exact sensor ray never intersects.  Preserve
+            // known obstacles here; genuine raycasting retains miss clearing.
+            if (contact_trace::enabled() &&
+                contact_trace::inRoi(pos.x(), pos.y(), pos.z())) {
+                try {
+                    auto fields = contact_trace::stream();
+                    fields << "\"operation\":\"observed_miss_preserved\",\"position\":["
+                           << contact_trace::number(pos.x()) << ','
+                           << contact_trace::number(pos.y()) << ','
+                           << contact_trace::number(pos.z()) << ']'
+                           << ",\"hash_id\":" << hash_id
+                           << ",\"count\":" << operation_cnt
+                           << ",\"before_log_odds\":"
+                           << contact_trace::number(occupancy_buffer_[hash_id])
+                           << ",\"after_log_odds\":"
+                           << contact_trace::number(occupancy_buffer_[hash_id])
+                           << ",\"from\":\"" << gridTypeName(GridType::OCCUPIED)
+                           << "\",\"to\":\"" << gridTypeName(GridType::OCCUPIED) << '"'
+                           << ",\"reason\":\"no_raycast_occupied_evidence\"";
+                    contact_trace::submit("map_probability_update", fields.str());
+                } catch (...) {
+                }
+            }
+        }
         else {
             missPointUpdate(pos, hash_id, operation_cnt - hit_cnt);
         }
@@ -872,15 +900,10 @@ void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odo
                 if (sparse_it != raycast_data_.sparse_update_counts.end() &&
                     sparse_it->second.hit_cnt > 0) {
                     if (trace_roi_point) ++trace_roi_duplicate_hit;
-                    // The probability cache is voxel-indexed and a single
-                    // p_hit=0.9 observation already crosses the configured
-                    // occupied threshold (p_occ=0.85).  Repeating the same
-                    // hit also repeats an up-to-10 m free-space march even
-                    // though those candidates are merged by hash afterward.
-                    // Coalesce only exact same-resolution hit voxels within
-                    // this scan.  Angular coverage and input point accounting
-                    // remain unchanged, while the expensive ray march is
-                    // performed once for the geometry the map can represent.
+                    // Preserve every retained hit's probability contribution:
+                    // one hit need not restore occupancy after a free prior.
+                    // Only deduplicate the expensive observed-space ray march.
+                    insertUpdateCandidate(pt_id_g, true);
                     continue;
                 }
                 insertUpdateCandidate(pt_id_g, true);

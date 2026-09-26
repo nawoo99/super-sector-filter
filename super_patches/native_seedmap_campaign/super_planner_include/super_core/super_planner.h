@@ -38,6 +38,7 @@
 
 #include <super_core/config.hpp>
 #include <super_core/demand_replan_policy.hpp>
+#include <fsm/stop_margin_certificate.hpp>
 #include <ros_interface/ros1/ros1_interface.hpp>
 #include <data_structure/base/trajectory.h>
 
@@ -100,6 +101,9 @@ namespace super_planner {
         double voxelize_ms{0.0};
         bool used_clearance_escape{false};
         bool used_initial_footprint_egress{false};
+        // Set only after every prepared geometry query and final map/deadline
+        // checks complete. An early CLEARANCE_MARGIN is not a stop proof.
+        bool hard_checks_complete{false};
         double clearance_escape_completed_tt{-1.0};
         initial_egress::Receipt initial_egress;
 
@@ -278,6 +282,9 @@ namespace super_planner {
 
         bool stopViabilityEnabled() const { return cfg_.guard_viability_en; }
         double stopViabilitySampleDt() const { return cfg_.guard_viability_sample_dt_s; }
+        std::uint32_t stopViabilityPolicyRevision() const {
+            return stop_margin::kViabilityPolicyRevision;
+        }
         double configuredReplanForwardDt() const { return cfg_.replan_forward_dt; }
 
         bool trajectoryGuardRejectionPending() const {
@@ -349,7 +356,9 @@ namespace super_planner {
                 const Vec3f *initial_footprint_origin = nullptr,
                 std::chrono::steady_clock::time_point deadline =
                         std::chrono::steady_clock::time_point::max(),
-                const initial_egress::Receipt *egress_receipt = nullptr) const;
+                const initial_egress::Receipt *egress_receipt = nullptr,
+                stop_margin::ValidationPolicy margin_policy =
+                        stop_margin::ValidationPolicy::RejectImmediately) const;
 
         TrajectorySafetyResult validateCommittedTrajectory(
                 double now_wt,

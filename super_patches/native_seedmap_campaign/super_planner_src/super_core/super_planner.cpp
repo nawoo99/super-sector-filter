@@ -267,7 +267,8 @@ namespace super_planner {
             const bool test_force_initial_footprint_occupancy,
             const Vec3f *initial_footprint_origin,
             const std::chrono::steady_clock::time_point deadline,
-            const initial_egress::Receipt *egress_receipt) const {
+            const initial_egress::Receipt *egress_receipt,
+            const stop_margin::ValidationPolicy margin_policy) const {
         const thread_cpu_profile::Scope cpu_scope(
                 thread_cpu_profile::Stage::PlannerValidateGeometry);
         TrajectorySafetyResult result;
@@ -660,8 +661,12 @@ namespace super_planner {
                 map_config.inflation_resolution;
         double first_clearance_violation_tt = -1.0;
         Vec3f first_clearance_violation_pos = Vec3f::Zero();
+        stop_margin::Traversal margin_traversal(margin_policy, map_queries.size());
+        double first_deferred_margin_tt = -1.0;
+        Vec3f first_deferred_margin_pos = Vec3f::Zero();
         for (std::size_t query_index = 0; query_index < map_queries.size(); ++query_index) {
             if (expired()) return result;
+            margin_traversal.beginQuery();
             const auto &query = map_queries[query_index];
             const auto &point = query.point;
             const auto trace_guard_query = [&](const char* verdict,
@@ -834,6 +839,17 @@ namespace super_planner {
                 } else {
                     result.status = TrajectorySafetyStatus::CLEARANCE_MARGIN;
                     trace_guard_query("clearance_margin", false, true, false);
+                    if (margin_traversal.deferSoftMargin()) {
+                        // A stop may relax only the extra inflation margin.
+                        // Keep visiting the rest of the brake: an early soft
+                        // graze says nothing about a later physical/unknown
+                        // collision. All hard returns above stay unchanged.
+                        if (first_deferred_margin_tt < 0.0) {
+                            first_deferred_margin_tt = query.tt;
+                            first_deferred_margin_pos = point;
+                        }
+                        continue;
+                    }
                 }
             }
             result.first_collision_tt = query.tt;
@@ -862,13 +878,18 @@ namespace super_planner {
                 result.first_collision_pos = first_clearance_violation_pos;
                 result.map_query_ms = std::chrono::duration<double, std::milli>(
                         std::chrono::steady_clock::now() - query_start).count();
-                return result;
+                if (!margin_traversal.deferSoftMargin()) return result;
+                if (first_deferred_margin_tt < 0.0) {
+                    first_deferred_margin_tt = first_clearance_violation_tt;
+                    first_deferred_margin_pos = first_clearance_violation_pos;
+                }
+            } else {
+                clearance_escape_completed = true;
+                result.clearance_escape_completed_tt = std::min(
+                        total_duration,
+                        latest_clearance_violation_tt +
+                                clearance_escape_free_confirmation_s);
             }
-            clearance_escape_completed = true;
-            result.clearance_escape_completed_tt = std::min(
-                    total_duration,
-                    latest_clearance_violation_tt +
-                            clearance_escape_free_confirmation_s);
         }
         result.used_clearance_escape = clearance_escape_completed;
         if (result.used_initial_footprint_egress && footprint_origin) {
@@ -892,7 +913,19 @@ namespace super_planner {
             result.map_version = health_after.map_version;
             return result;
         }
-        result.status = TrajectorySafetyStatus::SAFE;
+        if (expired()) return result;
+        result.hard_checks_complete = margin_traversal.completedAfterFinalChecks();
+        if (!result.hard_checks_complete) {
+            result.status = TrajectorySafetyStatus::INVALID_TRAJECTORY;
+            return result;
+        }
+        result.status = margin_traversal.deferredSoftMargin()
+                ? TrajectorySafetyStatus::CLEARANCE_MARGIN
+                : TrajectorySafetyStatus::SAFE;
+        if (margin_traversal.deferredSoftMargin()) {
+            result.first_collision_tt = first_deferred_margin_tt;
+            result.first_collision_pos = first_deferred_margin_pos;
+        }
         if (rog_map::contact_trace::enabled()) {
             try {
                 auto fields = rog_map::contact_trace::stream();
@@ -908,7 +941,9 @@ namespace super_planner {
                        << ",\"effective_unknown_as_occupied\":"
                        << (unknown_as_occupied ? "true" : "false")
                        << ",\"configured_unknown_as_occupied\":"
-                       << (cfg_.trajectory_guard_unknown_as_occupied ? "true" : "false");
+                       << (cfg_.trajectory_guard_unknown_as_occupied ? "true" : "false")
+                       << ",\"hard_checks_complete\":"
+                       << (result.hard_checks_complete ? "true" : "false");
                 rog_map::contact_trace::submit("trajectory_validation_result", fields.str());
             } catch (...) {
             }
@@ -2034,22 +2069,20 @@ namespace super_planner {
                         allow_footprint_egress ? &brake_start : nullptr,
                         allow_footprint_egress &&
                                 test_force_initial_footprint_occupancy,
-                        initial_footprint_origin);
+                        initial_footprint_origin,
+                        std::chrono::steady_clock::time_point::max(), nullptr,
+                        stop_margin::ValidationPolicy::DeferSoftMarginUntilHardChecksComplete);
                 last_status = safety.status;
-                // Diagnostic logging showed almost all stop-viability failures
-                // were CLEARANCE_MARGIN, not OCCUPIED, at speeds from 2.9 to
-                // 6.7 m/s -- i.e. not fixed by slowing down. isOccupiedInflate
-                // (used for CLEARANCE_MARGIN) inflates by inflation_step *
-                // inflation_resolution = 0.3 m here, a full 0.1 m more than
-                // the true physical robot_r = 0.2 m used for OCCUPIED. That
-                // extra conservative buffer, not real obstacle proximity, was
-                // rejecting brakes. An emergency stop is exactly the case
-                // where trading that buffer for having a certified fallback
-                // at all is the right call, so accept CLEARANCE_MARGIN here
-                // too; only true physical contact (OCCUPIED) or map problems
-                // (OUT_OF_MAP/MAP_STALE/etc.) still fail the check.
-                if (safety.safe() ||
-                    safety.status == TrajectorySafetyStatus::CLEARANCE_MARGIN) {
+                // Extra inflation margin is optional for a viable stop, but
+                // only AFTER the entire stop passed the existing hard-body,
+                // explicit unknown, map-version and deadline checks. An
+                // early-return margin can hide a later hard collision.
+                // Unknown remains explicitly false in this bounded repair;
+                // this is not a strict-known-free stopping certificate.
+                if (stop_margin::admissibleStop(
+                        safety.safe(),
+                        safety.status == TrajectorySafetyStatus::CLEARANCE_MARGIN,
+                        safety.hard_checks_complete)) {
                     return true;
                 }
             }
@@ -2115,10 +2148,10 @@ namespace super_planner {
         receipt.checked_from_tt = from_tt;
         receipt.checked_until_tt = from_tt;
         receipt.sample_dt_s = cfg_.guard_viability_sample_dt_s;
-        // Revision 1 means the EXISTING sampled stop policy: unknown=false,
-        // CLEARANCE_MARGIN accepted by certifiedStopExistsFrom. It is not
-        // equivalent to the stricter runtime emergency-brake certificate.
-        receipt.policy_revision = 1;
+        // Revision 2 retains unknown=false but permits a soft margin only
+        // after complete hard-query traversal; invalid sampled states reject.
+        // It is still not equivalent to strict-known-free emergency braking.
+        receipt.policy_revision = stopViabilityPolicyRevision();
         for (double tt = from_tt;;) {
             StatePVAJ state;
             // Unlike the legacy bool loop's skipped getState failures, a
@@ -2155,10 +2188,14 @@ namespace super_planner {
             const bool test_force_initial_footprint_occupancy) const {
         const thread_cpu_profile::Scope cpu_scope(
                 thread_cpu_profile::Stage::PlannerStopViability);
-        if (pos_traj.empty()) {
-            return true;
-        }
+        if (pos_traj.empty()) return false;
         const double total_duration = pos_traj.getTotalDuration();
+        if (!std::isfinite(total_duration) || total_duration < 0.0 ||
+            !std::isfinite(checked_from_tt) ||
+            !std::isfinite(cfg_.guard_viability_horizon_s) ||
+            cfg_.guard_viability_horizon_s <= 0.0 ||
+            !std::isfinite(cfg_.guard_viability_sample_dt_s) ||
+            cfg_.guard_viability_sample_dt_s <= 0.0) return false;
         checked_from_tt = std::clamp(checked_from_tt, 0.0, total_duration);
         const double horizon_end = std::min(
                 total_duration,
@@ -2168,14 +2205,12 @@ namespace super_planner {
         bool checked_end = false;
         while (true) {
             StatePVAJ state;
-            if (pos_traj.getState(tt, state)) {
-                if (!certifiedStopExistsFrom(
-                            state, trajectory_generation,
-                            initial_footprint_origin,
-                            test_force_initial_footprint_occupancy)) {
-                    return false;
-                }
-            }
+            if (!pos_traj.getState(tt, state) ||
+                !state.array().isFinite().all() ||
+                !certifiedStopExistsFrom(
+                        state, trajectory_generation,
+                        initial_footprint_origin,
+                        test_force_initial_footprint_occupancy)) return false;
             if (checked_end) {
                 break;
             }

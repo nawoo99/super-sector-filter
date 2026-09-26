@@ -6603,3 +6603,67 @@ Full protocol and per-mode times are in
 `docs/scenario7_repair_20260926.md`. Next is targeted sensor/map/certificate
 tracing at first backup/wall intrusion, not confirmation-scale repetitions or
 map changes to conceal the failures. CIRI remains shadow-only/default false.
+
+### 8.108 Guard-contract v2: three bounded repairs, failed safety smoke (2026-09-26)
+
+Preserved v1 ROI probes and real-library regressions exposed two actual mapping
+defects: same-voxel coalescing discarded probability hit multiplicity (one hit
+does not cross occupancy threshold from the actual free prior), and coarse
+0.15m observed-free markers could erase occupied0.05m cells off the true ray.
+The no-raycast branch now retains all hit evidence while deduplicating only ray
+work, and preserves occupied cells from approximate miss-only markers. Genuine
+raycasting clearing and nonoccupied observed markers are unchanged. This
+occupancy-accumulation repair is scoped to the static scenarios, not validated
+for removing dynamic obstacles or noisy false hits.
+
+Sampled stop viability also accepted an early CLEARANCE_MARGIN before checking
+later hard collisions. The stop-only policy now defers that margin through all
+prepared queries and final map/deadline checks, requires an explicit completion
+proof, rejects invalid sampled states, and binds receipt/FSM consumer revision2.
+The explicit unknown=false and voxel-centre geometry limitations remain; this
+is not strict-known-free or continuous swept-volume certification. A uint8
+command trace field is now a numeric JSON value, without rewriting old traces.
+
+Original install and v1 overlay remain unchanged. Separate serial Release build
+`/root/super_ws/scenario7_guard_v2_20260926/install` completed in12m28s. Actual ROG
+archive regressions, changed-map ASan/UBSan/leak checks, stop helper/revision
+tests,13-case extracted production traversal normal/sanitizer tests,79 Python
+tests, three existing CTest targets and24 static checks pass. Review retains
+two test gaps: final initial-escape-prefix deferral lacks executable branch
+coverage, and timeout order is not asserted after the margin. No passing-test
+claim removes these limitations.
+
+New cohort `results/scenario7_guard_contract_smoke_20260926_v2b` completed in
+1785.946s with failures retained: plannedON9/OFF9, actualON8/OFF3. G1 all modes
+are contact-free and complete in both phases. ON times Full49.15/Sector48.89/
+Adaptive61.69s; OFF50.24/56.59/46.32s. G4 ON Full54.22 and Sector52.53 complete
+without contact; Adaptive51.22 completes with one analytic/native contact.
+Urban ON Adaptive180.01 and Sector180.00 time out with one contact each and0/5
+waypoints. Sector additionally fails main-callback timing, preventing Urban
+Full ON. G4/Urban OFF are BLOCKED_BY_PREFLIGHT, not zero-contact observations.
+There were no flight retries/replacements and no G2/G3/G5/Forest retest.
+
+G4 enters cylinder40 on normal generation114 with a smooth first-entry step;
+Urban enters building10's east face on normal generations8/9. None exercises
+footprint egress; SAFE certificates/commits persist during contact. Command
+heading is strongly lateral to motion, but actual synchronized sensor pose and
+voxel state are unrecorded. Crucially Urban Adaptive had a Full acquisition
+only249.860ms before entry and released to Sector200.355ms before entry, so
+simple missing/delayed Full switching is not an established cause.
+
+G1 ON's extra12.54s includes8.157s excess recovery-active time (13 versus2
+cycles); its main/command99.457/100.002Hz and stop validation0.238ms CPU/call do
+not support attributing delay to the new traversal computation. Urban Sector's
+later synchronous PlanFromRest/A* timeout loop takes about100ms per search,
+driving main to about10Hz late/19.7568Hz aggregate while command remains100Hz.
+This begins after contact and is a separate liveness/timing defect.
+
+G1 OFF n=1 measured Full0.758606 versus Adaptive0.416767 experiment CPU cores,
+45.06% reduction, and41.139838 versus21.231938core-s,48.39% reduction. Do not pool
+ON/OFF, claim repeatability, or use this performance observation to promote a
+candidate that fails safety. Next: first-entry sensor/map/query evidence and
+path/stopping-region observation acceptance, plus separating synchronous Sector
+GENERATE_TRAJ search from main while preserving hold/identity rules. Maps,
+missions, radii, budgets, gates and CIRI activation were not changed. Full record:
+`docs/scenario7_guard_v2_results_20260926.md`; diagnostic/review notes are under
+`results/scenario7_guard_v2_20260926/`. No GitHub push occurred.

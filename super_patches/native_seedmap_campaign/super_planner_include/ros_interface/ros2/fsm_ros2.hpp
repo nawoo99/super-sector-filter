@@ -3472,7 +3472,8 @@ namespace fsm {
                     fields << "\"stamp_sec\":" << command.header.stamp.sec
                            << ",\"stamp_nanosec\":" << command.header.stamp.nanosec
                            << ",\"trajectory_id\":" << command.trajectory_id
-                           << ",\"trajectory_flag\":" << command.trajectory_flag
+                           << ",\"trajectory_flag\":"
+                           << static_cast<unsigned int>(command.trajectory_flag)
                            << ",\"committed_generation_now\":"
                            << planner_ptr_->getCommittedTrajectoryGeneration()
                            << ",\"map_version_now\":" << health.map_version
@@ -4070,8 +4071,10 @@ namespace fsm {
                 ros_ptr_->info(
                         " -- [GUARDED_DEMAND_REPLAN] enabled=true max_dispatch_interval={} "
                         "demand_timer_hz={} guard_command_hz=100 legacy_coalescer=bypassed "
-                        "stop_policy=sampled_unknown_allowed_clearance_margin_allowed",
-                        demandReplanBasePolicy().max_dispatch_interval_s, cfg_.replan_rate);
+                        "stop_policy=sampled_unknown_allowed_soft_margin_after_complete_hard_checks "
+                        "stop_policy_revision={}",
+                        demandReplanBasePolicy().max_dispatch_interval_s, cfg_.replan_rate,
+                        planner_ptr_->stopViabilityPolicyRevision());
             }
             if (cfg_.timer_en) {
                 execution_timer_ = nh_->create_wall_timer(
@@ -4389,6 +4392,7 @@ namespace fsm {
                     ? std::floor(1000.0 / cfg_.replan_rate) / 1000.0 : 0.0;
             policy.solve_budget_s = planner_ptr_->configuredReplanForwardDt();
             policy.viability_sample_dt_s = planner_ptr_->stopViabilitySampleDt();
+            policy.viability_policy_revision = planner_ptr_->stopViabilityPolicyRevision();
             auto evidence = collectDemandEvidence();
             auto decision = demand_policy::decide(policy, evidence);
             ++demand_checks_;

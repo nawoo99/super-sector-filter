@@ -1,6 +1,26 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-26 후속: guard-contract v2도 안전성 검증 실패 — 안정판 아님.**
+> no-raycast 중복 hit의 확률 증거 손실, coarse observed-free marker의 occupied
+> 삭제, 정지 검사의 조기 CLEARANCE_MARGIN 수락을 수정했다. 정지 policy revision=2는
+> 전체 hard-query 검사 후에만 soft margin을 허용하며 unknown=false 정책은 여전히 남는다.
+> 원본/v1 install 보존, 별도 `/root/super_ws/scenario7_guard_v2_20260926/install` 사용.
+> 실제 ROG archive 회귀·C++ normal/sanitizer·Python79검사·기존 CTest3·static24 통과.
+> 새 cohort `results/scenario7_guard_contract_smoke_20260926_v2b`는 ON8+OFF3=11회,
+> 29분46초, `COMPLETE_WITH_RETAINED_FAILURES`. G1 ON/OFF 세 모드 모두 무접촉 완주.
+> G4 ON Adaptive는 완주했지만 접촉1; Urban ON Adaptive/Sector는 접촉1씩+180초 미완주.
+> Urban ON Full 및 G4/Urban OFF는 미실행이며 성공·접촉0으로 세지 말 것. 재시도 없음.
+> G4/Urban 최초 접촉은 이번에는 normal EXP이고 footprint-egress 사용0회이며 SAFE가 유지됐다.
+> Urban은 마지막 Full 취득 약250ms/ Sector 복귀 약200ms 뒤 건물10에 접촉했다.
+> 단순 Full 전환 지연만으로 설명 불가. 센서 자세/해당 벽 voxel 증거는 아직 불충분하다.
+> Sector는 접촉 후 동기 A* 약100ms 반복으로 FSMmain 평균19.76Hz(후반 약10Hz),
+> command는100Hz 유지. A* 반복은 최초 접촉의 원인으로 확정된 것이 아니라 후속 병목이다.
+> G1 OFF Adaptive CPU 평균45.06%/누적48.39% 감소는 n=1 관측이며 안전성 실패를 상쇄하지 않는다.
+> 다음은 건물10/G4 원기둥40의 sensor→map→guard 증거 및 경로 관측 검증, 동기 A* 분리.
+> 상세 `docs/scenario7_guard_v2_results_20260926.md`, §8.108. CIRI 기본false/shadow 유지.
+
+> [!IMPORTANT]
 > **2026-09-26: Scenario7 수정 후보 검증 실패 — 안정판으로 승격하지 말 것.**
 > G4 SimplifySFC 무한 append, 초기 footprint 탈출의 commit/live 계약 불일치,
 > 시간 재조정/EXP 재사용 경로의 불연속 거부, Urban 관측기 지연과 누락 reference
