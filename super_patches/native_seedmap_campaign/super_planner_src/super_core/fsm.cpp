@@ -261,6 +261,21 @@ namespace fsm {
                           const std::string& frame, const std::int64_t creation_stamp_ns) {
         {
             std::lock_guard<std::mutex> lock(pending_goal_mutex_);
+            const auto request = rawGoalRequest(
+                    p, q, frame, creation_stamp_ns);
+            bool repeated_identity = false;
+            if (pending_goal_.valid) {
+                repeated_identity = goal_retransmit::sameRequest(
+                        request, rawGoalRequest(
+                                pending_goal_.goal_p, pending_goal_.goal_q,
+                                pending_goal_.frame,
+                                pending_goal_.creation_stamp_ns));
+            }
+            if (!repeated_identity &&
+                accepted_raw_goal_source_revision_ != 0) {
+                repeated_identity = goal_retransmit::sameRequest(
+                        request, accepted_raw_goal_request_);
+            }
             pending_goal_.goal_p = p;
             pending_goal_.goal_q = q;
             pending_goal_.valid = true;
@@ -269,6 +284,7 @@ namespace fsm {
             pending_goal_.creation_stamp_ns = creation_stamp_ns;
             pending_goal_.source_revision = queued_goal_revision_;
             if (goalRetransmitIdentityEnabled()) invalidateGoalRetransmissionTokenLocked();
+            onGoalQueuedLocked(!repeated_identity);
         }
         started_.store(true, std::memory_order_release);
     }

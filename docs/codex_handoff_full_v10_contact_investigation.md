@@ -1,6 +1,20 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-27 후속: goal-change Full-refresh v6가 Urban Adaptive 2/2를 복구했으나 아직 탐색 결과.**
+> `SUPER_GOAL_CHANGE_FULL_REFRESH_V6=1`은 FOLLOW 중 정확한 새 goal identity에만
+> 정지→Full committed ACK→새 경로 인증→Sector 복귀를 강제한다. 동일 goal 재전송은
+> 무시하고 Full/Sector에는 명시적으로 OFF, 기본값도 false다. 별도 overlay 빌드,
+> CTest4/4와 source contract v6 4/4·v5 3/3·v4 5/5·async12/12 통과.
+> Urban Adaptive 무재시도 2회는 각각51.35/67.87초, 모두5/5·접촉0이었으며 정확히
+> 4개의 waypoint 변경마다 v6 요청이1회 발생하고 각각 Full ACK/새 generation 뒤 해제됐다.
+> fresh 3모드에서는 Full54.74초/5·접촉0, Sector180.01초/1·접촉0,
+> Adaptive67.87초/5·접촉0. Adaptive 평균 CPU31.35%, map input55.89%, map update50.77%
+> 감소지만 시간23.99% 증가로 누적 CPU 감소는16.07%뿐이다. n=2 Adaptive/n=1 triplet이라
+> population100%나 최종 승격으로 해석 금지. 다음은 G1/G4 bounded regression 후 Urban
+> 사전고정 반복 cohort. 상세 `docs/scenario7_goal_change_full_refresh_v6_20260927.md`, §8.111.
+
+> [!IMPORTANT]
 > **2026-09-27 후속: stationary-hold v5는 Urban 1/2 성공, 새 분기 미발동 — 승격 금지.**
 > `SUPER_STOPPED_HOLD_V5=1`은 물리적으로 정지한 후보에 한해 전체 hard-query 완료 뒤
 > `CLEARANCE_MARGIN`을 허용하도록 별도 overlay에 구현했다. CTest4/4, 신규3/3,

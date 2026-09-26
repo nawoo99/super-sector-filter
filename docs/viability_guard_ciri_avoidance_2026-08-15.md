@@ -6815,3 +6815,46 @@ map ACK, new-path certification, then Sector release. Full and Fixed Sector
 must remain unchanged. Compact run evidence and the full decision boundary are
 in `results/scenario7_stopped_hold_v5_urban_adaptive_20260927/functional_repeat_summary.json`
 and `docs/scenario7_stopped_hold_v5_20260927.md`.
+
+### 8.111 Goal-change Full-refresh v6 and Urban exploratory recovery (2026-09-27)
+
+Candidate c31 implements the bounded transaction identified by the retained v5
+failure. It is exact/default-off under `SUPER_GOAL_CHANGE_FULL_REFRESH_V6=1`
+and requires event recovery plus v4. A genuinely new goal queued while following
+latches a lightweight request inside the pending-goal transaction; exact
+retransmissions do not. The main callback then uses the existing certified-stop
+and event-recovery path: stop, open Full, wait for the committed refresh ACK,
+certify a new trajectory from rest, release, and close to Sector. The callback
+does not plan or publish, and Full/Fixed Sector run with v6 explicitly disabled.
+
+A separate serial Release overlay was built at
+`/root/super_ws/scenario7_guard_v6_20260927/install`. Planner CTest4/4, v6
+contracts4/4, v5 contracts3/3, v4 contracts5/5 and async contracts12/12 pass;
+six runtime/mirror pairs match. Maps, missions, collision geometry, speed and
+CIRI settings are unchanged.
+
+Urban Adaptive completed twice without retry or contact: run81500 took51.35s
+and run81501 took67.87s, each reaching5/5 waypoints. Both saw exactly five
+distinct identities and exactly four v6 requests after the initial goal. Every
+request was followed by a committed Full ACK and newer certified generation;
+retransmissions caused no requests. Total Full open/close cycles were7/7 and
+17/17 because ordinary trajectory-guard events still share the same recovery
+transaction. The extra cycles all reclosed but expose a remaining performance
+variance rather than extra goal identities.
+
+Fresh run81501 controls retained Full5/5/contact0 in54.74s and Fixed Sector
+1/5/contact0 at180.01s; Adaptive was5/5/contact0 in67.87s. Source logs contain
+v6 `enabled=false` once and zero v6 requests for each control, versus
+`enabled=true` once and four requests for Adaptive. Relative to Full, Adaptive
+reduced mean end-to-end CPU31.35%, map payload55.89% and map update50.77%, but
+mission time rose23.99%, so cumulative CPU reduction was only16.07%. The mean
+CPU objective passes while the cumulative/time objective does not; Sector's low
+mean CPU is not comparable as a successful mission.
+
+These n=2 Adaptive and n=1 control observations repair the specific missing
+pre-turn observation symptom but do not establish population safety or justify
+promotion. Keep v6 default-off. Next run bounded G1/G4 Adaptive regressions;
+only if they pass, execute a predeclared Urban repetition cohort and report the
+Full-transition/time cost. Full record:
+`docs/scenario7_goal_change_full_refresh_v6_20260927.md`; compact evidence:
+`results/scenario7_goal_change_full_refresh_v6_urban_20260927/functional_summary.json`.

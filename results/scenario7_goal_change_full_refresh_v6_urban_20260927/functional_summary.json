@@ -1,0 +1,106 @@
+{
+  "schema": "scenario7-goal-change-full-refresh-v6-functional-summary-v1",
+  "date": "2026-09-27",
+  "candidate": "c31_goal_change_full_refresh_v6",
+  "default_off": true,
+  "flag": "SUPER_GOAL_CHANGE_FULL_REFRESH_V6=1",
+  "automatic_retries": 0,
+  "adaptive_observations": [
+    {
+      "run": 81500,
+      "source": "results/scenario7_goal_change_full_refresh_v6_urban_adaptive_20260927/raw.csv",
+      "completion": {"reached": 5, "total": 5, "success": true},
+      "mission_time_s": 51.35,
+      "safety_contacts": 0,
+      "body_clearance_m": 0.279,
+      "distinct_goal_identities": 5,
+      "goal_change_v6_requests": 4,
+      "full_open_transitions": 7,
+      "full_close_transitions": 7,
+      "committed_full_acks": 7,
+      "full_open_duty_pct": 12.233,
+      "end_to_end_cpu_cores_mean": 0.4842971857268166,
+      "end_to_end_cpu_core_s": 25.603916,
+      "map_payload_mib_s": 3.6647509878543008,
+      "map_update_ms_mean": 13.060915498031495
+    },
+    {
+      "run": 81501,
+      "source": "results/scenario7_goal_change_full_refresh_v6_urban_triplet_20260927/raw.csv",
+      "completion": {"reached": 5, "total": 5, "success": true},
+      "mission_time_s": 67.87,
+      "safety_contacts": 0,
+      "body_clearance_m": 0.315,
+      "distinct_goal_identities": 5,
+      "goal_change_v6_requests": 4,
+      "full_open_transitions": 17,
+      "full_close_transitions": 17,
+      "committed_full_acks": 17,
+      "full_open_duty_pct": 25.219,
+      "end_to_end_cpu_cores_mean": 0.4997046441936008,
+      "end_to_end_cpu_core_s": 34.849968,
+      "map_payload_mib_s": 4.664683113643342,
+      "map_update_ms_mean": 15.517050936532508
+    }
+  ],
+  "triplet_run_81501": {
+    "source": "results/scenario7_goal_change_full_refresh_v6_urban_triplet_20260927/raw.csv",
+    "full": {
+      "completion": "5/5",
+      "mission_time_s": 54.74,
+      "safety_contacts": 0,
+      "body_clearance_m": 0.46,
+      "end_to_end_cpu_cores_mean": 0.7279378484219358,
+      "end_to_end_cpu_core_s": 41.524697,
+      "map_payload_mib_s": 10.575166234666952,
+      "map_update_ms_mean": 31.51678940966011,
+      "v6_enabled": false,
+      "v6_requests": 0
+    },
+    "sector": {
+      "completion": "1/5",
+      "mission_time_s": 180.01,
+      "safety_contacts": 0,
+      "body_clearance_m": 0.278,
+      "end_to_end_cpu_cores_mean": 0.24952105842076253,
+      "end_to_end_cpu_core_s": 45.405327,
+      "map_payload_mib_s": 0.43792750039277334,
+      "map_update_ms_mean": 8.528610631818182,
+      "v6_enabled": false,
+      "v6_requests": 0
+    },
+    "adaptive": {
+      "completion": "5/5",
+      "mission_time_s": 67.87,
+      "safety_contacts": 0,
+      "body_clearance_m": 0.315,
+      "end_to_end_cpu_cores_mean": 0.4997046441936008,
+      "end_to_end_cpu_core_s": 34.849968,
+      "map_payload_mib_s": 4.664683113643342,
+      "map_update_ms_mean": 15.517050936532508,
+      "v6_enabled": true,
+      "v6_requests": 4
+    },
+    "adaptive_vs_full": {
+      "mean_end_to_end_cpu_reduction_pct": 31.35339160109777,
+      "cumulative_end_to_end_cpu_reduction_pct": 16.07411849386886,
+      "map_payload_reduction_pct": 55.890214771737355,
+      "map_update_reduction_pct": 50.76576254376841,
+      "mission_time_increase_pct": 23.98611618560469
+    }
+  },
+  "validation": {
+    "planner_ctest": "4/4",
+    "v6_source_contract": "4/4",
+    "v5_source_contract": "3/3",
+    "v4_source_contract": "5/5",
+    "async_source_contract": "12/12",
+    "runtime_mirror_sha256_pairs_match": 6
+  },
+  "decision": {
+    "urban_failure_fixed_in_observed_adaptive_runs": true,
+    "population_guarantee": false,
+    "promoted": false,
+    "next_gate": "bounded G1 and G4 Adaptive regressions, then a predeclared Urban repetition cohort"
+  }
+}

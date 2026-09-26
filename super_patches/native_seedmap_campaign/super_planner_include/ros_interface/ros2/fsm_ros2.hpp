@@ -94,6 +94,8 @@ namespace fsm {
         std::uint64_t event_recovery_handled_{0};
         std::uint64_t event_recovery_min_map_version_{0};
         std::uint64_t event_recovery_not_before_stamp_ns_{0};
+        std::atomic<std::uint64_t> goal_change_full_refresh_requested_{0};
+        std::uint64_t goal_change_full_refresh_handled_{0};
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub_;
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
                 guard_cloud_sub_;
@@ -236,6 +238,30 @@ namespace fsm {
         bool stoppedHoldV5Enabled() const {
             return stoppedHoldV5SettingEnabled() &&
                     stoppedDepartureV4Enabled();
+        }
+
+        static bool goalChangeFullRefreshV6SettingEnabled() {
+            static const bool enabled = async_from_rest::enabledSetting(
+                    std::getenv("SUPER_GOAL_CHANGE_FULL_REFRESH_V6"));
+            return enabled;
+        }
+
+        bool goalChangeFullRefreshV6Enabled() const {
+            return goalChangeFullRefreshV6SettingEnabled() &&
+                    cfg_.event_recovery_en && stoppedDepartureV4Enabled();
+        }
+
+        void onGoalQueuedLocked(const bool distinct_identity) override {
+            if (!goalChangeFullRefreshV6Enabled() || !distinct_identity ||
+                machine_state_.load(std::memory_order_acquire) != FOLLOW_TRAJ) {
+                return;
+            }
+            auto request = goal_change_full_refresh_requested_.fetch_add(
+                    1, std::memory_order_acq_rel) + 1;
+            if (request == 0) {
+                goal_change_full_refresh_requested_.store(
+                        1, std::memory_order_release);
+            }
         }
 
         void refreshMainRobotState() override {
@@ -4600,6 +4626,12 @@ namespace fsm {
                 throw std::runtime_error(
                         "Stopped hold v5 requires stopped departure v4");
             }
+            if (goalChangeFullRefreshV6SettingEnabled() &&
+                (!cfg_.event_recovery_en ||
+                 !stoppedDepartureV4SettingEnabled())) {
+                throw std::runtime_error(
+                        "Goal-change Full refresh v6 requires event recovery and stopped departure v4");
+            }
             // Keep map commits schedulable while planner optimization is
             // running. Planner map-reading frontends take an explicit shared
             // map transaction; the writer takes the matching exclusive lock.
@@ -4623,6 +4655,11 @@ namespace fsm {
                            "stationary_only=true deferred_soft_margin=true "
                            "hard_checks_required=true default_off=true",
                            stoppedHoldV5Enabled());
+            ros_ptr_->info(" -- [GOAL_CHANGE_FULL_REFRESH_V6] enabled={} "
+                           "distinct_identity_only=true following_only=true "
+                           "stop_before_full_ack=true certified_release=true "
+                           "default_off=true",
+                           goalChangeFullRefreshV6Enabled());
             if (cfg_.trajectory_guard_en) {
                 const rclcpp::QoS guard_recovery_qos(
                         rclcpp::QoS(1).reliable().keep_last(1)
@@ -5592,6 +5629,31 @@ namespace fsm {
             if (asyncGenerateEnabled()) {
                 if (const auto completed = async_generate_slot_.completed())
                     finishAsyncGenerateTrajectory(*completed);
+            }
+            if (goalChangeFullRefreshV6Enabled()) {
+                const auto request =
+                        goal_change_full_refresh_requested_.load(
+                                std::memory_order_acquire);
+                if (request > goal_change_full_refresh_handled_) {
+                    goal_change_full_refresh_handled_ = request;
+                    const auto state = machine_state_.load(
+                            std::memory_order_acquire);
+                    if (started_ && state != WAIT_GOAL && state != INIT &&
+                        !safety_brake_active_.load(
+                                std::memory_order_acquire)) {
+                        ros_ptr_->info(
+                                " -- [GOAL_CHANGE_FULL_REFRESH_REQUEST] "
+                                "request={} action=certified_stop_then_full_ack_reroute",
+                                request);
+                        activateEmergencyBrake(
+                                "goal_change_full_refresh");
+                        return;
+                    }
+                    ros_ptr_->info(
+                            " -- [GOAL_CHANGE_FULL_REFRESH_REQUEST] request={} "
+                            "action=merge_with_existing_stop_or_idle state={}",
+                            request, MACHINE_STATE_STR[state]);
+                }
             }
             if (cfg_.event_recovery_en) {
                 const auto request = event_recovery_requested_.load(std::memory_order_acquire);

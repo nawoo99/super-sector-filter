@@ -343,6 +343,13 @@ namespace fsm {
             planner_ptr_->getRobotState(robot_state_);
         }
 
+        // Runs while pending_goal_mutex_ protects the just-written latest
+        // goal. ROS frontends may latch a lightweight event here, but must not
+        // block, plan, publish, or reacquire pending_goal_mutex_.
+        virtual void onGoalQueuedLocked(bool distinct_identity) {
+            (void) distinct_identity;
+        }
+
         bool closeToGoal(const double &thresh_dis);
 
         void enqueueGoal(const Vec3f &p, const Quatf &q,

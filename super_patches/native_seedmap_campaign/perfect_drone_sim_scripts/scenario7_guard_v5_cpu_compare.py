@@ -7,6 +7,7 @@ import scenario7_guard_v4_cpu_compare as previous
 
 
 V5_SOURCE = Path(__file__).resolve()
+V5_INSTALL_ROOT = '/root/super_ws/scenario7_guard_v5_20260927/install'
 V5_CHANGED = (
     'super_planner/include/ros_interface/ros2/fsm_ros2.hpp',
     'super_planner/test/stopped_hold_v5_source_contract_test.py',
@@ -52,7 +53,7 @@ def main():
         original_build_main = previous.previous.build_main
 
         def build_main_v5(*args, **kwargs):
-            kwargs['install_root'] = '/root/super_ws/scenario7_guard_v5_20260927/install'
+            kwargs['install_root'] = V5_INSTALL_ROOT
             generated = original_build_main(*args, **kwargs)
             generated.__globals__.update(
                     V5_SOURCE=V5_SOURCE, V5_CHANGED=V5_CHANGED)
