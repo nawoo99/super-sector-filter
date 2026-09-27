@@ -18,6 +18,11 @@ def main():
     def frozen_identity(root):
         hashes = old_frozen_identity(root)
         hashes[str(THIS_FILE)] = previous.sha256(THIS_FILE)
+        for relative in (
+                'super_planner/include/super_core/config.hpp',
+                'super_planner/src/super_core/super_planner.cpp'):
+            path = previous.SOURCE / relative
+            hashes[str(path)] = previous.sha256(path)
         return hashes
 
     previous.CANDIDATE = CANDIDATE
