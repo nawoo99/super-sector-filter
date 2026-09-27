@@ -178,6 +178,18 @@ namespace fsm {
         double brake_passive_stability_start_wt_{0.0};
         bool brake_passive_stability_started_{false};
         std::atomic_bool trajectory_guard_recovery_announced_{false};
+        // A certified PlanFromRest path may intentionally begin inside the
+        // conservative inflated clearance margin and prove a bounded escape
+        // from it. Keep the front-end in Full acquisition until that escape
+        // prefix has actually executed and a current, ordinary (non-escape)
+        // certificate covers the vehicle. Closing Full when the path is only
+        // committed exposes the prefix to a Sector-updated map and can
+        // immediately fail-close before the vehicle has moved.
+        // Protected by safety_mutex_.
+        bool recovery_escape_hold_pending_{false};
+        std::uint64_t recovery_escape_hold_generation_{0};
+        double recovery_escape_hold_release_wt_{-
+                std::numeric_limits<double>::infinity()};
         // Protected by brake_activation_mutex_. This is only the pre-first-path
         // state-selection failure, not an alternative active-brake completion.
         std::uint64_t brake_activation_revision_{0};
@@ -540,6 +552,98 @@ namespace fsm {
             }
             ros_ptr_->info(
                     " -- [TRAJ_GUARD_RECOVERY_SIGNAL] active={}", active);
+        }
+
+        static bool needsRecoveryEscapeHold(
+                const TrajectorySafetyResult &certificate,
+                const CmdTraj::Sample &sample) {
+            if (!certificate.safe() ||
+                (!certificate.used_clearance_escape &&
+                 !certificate.used_initial_footprint_egress)) {
+                return false;
+            }
+            return std::isfinite(certificate.clearance_escape_completed_tt) &&
+                    certificate.clearance_escape_completed_tt >= 0.0 &&
+                    sample.trajectory_time + 1.0e-6 <
+                            certificate.clearance_escape_completed_tt;
+        }
+
+        // Called from the main FSM callback after refreshSafetyCertificate
+        // has accepted the current committed trajectory against the current
+        // map. The Full->Sector edge is released only when the certified
+        // escape prefix is in the past and the live certificate no longer
+        // consumes an escape exception.
+        bool tryCompleteRecoveryEscapeHold() {
+            bool released = false;
+            std::uint64_t generation = 0;
+            std::uint64_t escape_generation = 0;
+            std::uint64_t map_version = 0;
+            double trajectory_time = 0.0;
+            double release_wt = 0.0;
+            {
+                // Match the recovery-completion lock order.
+                std::lock_guard<std::mutex> refresh(full_refresh_mutex_);
+                std::lock_guard<std::mutex> safety(safety_mutex_);
+                if (!recovery_escape_hold_pending_) return false;
+
+                const auto snapshot =
+                        planner_ptr_->getCommittedSharedTrajectorySnapshot();
+                const auto health = map_ptr_->getMapHealthSnapshot();
+                CmdTraj::Sample sample;
+                if (snapshot.empty ||
+                    !planner_ptr_->getOneCommandSample(
+                            sample, snapshot.generation) ||
+                    sample.finished ||
+                    !sample.pvaj.array().isFinite().all() ||
+                    ros_ptr_->getSimTime() + 1.0e-6 <
+                            recovery_escape_hold_release_wt_ ||
+                    !safety_certificate_valid_ ||
+                    !safety_certificate_.safe() ||
+                    safety_certificate_.trajectory_generation !=
+                            snapshot.generation ||
+                    safety_certificate_.map_version != health.map_version ||
+                    safety_revalidation_requested_.load(
+                            std::memory_order_acquire) ||
+                    safety_certificate_.checked_from_tt >
+                            sample.trajectory_time ||
+                    safety_certificate_.checked_to_tt <
+                            sample.trajectory_time ||
+                    safety_certificate_.used_clearance_escape ||
+                    safety_certificate_.used_initial_footprint_egress) {
+                    return false;
+                }
+
+                bool expected = true;
+                if (!trajectory_guard_recovery_announced_.compare_exchange_strong(
+                            expected, false, std::memory_order_acq_rel)) {
+                    return false;
+                }
+                generation = snapshot.generation;
+                escape_generation = recovery_escape_hold_generation_;
+                map_version = health.map_version;
+                trajectory_time = sample.trajectory_time;
+                release_wt = recovery_escape_hold_release_wt_;
+                recovery_escape_hold_pending_ = false;
+                recovery_escape_hold_generation_ = 0;
+                recovery_escape_hold_release_wt_ =
+                        -std::numeric_limits<double>::infinity();
+                clearFullRefreshRecoveryGateLocked();
+                released = true;
+            }
+            if (released) {
+                std_msgs::msg::Bool inactive;
+                inactive.data = false;
+                trajectory_guard_recovery_pub_->publish(inactive);
+                ros_ptr_->info(
+                        " -- [EVENT_RECOVERY_ESCAPE_RELEASE] escape_gen={} "
+                        "current_gen={} map={} trajectory_tt={:.3f} "
+                        "release_wt={:.3f}",
+                        escape_generation, generation, map_version,
+                        trajectory_time, release_wt);
+                ros_ptr_->info(
+                        " -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=false");
+            }
+            return released;
         }
 
         enum class RawCloudSafetyStatus {
@@ -3990,14 +4094,29 @@ namespace fsm {
                                 current.ack.target, current.ack.stamp, current.ack.map,
                                 certified_map, before.generation_before, result.generation_after);
                     }
-                    bool expected = true;
-                    if (trajectory_guard_recovery_announced_.compare_exchange_strong(
-                                expected, false, std::memory_order_acq_rel)) {
-                        clearFullRefreshRecoveryGateLocked();
-                        std_msgs::msg::Bool inactive;
-                        inactive.data = false;
-                        trajectory_guard_recovery_pub_->publish(inactive);
-                        ros_ptr_->info(" -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=false");
+                    if (needsRecoveryEscapeHold(safety_certificate_, sample)) {
+                        recovery_escape_hold_pending_ = true;
+                        recovery_escape_hold_generation_ =
+                                result.generation_after;
+                        recovery_escape_hold_release_wt_ = sample.start_wt +
+                                safety_certificate_.clearance_escape_completed_tt;
+                        ros_ptr_->info(
+                                " -- [EVENT_RECOVERY_ESCAPE_HOLD] gen={} map={} "
+                                "trajectory_tt={:.3f} release_wt={:.3f} "
+                                "action=retain_full_until_ordinary_certificate",
+                                result.generation_after, certified_map,
+                                sample.trajectory_time,
+                                recovery_escape_hold_release_wt_);
+                    } else {
+                        bool expected = true;
+                        if (trajectory_guard_recovery_announced_.compare_exchange_strong(
+                                    expected, false, std::memory_order_acq_rel)) {
+                            clearFullRefreshRecoveryGateLocked();
+                            std_msgs::msg::Bool inactive;
+                            inactive.data = false;
+                            trajectory_guard_recovery_pub_->publish(inactive);
+                            ros_ptr_->info(" -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=false");
+                        }
                     }
                 }
             }
@@ -4190,6 +4309,13 @@ namespace fsm {
             if (!cfg_.event_recovery_en && !asyncGenerateEnabled()) publishPolyTraj();
 
             std::string recovered_reason;
+            const bool defer_escape_release =
+                    needsRecoveryEscapeHold(
+                            recovered_certificate, recovered_sample);
+            const double escape_release_wt = defer_escape_release
+                    ? recovered_sample.start_wt +
+                            recovered_certificate.clearance_escape_completed_tt
+                    : -std::numeric_limits<double>::infinity();
             {
                 std::lock_guard<std::mutex> lock(safety_mutex_);
                 recovered_reason = brake_reason_;
@@ -4202,6 +4328,11 @@ namespace fsm {
                 safety_brake_active_.store(false, std::memory_order_release);
                 active_brake_body_replaced_ = false;
                 if (asyncGenerateEnabled()) clearAsyncGenerateQuarantineLocked();
+                if (defer_escape_release) {
+                    recovery_escape_hold_pending_ = true;
+                    recovery_escape_hold_generation_ = generation_after;
+                    recovery_escape_hold_release_wt_ = escape_release_wt;
+                }
             }
             if (!cfg_.event_recovery_en && asyncGenerateEnabled()) publishPolyTraj();
             if (cfg_.event_recovery_en) {
@@ -4214,7 +4345,17 @@ namespace fsm {
                         required_full_refresh_ack_map_version_, recovered_certificate.map_version,
                         generation_before, generation_after);
             }
-            publishTrajectoryGuardRecoveryState(false);
+            if (defer_escape_release) {
+                ros_ptr_->info(
+                        " -- [EVENT_RECOVERY_ESCAPE_HOLD] gen={} map={} "
+                        "trajectory_tt={:.3f} release_wt={:.3f} "
+                        "action=retain_full_until_ordinary_certificate",
+                        generation_after, recovered_certificate.map_version,
+                        recovered_sample.trajectory_time,
+                        escape_release_wt);
+            } else {
+                publishTrajectoryGuardRecoveryState(false);
+            }
             ros_ptr_->info(" -- [TRAJ_GUARD_RECOVERED] trigger={} gen={} map={}",
                            recovered_reason,
                            planner_ptr_->getCommittedTrajectoryGeneration(),
@@ -5785,6 +5926,9 @@ namespace fsm {
                 !refreshSafetyCertificate("main_pre")) {
                 activateEmergencyBrake("main_pre_uncertified");
                 return;
+            }
+            if (cfg_.trajectory_guard_en && machine_state_ == FOLLOW_TRAJ) {
+                tryCompleteRecoveryEscapeHold();
             }
             if (asyncGenerateEnabled() &&
                 async_generate_quarantine_.load(std::memory_order_acquire)) {

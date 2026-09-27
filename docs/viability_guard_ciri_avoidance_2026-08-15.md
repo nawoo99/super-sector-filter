@@ -6880,3 +6880,64 @@ The next decision is to freeze broader map-level validation before any further
 tuning, not to declare 100% safety from five Urban observations. Protocol and
 compact result are under
 `results/scenario7_goal_change_full_refresh_v6_urban_n3_20260927/`.
+
+### 8.112 Configurable A-star budget campaign stop and escape-prefix Full hold (2026-09-27)
+
+Candidate c32 replaced the fixed0.1s A-star deadline with the common configured
+0.25s budget and predeclared a seven-map, three-mode, two-stage n=10 campaign.
+It stopped as designed at stage1 Urban repeat2. Before that stop,11 triplets were
+valid; all Full runs and all preceding Adaptive runs completed without contact.
+The blocking Urban Adaptive run timed out after0/5 waypoints with contact0 and
+failed the strict source-recovery audit. Its Full and Fixed Sector controls were
+retained. Fixed Sector outcomes, including a G4 contact, remain measurements
+rather than campaign blockers.
+
+The Urban failure was not another insufficient A-star budget. Adaptive opened
+Full, obtained a committed refresh, and generated a certified local escape.
+The recovery path was published and Full was immediately closed while the
+certificate still depended on a clearance-escape prefix. Roughly50ms later the
+Sector-updated main guard rejected that same prefix, opened a second cycle, and
+the vehicle remained near the building with its start voxel occupied. The defect
+was therefore the recovery transaction boundary: path commitment was treated as
+equivalent to completed execution of the escape.
+
+Candidate c33 keeps the front end in Full acquisition when the accepted
+certificate uses either clearance escape or initial-footprint egress. It records
+the certified escape completion as an absolute simulation wall time. Periodic
+replanning may replace the original generation, so release is deliberately not
+tied forever to that generation. After the completion time, the main callback
+requires a fresh certificate for the current committed generation and current
+map, covering current trajectory time, with neither escape exception set. Only
+then does it atomically clear the Full-refresh gate and publish the Sector edge.
+All collision, stale-map, unfinished-sample and revalidation checks remain
+fail-closed. No map, mission, speed, collision geometry or CIRI setting changed.
+
+The first c33 Urban Adaptive smoke exercised the hold branch and completed5/5,
+contact0 in82.05s, but its intermediate generation replacement produced two
+PATH_READY records inside one recovery cycle, so the strict audit correctly
+rejected that implementation. Release was then moved to the absolute completion
+time plus current ordinary-certificate condition. Fresh run83126 completed5/5,
+contact0 in87.70s and passed the strict one-to-one recovery audit across12 cycles.
+Run83127 also completed5/5, contact0 in56.83s; its manual invocation used the
+wrong working directory, so only the optional post-flight CPU summarizer failed
+to resolve a relative CSV. It is retained as flight evidence, not substituted
+or counted in the predeclared campaign. Neither latter smoke happened to require
+the escape exception, so the broad campaign remains the integration gate.
+
+Parallel compilation consumed about15GiB RAM plus2GiB swap and was abandoned.
+The actual campaign overlay was rebuilt serially; the apparent missing-header
+error came from accidentally configuring the unrelated legacy install tree and
+was not a source defect. Full and Adaptive executables in
+`/root/super_ws/scenario7_guard_v6_20260927/install` now contain the same c33
+header.
+
+The prospective c33 protocol is frozen at
+`results/scenario7_escape_hold_v8_n10_20260927/protocol.json`. It schedules the
+five gap-free cylinder maps, Urban and Forest in rotating mode order. Stage1 is
+7 maps x3 modes x5 repeats (105 flights); stage2 adds the same105 flights only
+after every stage1 infrastructure/source check and every Full/Adaptive safe
+completion passes. There is one attempt per flight, no replacement, and Sector
+completion/contact are retained outcomes. Metrics include completion, contact,
+time, body clearance, mean and cumulative experiment CPU, input bandwidth, map
+update time, and Adaptive Full transitions/ACKs. This is finite simulation
+evidence and cannot establish population-level or real-world safety.

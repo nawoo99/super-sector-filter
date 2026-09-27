@@ -1,6 +1,19 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-27 최신: c32 Urban 실패의 Full 조기해제 원인을 c33에서 수정, 7-map n=10 후보 동결.**
+> c32 캠페인은 stage1 Urban repeat2에서 Adaptive가 certified clearance-escape를
+> commit하자마자 Full을 닫고, escape를 실제 실행하기 전 Sector map으로 main guard가
+> 다시 fail-close해 중단됐다. c33은 escape/initial-egress certificate이면 Full을 유지하고,
+> escape 종료 절대시각 이후 현재 generation/map의 일반(non-escape) certificate가 있을 때만
+> Sector로 복귀한다. 고정 지연이나 같은 후보 재시도가 아니다. Urban Adaptive smoke
+> run83126은87.70초,5/5,접촉0, strict recovery audit valid였고 run83127 비행도
+> 56.83초,5/5,접촉0이었다(후자는 수동 실행 cwd 때문에 비행 후 CPU 요약만 실패).
+> c33 코드·프로토콜은 별도 7-map×3-mode×n=10, 무재시도 2-stage 후보로 동결했다.
+> 먼저 각 모드/맵 n=5가 모두 gate를 통과해야 추가 n=5를 수행한다. 상세 §8.112와
+> `results/scenario7_escape_hold_v8_n10_20260927/protocol.json`.
+
+> [!IMPORTANT]
 > **2026-09-27 후속: goal-change Full-refresh v6가 bounded/Urban gate를 통과했으나 아직 탐색 결과.**
 > `SUPER_GOAL_CHANGE_FULL_REFRESH_V6=1`은 FOLLOW 중 정확한 새 goal identity에만
 > 정지→Full committed ACK→새 경로 인증→Sector 복귀를 강제한다. 동일 goal 재전송은
