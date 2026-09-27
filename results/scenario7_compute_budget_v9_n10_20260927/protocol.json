@@ -1,0 +1,54 @@
+{
+  "candidate": "c34_decoupled_planning_compute_budget_v9_n10",
+  "created_local": "2026-09-27",
+  "objective": "Validate Full, Fixed Sector, and Adaptive over seven fixed maps after separating the asynchronous planning compute budget from the trajectory look-ahead interval while retaining the c33 escape-prefix Full hold.",
+  "maps": [
+    "gapfree_d1_m01",
+    "gapfree_d1_m02",
+    "gapfree_d1_m03",
+    "gapfree_d1_m04",
+    "gapfree_d1_m05r2",
+    "urban_blocks_u01",
+    "forest_cluster_f01"
+  ],
+  "modes": ["full", "sector", "adaptive"],
+  "repetitions_per_map_mode": 10,
+  "planned_triplets": 70,
+  "planned_flights": 210,
+  "stages": {
+    "stage1": "repetitions 1-5; all 35 triplets must pass infrastructure/source gates before stage2",
+    "stage2": "repetitions 6-10"
+  },
+  "mode_order": "Deterministic rotating order within every triplet.",
+  "attempts_per_flight": 1,
+  "replacement_runs": false,
+  "common_planning_limits": {
+    "trajectory_lookahead_s": 0.1,
+    "astar_search_timeout_s": 0.25,
+    "asynchronous_total_compute_budget_s": 0.5
+  },
+  "blocking_gate": "Stop on any infrastructure/source error, or any Full/Adaptive non-completion, contact, speed violation, or strict recovery-audit failure. Retain Sector safety/non-completion as an outcome if the run is otherwise valid.",
+  "required_adaptive_contract": "Every completed Full-recovery cycle has exactly one fresh source frame, one committed acknowledgement, one newer certified path and one Sector return; escape-prefix paths retain Full until an ordinary current certificate permits release.",
+  "predeclared_metrics": [
+    "completion",
+    "contact runs and episodes",
+    "mission time",
+    "minimum static-PCD body clearance",
+    "end-to-end mean CPU cores",
+    "end-to-end cumulative CPU core-seconds",
+    "planner input MiB/s",
+    "map update time per frame",
+    "Adaptive Full-open transitions and refresh acknowledgements"
+  ],
+  "prior_evidence": {
+    "c33_stage1_stop": "Forest repeat 1 Full timed out after waypoint 1 with contact 0; Sector and Adaptive completed without contact.",
+    "root_cause": "A-star had a 0.25 s budget but total PlanFromRest still reused replan_forward_dt=0.1 s as a compute deadline, rejecting valid Full-map solves taking 0.18-0.26 s.",
+    "c34_forest_full_gate": "Independent run85100 completed 5/5 in 64.43 s with contact 0, body clearance 0.231 m, valid resource/speed gates, and no total-planning overtime rejection."
+  },
+  "reporting_groups": {
+    "normal": ["gapfree_d1_m01", "gapfree_d1_m02", "gapfree_d1_m03", "gapfree_d1_m04", "gapfree_d1_m05r2"],
+    "urban": ["urban_blocks_u01"],
+    "forest": ["forest_cluster_f01"]
+  },
+  "claim_limit": "Finite simulation evidence on the declared maps; not a population-level or real-world guarantee."
+}

@@ -157,6 +157,9 @@ super_planner:
   iris_iter_num: 2
   obs_skip_num: 2
   replan_forward_dt: 0.1
+  # Async planning may legitimately outlive the 0.1 s trajectory look-ahead.
+  # Keep the solve bounded without conflating these two independent clocks.
+  planning_compute_budget_s: 0.5
   planning_horizon: 7.0
   sensing_horizon: -1
   receding_dis: 1.0

@@ -1,6 +1,20 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-27 최신: c33 stage1 Forest Full 실패에서 계획 clock 결합 결함 확인, c34로 분리.**
+> c33 첫 반복은 G1--G5와 Urban triplet을 통과했으나 Forest Full이 waypoint1 뒤
+> 180.01초/1·접촉0으로 중단됐다. 같은 triplet의 Sector70.48초/5·접촉0과
+> Adaptive66.67초/5·접촉0은 완주했다. Full은849회 async solve를 요청했지만,
+> A* 예산을0.25초로 늘린 뒤에도 전체 solve가 trajectory look-ahead인
+> `replan_forward_dt=0.1초`를 deadline으로 재사용해 0.18--0.26초 정상 후보를 버렸다.
+> c34는 look-ahead0.1초/A*0.25초를 유지하고 별도 공통 async compute budget0.5초를
+> 추가했다. 미지정 프로파일은 기존 look-ahead 값을 fallback으로 써 호환된다.
+> 독립 Forest Full run85100은64.43초/5·접촉0, clearance0.231m로 통과했다.
+> c33 결과는 대체하지 않고 중단 코호트로 보존하며, c34는 새 7-map×3-mode×n=10
+> 프로토콜로 처음부터 수행한다. 상세 §8.113과
+> `results/scenario7_compute_budget_v9_n10_20260927/protocol.json`.
+
+> [!IMPORTANT]
 > **2026-09-27 최신: c32 Urban 실패의 Full 조기해제 원인을 c33에서 수정, 7-map n=10 후보 동결.**
 > c32 캠페인은 stage1 Urban repeat2에서 Adaptive가 certified clearance-escape를
 > commit하자마자 Full을 닫고, escape를 실제 실행하기 전 Sector map으로 main guard가

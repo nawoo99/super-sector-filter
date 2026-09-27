@@ -1,0 +1,27 @@
+{
+  "candidate": "c34_decoupled_planning_compute_budget",
+  "map": "forest_cluster_f01",
+  "mode": "full",
+  "run": 85100,
+  "purpose": "Independent causal functional gate after separating planning compute budget from trajectory look-ahead; not part of either n10 cohort.",
+  "settings": {
+    "trajectory_lookahead_s": 0.1,
+    "astar_search_timeout_s": 0.25,
+    "asynchronous_total_compute_budget_s": 0.5
+  },
+  "result": {
+    "success": true,
+    "waypoints": "5/5",
+    "mission_time_s": 64.43,
+    "contacts": 0,
+    "body_clearance_m": 0.231,
+    "speed_limit_valid": true,
+    "resource_valid": true,
+    "run_valid": true,
+    "total_planning_overtime_rejections": 0,
+    "mean_end_to_end_cpu_cores": 0.8775309267492052,
+    "cumulative_end_to_end_cpu_core_s": 58.608028,
+    "map_update_ms_per_frame": 38.42570169230769
+  },
+  "claim_limit": "One functional run demonstrates removal of the observed deterministic timing rejection, not repeatability or population safety."
+}

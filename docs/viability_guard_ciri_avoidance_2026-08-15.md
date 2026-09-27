@@ -6881,6 +6881,53 @@ tuning, not to declare 100% safety from five Urban observations. Protocol and
 compact result are under
 `results/scenario7_goal_change_full_refresh_v6_urban_n3_20260927/`.
 
+### 8.113 Forest Full failure and separation of planning clocks (2026-09-27)
+
+The c33 campaign started from a committed protocol and stopped at the first
+blocking failure, without retry or replacement. Repeat1 G1--G5 and Urban all
+produced valid triplets. Full and Adaptive completed those six maps without
+contact. Urban preserved the expected separation: Full58.75s/5/contact0,
+Adaptive68.92s/5/contact0, Fixed Sector180.01s/0/contact0. The subsequent Forest
+triplet had Full180.01s/1/contact0, while Sector70.48s/5/contact0 and Adaptive
+66.67s/5/contact0 both completed. The driver therefore stopped before repeat2.
+
+Forest Full reached waypoint0 and stopped near `(7.425,19.825,2.075)` while
+planning the second waypoint. It dispatched849 asynchronous attempts, completed
+only the initial recovery, and retained generation54. Later attempts repeatedly
+found corridors or reached the optimizer but were rejected as overtime at
+roughly0.18--0.26s; reroute epochs then cycled through two blockers and A* no-path
+resets. There was no contact, speed violation or infrastructure failure, and the
+same map/mission was feasible for both restricted-input modes.
+
+The root cause was an earlier incomplete timing change. A-star had received a
+configurable common0.25s deadline, but both `ReplanOnce` and `PlanFromRest` still
+used `replan_forward_dt=0.1s` as their total compute deadline. That parameter is
+also the trajectory look-ahead interval. Full's denser map made otherwise valid
+solves exceed0.1s, while Sector/Adaptive frequently completed below it. Increasing
+the A-star limit alone could therefore never establish a coherent total budget.
+
+Candidate c34 adds `super_planner/planning_compute_budget_s`. If absent, it
+defaults to `replan_forward_dt`, preserving every old profile. The six campaign
+profiles explicitly use the same0.5s budget for Full, Fixed Sector and Adaptive;
+look-ahead remains0.1s and A-star remains0.25s. Both total-time rejection sites
+now use the new value. The heavy solve is already in the separate asynchronous
+worker, so this does not turn the100Hz main/command callbacks into0.5s blocking
+callbacks. Invalid non-finite/non-positive values fail configuration loading.
+
+Runtime/mirror pairs for the config header, planner source and six YAMLs match.
+Serial core and Full/Adaptive overlay builds completed, and planner CTest4/4
+passed. Independent Forest Full gate run85100 then completed5/5 in64.43s with
+contact0, minimum body clearance0.231m and valid resource/speed gates. It had no
+total-planning overtime rejection. This is a causal functional gate, not a
+replacement sample for c33 and not repeatability evidence.
+
+The c34 campaign is newly frozen under
+`results/scenario7_compute_budget_v9_n10_20260927/protocol.json`: seven maps,
+three modes, five repeats as the blocking first stage and five additional repeats
+only after that stage passes. It starts from repeat1 with new run identities,
+one attempt per flight and no replacement. Metrics and claim limits are unchanged
+from c33.
+
 ### 8.112 Configurable A-star budget campaign stop and escape-prefix Full hold (2026-09-27)
 
 Candidate c32 replaced the fixed0.1s A-star deadline with the common configured

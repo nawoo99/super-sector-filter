@@ -3077,7 +3077,7 @@ namespace super_planner {
         }
 
         double replan_dt = replan_total_t.stop();
-        if (replan_dt > cfg_.replan_forward_dt * 0.9) {
+        if (replan_dt > cfg_.planning_compute_budget_s) {
             ros_ptr_->warn(" -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = {}.", replan_dt);
             return FAILED;
         }
@@ -4009,7 +4009,7 @@ namespace super_planner {
             return FAILED;
         }
         double replan_total_t = (ros_ptr_->getSimTime() - replan_process_start_WT);
-        if (replan_total_t > cfg_.replan_forward_dt) {
+        if (replan_total_t > cfg_.planning_compute_budget_s) {
             record_post_corridor_failure("trajectory_optimization_overtime");
             ros_ptr_->warn(" -- [SUPER] Replan over time({})!!!! Return FAILED", replan_total_t);
             return FAILED;

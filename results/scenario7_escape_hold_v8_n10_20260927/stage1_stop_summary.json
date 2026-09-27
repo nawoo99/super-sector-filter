@@ -1,0 +1,28 @@
+{
+  "candidate": "c33_escape_hold_gate_v8_n10",
+  "state": "STOPPED_FOR_DIAGNOSIS",
+  "attempts_per_flight": 1,
+  "replacement_runs": false,
+  "valid_triplets_before_stop": 6,
+  "blocking_triplet": {
+    "map": "forest_cluster_f01",
+    "repeat": 1,
+    "run": 84116,
+    "mode_order": ["full", "sector", "adaptive"],
+    "full": {"success": false, "waypoints": "1/5", "mission_time_s": 180.01, "contacts": 0, "body_clearance_m": 0.275},
+    "sector": {"success": true, "waypoints": "5/5", "mission_time_s": 70.48, "contacts": 0, "body_clearance_m": 0.088},
+    "adaptive": {"success": true, "waypoints": "5/5", "mission_time_s": 66.67, "contacts": 0, "body_clearance_m": 0.260, "full_open_transitions": 8, "full_close_transitions": 8}
+  },
+  "full_failure_evidence": {
+    "stopped_position_m": [7.425, 19.825, 2.075],
+    "retained_generation": 54,
+    "async_requests": 849,
+    "async_results": 848,
+    "successful_async_results": 1,
+    "planner_total_budget_s_before_fix": 0.1,
+    "astar_budget_s": 0.25,
+    "observed_rejected_solve_time_s": "approximately 0.18-0.26",
+    "diagnosis": "trajectory look-ahead interval was also used as the total asynchronous compute deadline"
+  },
+  "claim_limit": "Stopped prospective cohort; not pooled with c34 and not replaced by the causal gate."
+}

@@ -30,6 +30,7 @@
 #include <utils/header/yaml_loader.hpp>
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 
 namespace super_planner {
     using namespace traj_opt;
@@ -75,6 +76,10 @@ namespace super_planner {
         int obs_skip_num;
         double corridor_bound_dis, corridor_line_max_length;
         double replan_forward_dt;
+        // Maximum wall time for one planning attempt. This is deliberately
+        // independent from replan_forward_dt, which is a trajectory look-ahead
+        // interval and must not also cap an asynchronous solve.
+        double planning_compute_budget_s;
         double sample_traj_dt;
         double robot_r;
         bool corridor_use_inflated_obstacles;
@@ -254,6 +259,13 @@ namespace super_planner {
             loader.LoadParam("super_planner/sensing_horizon", sensing_horizon, 3.0);
             loader.LoadParam("super_planner/obs_skip_num", obs_skip_num, 1);
             loader.LoadParam("super_planner/replan_forward_dt", replan_forward_dt, 0.3);
+            loader.LoadParam("super_planner/planning_compute_budget_s",
+                             planning_compute_budget_s, replan_forward_dt);
+            if (!std::isfinite(planning_compute_budget_s) ||
+                planning_compute_budget_s <= 0.0) {
+                throw std::invalid_argument(
+                        "super_planner/planning_compute_budget_s must be finite and > 0");
+            }
             loader.LoadParam("super_planner/corridor_bound_dis", corridor_bound_dis, 3.0);
             loader.LoadParam("super_planner/corridor_line_max_length", corridor_line_max_length, 3.0);
             loader.LoadParam("super_planner/planning_horizon", planning_horizon, 10.0);
