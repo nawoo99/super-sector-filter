@@ -1,0 +1,63 @@
+{
+  "candidate": "c35_rest_only_compute_budget_v10_n10",
+  "created_local": "2026-09-27",
+  "objective": "Validate Full, Fixed Sector, and Adaptive over seven fixed maps with a 0.5 s compute budget only for rest-to-rest planning while preserving the original moving-replan look-ahead deadlines.",
+  "maps": [
+    "gapfree_d1_m01",
+    "gapfree_d1_m02",
+    "gapfree_d1_m03",
+    "gapfree_d1_m04",
+    "gapfree_d1_m05r2",
+    "urban_blocks_u01",
+    "forest_cluster_f01"
+  ],
+  "modes": ["full", "sector", "adaptive"],
+  "repetitions_per_map_mode": 10,
+  "planned_triplets": 70,
+  "planned_flights": 210,
+  "stages": {
+    "stage1": "repetitions 1-5; all 35 triplets must pass infrastructure/source gates before stage2",
+    "stage2": "repetitions 6-10"
+  },
+  "mode_order": "Deterministic rotating order within every triplet.",
+  "attempts_per_flight": 1,
+  "replacement_runs": false,
+  "common_planning_limits": {
+    "trajectory_lookahead_s": 0.1,
+    "moving_exp_compute_ceiling_s": 0.1,
+    "moving_total_compute_ceiling_s": 0.09,
+    "astar_search_timeout_s": 0.25,
+    "rest_to_rest_compute_budget_s": 0.5
+  },
+  "blocking_gate": "Stop on any infrastructure/source error, or any Full/Adaptive non-completion, contact, speed violation, or strict recovery-audit failure. Retain Sector safety/non-completion as an outcome if the run is otherwise valid.",
+  "required_adaptive_contract": "Every completed Full-recovery cycle has exactly one fresh source frame, one committed acknowledgement, one newer certified path and one Sector return; escape-prefix paths retain Full until an ordinary current certificate permits release.",
+  "predeclared_metrics": [
+    "completion",
+    "contact runs and episodes",
+    "mission time",
+    "minimum static-PCD body clearance",
+    "end-to-end mean CPU cores",
+    "end-to-end cumulative CPU core-seconds",
+    "planner input MiB/s",
+    "map update time per frame",
+    "Adaptive Full-open transitions and refresh acknowledgements"
+  ],
+  "prior_evidence": {
+    "c34_stage1_stop": "G3 repeat 1 Full timed out at waypoint 0 after a stopped recovery loop; contact remained zero while Adaptive and Sector completed.",
+    "c34_regression_root_cause": "The 0.5 s rest-planning budget had also replaced the moving ReplanOnce deadlines tied to the 0.1 s trajectory look-ahead, permitting stale moving splice attempts that c33 rejected.",
+    "c35_g3_full_gate": "Independent run87112 completed 5/5 in 61.79 s with contact 0 and body clearance 0.250 m.",
+    "c35_forest_full_gate": "Independent run87100 completed 5/5 in 61.31 s with contact 0 and body clearance 0.232 m, preserving the original c34 Forest recovery."
+  },
+  "reporting_groups": {
+    "normal": [
+      "gapfree_d1_m01",
+      "gapfree_d1_m02",
+      "gapfree_d1_m03",
+      "gapfree_d1_m04",
+      "gapfree_d1_m05r2"
+    ],
+    "urban": ["urban_blocks_u01"],
+    "forest": ["forest_cluster_f01"]
+  },
+  "claim_limit": "Finite simulation evidence on the declared maps; not a population-level or real-world guarantee."
+}

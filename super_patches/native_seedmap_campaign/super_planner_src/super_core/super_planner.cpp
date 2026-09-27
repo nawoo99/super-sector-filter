@@ -3077,7 +3077,16 @@ namespace super_planner {
         }
 
         double replan_dt = replan_total_t.stop();
-        if (replan_dt > cfg_.planning_compute_budget_s) {
+        // A moving replan is anchored replan_forward_dt into the command
+        // already being executed.  Letting its end-to-end solve outlive that
+        // look-ahead can produce an already-expired handoff even when a
+        // longer wall-clock budget is useful for PlanFromRest.  Preserve the
+        // original 0.9 safety factor here and use the independent compute
+        // budget only as an additional (possibly tighter) ceiling.
+        const double moving_replan_budget_s = std::min(
+                cfg_.planning_compute_budget_s,
+                cfg_.replan_forward_dt * 0.9);
+        if (replan_dt > moving_replan_budget_s) {
             ros_ptr_->warn(" -- [SUPER] in [ReplanOnce]: Replan overtime, check parameters, replan dt = {}.", replan_dt);
             return FAILED;
         }
@@ -4009,7 +4018,14 @@ namespace super_planner {
             return FAILED;
         }
         double replan_total_t = (ros_ptr_->getSimTime() - replan_process_start_WT);
-        if (replan_total_t > cfg_.planning_compute_budget_s) {
+        // Rest-to-rest planning has no moving handoff deadline, so it may use
+        // the independent compute budget.  A moving replan must still finish
+        // within its trajectory look-ahead or the splice point is stale.
+        const double effective_compute_budget_s = last_exp_traj_info.empty()
+                ? cfg_.planning_compute_budget_s
+                : std::min(cfg_.planning_compute_budget_s,
+                           cfg_.replan_forward_dt);
+        if (replan_total_t > effective_compute_budget_s) {
             record_post_corridor_failure("trajectory_optimization_overtime");
             ros_ptr_->warn(" -- [SUPER] Replan over time({})!!!! Return FAILED", replan_total_t);
             return FAILED;
