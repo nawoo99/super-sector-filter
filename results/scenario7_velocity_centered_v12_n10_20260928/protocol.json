@@ -1,0 +1,60 @@
+{
+  "candidate": "c37_velocity_centered_adaptive_v12_n10",
+  "created_local": "2026-09-28",
+  "objective": "Validate Full, Fixed Sector, and velocity-centred event-recovery Adaptive on seven fixed maps after a body-forward Adaptive blind-side contact in frozen c36.",
+  "maps": [
+    "gapfree_d1_m01",
+    "gapfree_d1_m02",
+    "gapfree_d1_m03",
+    "gapfree_d1_m04",
+    "gapfree_d1_m05r2",
+    "urban_blocks_u01",
+    "forest_cluster_f01"
+  ],
+  "modes": ["full", "sector", "adaptive"],
+  "repetitions_per_map_mode": 10,
+  "planned_triplets": 70,
+  "planned_flights": 210,
+  "stages": {
+    "stage1": "repetitions 1-5; all 35 triplets must pass infrastructure/source/heading gates before stage2",
+    "stage2": "repetitions 6-10"
+  },
+  "attempts_per_flight": 1,
+  "replacement_runs": false,
+  "heading_policy": {
+    "full": "360 degree acquisition",
+    "sector": "body-forward fixed plus/minus 45 degree acquisition",
+    "adaptive": "velocity-centred plus/minus 45 degree acquisition, with certified event-driven Full recovery",
+    "aperture_change": "none relative to c36; only the Adaptive sector centre policy changes",
+    "runtime_audit": "Every Sector and Adaptive flight must log exactly one matching SECTOR_HEADING_POLICY marker."
+  },
+  "causal_trigger": {
+    "failed_candidate": "c36_escape16_forest_recovery_v11_n10",
+    "failed_observation": "gapfree_d1_m01 repeat 8 Adaptive contacted cylinder_0168 and stopped at waypoint 2",
+    "first_contact_elapsed_s": 31.5967,
+    "first_guard_full_signal_elapsed_s": 31.714,
+    "guard_delay_after_contact_ms": 117.3,
+    "body_yaw_deg_at_contact": -18.7,
+    "velocity_heading_deg_at_contact": -135.7,
+    "interpretation": "The body-forward source sector excluded a collision obstacle that lay in the direction of travel; the guard could react only after contact."
+  },
+  "unchanged_safety_mechanisms": "Full request, fresh frame, committed map ACK, newer certified path, and Sector return handshake remain unchanged. Sixteen-direction certified stopped local escape remains enabled.",
+  "blocking_gate": "Stop on any infrastructure/source/heading error, or any Full/Adaptive non-completion, contact, speed violation, or strict recovery-audit failure. Retain Sector safety/non-completion as an outcome if otherwise valid.",
+  "predeclared_metrics": [
+    "completion",
+    "contact runs and episodes",
+    "mission time",
+    "minimum static-PCD body clearance",
+    "end-to-end mean CPU cores",
+    "end-to-end cumulative CPU core-seconds",
+    "planner input MiB/s",
+    "map update time per frame",
+    "Adaptive Full-open transitions and refresh acknowledgements"
+  ],
+  "reporting_groups": {
+    "normal": ["gapfree_d1_m01", "gapfree_d1_m02", "gapfree_d1_m03", "gapfree_d1_m04", "gapfree_d1_m05r2"],
+    "urban": ["urban_blocks_u01"],
+    "forest": ["forest_cluster_f01"]
+  },
+  "claim_limit": "Finite simulation evidence on the declared maps; velocity alignment and Full recovery are both components of Adaptive, so this campaign alone does not isolate their individual causal effects."
+}
