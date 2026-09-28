@@ -2405,27 +2405,33 @@ namespace super_planner {
         // exactly that case: the stored direction pointed into the originally
         // rejected route and the planner then reseeded that route for almost a
         // minute.  Four cardinal exits were still insufficient at map8's
-        // diagonal boundary pocket. Enumerate the eight horizontal homotopy
-        // exits once and let the unchanged trajectory certificate select the
-        // first safe one.
+        // diagonal boundary pocket. Enumerate a bounded set of
+        // horizontal exits once and let the unchanged trajectory certificate
+        // select the first safe one. Dense cylinder fields can contain a
+        // viable short ray between the old 45-degree samples, so generate the
+        // directions uniformly instead of hard-coding only eight vectors.
         // This remains a bounded, stop-only recovery; no unsafe candidate can
         // be published merely because it is an alternate direction.
-        const Vec3f perpendicular(-escape_direction.y(),
-                                  escape_direction.x(), 0.0);
-        std::vector<Vec3f> escape_directions{
-                escape_direction,
-                -escape_direction,
-                perpendicular,
-                -perpendicular,
-                (escape_direction + perpendicular).normalized(),
-                (escape_direction - perpendicular).normalized(),
-                (-escape_direction + perpendicular).normalized(),
-                (-escape_direction - perpendicular).normalized()};
+        const double base_angle = std::atan2(escape_direction.y(),
+                                             escape_direction.x());
+        // Sixteen bounded directions keep the recovery deterministic while
+        // resolving the 22.5-degree gaps observed in the forest passage.
+        constexpr int direction_count = 16;
+        constexpr double kTwoPi = 6.28318530717958647692;
+        std::vector<Vec3f> escape_directions;
+        escape_directions.reserve(static_cast<std::size_t>(direction_count));
+        for (int i = 0; i < direction_count; ++i) {
+            const double angle = base_angle +
+                    kTwoPi * static_cast<double>(i) /
+                            static_cast<double>(direction_count);
+            escape_directions.emplace_back(std::cos(angle),
+                                           std::sin(angle), 0.0);
+        }
         // A geometrically safe step can still make the next corridor problem
         // worse when it moves toward the map boundary.  Seed10 exposed this:
         // the first safe "away from collision" direction moved north-east
         // while the waypoint was almost due west, leaving FIRI at y=24.95
-        // indefinitely.  Keep the same eight certified alternatives, but try
+        // indefinitely. Keep the same bounded certified alternatives, but try
         // the directions that make the most horizontal waypoint progress
         // first.  stable_sort preserves the collision-relative order when a
         // goal direction is unavailable or scores tie.
@@ -4576,7 +4582,7 @@ namespace super_planner {
                     // state went straight to permanent certified hold even
                     // when the separately-bounded horizontal escape budget
                     // was still available.  Reuse the existing stop-only,
-                    // eight-direction local escape certificate to move to a
+                    // multi-direction local escape certificate to move to a
                     // distinct start cell, then rerun A*.  The waypoint
                     // direction is only an ordering hint; every trial still
                     // passes the unchanged trajectory and viability guards.

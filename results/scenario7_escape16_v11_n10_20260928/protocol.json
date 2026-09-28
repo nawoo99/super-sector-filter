@@ -1,0 +1,75 @@
+{
+  "candidate": "c36_escape16_forest_recovery_v11_n10",
+  "created_local": "2026-09-28",
+  "objective": "Validate Full, Fixed Sector, and Adaptive on seven fixed maps after increasing certified stopped local-escape angular resolution from eight to sixteen uniformly spaced directions.",
+  "maps": [
+    "gapfree_d1_m01",
+    "gapfree_d1_m02",
+    "gapfree_d1_m03",
+    "gapfree_d1_m04",
+    "gapfree_d1_m05r2",
+    "urban_blocks_u01",
+    "forest_cluster_f01"
+  ],
+  "modes": [
+    "full",
+    "sector",
+    "adaptive"
+  ],
+  "repetitions_per_map_mode": 10,
+  "planned_triplets": 70,
+  "planned_flights": 210,
+  "stages": {
+    "stage1": "repetitions 1-5; all 35 triplets must pass infrastructure/source gates before stage2",
+    "stage2": "repetitions 6-10"
+  },
+  "mode_order": "Deterministic rotating order within every triplet.",
+  "attempts_per_flight": 1,
+  "replacement_runs": false,
+  "common_planning_limits": {
+    "trajectory_lookahead_s": 0.1,
+    "moving_exp_compute_ceiling_s": 0.1,
+    "moving_total_compute_ceiling_s": 0.09,
+    "astar_search_timeout_s": 0.25,
+    "rest_to_rest_compute_budget_s": 0.5
+  },
+  "local_escape_change": {
+    "before": "eight uniformly distributed horizontal directions at 45 degree spacing",
+    "after": "sixteen uniformly distributed horizontal directions at 22.5 degree spacing",
+    "unchanged_guards": "Every candidate still passes the existing trajectory certificate and stop-viability guard; unsafe candidates remain rejected."
+  },
+  "preflight_evidence": {
+    "forest_full_nominal": "Four independent runs completed 5/5 with zero contacts in 57.77-66.33 seconds; minimum body clearance range 0.225-0.297 m.",
+    "forced_branch": "SUPER_TEST_FORCE_LOCAL_ESCAPE_ONCE skipped direction 1/16, committed certified direction 2/16, then completed 5/5 in 58.53 seconds with zero contacts and 0.243 m minimum body clearance.",
+    "unit_tests": "super_planner CTest 4/4 passed after the final source build."
+  },
+  "blocking_gate": "Stop on any infrastructure/source error, or any Full/Adaptive non-completion, contact, speed violation, or strict recovery-audit failure. Retain Sector safety/non-completion as an outcome if the run is otherwise valid.",
+  "required_adaptive_contract": "Every completed Full-recovery cycle has exactly one fresh source frame, one committed acknowledgement, one newer certified path and one Sector return; escape-prefix paths retain Full until an ordinary current certificate permits release.",
+  "predeclared_metrics": [
+    "completion",
+    "contact runs and episodes",
+    "mission time",
+    "minimum static-PCD body clearance",
+    "end-to-end mean CPU cores",
+    "end-to-end cumulative CPU core-seconds",
+    "planner input MiB/s",
+    "map update time per frame",
+    "Adaptive Full-open transitions and refresh acknowledgements"
+  ],
+  "reporting_groups": {
+    "normal": [
+      "gapfree_d1_m01",
+      "gapfree_d1_m02",
+      "gapfree_d1_m03",
+      "gapfree_d1_m04",
+      "gapfree_d1_m05r2"
+    ],
+    "urban": [
+      "urban_blocks_u01"
+    ],
+    "forest": [
+      "forest_cluster_f01"
+    ]
+  },
+  "claim_limit": "Finite simulation evidence on the declared maps; not a population-level or real-world guarantee."
+}
