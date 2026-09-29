@@ -7043,3 +7043,57 @@ completion1/10→10/10 and contact runs3/10→0/10. This is a bounded static Urb
 simulation result, not a population or real-world safety guarantee. Raw and
 compact tables are under
 `results/urban_sector_active_yaw_v1_n10_final5_20260929/`.
+
+### 8.115 Active-yaw six-map safety screen and blind-side braking failure (2026-09-29)
+
+The Urban result was followed by one independent smoke flight on each of the
+five gap-free cylinder maps and Forest. All six completed without contact and
+all active-yaw ARM events had matching TARGET_REACHED and MAP_READY events. A
+fresh formal protocol then scheduled ten runs per map in repeat-major rotated
+order, one attempt per flight, no replacement, and stop on the first mission,
+contact, resource, speed, infrastructure, or active-yaw audit failure. The
+earlier run93901 was excluded because its post-processing gate queried a JSON
+field that the wrapper does not create; its flight itself was successful. The
+corrected campaign restarted from run94001 with a log-derived audit.
+
+Runs94001--94020 all completed without contact. Run94021 on
+`forest_cluster_f01` completed the mission but produced one static-PCD contact,
+so the campaign stopped and did not execute the remaining39 flights. At the
+stop, Map1--3 had three observations each, Map4--5 four each, and Forest four.
+All21 completed; Forest had one contact run and every other map had zero. Across
+the uneven early-stopped sample there were207 completed yaw views and14
+four-view exhaustion diagnostics. Exhaustion itself is not an unsafe release:
+the implementation retains the certified hold and may begin a later episode.
+These partial rates and aggregate compute means are diagnostic, not final
+n=10-per-map estimates.
+
+The run94021 contact was not a monitor artifact. Static-PCD distance reached
+0.179m for the0.200m body radius, yielding -0.021m clearance. The vehicle was at
+approximately `(-17.120,-20.903,1.654)`, moving0.450m/s, adjacent to Forest
+`trunk_024` centered at `(-16.4524,-20.7181)` with radius0.5m. At brake
+activation the body yaw was133.3deg and the trunk's world bearing was14.8deg,
+placing it about -118.5deg body-relative and outside the fixed ±45deg input.
+The limited map initially classified the stop path SAFE. A later guard check
+detected a margin conflict and activated braking near0.684m/s, but the selected
+stop endpoint `(-17.103,-20.889,1.648)` already overlapped the unseen trunk.
+
+The active-yaw command is applied only after the brake trajectory reports
+finished, so the collision occurred during braking before rotation. The causal
+limitation is therefore observability of the swept stopping footprint, not yaw
+dynamics or a missing post-yaw map acknowledgement. A fixed sector can improve
+route acquisition by rotating after stopping, but cannot guarantee that the
+stop itself is clear when side/rear obstacles were never observed. Making this
+variant safe in dense Forest would require a pre-stop observation mechanism,
+such as Adaptive Full acquisition during the braking decision, or another
+independent source that certifies the full swept stop volume. Repeating the same
+limited observation or tuning the yaw sequence cannot supply the missing
+geometry.
+
+The original Fixed Sector result remains frozen. The new behavior must be named
+`Fixed Sector + Active Yaw Recovery` and treated as an ablation, not substituted
+for the baseline. The retained n=10 Forest controls are Full10/10/contact0 at
+62.109s mean, original Sector8/10/contact2 at88.185s, and
+Adaptive10/10/contact0 at60.732s. The partial active-yaw Forest result is
+4/4 complete with1/4 contact and cannot be interpreted as a final population
+rate. Protocol, compact per-run data and failure reconstruction are under
+`results/sector_active_yaw_sixmap_n10_v2_20260929/`.

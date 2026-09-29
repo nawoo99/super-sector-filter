@@ -1,0 +1,39 @@
+{
+  "campaign": "sector_active_yaw_sixmap_n10_v2_20260929",
+  "candidate": "sector_active_yaw_scan_v1",
+  "mode": "sector",
+  "label": "Fixed Sector + Active Yaw Recovery",
+  "maps": [
+    "gapfree_d1_m01",
+    "gapfree_d1_m02",
+    "gapfree_d1_m03",
+    "gapfree_d1_m04",
+    "gapfree_d1_m05r2",
+    "forest_cluster_f01"
+  ],
+  "repeats_per_map": 10,
+  "planned_flights": 60,
+  "smoke_results_are_excluded": true,
+  "aborted_predecessor_campaign_is_excluded": "sector_active_yaw_sixmap_n10_20260929",
+  "run_ids": "94001-94060",
+  "execution_order": "repeat-major with the map list rotated left by repeat_index modulo 6",
+  "attempts_per_flight": 1,
+  "replacement_runs": false,
+  "stop_on_first_failure": true,
+  "status": "stopped_on_first_failure",
+  "observed_flights": 21,
+  "stop_run": 94021,
+  "stop_map": "forest_cluster_f01",
+  "stop_reason": "static-PCD safety contact",
+  "blocking_conditions": [
+    "mission incomplete",
+    "safety contact",
+    "run_valid false",
+    "resource_valid false",
+    "infrastructure failure",
+    "speed limit invalid",
+    "active-yaw audit invalid"
+  ],
+  "active_yaw_audit_definition": "ARM, TARGET_REACHED, and MAP_READY counts must match; no scan may remain unfinished at mission completion. EXHAUSTED is diagnostic, not a failure, because the implementation retains a certified stop and may later start a new recovery episode.",
+  "notes": "Fresh restart after the predecessor post-processing gate looked for a nonexistent JSON field. Fixed Sector plus opt-in certified active-yaw acquisition. Full, original Fixed Sector, and Adaptive are not rerun."
+}

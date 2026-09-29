@@ -1,6 +1,21 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-29 최신: Fixed Sector active-yaw six-map 확대 검증은 Forest 접촉으로 조기 중단.**
+> Urban n=10 성공 뒤 Map1--5와 Forest에 대해 스모크 각1회는 모두 완주·접촉0이었다.
+> 이어 새 run ID로 맵당10회, 첫 실패 중단 프로토콜을 시작했고 run94001--94020은
+> 완주·접촉0이었으나 21번째인 Forest run94021에서 완주 중 static-PCD 접촉1회가
+> 확인되어 나머지39회는 실행하지 않았다. 접촉은 waypoint2 부근
+> `(-17.12,-20.90,1.65)`에서 반지름0.5m `trunk_024`에 body clearance -0.021m,
+> 속도0.450m/s였다. 제동 시작 yaw133.3도 기준 나무는 body-relative -118.5도로
+> ±45도 Sector 밖이어서 map에 없었고, 회전은 제동 완료 후 시작하도록 구현되어 있다.
+> 따라서 active-yaw가 충돌한 것이 아니라 제한 시야 map이 blind-side 장애물이 없는
+> 것으로 보고 인증한 제동 종점이 실제 장애물 안에 놓인 구조적 실패다. 이 변형은
+> 경로 고착을 줄이지만 Adaptive의 Full 관측을 대체하는 안전 해법으로 승격하면 안 된다.
+> 원본 Fixed Sector baseline은 유지하고 변형은 별도 ablation으로만 표기한다. 상세
+> §8.115와 `results/sector_active_yaw_sixmap_n10_v2_20260929/summary.md`.
+
+> [!IMPORTANT]
 > **2026-09-29 최신: Urban Fixed Sector의 정지 고착을 active-yaw recovery로 제거, n=10 통과.**
 > `SUPER_SECTOR_ACTIVE_YAW_SCAN=1`에서 Fixed Sector의 새 goal은 기존 인증 브레이크로
 > 정지한 뒤 goal 방향을 관측하고 경로를 다시 만든다. 해당 관측으로 경로를 못 찾으면
