@@ -1,6 +1,18 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-29 최신: Forest Active-Yaw Sector의 mission cutoff를 제거한 fresh n=10은 10/10 완주·접촉0.**
+> run94201--94210은 비행당1회, 재시도·대체 없이 실행했고 planner/map/속도/±45도
+> Sector/Active-Yaw는 그대로 두고 mission-time horizon만 무한대로 설정했다. 전 실행이
+> run/resource/speed/log gate를 통과했으며 시간99.155±17.417초, 범위73.98--125.17초,
+> 평균CPU0.4170코어, 누적41.962core-s, 입력2.780MiB/s, map update9.444ms/frame,
+> 최소 solid clearance0.101m였다. 단, 10회 모두 종전 cutoff 180초 전에 완주했으므로
+> `cutoff 제거가 실패를 구조했다`는 인과증거가 아니다. 기존 Forest cohort의6/10·접촉1은
+> 삭제하거나 대체하지 않으며, 새 결과는 서로 다른 run ID의 독립·비paired 표본이다.
+> 상세 §8.117과
+> `results/forest_active_yaw_no_mission_timeout_n10_20260929/summary.md`.
+
+> [!IMPORTANT]
 > **2026-09-29 최신: Active-Yaw Sector를 기존 Sector 대체 후보로 6맵×10회 완주 실행했으나 승격 실패.**
 > 기존 자료는 그대로 보존하고 새 run94101--94160을 맵 순환 순서, 비행당1회,
 > 재시도·대체 없이 끝까지 수행했다. 60/60이 인프라·자원·속도·로그 품질 gate를

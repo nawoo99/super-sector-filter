@@ -7147,3 +7147,35 @@ the validated reference on this frozen cohort: Map1--5 and Forest were both
 100% complete and contact-free in the retained controls. Protocol and compact
 tables are under
 `results/sector_active_yaw_replacement_sixmap_n10_20260929/`.
+
+### 8.117 Forest Active-Yaw Sector without a mission-time cutoff, n=10 (2026-09-29)
+
+To separate the Forest completion question from the earlier fixed 180s mission
+horizon, a fresh Forest-only cohort used runs94201--94210. The planner, static
+map, velocity/configuration, 45-degree Sector and Active-Yaw behavior were held
+fixed. Only `loop_timeout_override` was set to positive infinity. Each flight
+had exactly one attempt, with no retry or replacement, and resource/process
+integrity termination remained enabled. All ten runs passed the run-valid,
+resource, speed and logging gates.
+
+All10 completed all waypoints and all10 were free of solid-obstacle contact.
+Mission times were122.49,111.14,112.22,85.39,125.17,90.52,86.13,96.25,88.26
+and73.98s, giving99.155+/-17.417s (sample SD). Mean end-to-end CPU was0.417000
+cores and mean cumulative CPU41.961691core-s/run. Direct in-process map input
+was2.779649MiB/s and280.792474MiB/run; map update averaged9.443542ms/frame.
+The cohort minimum solid clearance was0.101229m. There were143 Active-Yaw arms
+and143 matching fresh-map acknowledgements. Exhaustion log records are retained
+as diagnostics rather than counted as independent mission failures.
+
+This test does not establish the intended timeout-removal mechanism. Every run
+completed before the old180s threshold, with a cohort maximum of125.17s. Thus
+none was demonstrably rescued after the former cutoff. The earlier frozen
+Forest cohort remains6/10 complete with1/10 contact,134.613s across all trials
+and104.355s among its completed trials. The new cohort is encouraging but is
+unpaired and uses different run IDs, so the outcome difference can reflect
+stochastic trajectory selection rather than the infinite horizon. It must not
+erase the earlier blind-side contact, be substituted into the frozen six-map
+campaign, or be presented as a population/real-world safety guarantee. A
+causal claim would require paired replay or an observed run that continues
+making progress at180s and completes only after that point. Compact evidence is
+under `results/forest_active_yaw_no_mission_timeout_n10_20260929/`.
