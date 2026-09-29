@@ -1,0 +1,39 @@
+{
+  "campaign": "sector_active_yaw_replacement_sixmap_n10_20260929",
+  "candidate": "sector_active_yaw_scan_v1",
+  "reported_label": "Sector (Active-Yaw)",
+  "legacy_fixed_sector_is_preserved": true,
+  "mode": "sector",
+  "maps": [
+    "gapfree_d1_m01",
+    "gapfree_d1_m02",
+    "gapfree_d1_m03",
+    "gapfree_d1_m04",
+    "gapfree_d1_m05r2",
+    "forest_cluster_f01"
+  ],
+  "repeats_per_map": 10,
+  "planned_flights": 60,
+  "run_ids": "94101-94160",
+  "execution_order": "repeat-major with map order rotated left by repeat index modulo 6",
+  "attempts_per_flight": 1,
+  "replacement_runs": false,
+  "outcome_failures_are_retained": true,
+  "completion_or_contact_stops_campaign": false,
+  "blocking_quality_conditions": [
+    "raw row missing or duplicated",
+    "run_valid false",
+    "resource_valid false",
+    "infrastructure failure",
+    "speed limit invalid",
+    "stack log missing or duplicated"
+  ],
+  "active_yaw_audit": "ARM, TARGET_REACHED, MAP_READY, and EXHAUSTED counts are recorded. An incomplete mission may end with an unfinished recovery action; this is retained as an outcome rather than replaced.",
+  "reference_policy": "Existing Full and Adaptive n=10 controls are reused because this opt-in Fixed-Sector-only candidate does not modify their runtime path. Existing Urban Active-Yaw n=10 is reused and is not rerun here.",
+  "status": "complete",
+  "observed_flights": 60,
+  "quality_valid_flights": 60,
+  "completed_flights": 55,
+  "contact_runs": 2,
+  "replacement_runs_observed": 0
+}

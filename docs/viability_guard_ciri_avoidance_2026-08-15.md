@@ -7097,3 +7097,53 @@ Adaptive10/10/contact0 at60.732s. The partial active-yaw Forest result is
 4/4 complete with1/4 contact and cannot be interpreted as a final population
 rate. Protocol, compact per-run data and failure reconstruction are under
 `results/sector_active_yaw_sixmap_n10_v2_20260929/`.
+
+### 8.116 Active-yaw Sector replacement campaign, six maps n=10 (2026-09-29)
+
+After preserving the early-stopped safety screen, a new campaign tested the
+user's proposed replacement of the legacy Fixed Sector by the active-yaw
+variant. Runs94101--94160 form a fresh cohort: six maps, ten flights per map,
+repeat-major map order rotated on each repeat, exactly one attempt per flight,
+and no retry or replacement. Contact and incomplete missions were retained and
+did not stop the campaign. All 60 flights passed the predefined infrastructure,
+resource, speed and logging quality gates.
+
+Map1--5 completion/contact outcomes were respectively10/10-0,10/10-0,
+9/10-1,10/10-0 and10/10-0. Their pooled result was49/50 complete and1/50
+contact. Forest was6/10 complete and1/10 contact. The overall result was55/60
+complete (91.67%) with2/60 contact runs (3.33%). The incomplete runs were Map3
+run94113 and Forest runs94121,94142,94152 and94157. The two contact runs were
+run94113 and run94157; each contained one continuous contact episode. Because
+the batch retained failures and used no replacement rows, these outcomes must
+not be converted into successful reruns.
+
+The two contacts reproduce the same structural limit at higher speed than the
+earlier safety-screen event. Map3 run94113 entered `cylinder_0238` near
+`(-21.898,-4.355,1.041)` at approximately4.71m/s. Before entry, successive
+candidate/backup checks reported shrinking clearance conflicts; recovery was
+raised at commanded speed6.994m/s, but the first brake was rejected because the
+motion generation was discontinuous. Forest run94157 entered `trunk_024` near
+`(-15.853,-20.965,2.489)` at approximately6.80m/s. Recovery activated at
+6.910m/s when the latest path was already OCCUPIED and the certified brake was
+again unavailable. Active-yaw starts only after stationary hold, so it is a
+downstream deadlock-recovery mechanism and cannot certify an unseen swept
+stopping volume. It did not cause the contact, but it also cannot prevent it.
+
+For Map1--5, Active-Yaw Sector averaged76.636s,0.426679 CPU cores,
+33.166350 core-s/run,2.854223MiB/s input and9.571974ms/frame map update. Against
+the retained same-map Full controls this is38.30% lower mean CPU,13.66% lower
+cumulative CPU,74.54% lower input and62.34% lower map-update time, at47.63%
+longer mission time. Forest averaged134.613s and0.407675 CPU cores. Relative to
+Forest Full it reduced mean CPU44.17%, input67.62% and map update70.95%, but its
+timeouts made mission time116.74% and cumulative CPU13.89% higher.
+
+This is not a successful replacement. Across Map1--5 the legacy and active-yaw
+Sector cohorts both produced49/50 completions and1/50 contacts; the new cohort
+was slower (76.636s versus54.961s) and shifted the failure from Map4 to Map3.
+On Forest, contacts changed2/10 to1/10, but completion changed8/10 to6/10 and
+mean time changed88.185s to134.613s. The method remains a named ablation,
+`Sector (Active-Yaw)` or `Fixed Sector + Active-Yaw Recovery`. Adaptive remains
+the validated reference on this frozen cohort: Map1--5 and Forest were both
+100% complete and contact-free in the retained controls. Protocol and compact
+tables are under
+`results/sector_active_yaw_replacement_sixmap_n10_20260929/`.
