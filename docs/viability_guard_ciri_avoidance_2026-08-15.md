@@ -6988,3 +6988,58 @@ completion/contact are retained outcomes. Metrics include completion, contact,
 time, body clearance, mean and cumulative experiment CPU, input bandwidth, map
 update time, and Adaptive Full transitions/ACKs. This is finite simulation
 evidence and cannot establish population-level or real-world safety.
+
+### 8.114 Fixed Sector active-yaw recovery and Urban n=10 (2026-09-29)
+
+The retained Urban control showed that a body-yaw-centred 45-degree Fixed
+Sector could stop safely yet remain unable to acquire the off-axis geometry
+needed for the next route: only1/10 completed,3/10 contacted, and mean mission
+time was168.424s. Waiting or repeating the same candidate cannot change the
+sensor topology. Candidate `sector_active_yaw_scan_v1` therefore adds an
+explicit, default-off observation action under
+`SUPER_SECTOR_ACTIVE_YAW_SCAN=1`. Every distinct waypoint goal first uses the
+existing certified brake, then rotates at a bounded 40deg/s nominal rate to the
+goal bearing. If planning still fails, it scans goal+90deg, goal-90deg and the
+rear view. Each view requires measured yaw within8deg, a0.20s settle, a newly
+processed scan and a fresh committed-map observation. Exhausting four views
+retains the certified stationary hold; it never authorizes a moving stale-map
+trajectory.
+
+Integration exposed two freshness defects rather than a geometric-planner
+failure. First, freshness had been tied to `map_version`, so a processed frame
+with no occupancy change could never acknowledge the view. Second, MARSIM
+legitimately emits dense zero-return PointCloud2 frames in an empty sector, but
+ROG-Map discarded them before accepted/processed/committed accounting. The
+opt-in `SUPER_SECTOR_EMPTY_SCAN_HEARTBEAT=1` path now records such a frame as a
+committed no-op observation. It increments accepted/processed/committed scan
+health and timestamps while leaving occupancy, immutable snapshot and
+`map_version` unchanged; it also does not clear a concurrent writer's
+`update_in_progress`. This distinguishes a valid empty view from sensor silence.
+It does not synthesize max-range free-space rays and must not be described as
+free-space clearing for dynamic obstacles.
+
+Both environment variables remain false by default and are enabled only by the
+Fixed Sector comparison wrapper. Source and installed dependency audits show the
+candidate binary uses the candidate ROG-Map and SUPER libraries rather than the
+older guard overlay. Five existing planner test binaries pass, including the
+three active-yaw policy cases. Two final smoke flights completed without contact;
+the first established processed-scan progress through zero-return frames, and
+the second established zero `MAP_NOT_READY` after committed no-op accounting.
+
+The final independent Urban Sector cohort used runs93701--93710 with no retry or
+replacement. All10 were valid, completed5/5 waypoints and had zero contact.
+Mission times were87.16,64.78,68.16,73.19,71.79,70.77,75.69,86.03,75.87 and
+81.02s: mean75.446s, sample SD7.361s. There were63 recovery episodes and91
+acquired yaw views (6.3 and9.1 per run); every log has zero `MAP_NOT_READY` and
+zero `ACTIVE_YAW_SCAN_EXHAUSTED`. Mean end-to-end CPU was0.42420 cores and mean
+cumulative CPU32.8337 core-s, retained as secondary diagnostics.
+
+Existing same-map controls from
+`scenario7_velocity_centered_v12_n10_20260928` remain Full10/10/contact0 at
+48.321±1.493s and Adaptive10/10/contact0 at51.303±4.534s. The new Fixed Sector
+is27.125s (56.14%) slower than Full and24.143s (47.06%) slower than Adaptive,
+but92.978s (55.20%) faster than the old Fixed Sector cohort while changing
+completion1/10→10/10 and contact runs3/10→0/10. This is a bounded static Urban
+simulation result, not a population or real-world safety guarantee. Raw and
+compact tables are under
+`results/urban_sector_active_yaw_v1_n10_final5_20260929/`.

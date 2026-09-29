@@ -1,6 +1,22 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-29 최신: Urban Fixed Sector의 정지 고착을 active-yaw recovery로 제거, n=10 통과.**
+> `SUPER_SECTOR_ACTIVE_YAW_SCAN=1`에서 Fixed Sector의 새 goal은 기존 인증 브레이크로
+> 정지한 뒤 goal 방향을 관측하고 경로를 다시 만든다. 해당 관측으로 경로를 못 찾으면
+> goal 기준 +90/-90/후방 순서로 추가 회전하며, 각 view마다 실제 yaw 도달·settle·새
+> processed scan·fresh committed map을 요구한다. 4개 view가 모두 실패하면 주행하지 않고
+> 인증 정지를 유지한다. MARSIM의 유효한 0-point frame을 ROG-Map이 센서 무응답으로
+> 오인하던 문제도 `SUPER_SECTOR_EMPTY_SCAN_HEARTBEAT=1` opt-in으로 수정했다. 이 frame은
+> committed no-op으로 freshness만 갱신하며 occupancy/map_version/snapshot은 바꾸지 않는다.
+> 두 기능은 기본 OFF이고 Sector 전용 wrapper만 켠다. Full/Adaptive에는 적용하지 않았다.
+> 최종 Urban Sector 10회는10/10 완주·접촉0, 평균75.446±7.361초였다. 기존 동일 Urban
+> control은 Full48.321±1.493초/10·Adaptive51.303±4.534초/10, 모두 접촉0이다. 따라서
+> 고착은 제거됐지만 회전 관측 비용으로 Sector가 Full보다56.14%, Adaptive보다47.06%
+> 느리다. 상세 §8.114와
+> `results/urban_sector_active_yaw_v1_n10_final5_20260929/summary.md`.
+
+> [!IMPORTANT]
 > **2026-09-27 최신: c33 stage1 Forest Full 실패에서 계획 clock 결합 결함 확인, c34로 분리.**
 > c33 첫 반복은 G1--G5와 Urban triplet을 통과했으나 Forest Full이 waypoint1 뒤
 > 180.01초/1·접촉0으로 중단됐다. 같은 triplet의 Sector70.48초/5·접촉0과

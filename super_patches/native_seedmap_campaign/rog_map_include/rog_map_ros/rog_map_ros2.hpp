@@ -41,8 +41,10 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
+#include <cstdlib>
 #include <functional>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <utility>
 
@@ -78,6 +80,18 @@ namespace rog_map {
         Vec3f latest_odom_twist_{Vec3f::Zero()};
         double latest_odom_twist_receive_time_{0.0};
         bool latest_odom_twist_valid_{false};
+
+        static bool emptyScanHeartbeatEnabled() {
+            static const bool enabled = [] {
+                const char *raw =
+                        std::getenv("SUPER_SECTOR_EMPTY_SCAN_HEARTBEAT");
+                if (!raw) return false;
+                const std::string value(raw);
+                return value == "1" || value == "true" || value == "TRUE" ||
+                       value == "on" || value == "ON";
+            }();
+            return enabled;
+        }
 
 
         const double getSystemWalltimeNow() override {
@@ -172,15 +186,21 @@ namespace rog_map {
                 std::cout << YELLOW << " -- [ROS] Odom timeout, skip cloud callback." << RESET << std::endl;
                 return;
             }
-            if (cloud_msg->data.empty() || !cloud_msg->is_dense) {
-                std::cout << YELLOW << " -- [ROS] Empty or non-dense point cloud, skip cloud callback." << RESET
-                          << std::endl;
+            if (!cloud_msg->is_dense) {
+                std::cout << YELLOW
+                          << " -- [ROS] Non-dense point cloud, skip cloud callback."
+                          << RESET << std::endl;
                 return;
             }
 
             const std::int64_t source_stamp_ns =
                 static_cast<std::int64_t>(cloud_msg->header.stamp.sec) * 1000000000LL +
                 static_cast<std::int64_t>(cloud_msg->header.stamp.nanosec);
+            const bool empty_scan = cloud_msg->data.empty();
+            if (empty_scan && !emptyScanHeartbeatEnabled()) {
+                // Preserve the original default-off behavior exactly.
+                return;
+            }
             const std::uint64_t scan_seq = recordAcceptedScan(rx_time, source_stamp_ns);
 
             // Optional in-process tap for diagnostics that need the same raw
@@ -198,6 +218,24 @@ namespace rog_map {
                 if (observer) {
                     observer(cloud_msg, rx_time);
                 }
+            }
+
+            if (empty_scan) {
+                // A no-return frame changes no occupancy cell, but it is a
+                // completed acquisition at the current body yaw.  Keep this
+                // opt-in and commit it as a no-op observation so downstream
+                // freshness gates distinguish it from sensor silence without
+                // pretending that occupancy or map_version changed.
+                recordCommittedNoopScan(scan_seq, source_stamp_ns, rx_time);
+                const auto health = getMapHealthSnapshot();
+                if (rc_.cloud_process_ack_pub) {
+                    std_msgs::msg::UInt64MultiArray ack;
+                    ack.data = {scan_seq,
+                                static_cast<std::uint64_t>(source_stamp_ns),
+                                health.map_version, 1ULL};
+                    rc_.cloud_process_ack_pub->publish(ack);
+                }
+                return;
             }
 
             bool overwrote_pending_frame = false;

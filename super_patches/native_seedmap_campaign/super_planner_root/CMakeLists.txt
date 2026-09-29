@@ -179,6 +179,9 @@ if(BUILD_TESTING)
     ament_add_gtest(brake_motion_estimate_policy_test
             test/brake_motion_estimate_policy_test.cpp)
     target_include_directories(brake_motion_estimate_policy_test PRIVATE include)
+    ament_add_gtest(active_yaw_scan_policy_test
+            test/active_yaw_scan_policy_test.cpp)
+    target_include_directories(active_yaw_scan_policy_test PRIVATE include)
     add_executable(stopped_departure_clock_test
             test/stopped_departure_clock_test.cpp)
     target_link_libraries(stopped_departure_clock_test PRIVATE super)

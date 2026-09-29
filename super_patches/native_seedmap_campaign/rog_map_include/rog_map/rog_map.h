@@ -245,6 +245,15 @@ namespace rog_map {
 
         void recordMapUpdateStarted();
 
+        // A valid zero-return sensor frame is still evidence that the sensor
+        // pipeline is alive and the commanded view has been acquired.  Commit
+        // it as a no-op observation: advance scan/commit freshness while
+        // leaving occupancy, map_version, the immutable snapshot, and a
+        // concurrent writer's update_in_progress flag unchanged.
+        void recordCommittedNoopScan(std::uint64_t scan_seq,
+                                     std::int64_t source_stamp_ns,
+                                     MapHealthClock::time_point scan_rx_time);
+
         void recordMapUpdateFinished(std::uint64_t scan_seq,
                                      std::int64_t source_stamp_ns,
                                      MapHealthClock::time_point scan_rx_time,

@@ -33,6 +33,7 @@
 #include "fsm/async_certified_recovery.hpp"
 #include "fsm/async_from_rest_planning.hpp"
 #include "fsm/brake_motion_estimate_policy.hpp"
+#include "fsm/active_yaw_scan_policy.hpp"
 #include "fsm/command_publication_policy.hpp"
 #include "fsm/path_publication_policy.hpp"
 #include <super_utils/thread_cpu_profile.hpp>
@@ -96,6 +97,8 @@ namespace fsm {
         std::uint64_t event_recovery_not_before_stamp_ns_{0};
         std::atomic<std::uint64_t> goal_change_full_refresh_requested_{0};
         std::uint64_t goal_change_full_refresh_handled_{0};
+        std::atomic<std::uint64_t> active_yaw_scan_goal_requested_{0};
+        std::uint64_t active_yaw_scan_goal_handled_{0};
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub_;
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
                 guard_cloud_sub_;
@@ -162,6 +165,30 @@ namespace fsm {
         std::uint64_t brake_command_revision_{0};  // protected by safety_mutex_
         double brake_yaw_{0.0};
         std::string brake_reason_{};
+        // Default-off fixed-Sector ablation.  A certified stop keeps the same
+        // position while yawing the vehicle so the physically limited sensor
+        // can acquire a new wedge before PlanFromRest is allowed to retry.
+        // Protected by safety_mutex_.
+        struct ActiveYawScanState {
+            bool episode_active{false};
+            bool command_active{false};
+            bool rotation_started{false};
+            bool target_reached{false};
+            bool recovery_ready{false};
+            unsigned attempt{0};
+            std::uint64_t episode{0};
+            std::uint64_t start_map_version{0};
+            std::uint64_t required_map_version{0};
+            std::uint64_t start_processed_scan_count{0};
+            std::uint64_t required_processed_scan_count{0};
+            double goal_bearing{0.0};
+            double start_yaw{0.0};
+            double target_yaw{0.0};
+            double start_wt{0.0};
+            double settle_not_before_wt{0.0};
+        } active_yaw_scan_;
+        std::uint64_t active_yaw_scan_arms_{0};
+        std::uint64_t active_yaw_scan_map_acks_{0};
         // A fresh current-body hazard may shorten one already-active brake.
         // Limit this to one replacement per episode to prevent 10 Hz verdicts
         // from continually resetting the stop trajectory.
@@ -263,16 +290,35 @@ namespace fsm {
                     cfg_.event_recovery_en && stoppedDepartureV4Enabled();
         }
 
+        static bool activeYawScanSettingEnabled() {
+            static const bool enabled = active_yaw_scan::enabledSetting(
+                    std::getenv("SUPER_SECTOR_ACTIVE_YAW_SCAN"));
+            return enabled;
+        }
+
+        bool activeYawScanEnabled() const {
+            return activeYawScanSettingEnabled() &&
+                    !cfg_.event_recovery_en && stoppedDepartureV4Enabled();
+        }
+
         void onGoalQueuedLocked(const bool distinct_identity) override {
-            if (!goalChangeFullRefreshV6Enabled() || !distinct_identity ||
-                machine_state_.load(std::memory_order_acquire) != FOLLOW_TRAJ) {
-                return;
+            if (!distinct_identity) return;
+            if (activeYawScanEnabled()) {
+                auto request = active_yaw_scan_goal_requested_.fetch_add(
+                        1, std::memory_order_acq_rel) + 1;
+                if (request == 0) {
+                    active_yaw_scan_goal_requested_.store(
+                            1, std::memory_order_release);
+                }
             }
-            auto request = goal_change_full_refresh_requested_.fetch_add(
-                    1, std::memory_order_acq_rel) + 1;
-            if (request == 0) {
-                goal_change_full_refresh_requested_.store(
-                        1, std::memory_order_release);
+            if (goalChangeFullRefreshV6Enabled() &&
+                machine_state_.load(std::memory_order_acquire) == FOLLOW_TRAJ) {
+                auto request = goal_change_full_refresh_requested_.fetch_add(
+                        1, std::memory_order_acq_rel) + 1;
+                if (request == 0) {
+                    goal_change_full_refresh_requested_.store(
+                            1, std::memory_order_release);
+                }
             }
         }
 
@@ -2607,6 +2653,253 @@ namespace fsm {
                    max_jerk <= cfg_.brake_max_jerk_mps3 * 1.001;
         }
 
+        void clearActiveYawScanLocked() {
+            active_yaw_scan_ = ActiveYawScanState{};
+        }
+
+        void armActiveYawScanLocked(const double start_yaw,
+                                    const Vec3f& stop_position,
+                                    const Vec3f& goal_position,
+                                    const std::uint64_t map_version,
+                                    const std::uint64_t processed_scan_count,
+                                    const unsigned attempt,
+                                    const bool new_episode) {
+            if (!activeYawScanEnabled()) return;
+            const Vec3f delta = goal_position - stop_position;
+            const double goal_bearing = delta.head<2>().norm() > 1.0e-3
+                    ? std::atan2(delta.y(), delta.x())
+                    : start_yaw;
+            if (new_episode) {
+                clearActiveYawScanLocked();
+                active_yaw_scan_.episode_active = true;
+                active_yaw_scan_.episode = ++active_yaw_scan_arms_;
+                if (active_yaw_scan_.episode == 0) {
+                    active_yaw_scan_.episode = ++active_yaw_scan_arms_;
+                }
+                active_yaw_scan_.goal_bearing = goal_bearing;
+            }
+            active_yaw_scan_.attempt = attempt;
+            active_yaw_scan_.command_active = true;
+            active_yaw_scan_.rotation_started = false;
+            active_yaw_scan_.target_reached = false;
+            active_yaw_scan_.recovery_ready = false;
+            active_yaw_scan_.start_map_version = map_version;
+            active_yaw_scan_.required_map_version = 0;
+            active_yaw_scan_.start_processed_scan_count =
+                    processed_scan_count;
+            active_yaw_scan_.required_processed_scan_count =
+                    processed_scan_count ==
+                            std::numeric_limits<std::uint64_t>::max()
+                    ? processed_scan_count : processed_scan_count + 1;
+            active_yaw_scan_.start_yaw = active_yaw_scan::wrapAngle(start_yaw);
+            active_yaw_scan_.target_yaw = active_yaw_scan::targetForAttempt(
+                    active_yaw_scan_.goal_bearing, attempt);
+            active_yaw_scan_.start_wt =
+                    std::numeric_limits<double>::quiet_NaN();
+            active_yaw_scan_.settle_not_before_wt =
+                    std::numeric_limits<double>::infinity();
+            const auto command = active_yaw_scan::command(
+                    active_yaw_scan_.start_yaw,
+                    active_yaw_scan_.target_yaw, 0.0,
+                    40.0 * active_yaw_scan::kPi / 180.0);
+            ros_ptr_->info(
+                    " -- [ACTIVE_YAW_SCAN_ARM] episode={} attempt={} "
+                    "start_deg={:.1f} target_deg={:.1f} goal_deg={:.1f} "
+                    "duration={:.3f}s start_map={} start_processed_scan={} "
+                    "default_off=true",
+                    active_yaw_scan_.episode, attempt,
+                    active_yaw_scan_.start_yaw * 180.0 / active_yaw_scan::kPi,
+                    active_yaw_scan_.target_yaw * 180.0 / active_yaw_scan::kPi,
+                    active_yaw_scan_.goal_bearing * 180.0 / active_yaw_scan::kPi,
+                    command.duration, map_version, processed_scan_count);
+        }
+
+        bool activeYawScanRecoveryReady() {
+            if (!activeYawScanEnabled()) return true;
+            const auto health = map_ptr_->getMapHealthSnapshot();
+            const auto odom = map_ptr_->getRobotState();
+            const double now_wt = ros_ptr_->getSimTime();
+            double map_age_s = std::numeric_limits<double>::infinity();
+            const bool map_fresh = mapFreshForGuard(health, map_age_s);
+            bool log_reached = false;
+            bool log_ready = false;
+            std::uint64_t episode = 0, start_map = 0, required_map = 0,
+                    current_map = 0;
+            std::uint64_t required_processed = 0, current_processed = 0;
+            unsigned attempt = 0;
+            double measured_yaw = std::numeric_limits<double>::quiet_NaN();
+            {
+                std::lock_guard<std::mutex> lock(safety_mutex_);
+                if (!safety_brake_active_.load(std::memory_order_relaxed)) {
+                    return true;
+                }
+                if (!active_yaw_scan_.episode_active) {
+                    // The opt-in contract requires every recovery attempt to
+                    // have an explicit yaw acquisition boundary.
+                    return false;
+                }
+                if (active_yaw_scan_.recovery_ready) return true;
+                if (!safety_brake_finished_.load(
+                            std::memory_order_relaxed) ||
+                    !active_yaw_scan_.rotation_started ||
+                    !std::isfinite(active_yaw_scan_.start_wt)) {
+                    return false;
+                }
+                const auto command = active_yaw_scan::command(
+                        active_yaw_scan_.start_yaw,
+                        active_yaw_scan_.target_yaw,
+                        now_wt - active_yaw_scan_.start_wt,
+                        40.0 * active_yaw_scan::kPi / 180.0);
+                if (!command.complete || !odom.rcv ||
+                    !std::isfinite(odom.rcv_time) ||
+                    now_wt < odom.rcv_time || now_wt - odom.rcv_time > 0.1 ||
+                    !std::isfinite(odom.yaw) ||
+                    std::abs(active_yaw_scan::wrapAngle(
+                            odom.yaw - active_yaw_scan_.target_yaw)) >
+                            8.0 * active_yaw_scan::kPi / 180.0) {
+                    return false;
+                }
+                measured_yaw = odom.yaw;
+                if (!active_yaw_scan_.target_reached) {
+                    active_yaw_scan_.target_reached = true;
+                    active_yaw_scan_.required_map_version =
+                            health.map_version ==
+                                    std::numeric_limits<std::uint64_t>::max()
+                            ? health.map_version : health.map_version + 1;
+                    active_yaw_scan_.settle_not_before_wt = now_wt + 0.20;
+                    log_reached = true;
+                }
+                // The ordinary stopped guard allows a 0.55 s map age.  That
+                // is too loose for a 40 deg/s acquisition sweep: a boundary
+                // frame could have been observed roughly 22 degrees before
+                // the commanded view and expire before the async recovery
+                // request is submitted.  At 10 Hz, 0.35 s still covers one
+                // target-view frame plus the 0.20 s settle window and normal
+                // scheduling jitter.
+                constexpr double kActiveYawViewMaxAgeS = 0.35;
+                const bool observation_ready =
+                        health.processed_scan_count >=
+                                active_yaw_scan_.required_processed_scan_count &&
+                        map_fresh && map_age_s <= kActiveYawViewMaxAgeS;
+                if (now_wt < active_yaw_scan_.settle_not_before_wt ||
+                    health.update_in_progress) {
+                    episode = active_yaw_scan_.episode;
+                    attempt = active_yaw_scan_.attempt;
+                    start_map = active_yaw_scan_.start_map_version;
+                    required_map = active_yaw_scan_.required_map_version;
+                    current_map = health.map_version;
+                    required_processed =
+                            active_yaw_scan_.required_processed_scan_count;
+                    current_processed = health.processed_scan_count;
+                } else if (!observation_ready) {
+                    const auto skipped_episode = active_yaw_scan_.episode;
+                    const auto skipped_attempt = active_yaw_scan_.attempt;
+                    const auto skipped_required =
+                            active_yaw_scan_.required_processed_scan_count;
+                    if (active_yaw_scan_.attempt >= 3) {
+                        active_yaw_scan_.command_active = false;
+                        active_yaw_scan_.episode_active = false;
+                        ros_ptr_->warn(
+                                " -- [ACTIVE_YAW_SCAN_EXHAUSTED] episode={} "
+                                "views=4 reason=no_fresh_view_observation "
+                                "min_processed_scan={} current_processed_scan={} "
+                                "map_age_s={:.3f} "
+                                "action=retain_certified_hold",
+                                skipped_episode, skipped_required,
+                                health.processed_scan_count, map_age_s);
+                    } else {
+                        const unsigned next_attempt =
+                                active_yaw_scan_.attempt + 1;
+                        const Vec3f synthetic_stop = Vec3f::Zero();
+                        const Vec3f synthetic_goal(
+                                std::cos(active_yaw_scan_.goal_bearing),
+                                std::sin(active_yaw_scan_.goal_bearing), 0.0);
+                        ros_ptr_->warn(
+                                " -- [ACTIVE_YAW_SCAN_VIEW_EMPTY] episode={} "
+                                "attempt={} min_processed_scan={} "
+                                "current_processed_scan={} map_age_s={:.3f} "
+                                "action=next_view",
+                                skipped_episode, skipped_attempt,
+                                skipped_required,
+                                health.processed_scan_count, map_age_s);
+                        armActiveYawScanLocked(
+                                odom.yaw, synthetic_stop, synthetic_goal,
+                                health.map_version,
+                                health.processed_scan_count,
+                                next_attempt, false);
+                    }
+                    return false;
+                } else {
+                    active_yaw_scan_.command_active = false;
+                    active_yaw_scan_.recovery_ready = true;
+                    ++active_yaw_scan_map_acks_;
+                    log_ready = true;
+                    episode = active_yaw_scan_.episode;
+                    attempt = active_yaw_scan_.attempt;
+                    start_map = active_yaw_scan_.start_map_version;
+                    required_map = active_yaw_scan_.required_map_version;
+                    current_map = health.map_version;
+                    required_processed =
+                            active_yaw_scan_.required_processed_scan_count;
+                    current_processed = health.processed_scan_count;
+                }
+            }
+            if (log_reached) {
+                ros_ptr_->info(
+                        " -- [ACTIVE_YAW_SCAN_TARGET_REACHED] episode={} "
+                        "attempt={} yaw_deg={:.1f} min_processed_scan={} "
+                        "current_processed_scan={} start_map={} current_map={} "
+                        "next_map_if_changed={}",
+                        episode, attempt,
+                        measured_yaw * 180.0 / active_yaw_scan::kPi,
+                        required_processed, current_processed, start_map,
+                        current_map, required_map);
+            }
+            if (log_ready) {
+                ros_ptr_->info(
+                        " -- [ACTIVE_YAW_SCAN_MAP_READY] episode={} attempt={} "
+                        "min_processed_scan={} current_processed_scan={} "
+                        "start_map={} current_map={} next_map_if_changed={} "
+                        "completed_total={}",
+                        episode, attempt, required_processed,
+                        current_processed, start_map, current_map, required_map,
+                        active_yaw_scan_map_acks_);
+                return true;
+            }
+            return false;
+        }
+
+        void armNextActiveYawScanAfterPlanningFailure(
+                const std::uint64_t brake_revision) {
+            if (!activeYawScanEnabled()) return;
+            const auto health = map_ptr_->getMapHealthSnapshot();
+            const auto odom = map_ptr_->getRobotState();
+            std::lock_guard<std::mutex> lock(safety_mutex_);
+            if (!safety_brake_active_.load(std::memory_order_relaxed) ||
+                brake_revision != brake_activation_revision_ ||
+                !active_yaw_scan_.episode_active) return;
+            if (active_yaw_scan_.attempt >= 3) {
+                active_yaw_scan_.command_active = false;
+                active_yaw_scan_.recovery_ready = true;
+                ros_ptr_->warn(
+                        " -- [ACTIVE_YAW_SCAN_EXHAUSTED] episode={} views=4 "
+                        "action=retain_certified_hold_and_retry_accumulated_map",
+                        active_yaw_scan_.episode);
+                return;
+            }
+            const unsigned next_attempt = active_yaw_scan_.attempt + 1;
+            const double start_yaw = odom.rcv && std::isfinite(odom.yaw)
+                    ? odom.yaw : active_yaw_scan_.target_yaw;
+            const Vec3f synthetic_stop = Vec3f::Zero();
+            const Vec3f synthetic_goal(
+                    std::cos(active_yaw_scan_.goal_bearing),
+                    std::sin(active_yaw_scan_.goal_bearing), 0.0);
+            armActiveYawScanLocked(start_yaw, synthetic_stop, synthetic_goal,
+                                   health.map_version,
+                                   health.processed_scan_count,
+                                   next_attempt, false);
+        }
+
         bool activateEmergencyBrake(const std::string &reason,
                                     bool replace_active_body_brake = false) {
             const super_utils::thread_cpu_profile::Scope cpu_scope(
@@ -2937,6 +3230,7 @@ namespace fsm {
                     RawCloudSafetyStatus::DISABLED;
             bool certified_stationary_hold = false;
             bool certified_stationary_margin_hold = false;
+            bool active_yaw_stale_stationary_hold = false;
             double raw_cloud_age_s =
                     std::numeric_limits<double>::infinity();
             std::uint64_t raw_cloud_sequence = 0;
@@ -2949,6 +3243,13 @@ namespace fsm {
                                                         max_velocity,
                                                         max_acc, max_jerk);
                 if (dynamics_ok) {
+                    const double hold_displacement =
+                            (candidate.getPos(candidate.getTotalDuration()) -
+                             initial.col(0)).norm();
+                    const bool stationary_candidate =
+                            initial.col(1).norm() <= 0.05 &&
+                            std::isfinite(hold_displacement) &&
+                            hold_displacement <= 0.03;
                     // Cheap copy only. Accumulation, voxelization and CIRI are
                     // performed later by the latest-only shadow worker.
                     ciri_shadow_candidate = candidate;
@@ -2958,6 +3259,50 @@ namespace fsm {
                         brake_safety.status = TrajectorySafetyStatus::MAP_STALE;
                         brake_safety.map_version = health_before.map_version;
                         certified_map_age_s = map_age_before_s;
+                        // An active-yaw acquisition can be needed precisely
+                        // because the current 45-degree view contains no
+                        // returns and therefore cannot refresh ROG-Map. Once
+                        // independent odometry proves that the vehicle has
+                        // not translated for 0.25 s, a constant-position hold
+                        // plus yaw-only rotation does not introduce a swept
+                        // translational volume. Check the last immutable map
+                        // and supplemental raw cloud for an explicit hard
+                        // conflict, but do not require that old snapshot to
+                        // become fresh before rotating toward a useful view.
+                        if (activeYawScanEnabled() &&
+                            reason == "sector_active_yaw_goal_change" &&
+                            stationary_candidate && passive_stop_stable) {
+                            const auto hold_safety =
+                                    planner_ptr_->validatePositionTrajectory(
+                                            candidate, 0.0, 0, false, false);
+                            raw_brake_status =
+                                    validateTrajectoryAgainstRawCloud(
+                                            candidate, 0.0,
+                                            raw_collision_position,
+                                            raw_cloud_age_s,
+                                            raw_cloud_sequence);
+                            const bool no_known_map_conflict =
+                                    hold_safety.status ==
+                                            TrajectorySafetyStatus::SAFE ||
+                                    hold_safety.status ==
+                                            TrajectorySafetyStatus::UNOBSERVED ||
+                                    hold_safety.status ==
+                                            TrajectorySafetyStatus::
+                                                    CLEARANCE_MARGIN;
+                            const bool no_raw_conflict =
+                                    raw_brake_status !=
+                                            RawCloudSafetyStatus::OCCUPIED &&
+                                    raw_brake_status !=
+                                            RawCloudSafetyStatus::
+                                                    EMPTY_TRAJECTORY;
+                            if (no_known_map_conflict && no_raw_conflict) {
+                                brake_safety = hold_safety;
+                                brake_trajectory = std::move(candidate);
+                                certified_stationary_hold = true;
+                                active_yaw_stale_stationary_hold = true;
+                                certified_brake_found = true;
+                            }
+                        }
                         break;
                     }
                     brake_safety = planner_ptr_->validatePositionTrajectory(
@@ -2983,13 +3328,6 @@ namespace fsm {
                     // re-checked without treating unknown as occupied.
                     // OCCUPIED and clearance failures still reject, and moving
                     // brakes retain the strict unknown-as-occupied rule.
-                    const double hold_displacement =
-                            (candidate.getPos(candidate.getTotalDuration()) -
-                             initial.col(0)).norm();
-                    const bool stationary_candidate =
-                            initial.col(1).norm() <= 0.05 &&
-                            std::isfinite(hold_displacement) &&
-                            hold_displacement <= 0.03;
                     if (stationary_candidate && !passive_stop_stable) {
                         // All later duration attempts describe the same
                         // stationary point, so retrying them cannot improve
@@ -3206,7 +3544,9 @@ namespace fsm {
                         (brake_trajectory.getPos(
                                  brake_trajectory.getTotalDuration()) -
                          initial.col(0)).norm(),
-                        certified_stationary_margin_hold
+                        active_yaw_stale_stationary_hold
+                                ? "publish_stale_map_yaw_only_hold"
+                        : certified_stationary_margin_hold
                                 ? "publish_physically_clear_margin_hold"
                                 : "publish_certified_hold");
             }
@@ -3217,6 +3557,16 @@ namespace fsm {
             Trajectory yaw_trajectory;
             yaw_trajectory.emplace_back(duration, yaw_coeff);
             yaw_trajectory.start_WT = start_wt;
+
+            Vec3f active_scan_goal = gi_.goal_p;
+            {
+                std::lock_guard<std::mutex> goal_lock(pending_goal_mutex_);
+                if (pending_goal_.valid) {
+                    active_scan_goal = pending_goal_.goal_p;
+                }
+            }
+            const auto active_scan_health =
+                    map_ptr_->getMapHealthSnapshot();
 
             {
                 std::lock_guard<std::mutex> lock(safety_mutex_);
@@ -3259,6 +3609,10 @@ namespace fsm {
                 safety_brake_finished_.store(certified_stationary_hold,
                                               std::memory_order_release);
                 safety_brake_active_.store(true, std::memory_order_release);
+                armActiveYawScanLocked(
+                        initial_yaw, brake_stop_position_, active_scan_goal,
+                        active_scan_health.map_version,
+                        active_scan_health.processed_scan_count, 0, true);
             }
 
             const Vec3f stop_position = brake_trajectory.getPos(duration);
@@ -3332,8 +3686,33 @@ namespace fsm {
             sample.total_duration = brake_duration_s_;
             sample.finished = raw_tt >= brake_duration_s_;
             sample.on_backup = true;
-            sample.yaw = brake_yaw_;
-            sample.yaw_dot = 0.0;
+            if (activeYawScanEnabled() &&
+                active_yaw_scan_.episode_active &&
+                active_yaw_scan_.command_active) {
+                if (sample.finished &&
+                    !active_yaw_scan_.rotation_started) {
+                    active_yaw_scan_.rotation_started = true;
+                    active_yaw_scan_.start_wt = ros_ptr_->getSimTime();
+                }
+                if (active_yaw_scan_.rotation_started) {
+                    const auto yaw_command = active_yaw_scan::command(
+                            active_yaw_scan_.start_yaw,
+                            active_yaw_scan_.target_yaw,
+                            ros_ptr_->getSimTime() -
+                                    active_yaw_scan_.start_wt,
+                            40.0 * active_yaw_scan::kPi / 180.0);
+                    sample.yaw = yaw_command.yaw;
+                    sample.yaw_dot = yaw_command.yaw_rate;
+                } else {
+                    sample.yaw = brake_yaw_;
+                    sample.yaw_dot = 0.0;
+                }
+            } else {
+                sample.yaw = activeYawScanEnabled() &&
+                        active_yaw_scan_.episode_active
+                        ? active_yaw_scan_.target_yaw : brake_yaw_;
+                sample.yaw_dot = 0.0;
+            }
             if (identity) *identity = {brake_command_revision_, brake_source_generation_, brake_start_wt_};
             if (velocity_limit) *velocity_limit = brake_velocity_limit_mps_;
             if (sample.finished) {
@@ -4083,6 +4462,7 @@ namespace fsm {
                     safety_brake_finished_.store(false, std::memory_order_release);
                     safety_brake_active_.store(false, std::memory_order_release);
                     active_brake_body_replaced_ = false;
+                    clearActiveYawScanLocked();
                     if (asyncGenerateEnabled()) clearAsyncGenerateQuarantineLocked();
                     // Command publication uses this same safety lock. The
                     // exact certified path is published before releasing it.
@@ -4143,6 +4523,14 @@ namespace fsm {
                         before.id, stopped_release.reason,
                         result.generation_after, release_health.map_version);
             }
+            const bool planning_failure = result.computed &&
+                    ((result.ret_code != super_utils::SUCCESS &&
+                      result.ret_code != super_utils::FINISH) ||
+                     !result.goal_valid || result.rejected);
+            if (!completed && planning_failure) {
+                armNextActiveYawScanAfterPlanningFailure(
+                        before.brake_revision);
+            }
             async_recovery_slot_.release(before.id);
             return completed;
         }
@@ -4152,6 +4540,7 @@ namespace fsm {
             if (const auto result = async_recovery_slot_.completed())
                 return finishAsyncCertifiedRecovery(*result);
             if (async_recovery_slot_.busy()) return false;
+            if (!activeYawScanRecoveryReady()) return false;
             std::unique_lock<std::mutex> activation(brake_activation_mutex_, std::try_to_lock);
             if (!activation || stop.load(std::memory_order_acquire) ||
                 !safety_brake_active_.load(std::memory_order_acquire) ||
@@ -4216,6 +4605,7 @@ namespace fsm {
                 !safety_brake_finished_.load(std::memory_order_acquire)) {
                 return false;
             }
+            if (!activeYawScanRecoveryReady()) return false;
 
             const auto health = map_ptr_->getMapHealthSnapshot();
             double map_age_s;
@@ -4327,6 +4717,7 @@ namespace fsm {
                 safety_brake_finished_.store(false, std::memory_order_release);
                 safety_brake_active_.store(false, std::memory_order_release);
                 active_brake_body_replaced_ = false;
+                clearActiveYawScanLocked();
                 if (asyncGenerateEnabled()) clearAsyncGenerateQuarantineLocked();
                 if (defer_escape_release) {
                     recovery_escape_hold_pending_ = true;
@@ -4773,6 +5164,13 @@ namespace fsm {
                 throw std::runtime_error(
                         "Goal-change Full refresh v6 requires event recovery and stopped departure v4");
             }
+            if (activeYawScanSettingEnabled() &&
+                (cfg_.event_recovery_en ||
+                 !cfg_.trajectory_guard_en ||
+                 !stoppedDepartureV4SettingEnabled())) {
+                throw std::runtime_error(
+                        "Sector active yaw scan requires fixed-Sector guard plus stopped departure v4");
+            }
             // Keep map commits schedulable while planner optimization is
             // running. Planner map-reading frontends take an explicit shared
             // map transaction; the writer takes the matching exclusive lock.
@@ -4801,6 +5199,12 @@ namespace fsm {
                            "stop_before_full_ack=true certified_release=true "
                            "default_off=true",
                            goalChangeFullRefreshV6Enabled());
+            ros_ptr_->info(
+                    " -- [ACTIVE_YAW_SCAN] enabled={} mode=fixed_sector "
+                    "trigger=distinct_goal_or_failed_stopped_plan "
+                    "sequence=stop_yaw_fresh_map_replan rate_deg_s=40.0 "
+                    "yaw_tolerance_deg=8.0 settle_s=0.20 default_off=true",
+                    activeYawScanEnabled());
             if (cfg_.trajectory_guard_en) {
                 const rclcpp::QoS guard_recovery_qos(
                         rclcpp::QoS(1).reliable().keep_last(1)
@@ -5770,6 +6174,53 @@ namespace fsm {
             if (asyncGenerateEnabled()) {
                 if (const auto completed = async_generate_slot_.completed())
                     finishAsyncGenerateTrajectory(*completed);
+            }
+            if (activeYawScanEnabled()) {
+                const auto request = active_yaw_scan_goal_requested_.load(
+                        std::memory_order_acquire);
+                if (request > active_yaw_scan_goal_handled_) {
+                    const auto state = machine_state_.load(
+                            std::memory_order_acquire);
+                    if (safety_brake_active_.load(
+                                std::memory_order_acquire)) {
+                        active_yaw_scan_goal_handled_ = request;
+                        ros_ptr_->info(
+                                " -- [ACTIVE_YAW_SCAN_GOAL_REQUEST] request={} "
+                                "action=merge_with_existing_stop state={}",
+                                request, MACHINE_STATE_STR[state]);
+                    } else if (started_ && state != INIT) {
+                        const double now_wt = ros_ptr_->getSimTime();
+                        if (std::isfinite(brake_activation_retry_last_wt_) &&
+                            now_wt - brake_activation_retry_last_wt_ <
+                                    cfg_.brake_retry_interval_s) {
+                            return;
+                        }
+                        brake_activation_retry_last_wt_ = now_wt;
+                        ros_ptr_->info(
+                                " -- [ACTIVE_YAW_SCAN_GOAL_REQUEST] request={} "
+                                "action=certified_stop_then_yaw_fresh_map_reroute",
+                                request);
+                        if (activateEmergencyBrake(
+                                    "sector_active_yaw_goal_change")) {
+                            active_yaw_scan_goal_handled_ = request;
+                        }
+                        return;
+                    } else {
+                        // Preserve the request across INIT so the first route
+                        // is never generated from an unturned body-forward
+                        // Sector.  Do not gate this branch on
+                        // mapReadyForPlanning(): a forward view with zero
+                        // returns is exactly the case where the map becomes
+                        // stale and a proven stationary yaw-only acquisition
+                        // is required to recover visibility.  The brake
+                        // selector and recovery planner retain their own hard
+                        // conflict and fresh-map checks.
+                        // INIT itself must still execute once to enter
+                        // WAIT_GOAL; the pending request intercepts the next
+                        // tick before WAIT_GOAL can consume/plan the goal.
+                        if (state != INIT) return;
+                    }
+                }
             }
             if (goalChangeFullRefreshV6Enabled()) {
                 const auto request =
