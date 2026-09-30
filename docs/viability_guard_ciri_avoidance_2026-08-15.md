@@ -7378,8 +7378,8 @@ The required common campaign was created without overwriting or reusing any
 earlier cohort. `c39_bounded_recovery_refresh_v13_n10` schedules Map1--5,
 Urban and Forest in Full, canonical Active-Yaw Sector and velocity-centred
 Adaptive, ten repetitions per map and mode. This is70 triplets and210 flights.
-Runs start at96010, outside the previous c37 and diagnostic run ranges, and
-retain one attempt per flight with no replacement.
+The production v2 runs start at96210, outside the previous c37, diagnostic and
+excluded-pilot run ranges, and retain one attempt per flight with no replacement.
 
 The scheduler keeps the two-stage gate: repetitions1--5 comprise35 triplets
 and105 flights; repetitions6--10 begin only if all stage1 infrastructure,
@@ -7399,13 +7399,24 @@ link or a stale profile cannot qualify even if the source tree is current.
 The previous Active-Yaw, heading-policy, source, contact, resource, speed and
 timing audits remain inherited.
 
-The committed protocol is
-`results/scenario7_bounded_recovery_v13_n10_20260930/protocol.json`; the
-entrypoint is `scripts/native_campaign/run_scenario7_v13_n10.sh`. Offline
-v13 tests passed7/7; the combined v13 and inherited guard-v3 admission suite
-passed45/45. The dry run produced exactly70 triplets/210 flights, with first
-run96010 and last scheduled run96101. No ROS flight had started when this
-preparation record was written. Expected wall time for the complete
+The first attempted launch exposed an environment-ordering defect before a
+triplet could complete. Outer shell sourcing had preloaded the selected overlay;
+the inherited inner command then sourced the base install first, and colcon's
+non-duplicate path hook did not restore overlay precedence. Map1 Full run96010
+therefore used `/root/super_ws/install/perfect_drone_full_node`. It completed
+in53.28s without contact, but correctly failed the new source/runtime contract;
+Sector and Adaptive were not started. This stale-install pilot is excluded and
+preserved under `results/scenario7_bounded_recovery_v13_n10_20260930/`.
+
+The corrected entrypoint sources only the base install in the outer process;
+the child then establishes base-then-selected-overlay order. A new preflight
+rejects any outer environment that already contains the overlay, preventing
+the same silent selection. The production protocol is
+`results/scenario7_bounded_recovery_v13_n10_v2_20260930/protocol.json`; the
+entrypoint remains `scripts/native_campaign/run_scenario7_v13_n10.sh`. Offline
+v13 tests now pass8/8; the combined v13 and inherited guard-v3 admission suite
+passes46/46. The corrected dry run produces exactly70 triplets/210 flights,
+with first run96210 and last scheduled run96301. Expected wall time for the complete
 campaign is approximately5--8hours, depending mainly on Active-Yaw and dense
 Forest mission tails. Final reporting must keep normal five-map, Urban and
 Forest aggregates separate and retain all earlier cohorts as historical

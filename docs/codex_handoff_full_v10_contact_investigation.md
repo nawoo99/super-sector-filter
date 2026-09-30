@@ -5,11 +5,14 @@
 > 기존 c37 및 이후 모드별 진단 결과는 보존하고 섞지 않는다. 새
 > `c39_bounded_recovery_refresh_v13_n10`은 Map1--5+Urban+Forest에서
 > Full/기본 Active-Yaw Sector/velocity-centred Adaptive를 각10회, 총210회 실행한다.
-> run96010부터 새 ID를 사용하며 1--5회차105비행의 stage1 품질 gate를 통과해야
+> 최초 run96010 Full은 wrapper의 overlay 선로딩 때문에 내부 launch가 stale base
+> 바이너리를 선택해 runtime contract에서 즉시 중단된 인프라 pilot이며 본시험에서
+> 제외한다. 수정된 v2는 outer base-only+child overlay 순서를 fail-fast로 검사하고
+> run96210부터 새 ID를 사용한다. 1--5회차105비행의 stage1 품질 gate를 통과해야
 > 6--10회차를 시작한다. 각 비행은0.6m 시작 거리,1.2m 최대 거리,2단계가 실제
 > 통합 바이너리에서 정확히 한 번 로드됐는지 추가 검증한다. 프로토콜과 dry-run은
-> 준비됐지만 이 배너 갱신 시점에는 실제 비행을 아직 시작하지 않았다. 상세 §8.121과
-> `results/scenario7_bounded_recovery_v13_n10_20260930/protocol.json`.
+> 준비됐다. 상세 §8.121과
+> `results/scenario7_bounded_recovery_v13_n10_v2_20260930/protocol.json`.
 
 > [!IMPORTANT]
 > **2026-09-30 최신: Forest Full 무접촉 180초 고착의 두 원인을 수정하고 fresh 검증 완료.**

@@ -23,7 +23,7 @@ def runtime_log(distance='0.6', maximum='1.2', steps='2'):
 
 def test_campaign_has_fresh_identity_and_nonoverlapping_run_range():
     assert campaign.CANDIDATE == 'c39_bounded_recovery_refresh_v13_n10'
-    assert campaign.BASE_RUN == 96000
+    assert campaign.BASE_RUN == 96200
     assert campaign.BASE_RUN > campaign.previous.BASE_RUN
 
 
@@ -43,5 +43,12 @@ def test_bounded_recovery_runtime_contract_fails_closed(log):
     assert not campaign.bounded_recovery_runtime_audit(log)['valid']
 
 
-def test_current_integrated_runtime_contains_repair_markers():
+def test_current_integrated_runtime_contains_repair_markers(monkeypatch):
+    monkeypatch.delenv('AMENT_PREFIX_PATH', raising=False)
     assert campaign.verify_runtime_install()['valid']
+
+
+def test_preloaded_overlay_is_rejected_before_flight(monkeypatch):
+    monkeypatch.setenv('AMENT_PREFIX_PATH', str(campaign.INSTALL_ROOT / 'perfect_drone_sim'))
+    with pytest.raises(RuntimeError, match='overlay is preloaded'):
+        campaign.verify_runtime_install()

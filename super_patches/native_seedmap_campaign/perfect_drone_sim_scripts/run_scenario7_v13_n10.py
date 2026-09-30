@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Run the fresh c39 seven-map campaign after bounded recovery repair."""
 from pathlib import Path
+import os
 import re
 
 import run_scenario7_v12_n10 as previous
 
 
 CANDIDATE = 'c39_bounded_recovery_refresh_v13_n10'
-BASE_RUN = 96000
+BASE_RUN = 96200
 THIS_FILE = Path(__file__).resolve()
 INSTALL_ROOT = Path('/root/super_ws/sector_active_yaw_scan_v1_20260929/install')
 RUNTIME_BINARY = (
@@ -59,11 +60,22 @@ def verify_runtime_install():
     if missing:
         raise RuntimeError(
             'integrated runtime lacks bounded-recovery markers: ' + ', '.join(missing))
+    # The child deliberately sources the base install and then this overlay's
+    # local_setup.  If the overlay is already present in the outer process,
+    # sourcing the base can move it behind /root/super_ws/install and colcon's
+    # non-duplicate hook will not restore precedence.  Fail before any flight.
+    prefixes = os.environ.get('AMENT_PREFIX_PATH', '').split(':')
+    preloaded = [value for value in prefixes if value.startswith(str(INSTALL_ROOT))]
+    if preloaded:
+        raise RuntimeError(
+            'Active-Yaw overlay is preloaded in the outer campaign environment; '
+            'this can select the stale base binary: ' + ', '.join(preloaded))
     return {
         'valid': True,
         'install_root': str(INSTALL_ROOT),
         'runtime_binary': str(RUNTIME_BINARY),
         'markers': 'bounded_multi_distance_v1',
+        'outer_overlay_preloaded': False,
     }
 
 
