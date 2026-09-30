@@ -1,6 +1,17 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-30 최신: bounded-recovery 적용 뒤 fresh 7-map 공통 캠페인 c39를 생성.**
+> 기존 c37 및 이후 모드별 진단 결과는 보존하고 섞지 않는다. 새
+> `c39_bounded_recovery_refresh_v13_n10`은 Map1--5+Urban+Forest에서
+> Full/기본 Active-Yaw Sector/velocity-centred Adaptive를 각10회, 총210회 실행한다.
+> run96010부터 새 ID를 사용하며 1--5회차105비행의 stage1 품질 gate를 통과해야
+> 6--10회차를 시작한다. 각 비행은0.6m 시작 거리,1.2m 최대 거리,2단계가 실제
+> 통합 바이너리에서 정확히 한 번 로드됐는지 추가 검증한다. 프로토콜과 dry-run은
+> 준비됐지만 이 배너 갱신 시점에는 실제 비행을 아직 시작하지 않았다. 상세 §8.121과
+> `results/scenario7_bounded_recovery_v13_n10_20260930/protocol.json`.
+
+> [!IMPORTANT]
 > **2026-09-30 최신: Forest Full 무접촉 180초 고착의 두 원인을 수정하고 fresh 검증 완료.**
 > 인증 복구가 물리적으로 비접촉인데도 시작 voxel cluster 뒤의 soft clearance
 > margin에서 거부되던 결함을 recovery-only bounded prefix로 수정했다. ordinary 경로와

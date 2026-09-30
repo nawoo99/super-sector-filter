@@ -1,0 +1,65 @@
+{
+  "attempts_per_flight": 1,
+  "blocking_gate": "Stop before stage 2 on any infrastructure, source, heading, runtime-profile or strict Full/Adaptive safe-completion failure. Retain valid Sector mission failures as measured outcomes.",
+  "candidate": "c39_bounded_recovery_refresh_v13_n10",
+  "claim_limit": "Finite simulation evidence on seven declared maps. It is not a population or real-world 100% guarantee.",
+  "created_local": "2026-09-30",
+  "maps": [
+    "gapfree_d1_m01",
+    "gapfree_d1_m02",
+    "gapfree_d1_m03",
+    "gapfree_d1_m04",
+    "gapfree_d1_m05r2",
+    "urban_blocks_u01",
+    "forest_cluster_f01"
+  ],
+  "modes": [
+    "full",
+    "sector",
+    "adaptive"
+  ],
+  "objective": "Generate a fresh common Full, canonical Active-Yaw Sector, and velocity-centred Adaptive cohort after applying the bounded 0.6-to-1.2 m certified recovery schedule equally to all three near-hit profiles.",
+  "planned_flights": 210,
+  "planned_triplets": 70,
+  "predeclared_metrics": [
+    "completion and safe completion",
+    "static-PCD contact runs and episodes",
+    "mission time",
+    "minimum static-PCD body clearance",
+    "end-to-end mean CPU cores and cumulative CPU core-seconds",
+    "planner input MiB/s and MiB/run",
+    "map update time per frame",
+    "Adaptive Full-open transitions and refresh acknowledgements",
+    "Active-Yaw arm and fresh-map-ready counts",
+    "strict message timing quality"
+  ],
+  "repetitions_per_map_mode": 10,
+  "replacement_runs": false,
+  "reporting_groups": {
+    "forest": [
+      "forest_cluster_f01"
+    ],
+    "normal": [
+      "gapfree_d1_m01",
+      "gapfree_d1_m02",
+      "gapfree_d1_m03",
+      "gapfree_d1_m04",
+      "gapfree_d1_m05r2"
+    ],
+    "urban": [
+      "urban_blocks_u01"
+    ]
+  },
+  "runtime_contract": {
+    "canonical_sector": "Active-Yaw Sector with zero-return heartbeat",
+    "local_escape_distance_m": 0.6,
+    "local_escape_distance_steps": 2,
+    "local_escape_max_distance_m": 1.2,
+    "profile_scope": "identical schedule in current Full, Sector and Adaptive near-hit profiles",
+    "runtime_audit": "Every flight must load each of the three bounded-recovery parameters exactly once."
+  },
+  "stages": {
+    "stage1": "repetitions 1-5; 35 triplets and 105 flights",
+    "stage2": "repetitions 6-10; starts only after the stage-1 gate passes"
+  }
+}

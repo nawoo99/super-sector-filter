@@ -19,7 +19,9 @@ import scenario7_guard_v3_cpu_compare as child
 def markers():
     return ('[ASYNC_GENERATE_TRAJ] enabled=true executor=existing_replan '
             'main_finalization=true default_off=true\n'
-            '[OCCUPANCY_ONLY_RANGE] enabled=1 hit_min=0.1 free_ray_min=0.5 startup_clear_radius=0.5\n')
+            '[OCCUPANCY_ONLY_RANGE] enabled=1 hit_min=0.1 free_ray_min=0.5 startup_clear_radius=0.5\n'
+            'Load param super_planner/guard_topology_reroute/local_escape_max_distance_m success: 1.2\n'
+            'Load param super_planner/guard_topology_reroute/local_escape_distance_steps success: 2\n')
 
 
 @pytest.mark.parametrize('rounds', [1, 3, 10])
@@ -95,11 +97,17 @@ def test_execute_keeps_memory_sentinel_and_overrides_stale_environment(tmp_path,
 
 def profile_text():
     return ('rog_map:\n  raycasting:\n    enable: false\n    ray_range: [0.5, 100 ]\n'
-            'super_planner:\n  robot_r: 0.2\n')
+            'super_planner:\n  guard_topology_reroute:\n    local_escape_distance_m: 0.60\n'
+            '  robot_r: 0.2\n')
 
 
 def new_profile_text():
-    return profile_text().replace('    ray_range:', '    occupancy_only_min_range: 0.1\n    ray_range:')
+    return profile_text().replace(
+        '    ray_range:', '    occupancy_only_min_range: 0.1\n    ray_range:').replace(
+        '    local_escape_distance_m: 0.60\n',
+        '    local_escape_distance_m: 0.60\n'
+        '    local_escape_max_distance_m: 1.20\n'
+        '    local_escape_distance_steps: 2\n')
 
 
 def test_only_exact_nearhit_addition_is_admitted():
@@ -163,12 +171,12 @@ def test_runtime_markers_exact_once_and_finite_numeric_equivalence():
 
 @pytest.mark.parametrize('mutation', ['missing_async', 'missing_near', 'disabled', 'wrong_executor',
     'not_finalized', 'not_default_off', 'duplicate_async', 'duplicate_near', 'wrong_hit', 'wrong_ray',
-    'wrong_clear', 'nan', 'infinity', 'duplicate_field'])
+    'wrong_clear', 'nan', 'infinity', 'duplicate_field', 'missing_escape', 'wrong_escape_max'])
 def test_invalid_runtime_markers_fail(mutation):
-    async_line, near_line = markers().splitlines()
+    async_line, near_line, max_line, steps_line = markers().splitlines()
     altered = {
-        'missing_async': near_line,
-        'missing_near': async_line,
+        'missing_async': '\n'.join((near_line, max_line, steps_line)),
+        'missing_near': '\n'.join((async_line, max_line, steps_line)),
         'disabled': markers().replace('enabled=true', 'enabled=false'),
         'wrong_executor': markers().replace('existing_replan', 'main'),
         'not_finalized': markers().replace('main_finalization=true', 'main_finalization=false'),
@@ -181,6 +189,9 @@ def test_invalid_runtime_markers_fail(mutation):
         'nan': markers().replace('hit_min=0.1', 'hit_min=nan'),
         'infinity': markers().replace('hit_min=0.1', 'hit_min=inf'),
         'duplicate_field': markers().replace('hit_min=0.1', 'hit_min=0.1 hit_min=0.1'),
+        'missing_escape': '\n'.join((async_line, near_line, max_line)),
+        'wrong_escape_max': markers().replace('max_distance_m success: 1.2',
+                                              'max_distance_m success: 0.6'),
     }[mutation]
     assert child.runtime_audit(altered)['valid'] is False
 
