@@ -50,7 +50,7 @@ def main():
                     package.parent / 'rog_map/include/rog_map/diagnostic_trace.hpp')
     report = dict(schema='stop-margin-prefix-supplement-v1', prepared_only=args.prepare_only,
                   scope='exact extracted production validator; fixture map/linear trajectory/midpoint DDA',
-                  allow_initial_clearance_escape=True, cases_expected=8,
+                  allow_initial_clearance_escape=True, cases_expected=10,
                   timing_scope='real clock; three-second budget; visited-order asserted; not deterministic under arbitrary load',
                   sanitize=args.sanitize, compiler_command=command,
                   extracted_validator_sha256=hashlib.sha256(geometry.encode()).hexdigest(),

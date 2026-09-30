@@ -279,7 +279,8 @@ namespace super_planner {
             const Vec3f *initial_footprint_origin,
             const std::chrono::steady_clock::time_point deadline,
             const initial_egress::Receipt *egress_receipt,
-            const stop_margin::ValidationPolicy margin_policy) const {
+            const stop_margin::ValidationPolicy margin_policy,
+            const bool allow_bounded_soft_margin_egress) const {
         const thread_cpu_profile::Scope cpu_scope(
                 thread_cpu_profile::Stage::PlannerValidateGeometry);
         TrajectorySafetyResult result;
@@ -836,7 +837,20 @@ namespace super_planner {
                             (guard_corridor_retry_pending_.load(
                                      std::memory_order_acquire) &&
                              query.tt - checked_from_tt <=
-                                     cfg_.trajectory_guard_escape_entry_grace_s)) &&
+                                     cfg_.trajectory_guard_escape_entry_grace_s) ||
+                            // A certified topology-recovery trajectory starts
+                            // from a physical-contact-free stop that can still
+                            // lie inside the conservative inflated margin. In
+                            // a dense multi-obstacle pocket, limiting egress to
+                            // one starting-voxel cluster makes every otherwise
+                            // collision-free escape ray fail before it reaches
+                            // free space. Permit only these explicitly tagged
+                            // recovery candidates to traverse a bounded soft-
+                            // margin prefix. Raw occupied voxels, unknown
+                            // space, map bounds, the escape time limit, and the
+                            // required continuous free tail remain unchanged.
+                            (allow_bounded_soft_margin_egress &&
+                             clearance_escape_prefix)) &&
                            query.tt - checked_from_tt <=
                                    cfg_.trajectory_guard_escape_max_duration_s) {
                     clearance_escape_prefix = true;
@@ -1798,7 +1812,12 @@ namespace super_planner {
                                                  hard_current_pose
                                                          ? &*hard_current_pose
                                                          : nullptr,
-                                                 inject_initial_footprint_occupancy);
+                                                 inject_initial_footprint_occupancy,
+                                                 nullptr,
+                                                 std::chrono::steady_clock::time_point::max(),
+                                                 nullptr,
+                                                 stop_margin::ValidationPolicy::RejectImmediately,
+                                                 topology_recovery_candidate);
         if (!safety.safe()) {
             trajectory_guard_rejection_pending_.store(true,
                                                       std::memory_order_release);
@@ -1909,7 +1928,12 @@ namespace super_planner {
                         candidate.pos_traj, checked_from_tt, candidate_generation,
                         allow_clearance_escape, false,
                         hard_current_pose ? &*hard_current_pose : nullptr,
-                        inject_initial_footprint_occupancy);
+                        inject_initial_footprint_occupancy,
+                        nullptr,
+                        std::chrono::steady_clock::time_point::max(),
+                        nullptr,
+                        stop_margin::ValidationPolicy::RejectImmediately,
+                        topology_recovery_candidate);
                 if (!rescaled_safety.safe()) {
                     ros_ptr_->error(
                             " -- [TRAJ_GUARD_VIABILITY_RESCALE_UNSAFE] phase={} "
@@ -2449,98 +2473,153 @@ namespace super_planner {
                                rhs.dot(goal_direction);
                     });
         }
-        const double distance =
+        const double min_distance =
                 cfg_.guard_topology_local_escape_distance_m;
+        const double max_distance = std::max(
+                min_distance,
+                cfg_.guard_topology_local_escape_max_distance_m);
+        const int configured_distance_steps =
+                cfg_.guard_topology_local_escape_distance_steps;
+        const int distance_step_count =
+                max_distance - min_distance > 1.0e-6
+                        ? std::max(2, configured_distance_steps)
+                        : 1;
+        std::vector<double> escape_distances;
+        escape_distances.reserve(
+                static_cast<std::size_t>(distance_step_count));
+        for (int step = 0; step < distance_step_count; ++step) {
+            const double alpha = distance_step_count == 1
+                    ? 0.0
+                    : static_cast<double>(step) /
+                              static_cast<double>(distance_step_count - 1);
+            escape_distances.push_back(
+                    min_distance + alpha * (max_distance - min_distance));
+        }
         const double velocity_limit = std::max(
                 1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_vel);
         const double acceleration_limit = std::max(
                 1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_acc);
         const double jerk_limit = std::max(
                 1.0e-3, 0.8 * cfg_.exp_traj_cfg.max_jerk);
-        const double duration = std::max({
-                cfg_.guard_direct_goal_fallback_min_duration_s,
-                1.875 * distance / velocity_limit,
-                std::sqrt(5.774 * distance / acceleration_limit),
-                std::cbrt(60.0 * distance / jerk_limit)});
 
         const double start_wt = ros_ptr_->getSimTime();
         ExpTraj recovery_exp;
         bool committed = false;
         std::size_t committed_direction = 0;
-        for (std::size_t direction_index = 0;
-             direction_index < escape_directions.size(); ++direction_index) {
-            const Vec3f trial_direction =
-                    escape_directions[direction_index].normalized();
-            if (guard_test_local_escape_skip_first_direction_ &&
-                direction_index == 0) {
-                guard_test_local_escape_skip_first_direction_ = false;
+        std::size_t committed_distance_step = 0;
+        double committed_distance = 0.0;
+        double committed_duration = 0.0;
+        const std::size_t total_trials = escape_distances.size() *
+                escape_directions.size();
+        for (std::size_t distance_index = 0;
+             distance_index < escape_distances.size() && !committed;
+             ++distance_index) {
+            const double distance = escape_distances[distance_index];
+            const double duration = std::max({
+                    cfg_.guard_direct_goal_fallback_min_duration_s,
+                    1.875 * distance / velocity_limit,
+                    std::sqrt(5.774 * distance / acceleration_limit),
+                    std::cbrt(60.0 * distance / jerk_limit)});
+            if (guard_test_local_escape_skip_first_distance_ &&
+                distance_index == 0) {
+                guard_test_local_escape_skip_first_distance_ = false;
                 ros_ptr_->warn(
-                        " -- [TEST_FAULT_LOCAL_ESCAPE_DIRECTION_SKIP] "
-                        "attempt=1/{} direction=[{:.3f},{:.3f},{:.3f}]",
-                        escape_directions.size(), trial_direction.x(),
-                        trial_direction.y(), trial_direction.z());
+                        " -- [TEST_FAULT_LOCAL_ESCAPE_DISTANCE_SKIP] "
+                        "distance_step=1/{} skipped_trials={} "
+                        "distance={:.3f}m action=exercise_next_distance",
+                        escape_distances.size(), escape_directions.size(),
+                        distance);
                 continue;
             }
-            const Vec3f escape_goal = escape_start +
-                    distance * trial_direction;
-            Eigen::Matrix<double, 3, 3> initial_pva;
-            Eigen::Matrix<double, 3, 3> goal_pva;
-            initial_pva.setZero();
-            goal_pva.setZero();
-            initial_pva.col(0) = escape_start;
-            goal_pva.col(0) = escape_goal;
-            Eigen::Matrix<double, 3, Eigen::Dynamic>
-                    position_waypoints(3, 0);
-            VecDf durations(1);
-            durations << duration;
-            Trajectory position_trajectory =
-                    poly_interpo::minimumJerkInterpolation<3>(
-                            initial_pva, goal_pva,
-                            position_waypoints, durations);
+            for (std::size_t direction_index = 0;
+                 direction_index < escape_directions.size();
+                 ++direction_index) {
+                const Vec3f trial_direction =
+                        escape_directions[direction_index].normalized();
+                const std::size_t trial_index =
+                        distance_index * escape_directions.size() +
+                        direction_index;
+                if (guard_test_local_escape_skip_first_direction_ &&
+                    trial_index == 0) {
+                    guard_test_local_escape_skip_first_direction_ = false;
+                    ros_ptr_->warn(
+                            " -- [TEST_FAULT_LOCAL_ESCAPE_DIRECTION_SKIP] "
+                            "trial=1/{} distance_step=1/{} direction=1/{} "
+                            "distance={:.3f}m vector=[{:.3f},{:.3f},{:.3f}]",
+                            total_trials, escape_distances.size(),
+                            escape_directions.size(), distance,
+                            trial_direction.x(), trial_direction.y(),
+                            trial_direction.z());
+                    continue;
+                }
+                const Vec3f escape_goal = escape_start +
+                        distance * trial_direction;
+                Eigen::Matrix<double, 3, 3> initial_pva;
+                Eigen::Matrix<double, 3, 3> goal_pva;
+                initial_pva.setZero();
+                goal_pva.setZero();
+                initial_pva.col(0) = escape_start;
+                goal_pva.col(0) = escape_goal;
+                Eigen::Matrix<double, 3, Eigen::Dynamic>
+                        position_waypoints(3, 0);
+                VecDf durations(1);
+                durations << duration;
+                Trajectory position_trajectory =
+                        poly_interpo::minimumJerkInterpolation<3>(
+                                initial_pva, goal_pva,
+                                position_waypoints, durations);
 
-            Eigen::Matrix<double, 1, 3> initial_yaw;
-            Eigen::Matrix<double, 1, 3> goal_yaw;
-            initial_yaw.setZero();
-            goal_yaw.setZero();
-            initial_yaw(0, 0) = odom_yaw;
-            goal_yaw(0, 0) = odom_yaw;
-            Eigen::Matrix<double, 1, Eigen::Dynamic> yaw_waypoints(1, 0);
-            Trajectory yaw_trajectory =
-                    poly_interpo::minimumJerkInterpolation<1>(
-                            initial_yaw, goal_yaw,
-                            yaw_waypoints, durations);
-            position_trajectory.start_WT = start_wt;
-            yaw_trajectory.start_WT = start_wt;
+                Eigen::Matrix<double, 1, 3> initial_yaw;
+                Eigen::Matrix<double, 1, 3> goal_yaw;
+                initial_yaw.setZero();
+                goal_yaw.setZero();
+                initial_yaw(0, 0) = odom_yaw;
+                goal_yaw(0, 0) = odom_yaw;
+                Eigen::Matrix<double, 1, Eigen::Dynamic> yaw_waypoints(1, 0);
+                Trajectory yaw_trajectory =
+                        poly_interpo::minimumJerkInterpolation<1>(
+                                initial_yaw, goal_yaw,
+                                yaw_waypoints, durations);
+                position_trajectory.start_WT = start_wt;
+                yaw_trajectory.start_WT = start_wt;
 
-            ExpTraj trial_exp;
-            trial_exp.setTrajectory(start_wt, position_trajectory,
-                                    yaw_trajectory);
-            trial_exp.setGoalConnectedFlag(false);
-            CmdTraj::Candidate candidate;
-            if (CmdTraj::buildCandidate(trial_exp, candidate) &&
-                commitTrajectoryCandidate(
-                        std::move(candidate),
-                        "PlanFromRest/certified_local_escape")) {
-                recovery_exp = trial_exp;
-                escape_direction = trial_direction;
-                committed_direction = direction_index;
-                committed = true;
-                break;
+                ExpTraj trial_exp;
+                trial_exp.setTrajectory(start_wt, position_trajectory,
+                                        yaw_trajectory);
+                trial_exp.setGoalConnectedFlag(false);
+                CmdTraj::Candidate candidate;
+                if (CmdTraj::buildCandidate(trial_exp, candidate) &&
+                    commitTrajectoryCandidate(
+                            std::move(candidate),
+                            "PlanFromRest/certified_local_escape")) {
+                    recovery_exp = trial_exp;
+                    escape_direction = trial_direction;
+                    committed_direction = direction_index;
+                    committed_distance_step = distance_index;
+                    committed_distance = distance;
+                    committed_duration = duration;
+                    committed = true;
+                    break;
+                }
+                ros_ptr_->warn(
+                        " -- [TRAJ_GUARD_LOCAL_ESCAPE_DIRECTION_REJECTED] "
+                        "trial={}/{} distance_step={}/{} direction={}/{} "
+                        "distance={:.3f}m duration={:.3f}s "
+                        "vector=[{:.3f},{:.3f},{:.3f}]",
+                        trial_index + 1, total_trials,
+                        distance_index + 1, escape_distances.size(),
+                        direction_index + 1, escape_directions.size(),
+                        distance, duration, trial_direction.x(),
+                        trial_direction.y(), trial_direction.z());
             }
-            ros_ptr_->warn(
-                    " -- [TRAJ_GUARD_LOCAL_ESCAPE_DIRECTION_REJECTED] "
-                    "attempt={}/{} "
-                    "distance={:.3f}m duration={:.3f}s "
-                    "direction=[{:.3f},{:.3f},{:.3f}]",
-                    direction_index + 1, escape_directions.size(),
-                    distance, duration, trial_direction.x(),
-                    trial_direction.y(), trial_direction.z());
         }
         if (!committed) {
             ros_ptr_->warn(
                     " -- [TRAJ_GUARD_LOCAL_ESCAPE_REJECTED] "
-                    "attempts={} distance={:.3f}m duration={:.3f}s",
-                    escape_directions.size(), distance, duration);
+                    "trials={} distance_steps={} "
+                    "distance_range=[{:.3f},{:.3f}]m directions={}",
+                    total_trials, escape_distances.size(), min_distance,
+                    max_distance, escape_directions.size());
             return false;
         }
 
@@ -2560,11 +2639,13 @@ namespace super_planner {
                 SUPER_RET_CODE::SUPER_SUCCESS_NO_BACKUP);
         ros_ptr_->warn(
                 " -- [TRAJ_GUARD_LOCAL_ESCAPE] action=commit "
-                "attempt={}/{} distance={:.3f}m duration={:.3f}s "
-                "direction=[{:.3f},{:.3f},{:.3f}] "
+                "distance_step={}/{} direction={}/{} "
+                "distance={:.3f}m duration={:.3f}s "
+                "vector=[{:.3f},{:.3f},{:.3f}] "
                 "stop_source={} odom_speed={:.3f}",
+                committed_distance_step + 1, escape_distances.size(),
                 committed_direction + 1, escape_directions.size(),
-                distance, duration, escape_direction.x(),
+                committed_distance, committed_duration, escape_direction.x(),
                 escape_direction.y(), escape_direction.z(),
                 certified_stop ? "certified_brake" : "stationary_odom",
                 odom_speed);
@@ -2787,9 +2868,19 @@ namespace super_planner {
 
         const char *test_force_local_escape =
                 std::getenv("SUPER_TEST_FORCE_LOCAL_ESCAPE_ONCE");
+        const char *test_force_second_distance =
+                std::getenv(
+                        "SUPER_TEST_FORCE_LOCAL_ESCAPE_SECOND_DISTANCE_ONCE");
+        const bool force_first_direction_skip =
+                test_force_local_escape != nullptr &&
+                std::string(test_force_local_escape) == "1";
+        const bool force_second_distance =
+                test_force_second_distance != nullptr &&
+                std::string(test_force_second_distance) == "1" &&
+                cfg_.guard_topology_local_escape_max_distance_m -
+                        cfg_.guard_topology_local_escape_distance_m > 1.0e-6;
         if (!guard_test_local_escape_injected_ &&
-            test_force_local_escape != nullptr &&
-            std::string(test_force_local_escape) == "1" &&
+            (force_first_direction_skip || force_second_distance) &&
             cfg_.guard_topology_local_escape_en &&
             cfg_.guard_viability_en) {
             Vec3f test_direction = goal_p - robot_state_.p;
@@ -2802,12 +2893,18 @@ namespace super_planner {
             guard_local_escape_direction_ = test_direction.normalized();
             guard_local_escape_pending_.store(true,
                                               std::memory_order_release);
-            guard_test_local_escape_skip_first_direction_ = true;
+            guard_test_local_escape_skip_first_direction_ =
+                    force_first_direction_skip && !force_second_distance;
+            guard_test_local_escape_skip_first_distance_ =
+                    force_second_distance;
             guard_test_local_escape_injected_ = true;
             ros_ptr_->warn(
                     " -- [TEST_FAULT_LOCAL_ESCAPE_ARM] "
-                    "action=skip_first_then_certify direction="
+                    "action={} direction="
                     "[{:.3f},{:.3f},{:.3f}]",
+                    force_second_distance
+                            ? "skip_first_distance_then_certify"
+                            : "skip_first_direction_then_certify",
                     guard_local_escape_direction_.x(),
                     guard_local_escape_direction_.y(),
                     guard_local_escape_direction_.z());

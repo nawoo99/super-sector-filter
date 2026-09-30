@@ -1,6 +1,26 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-30 최신: Forest Full 무접촉 180초 고착의 두 원인을 수정하고 fresh 검증 완료.**
+> 인증 복구가 물리적으로 비접촉인데도 시작 voxel cluster 뒤의 soft clearance
+> margin에서 거부되던 결함을 recovery-only bounded prefix로 수정했다. ordinary 경로와
+> occupied/unknown/bounds/version/deadline/terminal-free-tail/viability hard check는 유지된다.
+> 첫 수정 cohort run95101--95110은 접촉0이지만9/10 완주였고, retained run95109가
+> 후속 dense pocket에서0.6m 16방향을 모두 소진해180.01초 고착됐다. 이에 기본값은
+> 기존0.6m/1단계를 유지하면서 near-hit 3모드 프로파일만0.6→1.2m/2단계의 bounded
+> multi-distance를 동일 적용했다. 통합 노드가 `libsuper.a`를 정적 링크하므로
+> `perfect_drone_sim`까지 반드시 재빌드해야 하며, 이제 runner가 startup log의1.2m/2
+> 로드도 강제 검사한다. 실제 반영 후 primary run95401--95410은10/10 완주·접촉0,
+> 59.421±4.560초, 최소 body clearance0.165m였다. 단 run95408의 odometry receipt
+> max58.572ms가50ms gate를 넘어서 strict timing-valid는9/10이다. 보충 run95411은
+> 완주·접촉0·timing valid. 별도 default-off forced run95501은0.6m tier 전체를 건너뛴
+> 뒤 실제 guard+viability로1.2m step2/2를 commit하고48.72초 완주·접촉0을 확인했다.
+> 이는 finite observed result이지 population100% 보장이 아니며, 기존9/10 실패
+> cohort를 삭제/대체하지 않는다. 세 near-hit 모드 프로파일이 모두 새 schedule을
+> 쓰므로 최종7-map 3-mode 표는 fresh common campaign으로 다시 생성해야 한다.
+> 상세 §8.120과 `results/forest_full_multidistance_n10_v3_20260930/summary.md`.
+
+> [!IMPORTANT]
 > **2026-09-30 최신: `Sector` 기본 실행을 Active-Yaw로 승격하고 Urban 무제한 fresh n=10 재검증.**
 > 공통 `scenario7_guard_v6_cpu_compare.py`가 이제 mode=sector일 때 Active-Yaw와
 > zero-return heartbeat를 강제하고 Active-Yaw 설치본을 선택한다. 설치 바이너리/헤더

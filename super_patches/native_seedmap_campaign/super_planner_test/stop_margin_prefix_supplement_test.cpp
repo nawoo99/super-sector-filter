@@ -73,12 +73,14 @@ struct Map {
     MapConfig config;
     Hazard hazard{Hazard::None};
     bool late_margin_band{false};
+    bool wide_prefix_margin{false};
     mutable int health_reads{0};
     mutable bool visited_margin{false}, checked_margin_body{false};
     mutable bool visited_late_hazard{false}, visited_terminal{false};
     mutable int inflate_queries{0};
     std::chrono::steady_clock::time_point timeout_deadline{};
     bool isMargin(const Vec3f& p) const {
+        if (wide_prefix_margin) return p.x() >= 0.0 && p.x() <= 0.600001;
         return late_margin_band ? p.x() >= 0.18 && p.x() <= 0.30
                                 : p.x() >= 0.0 && p.x() <= 0.100001;
     }
@@ -146,7 +148,8 @@ public:
     TrajectorySafetyResult validatePositionTrajectory(
         const Trajectory&, double, std::uint64_t, bool, bool, const Vec3f*, bool,
         const Vec3f*, std::chrono::steady_clock::time_point,
-        const initial_egress::Receipt*, stop_margin::ValidationPolicy) const;
+        const initial_egress::Receipt*, stop_margin::ValidationPolicy,
+        bool allow_bounded_soft_margin_egress = false) const;
 };
 #include "validator.inc"
 
@@ -157,12 +160,14 @@ int main() {
     const auto ordinary = stop_margin::ValidationPolicy::RejectImmediately;
     const auto run = [&](Map& map, stop_margin::ValidationPolicy policy, double duration = 0.1,
                          std::chrono::steady_clock::time_point deadline =
-                                 std::chrono::steady_clock::time_point::max()) {
+                                 std::chrono::steady_clock::time_point::max(),
+                         bool allow_bounded_soft_margin_egress = false) {
         SuperPlanner planner(map);
         Trajectory trajectory;
         trajectory.piece.duration = duration;
         return planner.validatePositionTrajectory(trajectory, 0.0, 9, true,
-                true, nullptr, false, nullptr, deadline, nullptr, policy);
+                true, nullptr, false, nullptr, deadline, nullptr, policy,
+                allow_bounded_soft_margin_egress);
     };
     const auto emit = [](const char* name, const Map& map, const TrajectorySafetyResult& result) {
         std::cout << "case=" << name << " status=" << trajectorySafetyStatusName(result.status)
@@ -222,6 +227,28 @@ int main() {
         assert(result.status == S::CLEARANCE_MARGIN && !result.hard_checks_complete);
         assert(result.first_collision_tt >= 0.18 && result.first_collision_tt <= 0.30);
         emit("ordinary_later_margin_control", map, result);
+        ++cases;
+    }
+    {
+        Map map;
+        map.wide_prefix_margin = true;
+        const auto result = run(map, ordinary, 1.0,
+                std::chrono::steady_clock::time_point::max(), false);
+        assert(result.status == S::CLEARANCE_MARGIN && !result.safe());
+        assert(!result.used_clearance_escape && !result.hard_checks_complete);
+        emit("wide_prefix_ordinary_rejected", map, result);
+        ++cases;
+    }
+    {
+        Map map;
+        map.wide_prefix_margin = true;
+        const auto result = run(map, ordinary, 1.0,
+                std::chrono::steady_clock::time_point::max(), true);
+        assert(result.status == S::SAFE && result.safe());
+        assert(result.used_clearance_escape && result.hard_checks_complete);
+        assert(result.clearance_escape_completed_tt > 0.6 &&
+               result.clearance_escape_completed_tt < 1.0);
+        emit("wide_prefix_certified_recovery_egress", map, result);
         ++cases;
     }
     {

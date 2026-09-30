@@ -135,11 +135,16 @@ namespace super_planner {
         // A start-adjacent rejected route can lie inside the gap deliberately
         // left between the stopped vehicle and the first virtual blocker. In
         // that case, make a bounded sequence of short rest-to-rest moves from
-        // the eight horizontal alternatives, ordered by waypoint progress,
-        // before rebuilding topology. The unchanged trajectory and
-        // stop-viability guards still decide whether any may be committed.
+        // the horizontal alternatives, ordered by waypoint progress, before
+        // rebuilding topology. Dense multi-obstacle pockets can require a
+        // longer certified departure than one inflation diameter, so an
+        // opt-in maximum and bounded number of distance steps are supported.
+        // The unchanged trajectory and stop-viability guards still decide
+        // whether any candidate may be committed.
         bool guard_topology_local_escape_en{false};
         double guard_topology_local_escape_distance_m{0.6};
+        double guard_topology_local_escape_max_distance_m{0.6};
+        int guard_topology_local_escape_distance_steps{1};
         int guard_topology_local_escape_attempts{4};
         // Recovery budgets belong to one stopped-location episode, not one
         // short committed trajectory. Reset those budgets only after the
@@ -323,6 +328,12 @@ namespace super_planner {
                     "super_planner/guard_topology_reroute/local_escape_distance_m",
                     guard_topology_local_escape_distance_m, 0.6);
             loader.LoadParam(
+                    "super_planner/guard_topology_reroute/local_escape_max_distance_m",
+                    guard_topology_local_escape_max_distance_m, 0.6);
+            loader.LoadParam(
+                    "super_planner/guard_topology_reroute/local_escape_distance_steps",
+                    guard_topology_local_escape_distance_steps, 1);
+            loader.LoadParam(
                     "super_planner/guard_topology_reroute/local_escape_attempts",
                     guard_topology_local_escape_attempts, 4);
             loader.LoadParam(
@@ -411,6 +422,11 @@ namespace super_planner {
                     guard_topology_vertical_recovery_trigger_distance_m);
             guard_topology_local_escape_distance_m = std::max(
                     resolution, guard_topology_local_escape_distance_m);
+            guard_topology_local_escape_max_distance_m = std::max(
+                    guard_topology_local_escape_distance_m,
+                    guard_topology_local_escape_max_distance_m);
+            guard_topology_local_escape_distance_steps = std::clamp(
+                    guard_topology_local_escape_distance_steps, 1, 4);
             guard_topology_local_escape_attempts = std::max(
                     0, guard_topology_local_escape_attempts);
             guard_topology_episode_progress_reset_m = std::max(

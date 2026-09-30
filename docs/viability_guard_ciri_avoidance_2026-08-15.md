@@ -7281,3 +7281,93 @@ replacement campaign with the fresh no-cutoff Forest and Urban cohorts yields
 69/70 completion and1/70 contact for canonical Active-Yaw Sector. This composite
 was assembled from three independent campaigns and is not a single paired or
 preregistered70-run experiment.
+
+### 8.120 Forest Full dense-pocket egress correction and fresh validation (2026-09-30)
+
+The Forest Full long-tail investigation began from retained run94691: it
+stopped at waypoint1/5 after180.01s without physical contact, near
+`(8.437,18.735,1.882)`. A* repeatedly returned NO_PATH while short local
+recovery rays were rejected. The first defect was in the trajectory validator:
+a physically contact-free certified recovery could leave a conservative
+inflated-clearance pocket only while it remained in the starting voxel
+cluster. In a multi-trunk pocket that cluster ended before the candidate
+reached a continuous free tail. The validator now permits only explicitly
+tagged certified local/vertical recovery candidates to traverse a bounded
+soft-clearance prefix. Raw occupied voxels, configured unknown space, map
+bounds, map version, deadline, terminal free tail and stop viability remain
+hard checks. Ordinary trajectories retain the prior rejection behavior.
+
+An exact extracted-production-validator test covers ten cases. It demonstrates
+that an ordinary wide-prefix trajectory is rejected while the explicitly
+certified recovery is accepted, and independently retains rejection of a
+later occupied voxel, unknown voxel, out-of-map point, version change and
+deadline overrun. The test passed10/10 after the final code change.
+
+That first correction did not close the finite objective. Fresh Full runs
+95101--95110 completed9/10 with zero contacts. Retained run95109 made one0.6m
+local escape and2.053m of progress, but at the next dense pocket every one of
+the sixteen0.6m directions was rejected; a later vertical recovery also did
+not restore a path. It ended at180.01s and was not retried or replaced. This
+separated the validator defect from a second design limitation: one fixed
+escape length can terminate inside the same inflated pocket even when a
+longer contact-free ray could reach its free tail.
+
+The final correction keeps the existing0.6m distance as the first choice and
+adds two default-compatible parameters: `local_escape_max_distance_m`
+(default0.6m) and `local_escape_distance_steps` (default1, clamped1--4). Only
+the current three near-hit profiles opt into0.6--1.2m with two steps. At each
+distance the same sixteen directions are checked in the same goal-progress
+order; the next distance is considered only after the shorter tier is fully
+rejected. Candidate duration is recomputed per distance, the recovery episode
+budget is unchanged, and every commit still uses the unchanged geometry and
+viability certificates. Full, Sector and Adaptive near-hit profiles receive
+the identical schedule.
+
+The profile admission checker was extended so the three new profile inputs
+(near-hit0.1m, escape maximum1.2m and two steps) are the only admitted
+differences from the frozen bases. During validation an important build/runtime
+error was also caught: rebuilding only `super_planner` updates `libsuper.a`,
+but `perfect_drone_full_node` statically links that archive. Four preliminary
+flights therefore still used the old executable and are excluded from the new
+cohort. The integrated `perfect_drone_sim` target was rebuilt and its startup
+log then loaded0.6m,1.2m and2 steps. The runtime audit now requires those exact
+load records, preventing a YAML-only update from qualifying again. A separate
+postprocessor working-directory error produced one successful but incomplete
+report and was also excluded before the fresh cohort began.
+
+Runs95401--95410 form the fresh primary Forest Full cohort. All10 completed,
+all10 had zero static-PCD contact, mission time was59.421+/-4.560s with range
+53.04--65.89s, and minimum body clearance was0.165m. Mean end-to-end compute
+was0.827954 cores and50.903403core-s/run; planner ingress was10.303542MiB/s and
+613.403381MiB/run, and map computation was36.322434ms/frame. Run95405 exercised
+natural local recovery, rejected eight short directions, committed0.6m
+direction9/16 and completed contact-free. Each of the ten logs loaded the new
+two-distance contract exactly once.
+
+Run95408 is retained with a quality qualification: it completed without
+contact, but one odometry receipt interval was58.572ms and exceeded the
+existing50ms engineering limit; its p99 was10.567ms. Thus the primary cohort
+is10/10 for observed mission behavior and9/10 for strict timing quality.
+Declared supplemental run95411 completed in61.77s without contact and passed
+all timing checks. It is reported separately, not substituted silently for
+run95408. Across all retained flights the descriptive behavior is11/11
+complete and0/11 contact, with10/11 strict timing-valid.
+
+Because no ordinary run reached the second distance, a default-off one-shot
+regression hook forced only that branch in run95501. It skipped all sixteen
+0.6m trials, then the real guard+viability path certified and committed
+distance step2/2 at1.2m, after which the G1 Full mission completed in48.72s
+with contact0,0.288m minimum clearance, valid speed/resources/logs and valid
+timing. The hook is absent from production profiles and is inert unless its
+environment variable is explicitly set.
+
+This closes the two observed Forest Full mechanisms in the finite tests, but
+does not prove population or real-world100% completion. The new primary cohort
+is unpaired with the earlier failure and must not erase the retained9/10
+cohort. Since all three current near-hit profiles explicitly opt into the new
+schedule, any final seven-map Full/Sector/Adaptive table must come from a fresh
+common campaign rather than mixing these Full-only diagnostics with frozen
+Sector/Adaptive rows. Compact evidence is under
+`results/forest_full_soft_egress_n10_20260930/`,
+`results/forest_full_multidistance_n10_v3_20260930/` and
+`results/forest_full_multidistance_forced_second_distance_20260930/`.

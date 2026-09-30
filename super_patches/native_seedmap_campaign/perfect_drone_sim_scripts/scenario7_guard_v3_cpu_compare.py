@@ -34,17 +34,34 @@ def selected_install(value=None):
 
 
 def validate_profile_pair(original, candidate):
-    """Exactly one added YAML key; all legacy profile bytes remain intact."""
-    matches = list(re.finditer(r'^    occupancy_only_min_range: 0\.1(?:[ \t]+#[^\r\n]*)?\r?\n', candidate, re.M))
-    if len(matches) != 1:
-        raise ValueError('Near-hit profile requires exactly one explicit 0.1 m key')
-    match = matches[0]
-    if candidate[:match.start()] + candidate[match.end():] != original:
-        raise ValueError('Near-hit profile changed an input beyond the added key')
+    """Admit only the documented near-hit and bounded escape additions."""
+    additions = (
+        (r'^    occupancy_only_min_range: 0\.1(?:[ \t]+#[^\r\n]*)?\r?\n',
+         'Near-hit profile requires exactly one explicit 0.1 m key'),
+        (r'^    local_escape_max_distance_m: 1\.20(?:[ \t]+#[^\r\n]*)?\r?\n',
+         'Near-hit profile requires exactly one 1.20 m escape maximum'),
+        (r'^    local_escape_distance_steps: 2(?:[ \t]+#[^\r\n]*)?\r?\n',
+         'Near-hit profile requires exactly two bounded escape distances'),
+    )
+    stripped = candidate
+    for pattern, error in additions:
+        stripped, count = re.subn(pattern, '', stripped, count=1, flags=re.M)
+        if count != 1 or re.search(pattern, stripped, re.M):
+            raise ValueError(error)
+    if stripped != original:
+        raise ValueError(
+            'Near-hit profile changed an input beyond the admitted additions')
     before, after = yaml.safe_load(original), yaml.safe_load(candidate)
     ray = after['rog_map']['raycasting']
-    if ray.pop('occupancy_only_min_range', None) != 0.1 or before != after:
+    reroute = after['super_planner']['guard_topology_reroute']
+    if ray.pop('occupancy_only_min_range', None) != 0.1:
         raise ValueError('Near-hit key must be nested under rog_map/raycasting')
+    if reroute.pop('local_escape_max_distance_m', None) != 1.2 or \
+       reroute.pop('local_escape_distance_steps', None) != 2:
+        raise ValueError(
+            'Bounded escape additions must be nested under guard_topology_reroute')
+    if before != after:
+        raise ValueError('Profile semantic diff exceeds admitted additions')
     if ray.get('enable') is not False or ray.get('ray_range', [None])[0] != 0.5:
         raise ValueError('Legacy occupancy-only mode and 0.5 m ray range must stay unchanged')
     return True
@@ -73,6 +90,8 @@ def profile_admission(profiles, map_name, install_root, *, source=SOURCE, mirror
     hashes[str(sensor)] = sha(sensor)
     return dict(schema='scenario7-nearfield-async-inputs-v3', async_generate_trajectory=True,
                 occupancy_only_min_range_m=0.1, legacy_ray_range_min_m=0.5,
+                local_escape_distance_range_m=[0.6, 1.2],
+                local_escape_distance_steps=2,
                 sensor_blind_m=0.1, profiles=rows, assets_sha256=hashes)
 
 
@@ -95,9 +114,27 @@ def runtime_audit(stack):
                 near_valid = near_valid and math.isfinite(value) and value == expected
             except ValueError:
                 near_valid = False
-    return dict(valid=async_valid and near_valid, async_records=records,
-                near_range_records=near_records, checks=dict(
-                    async_generate_enabled_once=async_valid, near_range_loaded_0_1=near_valid))
+    escape_param_records = {}
+    escape_param_valid = True
+    for name, expected in {
+        'super_planner/guard_topology_reroute/local_escape_max_distance_m': 1.2,
+        'super_planner/guard_topology_reroute/local_escape_distance_steps': 2.0,
+    }.items():
+        values = re.findall(
+            r'Load param ' + re.escape(name) + r' success:\s*([^\s]+)', clean)
+        escape_param_records[name] = values
+        try:
+            value = float(values[0]) if len(values) == 1 else math.nan
+            escape_param_valid = (escape_param_valid and
+                                  math.isfinite(value) and value == expected)
+        except ValueError:
+            escape_param_valid = False
+    return dict(valid=async_valid and near_valid and escape_param_valid,
+                async_records=records, near_range_records=near_records,
+                escape_param_records=escape_param_records, checks=dict(
+                    async_generate_enabled_once=async_valid,
+                    near_range_loaded_0_1=near_valid,
+                    bounded_escape_parameters_loaded=escape_param_valid))
 
 
 def adapt_main(source):

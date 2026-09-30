@@ -219,6 +219,7 @@ namespace super_planner {
         // a production profile and is consumed only once per planner process.
         bool guard_test_local_escape_injected_{false};
         bool guard_test_local_escape_skip_first_direction_{false};
+        bool guard_test_local_escape_skip_first_distance_{false};
         bool guard_test_initial_footprint_egress_injected_{false};
         // -1 means the environment-gated regression hook has not been
         // inspected yet; zero means disabled or fully consumed.
@@ -399,7 +400,8 @@ namespace super_planner {
                         std::chrono::steady_clock::time_point::max(),
                 const initial_egress::Receipt *egress_receipt = nullptr,
                 stop_margin::ValidationPolicy margin_policy =
-                        stop_margin::ValidationPolicy::RejectImmediately) const;
+                        stop_margin::ValidationPolicy::RejectImmediately,
+                bool allow_bounded_soft_margin_egress = false) const;
 
         TrajectorySafetyResult validateCommittedTrajectory(
                 double now_wt,
