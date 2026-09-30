@@ -1,0 +1,658 @@
+{
+  "canonical_sector_result": false,
+  "classification": "legacy_body_forward_fixed_sector_ablation_only",
+  "superseded_by": "results/urban_active_yaw_default_no_mission_timeout_n10_20260930",
+  "schema": "urban-sector-no-mission-cutoff-replacement-v1",
+  "audit": {
+    "passed": true,
+    "new_sector_rows": 10,
+    "unique_run_ids": 10,
+    "attempt_count_each": 1,
+    "retry_count_total": 0,
+    "infrastructure_failure_rows": 0,
+    "invalid_rows": 0,
+    "frozen_asset_verification": {
+      "reference_plan": "/root/super-sector-filter/results/scenario7_velocity_centered_v12_n10_20260928/stage1/urban_blocks_u01/r01_run92115/plan.json",
+      "checked_files": 652,
+      "failures": [],
+      "passed": true
+    }
+  },
+  "replacement_policy": {
+    "urban_full_source": "/root/super-sector-filter/results/scenario7_velocity_centered_v12_n10_20260928/paper_audit_20260929/canonical_210_rows.csv",
+    "urban_adaptive_source": "/root/super-sector-filter/results/scenario7_velocity_centered_v12_n10_20260928/paper_audit_20260929/canonical_210_rows.csv",
+    "urban_sector_source": "/root/super-sector-filter/results/urban_fixed_sector_no_mission_timeout_n10_20260930",
+    "urban_sector_mission_time_cutoff_s": null,
+    "urban_sector_event_terminal": {
+      "stationary_window_s": 60.0,
+      "position_radius_m": 0.02
+    },
+    "paired_tests_valid_after_replacement": false,
+    "reason": "The replacement Sector run IDs are not paired with the retained Full/Adaptive triplets and use a different terminal protocol."
+  },
+  "urban": {
+    "outcomes": {
+      "full": {
+        "completion": {
+          "successes": 10,
+          "trials": 10,
+          "pct": 100.0,
+          "ci95_pct": [
+            69.15028921812392,
+            100.0
+          ]
+        },
+        "contact_runs": {
+          "successes": 0,
+          "trials": 10,
+          "pct": 0.0,
+          "ci95_pct": [
+            0.0,
+            30.849710781876063
+          ]
+        },
+        "safe_completion": {
+          "successes": 10,
+          "trials": 10,
+          "pct": 100.0,
+          "ci95_pct": [
+            69.15028921812392,
+            100.0
+          ]
+        }
+      },
+      "sector": {
+        "completion": {
+          "successes": 3,
+          "trials": 10,
+          "pct": 30.0,
+          "ci95_pct": [
+            6.673951117773447,
+            65.2452850059997
+          ]
+        },
+        "contact_runs": {
+          "successes": 3,
+          "trials": 10,
+          "pct": 30.0,
+          "ci95_pct": [
+            6.673951117773447,
+            65.2452850059997
+          ]
+        },
+        "safe_completion": {
+          "successes": 3,
+          "trials": 10,
+          "pct": 30.0,
+          "ci95_pct": [
+            6.673951117773447,
+            65.2452850059997
+          ]
+        }
+      },
+      "adaptive": {
+        "completion": {
+          "successes": 10,
+          "trials": 10,
+          "pct": 100.0,
+          "ci95_pct": [
+            69.15028921812392,
+            100.0
+          ]
+        },
+        "contact_runs": {
+          "successes": 0,
+          "trials": 10,
+          "pct": 0.0,
+          "ci95_pct": [
+            0.0,
+            30.849710781876063
+          ]
+        },
+        "safe_completion": {
+          "successes": 10,
+          "trials": 10,
+          "pct": 100.0,
+          "ci95_pct": [
+            69.15028921812392,
+            100.0
+          ]
+        }
+      }
+    },
+    "metrics": {
+      "mission_time_s": {
+        "unit": "s/run",
+        "full": {
+          "n": 10,
+          "mean": 48.321,
+          "sd": 1.4928455304477348,
+          "median": 48.504999999999995,
+          "min": 45.89,
+          "max": 50.99,
+          "reduction_vs_full_pct": 0.0
+        },
+        "sector": {
+          "n": 10,
+          "mean": 76.675,
+          "sd": 19.84569376744263,
+          "median": 78.595,
+          "min": 51.28,
+          "max": 106.66,
+          "reduction_vs_full_pct": -58.6784213902858
+        },
+        "adaptive": {
+          "n": 10,
+          "mean": 51.303,
+          "sd": 4.534490171023763,
+          "median": 50.43,
+          "min": 47.53,
+          "max": 63.71,
+          "reduction_vs_full_pct": -6.171229900043458
+        }
+      },
+      "mean_cpu_cores": {
+        "unit": "cores",
+        "full": {
+          "n": 10,
+          "mean": 0.6984816458678782,
+          "sd": 0.02457601561975356,
+          "median": 0.692734123795065,
+          "min": 0.6623833833281109,
+          "max": 0.7558605110127634,
+          "reduction_vs_full_pct": 0.0
+        },
+        "sector": {
+          "n": 10,
+          "mean": 0.36523438941298736,
+          "sd": 0.07986271508299192,
+          "median": 0.33364592415536665,
+          "min": 0.2789818200052182,
+          "max": 0.4829114277105875,
+          "reduction_vs_full_pct": 47.710238118114624
+        },
+        "adaptive": {
+          "n": 10,
+          "mean": 0.5108990240248923,
+          "sd": 0.019126357712846452,
+          "median": 0.5101624286128456,
+          "min": 0.47981090555395534,
+          "max": 0.5404230650289005,
+          "reduction_vs_full_pct": 26.855769647305554
+        }
+      },
+      "host_capacity_pct": {
+        "unit": "% of host",
+        "full": {
+          "n": 10,
+          "mean": 3.4924082293393908,
+          "sd": 0.12288007809876783,
+          "median": 3.4636706189753252,
+          "min": 3.311916916640554,
+          "max": 3.779302555063817,
+          "reduction_vs_full_pct": 0.0
+        },
+        "sector": {
+          "n": 10,
+          "mean": 1.8261719470649367,
+          "sd": 0.3993135754149596,
+          "median": 1.6682296207768332,
+          "min": 1.3949091000260911,
+          "max": 2.4145571385529374,
+          "reduction_vs_full_pct": 47.710238118114624
+        },
+        "adaptive": {
+          "n": 10,
+          "mean": 2.5544951201244612,
+          "sd": 0.09563178856423225,
+          "median": 2.5508121430642277,
+          "min": 2.399054527769777,
+          "max": 2.7021153251445025,
+          "reduction_vs_full_pct": 26.855769647305557
+        }
+      },
+      "total_cpu_core_s": {
+        "unit": "core-s/run",
+        "full": {
+          "n": 10,
+          "mean": 37.0232824,
+          "sd": 1.5842182665851456,
+          "median": 36.667593499999995,
+          "min": 35.503123,
+          "max": 40.771682,
+          "reduction_vs_full_pct": 0.0
+        },
+        "sector": {
+          "n": 10,
+          "mean": 27.91138,
+          "sd": 5.467213318568164,
+          "median": 27.469364,
+          "min": 19.975778,
+          "max": 36.711968,
+          "reduction_vs_full_pct": 24.611276497731595
+        },
+        "adaptive": {
+          "n": 10,
+          "mean": 28.6273548,
+          "sd": 3.0230524432959327,
+          "median": 28.19408,
+          "min": 25.681244,
+          "max": 36.60487,
+          "reduction_vs_full_pct": 22.67742635374761
+        }
+      },
+      "input_bandwidth_mib_s": {
+        "unit": "MiB/s",
+        "full": {
+          "n": 10,
+          "mean": 11.63810942282887,
+          "sd": 0.3103362739625347,
+          "median": 11.68160556138122,
+          "min": 11.166146348979572,
+          "max": 12.021031265193356,
+          "reduction_vs_full_pct": 0.0
+        },
+        "sector": {
+          "n": 10,
+          "mean": 3.313104725821834,
+          "sd": 2.434029337917591,
+          "median": 3.202226896198702,
+          "min": 0.7107003330344563,
+          "max": 7.3343017781309445,
+          "reduction_vs_full_pct": 71.53227723290713
+        },
+        "adaptive": {
+          "n": 10,
+          "mean": 3.3583214973132676,
+          "sd": 0.24410729117013583,
+          "median": 3.3247444010111575,
+          "min": 3.072643783389675,
+          "max": 3.9124294682773537,
+          "reduction_vs_full_pct": 71.14375389248606
+        }
+      },
+      "total_input_mib_run": {
+        "unit": "MiB/run",
+        "full": {
+          "n": 10,
+          "mean": 562.3141506195068,
+          "sd": 21.531036325725317,
+          "median": 559.976490020752,
+          "min": 533.6590633392334,
+          "max": 589.9906330108643,
+          "reduction_vs_full_pct": 0.0
+        },
+        "sector": {
+          "n": 10,
+          "mean": 246.11673583984376,
+          "sd": 203.62461520231204,
+          "median": 174.24200439453125,
+          "min": 55.484375,
+          "max": 616.8881225585938,
+          "reduction_vs_full_pct": 56.23145254859857
+        },
+        "adaptive": {
+          "n": 10,
+          "mean": 173.1307912826538,
+          "sd": 28.52452456974041,
+          "median": 167.53278732299805,
+          "min": 150.69625091552734,
+          "max": 249.2608814239502,
+          "reduction_vs_full_pct": 69.21102001578406
+        }
+      },
+      "map_computation_ms_frame": {
+        "unit": "ms/frame",
+        "full": {
+          "n": 10,
+          "mean": 27.609387381675305,
+          "sd": 2.447288706703146,
+          "median": 26.863773071516242,
+          "min": 26.26818426386233,
+          "max": 34.452311811320754,
+          "reduction_vs_full_pct": 0.0
+        },
+        "sector": {
+          "n": 10,
+          "mean": 9.106701834626252,
+          "sd": 2.290126414792932,
+          "median": 10.151220697725154,
+          "min": 4.175206785964912,
+          "max": 10.896695988636363,
+          "reduction_vs_full_pct": 67.01592212556487
+        },
+        "adaptive": {
+          "n": 10,
+          "mean": 11.333782000736939,
+          "sd": 0.7387194413214463,
+          "median": 11.101877718461523,
+          "min": 10.515845788867562,
+          "max": 12.65903495463138,
+          "reduction_vs_full_pct": 58.949534649003795
+        }
+      }
+    },
+    "sector_terminal_counts": {
+      "mission_complete": 3,
+      "persistent_contact_stall": 3,
+      "persistent_no_progress_stall": 4
+    },
+    "sector_completed_mission_time_s": {
+      "n": 3,
+      "mean": 54.39333333333334,
+      "sd": 2.6988948355453437,
+      "median": 55.83,
+      "min": 51.28,
+      "max": 56.07,
+      "reduction_vs_full_pct": null
+    }
+  },
+  "overall_replacement_view": {
+    "full": {
+      "rows": 70,
+      "completion": {
+        "successes": 70,
+        "trials": 70,
+        "pct": 100.0,
+        "ci95_pct": [
+          94.86662028489764,
+          100.0
+        ]
+      },
+      "contact_runs": {
+        "successes": 0,
+        "trials": 70,
+        "pct": 0.0,
+        "ci95_pct": [
+          0.0,
+          5.133379715102373
+        ]
+      },
+      "safe_completion": {
+        "successes": 70,
+        "trials": 70,
+        "pct": 100.0,
+        "ci95_pct": [
+          94.86662028489764,
+          100.0
+        ]
+      },
+      "metrics": {
+        "mission_time_s": {
+          "unit": "s/run",
+          "n": 70,
+          "mean": 52.85457142857143,
+          "sd": 11.132395563089053,
+          "median": 49.58,
+          "min": 42.9,
+          "max": 109.71,
+          "reduction_vs_full_pct": 0.0
+        },
+        "mean_cpu_cores": {
+          "unit": "cores",
+          "n": 70,
+          "mean": 0.6980581738732555,
+          "sd": 0.034419356954318546,
+          "median": 0.6911548315410057,
+          "min": 0.6238609384879679,
+          "max": 0.8234840784839106,
+          "reduction_vs_full_pct": 0.0
+        },
+        "host_capacity_pct": {
+          "unit": "% of host",
+          "n": 70,
+          "mean": 3.4902908693662775,
+          "sd": 0.17209678477159276,
+          "median": 3.4557741577050285,
+          "min": 3.1193046924398393,
+          "max": 4.117420392419553,
+          "reduction_vs_full_pct": 0.0
+        },
+        "total_cpu_core_s": {
+          "unit": "core-s/run",
+          "n": 70,
+          "mean": 39.600553257142856,
+          "sd": 7.070427908919928,
+          "median": 37.369816,
+          "min": 30.677799,
+          "max": 71.223909,
+          "reduction_vs_full_pct": 0.0
+        },
+        "input_bandwidth_mib_s": {
+          "unit": "MiB/s",
+          "n": 70,
+          "mean": 11.256025256092718,
+          "sd": 0.7953440863415253,
+          "median": 11.185704685352988,
+          "min": 9.898107203078064,
+          "max": 14.755626650997918,
+          "reduction_vs_full_pct": 0.0
+        },
+        "total_input_mib_run": {
+          "unit": "MiB/run",
+          "n": 70,
+          "mean": 601.2328996930804,
+          "sd": 185.13503670467549,
+          "median": 549.2871618270874,
+          "min": 451.9561367034912,
+          "max": 1618.8397998809814,
+          "reduction_vs_full_pct": 0.0
+        },
+        "map_computation_ms_frame": {
+          "unit": "ms/frame",
+          "n": 70,
+          "mean": 26.043119511399926,
+          "sd": 2.883028329508292,
+          "median": 25.678175758894362,
+          "min": 19.158598098455595,
+          "max": 35.48898374792704,
+          "reduction_vs_full_pct": 0.0
+        }
+      }
+    },
+    "sector": {
+      "rows": 70,
+      "completion": {
+        "successes": 60,
+        "trials": 70,
+        "pct": 85.71428571428571,
+        "ci95_pct": [
+          75.29317522496477,
+          92.93095457331302
+        ]
+      },
+      "contact_runs": {
+        "successes": 6,
+        "trials": 70,
+        "pct": 8.571428571428571,
+        "ci95_pct": [
+          3.2107636155695394,
+          17.72859190971917
+        ]
+      },
+      "safe_completion": {
+        "successes": 60,
+        "trials": 70,
+        "pct": 85.71428571428571,
+        "ci95_pct": [
+          75.29317522496477,
+          92.93095457331302
+        ]
+      },
+      "metrics": {
+        "mission_time_s": {
+          "unit": "s/run",
+          "n": 70,
+          "mean": 62.80957142857143,
+          "sd": 29.04467889781935,
+          "median": 51.86,
+          "min": 42.66,
+          "max": 180.01,
+          "reduction_vs_full_pct": -18.834700066489717
+        },
+        "mean_cpu_cores": {
+          "unit": "cores",
+          "n": 70,
+          "mean": 0.4670511061954997,
+          "sd": 0.05937078078595548,
+          "median": 0.4829717434343411,
+          "min": 0.2789818200052182,
+          "max": 0.5432931164845021,
+          "reduction_vs_full_pct": 33.09281035934107
+        },
+        "host_capacity_pct": {
+          "unit": "% of host",
+          "n": 70,
+          "mean": 2.3352555309774985,
+          "sd": 0.2968539039297774,
+          "median": 2.4148587171717057,
+          "min": 1.3949091000260911,
+          "max": 2.7164655824225106,
+          "reduction_vs_full_pct": 33.09281035934107
+        },
+        "total_cpu_core_s": {
+          "unit": "core-s/run",
+          "n": 70,
+          "mean": 29.99351467142857,
+          "sd": 10.092980293935868,
+          "median": 27.2542925,
+          "min": 19.975778,
+          "max": 74.991802,
+          "reduction_vs_full_pct": 24.259859510880542
+        },
+        "input_bandwidth_mib_s": {
+          "unit": "MiB/s",
+          "n": 70,
+          "mean": 3.2910800094612758,
+          "sd": 1.0737651168591675,
+          "median": 3.1683777632695485,
+          "min": 0.7107003330344563,
+          "max": 7.3343017781309445,
+          "reduction_vs_full_pct": 70.76161491659889
+        },
+        "total_input_mib_run": {
+          "unit": "MiB/run",
+          "n": 70,
+          "mean": 220.45095476422992,
+          "sd": 203.6299171597452,
+          "median": 161.73748779296875,
+          "min": 55.484375,
+          "max": 1206.3772277832031,
+          "reduction_vs_full_pct": 63.33351769725733
+        },
+        "map_computation_ms_frame": {
+          "unit": "ms/frame",
+          "n": 70,
+          "mean": 8.607969166518563,
+          "sd": 1.4038055688494904,
+          "median": 8.833620274668368,
+          "min": 3.137714387220098,
+          "max": 10.896695988636363,
+          "reduction_vs_full_pct": 66.94724238872163
+        }
+      }
+    },
+    "adaptive": {
+      "rows": 70,
+      "completion": {
+        "successes": 70,
+        "trials": 70,
+        "pct": 100.0,
+        "ci95_pct": [
+          94.86662028489764,
+          100.0
+        ]
+      },
+      "contact_runs": {
+        "successes": 0,
+        "trials": 70,
+        "pct": 0.0,
+        "ci95_pct": [
+          0.0,
+          5.133379715102373
+        ]
+      },
+      "safe_completion": {
+        "successes": 70,
+        "trials": 70,
+        "pct": 100.0,
+        "ci95_pct": [
+          94.86662028489764,
+          100.0
+        ]
+      },
+      "metrics": {
+        "mission_time_s": {
+          "unit": "s/run",
+          "n": 70,
+          "mean": 55.332857142857144,
+          "sd": 7.544673549253361,
+          "median": 53.64,
+          "min": 45.89,
+          "max": 86.62,
+          "reduction_vs_full_pct": -4.6888767561665095
+        },
+        "mean_cpu_cores": {
+          "unit": "cores",
+          "n": 70,
+          "mean": 0.5136457317546198,
+          "sd": 0.019217411159557777,
+          "median": 0.5107607712606145,
+          "min": 0.477052377997587,
+          "max": 0.5635609687059311,
+          "reduction_vs_full_pct": 26.417918881373772
+        },
+        "host_capacity_pct": {
+          "unit": "% of host",
+          "n": 70,
+          "mean": 2.5682286587730987,
+          "sd": 0.09608705579778888,
+          "median": 2.5538038563030723,
+          "min": 2.3852618899879348,
+          "max": 2.817804843529655,
+          "reduction_vs_full_pct": 26.41791888137378
+        },
+        "total_cpu_core_s": {
+          "unit": "core-s/run",
+          "n": 70,
+          "mean": 30.46005037142857,
+          "sd": 4.364061834799429,
+          "median": 29.060146000000003,
+          "min": 23.690159,
+          "max": 44.867265,
+          "reduction_vs_full_pct": 23.081755515790906
+        },
+        "input_bandwidth_mib_s": {
+          "unit": "MiB/s",
+          "n": 70,
+          "mean": 3.9309512257074655,
+          "sd": 0.7968898818386738,
+          "median": 3.739446240068104,
+          "min": 2.957287648120478,
+          "max": 8.055318604713497,
+          "reduction_vs_full_pct": 65.07691537401534
+        },
+        "total_input_mib_run": {
+          "unit": "MiB/run",
+          "n": 70,
+          "mean": 222.29107734135218,
+          "sd": 84.0624669002242,
+          "median": 195.97458457946777,
+          "min": 145.9553451538086,
+          "max": 697.7516975402832,
+          "reduction_vs_full_pct": 63.02745949950041
+        },
+        "map_computation_ms_frame": {
+          "unit": "ms/frame",
+          "n": 70,
+          "mean": 11.03950047699956,
+          "sd": 0.7716082209908589,
+          "median": 10.937662056483301,
+          "min": 9.386419373158756,
+          "max": 12.918232821637426,
+          "reduction_vs_full_pct": 57.610683036004154
+        }
+      }
+    }
+  }
+}

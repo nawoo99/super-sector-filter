@@ -1,0 +1,47 @@
+{
+  "canonical_sector_result": false,
+  "classification": "legacy_body_forward_fixed_sector_ablation_only",
+  "superseded_by": "results/urban_active_yaw_default_no_mission_timeout_n10_20260930",
+  "campaign": "urban_fixed_sector_no_mission_timeout_n10_20260930",
+  "reference_campaign": "scenario7_velocity_centered_v12_n10_20260928",
+  "replacement_scope": "urban_blocks_u01 / sector only",
+  "map": "urban_blocks_u01",
+  "mode": "Fixed Sector (legacy body-forward +/-45 deg)",
+  "active_yaw_scan": false,
+  "run_ids": [
+    94401,
+    94402,
+    94403,
+    94404,
+    94405,
+    94406,
+    94407,
+    94408,
+    94409,
+    94410
+  ],
+  "repeats": 10,
+  "attempts_per_flight": 1,
+  "retry": false,
+  "replacement_run": false,
+  "mission_time_cutoff_s": null,
+  "event_terminal": {
+    "kind": "persistent stationary state at one unreached waypoint",
+    "window_s": 60.0,
+    "position_radius_m": 0.02,
+    "contact_classification": "persistent_contact_stall when exact solid clearance <= 0 throughout the stationary window; otherwise persistent_no_progress_stall",
+    "planner_effect": false
+  },
+  "monitor_encoding": "positive infinity; mission completion remains the flight terminal condition",
+  "resource_and_process_integrity_guards": true,
+  "frozen_asset_verification": {
+    "reference_plan": "/root/super-sector-filter/results/scenario7_velocity_centered_v12_n10_20260928/stage1/urban_blocks_u01/r01_run92115/plan.json",
+    "checked_files": 652,
+    "failures": [],
+    "passed": true
+  },
+  "analysis_warning": "This no-timeout Sector cohort is not timeout-matched to the retained v12 Full and Adaptive cohorts, which used a 180 s mission cutoff.",
+  "existing_flight_policy": "Never re-fly a completed observation after a post-flight-only infrastructure failure; admit it only after raw/monitor/solid-audit/performance evidence checks all pass.",
+  "status": "complete",
+  "observed_flights": 10
+}

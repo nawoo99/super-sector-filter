@@ -1,6 +1,38 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-09-30 최신: `Sector` 기본 실행을 Active-Yaw로 승격하고 Urban 무제한 fresh n=10 재검증.**
+> 공통 `scenario7_guard_v6_cpu_compare.py`가 이제 mode=sector일 때 Active-Yaw와
+> zero-return heartbeat를 강제하고 Active-Yaw 설치본을 선택한다. 설치 바이너리/헤더
+> 계약은 각 ROS launch 전에 검사하며, 비행 뒤 `ACTIVE_YAW_SCAN enabled=true`와 전체
+> source audit가 없으면 결과를 거부한다. 새 run94501--94510은 비행당1회·retry0,
+> mission cutoff 없음으로10/10 완주·접촉0, 시간78.075±9.229초였다. 평균CPU
+> 0.41935코어, 누적33.622core-s, 입력2.552MiB/s·198.363MiB/run,
+> map update10.696ms/frame이며 Active-Yaw ARM/READY는96/96이었다. Map1--5 기존
+> 50회와 Forest 두 cohort70회도 전수 확인해70/70이 실제 Active-Yaw runtime
+> contract를 통과했다. 단 Map3의 기존1/10 접촉과 Forest 첫 cohort의1/10 접촉·6/10
+> 완주는 보존하며, post-stop yaw가 주행 중 blind-side braking을 보장하지 못한다는
+> 한계도 유지한다. Map1--5+fresh Forest+fresh Urban의 현재 descriptive composite는
+> Sector69/70 완주·접촉1/70이지만 서로 독립인3개 campaign의 결합값이다. 상세 §8.119와
+> `results/urban_active_yaw_default_no_mission_timeout_n10_20260930/summary.md`.
+
+> [!IMPORTANT]
+> **2026-09-30 정정: Urban legacy Fixed Sector n=10은 기본 Sector 결과가 아니라 잘못 실행된 ablation.**
+> v12의 보존 바이너리641개와 Urban PCD/mission/config SHA를 재검증한 뒤
+> run94401--94410을 비행당1회·재시도0으로 실행했다. planner/알고리즘/맵은
+> 바꾸지 않았고 mission horizon만 무한대로 두었다. 무한 대기 문제를 피하기 위해
+> 관측기만 동일 미도달 waypoint에서2cm 이내60초 무이동을 사건 기반 실패로
+> 종단했으며 planner 입력에는 영향이 없다. 결과는3/10 완주, 접촉 주행3/10,
+> 안전 완주3/10. 실패7회는 persistent contact stall3회와 비접촉 no-progress
+> stall4회였다. 완주 run 시간은54.393초, 전체 관측 종료시간은76.675초다.
+> 이 캠페인은 `SUPER_SECTOR_ACTIVE_YAW_SCAN=0`이었으므로 사용자가 지정한 기본
+> Sector가 아니었다. 따라서 Urban 기본표와 7-map 최종표에서 제외하고 legacy
+> fixed-view failure ablation으로만 보존한다. 기존 paired McNemar 검정을 재사용하면
+> 안 되며 원본 v12 결과도 보존한다.
+> 상세 §8.118과
+> `results/urban_fixed_sector_no_mission_timeout_n10_20260930/replacement_summary.md`.
+
+> [!IMPORTANT]
 > **2026-09-29 최신: Forest Active-Yaw Sector의 mission cutoff를 제거한 fresh n=10은 10/10 완주·접촉0.**
 > run94201--94210은 비행당1회, 재시도·대체 없이 실행했고 planner/map/속도/±45도
 > Sector/Active-Yaw는 그대로 두고 mission-time horizon만 무한대로 설정했다. 전 실행이

@@ -7179,3 +7179,105 @@ campaign, or be presented as a population/real-world safety guarantee. A
 causal claim would require paired replay or an observed run that continues
 making progress at180s and completes only after that point. Compact evidence is
 under `results/forest_active_yaw_no_mission_timeout_n10_20260929/`.
+
+### 8.118 Urban legacy Fixed Sector without a mission-time cutoff, n=10 (2026-09-30)
+
+**Correction after audit:** this cohort used the legacy body-forward-only
+Sector with Active-Yaw disabled. It is therefore a legacy ablation, not the
+user-designated canonical Sector result, and is excluded from the current
+Urban and seven-map default tables.
+
+The Urban legacy Fixed Sector was rerun to determine whether its low completion
+rate was merely an artifact of the former180s mission horizon. Before flight,
+all641 files in the preserved v12 overlay and the Urban PCD, geometry, mission
+and planner configuration hashes were checked against the original v12 plan.
+All matched. Runs94401--94410 used the same body-forward45-degree Fixed Sector,
+one attempt per flight and no retry or replacement. No planner, map, mission or
+speed parameter changed. The global mission horizon was positive infinity.
+
+An infinite horizon alone cannot yield ten observations when the controller can
+enter an absorbing stopped state. A measurement-only event terminal was
+therefore enabled in the solid observer: remaining within a2cm ball at the same
+unreached waypoint for60 continuous seconds ends the observation as failure.
+Exact solid clearance throughout that stationary window distinguishes
+`persistent_contact_stall` from `persistent_no_progress_stall`. The observer
+publishes no planner input, does not set the mission completion flag and records
+the terminal context in both native and solid-audit evidence. This is not a
+global mission-time cutoff, but it is a declared operational nonprogress
+criterion and must be reported with the result.
+
+All ten rows passed run, resource, speed, performance-window and solid-audit
+checks. Each has attempt count1 and retry count0. Three runs completed all five
+waypoints and three had solid-obstacle contact. The remaining outcomes were
+three persistent contact stalls and four contact-free no-progress stalls.
+Thus the fresh cohort is3/10 complete,3/10 contact and3/10 safe-complete.
+Completed-run mission time averaged54.393s. The76.675s mean over all ten rows
+is time to completion or declared event terminal, not mean traversal time.
+
+Mean Fixed Sector compute was0.365234 cores,27.911380core-s/run,
+3.313105MiB/s input,246.116736MiB/run and9.106702ms/map frame. Against the
+retained v12 Urban Full means, these correspond to47.7%,24.6%,71.5%,56.2%
+and67.0% reductions. These compute values include failed observations and must
+not be interpreted as successful-trajectory efficiency alone.
+
+The earlier proposal to substitute this cohort into the current Urban table is
+withdrawn. The original v12 archive remains unchanged, and this cohort is kept
+only for fixed-view failure reconstruction. Its run IDs and terminal protocol
+also differ from the retained Full/Adaptive triplets, so the original paired
+McNemar statistics must not be reused. Audited raw rows and the explicit
+`LEGACY_ABLATION_ONLY.md` notice are under
+`results/urban_fixed_sector_no_mission_timeout_n10_20260930/`.
+
+### 8.119 Active-Yaw promoted to canonical Sector and Urban no-cutoff n=10 (2026-09-30)
+
+Following the user decision that every unqualified `Sector` result denotes the
+Active-Yaw variant, the common scenario7 entrypoint was changed rather than
+relying on a special opt-in wrapper. `scenario7_guard_v6_cpu_compare.py` now
+selects the Active-Yaw installation and, for `mode=sector`, sets both
+`SUPER_SECTOR_ACTIVE_YAW_SCAN=1` and
+`SUPER_SECTOR_EMPTY_SCAN_HEARTBEAT=1`. Full and Adaptive set both to zero. The
+historical Active-Yaw wrapper is now a compatibility alias so it cannot apply
+the source transform twice. The C++ policy remains internally default-off;
+the experiment runner defines Active-Yaw as the project-level default Sector.
+
+A fail-fast preflight checks the installed FSM binary for the Active-Yaw,
+ARM, MAP_READY and heartbeat contract markers and checks the installed ROG-Map
+header for the heartbeat implementation before each ROS launch. Post-flight
+acceptance additionally requires exactly one
+`ACTIVE_YAW_SCAN enabled=true ... sequence=stop_yaw_fresh_map_replan` record,
+the Active-Yaw source check, and every inherited source-acquisition check. The
+three existing ActiveYawScanPolicy unit tests pass. Source and mirror copies of
+both runner files have identical SHA-256 values.
+
+Runs94501--94510 form a fresh Urban cohort with one attempt per flight, no
+retry/replacement, and no mission-time cutoff. All ten passed the runtime,
+resource, speed, performance-log and exact-solid-contact audits. Completion was
+10/10, contact0/10 and safe completion10/10. Mission time was
+78.075+/-9.229s. Mean CPU was0.419349 cores, cumulative CPU33.622174core-s/run,
+input2.551861MiB/s and198.362927MiB/run, and map computation
+10.695622ms/frame. Cohort minimum exact solid clearance was0.421203m. Aggregate
+Active-Yaw ARM and fresh-map-ready counts were96 and96; four EXHAUSTED log
+records occurred in two successful flights and are not mission failures.
+
+Against retained, unpaired Urban controls, mean CPU, input bandwidth, total
+input and map computation were lower than Full by39.96%,78.07%,64.72% and
+61.26%; cumulative CPU was lower by9.19%. The Sector mission was61.58% slower
+than Full and52.18% slower than Adaptive. These are descriptive comparisons:
+the new Sector run IDs are not paired to the retained controls, so paired
+McNemar results cannot be reused.
+
+The existing Active-Yaw evidence was also audited directly. All50 Map1--5 rows
+and both ten-run Forest cohorts contain a valid enabled runtime contract and
+source audit. Outcomes remain Map1--5:10/10-0 contact,10/10-0,9/10-1,10/10-0,
+10/10-0; retained Forest first cohort6/10-1; fresh no-cutoff Forest cohort
+10/10-0. Selecting the fresh Forest cohort for a current descriptive table
+does not erase the earlier contact/failure cohort or establish a causal timeout
+effect. Post-stop Active-Yaw still cannot guarantee an unseen swept stopping
+volume. Compact evidence is under
+`results/urban_active_yaw_default_no_mission_timeout_n10_20260930/`.
+
+For a current descriptive view only, combining Map1--5 from the completed
+replacement campaign with the fresh no-cutoff Forest and Urban cohorts yields
+69/70 completion and1/70 contact for canonical Active-Yaw Sector. This composite
+was assembled from three independent campaigns and is not a single paired or
+preregistered70-run experiment.
