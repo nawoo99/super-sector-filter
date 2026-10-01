@@ -7578,5 +7578,46 @@ user's secret entry and test.
 The user subsequently cancelled email notification on 2026-10-01. The email
 watcher was stopped without affecting the campaign process. No credential
 file exists and no email was sent. `email_terminal_status.json` records
-`DISABLED_BY_USER`; the local desktop notification/combined-report watcher
-remains active. Do not restart email monitoring without a new request.
+`DISABLED_BY_USER`; the separate combined-report watcher remained active until
+the campaign reached `COMPLETE`. Do not restart email monitoring without a new
+request.
+
+### 8.126 c40 no-mission-cutoff 210-flight final result (2026-10-01)
+
+The preserved 72 physical flights and 138 newly flown, previously unfilled
+slots are complete. The original stopped campaign and its false-positive
+fixed-count audit verdict remain untouched; the continuation is stored in a
+separate directory. The final event-chain and flight-quality audit passed all
+210 unique map/repeat/mode identities with no retries or replacement flights.
+`status.json` is `COMPLETE` and the combined report watcher generated
+`summary_no_cutoff.md`, `summary_no_cutoff_by_map.csv`, and
+`final_flight_manifest.csv` under
+`results/scenario7_no_mission_cutoff_v14_n10_completion_20261001/`.
+
+| Cohort | Full completion/contact | Active-Yaw Sector completion/contact | Adaptive completion/contact |
+|---|---:|---:|---:|
+| Normal Map1–5 | 50/50, 0/50 | 49/50, 1/50 | 50/50, 0/50 |
+| Urban | 10/10, 0/10 | 10/10, 0/10 | 10/10, 0/10 |
+| Forest | 10/10, 0/10 | 8/10, 0/10 | 10/10, 0/10 |
+| All seven maps | 70/70, 0/70 | 67/70, 1/70 | 70/70, 0/70 |
+
+The three Sector non-completions are Map1 repeat 6 (`persistent_contact_stall`,
+one contact), Forest repeat 5 (`persistent_no_progress_stall`, no contact), and
+Forest repeat 9 (same no-progress terminal, no contact). A contact is an
+independent outcome; it does not automatically redefine completion, although
+the only contact flight here also failed to complete. No flight hit a total
+mission-time cutoff. The declared 60 s/2 cm no-progress observer terminated
+absorbing stalls and counted them as failures, not timed completions.
+
+Across all seven maps, mean CPU was 0.741 Full vs 0.506 Adaptive cores
+(31.8% reduction); CPU per run was 41.84 vs 30.07 core-s (28.1% reduction).
+Planner input was 11.173 vs 3.894 MiB/s (65.1% reduction), total input per run
+580.45 vs 220.24 MiB (62.1% reduction), and map computation 30.83 vs
+12.26 ms/frame (60.2% reduction). Completion-only mean time was 51.90 s Full,
+80.20 s Sector, and 55.20 s Adaptive. The normal-five-map averages are kept
+separate from Urban and Forest in the combined report. These are observed
+simulation results, not a population-level success or collision guarantee.
+
+The local desktop notification attempt failed because `dbus-launch` is absent;
+the report and manifest were nevertheless created. Email notification remains
+disabled by user request, with no sender credential and no email sent.
