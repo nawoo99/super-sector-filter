@@ -7513,3 +7513,36 @@ Sector and Adaptive without contact at 51.92, 108.66 and 51.85 s. Each flight's
 plan recorded an infinite horizon, and each solid audit recorded
 `mission_time_cutoff_s=null` with the 60 s/2 cm terminal enabled. This smoke
 is excluded from the planned 210-flight confirmation cohort.
+
+### 8.124 c40 goal-change audit correction and preserved-slot continuation (2026-10-01)
+
+The new c40 no-cutoff cohort stopped after 24 triplets/72 physical flights at
+Urban repeat4 run96445. All 72 flights actually reached all five waypoints
+without contact and passed run/resource/speed/no-cutoff checks. The Adaptive
+flight at the stop had three, not four, explicit goal-change Full requests.
+Its next waypoint identity appeared while a preceding Full-refresh cycle was
+already open. The same cycle delivered a fresh Full ACK after that goal,
+received the new goal, certified a new path, and then released Sector. Thus
+the inherited four-request counter was an invalid proxy for the intended
+observation-and-certificate requirement, not a navigation failure.
+
+`audit_goal_change_full_refresh_v7.py` checks each later waypoint against an
+ordered new-request or already-open Full cycle, ACK, new-goal receipt, path
+certificate and Sector release. It still rejects missing or duplicate goal
+identity, request sequence disorder, unmatched requests and broken event
+chains. Eight synthetic unit tests pass. A read-only audit of all 72 original
+logs passes; deleting the actual run96445 ACK, path certificate or Sector
+release separately makes the audit reject that log. The original 24 triplet
+results, including their old failing verdict, remain unchanged.
+
+A separate continuation protocol at
+`results/scenario7_no_mission_cutoff_v14_n10_completion_20261001/protocol.json`
+predeclares the original 72 flights and only the 138 unflown slots (46
+triplets). The runner verifies all 41 original frozen file hashes and the
+preserved logs, then freezes the corrected auditor, runner and protocol before
+flying. It keeps the same c40 candidate, maps, mode rotation, integrated
+runtime, per-mode infinite mission horizon, measurement-only 60 s/2 cm
+no-progress terminal, one attempt and no replacement. Original and completion
+results must be combined by planned run ID, never by silently replacing the
+old verdict or re-running the 72 flights. At this writing the continuation is
+in progress; no final 210-flight result is claimed here.
