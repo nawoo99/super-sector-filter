@@ -7480,3 +7480,36 @@ The 210-row provenance and SHA-256 manifest is `final_flight_manifest.csv` in
 that directory; the combined gate is `final_combined_gate.json`. The original
 173-flight read-only verdict comparison is in
 `results/scenario7_bounded_recovery_v13_n10_v2_20260930/posthoc_recovery_audit_v2.md`.
+
+### 8.123 Correction: c39 retained a 180 s mission cutoff; no-cutoff rerun (2026-10-01)
+
+The c39 campaign above is **not** the previously requested no-mission-cutoff
+experiment. Its `effective_run_options` inherited
+`loop_timeout_override=180` from `cylinder_map_search.OPTIONS` in all three
+modes. The solid observer confirms `mission_time_cutoff_s=180` and shows that
+the measurement-only no-progress terminal was disabled. Map4 and Forest Sector
+repeat1 therefore ended at the 180 s observation cutoff. Their c39 completion
+counts and time means must not be described as no-cutoff outcomes. In
+particular, the 68/70 Sector completion count and its duration contrast with
+Adaptive cannot settle the user's requested unlimited-horizon comparison.
+The original c39 evidence remains valid only for its actual finite-180-s
+protocol and is preserved without rewriting or selective deletion.
+
+The corrective c40 protocol is frozen before the fresh 7-map, 3-mode, n10
+campaign under `results/scenario7_no_mission_cutoff_v14_n10_20261001/`.
+It retains the c39 planner, maps, profiles, Active-Yaw default Sector, mode
+rotation, and one-attempt/no-replacement rules. A new child wrapper changes
+only `loop_timeout_override` to positive infinity in Full, Sector and Adaptive.
+It also enables the previously used measurement-only no-progress event:
+60 continuous seconds within a 2 cm position ball at the same unreached
+waypoint terminates a stalled observation as failure. This is not a global
+mission-duration cutoff and publishes no planner input. Every flight is
+audited against its effective options and solid-observer policy; missing or
+finite cutoff evidence blocks the triplet. The c39 archive is not pooled with
+the new cohort.
+
+An independent Map1 three-mode smoke under this new child completed Full,
+Sector and Adaptive without contact at 51.92, 108.66 and 51.85 s. Each flight's
+plan recorded an infinite horizon, and each solid audit recorded
+`mission_time_cutoff_s=null` with the 60 s/2 cm terminal enabled. This smoke
+is excluded from the planned 210-flight confirmation cohort.

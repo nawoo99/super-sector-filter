@@ -1,0 +1,31 @@
+{
+  "schema": "scenario7-no-mission-cutoff-v14-n10-v1",
+  "candidate": "c40_no_mission_cutoff_v14_n10",
+  "status": "predeclared_before_flight",
+  "relationship_to_c39": "fresh campaign; preserve the c39 180-second archive unchanged; no replacement or pooling",
+  "maps": [
+    "gapfree_d1_m01",
+    "gapfree_d1_m02",
+    "gapfree_d1_m03",
+    "gapfree_d1_m04",
+    "gapfree_d1_m05r2",
+    "urban_blocks_u01",
+    "forest_cluster_f01"
+  ],
+  "modes": ["full", "sector", "adaptive"],
+  "sector_definition": "canonical Active-Yaw Sector",
+  "repeats_per_map_mode": 10,
+  "planned_flights": 210,
+  "attempts_per_flight": 1,
+  "retry": false,
+  "replacement": false,
+  "mission_time_cutoff_s": null,
+  "measurement_only_nonprogress_terminal": {
+    "stationary_window_s": 60.0,
+    "position_radius_m": 0.02,
+    "same_unreached_waypoint_required": true,
+    "planner_effect": false,
+    "outcome": "failure, not completion"
+  },
+  "analysis_policy": "report completion, exact solid contact, completed-flight duration, time to nonprogress terminal, CPU and sensor/map metrics separately by map and mode; no substitution from earlier cohorts"
+}
