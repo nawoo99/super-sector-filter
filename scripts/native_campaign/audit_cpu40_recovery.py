@@ -33,11 +33,18 @@ PATTERNS = {
     'fsm_ack': re.compile(
         r'\[FULL_REFRESH_RECOVERY_ACK\] request_seq=(?P<request_seq>\d+) '
         r'stamp_ns=(?P<stamp_ns>\d+) map=(?P<map>\d+) committed=(?P<committed>\d+)'),
+    'escape_hold': re.compile(
+        r'\[EVENT_RECOVERY_ESCAPE_HOLD\] gen=(?P<gen>\d+) map=(?P<map>\d+) '),
+    'escape_release': re.compile(
+        r'\[EVENT_RECOVERY_ESCAPE_RELEASE\] escape_gen=(?P<escape_gen>\d+) '
+        r'current_gen=(?P<current_gen>\d+) map=(?P<map>\d+) '),
 }
 MARKERS = {
     'source': '[SENSOR_ACQUISITION_FRAME]', 'open': '[EVENT_RECOVERY_FULL]',
     'ack': '[EVENT_RECOVERY_MAP_ACK]', 'path': '[EVENT_RECOVERY_PATH_READY]',
     'close': '[EVENT_RECOVERY_SECTOR]', 'fsm_ack': '[FULL_REFRESH_RECOVERY_ACK]',
+    'escape_hold': '[EVENT_RECOVERY_ESCAPE_HOLD]',
+    'escape_release': '[EVENT_RECOVERY_ESCAPE_RELEASE]',
 }
 ROS_TIME = re.compile(r'\[(?:INFO|WARN|ERROR|DEBUG|FATAL)\]\s+\[(\d+(?:\.\d+)?)\]')
 
@@ -54,6 +61,7 @@ def audit_text(text, mode='adaptive', require_all_closed=False):
                   completed_cycles_fresh_full_source=True,
                   completed_cycles_exact_committed_ack=True,
                   completed_cycles_new_certified_path=True,
+                  completed_cycles_superseded_path_chain=True,
                   completed_cycles_timestamp_order=True)
     errors = []
 
@@ -137,16 +145,23 @@ def audit_text(text, mode='adaptive', require_all_closed=False):
         paths = [path for path in records['path']
                  if path['stamp_ns'] == close['stamp_ns'] and
                  path['ack_map'] == close['map']]
-        if len(opens) != 1 or len(acks) != 1 or len(sources) != 1 or len(paths) != 1:
+        if len(opens) != 1 or len(acks) != 1 or len(sources) != 1 or not paths:
             fail('completed_cycles_one_to_one', 'missing_or_ambiguous_episode_record',
                  cycle, opens=len(opens), acks=len(acks), sources=len(sources),
                  paths=len(paths))
             completed.append(dict(cycle=cycle, valid=False, stamp_ns=close['stamp_ns']))
             continue
-        opened, ack, source, path = opens[0], acks[0], sources[0], paths[0]
-        if path['line'] in used_paths:
-            fail('completed_cycles_one_to_one', 'path_certificate_reused', cycle)
-        used_paths.add(path['line'])
+        opened, ack, source = opens[0], acks[0], sources[0]
+        # A guard can certify a second trajectory while an escape-prefix hold
+        # keeps this Full interval open. PATH_READY describes each committed
+        # trajectory, not a unique terminal event for the interval.
+        paths.sort(key=lambda path: (path['ros_time_ns'] is None,
+                                     path['ros_time_ns'] or 0, path['line']))
+        path = paths[-1]
+        for candidate in paths:
+            if candidate['line'] in used_paths:
+                fail('completed_cycles_one_to_one', 'path_certificate_reused', cycle)
+            used_paths.add(candidate['line'])
         if not (source['full'] == 1 and source['cycle'] == cycle and
                 source['frame'] > opened['input_boundary']):
             fail('completed_cycles_fresh_full_source', 'stale_or_wrong_cycle_source',
@@ -156,9 +171,12 @@ def audit_text(text, mode='adaptive', require_all_closed=False):
                 close['map'] > 0 and ack['stamp_ns'] == close['stamp_ns'] and
                 ack['map'] == close['map']):
             fail('completed_cycles_exact_committed_ack', 'ack_or_release_mismatch', cycle)
-        if not (path['generation_after'] > path['generation_before'] and
-                path['certified_map'] >= path['ack_map'] > 0):
-            fail('completed_cycles_new_certified_path', 'invalid_new_path_certificate', cycle)
+        for candidate in paths:
+            if not (candidate['generation_after'] > candidate['generation_before'] and
+                    candidate['certified_map'] >= candidate['ack_map'] > 0):
+                fail('completed_cycles_new_certified_path',
+                     'invalid_new_path_certificate', cycle,
+                     generation_after=candidate['generation_after'])
 
         def ordered(earlier, later, reason):
             if earlier is not None and later is not None and earlier > later:
@@ -170,7 +188,8 @@ def audit_text(text, mode='adaptive', require_all_closed=False):
         ordered(opened['ros_time_ns'], source['stamp_ns'], 'source_before_full_open')
         ordered(source['stamp_ns'], ack['ros_time_ns'], 'ack_before_observation')
         ordered(ack['ros_time_ns'], close['ros_time_ns'], 'sector_before_frontend_ack')
-        ordered(path['ros_time_ns'], close['ros_time_ns'], 'sector_before_path')
+        for candidate in paths:
+            ordered(candidate['ros_time_ns'], close['ros_time_ns'], 'sector_before_path')
         # Frontend ACK and FSM ACK subscriptions can be delivered in either
         # order. An exact committed FSM ACK can establish ACK-before-path even
         # when the frontend's own MAP_ACK log is later than PATH_READY.
@@ -182,15 +201,61 @@ def audit_text(text, mode='adaptive', require_all_closed=False):
                            if item['ros_time_ns'] is not None]
         earliest_ack = min(known_ack_times) if known_ack_times else None
         ordered(source['stamp_ns'], earliest_ack, 'committed_ack_before_observation')
-        ordered(earliest_ack, path['ros_time_ns'], 'path_before_committed_ack')
+        for candidate in paths:
+            ordered(earliest_ack, candidate['ros_time_ns'],
+                    'path_before_committed_ack')
+        if len(paths) > 1:
+            # A later certificate must supersede, not duplicate or roll back,
+            # the earlier one. The final escape release identifies the path
+            # actually in force when the frontend returns to Sector.
+            holds = [item for item in records['escape_hold']
+                     if item['ros_time_ns'] is not None and
+                     opened['ros_time_ns'] is not None and
+                     close['ros_time_ns'] is not None and
+                     opened['ros_time_ns'] <= item['ros_time_ns'] <= close['ros_time_ns']]
+            releases = [item for item in records['escape_release']
+                        if item['ros_time_ns'] is not None and
+                        opened['ros_time_ns'] is not None and
+                        close['ros_time_ns'] is not None and
+                        opened['ros_time_ns'] <= item['ros_time_ns'] <= close['ros_time_ns']]
+            chain_valid = all(candidate['request_seq'] == path['request_seq'] and
+                              candidate['stamp_ns'] == ack['stamp_ns'] and
+                              candidate['ack_map'] == ack['map'] and
+                              candidate['ros_time_ns'] is not None
+                              for candidate in paths)
+            for earlier, later in zip(paths, paths[1:]):
+                chain_valid &= (earlier['generation_after'] <= later['generation_before'] and
+                                earlier['generation_after'] < later['generation_after'] and
+                                earlier['certified_map'] <= later['certified_map'] and
+                                earlier['ros_time_ns'] is not None and
+                                later['ros_time_ns'] is not None and
+                                earlier['ros_time_ns'] < later['ros_time_ns'])
+            for candidate in paths:
+                chain_valid &= any(
+                    hold['gen'] == candidate['generation_after'] and
+                    candidate['ros_time_ns'] is not None and
+                    candidate['ros_time_ns'] <= hold['ros_time_ns'] <= close['ros_time_ns']
+                    for hold in holds)
+            chain_valid &= (len(releases) == 1 and
+                            releases[0]['escape_gen'] == path['generation_after'] and
+                            releases[0]['current_gen'] == path['generation_after'] and
+                            path['certified_map'] <= releases[0]['map'] and
+                            path['ros_time_ns'] is not None and
+                            path['ros_time_ns'] <= releases[0]['ros_time_ns']) if releases else False
+            if not chain_valid:
+                fail('completed_cycles_superseded_path_chain',
+                     'invalid_superseded_path_chain', cycle,
+                     generations=[item['generation_after'] for item in paths],
+                     holds=len(holds), releases=len(releases))
         have_times = all(item['ros_time_ns'] is not None
-                         for item in (opened, ack, path, close))
+                         for item in (opened, ack, *paths, close))
         timestamp_observed += int(have_times)
         completed.append(dict(cycle=cycle, valid=len(errors) == error_start,
                               source_frame=source['frame'], stamp_ns=source['stamp_ns'],
                               ack_map=ack['map'], certified_map=path['certified_map'],
                               generation_before=path['generation_before'],
                               generation_after=path['generation_after'],
+                              path_certificates=len(paths),
                               timestamps_observed=have_times,
                               fsm_ack_evidence_count=len(fsm_acks)))
 

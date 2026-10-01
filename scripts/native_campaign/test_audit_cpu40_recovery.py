@@ -59,6 +59,49 @@ def test_missing_certificate_and_duplicate_certificate_rejected():
     assert not audited(lines + [lines[4]])['valid']
 
 
+def superseded_episode():
+    lines = episode()
+    lines[5:5] = [
+        line('1.31', '[EVENT_RECOVERY_ESCAPE_HOLD] gen=4 map=6 '
+             'trajectory_tt=0.000 release_wt=1.330 action=retain_full_until_ordinary_certificate'),
+        line('1.35', '[EVENT_RECOVERY_PATH_READY] request_seq=7 stamp_ns=1100000000 '
+             'ack_map=5 certified_map=8 generation_before=4 generation_after=5'),
+        line('1.36', '[EVENT_RECOVERY_ESCAPE_HOLD] gen=5 map=8 '
+             'trajectory_tt=0.000 release_wt=1.370 action=retain_full_until_ordinary_certificate'),
+        line('1.38', '[EVENT_RECOVERY_ESCAPE_RELEASE] escape_gen=5 current_gen=5 '
+             'map=9 trajectory_tt=0.180 release_wt=1.370'),
+    ]
+    return lines
+
+
+def test_new_path_can_supersede_escape_path_before_sector_return():
+    result = audited(superseded_episode())
+    assert result['valid'], result['errors']
+    assert result['completed_cycles'][0]['path_certificates'] == 2
+    assert result['completed_cycles'][0]['generation_after'] == 5
+    assert result['unmatched_path_records'] == 0
+
+
+def test_superseded_path_requires_monotonic_chain_and_matching_release():
+    original = superseded_episode()
+    for index, before, after in (
+            (6, 'generation_before=4', 'generation_before=3'),
+            (6, 'generation_after=5', 'generation_after=4'),
+            (6, 'request_seq=7', 'request_seq=8'),
+            (6, 'certified_map=8', 'certified_map=5'),
+            (8, 'current_gen=5', 'current_gen=4')):
+        lines = original.copy()
+        lines[index] = lines[index].replace(before, after)
+        assert 'invalid_superseded_path_chain' in codes(audited(lines))
+    for removed in (5, 7, 8):
+        lines = original.copy()
+        lines.pop(removed)
+        assert 'invalid_superseded_path_chain' in codes(audited(lines))
+    lines = original.copy()
+    lines[8] = lines[8].replace('[1.38]', '[1.41]')
+    assert 'invalid_superseded_path_chain' in codes(audited(lines))
+
+
 def test_wrong_source_cycle_and_non_full_source_rejected():
     for replacement in (source(cycle=2), source(full=0)):
         lines = episode()
