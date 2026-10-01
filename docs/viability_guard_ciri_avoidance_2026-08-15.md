@@ -7574,3 +7574,9 @@ the same invalid one. Delivery state is recorded in
 the test result is in `email_test_status.json`. Four local notifier tests pass,
 and the host can reach `smtp.gmail.com:465`; real delivery is pending the
 user's secret entry and test.
+
+The user subsequently cancelled email notification on 2026-10-01. The email
+watcher was stopped without affecting the campaign process. No credential
+file exists and no email was sent. `email_terminal_status.json` records
+`DISABLED_BY_USER`; the local desktop notification/combined-report watcher
+remains active. Do not restart email monitoring without a new request.
