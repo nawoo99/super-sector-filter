@@ -1,6 +1,19 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-10-01 최신: c39 7맵 × 3모드 × 10회, 총210개 계획 비행을 증거상 완료.**
+> 첫 세션은173회 후 Map3 9회차 Adaptive의 복구 로그 검증기가 한 Full 유지 구간의
+> 서로 다른 인증 경로2개(gen27→28)를 중복으로 오판해 중단됐다. 실제 Adaptive는
+> 완주·무접촉, 해당 Full은 미실행이었다. 수정된 엄격 검증으로 보존 로그173/173이
+> 통과했고, 원본40개 고정 파일 해시가 일치하는 상태에서 별도 세션으로 미실행37회만
+> 각1회 실행했다. 최종 합본은 Full70/70 완주·접촉0, Adaptive70/70·접촉0,
+> 기본 Active-Yaw Sector68/70·접촉 주행1/70이다. Normal 5맵에서 Adaptive는
+> Full 대비 평균 CPU25.6%, 누적 CPU20.2%, 입력률64.7%, 맵 갱신시간58.1% 감소.
+> 이는 **중단된 캠페인의 문서화된 이어달리기**이며 한 번에 연속 실행한210회가 아니다.
+> 상세 §8.122와
+> `results/scenario7_bounded_recovery_v13_n10_v2_completion_20261001/final_combined_summary.md`.
+
+> [!IMPORTANT]
 > **2026-09-30 최신: bounded-recovery 적용 뒤 fresh 7-map 공통 캠페인 c39를 생성.**
 > 기존 c37 및 이후 모드별 진단 결과는 보존하고 섞지 않는다. 새
 > `c39_bounded_recovery_refresh_v13_n10`은 Map1--5+Urban+Forest에서

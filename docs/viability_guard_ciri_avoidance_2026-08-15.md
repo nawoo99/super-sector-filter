@@ -7421,3 +7421,62 @@ campaign is approximately5--8hours, depending mainly on Active-Yaw and dense
 Forest mission tails. Final reporting must keep normal five-map, Urban and
 Forest aggregates separate and retain all earlier cohorts as historical
 evidence.
+
+### 8.122 c39 recovery-audit correction and documented 210-flight completion (2026-10-01)
+
+The v2 campaign passed its stage1 gate (35 triplets/105 flights) but stopped in
+stage2 at Map3 repeat9, run96292. Sector and Adaptive had already completed
+without contact; Full had not started. The Adaptive flight itself reached5/5
+waypoints with contact0. Its first held-open Full recovery interval certified
+generation27 (map119), retained Full because of an escape-prefix hold, then
+certified generation28 (map135) after renewed guard rejection. The planner
+released Full only after the generation28 ordinary certificate at map137, and
+the frontend then returned to Sector. The old source/recovery auditor required
+exactly one `EVENT_RECOVERY_PATH_READY` per interval and rejected both genuine
+certificates as ambiguous. The validator's simultaneous `Full failed` entries
+were placeholders caused by the unflown Full slot, not a failed Full flight.
+
+The audit now accepts multiple distinct, monotonically newer certificates for
+one exact ACK token only when each carries an escape hold and the final escape
+release matches the last generation before Sector closure. Repeated identical
+certificates, stale tokens, generation rollback, missing holds, missing or
+wrong-generation release and timestamp reversal still fail. Seventeen audit
+test functions pass (executed directly because pytest is absent here). A
+read-only re-audit of all173 preserved stack logs changed only run96292 Adaptive
+from invalid to valid: old172/173, revised173/173. The original summaries and
+`STOPPED_FOR_DIAGNOSIS` status remain preserved.
+
+The original40 frozen file hashes still matched. A separate completion
+protocol ran only the37 unflown slots: Map3 repeat9 Full once, then the12
+unflown triplets. It preserved the same candidate, map/config/binary identity,
+mode order and one-attempt/no-replacement policy, while freezing the revised
+auditor, completion runner and protocol as three additional files. All13
+completion items passed source, recovery, runtime-parameter, heading, resource,
+speed and Full/Adaptive safe-completion checks. The second session ended
+`COMPLETE` after3822s; no original flight was overwritten or replayed. The
+combined manifest contains exactly210 unique planned flights (70 per mode).
+This is an interrupted campaign completed in a documented second session,
+not one uninterrupted210-flight run.
+
+| Scenario | Full completion/contact | Active-Yaw Sector completion/contact | Adaptive completion/contact | Adaptive mean CPU reduction vs Full | Adaptive cumulative CPU reduction | Adaptive input-rate reduction | Adaptive map-time reduction |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Normal Map1--5 (50 per mode) | 50/50, 0 | 49/50, 1 | 50/50, 0 | 25.6% | 20.2% | 64.7% | 58.1% |
+| Urban (10 per mode) | 10/10, 0 | 10/10, 0 | 10/10, 0 | 26.2% | 21.1% | 70.6% | 59.1% |
+| Forest (10 per mode) | 10/10, 0 | 9/10, 0 | 10/10, 0 | 29.4% | 17.2% | 57.8% | 61.4% |
+
+The Sector exceptions are Map4 repeat1 run96213 (contact1 and failure at
+waypoint2/5,180s) and Forest repeat1 run96216 (contact0 but failure at
+waypoint2/5,180s). All Full and Adaptive flights were observed safe completions.
+Map1 Full repeat10 run96300 took99.14s but passed quality and contact gates;
+its guard recovery was active43.39s with23 topology-reroute arms, versus
+1.7--15.7s of recovery activity in the other Map1 Full repeats. It remains in
+the mean and is not treated as an infrastructure retry. These counts establish
+finite perfect-tracking simulation outcomes on the seven declared maps, not a
+population or real-vehicle100% guarantee.
+
+Detailed per-map completion, contact, time, CPU, input and Adaptive transition
+results: `results/scenario7_bounded_recovery_v13_n10_v2_completion_20261001/final_combined_summary.md`.
+The 210-row provenance and SHA-256 manifest is `final_flight_manifest.csv` in
+that directory; the combined gate is `final_combined_gate.json`. The original
+173-flight read-only verdict comparison is in
+`results/scenario7_bounded_recovery_v13_n10_v2_20260930/posthoc_recovery_audit_v2.md`.
