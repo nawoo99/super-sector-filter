@@ -7546,3 +7546,31 @@ no-progress terminal, one attempt and no replacement. Original and completion
 results must be combined by planned run ID, never by silently replacing the
 old verdict or re-running the 72 flights. At this writing the continuation is
 in progress; no final 210-flight result is claimed here.
+
+### 8.125 c40 completion email notification setup (2026-10-01)
+
+The c40 continuation remains unchanged. A separate local watcher now waits for
+`COMPLETE` or `STOPPED_FOR_DIAGNOSIS` and then sends exactly one terminal
+notification to `nawoo5407@gmail.com` through Gmail SMTP over TLS, with an
+authentication-failure hold and a persisted delivery verdict. The watcher is
+currently waiting for the campaign terminal event; **email delivery is not
+active until the sender credential is configured and a test email succeeds**.
+The ChatGPT Gmail connection cannot be used by the unattended local Python
+process. Google's app-password method requires two-step verification and is
+less preferred than Google sign-in; this local script has no supported Google
+sign-in flow, so it uses a dedicated app password, never the account password.
+
+The user must generate that password in their own Google Account and run
+`python3 /root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/scripts/scenario7_v14_email_notify.py setup`
+in a local terminal. The helper reads the secret with hidden input, stores it
+outside both repositories at `/root/.config/super-sector-filter/scenario7_gmail_app_password`
+with owner-only directory/file permissions (0700/0600), and sends one test
+message to the same address. No password is accepted as a command argument,
+printed, committed or written to campaign results. The monitor waits for the
+credential even if the campaign has already ended; on authentication failure
+it waits for the credential file to be replaced instead of repeatedly trying
+the same invalid one. Delivery state is recorded in
+`results/scenario7_no_mission_cutoff_v14_n10_completion_20261001/email_terminal_status.json`;
+the test result is in `email_test_status.json`. Four local notifier tests pass,
+and the host can reach `smtp.gmail.com:465`; real delivery is pending the
+user's secret entry and test.
