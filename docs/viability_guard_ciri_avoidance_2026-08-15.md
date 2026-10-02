@@ -7621,3 +7621,27 @@ simulation results, not a population-level success or collision guarantee.
 The local desktop notification attempt failed because `dbus-launch` is absent;
 the report and manifest were nevertheless created. Email notification remains
 disabled by user request, with no sender credential and no email sent.
+
+### 8.127 Forest Sector no-progress-window sensitivity (2026-10-02)
+
+To test whether the two c40 Forest Sector failures were caused solely by the
+60 s stationary-observer termination, a separate diagnostic kept the c40
+Forest map, Active-Yaw Sector planner/source settings, and infinite mission
+duration, changing only the no-progress observation window to 180 s. The
+original failed run labels (repeat 5 and 9) were each re-executed five times
+in `results/forest_sector_stall_diagnostic_20261002/`. All 10 physical runs
+completed without contact; the longest observed stationary interval was
+25.89 s. All raw flight rows have valid run/resource/speed checks, one
+attempt, and zero retries. The first flight's CPU summary failed after the
+physical flight because of an incorrect working directory; its raw flight and
+solid safety audit were valid. The other nine postprocessed normally.
+
+This is **not** evidence that a longer observer would have rescued either
+original failure. Reusing a run number did not reproduce the same trajectory:
+the closest diagnostic route approached an original stop pose only to 0.49 m,
+and none remained stationary beyond 60 s before moving again. The frozen c40
+Forest Sector result remains 8/10 under the 60 s/2 cm rule. The correct
+inference is that those particular stalled states are not exactly replayed by
+ordinary wall-timed reruns. Whether a stopped original state could recover
+after 60 s requires a same-state counterfactual replay, not another campaign
+summary or a claim that Full viewing guarantees escape.
