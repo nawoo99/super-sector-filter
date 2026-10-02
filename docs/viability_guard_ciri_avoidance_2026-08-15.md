@@ -7699,3 +7699,34 @@ mission-time cutoff, and 60 s/2 cm no-progress observer. Combined summaries
 identify the 93 original and 117 continuation flights by planned run ID. No
 planner, map, waypoint, or simulator behavior was changed, and no final 210
 flight result is claimed until the continuation finishes and passes audit.
+
+### 8.130 c41 fresh n10 final 210-flight result (2026-10-02)
+
+The separate v16 continuation finished all 39 previously unflown triplets
+(117 flights). Combined with the preserved 31 original triplets (93 flights),
+the c41 fresh cohort contains exactly 70 triplets/210 unique physical flights,
+exactly 10 per map and mode. All 210 pass the corrected source/runtime/event
+quality audit; no failed outcome was replaced or selectively rerun. The
+original v15 stop verdict remains archived.
+
+Full completed 69/70 without contact in any run. Adaptive completed 70/70
+without contact. Active-Yaw Sector completed 67/70 with contact in four runs;
+one contact run nevertheless completed, so contact-free completion is 66/70.
+The sole Full non-completion was Forest repeat3 run97036: it reached waypoint
+1/5, remained at a nearly fixed pose for the declared 60 s/2 cm window, and
+was terminated by the measurement-only no-progress observer at 104.02 s.
+The stack includes repeated `NO_PATH`, CIRI polytope-generation failures, and
+trajectory-guard rejections. The precise causal chain requires a separate
+diagnostic; this is not a global mission-time cutoff or a collision.
+
+Across all seven maps and including terminal stops, Adaptive versus Full
+reduced mean end-to-end CPU from 0.726 to 0.512 cores (29.5%), mean CPU time
+from 40.14 to 31.09 core-s/run (22.5%), input rate from 11.238 to 3.954
+MiB/s (64.8%), total planner input from 581.82 to 228.65 MiB/run (60.7%),
+and map-update time from 29.47 to 12.09 ms/frame (59.0%). These are observed
+finite-simulation cohort averages, including non-completing runs, and do not
+establish a population success guarantee. The exact map-by-mode table and
+all anomalous run IDs are in
+`results/scenario7_no_cutoff_v16_completion_20261002/summary_final.md`.
+The companion `final_flight_manifest.csv` contains all 210 unique run/mode
+identities and hashes of their local stack and flight artifacts.
