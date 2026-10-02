@@ -7645,3 +7645,26 @@ inference is that those particular stalled states are not exactly replayed by
 ordinary wall-timed reruns. Whether a stopped original state could recover
 after 60 s requires a same-state counterfactual replay, not another campaign
 summary or a claim that Full viewing guarantees escape.
+
+### 8.128 Fresh seven-map c41 n10 campaign preparation (2026-10-02)
+
+The user corrected the repeat count from the proposed n30 to **n10 per map
+and mode**. A new 7-map × 3-mode × 10-repeat campaign therefore plans exactly
+70 triplets/210 new physical flights. It uses the frozen c40 physical inputs,
+unlimited total mission time, and the same declared 60 s/2 cm no-progress
+observer. The original c40 210 flights and the separate Forest 180 s
+sensitivity runs are not mixed with this cohort. The protocol is
+`results/scenario7_no_cutoff_v15_n10_20261002/protocol.json`.
+
+The new source driver is
+`mars_uav_sim/perfect_drone_sim/scripts/run_scenario7_v15_fresh_n10.py`, mirrored
+under `super_patches/native_seedmap_campaign/perfect_drone_sim_scripts/`. It
+requires the 40 non-protocol c40 frozen hashes to match before launch and
+uses the corrected goal-event-chain audit instead of assuming exactly four
+new Full requests. A read-only preflight of the historical c40 false-positive
+triplet (run 96445) and a known Forest Sector non-completion triplet (run
+96456) both passed the new quality gate; the latter correctly remained a
+recorded failed outcome. All physical outcomes, including any Full/Adaptive
+failure or contact, are retained; only invalid source/runtime/quality evidence
+stops the campaign. No algorithm, map, waypoint, or simulator setting changes
+were made.

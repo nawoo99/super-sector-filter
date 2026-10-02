@@ -1,0 +1,19 @@
+{
+  "schema": "scenario7-c41-fresh-no-cutoff-n10-v1",
+  "candidate": "c41_fresh_no_cutoff_v15_n10",
+  "maps": ["gapfree_d1_m01", "gapfree_d1_m02", "gapfree_d1_m03", "gapfree_d1_m04", "gapfree_d1_m05r2", "urban_blocks_u01", "forest_cluster_f01"],
+  "modes": ["full", "sector", "adaptive"],
+  "repeats_per_map_mode": 10,
+  "planned_triplets": 70,
+  "planned_physical_flights": 210,
+  "base_run": 97000,
+  "mission_time_cutoff_s": null,
+  "no_progress_terminal": {"stationary_window_s": 60.0, "position_radius_m": 0.02},
+  "sector_baseline": "Active-Yaw Sector with 45 degree half-angle",
+  "adaptive_policy": "45 degree half-angle source acquisition, demand-triggered Full acquisition with fresh map ACK and certified path before Sector release",
+  "physical_input_identity": "Require all 40 non-protocol c40 frozen source/runtime/map/config hashes to match before first flight",
+  "outcome_policy": "All 210 planned flights retained regardless of completion or contact. Stop only for infrastructure, missing row, or invalid source/runtime/quality audit; do not retry or replace silently.",
+  "previous_210_flights": "Preserved in scenario7_no_mission_cutoff_v14_n10_20261001 and scenario7_no_mission_cutoff_v14_n10_completion_20261001; never merged into this fresh cohort",
+  "forest_stall_180s_diagnostic": "Separate sensitivity analysis; never merged into this cohort",
+  "planner_map_mission_changes": false
+}
