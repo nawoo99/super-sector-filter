@@ -7668,3 +7668,34 @@ recorded failed outcome. All physical outcomes, including any Full/Adaptive
 failure or contact, are retained; only invalid source/runtime/quality evidence
 stops the campaign. No algorithm, map, waypoint, or simulator setting changes
 were made.
+
+### 8.129 c41 overlap-audit correction and preserved continuation (2026-10-02)
+
+The fresh c41 n10 cohort physically ran 31/70 triplets (93/210 flights), then
+stopped after Forest repeat5 run97056. All three modes in that triplet actually
+completed without contact. Adaptive received waypoint 1 while Full cycle 1
+was already open and ACKed. It logged the new goal-change request, continued
+Full sensor frames after the goal, received the new goal, certified a path on
+map 142 (newer than the cycle's ACK map 71), and only then released Sector.
+The v7 log audit incorrectly demanded a second Full-arm event after the goal
+request, although the existing Full cycle had never closed. The original
+failed audit verdict and all 93 physical-flight logs remain unchanged.
+
+`audit_goal_change_full_refresh_v8.py` adds a narrowly scoped overlap case:
+the request must arrive during an already open/ACKed Full cycle, a post-goal
+Full sensor frame must be logged, the new goal must be received, the certified
+path must use a map newer than the ACK map, and Sector release must follow.
+Missing post-goal Full observation, stale certified map, missing goal receipt,
+missing request, or missing Sector release remain rejected. The original eight
+v7 tests and six new v8 tests pass. A read-only v8 re-audit passes all 31
+preserved triplets; it does not modify their original validation files.
+
+The separate continuation protocol is
+`results/scenario7_no_cutoff_v16_completion_20261002/protocol.json`. Its runner
+checks all original frozen source/runtime/config/map hashes and hashes of the
+93 preserved raw rows and stack logs; it runs only the 39 unflown triplets
+(117 flights), using the same physical inputs, mode order, mission, no global
+mission-time cutoff, and 60 s/2 cm no-progress observer. Combined summaries
+identify the 93 original and 117 continuation flights by planned run ID. No
+planner, map, waypoint, or simulator behavior was changed, and no final 210
+flight result is claimed until the continuation finishes and passes audit.

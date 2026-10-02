@@ -1,0 +1,17 @@
+{
+  "schema": "scenario7-c41-fresh-no-cutoff-n10-v16-continuation-v1",
+  "candidate": "c41_fresh_no_cutoff_v15_n10",
+  "original_cohort": "results/scenario7_no_cutoff_v15_n10_20261002",
+  "preserved_triplets": 31,
+  "preserved_flights": 93,
+  "remaining_triplets": 39,
+  "remaining_flights": 117,
+  "total_triplets": 70,
+  "total_flights": 210,
+  "repeats_per_map_mode": 10,
+  "stop_cause": "Forest repeat5 Adaptive goal-change request arrived during an already ACKed Full cycle; v7 log audit required a new Full arm despite post-goal Full sensing and a newer certified map",
+  "audit_correction": "v8 accepts the overlap only with an explicit post-goal Full frame, received goal, newer certified map, certified path, and Sector release; negative cases remain rejected",
+  "physical_inputs": "unchanged c41 frozen hashes, mode order, maps, mission, runtime, source-acquisition policy, 60 s/0.02 m no-progress observer, and no global mission-time cutoff",
+  "outcome_policy": "Preserve all original 93 physical flights and their original verdict, run only 117 unflown slots, retain completion/contact outcomes without selection or replacement, stop only on quality/infrastructure failure",
+  "planner_map_mission_changes": false
+}
