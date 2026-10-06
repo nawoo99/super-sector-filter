@@ -53,3 +53,12 @@ Forest30회 약50–70분, 공통7맵210회 약5–6시간, 집계 포함 총6�
 `--background`는 프로토콜 생성 후 분리된 로컬 워커를 시작한다. 이미 준비한
 READY 경로는 `--execute`로만 한 번 시작할 수 있고, 완료/중단 결과를 덮어쓰지 않는다.
 이 워커는 이메일·외부 알림 발송·canonical 승격·Git push를 하지 않는다.
+
+실제 실행 시작:17:59:30 KST, detached controller pid264934. Forest 첫 Full
+r01/run99401의 동결 V6 실행·미션 진행·telemetry 기록을 확인했다. 이후의
+완료/중단은 live `status.json` 및 per-flight audit를 기준으로 판단한다.
+
+첫 검증:Forest Full r01/run99401은51.05초·5/5완주·접촉0·품질 유효다.
+독립 solid replay의5103개 수신 위치에서도 접촉0이다. 다음 Sector를 실행하며
+아직 Forest n10 gate는 통과하지 않았다. Git의 중간 snapshot과 live 상태는
+시점이 다를 수 있으므로 최종 결과는 완료 상태와 최종 감사로 확인한다.

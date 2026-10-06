@@ -8139,3 +8139,21 @@ by the READY protocol. Actual progress is in
 `results/topology_polyline_v6_n10_20261006/status.json`, with per-map tables in
 `summary_by_map.md`. The local detached worker saves results and gates stages;
 it does not send email, promote V6 or perform unattended Git writes.
+
+**Execution update:** the detached controller started at17:59:30 KST
+(pid264934), with exactly one physical launch request for Forest Full r01,
+run99401. The actual simulator/planner process uses the frozen V6 install
+and received mission goals; telemetry records experimental CPU and host CPU
+separately. Preparation status and the preceding diagnostics are historical,
+not a claim that all planned flights have completed. Consult the live status
+and per-flight independent audit for subsequent outcomes.
+
+**First verified outcome:** Forest Full r01/run99401 completed5/5 waypoints
+in51.05s with contact0 and valid resource/speed/source evidence. Independent
+solid replay of5103 received odometry samples found0 contact episodes and
+minimum body clearance0.286771m (not a continuous swept-volume proof).
+Experimental mean CPU0.711952cores, CPU time37.652623core-s, ingress9.221907
+MiB/s, payload470.778349MiB/run and map31.085525ms/frame. The worker then
+started Active-Yaw Sector r01. A single successful flight does not pass the
+Forest n10 gate or resolve the original failure universally. Git snapshots
+record launch/first-flight progress; live status remains authoritative.
