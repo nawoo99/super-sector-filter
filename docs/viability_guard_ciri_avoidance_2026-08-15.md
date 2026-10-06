@@ -7730,3 +7730,113 @@ all anomalous run IDs are in
 `results/scenario7_no_cutoff_v16_completion_20261002/summary_final.md`.
 The companion `final_flight_manifest.csv` contains all 210 unique run/mode
 identities and hashes of their local stack and flight artifacts.
+
+### 8.131 Forest Full virtual-zone liveness repair pilot (2026-10-06)
+
+The frozen c41 Full failure, Forest repeat3 run97036, was investigated without
+changing its outcome. The logged stopped pose is connected to the next goal
+in all eight static-cylinder-only 2-D grid checks (two resolutions, two
+clearances, four/eight directions). Applying both logged 0.8 m virtual zones
+disconnects it in all eight checks. This supports the virtual-blocker trapping
+mechanism, but the original ROG-Map/raw scans/A* guide/CIRI/MINCO state was not
+saved, so this is not an exact original-state replay or proof of a feasible
+dynamic trajectory. The read-only diagnosis and all 32 grid cases are in
+`results/full_forest_run97036_diagnostic_20261006/`.
+
+Changes are made in the SUPER source workspace and mirrored to this repo.
+They are built into a separate trial install, leaving the canonical c41
+install/runner and its 210 outcomes intact:
+
+- On the first stopped `NO_PATH` with virtual zones, run one counterfactual
+  A* query against the same locked map, flags and horizon with only the newest
+  zone omitted. Roll back that zone only on `REACH_GOAL`/`REACH_HORIZON`;
+  comparison timeout/failure does not change the zone set. Never export the
+  trial path to the optimizer or flight command.
+- After a confirmed disconnection, try the remaining bounded, independently
+  certified horizontal escape budget. A start-adjacent collision is not a
+  prerequisite for this horizontal move; its direction is only an ordering
+  hint, and the existing trajectory/stop-viability checks still decide every
+  candidate. Collision proximity/height remains a prerequisite for the
+  existing related vertical-recovery branch.
+- When no applicable recovery budget remains, set an idempotent
+  `TRAJ_GUARD_RECOVERY_EXHAUSTED` latch instead of resetting the same virtual
+  blockers indefinitely. Clear it on a distinct goal, material 2 m XY episode
+  progress, or a successful certified commit. Generic search-state clearing
+  does not reset the latch or recovery budgets. The post-corridor branch now
+  consumes the existing vertical-attempt budget and falls back to remaining
+  certified horizontal attempts instead of arming unbounded lifts.
+
+No maps, waypoints, sensing policy, collision radius, guard margin or
+trajectory acceptance tests were relaxed. This is a **static-scenario trial**:
+the latch does not resume just because a map version increments. Content-aware
+map-change recovery/dynamic-environment liveness is not implemented here.
+Stopping safely when certification fails remains possible; eliminating an
+infinite retry loop is not a guarantee of mission completion.
+
+The first candidate v1 is explicitly rejected and retained. Its fresh Forest
+Full run99001 detected a real two-zone disconnection, then latched at
+`local_attempts=0/4`, because the old collision-proximity eligibility condition
+left usable horizontal budget untried. It stopped at waypoint1/5, 77.41 s,
+contact0, with valid run/resource/speed measurements. Its logs, raw outcome
+and candidate patch remain in `forest_full_r01`; they are not replaced by a
+later success. V2 removes that premature horizontal eligibility restriction
+while retaining certification.
+
+V2 builds `super_planner` and `perfect_drone_sim` serially in
+`/root/super_ws/forest_liveness_trial_v2_20261006/install`. Existing CTest targets
+pass 5/5, related source-contract pytest cases pass 24/24, and the new fixture
+compiles exact production rollback/exhaustion code under ASan+UBSan. The
+fixture verifies fail-closed comparison outcomes, no trial-path publication,
+idempotent exhaustion, reset contracts, and remaining-budget eligibility.
+These fixtures are not substitutes for a physical simulation.
+
+The predefined V2 pilot/regression sequence and build hashes are saved in
+`results/topology_liveness_trial_20261006/protocol_v2.json` and
+`validation_v2.json`. It plans nine flights: Forest Full x3, Sector x1,
+Adaptive x2, and normal Map1 x1 per mode. Total mission duration is unlimited;
+the unchanged 60 s/2 cm observer still records terminal no-progress outcomes.
+The launcher rejects an existing output directory and does not automatically
+retry or replace failed outcomes. Final pilot outcomes are recorded below
+only after every planned flight finishes and is audited.
+
+All nine predefined V2 flights finished and passed the run/resource/speed,
+source/runtime, solid-obstacle sample coverage, strict recovery and v8
+goal-Full-refresh chain audits. Every flight used one physical attempt and
+zero retries. No contact was recorded.
+
+| Map | Mode | Complete | Contact trials | Mean time (s) | CPU (cores) | CPU time (core-s/run) | Input (MiB/s) | Input (MiB/run) | Map update (ms/frame) |
+|---|---|---|---|---:|---:|---:|---:|---:|---:|
+| Map1 | Full | 1/1 | 0/1 | 54.77 | 0.697 | 39.855 | 10.723 | 587.274 | 25.707 |
+| Map1 | Active-Yaw Sector | 1/1 | 0/1 | 67.08 | 0.438 | 29.986 | 2.491 | 167.107 | 9.495 |
+| Map1 | Adaptive | 1/1 | 0/1 | 53.30 | 0.522 | 28.825 | 3.912 | 208.494 | 13.539 |
+| Forest | Full | 3/3 | 0/3 | 57.37 | 0.763 | 45.550 | 10.486 | 601.704 | 30.237 |
+| Forest | Active-Yaw Sector | 1/1 | 0/1 | 107.35 | 0.429 | 47.059 | 2.530 | 271.644 | 9.439 |
+| Forest | Adaptive | 2/2 | 0/2 | 73.15 | 0.556 | 42.474 | 4.171 | 319.715 | 12.656 |
+
+Adaptive Full-transition counts are Map1 run99005:9, Forest run99003:15,
+Forest run99004:9. Forest Full times are 58.98/57.23/55.91 s; Adaptive times
+are 88.88/57.41 s. The slow Adaptive pair run99003 has 15 braking/recovery
+events and 297.144 m travel versus Full's 1 event and 273.373 m; its lower
+mean CPU does not offset the longer duration, and CPU time is **22.2% higher**
+than matched Full. This outcome is retained. These small, unequal per-mode
+counts and CPU-profiled smoke measurements are not a replacement performance
+cohort or evidence that a 30% CPU objective was achieved.
+
+**Important limitation:** none of the nine V2 flights exercised the new
+`ZONE_DISCONNECT` or `RECOVERY_EXHAUSTED` branch. Their 9/9 safe completions
+show this limited regression smoke passed; they do not prove closed-loop
+recovery from the original run97036 state. The original failure had already
+spent four horizontal and one vertical recovery before its trap, whereas the
+rejected v1 pilot prematurely held at zero horizontal attempts. Fixing that
+premature eligibility bug alone does not establish escape after exhausted
+budgets. The canonical baseline remains unpromoted. Exact stopped-state
+snapshot/replay or targeted branch-exercising simulation is required before
+claiming the original Full completion defect is resolved, followed by Forest
+n10 and a fresh common seven-map campaign. Existing c41 Full69/70 and
+Adaptive70/70 remain the paper's frozen results.
+
+Machine-readable evidence is `audit_v2.json` and `v2_flights.csv` in the trial
+folder; all ten physical outcomes (rejected v1 plus nine V2 flights) and logs
+are retained. `scripts/native_campaign/run_topology_liveness_trial.sh` runs
+this separate candidate, and `summarize_topology_liveness_trial.py` audits the
+predefined nine outcomes, hashes and non-missing finite computation metrics.

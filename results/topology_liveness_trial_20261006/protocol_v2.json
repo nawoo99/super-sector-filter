@@ -1,0 +1,20 @@
+{
+  "schema": "topology-recovery-liveness-pilot-v2",
+  "candidate": "topology_liveness_trial_v2_20261006",
+  "install_root": "/root/super_ws/forest_liveness_trial_v2_20261006/install",
+  "purpose": "Test virtual-zone rollback and bounded stopped recovery without relaxing safety guards",
+  "frozen_reference": "results/scenario7_no_cutoff_v16_completion_20261002/summary_final.md",
+  "discarded_candidate_preserved": "forest_full_r01",
+  "mission_time_cutoff_s": null,
+  "no_progress_observer_window_s": 60,
+  "no_progress_observer_radius_m": 0.02,
+  "no_automatic_retry_or_result_replacement": true,
+  "not_a_confirmation_campaign": true,
+  "advance_to_regression_only_if_pilot_safely_completes": true,
+  "planned_runs": [
+    {"directory": "forest_full_r02", "map": "forest_cluster_f01", "run": 99002, "modes": ["full"], "stage": "pilot"},
+    {"directory": "forest_r03", "map": "forest_cluster_f01", "run": 99003, "modes": ["full", "sector", "adaptive"], "stage": "regression"},
+    {"directory": "forest_r04", "map": "forest_cluster_f01", "run": 99004, "modes": ["full", "adaptive"], "stage": "regression"},
+    {"directory": "normal1_r01", "map": "gapfree_d1_m01", "run": 99005, "modes": ["full", "sector", "adaptive"], "stage": "regression"}
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "schema": "scenario-solid-audit-v1",
+  "schema_version": 1,
+  "map": "forest_cluster_f01",
+  "geometry_schema": "scenario-solid-geometry-v1",
+  "box_count": 0,
+  "cylinder_count": 410,
+  "primitive_count": 410,
+  "primitive_height_ranges_m": {
+    "boxes": [],
+    "cylinders": [
+      [
+        0.0,
+        4.0
+      ]
+    ]
+  },
+  "robot_radius_m": 0.2,
+  "geometry_path": "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/forest_cluster_f01_geometry.json",
+  "geometry_sha256": "691d2c0aec0a015368ecd2eca9335b932e3de892123305ba05bc87f26ca7150d",
+  "pcd_path": "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/pcd/seed_maps/forest_cluster_f01.pcd",
+  "pcd_sha256": "2f9662d5ceabbd3abc4e25485b56713c5b7216da5001d0e929e5c2e14b77ac74",
+  "base_monitor_path": "/root/super-sector-filter/scripts/native_campaign/native_loop_monitor.py",
+  "base_monitor_sha256": "f11777e680e4d4279c8d34ca7dfd86c55e98c9a7f6cd835e801a1f8a877f0813",
+  "observer_code_path": "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/scripts/scenario7_repair_loop_monitor.py",
+  "observer_code_sha256": "73f75c61e1b91232711e336277e6f42ce8cfa7cdd4d5f8e8685f758162faaff5",
+  "geometry_code_path": "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/scripts/scenario7_geometry.py",
+  "geometry_code_sha256": "f11bd4201e2e89f6044b5dd612f13f70ce377ae3aba587a3f7ddb636be90e476",
+  "adapter_code_path": "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/scripts/gapfree_native_loop_monitor.py",
+  "adapter_code_sha256": "73f2b766ffc843d726c0b96d4544fd08df8d74880f279aa6025f9885c31dae82",
+  "index_code_path": "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/scripts/scenario7_repair_pcd_index.py",
+  "index_code_sha256": "e57769fccddafd6c9dd2f08c157bff78818437e3431e40369a8034fb6b0e8d80",
+  "odometry_csv": "/tmp/scenario7_n10_1x2qtcgu/forest_cluster_f01_run99001_full.attempt1.odometry.csv",
+  "native_monitor_json": "/tmp/scenario7_n10_1x2qtcgu/forest_cluster_f01_run99001_full.attempt1.json",
+  "static_pcd_index_policy": "exact-vectorized-occupied-cell-enumeration-v1",
+  "native_monitor_counters_unchanged": true,
+  "legacy_static_pcd_episode_reset_defect_fixed": false,
+  "terminal_stall_policy": {
+    "enabled": true,
+    "window_s": 60.0,
+    "radius_m": 0.02,
+    "mission_time_cutoff_s": null,
+    "effect": "measurement-only observer termination; no planner input"
+  },
+  "observation": "received_odometry_samples_only",
+  "swept_collision_check": false,
+  "contact_definition": "sphere intersects closed solid AABB or finite capped cylinder; tangency included (1e-9 m tolerance)",
+  "clearance_definition": "distance from body centre to closed solid minus body radius; not signed penetration depth",
+  "episode_definition": "contiguous colliding received samples in union of solids; invalid samples invalidate audit",
+  "floor_policy": "unchanged frozen native observer; no added ground or boundary solids",
+  "samples": 7739,
+  "invalid_samples": 0,
+  "timestamp_nonmonotonic_count": 0,
+  "receipt_nonmonotonic_count": 0,
+  "max_header_interval_s": 0.010759148,
+  "max_receipt_interval_s": 0.012964297,
+  "max_pose_step_m": 0.20870861602755822,
+  "contact_samples": 0,
+  "contact_episodes": 0,
+  "in_contact_at_end": false,
+  "min_clearance_m": 0.1867953358206183,
+  "min_context": {
+    "sample": 1746,
+    "header_ns": 1791254591790367643,
+    "elapsed_s": 17.470486402511597,
+    "position_m": [
+      8.154082001915668,
+      18.550658920781206,
+      2.2412033919881966
+    ],
+    "velocity_mps": [
+      1.3322676295501878e-15,
+      -2.6645352591003757e-15,
+      -1.3322676295501878e-15
+    ],
+    "nearest_primitive_index": 92,
+    "nearest_primitive_id": "trunk_093",
+    "nearest_primitive_type": "cylinder",
+    "clearance_m": 0.1867953358206183
+  },
+  "events": [],
+  "audit_valid": true,
+  "completion": true,
+  "success": false,
+  "terminal_stall_event": {
+    "kind": "persistent_no_progress_stall",
+    "elapsed_s": 77.40816259384155,
+    "stationary_window_s": 60.004520893096924,
+    "radius_m": 0.02,
+    "position_m": [
+      8.154082001915668,
+      18.550658920781206,
+      2.2412033919881966
+    ],
+    "clearance_m": 0.1867953358206183,
+    "waypoint_index": 1,
+    "n_waypoints": 5
+  },
+  "coverage": {
+    "received_samples": 7739,
+    "written_rows": 7739,
+    "first_sample": 1,
+    "last_sample": 7739,
+    "all_received_samples_recorded": true,
+    "source": "received_odometry_callbacks",
+    "upstream_delivery_verified": false
+  },
+  "native_monitor_sha256": "8a5c573350236fa89f305815054e16dfa713d800547581c2540c06b5b7bf2a1b",
+  "odometry_sha256": "81b00f654480c7c980049663099ba80f7f00fbc6ecd5980ddb72afdb113e1b6c"
+}

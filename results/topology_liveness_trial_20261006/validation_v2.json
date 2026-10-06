@@ -1,0 +1,36 @@
+{
+  "schema": "topology-liveness-candidate-build-and-checks-v1",
+  "date": "2026-10-06",
+  "candidate": "topology_liveness_trial_v2_20261006",
+  "reference_repo_commit": "27b525e",
+  "build": {
+    "prefix": "/root/super_ws/forest_liveness_trial_v2_20261006",
+    "packages": ["super_planner", "perfect_drone_sim"],
+    "exit_code": 0,
+    "serial_build": true,
+    "wall_seconds_rounded": 601,
+    "existing_compiler_warnings_retained": true
+  },
+  "checks": {
+    "ctest_targets": 5,
+    "ctest_failed": 0,
+    "source_contract_pytest_cases": 24,
+    "source_contract_pytest_failed": 0,
+    "exact_production_recovery_fixture": "PASS",
+    "fixture_sanitizers": ["address", "undefined"],
+    "static_connectivity_cases": 32,
+    "static_connectivity_expected_results": "PASS",
+    "launcher_shell_syntax": "PASS"
+  },
+  "sha256": {
+    "super_planner/src/super_core/super_planner.cpp": "737fa8d210c1c5250e285bd31e7285d6e314418a286a7bd8cea1322235b1fc65",
+    "super_planner/include/super_core/super_planner.h": "b66518959f754da71b0f8f34a65dce4ee8693d6513e8ebf53e45ed06774e8edd",
+    "perfect_drone_full_node": "ea190bc7d7bb0073e3421acfb0c91d2229e35ce99884040b83aa5a13bcaf4736",
+    "perfect_drone_adaptive_node": "856303ef1ea1dfada1baf7cd0fac368d45074b3039c5fe09b7d76cd85df79fbb"
+  },
+  "limits": [
+    "Static 2-D connectivity is not an exact original-state 3-D replay",
+    "Mock A* outcomes exercise exact production state handling, not physical flight safety",
+    "Smoke runs do not replace or augment the frozen c41 confirmation results"
+  ]
+}

@@ -1156,12 +1156,36 @@ namespace super_planner {
 
     void SuperPlanner::resetTopologyRecoveryState() {
         clearTopologyRecoverySearchState();
+        guard_topology_recovery_exhausted_ = false;
         guard_topology_base_no_path_recoveries_ = 0;
         guard_topology_saturation_recoveries_ = 0;
         guard_topology_local_escape_recoveries_ = 0;
         guard_topology_epoch_ = 0;
         guard_topology_episode_anchor_.setZero();
         guard_topology_episode_anchor_valid_ = false;
+    }
+
+    void SuperPlanner::markTopologyRecoveryExhausted(
+            const char *reason, const Vec3f &start_pos) {
+        if (guard_topology_recovery_exhausted_) {
+            return;
+        }
+        guard_topology_recovery_exhausted_ = true;
+        guard_corridor_retry_pending_.store(false, std::memory_order_release);
+        guard_local_escape_pending_.store(false, std::memory_order_release);
+        guard_vertical_recovery_pending_.store(false,
+                                               std::memory_order_release);
+        ros_ptr_->warn(
+                " -- [TRAJ_GUARD_RECOVERY_EXHAUSTED] reason={} "
+                "start=[{:.3f},{:.3f},{:.3f}] zones={} "
+                "local_attempts={}/{} vertical_attempts={}/{} "
+                "action=certified_hold_until_goal_or_progress",
+                reason, start_pos.x(), start_pos.y(), start_pos.z(),
+                guard_topology_avoidance_centers_.size(),
+                guard_topology_local_escape_recoveries_,
+                cfg_.guard_topology_local_escape_attempts,
+                guard_topology_saturation_recoveries_,
+                cfg_.guard_topology_saturation_vertical_attempts);
     }
 
     void SuperPlanner::armTopologyRouteBlock(
@@ -2014,6 +2038,7 @@ namespace super_planner {
                                                   std::memory_order_release);
         guard_corridor_retry_pending_.store(false, std::memory_order_release);
         guard_corridor_retry_attempts_.store(0, std::memory_order_release);
+        guard_topology_recovery_exhausted_ = false;
         // A successful short PlanFromRest candidate changes the current pose,
         // so its virtual blockers cannot be reused verbatim.  The recovery
         // budget, however, belongs to the stopped-location episode.  Resetting
@@ -2849,6 +2874,7 @@ namespace super_planner {
                     guard_topology_local_escape_recoveries_ = 0;
                     guard_topology_saturation_recoveries_ = 0;
                     guard_topology_base_no_path_recoveries_ = 0;
+                    guard_topology_recovery_exhausted_ = false;
                     guard_topology_epoch_ = 0;
                     guard_topology_episode_anchor_ = episode_position;
                     guard_topology_episode_anchor_valid_ = true;
@@ -2864,6 +2890,13 @@ namespace super_planner {
                             old_base_recoveries);
                 }
             }
+        }
+
+        if (guard_topology_recovery_exhausted_) {
+            // No certified movement or changed goal/episode has occurred.
+            // Keep the already-certified stationary hold rather than
+            // rebuilding the same unsafe guide and virtual blockers.
+            return FAILED;
         }
 
         const char *test_force_local_escape =
@@ -3914,7 +3947,8 @@ namespace super_planner {
                             local_escape_direction.norm();
                     if (!local_escape_direction.array().isFinite().all() ||
                         !std::isfinite(local_escape_direction_norm) ||
-                        local_escape_direction_norm < cfg_.resolution) {
+                        local_escape_direction_norm < cfg_.resolution ||
+                        guard_topology_stall_rejects_ <= 0) {
                         local_escape_direction = gi_.goal_p - stopped_start;
                         local_escape_direction.z() = 0.0;
                         local_escape_direction_norm =
@@ -3932,9 +3966,12 @@ namespace super_planner {
                             local_escape_direction.array().isFinite().all() &&
                             std::isfinite(local_escape_direction_norm) &&
                             local_escape_direction_norm >= cfg_.resolution;
+                    // A disconnected corridor can need a horizontal state
+                    // change even when its last rejection is beyond the
+                    // start-adjacent threshold. Every local escape still
+                    // passes the unchanged guard and stop-viability checks.
                     const bool arm_local_escape =
                             cfg_.guard_topology_local_escape_en &&
-                            start_adjacent_rejection &&
                             local_escape_direction_valid &&
                             guard_topology_local_escape_recoveries_ <
                                     cfg_.guard_topology_local_escape_attempts;
@@ -4000,13 +4037,8 @@ namespace super_planner {
                                 stopped_start.z(),
                                 collision_z);
                     } else {
-                        guard_corridor_retry_pending_.store(
-                                true, std::memory_order_release);
-                        ros_ptr_->warn(
-                                " -- [TRAJ_GUARD_REROUTE_EPOCH_RESET] epoch={} "
-                                "cleared_zones={} reason=corridor_no_path "
-                                "action=certified_stop_reseed",
-                                guard_topology_epoch_, cleared_zones);
+                        markTopologyRecoveryExhausted(
+                                "corridor_no_path", stopped_start);
                     }
                 }
             }
@@ -4086,17 +4118,37 @@ namespace super_planner {
             guard_topology_no_path_failures_ = 0;
             guard_topology_corridor_failures_ = 0;
             ++guard_topology_epoch_;
-            if (cfg_.guard_topology_vertical_recovery_en) {
+            const Vec3f escape_direction = gi_.goal_p - pos_init_state.col(0);
+            Vec3f escape_xy = escape_direction;
+            escape_xy.z() = 0.0;
+            const bool can_escape = cfg_.guard_topology_local_escape_en &&
+                    escape_xy.array().isFinite().all() &&
+                    escape_xy.norm() >= cfg_.resolution &&
+                    guard_topology_local_escape_recoveries_ <
+                            cfg_.guard_topology_local_escape_attempts;
+            const bool can_lift = cfg_.guard_topology_vertical_recovery_en &&
+                    guard_topology_saturation_recoveries_ <
+                            cfg_.guard_topology_saturation_vertical_attempts;
+            if (can_lift) {
+                ++guard_topology_saturation_recoveries_;
                 guard_vertical_recovery_pending_.store(
                         true, std::memory_order_release);
+            } else if (can_escape) {
+                guard_local_escape_direction_ = escape_xy.normalized();
+                ++guard_topology_local_escape_recoveries_;
+                guard_local_escape_pending_.store(
+                        true, std::memory_order_release);
+            } else {
+                markTopologyRecoveryExhausted(reason, pos_init_state.col(0));
             }
             ros_ptr_->warn(
                     " -- [TRAJ_GUARD_POST_CORRIDOR_RECOVERY] epoch={} "
                     "cleared_zones={} reason={} action={}",
                     guard_topology_epoch_, cleared_zones, reason,
-                    cfg_.guard_topology_vertical_recovery_en
+                    can_lift
                             ? "guarded_vertical_lift"
-                            : "reseed_without_lift");
+                            : (can_escape ? "certified_local_escape"
+                                          : "certified_hold_exhausted"));
         };
         {
             const thread_cpu_profile::Scope optimizer_cpu_scope(
@@ -4574,6 +4626,42 @@ namespace super_planner {
                 temp_start_point, goal, flag, temp_plannning_horizon, path,
                 guard_topology_avoidance_centers_,
                 guard_topology_avoidance_radii_);
+        const bool had_topology_zones =
+                !guard_topology_avoidance_centers_.empty();
+        if (planning_from_rest && ret_code == NO_PATH &&
+            had_topology_zones && guard_topology_no_path_failures_ == 0) {
+            // Trial the newest virtual blocker against the same map and A*
+            // constraints. A reachable guide *without* that blocker proves
+            // the new topology exclusion disconnected this stopped start.
+            // It does not prove that the guide can pass CIRI/MINCO or the
+            // trajectory guard, so never fly or optimize the trial path.
+            auto trial_centers = guard_topology_avoidance_centers_;
+            auto trial_radii = guard_topology_avoidance_radii_;
+            trial_centers.pop_back();
+            trial_radii.pop_back();
+            vec_Vec3f trial_path;
+            const RET_CODE trial_ret = astar_ptr_->pointToPointPathSearch(
+                    temp_start_point, goal, flag, temp_plannning_horizon,
+                    trial_path, trial_centers, trial_radii);
+            if (trial_ret == REACH_GOAL || trial_ret == REACH_HORIZON) {
+                const std::size_t blocked_zones =
+                        guard_topology_avoidance_centers_.size();
+                guard_topology_avoidance_centers_.pop_back();
+                guard_topology_avoidance_radii_.pop_back();
+                // The current failure is already a controlled counterfactual,
+                // not a transient sensor timeout. Go straight to the bounded
+                // certified-movement/exhaustion branch below.
+                guard_topology_no_path_failures_ =
+                        cfg_.guard_topology_reroute_no_path_reset_attempts - 1;
+                ros_ptr_->warn(
+                        " -- [TRAJ_GUARD_ZONE_DISCONNECT] zones={} "
+                        "trial_zones={} start=[{:.3f},{:.3f},{:.3f}] "
+                        "action=rollback_latest_zone_and_recover",
+                        blocked_zones, trial_centers.size(),
+                        temp_start_point.x(), temp_start_point.y(),
+                        temp_start_point.z());
+            }
+        }
 
         // Explicit one-shot regression hook for the otherwise stochastic
         // base-NO_PATH tail. It is inert unless the test environment opts in.
@@ -4625,7 +4713,7 @@ namespace super_planner {
                 ret_code == TIME_OUT ? "astar_timeout" : "astar_no_path";
 
         if (stopped_guard_astar_failure &&
-            guard_topology_avoidance_centers_.empty()) {
+            !had_topology_zones) {
             // The old recovery counter only ran after a rejected candidate
             // had already created a virtual blocker. A stopped base search
             // with no path or a bounded timeout therefore retried the
@@ -4708,6 +4796,8 @@ namespace super_planner {
                             guard_local_escape_direction_.z());
                 } else {
                     guard_topology_no_path_failures_ = -1;
+                    markTopologyRecoveryExhausted(
+                            astar_failure_reason, temp_start_point);
                     ros_ptr_->warn(
                             " -- [TRAJ_GUARD_BASE_NO_PATH_EXHAUSTED] "
                             "attempts={}/{} reason={} "
@@ -4721,7 +4811,7 @@ namespace super_planner {
                 }
             }
         } else if (guarded_astar_failure_with_zones &&
-            !guard_topology_avoidance_centers_.empty()) {
+            had_topology_zones) {
             ++guard_topology_no_path_failures_;
             if (guard_topology_no_path_failures_ >=
                 cfg_.guard_topology_reroute_no_path_reset_attempts) {
@@ -4750,7 +4840,8 @@ namespace super_planner {
                         local_escape_direction.norm();
                 if (!local_escape_direction.array().isFinite().all() ||
                     !std::isfinite(local_escape_direction_norm) ||
-                    local_escape_direction_norm < cfg_.resolution) {
+                    local_escape_direction_norm < cfg_.resolution ||
+                    guard_topology_stall_rejects_ <= 0) {
                     local_escape_direction = goal - temp_start_point;
                     local_escape_direction.z() = 0.0;
                     local_escape_direction_norm =
@@ -4761,9 +4852,11 @@ namespace super_planner {
                         local_escape_direction.array().isFinite().all() &&
                         std::isfinite(local_escape_direction_norm) &&
                         local_escape_direction_norm >= cfg_.resolution;
+                // NO_PATH caused by virtual zones is sufficient reason to
+                // try a separately certified horizontal escape. Collision
+                // height/proximity restricts lifts, not this bounded budget.
                 const bool arm_local_escape =
                         cfg_.guard_topology_local_escape_en &&
-                        start_adjacent_lower_rejection &&
                         local_escape_direction_valid &&
                         guard_topology_local_escape_recoveries_ <
                                 cfg_.guard_topology_local_escape_attempts;
@@ -4822,14 +4915,8 @@ namespace super_planner {
                             horizontal_collision_distance,
                             temp_start_point.z(), collision_z);
                 } else {
-                    guard_corridor_retry_pending_.store(
-                            true, std::memory_order_release);
-                    ros_ptr_->warn(
-                            " -- [TRAJ_GUARD_REROUTE_EPOCH_RESET] epoch={} "
-                            "cleared_zones={} reason={} "
-                            "action=certified_stop_reseed",
-                            guard_topology_epoch_, cleared_zones,
-                            astar_failure_reason);
+                    markTopologyRecoveryExhausted(
+                            astar_failure_reason, temp_start_point);
                 }
             }
         } else if (ret_code == REACH_HORIZON || ret_code == REACH_GOAL) {

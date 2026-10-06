@@ -196,6 +196,10 @@ namespace super_planner {
         int guard_topology_base_no_path_recoveries_{0};
         int guard_topology_saturation_recoveries_{0};
         int guard_topology_local_escape_recoveries_{0};
+        // A failed recovery episode must not recreate the same virtual
+        // blockers indefinitely from an unchanged certified stop. Cleared
+        // only by a new goal, material XY progress, or a successful commit.
+        bool guard_topology_recovery_exhausted_{false};
         // Anchor and budgets survive short commits at the same stopped
         // location. They reset only on a new goal or material XY progress.
         Vec3f guard_topology_episode_anchor_{Vec3f::Zero()};
@@ -460,6 +464,9 @@ namespace super_planner {
         // Clear blockers and pending actions tied to the current pose while
         // preserving stopped-episode budgets and the mission-goal identity.
         void clearTopologyRecoverySearchState();
+
+        void markTopologyRecoveryExhausted(const char *reason,
+                                           const Vec3f &start_pos);
 
         bool tryCommitCertifiedDirectGoalFallback(const Vec3f &start_p,
                                                   const Vec3f &goal_p);
