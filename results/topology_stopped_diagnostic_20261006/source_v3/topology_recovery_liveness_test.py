@@ -42,15 +42,6 @@ def main():
         source, "void SuperPlanner::clearTopologyRecoverySearchState(")
     assert "guard_topology_recovery_exhausted_ = false;" in extract(
         source, "bool SuperPlanner::commitTrajectoryCandidate(")
-    assert 'guard_topology_connected_retry_attempts_ = 0;' in extract(
-        source, 'void SuperPlanner::resetTopologyRecoveryState(')
-    assert 'guard_topology_connected_retry_attempts_ = 0;' not in extract(
-        source, 'void SuperPlanner::clearTopologyRecoverySearchState(')
-    assert 'guard_topology_connected_retry_attempts_ = 0;' not in extract(
-        source, 'bool SuperPlanner::commitTrajectoryCandidate(')
-    assert 'guard_topology_connected_retry_attempts_ = 0;' in plan
-    assert 'commitTrajectoryCandidate' not in rollback
-    assert 'path = trial_path' not in rollback and 'path.swap(trial_path)' not in rollback
     # The fresh-scan reconstruction must never become a production switch or
     # an A*/certificate-result override. It is only stationary, once, at the
     # recorded pose. Unit fixtures below still test the real recovery code.
@@ -78,14 +69,11 @@ struct Vec3f { double v[3]{1,2,3};
  double z() const {return v[2];} };
 using vec_Vec3f = std::vector<Vec3f>;
 enum RET_CODE { NO_PATH, TIME_OUT, INIT_ERROR, REACH_GOAL, REACH_HORIZON };
-const char* RET_CODE_STR[] = {"NO_PATH", "TIME_OUT", "INIT_ERROR", "REACH_GOAL", "REACH_HORIZON"};
 struct Astar { RET_CODE result=REACH_GOAL; int calls=0; size_t centers=99;
- RET_CODE fresh_result=REACH_GOAL;
  RET_CODE pointToPointPathSearch(const Vec3f&,const Vec3f&,int,double,
    vec_Vec3f& path,const vec_Vec3f& c,const std::vector<double>& r) {
    ++calls; centers=c.size(); assert(c.size()==r.size());
-   Vec3f p; p.v[0]=calls; path.push_back(p);
-   return calls==1?result:fresh_result; } };
+   path.push_back(Vec3f{}); return result; } };
 struct Logger {int warnings=0;
  template<class... Args> void warn(const char*,Args...) {++warnings;} };
 struct SuperPlanner {
@@ -96,7 +84,6 @@ struct SuperPlanner {
  vec_Vec3f guard_topology_avoidance_centers_;
  std::vector<double> guard_topology_avoidance_radii_;
  int guard_topology_no_path_failures_=0;
- int guard_topology_connected_retry_attempts_=0;
  int guard_topology_local_escape_recoveries_=4;
  int guard_topology_saturation_recoveries_=1;
  bool guard_topology_recovery_exhausted_=false;
@@ -114,8 +101,7 @@ ESCAPE_CONDITION
    Vec3f temp_start_point,goal; int flag=1; double temp_plannning_horizon=10;
    vec_Vec3f path;
 ROLLBACK
-   if (!path.empty()) assert(path.size()==1 && path[0].x()==2);
-   // x=1 is the counterfactual guide; only a separate real query can output x=2.
+   assert(path.empty()); // trial guide must not escape to the real output.
    return {had_topology_zones,ret_code};
  }
 };
@@ -125,29 +111,12 @@ int main() {
    SuperPlanner p; p.guard_topology_avoidance_centers_.resize(2);
    p.guard_topology_avoidance_radii_.resize(2,0.8);
    p.astar_ptr_->result=success;
-   p.astar_ptr_->fresh_result=success;
    const auto result=p.probe(true,NO_PATH);
-   assert(result.first && result.second==success);
-   assert(p.astar_ptr_->calls==2 && p.astar_ptr_->centers==1);
+   assert(result.first && result.second==NO_PATH);
+   assert(p.astar_ptr_->calls==1 && p.astar_ptr_->centers==1);
    assert(p.guard_topology_avoidance_centers_.size()==1);
    assert(p.guard_topology_avoidance_radii_.size()==1);
    assert(p.guard_topology_no_path_failures_==2);
-   assert(p.guard_topology_connected_retry_attempts_==1);
- }
- for (auto failed : {NO_PATH,TIME_OUT,INIT_ERROR}) {
-   SuperPlanner p; p.guard_topology_avoidance_centers_.resize(2);
-   p.guard_topology_avoidance_radii_.resize(2,0.8);
-   p.astar_ptr_->fresh_result=failed;
-   const auto result=p.probe(true,NO_PATH);
-   assert(result.second==failed && p.astar_ptr_->calls==2);
-   assert(p.guard_topology_connected_retry_attempts_==1);
- }
- { SuperPlanner p; p.guard_topology_avoidance_centers_.resize(2);
-   p.guard_topology_avoidance_radii_.resize(2,0.8);
-   p.guard_topology_connected_retry_attempts_=1;
-   const auto result=p.probe(true,NO_PATH);
-   assert(result.second==NO_PATH && p.astar_ptr_->calls==1);
-   assert(p.guard_topology_connected_retry_attempts_==1);
  }
  for (auto failed : {NO_PATH,TIME_OUT,INIT_ERROR}) {
    SuperPlanner p; p.guard_topology_avoidance_centers_.resize(2);

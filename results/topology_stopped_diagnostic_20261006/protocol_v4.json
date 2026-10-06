@@ -1,0 +1,20 @@
+{
+  "schema": "topology-stopped-diagnostic-plan-v4",
+  "install_root": "/root/super_ws/forest_liveness_trial_v4_20261006/install",
+  "candidate": "topology_liveness_trial_v4_20261006",
+  "frozen_c41_and_v3_outcomes_replaced": false,
+  "historical_map_replay": false,
+  "fresh_lidar_map_at_logged_pose": true,
+  "canonical_mission": false,
+  "automatic_retries": 0,
+  "change": "At a confirmed zone disconnection, query the restored topology afresh once per distinct goal/material progress episode; standard CIRI/MINCO/trajectory/stop-viability certification remains mandatory.",
+  "new_connected_query_budget": 1,
+  "local_movement_and_vertical_budgets_changed": false,
+  "planned_cases": [
+    {"directory": "v4_control", "variant": "control", "expect_connected_recovery": false},
+    {"directory": "v4_available", "variant": "available", "expect_connected_recovery": true},
+    {"directory": "v4_exhausted", "variant": "exhausted", "expect_connected_recovery": true}
+  ],
+  "exhausted_case_goal": "original next primary goal, not a replacement/reset goal",
+  "advance_rule": "All three physical branch cases and independent audits must pass before Forest n10; inspect any Full/Adaptive actual failure before common seven-map regression."
+}

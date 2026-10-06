@@ -1,0 +1,21 @@
+{
+  "schema": "topology-stopped-diagnostic-plan-v1",
+  "install_root": "/root/super_ws/forest_liveness_trial_v3_20261006/install",
+  "candidate": "topology_liveness_trial_v3_20261006",
+  "canonical_install_promoted": false,
+  "frozen_c41_outcomes_replaced": false,
+  "source_failure_run": 97036,
+  "historical_map_replay": false,
+  "fresh_lidar_map_at_logged_pose": true,
+  "canonical_mission": false,
+  "automatic_retries": 0,
+  "planned_cases": [
+    {"directory": "control", "variant": "control", "purpose": "fresh map and logged pose, no injected topology state"},
+    {"directory": "available", "variant": "available", "purpose": "two logged virtual zones, horizontal budget available, vertical budgets consumed"},
+    {"directory": "exhausted", "variant": "exhausted", "purpose": "two logged virtual zones, original consumed budgets, stationary hold followed by distinct goal"}
+  ],
+  "advance_rule": "Inspect actual A* branch, certified movement, contacts and independent evidence before broad regression. A safe exhausted hold does not resolve the original Full completion failure.",
+  "diagnostic_deadline_s": 180,
+  "canonical_global_mission_cutoff_s": null,
+  "original_rog_map_raw_scans_ciri_minco_state_available": false
+}

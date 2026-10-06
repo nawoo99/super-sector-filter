@@ -196,9 +196,6 @@ namespace super_planner {
         int guard_topology_base_no_path_recoveries_{0};
         int guard_topology_saturation_recoveries_{0};
         int guard_topology_local_escape_recoveries_{0};
-        // One fresh connected-topology query before resorting to local
-        // movement/hold. Survives short commits and search-state clears.
-        int guard_topology_connected_retry_attempts_{0};
         // A failed recovery episode must not recreate the same virtual
         // blockers indefinitely from an unchanged certified stop. Cleared
         // only by a new goal, material XY progress, or a successful commit.

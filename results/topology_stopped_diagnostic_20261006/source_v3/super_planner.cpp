@@ -1160,7 +1160,6 @@ namespace super_planner {
         guard_topology_base_no_path_recoveries_ = 0;
         guard_topology_saturation_recoveries_ = 0;
         guard_topology_local_escape_recoveries_ = 0;
-        guard_topology_connected_retry_attempts_ = 0;
         guard_topology_epoch_ = 0;
         guard_topology_episode_anchor_.setZero();
         guard_topology_episode_anchor_valid_ = false;
@@ -2873,7 +2872,6 @@ namespace super_planner {
                     guard_certified_stop_for_reroute_.store(
                             certified_stop, std::memory_order_release);
                     guard_topology_local_escape_recoveries_ = 0;
-                    guard_topology_connected_retry_attempts_ = 0;
                     guard_topology_saturation_recoveries_ = 0;
                     guard_topology_base_no_path_recoveries_ = 0;
                     guard_topology_recovery_exhausted_ = false;
@@ -4699,9 +4697,9 @@ namespace super_planner {
                         guard_topology_avoidance_centers_.size();
                 guard_topology_avoidance_centers_.pop_back();
                 guard_topology_avoidance_radii_.pop_back();
-                // This is a controlled topology disconnection rather than
-                // a transient timeout. If the one fresh connected query below
-                // fails or is already spent, use bounded movement/exhaustion.
+                // The current failure is already a controlled counterfactual,
+                // not a transient sensor timeout. Go straight to the bounded
+                // certified-movement/exhaustion branch below.
                 guard_topology_no_path_failures_ =
                         cfg_.guard_topology_reroute_no_path_reset_attempts - 1;
                 ros_ptr_->warn(
@@ -4711,27 +4709,6 @@ namespace super_planner {
                         blocked_zones, trial_centers.size(),
                         temp_start_point.x(), temp_start_point.y(),
                         temp_start_point.z());
-                // The old branch discarded the restored connection and
-                // moved immediately, even with all movement budgets spent.
-                // Query that changed topology afresh once per goal/progress
-                // episode. Only this real query's output proceeds through
-                // ordinary CIRI/MINCO, trajectory guard and stop viability;
-                // the counterfactual trial_path is never exported or flown.
-                if (guard_topology_connected_retry_attempts_ < 1) {
-                    ++guard_topology_connected_retry_attempts_;
-                    path.clear();
-                    ret_code = astar_ptr_->pointToPointPathSearch(
-                            temp_start_point, goal, flag,
-                            temp_plannning_horizon, path,
-                            guard_topology_avoidance_centers_,
-                            guard_topology_avoidance_radii_);
-                    ros_ptr_->warn(
-                            " -- [TRAJ_GUARD_CONNECTED_RETRY] attempt=1/1 "
-                            "zones={} result={} "
-                            "action=fresh_search_then_standard_certification",
-                            guard_topology_avoidance_centers_.size(),
-                            RET_CODE_STR[ret_code]);
-                }
             }
         }
 

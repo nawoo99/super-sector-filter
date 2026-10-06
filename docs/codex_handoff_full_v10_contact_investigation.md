@@ -1,6 +1,17 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-10-06 정지 상태 실제 분기 시험 후 정정:** 로그의 정지 위치·두 virtual
+> zone을 새 LiDAR 맵에 재구성해 실제 A* 단절/rollback/인증 탈출/소진 분기를
+> 시험했다. v3는 수평 탈출4회 후 재정체했고, 이어 구현한 v4의 목표/진행 구간당
+> 1회 fresh connected-topology 재탐색도 A*와 최적화 성공 뒤 EXP
+> `CLEARANCE_MARGIN` 거부로 정체가 남았다. **연결성 복구만으로 완주 결함을
+> 해결했다고 주장하지 말 것.** 후보 소스는 v4지만 canonical 실행본은
+> 승격하지 않았다. 실패를 보존하고 Forest n10/공통7맵 캠페인은 gate에서
+> 보류한다. 정확한 원본 ROG/CIRI/MINCO 상태 재생은 여전히 불가하다.
+> 상세 §8.132 및 `results/topology_stopped_diagnostic_20261006/`.
+
+> [!IMPORTANT]
 > **2026-10-06 Forest Full 정체 후속 후보:** 정지 위치를 가두는 최신 임시 zone의
 > 반사실 A* 검사·rollback, 남은 인증 수평 탈출 우선 사용, 복구 소진 후 동일 상태
 > 무한 reseed 차단을 구현했다. 첫 v1은 예산0/4에서 조기 종료해 **폐기·보존**했고,

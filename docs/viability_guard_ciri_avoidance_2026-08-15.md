@@ -7840,3 +7840,109 @@ folder; all ten physical outcomes (rejected v1 plus nine V2 flights) and logs
 are retained. `scripts/native_campaign/run_topology_liveness_trial.sh` runs
 this separate candidate, and `summarize_topology_liveness_trial.py` audits the
 predefined nine outcomes, hashes and non-missing finite computation metrics.
+
+### 8.132 Stopped-state branch simulation and connected-query candidate (2026-10-06)
+
+The unexercised V2 branches in §8.131 were tested physically, without rerunning
+or replacing c41 outcomes. A separately named simulator configuration starts at
+the logged run97036 pose `(8.6753022,18.9734347,2.685578)`, with the unchanged
+Forest PCD/solid geometry, full LiDAR policy and Full near-hit-v3 guard profile.
+The initial next waypoint is `(24.025,22.025,1.5)`; the FSM's existing cell
+quantization receives height1.525. It is a **one-next-goal diagnostic**, not a
+five-waypoint canonical mission. The original raw scans, ROG map, corridor and
+MINCO state remain unavailable, so this is fresh-map state reconstruction,
+not historical-state replay.
+
+`SUPER_TEST_FOREST_TOPOLOGY_STATE=available|exhausted` is an explicit one-shot
+test hook, restricted to stationary planning from rest within0.15m of the
+logged pose and speed<=0.05m/s. It injects only the logged XY zones and recovery
+counters. It never fabricates an A* return, certificate or command. Canonical
+V3/V4 campaign wrappers reject enabled `SUPER_TEST_*` variables.
+
+V3 builds separately from the canonical installation. Its predefined cases:
+
+|Case|Observed terminal|Contact episodes|Recovery observation|
+|---|---|---:|---|
+|No injected state|Next primary goal reached|0|Hook inert; no local escape|
+|Two zones, local budget0/4, vertical budgets consumed|81.14s no-progress terminal|0|Actual disconnect5 times, certified local commits4, exhaustion once|
+|Two zones, local4/4 and vertical1/1 consumed|Stable hold, then distinct reset goal reached|0|Actual disconnect once, exhaustion once; no local/vertical motion before reset|
+
+The exhausted case's reset goal is a **test of latch invalidation**, not rescue
+to the original waypoint. Its original primary goal was not reached. All three
+received odometry streams have valid analytic solid-contact evidence and
+speed checks. Independent audit differentiates `evidence_valid` from
+`criterion_met`: the available-budget failure is a valid measured failure,
+not missing/invalid data. The failed observation is retained, not retried or
+replaced. After source changes, explicit `source_v3` snapshots verify the
+original input hashes; the V3 integrated Full binary remains unchanged.
+
+The trace exposes a recovery-order limitation: the counterfactual detects a
+reachable topology after removing the newest blocker, but the V2/V3 branch
+retains `NO_PATH` and goes directly to bounded short local movements. Those
+movements can stay in the same small pocket and spend all four attempts.
+
+V4 adds **one fresh real A* query** against the rolled-back zone set before
+falling back to local movement/hold. The counterfactual trial guide is never
+exported. Only the new real query's guide proceeds through ordinary
+CIRI/MINCO and unchanged trajectory/stop-viability/async departure checks.
+The new attempt counter survives generic search-state clears and successful
+short commits; it resets only on a distinct goal or material2m XY episode
+progress. Existing local/vertical movement budgets, safety radius, profile,
+map and mission assets are unchanged.
+
+The exact-production ASan/UBSan fixture now tests the separate real-query
+output, bounded single-query budget, failed/timeout real queries, unchanged
+reset contracts, and no counterfactual-path or command export. Five CTest
+targets and24 related pytest source-contract cases pass. These do not
+substitute for a physical flight.
+
+V4 uses `/root/super_ws/forest_liveness_trial_v4_20261006/install`. A reused
+CMake cache initially retained the V3 install prefix: the build was stopped
+before integrated simulator installation, then explicitly reconfigured using
+`--cmake-force-configure`. Both package cache prefixes and final installation
+logs were checked against V4. The prior diagnostic Full executable SHA stayed
+unchanged. Build artifacts under the reused V3 build directory are now V4,
+and the initially completed planner-only install replaced V3's library/FSM;
+V3 must not be reused as a complete cohort runtime. Its retained integrated
+Full executable is self-contained and was the binary used for all three V3
+diagnostic observations; those executable hashes are unchanged.
+so the build-directory name must not be used as evidence of candidate identity.
+Select the installation and executable hashes recorded in each protocol.
+
+V4's physical control and available-budget tests both reached the restored
+A* horizon and generated an optimized EXP, but the final guard rejected EXP
+`CLEARANCE_MARGIN` violations. Four short certified local movements still
+did not leave the pocket. Thus this candidate does not establish completion
+recovery. At the connected retry in `v4_control/stack.log`, A* returns
+`REACH_HORIZON`, `GenerateExpTrajectory SUCCESS` follows, then EXP is rejected
+at `[7.791,19.462,2.685]`. Analytic body clearance there is0.23306m to
+`trunk_084`: this is an **unflown rejected candidate**, not an observed contact.
+Raw-point corridor clearance, voxelized guard clearance and the soft MINCO
+penalties differ; this is a concrete next diagnostic target, not proof that
+the guard should be relaxed or that all margin failures share one cause.
+The changed cold-start control outcome alone is not a causal regression
+estimate: original scans/map/optimizer inputs are not identically replayed.
+
+The frozen c41 Full69/70 and Adaptive70/70 remain unchanged. No baseline is
+promoted and the planned Forest n10/common7-map n10 expansion is blocked by
+the actual diagnostic completion failure. The gated controller
+`topology_liveness_v4_campaign.py` is prepared but must refuse launch unless
+all three V4 primary-goal diagnostics independently pass. It separates30
+Forest pilot flights from210 fresh seven-map flights, each mode/map n10,
+rotates mode order, records CPU/CPU-time/input/payload/map-time/transitions,
+and preserves/halts on any actual Full/Adaptive failure without replacement.
+Final per-case machine-readable outcomes are in the trial folder; no missing
+case is treated as a success.
+
+All six diagnostic physical attempts are now complete. V4's predefined
+control/available/exhausted cases each fail the original-next-goal criterion,
+contact0, at85.09/75.47/64.39s including startup and the60s observer. Each uses
+one fresh connected query; local commits are4/4/0. The exhausted case logs
+`GenerateExpTrajectory SUCCESS`, then EXP margin rejection before holding.
+`audit_v4.json` validates all three recorded streams/input hashes but correctly
+marks all three criteria false. The V3 source-bundle re-audit validates all
+three retained observations as well. The controller was invoked to verify
+fail-closed admission and refused before creating a campaign or launching
+any flight. Forest n10 and seven-map n10 remain unexecuted. All simulation
+and compiler processes are stopped. Detailed Korean summary:
+`results/topology_stopped_diagnostic_20261006/README.md`.
