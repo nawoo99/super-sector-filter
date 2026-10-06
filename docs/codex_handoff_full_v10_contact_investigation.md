@@ -1,6 +1,15 @@
 # Codex 인계 문서 — SUPER `full` 모드 v=10 잔여 접촉 조사 (2026-08-13)
 
 > [!IMPORTANT]
+> **2026-10-06 V6 확대 검증 준비:** 사용자 승인으로 V6 바이너리/프로파일/맵을
+> 그대로 동결한 Forest3모드 각10회(30회), 통과 시 별도7맵×3모드×10회(210회)를
+> 준비했다. 개별 비행마다 독립 odometry 감사와 실패 gate를 검사해 Full/Adaptive
+> 실패나 어떤 모드의 기록/속도/자원 오류에서 다음 비행 전 중단한다. 자동 재시도·
+> 결과 교체·canonical 승격은 없다. 아직 시작/완료 결과로 간주하지 말고
+> `results/topology_polyline_v6_n10_20261006/status.json`을 확인할 것.
+> 예상 Forest50–70분 +7맵5–6시간, 집계 포함6–7시간. 상세 §8.134.
+
+> [!IMPORTANT]
 > **2026-10-06 실제 입력 캡처 및 V6 다중 구간 복구 후보:** V5 입력27프레임에서
 > CIRI 회랑 내부의 최적화 점도 같은 맵 publication의 inflated voxel guard가
 > 거절하는 사례를 확인했다. 따라서 지도 갱신 차이 또는 MINCO soft penalty만을

@@ -8090,3 +8090,52 @@ Canonical promotion and original-state resolution claims remain withheld.
 Next admissible work is a frozen V6 Forest3-mode n10, then a separately
 documented fresh common7-map n10 if the safety/evidence gate passes. Neither
 larger cohort has been executed, and c41 paper figures remain unchanged.
+
+### 8.134 Frozen V6 Forest n10 and gated seven-map n10 campaign (2026-10-06)
+
+The user authorized the next two verification stages and requested a duration
+estimate. No planner/algorithm/profile/map change or rebuild is made: the V6
+Full/Adaptive binaries retain the hashes in §8.133. The canonical baseline,
+frozen c41 cohort, V5 failures and V6 diagnostic/smoke records remain separate.
+
+The new controller `topology_polyline_v6_campaign.py` predeclares30 Forest
+flights (each mode n10), then210 independent seven-map flights (each mode/map
+n10). Forest pilot outcomes are not pooled into the seven-map cohort. Maps
+are gapfree m01–m04/m05r2, Urban u01 and Forest f01, with unchanged missions.
+Sector still means Active-Yaw Sector. Mode order rotates cyclically by map
+and repeat. No total mission-time cutoff is introduced; the prior measurement
+only60s/2cm no-progress terminal remains and does not feed the planner.
+
+Each child executes exactly one mode/physical flight. Immediately afterwards,
+the controller verifies original source/resource/speed/recovery audits, raw
+identity and hashes, and independently replays every received odometry sample
+against analytic solids. A Full/Adaptive contact or non-completion stops before
+the next flight; any mode's evidence/resource/speed error also stops. Sector
+actual contact/non-completion remains an outcome, not a reason to replace it.
+This is stricter than waiting until all three modes in a group have finished.
+
+706 inputs are hashed before execution and rechecked before each flight.
+Admission validates the three targeted V6 results, nine smoke outcomes and
+matching executable hashes. An initial preparation call uncovered that saved
+smoke artifact directories could be repo-relative while the caller cwd was
+the source tree. It refused before directory creation or physical launch;
+relative evidence paths now resolve against the documented mirror repository.
+Twelve orchestration fixtures pass (including240 unique slots, immediate
+reference-failure stop, quality failure, retained Sector failure, relative-path
+resolution and refusal to implicitly restart a completed run). These mocked
+controller fixtures are not safety-certificate or physical-flight evidence.
+
+The protocol was prepared at17:54:44 KST with240 planned/zero observed flights.
+It records Forest run99401–99410 and seven-map run99501–99570, retries0,
+input capture/fault hooksOFF and candidate-only polyline recoveryON. All
+resource/computation/ingress/map-update/transition metrics and originals are
+retained; completion-only time and observed termination time are separate.
+
+Estimated elapsed duration, based on recent V6/c41 mission times plus roughly
+30s setup/collection overhead per flight: Forest50–70min, seven-map5–6h,
+total6–7h including aggregation. Bug diagnosis/fixes or prolonged moving
+missions can extend this; it is not a deadline. No simulation/finish is implied
+by the READY protocol. Actual progress is in
+`results/topology_polyline_v6_n10_20261006/status.json`, with per-map tables in
+`summary_by_map.md`. The local detached worker saves results and gates stages;
+it does not send email, promote V6 or perform unattended Git writes.
