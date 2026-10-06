@@ -1,0 +1,94 @@
+{
+  "schema": "forest-stopped-topology-diagnostic-result-v1",
+  "variant": "available",
+  "status": "PERSISTENT_NO_PROGRESS",
+  "passed": false,
+  "checks": {
+    "no_contact": true,
+    "odometry_received": true,
+    "speed_limit_valid": true,
+    "input_hashes_unchanged": true,
+    "goal_reached": false,
+    "certified_polyline_recovery": false,
+    "state_injected_once": true
+  },
+  "markers": {
+    "TEST_FOREST_TOPOLOGY_STATE": 1,
+    "TRAJ_GUARD_ZONE_DISCONNECT": 6,
+    "TRAJ_GUARD_CONNECTED_RETRY": 1,
+    "TRAJ_GUARD_POLYLINE_RECOVERY": 0,
+    "TRAJ_GUARD_POLYLINE_REJECT": 1,
+    "TRAJ_GUARD_RECOVERY_EXHAUSTED": 1,
+    "TRAJ_GUARD_LOCAL_ESCAPE": 4,
+    "TRAJ_GUARD_VERTICAL_RECOVERY": 0,
+    "TRAJ_GUARD_REROUTE_RESEED": 0
+  },
+  "elapsed_s": 82.52147248399706,
+  "goal_sent_monotonic": 18991.172547438,
+  "reset_sent_monotonic": null,
+  "last_pose": [
+    7.948663530323179,
+    19.29214909473225,
+    2.6980858802342444
+  ],
+  "solid_audit": {
+    "observation": "received_odometry_samples_only",
+    "swept_collision_check": false,
+    "contact_definition": "sphere intersects closed solid AABB or finite capped cylinder; tangency included (1e-9 m tolerance)",
+    "clearance_definition": "distance from body centre to closed solid minus body radius; not signed penetration depth",
+    "episode_definition": "contiguous colliding received samples in union of solids; invalid samples invalidate audit",
+    "floor_policy": "unchanged frozen native observer; no added ground or boundary solids",
+    "robot_radius_m": 0.2,
+    "box_count": 0,
+    "cylinder_count": 410,
+    "primitive_count": 410,
+    "primitive_height_ranges_m": {
+      "boxes": [],
+      "cylinders": [
+        [
+          0.0,
+          4.0
+        ]
+      ]
+    },
+    "samples": 7800,
+    "invalid_samples": 0,
+    "timestamp_nonmonotonic_count": 0,
+    "receipt_nonmonotonic_count": 0,
+    "max_header_interval_s": 0.010298024,
+    "max_receipt_interval_s": 0.011214599,
+    "max_pose_step_m": 0.022534059861553487,
+    "contact_samples": 0,
+    "contact_episodes": 0,
+    "in_contact_at_end": false,
+    "min_clearance_m": 0.2498906144918635,
+    "min_context": {
+      "sample": 1,
+      "header_ns": 1791273058238752450,
+      "elapsed_s": 4.151579800996842,
+      "position_m": [
+        8.6753022,
+        18.9734347,
+        2.685578
+      ],
+      "velocity_mps": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nearest_primitive_index": 87,
+      "nearest_primitive_id": "trunk_088",
+      "nearest_primitive_type": "cylinder",
+      "clearance_m": 0.2498906144918635
+    },
+    "events": [],
+    "audit_valid": true
+  },
+  "cpu_measurement_scope": "diagnostic composed simulator+planner; not a canonical performance cohort",
+  "hashes": {
+    "protocol.json": "1c1e8720bdc1aff13034e105863c6b9fd8eb177590293feb85485280671bbd99",
+    "odometry.csv": "598e1009bf5179a2eb3c7a21422cb78b577b440bcaa63ab172eff65909ce68b6",
+    "stack.log": "5e06ef9b21ed844cf2e9cc0c4ebc8a8aeb59c196a98f4cb37d3639168eedf183",
+    "resources.json": "7684b218c511f8d66dd3da3b3719cf599cfe52a94cfad03def9556936432fa6c"
+  }
+}

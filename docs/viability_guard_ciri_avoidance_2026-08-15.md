@@ -7946,3 +7946,147 @@ fail-closed admission and refused before creating a campaign or launching
 any flight. Forest n10 and seven-map n10 remain unexecuted. All simulation
 and compiler processes are stopped. Detailed Korean summary:
 `results/topology_stopped_diagnostic_20261006/README.md`.
+
+### 8.133 Actual failed-input capture and certified piecewise recovery candidate (2026-10-06)
+
+The V4 failure evidence, original c41 cohort and canonical installation are
+retained. This session first captured actual stopped-plan guide points, CIRI
+cloud union/corridors, optimizer boundaries/initialization/output coefficients,
+candidate coefficients, guard query/time and immutable ROG raw/inflated bitsets.
+`SUPER_PLANNER_FAILURE_CAPTURE_DIR` is opt-in/default absent: a dedicated IO
+worker serializes shared immutable publications, with four pending frames and
+32 started-frame maximum. It does not pin live planning queries to one map.
+Captured publication start/end equality identifies coherent observations;
+incoherent frames remain labelled, not silently treated as exact replay.
+CIRI cloud union does not encode every decomposition call's order, and the
+post-optimizer polytope array is not a deterministic optimizer replay input.
+In this writer version, failed MINCO frames are submitted before the init-value
+getter, so their initialization CSVs are empty; successful guard-stage frames
+retain initialization. This is a documented diagnostic limitation, not complete
+failed-optimizer replay coverage.
+Only read completed files after producer shutdown. Capture-enabled CPU results
+are excluded from performance comparisons. The historical run97036 inputs
+were never saved, so these remain fresh-map stopped-state diagnostics.
+
+V5's `capture_available` fails the original goal after84.34s including startup
+and the unchanged60s no-progress observer, contact0. It records27 complete
+frames: nine MINCO failures and18 geometry stages, of which16 are margin
+rejects and two are geometrically SAFE. SAFE here is not proof of final
+viability, release or executed motion. Twenty frontend frames are coherent;
+three margin rejects use the same coherent frontend/guard publication.
+
+Frame17/publication117: the actual polynomial point is inside a CIRI polytope
+(normalized maximum face value -0.022076m), but its inflated voxel is occupied.
+Coefficient reconstruction agrees within3.6e-15m; unflown analytic body
+clearance is0.248468m. Frame29/publication207 independently has the same
+representation disagreement, face value -0.015359m and body clearance0.302435m.
+Frame8/publication58 instead distinguishes the actual free-voxel polynomial
+point from the occupied raycast voxel centre0.063617m away. These are actual
+input evidence that raw-point CIRI and the inflated/supercover guard's allowed
+sets differ, not merely a stale-map explanation. They do not identify soft
+MINCO corridor penalties as the main cause, and rejected unflown candidates
+are not physical contact events. Raw bitsets are sealed by original SHA-256,
+then losslessly gzip-compressed; the342-file content check passes after
+compression, reducing V5 capture storage from approximately2.8GiB to53MiB.
+
+V5's initial polyline candidate still fails all three primary-goal cases:
+control/available/exhausted, contact0. Its ordinary inflated LOS/diagonal search
+did not ensure the voxel-ray certificate, and its version prefilter could
+discard a guide simply because a scan arrived. Failed logs, audits and the
+actual V5 source/binaries are preserved. No success replacement was performed.
+
+V6 uses a fresh build/install directory and the unchanged V5 ROG underlay,
+leaving canonical and V5 runtime artifacts intact. Only recovery searches set
+the new six-connected A* flag; legacy search requests are unchanged. Greedy
+shortcuts use a closed-voxel segment supercover, including edge/corner contact.
+An uncertified adjacent edge now fails closed rather than being used as a
+fallback. The common7m search horizon, maximum24 knots and2m XY departure
+criterion bound the strategy. One extra attempt is allowed per actual
+goal/progress episode; generic clears and short commits do not reset it.
+Real observed2m progress or a distinct goal can reset the episode.
+
+Each edge is a monotone straight quintic with zero endpoint velocity and
+acceleration, producing C2 stop-at-corner connections. Duration obeys existing
+velocity/acceleration/jerk limits at80%. Heading is held. These properties do
+not themselves authorize flight: the entire candidate must pass unchanged
+`commitTrajectoryCandidate`, body/voxel geometry, stop viability and async
+stopped-release checks. Existing bounded soft-margin recovery egress is reused,
+not widened. A search-time publication change is logged, then current-map
+candidate/release checks still apply. A rejected route retains certified hold.
+Both new recovery and raw-cloud CIRI shadow remain defaultOFF; all three
+safety profiles, body radius, map geometry, mission and sensing are unchanged.
+
+The real-polynomial C++ fixture passes monotone containment/C2/dynamics tests
+and rejects a diagonal touching an occupied voxel despite free endpoints.
+The production rollback/exhaustion ASan+UBSan fixture,24 related source
+contracts and five CTest targets pass. Unit fixtures are not flight evidence.
+
+|V6 stopped-state case|Original next goal|Contact episodes|Diagnostic elapsed(s), startup included|Polyline commits|
+|---|---|---:|---:|---:|
+|No injection control|Reached|0|14.02|0; ordinary connected retry sufficient|
+|Two zones, horizontal0/4, vertical consumed|Reached|0|35.14|1|
+|Two zones, horizontal4/4, vertical consumed|Reached|0|63.18|2; material XY progress resets episode|
+
+Independent `audit_v6.json` verifies input/output hashes and received-odometry
+solid-contact reconstruction for all three. Their goal threshold is1.5m,
+not a canonical five-waypoint completion. Exhausted has a second stop and
+another certified recovery; one route is not a universal completion guarantee.
+The contact audit is sampled, not continuous swept-body proof. The capture
+of V6 recovery uses a post-search publication with frontend_end=0, explicitly
+preventing a false coherent-search claim.
+
+After this gate, a separate nine-flight no-capture smoke was predefined:
+Forest Full3, Active-Yaw Sector1, Adaptive2 and Map1 each mode1. The controller
+stops on actual Full/Adaptive failure or quality failure and never retries.
+Its first Forest Full completes5/5 in61.24s, contact0, but the controller then
+fails on a non-applicable Full transition count represented by an empty CSV
+cell. This is an aggregation infrastructure error, not a failed flight.
+The original directory/status/controller source are retained; the corrected
+reader represents non-Adaptive transitions as NA, re-audits the completed
+prefix and runs only the eight unexecuted flights in a new continuation folder.
+No physical flight is replaced. Final pilot status is not yet established in
+this entry; consult the appended outcome and `pilot_v6_completion/status.json`.
+
+No canonical promotion, frozen c41 replacement or common seven-map campaign
+is authorized by these small diagnostics. Full69/70 and Adaptive70/70 remain
+the frozen paper cohort. Evidence and prepared fail-closed pilot controller:
+`results/topology_capture_polyline_20261006/` and
+`mars_uav_sim/perfect_drone_sim/scripts/topology_polyline_v6_pilot.py`.
+
+**Final outcome:** nine unique canonical-mission smoke flights complete safely,
+contact0, with source/resource/speed/recovery contracts valid. The original
+first flight is preserved and only eight unexecuted flights were run in
+`pilot_v6_completion`. Independent `audit_pilot_v6.json` replays every saved
+received odometry sample against analytic solids and verifies input hashes.
+No extra physical flight, automatic retry or selective replacement occurred.
+
+|Map|Mode|n|Complete|Contact trials|Mean time(s)|CPU(cores)|CPU(core-s/run)|Input(MiB/s)|Payload(MiB/run)|Map(ms/frame)|Adaptive Full transitions, sum|
+|---|---|---:|---|---|---:|---:|---:|---:|---:|---:|---:|
+|Forest|Full|3|3/3|0/3|55.01|0.732|41.930|10.137|560.036|30.191|NA|
+|Forest|Active-Yaw Sector|1|1/1|0/1|89.24|0.444|40.734|2.435|217.294|9.836|NA|
+|Forest|Adaptive|2|2/2|0/2|65.59|0.530|36.017|4.695|310.144|13.315|21|
+|Map1|Full|1|1/1|0/1|51.63|0.684|36.946|10.991|567.455|26.180|NA|
+|Map1|Active-Yaw Sector|1|1/1|0/1|82.54|0.413|34.597|2.724|224.804|9.441|NA|
+|Map1|Adaptive|1|1/1|0/1|54.05|0.522|29.272|4.192|226.578|13.507|9|
+
+Unequal Forest3/1/2 mode counts are a regression smoke, not a paired replacement
+performance cohort. CPU is the pre-existing experimental process sum, not
+host capacity utilization; payload is application ingress, not wire traffic.
+Adaptive mean CPU reductions are27.574% Forest and23.764% Map1, with CPU-time
+reductions14.103%/20.770%, ingress53.682%/61.859%, payload44.621%/60.071%,
+and map update55.898%/48.407%. Longer Forest Adaptive travel65.59s versus
+Full55.01s limits accumulated CPU savings. The30% mean-CPU engineering target
+was not met in this smoke. New polyline commits are zero in the nine normal
+flights, but actual targeted available/exhausted commits were one/two.
+
+V6 exhausted capture has31 completed frames: SAFE8, margin rejects10, MINCO
+failures6 and CIRI failures7. Its first polyline frame3 is guard-coherent SAFE;
+the second commit occurs after the32-start limit and has no input snapshot.
+All390 original file-content hashes survive lossless gzip compression, reducing
+approximately3.0GiB to86MiB. Across this session, four failed V5 diagnostics,
+three successful V6 targeted diagnostics and nine safe smoke flights (16
+physical attempts) are retained. No simulation/build remains running.
+Canonical promotion and original-state resolution claims remain withheld.
+Next admissible work is a frozen V6 Forest3-mode n10, then a separately
+documented fresh common7-map n10 if the safety/evidence gate passes. Neither
+larger cohort has been executed, and c41 paper figures remain unchanged.

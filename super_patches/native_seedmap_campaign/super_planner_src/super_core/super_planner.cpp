@@ -1161,6 +1161,7 @@ namespace super_planner {
         guard_topology_saturation_recoveries_ = 0;
         guard_topology_local_escape_recoveries_ = 0;
         guard_topology_connected_retry_attempts_ = 0;
+        guard_topology_polyline_attempts_ = 0;
         guard_topology_epoch_ = 0;
         guard_topology_episode_anchor_.setZero();
         guard_topology_episode_anchor_valid_ = false;
@@ -1793,7 +1794,8 @@ namespace super_planner {
         }
         const bool topology_recovery_candidate =
                 phase_name == "PlanFromRest/certified_local_escape" ||
-                phase_name == "PlanFromRest/certified_vertical_recovery";
+                phase_name == "PlanFromRest/certified_vertical_recovery" ||
+                phase_name == "PlanFromRest/certified_polyline_recovery";
         bool stopped_for_reroute = false;
         const bool certified_stop_for_reroute = plan_from_rest &&
                 guard_certified_stop_for_reroute_.load(
@@ -1829,6 +1831,15 @@ namespace super_planner {
                     "phase={} radius={:.3f}m action=inject_once",
                     phase, cfg_.robot_r);
         }
+        auto capture = plan_from_rest && (!topology_recovery_candidate ||
+                phase_name == "PlanFromRest/certified_polyline_recovery")
+                ? std::exchange(failure_capture_frame_, {}) : nullptr;
+        if (capture) {
+            capture->candidate = candidate.pos_traj;
+            capture->phase = phase_name;
+            capture->guard_map = map_ptr_->capturePlannerSnapshotForDiagnostic();
+            capture->guard_before = map_ptr_->capturePlannerSnapshotForDiagnostic().version;
+        }
         auto safety = validatePositionTrajectory(candidate.pos_traj,
                                                  checked_from_tt,
                                                  candidate_generation,
@@ -1843,6 +1854,14 @@ namespace super_planner {
                                                  nullptr,
                                                  stop_margin::ValidationPolicy::RejectImmediately,
                                                  topology_recovery_candidate);
+        if (capture) {
+            capture->stage = "geometric_guard";
+            capture->status = trajectorySafetyStatusName(safety.status);
+            capture->guard_after = map_ptr_->capturePlannerSnapshotForDiagnostic().version;
+            capture->collision_tt = safety.first_collision_tt;
+            capture->collision = safety.first_collision_pos;
+            failure_capture_.submit(std::move(*capture));
+        }
         if (!safety.safe()) {
             trajectory_guard_rejection_pending_.store(true,
                                                       std::memory_order_release);
@@ -2874,6 +2893,7 @@ namespace super_planner {
                             certified_stop, std::memory_order_release);
                     guard_topology_local_escape_recoveries_ = 0;
                     guard_topology_connected_retry_attempts_ = 0;
+                    guard_topology_polyline_attempts_ = 0;
                     guard_topology_saturation_recoveries_ = 0;
                     guard_topology_base_no_path_recoveries_ = 0;
                     guard_topology_recovery_exhausted_ = false;
@@ -2895,6 +2915,7 @@ namespace super_planner {
         }
 
         if (guard_topology_recovery_exhausted_) {
+            if (tryCommitCertifiedPolylineRecovery(robot_state_.p)) return SUCCESS;
             // No certified movement or changed goal/episode has occurred.
             // Keep the already-certified stationary hold rather than
             // rebuilding the same unsafe guide and virtual blockers.
@@ -3504,6 +3525,14 @@ namespace super_planner {
         // not starved by the CPU-heavy solver.
         auto map_read_transaction = map_ptr_->acquireMapReadTransaction();
 
+        failure_capture_frame_ = last_exp_traj_info.empty()
+                ? failure_capture_.begin() : nullptr;
+        if (failure_capture_frame_) {
+            failure_capture_frame_->frontend_map = map_ptr_->capturePlannerSnapshotForDiagnostic();
+            failure_capture_frame_->body_radius = cfg_.robot_r;
+            failure_capture_frame_->inflation_radius = trajectory_guard_hard_clearance_m_;
+        }
+
         // use hot init or not, just prepare a guide path, a guide t, init and fina state and sfc for exp traj opt
         StatePVAJ pos_init_state, pos_fina_state;
         PolytopeVec sfc;
@@ -3868,6 +3897,8 @@ namespace super_planner {
             guard_retry_alternated_to_normal = alternate_this_attempt;
         }
         auto &active_cg = use_guard_retry_corridor ? cg_guard_retry_ptr_ : cg_ptr_;
+        const auto capture_cloud_offset = failure_capture_frame_
+                ? active_cg->diagnosticCloud().size() : 0;
         if (use_guard_retry_corridor) {
             ros_ptr_->warn(" -- [SUPER] Retrying EXP with inflated guard corridor.");
         } else if (guard_retry_alternated_to_normal) {
@@ -3882,6 +3913,23 @@ namespace super_planner {
                     guard_topology_avoidance_centers_, guard_topology_avoidance_radii_);
         }();
 
+        if (failure_capture_frame_) {
+            auto& frame = *failure_capture_frame_;
+            frame.guide = guide_path;
+            frame.guide_stamps = guide_stamp;
+            frame.corridors = sfc;
+            frame.zones = guard_topology_avoidance_centers_;
+            frame.radii = guard_topology_avoidance_radii_;
+            frame.initial = pos_init_state;
+            const auto& cloud = active_cg->diagnosticCloud();
+            frame.cloud.assign(cloud.begin()+capture_cloud_offset, cloud.end());
+            frame.frontend_end = map_ptr_->capturePlannerSnapshotForDiagnostic().version;
+            if (!bool_ret_code) {
+                frame.stage = "ciri_corridor"; frame.status = "FAILED";
+                failure_capture_.submit(std::move(frame));
+                failure_capture_frame_.reset();
+            }
+        }
         if (!bool_ret_code) {
             // A moving-state ReplanOnce failure leaves the previously
             // committed trajectory in charge.  It is neither a certified
@@ -4163,10 +4211,27 @@ namespace super_planner {
                                                out_traj);
         }
         time_consuming_[EXP_TRAJ_OPT] = t_exp_opt.stop();
+        if (failure_capture_frame_) {
+            failure_capture_frame_->final = pos_fina_state;
+            failure_capture_frame_->optimized = out_traj;
+            failure_capture_frame_->optimizer_success = temp_ret;
+            // The optimizer can simplify/modify the corridor list.
+            failure_capture_frame_->corridors = sfc;
+            if (!temp_ret) {
+                failure_capture_frame_->stage = "minco_optimizer";
+                failure_capture_frame_->status = "FAILED";
+                failure_capture_.submit(std::move(*failure_capture_frame_));
+                failure_capture_frame_.reset();
+            }
+        }
         {
             VecDf init_ts;
             vec_Vec3f init_ps;
             exp_traj_opt_->getInitValue(init_ts, init_ps);
+            if (failure_capture_frame_) {
+                failure_capture_frame_->init_times = init_ts;
+                failure_capture_frame_->init_positions = init_ps;
+            }
             latest_replan.setExpCondition(init_ts, init_ps, pos_init_state, pos_fina_state, sfc);
         }
         if (!temp_ret) {

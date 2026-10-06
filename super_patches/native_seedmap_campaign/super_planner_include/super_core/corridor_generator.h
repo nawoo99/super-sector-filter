@@ -81,6 +81,7 @@ namespace super_planner {
                                        const std::vector<double> &avoidance_radii,
                                        vec_E<Vec3f> &pc) const;
     public:
+        const vec_Vec3f& diagnosticCloud() const { return latest_pc; }
         vec_Vec3f getLatestCloud() {
             // Transfer ownership instead of copying the potentially large
             // per-replan corridor cloud.  Moving also drops the producer's

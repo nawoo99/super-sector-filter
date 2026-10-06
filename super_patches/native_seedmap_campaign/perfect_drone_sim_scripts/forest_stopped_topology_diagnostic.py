@@ -20,7 +20,7 @@ from scenario7_geometry import SampledSolidAudit, load_geometry, sha256
 
 
 SOURCE = Path('/root/super_ws/src/SUPER')
-INSTALL = Path('/root/super_ws/forest_liveness_trial_v3_20261006/install')
+INSTALL = Path('/root/super_ws/forest_liveness_trial_v6_20261006/install')
 START = (8.6753022, 18.9734347, 2.685578)
 GOAL = (24.025, 22.025, 1.5)
 RESET_GOAL = (*START[:2], 1.5)
@@ -34,10 +34,14 @@ def main():
     parser.add_argument('--variant', choices=('control', 'available', 'exhausted'), required=True)
     parser.add_argument('--install-root', type=Path, default=INSTALL)
     parser.add_argument('--expect-connected-recovery', action='store_true')
+    parser.add_argument('--capture-inputs', action='store_true')
+    parser.add_argument('--polyline-recovery', action='store_true')
     args = parser.parse_args()
     binary = args.install_root / 'perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_full_node'
     if b'[TEST_FOREST_TOPOLOGY_STATE]' not in binary.read_bytes():
         raise RuntimeError('Selected binary lacks the opt-in state reconstruction hook')
+    if args.polyline_recovery and b'axis_aligned=true supercover=true' not in binary.read_bytes():
+        raise RuntimeError('Selected binary lacks the V6 certified-edge search contract')
     lock = open('/tmp/super_sector_filter_native.lock', 'a')
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     for process in psutil.process_iter(['cmdline']):
@@ -46,6 +50,8 @@ def main():
                 'perfect_drone_adaptive_node', 'perfect_drone_frontend_node', 'perfect_drone_node'):
             raise RuntimeError('A flight process is already running')
     args.output.mkdir(parents=True, exist_ok=False)
+    if args.capture_inputs:
+        (args.output / 'input_capture').mkdir()
     pcd = SOURCE / 'mars_uav_sim/perfect_drone_sim/pcd/seed_maps/forest_cluster_f01.pcd'
     geometry = load_geometry(pcd)
     audit = SampledSolidAudit(geometry)
@@ -70,6 +76,13 @@ def main():
         if key.startswith('SUPER_TEST_'):
             env.pop(key)
     env.update(settings)
+    # Do not inherit diagnostic IO or experimental recovery from the shell.
+    env.pop('SUPER_PLANNER_FAILURE_CAPTURE_DIR', None)
+    env.pop('SUPER_CERTIFIED_POLYLINE_RECOVERY', None)
+    if args.capture_inputs:
+        env['SUPER_PLANNER_FAILURE_CAPTURE_DIR'] = str(args.output / 'input_capture')
+    if args.polyline_recovery:
+        env['SUPER_CERTIFIED_POLYLINE_RECOVERY'] = '1'
     if args.variant != 'control':
         env['SUPER_TEST_FOREST_TOPOLOGY_STATE'] = args.variant
     os.environ['ROS_DOMAIN_ID'] = env['ROS_DOMAIN_ID']
@@ -78,9 +91,16 @@ def main():
               SOURCE / 'super_planner/include/super_core/super_planner.h',
               SOURCE / 'super_planner/config' / PROFILE,
               SOURCE / 'mars_uav_sim/perfect_drone_sim/config' / SIM_CONFIG,
-              geometry.geometry_path, pcd)
+              geometry.geometry_path, pcd,
+              SOURCE / 'super_planner/src/super_core/certified_polyline_recovery.cpp',
+              SOURCE / 'super_planner/include/super_core/planner_failure_capture.hpp',
+              SOURCE / 'super_planner/src/super_core/astar.cpp',
+              SOURCE / 'super_planner/include/path_search/recovery_line_certificate.hpp',
+              SOURCE / 'rog_map/include/rog_map/rog_map.h',
+              SOURCE / 'rog_map/src/rog_map/rog_map.cpp')
     manifest = dict(schema='forest-stopped-topology-diagnostic-v1', variant=args.variant,
         install_root=str(args.install_root), expect_connected_recovery=args.expect_connected_recovery,
+        capture_inputs=args.capture_inputs, polyline_recovery=args.polyline_recovery,
         source_run=97036, historical_map_replay=False, fresh_lidar_map=True,
         canonical_mission=False, flight_attempts=1, automatic_retries=0,
         start=list(START), goal=list(GOAL), reset_goal=list(RESET_GOAL),
@@ -182,6 +202,7 @@ def main():
                 if math.dist(last[0], stall_origin) > 0.02:
                     origin_time, stall_origin = now, last[0]
                 if (args.variant == 'exhausted' and not args.expect_connected_recovery
+                        and not args.polyline_recovery
                         and '[TRAJ_GUARD_RECOVERY_EXHAUSTED]' in stack):
                     hold_started, hold_origin = now, last[0]
                     phase = 'exhausted_hold'
@@ -223,6 +244,7 @@ def main():
         markers = {name: stack.count('['+name+']') for name in (
             'TEST_FOREST_TOPOLOGY_STATE', 'TRAJ_GUARD_ZONE_DISCONNECT',
             'TRAJ_GUARD_CONNECTED_RETRY',
+            'TRAJ_GUARD_POLYLINE_RECOVERY', 'TRAJ_GUARD_POLYLINE_REJECT',
             'TRAJ_GUARD_RECOVERY_EXHAUSTED', 'TRAJ_GUARD_LOCAL_ESCAPE',
             'TRAJ_GUARD_VERTICAL_RECOVERY', 'TRAJ_GUARD_REROUTE_RESEED')}
         (args.output / 'resources.json').write_text(json.dumps(cpu_rows, indent=2)+'\n')
@@ -231,7 +253,14 @@ def main():
         checks = dict(no_contact=no_contact, odometry_received=bool(rows),
             speed_limit_valid=bool(rows) and max(math.sqrt(sum(x*x for x in row[2])) for row in rows) <= 7.01,
             input_hashes_unchanged=all(sha256(path) == digest for path, digest in manifest['hashes'].items()))
-        if args.variant == 'control':
+        if args.polyline_recovery:
+            checks.update(goal_reached=status == 'GOAL_REACHED')
+            if args.variant != 'control':
+                checks['state_injected_once'] = markers['TEST_FOREST_TOPOLOGY_STATE'] == 1
+                checks['certified_polyline_recovery'] = markers['TRAJ_GUARD_POLYLINE_RECOVERY'] >= 1
+            else:
+                checks['hook_inert'] = markers['TEST_FOREST_TOPOLOGY_STATE'] == 0
+        elif args.variant == 'control':
             checks.update(goal_reached=status == 'GOAL_REACHED', hook_inert=markers['TEST_FOREST_TOPOLOGY_STATE'] == 0)
         elif args.expect_connected_recovery:
             checks.update(goal_reached=status == 'GOAL_REACHED',

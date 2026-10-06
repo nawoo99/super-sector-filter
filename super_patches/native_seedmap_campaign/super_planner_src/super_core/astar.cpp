@@ -23,6 +23,7 @@
 
 #include <path_search/astar.h>
 #include <path_search/parent_chain.hpp>
+#include <path_search/recovery_line_certificate.hpp>
 
 using namespace color_text;
 using namespace super_utils;
@@ -449,7 +450,7 @@ namespace path_search {
                         if (dx == 0 && dy == 0 && dz == 0) {
                             continue;
                         }
-                        if (!cfg_.allow_diag &&
+                        if ((!cfg_.allow_diag || (flag & AXIS_ALIGNED_RECOVERY)) &&
                             (std::abs(dx) + std::abs(dy) + std::abs(dz) > 1)) {
                             continue;
                         }

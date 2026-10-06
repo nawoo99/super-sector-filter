@@ -1,0 +1,136 @@
+{
+  "schema": "certified-polyline-v6-nine-flight-pilot-v1",
+  "install_root": "/root/super_ws/forest_liveness_trial_v6_20261006/install",
+  "planned": [
+    [
+      "forest_full_r01",
+      "forest_cluster_f01",
+      99301,
+      [
+        "full"
+      ]
+    ],
+    [
+      "forest_sector_adaptive_r01",
+      "forest_cluster_f01",
+      99302,
+      [
+        "sector",
+        "adaptive"
+      ]
+    ],
+    [
+      "forest_full_r02",
+      "forest_cluster_f01",
+      99303,
+      [
+        "full"
+      ]
+    ],
+    [
+      "forest_adaptive_r02",
+      "forest_cluster_f01",
+      99304,
+      [
+        "adaptive"
+      ]
+    ],
+    [
+      "forest_full_r03",
+      "forest_cluster_f01",
+      99305,
+      [
+        "full"
+      ]
+    ],
+    [
+      "map1_three_modes",
+      "gapfree_d1_m01",
+      99306,
+      [
+        "adaptive",
+        "full",
+        "sector"
+      ]
+    ]
+  ],
+  "diagnostic_audits": [
+    {
+      "directory": "/root/super-sector-filter/results/topology_capture_polyline_20261006/v6_control",
+      "variant": "control",
+      "valid": true,
+      "evidence_valid": true,
+      "evidence_errors": [],
+      "criterion_met": true,
+      "errors": [],
+      "reported_passed": true,
+      "status": "GOAL_REACHED",
+      "contact_episodes": 0,
+      "samples": 972,
+      "min_body_clearance_m": 0.2498904472409032,
+      "max_receipt_interval_s": 0.010802132,
+      "max_pose_step_m": 0.14092087178378004,
+      "historical_map_replay": false,
+      "canonical_mission": false
+    },
+    {
+      "directory": "/root/super-sector-filter/results/topology_capture_polyline_20261006/v6_available",
+      "variant": "available",
+      "valid": true,
+      "evidence_valid": true,
+      "evidence_errors": [],
+      "criterion_met": true,
+      "errors": [],
+      "reported_passed": true,
+      "status": "GOAL_REACHED",
+      "contact_episodes": 0,
+      "samples": 3083,
+      "min_body_clearance_m": 0.229494731562567,
+      "max_receipt_interval_s": 0.011211594,
+      "max_pose_step_m": 0.19816845629878416,
+      "historical_map_replay": false,
+      "canonical_mission": false
+    },
+    {
+      "directory": "/root/super-sector-filter/results/topology_capture_polyline_20261006/v6_exhausted",
+      "variant": "exhausted",
+      "valid": true,
+      "evidence_valid": true,
+      "evidence_errors": [],
+      "criterion_met": true,
+      "errors": [],
+      "reported_passed": true,
+      "status": "GOAL_REACHED",
+      "contact_episodes": 0,
+      "samples": 5877,
+      "min_body_clearance_m": 0.22736402712133014,
+      "max_receipt_interval_s": 0.011312798,
+      "max_pose_step_m": 0.14041381046073542,
+      "historical_map_replay": false,
+      "canonical_mission": false
+    }
+  ],
+  "hashes": {
+    "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/scripts/topology_polyline_v6_pilot.py": "74e76d8763d6dde2534916f455d1082a347a8c5917deb6ebf756e3da31b80ecd",
+    "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/scripts/run_topology_liveness_v6_trial.sh": "4e750582286257ccf019f9e8e167b48f243d7edaf25e9a116ac1a9f0bdc8d41e",
+    "/root/super_ws/src/SUPER/super_planner/src/super_core/certified_polyline_recovery.cpp": "dfe3f05c18131cc27fdcc753e966c0a8906445d03de74c4d57f42066e4be7624",
+    "/root/super_ws/src/SUPER/super_planner/src/super_core/astar.cpp": "103abf2568a97f8aab41ecde6de0b13759e28a1104fe5362a975d57042c49b86",
+    "/root/super_ws/src/SUPER/super_planner/include/path_search/recovery_line_certificate.hpp": "43faf4c1940ccccb510a15642112ac243f02bd44283e39284791eaefdf73a952",
+    "/root/super_ws/forest_liveness_trial_v6_20261006/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_full_node": "d27d18b6d884da5bc3c20a3c1a0003f25aa6f4a06409a2b7cea6c0f8a772d4a8",
+    "/root/super_ws/forest_liveness_trial_v6_20261006/install/perfect_drone_sim/lib/perfect_drone_sim/perfect_drone_adaptive_node": "cd93a5bd8d2ecf2825d0f847637c134314a25571420b96a64c8a48201a2e0ec9"
+  },
+  "planned_flights": 9,
+  "mission_cutoff_s": null,
+  "observer_stall_s": 60,
+  "observer_radius_m": 0.02,
+  "retries": 0,
+  "capture": false,
+  "fault_hooks": false,
+  "canonical_promoted": false,
+  "frozen_c41_replaced": false,
+  "safety_profiles_unchanged": true,
+  "purpose": "unequal-count regression smoke, not replacement performance cohort",
+  "preserved_prefix_directory": "/root/super-sector-filter/results/topology_capture_polyline_20261006/pilot_v6",
+  "preserved_prefix_groups": 1,
+  "new_planned_flights": 8
+}

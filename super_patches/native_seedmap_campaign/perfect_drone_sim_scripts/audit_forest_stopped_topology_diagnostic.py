@@ -47,7 +47,8 @@ def audit(directory, source_bundle=None):
     evidence_errors = list(errors)
     variant = protocol['variant']
     connected = protocol.get('expect_connected_recovery', False)
-    hold_case = variant == 'exhausted' and not connected
+    polyline = protocol.get('polyline_recovery', False)
+    hold_case = variant == 'exhausted' and not connected and not polyline
     goal = protocol['reset_goal'] if hold_case else protocol['goal']
     max_goal_distance = 0.2 if hold_case else 1.5
     if not rows or math.dist([float(rows[-1][k]) for k in ('x', 'y', 'z')], goal) > max_goal_distance:
@@ -58,7 +59,12 @@ def audit(directory, source_bundle=None):
             errors.append('state_injection_contract')
         if not re.search(r'\[TRAJ_GUARD_ZONE_DISCONNECT\].*action=rollback_latest_zone_and_recover', stack):
             errors.append('real_astar_branch_unexercised')
-    if connected and variant != 'control':
+    if polyline and (variant != 'control' or report['markers'].get('TRAJ_GUARD_POLYLINE_RECOVERY',0)):
+        if not re.search(r'\[TRAJ_GUARD_POLYLINE_RECOVERY\] action=commit.*certificate=unchanged', stack):
+            errors.append('no_certified_polyline_commit')
+        if not re.search(r'\[TRAJ_GUARD_COMMIT\] phase=PlanFromRest/certified_polyline_recovery', stack):
+            errors.append('no_polyline_guard_commit')
+    elif connected and variant != 'control':
         if not re.search(r'\[TRAJ_GUARD_CONNECTED_RETRY\] attempt=1/1.*action=fresh_search_then_standard_certification', stack):
             errors.append('no_fresh_connected_search')
         if not re.search(r'\[TRAJ_GUARD_COMMIT\] phase=PlanFromRest/(?:with_backup|no_backup|certified_stop_fallback)', stack):
