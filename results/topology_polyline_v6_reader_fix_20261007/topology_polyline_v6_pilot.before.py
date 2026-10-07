@@ -59,9 +59,7 @@ def inspect(directory, name, run, modes):
             and solid['audit_valid'] is True
             and solid['coverage']['all_received_samples_recorded'] is True
             and solid['contact_episodes'] == result['safety_collisions']
-            and solid['completion'] is True
-            and type(solid['success']) is bool
-            and solid['success'] == result['success']
+            and solid['completion'] == result['success']
             and goal_audit(text, result['mode'])['valid'] is True
             and '[TEST_FOREST_TOPOLOGY_STATE]' not in text
             and '[PLANNER_INPUT_CAPTURE]' not in text)

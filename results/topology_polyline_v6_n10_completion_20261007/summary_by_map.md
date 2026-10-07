@@ -26,5 +26,5 @@ Failed outcomes retained; time-to-terminal and completion-only time are distinct
 |seven_map_n10|Urban|sector|4|4/4|0/4|4/4|4/4|75.93|75.93|0.452|35.265|2.711|206.379|9.082|NA|
 |seven_map_n10|Urban|adaptive|4|4/4|0/4|4/4|4/4|55.75|55.75|0.534|30.708|3.367|187.972|11.895|24|
 |seven_map_n10|Forest|full|4|4/4|0/4|4/4|4/4|61.09|61.09|0.715|44.858|11.109|697.535|27.195|NA|
-|seven_map_n10|Forest|sector|4|3/4|1/4|3/4|3/4|133.91|114.10|0.426|57.119|3.479|505.999|6.978|NA|
+|seven_map_n10|Forest|sector|4|3/4|1/4|3/4|4/4|133.91|114.10|0.426|57.119|3.479|505.999|6.978|NA|
 |seven_map_n10|Forest|adaptive|3|3/3|0/3|3/3|3/3|61.23|61.23|0.527|33.349|3.616|221.075|12.316|29|

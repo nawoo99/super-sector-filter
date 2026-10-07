@@ -8157,3 +8157,65 @@ MiB/s, payload470.778349MiB/run and map31.085525ms/frame. The worker then
 started Active-Yaw Sector r01. A single successful flight does not pass the
 Forest n10 gate or resolve the original failure universally. Git snapshots
 record launch/first-flight progress; live status remains authoritative.
+
+### 8.135 Sector observation-completion audit fix and preserved V6 continuation (2026-10-07)
+
+The user explicitly authorized continuing despite Sector non-completion.
+The frozen campaign completed30 separate Forest gate flights: each mode10/10
+complete, contact0, evidence valid. The seven-map phase then observed83
+flights: Full28/28 and Adaptive27/27 complete/contact0; Sector27/28 complete,
+contact1. Its Forest Sector r04/run99528 reached2/5 waypoints and contacted a
+static tree at133.0289s, then terminated after the existing60s stationary
+observation rule at193.31s. This is a real failed outcome, not missing evidence.
+
+The controller halted at21:08:30 KST onOctober6 because its pilot reader
+compared `solid['completion'] == result['success']`. The solid observer's
+`completion` means normal completion of the recorded observation, independently
+of mission success; its separate `success` already records the actual outcome.
+All source/resource/speed/solid/coverage contracts passed, and independent replay
+of19330 received samples confirmed one contact episode. Therefore the comparison
+incorrectly classified a valid failed Sector trial as a quality error.
+
+The only existing-code edit replaces that comparison with observation completion
+required True, a typed boolean solid success, and equality of solid success to
+mission success. No planner, map, mission, profile, binary or observer is changed.
+The exact previous inspector is archived with SHA256
+`74e76d8763d6dde2534916f455d1082a347a8c5917deb6ebf756e3da31b80ecd`.
+The new continuation admits only that exact three-line audit edit among the706
+original frozen inputs; all other source/assets must retain their hashes.
+
+Original113 physical flights, raw outcomes, original quality flag and STOPPED
+status remain untouched. A new read-only prefix re-audit verifies every measured
+metric, identity, raw/stack hash, source contract and independent solid replay.
+Exactly one quality flag may be corrected in the separate continuation, without
+changing its success=False/contact1 outcome. Original files are hashed and
+rechecked before each new flight. The new protocol predeclares only the127
+unexecuted suffix slots, starting Forest Adaptive r04/run99528, followed by
+rounds5–10. No physical rerun, replacement, pooling of the initial30 Forest
+flights into the separate210 seven-map cohort or canonical promotion occurs.
+
+The inspector and continuation orchestration fixtures pass27 tests, including
+valid failed Sector observation, incomplete/mismatched evidence rejection,
+127 unique suffix launches, original failure retention, immediate Full/Adaptive
+failure gating and unchanged Sector evidence gating. Mock fixtures are not
+physical safety evidence. Full/Adaptive contact/non-completion still halts;
+Sector contact/non-completion alone does not. Actual evidence/resource/speed/
+process errors still halt. Total mission duration is unbounded, with the frozen
+measurement-only60s/2cm stationary terminal retained.
+
+Preparation/continuation evidence is in
+`results/topology_polyline_v6_n10_completion_20261007/`; the previous original
+root is not overwritten. A combined live table references113 originals plus
+new suffix results, keeping the two experiment stages separate. Remaining
+runtime is estimated3–4h, excluding diagnosis if another real failure occurs.
+Preparation does not imply actual start/completion; consult the new status.
+
+**Admission/execution update:** the113-original re-audit passed. Exactly one
+quality flag changes False→True while its mission success=False and contacts=1
+remain identical. Original113 independent solid replays match and original
+raw/stack/other metrics remain unchanged. The continuation freezes3050 hashes
+including original evidence and the exact reader migration. At10:12:03 KST on
+October7 the detached worker(pid895259) entered RUNNING and launched only
+Forest Adaptive r04/run99528. Its suffix comprises Full42, Sector42, Adaptive43
+flights. No previous flight was rerun; latest status and combined separate-stage
+tables are in the new root. This is a start record, not a completed127/240 claim.
