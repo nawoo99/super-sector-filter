@@ -8219,3 +8219,91 @@ October7 the detached worker(pid895259) entered RUNNING and launched only
 Forest Adaptive r04/run99528. Its suffix comprises Full42, Sector42, Adaptive43
 flights. No previous flight was rerun; latest status and combined separate-stage
 tables are in the new root. This is a start record, not a completed127/240 claim.
+
+### 8.136 V6 completed cohort and result freeze (2026-10-08)
+
+The continuation completed at2026-10-07 13:36:51 KST. All240 unique physical
+flights, including113 preserved originals and127 new suffix flights, pass quality
+and independent received-odometry solid replay. Retries0, original failures retained.
+The30 Forest gate flights remain separate from the210 seven-map main experiment;
+never pool them as Forest n20 in the main comparison.
+
+|Main mode|n|Complete|Contact runs|Contact-free complete|
+|---|---:|---:|---:|---:|
+|Full|70|70/70|0/70|70/70|
+|Active-Yaw Sector|70|68/70|2/70|67/70|
+|Adaptive|70|70/70|0/70|70/70|
+
+The user closed CPU-target tuning and Sector comparator improvement, and authorized
+case analysis, figures and result freeze. No planner/map/profile/binary change,
+rebuild or new physical flight occurs. Analysis-only scripts are authored in the
+source workspace and mirrored. `results/v6_frozen_20261008/` is a versioned result
+release, not canonical runtime promotion; original c41 and the113-flight STOPPED
+root remain unchanged. The completed continuation root remains authoritative
+for physical inventory, while the new frozen release supplies reporting tables.
+
+Actual adverse Sector trials are Forest r04/run99528(contact1,2/5 goals,193.31s),
+Forest r05/run99535(contact0,1/5,154.05s), and Map1 r06/run99536(contact1,5/5,108.08s).
+All have valid process/resource/speed/source/solid evidence. Forest r04 contacted
+trunk003 at133.025s and ended after60s stationary contact; Map1 contacted cylinder0223
+at44.023–44.212s but subsequently completed. Completion and contact-free completion
+are distinct; neither contact episode is silently removed.
+
+Forest Sector r05 is not demonstrated geometric no-path or FOV-only failure.
+After22 yaw map-ready actions and CIRI failures, a certified12-knot polyline was
+committed gen61/map1103. Approximately9.3ms later main release health usedmap1104;
+the strict staged/current-map certificate match failed and brake remained held.
+No gen61 release or postcommit displacement occurred. The common once-per-episode
+polyline attempt had been consumed and no2m/new-goal reset occurred. This is
+freshness-gate/budget liveness sensitivity, not a proven safety defect or evidence
+that all shared planner liveness mechanisms are resolved. Retain this confound
+when discussing the observed Active-Yaw Sector limitations.
+
+Actual successful polyline recovery occurs in Forest Full r03/run99521:9knots,
+gen70/map398 certificate and release,14.516m progress by the next goal12.66s later,
+whole-mission80.30s/contact0. Only this Full and Sector r05 committed polyline in
+the240-flight inventory; Adaptive commits0. Do not attribute Adaptive efficiency
+to the polyline branch or claim exact reconstruction of unavailable oldrun97036.
+
+An independent actual-log audit confirms all509 MAIN Adaptive Full cycles and
+109 separate-gate cycles: same cycle/request/source stamp, actualfull=1 sensor
+frame, committed-map ACK, newer certified path/release and ordered Sector return.
+No outstanding or mismatched cycle exists. This supports the fresh-observation
+return contract, not omniscient risk prediction or population safety assurance.
+
+|Environment|Adaptive mean CPU reduction|CPU-time reduction|Ingress reduction|Payload reduction|Map-time reduction|
+|---|---:|---:|---:|---:|---:|
+|Normal1–5|25.36%|21.21%|64.88%|62.60%|55.15%|
+|Urban|22.58%|12.89%|70.35%|66.21%|54.83%|
+|Forest|28.62%|28.78%|67.06%|67.72%|55.60%|
+
+These are arithmetic means of run metrics, including failed Sector observations.
+CPU is cgroup end-to-end(simulator+frontend+planner+mission), observer/background
+excluded; host CPU including background is separately reported, without baseline
+subtraction. CPU measurement duration exceeds mission time by about1.2–2.8s, so
+cores×mission_time is not the saved accumulated CPU metric. Ingress is application
+payload, not network wire bandwidth. ms/frame measures map compute, MiB/run input
+volume. Forest Sector completion-only time96.926s differs from failure-inclusive
+observation112.277s. Adaptive transitions per map:85/54/80/69/72/61/88(sum509).
+
+Five figure pairs(PNG/PDF) show normalized computation and four three-mode cases
+with ground-truth geometry, received XY/clearance/reported velocity and recorded
+instantaneous acquisition aperture. No yaw/raw-cloud/ROG snapshot exists for these
+flights; do not depict reconstructed visible obstacles or planner occupancy.
+Figures downsample for readability; safety auditing uses all saved received samples.
+Full/Adaptive empirical70/70 are simulation outcomes, not a continuous swept-volume
+proof, a population guarantee or a significance-tested safety-superiority claim.
+Total mission-time cutoff isnull, with the disclosed measurement-only60s/2cm3D
+stationary terminal retained. Sector unlimited-time impossibility is not established.
+
+The analysis release verifies3050 pre-existing frozen hashes and fingerprints5683
+source/evidence paths. Reporting CSVs independently agree with raw metrics; no
+flight result changes. The analysis generator's13 fixtures and Adaptive auditor's
+one positive/twelve negative fixtures pass; these are not physical flight evidence.
+Incomplete report builds are preserved outside the release after a NumPy2/system
+Matplotlib ABI incompatibility; compatible systemPython `-s` produces the figures
+without altering simulator dependencies. A build-completion marker prevents sealing
+partial output, and SHA-bound one-shot seal/verify detects missing, extra or modified
+results and changed raw sources. See release README/failure analysis and
+`freeze_manifest.json`; all original failures and earlier observational-reader
+correction remain traceable. No new campaign is required by this result-freeze step.
