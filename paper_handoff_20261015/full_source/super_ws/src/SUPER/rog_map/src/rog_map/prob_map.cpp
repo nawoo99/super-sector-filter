@@ -1,0 +1,1132 @@
+/**
+* This file is part of ROG-Map
+*
+* Copyright 2024 Yunfan REN, MaRS Lab, University of Hong Kong, <mars.hku.hk>
+* Developed by Yunfan REN <renyf at connect dot hku dot hk>
+* for more information see <https://github.com/hku-mars/ROG-Map>.
+* If you use this code, please cite the respective publications as
+* listed on the above website.
+*
+* ROG-Map is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* ROG-Map is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public License
+* along with ROG-Map. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <rog_map/prob_map.h>
+#include <rog_map/diagnostic_trace.hpp>
+using namespace rog_map;
+using namespace super_utils;
+
+namespace {
+const char* gridTypeName(const GridType type) noexcept {
+    switch (type) {
+        case GridType::OCCUPIED: return "occupied";
+        case GridType::KNOWN_FREE: return "known_free";
+        case GridType::UNKNOWN: return "unknown";
+        default: return "undefined";
+    }
+}
+
+void traceMapInputCloud(const PointCloud& cloud, const Pose& pose,
+                        const std::uint64_t payload_bytes,
+                        const std::uint32_t point_step) noexcept {
+    if (!contact_trace::enabled()) return;
+    try {
+        std::size_t roi_count = 0;
+        std::size_t retained_count = 0;
+        constexpr std::size_t kPointCap = 4096;
+        auto fields = contact_trace::stream();
+        fields << "\"cloud_points\":" << cloud.size()
+               << ",\"payload_bytes\":" << payload_bytes
+               << ",\"point_step\":" << point_step
+               << ",\"sensor_position\":["
+               << contact_trace::number(pose.first.x()) << ','
+               << contact_trace::number(pose.first.y()) << ','
+               << contact_trace::number(pose.first.z()) << ']'
+               << ",\"roi_points\":[";
+        bool first = true;
+        for (const auto& point : cloud) {
+            if (!contact_trace::inRoi(point.x, point.y, point.z)) continue;
+            ++roi_count;
+            if (retained_count >= kPointCap) continue;
+            if (!first) fields << ',';
+            first = false;
+            fields << '[' << contact_trace::number(point.x) << ','
+                   << contact_trace::number(point.y) << ','
+                   << contact_trace::number(point.z) << ','
+                   << contact_trace::number(point.intensity) << ']';
+            ++retained_count;
+        }
+        fields << "],\"roi_count\":" << roi_count
+               << ",\"roi_retained\":" << retained_count
+               << ",\"roi_truncated\":"
+               << (roi_count > retained_count ? "true" : "false");
+        contact_trace::submit("map_input_cloud", fields.str());
+    } catch (...) {
+        // Diagnostic output must never affect map processing.
+    }
+}
+}  // namespace
+
+void ProbMap::initProbMap() {
+    static bool init_once{false};
+    if (init_once) {
+        throw std::runtime_error(" -- [ROGMap] ProbMap can only init once.");
+    }
+    init_once = true;
+    initSlidingMap(cfg_.half_map_size_i, cfg_.resolution,
+                   cfg_.map_sliding_en, cfg_.map_sliding_thresh,
+                   cfg_.fix_map_origin);
+    time_consuming_.resize(time_consuming_name_.size());
+    inf_map_ = std::make_shared<InfMap>(cfg_);
+
+
+    if (cfg_.frontier_extraction_en) {
+        fcnt_map_ = std::make_shared<FreeCntMap>(cfg_.half_map_size_i + Vec3i::Constant(2),
+                                                 cfg_.resolution,
+                                                 cfg_.map_sliding_en,
+                                                 cfg_.map_sliding_thresh,
+                                                 cfg_.fix_map_origin);
+    }
+
+    if (cfg_.esdf_en) {
+        esdf_map_ = std::make_shared<ESDFMap>();
+        esdf_map_->initESDFMap(cfg_.half_map_size_i,
+                               cfg_.resolution,
+                               cfg_.esdf_resolution,
+                               cfg_.esdf_local_update_box,
+                               cfg_.map_sliding_en,
+                               cfg_.map_sliding_thresh,
+                               cfg_.fix_map_origin,
+                               cfg_.unk_thresh);
+    }
+
+
+    posToGlobalIndex(cfg_.visualization_range, sc_.visualization_range_i);
+    posToGlobalIndex(cfg_.virtual_ceil_height, sc_.virtual_ceil_height_id_g);
+    posToGlobalIndex(cfg_.virtual_ground_height, sc_.virtual_ground_height_id_g);
+
+    cfg_.virtual_ceil_height = sc_.virtual_ceil_height_id_g * cfg_.resolution;
+    cfg_.virtual_ground_height = sc_.virtual_ground_height_id_g * cfg_.resolution;
+
+    cout<<"[ProbMap] virtual_ceil_height: "<<cfg_.virtual_ceil_height<<endl;
+    cout<< "[ProbMap] virtual_ground_height: "<<cfg_.virtual_ground_height<<endl;
+
+    if (!cfg_.map_sliding_en) {
+        std::cout << YELLOW << " -- [ProbMap] Map sliding disabled, set origin to [" << cfg_.fix_map_origin.transpose()
+            << "] -- " << RESET << std::endl;
+        slideAllMap(cfg_.fix_map_origin);
+    }
+
+
+    int map_size = sc_.map_size_i.prod();
+
+
+    occupancy_buffer_.resize(map_size, 0);
+    raycast_data_.raycaster.setResolution(cfg_.resolution);
+    raycast_data_.observed_raycaster.setResolution(
+            cfg_.resolution * kObservedNeighborRadiusCells);
+    if (cfg_.raycasting_en) {
+        raycast_data_.operation_cnt.resize(map_size, 0);
+        raycast_data_.hit_cnt.resize(map_size, 0);
+    }
+    else {
+        // Avoid a fixed pair of map-sized uint16 arrays when raycasting is
+        // disabled.  This reserve covers normal scan batches without tying
+        // memory to the full configured map volume.
+        raycast_data_.sparse_update_counts.reserve(262144);
+    }
+
+    resetLocalMap();
+
+    std::cout << GREEN << " -- [ProbMap] Init successfully -- ." << RESET << std::endl;
+    printMapInformation();
+}
+
+Vec3f ProbMap::getLocalMapOrigin() const {
+    return local_map_origin_d_;
+}
+
+Vec3f ProbMap::getLocalMapSize() const {
+    return cfg_.map_size_d;
+}
+
+// Query====================================================
+bool ProbMap::isOccupied(const Vec3f& pos) const {
+    if (!insideLocalMap(pos)) {
+        return false;
+    }
+    if (pos.z() > cfg_.virtual_ceil_height ||
+        pos.z() < cfg_.virtual_ground_height) {
+        return true;
+    }
+    return isOccupied(occupancy_buffer_[getHashIndexFromPos(pos)]);
+}
+
+bool ProbMap::isUnknown(const Vec3f& pos) const {
+    if (!insideLocalMap(pos)) {
+        return true;
+    }
+    if (pos.z() > cfg_.virtual_ceil_height ||
+        pos.z() < cfg_.virtual_ground_height) {
+        return false;
+    }
+
+    return isUnknown(occupancy_buffer_[getHashIndexFromPos(pos)]);
+}
+
+bool ProbMap::isKnownFree(const Vec3f& pos) const {
+    if (!insideLocalMap(pos)) {
+        return false;
+    }
+    if (pos.z() > cfg_.virtual_ceil_height ||
+        pos.z() < cfg_.virtual_ground_height) {
+        return false;
+    }
+    return isKnownFree(occupancy_buffer_[getHashIndexFromPos(pos)]);
+}
+
+bool ProbMap::isFrontier(const Vec3f& pos) const {
+    // 1) Check local map
+    if (!insideLocalMap(pos)) {
+        return false;
+    }
+
+    // 2) Check virtual ceil and ground
+    if (pos.z() > cfg_.virtual_ceil_height ||
+        pos.z() < cfg_.virtual_ground_height) {
+        return false;
+    }
+
+    // 3) Check frontier
+    if (isUnknown(occupancy_buffer_[getHashIndexFromPos(pos)])) {
+        if (fcnt_map_->getFreeCnt(pos)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// ======================================================
+bool ProbMap::isOccupied(const Vec3i& id_g) const {
+    if (!insideLocalMap(id_g)) {
+        return false;
+    }
+    if (id_g.z() > sc_.virtual_ceil_height_id_g ||
+        id_g.z() < sc_.virtual_ground_height_id_g + sc_.safe_margin_i) {
+        return true;
+    }
+    return isOccupied(occupancy_buffer_[getHashIndexFromGlobalIndex(id_g)]);
+}
+
+bool ProbMap::isUnknown(const Vec3i& id_g) const {
+    if (!insideLocalMap(id_g)) {
+        return true;
+    }
+    if (id_g.z() > sc_.virtual_ceil_height_id_g ||
+        id_g.z() < sc_.virtual_ground_height_id_g + sc_.safe_margin_i) {
+        return false;
+    }
+    return isUnknown(occupancy_buffer_[getHashIndexFromGlobalIndex(id_g)]);
+}
+
+bool ProbMap::isKnownFree(const Vec3i& id_g) const {
+    if (!insideLocalMap(id_g)) {
+        return false;
+    }
+    if (id_g.z() > sc_.virtual_ceil_height_id_g ||
+        id_g.z() < sc_.virtual_ground_height_id_g + sc_.safe_margin_i) {
+        return true;
+    }
+    return isKnownFree(occupancy_buffer_[getHashIndexFromGlobalIndex(id_g)]);
+}
+
+bool ProbMap::isFrontier(const Vec3i& id_g) const {
+    // 1) Check local map
+    if (!insideLocalMap(id_g)) {
+        return false;
+    }
+    if (id_g.z() > sc_.virtual_ceil_height_id_g ||
+        id_g.z() < sc_.virtual_ground_height_id_g + sc_.safe_margin_i) {
+        return false;
+    }
+
+    if (isUnknown(occupancy_buffer_[getHashIndexFromGlobalIndex(id_g)])) {
+        if (fcnt_map_->getFreeCnt(id_g) > 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ProbMap::isKnownFreeInflate(const Vec3f& pos) const {
+    return inf_map_->isKnownFreeInflate(pos);
+}
+
+
+bool ProbMap::isOccupiedInflate(const Vec3f& pos) const {
+    return inf_map_->isOccupiedInflate(pos);
+}
+
+bool ProbMap::isUnknownInflate(const Vec3f& pos) const {
+    return inf_map_->isUnknownInflate(pos);
+}
+
+// Query====================================================
+
+
+void ProbMap::writeTimeConsumingToLog(std::ofstream& log_file) {
+    for (long unsigned int i = 0; i < time_consuming_.size(); i++) {
+        log_file << time_consuming_[i];
+        if (i != time_consuming_.size() - 1)
+            log_file << ", ";
+    }
+    log_file << std::endl;
+}
+
+void ProbMap::writeMapInfoToLog(std::ofstream& log_file) {
+    log_file << "[ProbMap]" << std::endl;
+    log_file << "\tmap_size_d: " << cfg_.map_size_d.transpose() << std::endl;
+    log_file << "\tresolution: " << cfg_.resolution << std::endl;
+    log_file << "\tmap_size_i: " << sc_.map_size_i.transpose() << std::endl;
+    log_file << "\tlocal_update_box_size: " << cfg_.local_update_box_d.transpose() << std::endl;
+    log_file << "\tp_min: " << cfg_.p_min << std::endl;
+    log_file << "\tp_max: " << cfg_.p_max << std::endl;
+    log_file << "\tp_hit: " << cfg_.p_hit << std::endl;
+    log_file << "\tp_miss: " << cfg_.p_miss << std::endl;
+    log_file << "\tp_occ: " << cfg_.p_occ << std::endl;
+    log_file << "\tp_free: " << cfg_.p_free << std::endl;
+    log_file << "\tunk_thresh: " << cfg_.unk_thresh << std::endl;
+    log_file << "\tmap_sliding_thresh: " << cfg_.map_sliding_thresh << std::endl;
+    log_file << "\tmap_sliding_en: " << cfg_.map_sliding_en << std::endl;
+    log_file << "\tfix_map_origin: " << cfg_.fix_map_origin.transpose() << std::endl;
+    log_file << "\tvisualization_range: " << cfg_.visualization_range.transpose() << std::endl;
+    log_file << "\tvirtual_ceil_height: " << cfg_.virtual_ceil_height << std::endl;
+    log_file << "\tvirtual_ground_height: " << cfg_.virtual_ground_height << std::endl;
+    log_file << "\tbatch_update_size: " << cfg_.batch_update_size << std::endl;
+    log_file << "\tfrontier_extraction_en: " << cfg_.frontier_extraction_en << std::endl;
+    inf_map_->writeMapInfoToLog(log_file);
+}
+
+void ProbMap::updateOccPointCloud(const PointCloud& input_cloud) {
+    /// Step 1; Raycast and add to update cache.
+    const int cloud_in_size = input_cloud.size();
+    Vec3f localmap_min = local_map_bound_min_d_;
+    Vec3f localmap_max = local_map_bound_max_d_;
+    for (int i = 0; i < cloud_in_size; i++) {
+        static Vec3f p, ray_pt;
+        static Vec3i pt_id_g, pt_id_l;
+        if (cfg_.intensity_thresh > 0 &&
+            input_cloud[i].intensity < cfg_.intensity_thresh) {
+            continue;
+        }
+
+        p.x() = input_cloud[i].x;
+        p.y() = input_cloud[i].y;
+        p.z() = input_cloud[i].z;
+
+        posToGlobalIndex(p, pt_id_g);
+
+        if (p.z() > cfg_.virtual_ceil_height || p.z() < cfg_.virtual_ground_height) {
+            continue;
+        }
+        if (insideLocalMap(pt_id_g)) {
+            const int occ_hit_num = ceil(cfg_.l_occ / cfg_.l_hit);
+            for (int j = 0; j < occ_hit_num; j++) {
+                insertUpdateCandidate(pt_id_g, true);
+            }
+            localmap_max = localmap_max.cwiseMax(p);
+            localmap_min = localmap_min.cwiseMin(p);
+        }
+    }
+    if(cfg_.map_sliding_en) {
+        local_map_bound_max_d_ = localmap_max;
+        local_map_bound_min_d_ = localmap_min;
+    }
+    probabilisticMapFromCache();
+    map_empty_ = false;
+}
+
+void ProbMap::slideAllMap(const rog_map::Vec3f& pos) {
+    mapSliding(pos);
+    inf_map_->mapSliding(pos);
+    if (cfg_.frontier_extraction_en) {
+        fcnt_map_->mapSliding(pos);
+    }
+    if (cfg_.esdf_en) {
+        esdf_map_->mapSliding(pos);
+    }
+}
+
+ProbMapUpdateResult ProbMap::updateProbMap(
+        const PointCloud& cloud, const Pose& pose,
+        std::uint64_t payload_bytes, std::uint32_t point_step) {
+    ProbMapUpdateResult result;
+    traceMapInputCloud(cloud, pose, payload_bytes, point_step);
+    TimeConsuming tc("updateMap", false);
+    const Vec3f& pos = pose.first;
+    time_consuming_[4] = cloud.size();
+    time_consuming_[7] = static_cast<double>(payload_bytes);
+    time_consuming_[8] = static_cast<double>(point_step);
+    if (cfg_.map_sliding_en && !insideLocalMap(pos) && raycast_data_.batch_update_counter == 0) {
+        std::cout << YELLOW << " -- [ROGMapCore] cur_pose out of map range, reset the map." << RESET << std::endl;
+        std::cout << YELLOW << " -- [ROGMapCore] Sliding to map center at: " << pos.transpose() << RESET << std::endl;
+        slideAllMap(pos);
+        return result;
+    }
+
+    if (pos.z() > cfg_.virtual_ceil_height) {
+        std::cout << YELLOW << " -- [ROGMapCore] Odom above virtual ceil, please check map parameter -- ." << RESET
+            << std::endl;
+        return result;
+    }
+    else if (pos.z() < cfg_.virtual_ground_height) {
+        std::cout << YELLOW << " -- [ROGMapCore] Odom below virtual ground, please check map parameter -- ." << RESET
+            << std::endl;
+        return result;
+    }
+
+    if (raycast_data_.batch_update_counter == 0 &&
+        cfg_.map_sliding_en  &&
+        (map_empty_ || (pos - local_map_origin_d_).norm() > cfg_.map_sliding_thresh)
+        ) {
+        slideAllMap(pos);
+    }
+
+    updateLocalBox(pos);
+    TimeConsuming t_raycast("raycast", false);
+    raycastProcess(cloud, pos);
+    time_consuming_[1] = t_raycast.stop();
+    result.scan_processed = true;
+    raycast_data_.batch_update_counter++;
+    if (raycast_data_.batch_update_counter >= cfg_.batch_update_size) {
+        raycast_data_.batch_update_counter = 0;
+        time_consuming_[5] = raycast_data_.update_cache_id_g.size();
+        const bool had_updates = !raycast_data_.update_cache_id_g.empty();
+        TimeConsuming t_update("update", false);
+        probabilisticMapFromCache();
+        time_consuming_[2] = t_update.stop();
+        if (had_updates) {
+            map_empty_ = false;
+            result.map_committed = true;
+        }
+    }
+    inf_map_->getInflationNumAndTime(time_consuming_[6], time_consuming_[3]);
+    time_consuming_[0] = tc.stop();
+
+    /* Update ESDF map */
+    if (cfg_.esdf_en) {
+        esdf_map_->updateESDF3D(pos);
+    }
+
+    /* For the first frame, clear all unknown around the robot */
+    static bool first = true;
+    if (first) {
+        first = false;
+        for (double dx = -cfg_.raycast_range_min; dx <= cfg_.raycast_range_min; dx += cfg_.resolution) {
+            for (double dy = -cfg_.raycast_range_min; dy <= cfg_.raycast_range_min; dy += cfg_.resolution) {
+                for (double dz = -cfg_.raycast_range_min; dz <= cfg_.raycast_range_min; dz += cfg_.resolution) {
+                    Vec3f p(dx, dy, dz);
+                    if (p.norm() <= cfg_.raycast_range_min) {
+                        Vec3f pp = pos + p;
+                        int hash_id = getHashIndexFromPos(pp);
+                        missPointUpdate(pp, hash_id, 999);
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
+
+GridType ProbMap::getGridType(Vec3i& id_g) const {
+    if (id_g.z() <= sc_.virtual_ground_height_id_g ||
+        id_g.z() >= sc_.virtual_ceil_height_id_g - sc_.safe_margin_i) {
+        return super_utils::OCCUPIED;
+    }
+    if (!insideLocalMap(id_g)) {
+        return super_utils::OUT_OF_MAP;
+    }
+    Vec3i id_l;
+    globalIndexToLocalIndex(id_g, id_l);
+    int hash_id = getLocalIndexHash(id_l);
+    double ret = occupancy_buffer_[hash_id];
+    if (isKnownFree(ret)) {
+        return GridType::KNOWN_FREE;
+    }
+    else if (isOccupied(ret)) {
+        return GridType::OCCUPIED;
+    }
+    else {
+        return GridType::UNKNOWN;
+    }
+}
+
+GridType ProbMap::getGridType(const Vec3f& pos) const {
+    if (pos.z() <= cfg_.virtual_ground_height ||
+        pos.z() >= cfg_.virtual_ceil_height) {
+        return OCCUPIED;
+    }
+    if (!insideLocalMap(pos)) {
+        return OUT_OF_MAP;
+    }
+    Vec3i id_g, id_l;
+    posToGlobalIndex(pos, id_g);
+    return getGridType(id_g);
+}
+
+GridType ProbMap::getInfGridType(const Vec3f& pos) const {
+    // NOTE, we consider, if the pos is not inside prob map, it is also out of inf map.
+    if(!insideLocalMap(pos)) {
+        return OUT_OF_MAP;
+    }
+    return inf_map_->getGridType(pos);
+}
+
+double ProbMap::getMapValue(const Vec3f& pos) const {
+    if (!insideLocalMap(pos)) {
+        return 0;
+    }
+    return occupancy_buffer_[getHashIndexFromPos(pos)];
+}
+
+void
+ProbMap::boxSearch(const Vec3f& _box_min, const Vec3f& _box_max, const GridType& gt, vec_E<Vec3f>& out_points) const {
+    out_points.clear();
+    if (map_empty_) {
+        std::cout << YELLOW << " -- [ROG] Map is empty, cannot perform box search." << RESET << std::endl;
+        return;
+    }
+    if ((_box_max - _box_min).minCoeff() <= 0) {
+        std::cout << YELLOW << " -- [ROG] Box search failed, box size is zero." << RESET << std::endl;
+        return;
+    }
+    Vec3f box_min_d = _box_min, box_max_d = _box_max;
+    boundBoxByLocalMap(box_min_d, box_max_d);
+    if ((box_max_d - box_min_d).minCoeff() <= 0) {
+        std::cout << YELLOW << " -- [ROG] Box search failed, box size is zero." << RESET << std::endl;
+        return;
+    }
+    Vec3i box_min_id_g, box_max_id_g;
+    posToGlobalIndex(box_min_d, box_min_id_g);
+    posToGlobalIndex(box_max_d, box_max_id_g);
+    Vec3i box_size = box_max_id_g - box_min_id_g;
+    if (gt == UNKNOWN) {
+        out_points.reserve(box_size.prod());
+        for (int i = box_min_id_g.x() + 1; i < box_max_id_g.x(); i++) {
+            for (int j = box_min_id_g.y() + 1; j < box_max_id_g.y(); j++) {
+                for (int k = box_min_id_g.z() + 1; k < box_max_id_g.z(); k++) {
+                    Vec3i id_g(i, j, k);
+                    if (isUnknown(id_g)) {
+                        Vec3f pos;
+                        globalIndexToPos(id_g, pos);
+                        out_points.push_back(pos);
+                    }
+                }
+            }
+        }
+    }
+    else if (gt == OCCUPIED) {
+        out_points.reserve(box_size.prod() / 3);
+        for (int i = box_min_id_g.x() + 1; i < box_max_id_g.x(); i++) {
+            for (int j = box_min_id_g.y() + 1; j < box_max_id_g.y(); j++) {
+                for (int k = box_min_id_g.z() + 1; k < box_max_id_g.z(); k++) {
+                    Vec3i id_g(i, j, k);
+                    if (isOccupied(id_g)) {
+                        Vec3f pos;
+                        globalIndexToPos(id_g, pos);
+                        out_points.push_back(pos);
+                    }
+                }
+            }
+        }
+    }
+    else if (gt == FRONTIER) {
+        out_points.reserve(box_size.prod() / 3);
+        for (int i = box_min_id_g.x() + 1; i < box_max_id_g.x(); i++) {
+            for (int j = box_min_id_g.y() + 1; j < box_max_id_g.y(); j++) {
+                for (int k = box_min_id_g.z() + 1; k < box_max_id_g.z(); k++) {
+                    Vec3i id_g(i, j, k);
+                    if (isFrontier(id_g)) {
+                        Vec3f pos;
+                        globalIndexToPos(id_g, pos);
+                        out_points.push_back(pos);
+                    }
+                }
+            }
+        }
+    }
+    else {
+        throw std::runtime_error(" -- [ROG-Map] Box search does not support KNOWN_FREE.");
+    }
+}
+
+void ProbMap::boxSearchInflate(const Vec3f& box_min, const Vec3f& box_max, const GridType& gt,
+                               vec_E<Vec3f>& out_points) const {
+    inf_map_->boxSearch(box_min, box_max, gt, out_points);
+}
+
+void ProbMap::boundBoxByLocalMap(Vec3f& box_min, Vec3f& box_max) const {
+    if ((box_max - box_min).minCoeff() <= 0) {
+        box_min = box_max;
+        std::cout << YELLOW << "-- [ROG] Bound box is invalid." << RESET << std::endl;
+        return;
+    }
+
+    box_min = box_min.cwiseMax(local_map_bound_min_d_);
+    box_max = box_max.cwiseMin(local_map_bound_max_d_);
+    box_max.z() = std::min(box_max.z(), cfg_.virtual_ceil_height);
+    box_min.z() = std::max(box_min.z(), cfg_.virtual_ground_height);
+}
+
+void ProbMap::resetCell(const int& hash_id) {
+    float& ret = occupancy_buffer_[hash_id];
+    const bool was_occupied = isOccupied(ret);
+    if (isOccupied(ret)) {
+        /// if current state is occupied
+        Vec3f pos;
+        hashIdToPos(hash_id, pos);
+        inf_map_->updateGridCounter(pos, OCCUPIED, UNKNOWN);
+        if (cfg_.esdf_en) {
+            esdf_map_->updateGridCounter(pos, OCCUPIED, UNKNOWN);
+        }
+    }
+    else if (isKnownFree(ret)) {
+        /// if current state is free
+        Vec3f pos;
+        hashIdToPos(hash_id, pos);
+        inf_map_->updateGridCounter(pos, KNOWN_FREE, UNKNOWN);
+        if (cfg_.esdf_en) {
+            esdf_map_->updateGridCounter(pos, KNOWN_FREE, UNKNOWN);
+        }
+        if (cfg_.frontier_extraction_en) {
+            Vec3i id_g;
+            posToGlobalIndex(pos, id_g);
+            if (cfg_.frontier_extraction_en) {
+                fcnt_map_->updateFrontierCounter(id_g, false);
+            }
+        }
+    }
+    else {
+        // nothing need to do
+    }
+    ret = 0;
+    if (was_occupied) {
+        snapshot_dirty_hashes_.insert(hash_id);
+    }
+}
+
+std::vector<int> ProbMap::consumeSnapshotDirtyHashes() {
+    std::vector<int> dirty;
+    dirty.reserve(snapshot_dirty_hashes_.size());
+    for (const int hash_id : snapshot_dirty_hashes_) {
+        dirty.push_back(hash_id);
+    }
+    snapshot_dirty_hashes_.clear();
+    return dirty;
+}
+
+void ProbMap::probabilisticMapFromCache() {
+    //    int addr = getHashIndexFromGlobalIndex(Vec3i(41,
+    //                                                 -216,
+    //                                                 -6));
+    //    float ret = occupancy_buffer_[addr];
+    //    std::cout << "ret: " << ret << std::endl;
+    while (!raycast_data_.update_cache_id_g.empty()) {
+        Vec3f pos;
+        Vec3i id_g = raycast_data_.update_cache_id_g.front();
+        raycast_data_.update_cache_id_g.pop();
+        Vec3i id_l;
+        globalIndexToLocalIndex(id_g, id_l);
+        int hash_id = getLocalIndexHash(id_l);
+        globalIndexToPos(id_g, pos);
+        uint16_t operation_cnt = 0;
+        uint16_t hit_cnt = 0;
+        if (cfg_.raycasting_en) {
+            operation_cnt = raycast_data_.operation_cnt[hash_id];
+            hit_cnt = raycast_data_.hit_cnt[hash_id];
+            raycast_data_.hit_cnt[hash_id] = 0;
+            raycast_data_.operation_cnt[hash_id] = 0;
+        }
+        else {
+            const auto it = raycast_data_.sparse_update_counts.find(hash_id);
+            if (it == raycast_data_.sparse_update_counts.end()) {
+                continue;
+            }
+            operation_cnt = it->second.operation_cnt;
+            hit_cnt = it->second.hit_cnt;
+            raycast_data_.sparse_update_counts.erase(it);
+        }
+        if (hit_cnt > 0) {
+            hitPointUpdate(pos, hash_id, hit_cnt);
+        }
+        else if (!cfg_.raycasting_en && isOccupied(occupancy_buffer_[hash_id])) {
+            // Occupancy-only maps use approximate observed-free markers to
+            // establish sensor coverage, not to contradict occupied evidence.
+            // In particular, the coarse observed DDA can emit a raw voxel
+            // centre that the exact sensor ray never intersects.  Preserve
+            // known obstacles here; genuine raycasting retains miss clearing.
+            if (contact_trace::enabled() &&
+                contact_trace::inRoi(pos.x(), pos.y(), pos.z())) {
+                try {
+                    auto fields = contact_trace::stream();
+                    fields << "\"operation\":\"observed_miss_preserved\",\"position\":["
+                           << contact_trace::number(pos.x()) << ','
+                           << contact_trace::number(pos.y()) << ','
+                           << contact_trace::number(pos.z()) << ']'
+                           << ",\"hash_id\":" << hash_id
+                           << ",\"count\":" << operation_cnt
+                           << ",\"before_log_odds\":"
+                           << contact_trace::number(occupancy_buffer_[hash_id])
+                           << ",\"after_log_odds\":"
+                           << contact_trace::number(occupancy_buffer_[hash_id])
+                           << ",\"from\":\"" << gridTypeName(GridType::OCCUPIED)
+                           << "\",\"to\":\"" << gridTypeName(GridType::OCCUPIED) << '"'
+                           << ",\"reason\":\"no_raycast_occupied_evidence\"";
+                    contact_trace::submit("map_probability_update", fields.str());
+                } catch (...) {
+                }
+            }
+        }
+        else {
+            missPointUpdate(pos, hash_id, operation_cnt - hit_cnt);
+        }
+    }
+}
+
+void ProbMap::hitPointUpdate(const Vec3f& pos, const int& hash_id, const int& hit_num) {
+    float& ret = occupancy_buffer_[hash_id];
+    const float before_probability = ret;
+    GridType from_type = UNDEFINED;
+
+    if (isOccupied(ret)) {
+        from_type = GridType::OCCUPIED;
+    }
+    else if (isKnownFree(ret)) {
+        from_type = GridType::KNOWN_FREE;
+    }
+    else {
+        from_type = GridType::UNKNOWN;
+    }
+
+
+    ret += cfg_.l_hit * hit_num;
+    if (ret > cfg_.l_max) {
+        ret = cfg_.l_max;
+    }
+
+    GridType to_type;
+    if (isOccupied(ret)) {
+        to_type = GridType::OCCUPIED;
+    }
+    else if (isKnownFree(ret)) {
+        to_type = GridType::KNOWN_FREE;
+    }
+    else {
+        to_type = GridType::UNKNOWN;
+    }
+
+    if (from_type != to_type) {
+        snapshot_dirty_hashes_.insert(hash_id);
+        Vec3f center_pos;
+        Vec3i id_g;
+        posToGlobalIndex(pos, id_g);
+        globalIndexToPos(id_g, center_pos);
+        inf_map_->updateGridCounter(center_pos, from_type, to_type);
+        if (cfg_.esdf_en) {
+            esdf_map_->updateGridCounter(center_pos, from_type, to_type);
+        }
+        if (cfg_.frontier_extraction_en && from_type == KNOWN_FREE) {
+            Vec3i id_g;
+            posToGlobalIndex(pos, id_g);
+            fcnt_map_->updateFrontierCounter(id_g, false);
+        }
+    }
+    if (contact_trace::enabled() && contact_trace::inRoi(pos.x(), pos.y(), pos.z())) {
+        try {
+            auto fields = contact_trace::stream();
+            fields << "\"operation\":\"hit\",\"position\":["
+                   << contact_trace::number(pos.x()) << ','
+                   << contact_trace::number(pos.y()) << ','
+                   << contact_trace::number(pos.z()) << ']'
+                   << ",\"hash_id\":" << hash_id
+                   << ",\"count\":" << hit_num
+                   << ",\"before_log_odds\":" << contact_trace::number(before_probability)
+                   << ",\"after_log_odds\":" << contact_trace::number(ret)
+                   << ",\"from\":\"" << gridTypeName(from_type)
+                   << "\",\"to\":\"" << gridTypeName(to_type) << '\"';
+            contact_trace::submit("map_probability_update", fields.str());
+        } catch (...) {
+        }
+    }
+}
+
+void ProbMap::missPointUpdate(const Vec3f& pos, const int& hash_id, const int& hit_num) {
+    float& ret = occupancy_buffer_[hash_id];
+    const float before_probability = ret;
+    GridType from_type;
+    if (isOccupied(ret)) {
+        from_type = GridType::OCCUPIED;
+    }
+    else if (isKnownFree(ret)) {
+        from_type = GridType::KNOWN_FREE;
+    }
+    else {
+        from_type = GridType::UNKNOWN;
+    }
+    ret += cfg_.l_miss * hit_num;
+    if (ret < cfg_.l_min) {
+        ret = cfg_.l_min;
+    }
+
+    GridType to_type;
+    if (isOccupied(ret)) {
+        to_type = GridType::OCCUPIED;
+    }
+    else if (isKnownFree(ret)) {
+        to_type = GridType::KNOWN_FREE;
+    }
+    else {
+        to_type = GridType::UNKNOWN;
+    }
+    // Catch the jump edge
+    if (from_type != to_type) {
+        snapshot_dirty_hashes_.insert(hash_id);
+        Vec3f center_pos;
+        Vec3i id_g;
+        posToGlobalIndex(pos, id_g);
+        globalIndexToPos(id_g, center_pos);
+        // Update inf map
+        inf_map_->updateGridCounter(center_pos, from_type, to_type);
+        if (cfg_.esdf_en) {
+            esdf_map_->updateGridCounter(center_pos, from_type, to_type);
+        }
+
+
+        if (cfg_.frontier_extraction_en && to_type == KNOWN_FREE) {
+            Vec3i id_g;
+            posToGlobalIndex(pos, id_g);
+            fcnt_map_->updateFrontierCounter(id_g, true);
+        }
+    }
+    if (contact_trace::enabled() && contact_trace::inRoi(pos.x(), pos.y(), pos.z())) {
+        try {
+            auto fields = contact_trace::stream();
+            fields << "\"operation\":\"miss\",\"position\":["
+                   << contact_trace::number(pos.x()) << ','
+                   << contact_trace::number(pos.y()) << ','
+                   << contact_trace::number(pos.z()) << ']'
+                   << ",\"hash_id\":" << hash_id
+                   << ",\"count\":" << hit_num
+                   << ",\"before_log_odds\":" << contact_trace::number(before_probability)
+                   << ",\"after_log_odds\":" << contact_trace::number(ret)
+                   << ",\"from\":\"" << gridTypeName(from_type)
+                   << "\",\"to\":\"" << gridTypeName(to_type) << '\"';
+            contact_trace::submit("map_probability_update", fields.str());
+        } catch (...) {
+        }
+    }
+}
+
+void ProbMap::raycastProcess(const PointCloud& input_cloud, const Vec3f& cur_odom) {
+    const bool trace_enabled = contact_trace::enabled();
+    const double occupancy_min_range = cfg_.occupancyOnlyMinRange();
+    const double sqr_occupancy_min_range = occupancy_min_range * occupancy_min_range;
+    std::size_t trace_roi_input = 0;
+    std::size_t trace_roi_intensity_rejected = 0;
+    std::size_t trace_roi_temporal_rejected = 0;
+    std::size_t trace_roi_outside_map = 0;
+    std::size_t trace_roi_near_range_rejected = 0;
+    std::size_t trace_roi_duplicate_hit = 0;
+    std::size_t trace_roi_hit_inserted = 0;
+    std::size_t trace_roi_near_hit_inserted = 0;
+    // bounding box of updated region
+    raycast_data_.cache_box_min = cur_odom;
+    raycast_data_.cache_box_max = cur_odom;
+    Vec3f raycast_box_min, raycast_box_max;
+
+    {
+        std::lock_guard<std::mutex> lck{raycast_data_.raycast_range_mtx};
+        raycast_box_max = raycast_data_.local_update_box_max;
+        raycast_box_min = raycast_data_.local_update_box_min;
+    }
+
+    /// Step 1; Raycast and add to update cache.
+    const int& cloud_in_size = input_cloud.size();
+    // new version of raycasting process
+    auto raycasting_cloud = vec_Vec3f{};
+    raycasting_cloud.reserve(cloud_in_size);
+
+    // 1) process all non-inf points, update occupied probability
+    int temperol_cnt{0};
+    for (const auto& pcl_p : input_cloud) {
+        const bool trace_roi_point = trace_enabled &&
+                contact_trace::inRoi(pcl_p.x, pcl_p.y, pcl_p.z);
+        if (trace_roi_point) ++trace_roi_input;
+        // 1.1) intensity filter
+        if (cfg_.intensity_thresh > 0 &&
+            pcl_p.intensity < cfg_.intensity_thresh) {
+            if (trace_roi_point) ++trace_roi_intensity_rejected;
+            continue;
+        }
+
+        // 1.2) temporal filter
+        if (temperol_cnt++ % cfg_.point_filt_num) {
+            if (trace_roi_point) ++trace_roi_temporal_rejected;
+            continue;
+        }
+
+        Vec3f p(pcl_p.x, pcl_p.y, pcl_p.z);
+        Vec3i pt_id_g;
+
+        // no raycasting, purely add occ pints
+        if (!cfg_.raycasting_en) {
+            if (insideLocalMap(p)) {
+                double sqrdis = (p - cur_odom).squaredNorm();
+                if(sqrdis<sqr_occupancy_min_range){
+                    if (trace_roi_point) ++trace_roi_near_range_rejected;
+                    continue;
+                }
+                posToGlobalIndex(p, pt_id_g);
+                const int hit_hash = getHashIndexFromGlobalIndex(pt_id_g);
+                const auto sparse_it =
+                        raycast_data_.sparse_update_counts.find(hit_hash);
+                if (sparse_it != raycast_data_.sparse_update_counts.end() &&
+                    sparse_it->second.hit_cnt > 0) {
+                    if (trace_roi_point) ++trace_roi_duplicate_hit;
+                    // Preserve every retained hit's probability contribution:
+                    // one hit need not restore occupancy after a free prior.
+                    // Only deduplicate the expensive observed-space ray march.
+                    insertUpdateCandidate(pt_id_g, true);
+                    continue;
+                }
+                insertUpdateCandidate(pt_id_g, true);
+                if (trace_roi_point) ++trace_roi_hit_inserted;
+                // record cache box size;
+                raycast_data_.cache_box_min = raycast_data_.cache_box_min.cwiseMin(p);
+                raycast_data_.cache_box_max = raycast_data_.cache_box_max.cwiseMax(p);
+
+                // A closer sensor-valid surface is occupied evidence, not a
+                // license to clear the robot's near field. In particular do
+                // not march backwards from ray_range[0] through this hit.
+                // Startup clearing and genuine raycasting remain unchanged.
+                if (sqrdis < cfg_.sqr_raycast_range_min || sqrdis == 0.0) {
+                    if (trace_roi_point) ++trace_roi_near_hit_inserted;
+                    continue;
+                }
+
+                // Mark the near-field approach to this hit as observed-free.
+                // Without this, no cell is ever recorded as confirmed-clear
+                // in this mode (only hit surfaces are ever touched), so
+                // isUnknown() can't distinguish "swept and clear" from
+                // "never looked at" -- unsafe for a guard check that treats
+                // unknown space as occupied. Bounded by
+                // observed_mark_range_max (not the full sensor range) so
+                // per-scan cost doesn't scale with raycast_range_max.
+                const double dist = std::sqrt(sqrdis);
+                const Vec3f dir = (p - cur_odom) / dist;
+                const double march_start_dist = std::max(
+                        cfg_.raycast_range_min,
+                        dist - cfg_.observed_mark_range_max);
+                const Vec3f raycast_start = cur_odom + dir * march_start_dist;
+                // The fixed-map immutable snapshot answers isUnknown() with
+                // a +/-3 raw-cell neighborhood.  Marching every 0.05 m and
+                // then expanding each query by the same 0.15 m needlessly
+                // writes many equivalent free markers.  Use the matching
+                // 0.15 m DDA only for that snapshot configuration; dynamic
+                // maps, whose direct queries do not have this neighborhood,
+                // retain the original raw-resolution march.
+                auto& observed_raycaster =
+                        (!cfg_.map_sliding_en && !cfg_.unk_inflation_en)
+                        ? raycast_data_.observed_raycaster
+                        : raycast_data_.raycaster;
+                observed_raycaster.setInput(raycast_start, p);
+                Vec3f ray_pt;
+                while (observed_raycaster.step(ray_pt)) {
+                    Vec3i cur_ray_id_g;
+                    posToGlobalIndex(ray_pt, cur_ray_id_g);
+                    if (!insideLocalMap(cur_ray_id_g)) {
+                        break;
+                    }
+                    insertUpdateCandidate(cur_ray_id_g, false);
+                }
+            }
+            else if (trace_roi_point) {
+                ++trace_roi_outside_map;
+            }
+            continue;
+        }
+
+        bool update_hit{true};
+        // 1.3) filter for virtual ceil and ground
+        if (p.z() > cfg_.virtual_ceil_height) {
+            update_hit = false;
+            // find the intersect point with the ceil
+            const double dz = p.z() - cur_odom.z();
+            const double pc = cfg_.virtual_ceil_height - cur_odom.z();
+            p = cur_odom + (p - cur_odom).normalized() * pc / dz;
+        }
+        else if (p.z() < cfg_.virtual_ground_height) {
+            update_hit = false;
+            // find the intersect point with the ground
+            const double dz = p.z() - cur_odom.z();
+            const double pc = cfg_.virtual_ground_height - cur_odom.z();
+            p = cur_odom + (p - cur_odom).normalized() * pc / dz;
+        }
+
+        // 1.4) bounding box filter
+        // raycasting max
+        const double sqr_dis = (p - cur_odom).squaredNorm();
+        if (sqr_dis > cfg_.sqr_raycast_range_max) {
+            double k = cfg_.raycast_range_max / sqrt(sqr_dis);
+            p = k * (p - cur_odom) + cur_odom;
+            update_hit = false;
+        }
+
+        if(sqr_dis < cfg_.sqr_raycast_range_min) {
+            continue;
+        }
+
+        // local map bound
+        if (((p - raycast_box_min).minCoeff() < 0) ||
+            ((p - raycast_box_max).maxCoeff() > 0)) {
+            p = lineBoxIntersectPoint(p,
+                                      cur_odom,
+                                      raycast_box_min,
+                                      raycast_box_max);
+            update_hit = false;
+        }
+
+
+        // record cache box size;
+        raycast_data_.cache_box_min = raycast_data_.cache_box_min.cwiseMin(p);
+        raycast_data_.cache_box_max = raycast_data_.cache_box_max.cwiseMax(p);
+
+        // 1.4) for all validate hit points, update probability
+        raycasting_cloud.push_back(p);
+
+        if (update_hit) {
+            posToGlobalIndex(p, pt_id_g);
+            insertUpdateCandidate(pt_id_g, true);
+        }
+    }
+
+    if (cfg_.raycasting_en) {
+        // 4) process all inf points, updae free probability
+        for (const auto& p : raycasting_cloud) {
+            Vec3f raycast_start = (p - cur_odom).normalized() * cfg_.raycast_range_min + cur_odom;
+            raycast_data_.raycaster.setInput(raycast_start, p);
+            Vec3f ray_pt;
+            while (raycast_data_.raycaster.step(ray_pt)) {
+                Vec3i cur_ray_id_g;
+                posToGlobalIndex(ray_pt, cur_ray_id_g);
+                if (!insideLocalMap(cur_ray_id_g)) {
+                    break;
+                }
+                insertUpdateCandidate(cur_ray_id_g, false);
+            }
+        }
+    }
+    if (trace_enabled) {
+        try {
+            auto fields = contact_trace::stream();
+            fields << "\"raycasting_enabled\":" << (cfg_.raycasting_en ? "true" : "false")
+                   << ",\"input_points\":" << input_cloud.size()
+                   << ",\"sensor_position\":["
+                   << contact_trace::number(cur_odom.x()) << ','
+                   << contact_trace::number(cur_odom.y()) << ','
+                   << contact_trace::number(cur_odom.z()) << ']'
+                   << ",\"roi_input\":" << trace_roi_input
+                   << ",\"roi_intensity_rejected\":" << trace_roi_intensity_rejected
+                   << ",\"roi_temporal_rejected\":" << trace_roi_temporal_rejected
+                   << ",\"roi_outside_map\":" << trace_roi_outside_map
+                   << ",\"roi_near_range_rejected\":" << trace_roi_near_range_rejected
+                   << ",\"occupancy_hit_min_range\":"
+                   << contact_trace::number(occupancy_min_range)
+                   << ",\"free_ray_min_range\":"
+                   << contact_trace::number(cfg_.raycast_range_min)
+                   << ",\"roi_near_hit_inserted\":" << trace_roi_near_hit_inserted
+                   << ",\"roi_duplicate_hit\":" << trace_roi_duplicate_hit
+                   << ",\"roi_hit_inserted\":" << trace_roi_hit_inserted;
+            contact_trace::submit("map_raycast_summary", fields.str());
+        } catch (...) {
+        }
+    }
+}
+
+void ProbMap::insertUpdateCandidate(const Vec3i& id_g, bool is_hit) {
+    const auto& hash_id = getHashIndexFromGlobalIndex(id_g);
+    if (!cfg_.raycasting_en) {
+        auto [it, inserted] = raycast_data_.sparse_update_counts.try_emplace(hash_id);
+        auto& count = it->second;
+        ++count.operation_cnt;
+        if (inserted) {
+            raycast_data_.update_cache_id_g.push(id_g);
+        }
+        if (is_hit) {
+            ++count.hit_cnt;
+        }
+        return;
+    }
+    raycast_data_.operation_cnt[hash_id]++;
+    if (raycast_data_.operation_cnt[hash_id] == 1) {
+        raycast_data_.update_cache_id_g.push(id_g);
+    }
+    if (is_hit) {
+        raycast_data_.hit_cnt[hash_id]++;
+    }
+}
+
+void ProbMap::updateLocalBox(const Vec3f& cur_odom) {
+    /* This function is only used for decide the local update range
+     * and do not related to the map origin and map bound
+     * the map origin and map bound is only update in [SlidingMap::mapSliding(const Vec3f &odom)]
+     * */
+    // The local map should be inside in index wise
+    // update: the virtual floor and ceil should not influence the raycasting.
+    // 2) local map size
+    // The update box should follow odom.
+    // The local map should follow current map center.
+    std::lock_guard<std::mutex> lck(raycast_data_.raycast_range_mtx);
+
+    Vec3i cur_odom_i;
+    posToGlobalIndex(cur_odom, cur_odom_i);
+    Vec3i local_updatebox_min_i, local_updatebox_max_i;
+
+    if (cfg_.raycasting_en) {
+        local_updatebox_max_i = cur_odom_i + cfg_.half_local_update_box_i;
+        local_updatebox_min_i = cur_odom_i - cfg_.half_local_update_box_i;
+    }
+
+    globalIndexToPos(local_updatebox_min_i, raycast_data_.local_update_box_min);
+    globalIndexToPos(local_updatebox_max_i, raycast_data_.local_update_box_max);
+
+    // the local update box must inside the local map
+    raycast_data_.local_update_box_max = raycast_data_.local_update_box_max.cwiseMin(
+        local_map_bound_max_d_);
+    raycast_data_.local_update_box_min = raycast_data_.local_update_box_min.cwiseMax(
+        local_map_bound_min_d_);
+}
+
+void ProbMap::resetLocalMap() {
+    std::cout << YELLOW << " -- [Prob-Map] Clear all local map." << RESET << std::endl;
+    double unk_value = (cfg_.l_free + cfg_.l_occ)/2.0;
+    // Clear local map
+    std::fill(occupancy_buffer_.begin(), occupancy_buffer_.end(), unk_value);
+    while (!raycast_data_.update_cache_id_g.empty()) {
+        raycast_data_.update_cache_id_g.pop();
+    }
+    raycast_data_.batch_update_counter = 0;
+    std::fill(raycast_data_.operation_cnt.begin(), raycast_data_.operation_cnt.end(), 0);
+    std::fill(raycast_data_.hit_cnt.begin(), raycast_data_.hit_cnt.end(), 0);
+    raycast_data_.sparse_update_counts.clear();
+}

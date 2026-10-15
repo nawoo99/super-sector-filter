@@ -1,0 +1,193 @@
+{
+  "body_radius_m": 0.2,
+  "change_from_parent": "add north observation wall only",
+  "config_sha256": "0969033bc3f10535fc2a091f751b03dae7c23b66cbd455eaca3d6186695b4a27",
+  "generator_sha256": "9eeb441ff6d34816d032b741d10dc5a5013b98b0436d446107968c835deea734",
+  "guide_posts": [
+    {
+      "center_xy_m": [
+        22.0,
+        5.0
+      ],
+      "radius_m": 0.15
+    },
+    {
+      "center_xy_m": [
+        26.0,
+        5.0
+      ],
+      "radius_m": 0.15
+    },
+    {
+      "center_xy_m": [
+        22.0,
+        10.0
+      ],
+      "radius_m": 0.15
+    },
+    {
+      "center_xy_m": [
+        26.0,
+        10.0
+      ],
+      "radius_m": 0.15
+    },
+    {
+      "center_xy_m": [
+        22.0,
+        15.0
+      ],
+      "radius_m": 0.15
+    },
+    {
+      "center_xy_m": [
+        26.0,
+        15.0
+      ],
+      "radius_m": 0.15
+    }
+  ],
+  "hazard": {
+    "center_xy_m": [
+      16.2,
+      24.4
+    ],
+    "height_m": 3.2,
+    "radius_m": 1.2
+  },
+  "initial_position_xyz_m": [
+    24.0,
+    0.0,
+    1.5
+  ],
+  "initial_yaw_rad": 1.5707963267948966,
+  "liveness_check": {
+    "minimum_filtered_points_per_frame": 50.0,
+    "sector_half_angle_deg": 45.0,
+    "sensing_horizon_m": 15.0,
+    "stations": [
+      {
+        "name": "outgoing_x20",
+        "position_xyz_m": [
+          20.0,
+          26.3,
+          1.2
+        ]
+      },
+      {
+        "name": "outgoing_x12",
+        "position_xyz_m": [
+          12.0,
+          26.3,
+          1.2
+        ]
+      },
+      {
+        "name": "outgoing_x4",
+        "position_xyz_m": [
+          4.0,
+          26.3,
+          1.2
+        ]
+      }
+    ],
+    "velocity_xyz_mps": [
+      -7.0,
+      0.0,
+      0.0
+    ],
+    "yaw_deg": 180.0
+  },
+  "lower_wall": {
+    "aperture_center_x_m": 19.65,
+    "aperture_width_m": 0.38,
+    "east_x_m": 23.2,
+    "height_m": 3.2,
+    "thickness_m": 0.3,
+    "west_x_m": 14.0,
+    "y_m": 23.0
+  },
+  "map": "abt4_observed_exit",
+  "observation_wall": {
+    "end_xy_m": [
+      24.0,
+      29.0
+    ],
+    "height_m": 3.2,
+    "role": "non-colliding forward-sector liveness support",
+    "start_xy_m": [
+      -10.0,
+      29.0
+    ],
+    "thickness_m": 0.3
+  },
+  "parent_geometry": "abt3_gate_open",
+  "pcd_sha256": "ceff36eb6916f4d1301d2dfd73529ee589f87840264382121c43a811c1a7e87f",
+  "point_count": 79011,
+  "purpose": "development gate only; do not pool with v1/v2/v3/evaluation",
+  "replay": {
+    "position_xyz_m": [
+      24.0,
+      23.5,
+      1.5
+    ],
+    "risk_horizon_s": 1.0,
+    "trajectory_duration_s": 1.15,
+    "trajectory_end_xyz_m": [
+      16.2,
+      24.4,
+      1.5
+    ],
+    "velocity_xyz_mps": [
+      0.0,
+      7.0,
+      0.0
+    ],
+    "yaw_deg": 90.0
+  },
+  "route_check": {
+    "anchors_xy_m": [
+      [
+        24.0,
+        23.5
+      ],
+      [
+        18.0,
+        26.1
+      ],
+      [
+        14.5,
+        26.1
+      ],
+      [
+        0.0,
+        24.0
+      ]
+    ],
+    "bounds_xy_m": [
+      -1.0,
+      27.0,
+      20.0,
+      28.5
+    ],
+    "flight_z_m": 1.5,
+    "inflation_radius_m": 0.3,
+    "inflation_step": 3,
+    "planning_horizon_m": 7.0,
+    "resolution_m": 0.1
+  },
+  "route_waypoints_xy_m": [
+    [
+      24.0,
+      24.0
+    ],
+    [
+      0.0,
+      24.0
+    ]
+  ],
+  "runtime_root": "/root/super_ws/src/SUPER",
+  "schema": "angular-blind-turn-v4-observed-exit-gate-v1",
+  "shared_geometry_generator_sha256": "c0c3d5b0a4b81803930f729a728d7371fdf99fb17c14f75512c2c1042f549fc1",
+  "wall_point_count": 70266
+}

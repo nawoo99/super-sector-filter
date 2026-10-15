@@ -1,0 +1,584 @@
+/**
+* This file is part of SUPER
+*
+* Copyright 2025 Yunfan REN, MaRS Lab, University of Hong Kong, <mars.hku.hk>
+* Developed by Yunfan REN <renyf at connect dot hku dot hk>
+* for more information see <https://github.com/hku-mars/SUPER>.
+* If you use this code, please cite the respective publications as
+* listed on the above website.
+*
+* SUPER is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* SUPER is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public License
+* along with SUPER. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <super_core/corridor_generator.h>
+#include <super_core/planner_sequence_guards.hpp>
+#include <cmath>
+
+using namespace super_utils;
+
+namespace super_planner {
+
+    CorridorGenerator::CorridorGenerator(const ros_interface::RosInterface::Ptr &ros_ptr,
+                                         const rog_map::ROGMapROS::Ptr &map_ptr, const double bound_dis,
+                                         const double seed_line_max_dis, const double min_overlap_threshold,
+                                         const double virtual_groud_height, const double virtual_ceil_height,
+                                         const double robot_r, const int box_search_skip_num, const int iris_iter_num,
+                                         const double corridor_pref_margin,
+                                         const bool use_inflated_obstacles,
+                                         const bool use_inflated_seed_lines)
+            : ros_ptr_(ros_ptr), map_ptr_(map_ptr) {
+        ciri_ = std::make_shared<CIRI>(ros_ptr_);
+        ciri_->setupParams(robot_r, iris_iter_num, corridor_pref_margin);
+        bound_dis_ = bound_dis;
+        seed_line_max_length_ = seed_line_max_dis;
+        min_overlap_threshold_ = min_overlap_threshold;
+        robot_r_ = robot_r;
+        use_inflated_obstacles_ = use_inflated_obstacles;
+        use_inflated_seed_lines_ = use_inflated_seed_lines;
+        box_search_skip_num_ = box_search_skip_num;
+        iris_iter_num_ = iris_iter_num;
+        virtual_ceil_height_ = virtual_ceil_height - robot_r;
+        virtual_groud_height_ = virtual_groud_height + robot_r;
+//        failed_traj_log.open(DEBUG_FILE_DIR("sfc.csv"), std::ios::out | std::ios::trunc);
+    }
+
+
+    void CorridorGenerator::SetLineNeighborList(const vec_E<Vec3i> &_line_seed_neighbor_list) {
+        this->line_seed_neighbor_list = _line_seed_neighbor_list;
+    }
+
+    void CorridorGenerator::appendAvoidanceZonePoints(
+            const Vec3f &box_min, const Vec3f &box_max,
+            const vec_Vec3f &avoidance_centers,
+            const std::vector<double> &avoidance_radii,
+            vec_E<Vec3f> &pc) const {
+        const std::size_t n = std::min(avoidance_centers.size(), avoidance_radii.size());
+        for (std::size_t i = 0; i < n; ++i) {
+            const double radius = avoidance_radii[i];
+            const Vec3f &center = avoidance_centers[i];
+            if (!std::isfinite(radius) || radius <= robot_r_ ||
+                !center.array().isFinite().all()) {
+                continue;
+            }
+            // These recovery zones are vertical XY cylinders, not spheres:
+            // climbing over the rejected route would keep the same horizontal
+            // homotopy.  Test circle-vs-box overlap only in XY and span the
+            // flyable portion of the current CIRI search box in Z.
+            const double nearest_x = std::max(
+                    static_cast<double>(box_min.x()),
+                    std::min(static_cast<double>(center.x()),
+                             static_cast<double>(box_max.x())));
+            const double nearest_y = std::max(
+                    static_cast<double>(box_min.y()),
+                    std::min(static_cast<double>(center.y()),
+                             static_cast<double>(box_max.y())));
+            const double dx = static_cast<double>(center.x()) - nearest_x;
+            const double dy = static_cast<double>(center.y()) - nearest_y;
+            const bool overlaps = dx * dx + dy * dy <= radius * radius;
+            if (!overlaps) {
+                if (std::getenv("AVOIDANCE_DEBUG") != nullptr) {
+                    fmt::print(" -- [AVOIDANCE_DEBUG] zone {} center=[{:.3f},{:.3f},{:.3f}] "
+                               "radius={:.3f} SKIPPED (no box overlap) "
+                               "box=[{:.3f},{:.3f},{:.3f}]-[{:.3f},{:.3f},{:.3f}]\n",
+                               i, center.x(), center.y(), center.z(), radius,
+                               box_min.x(), box_min.y(), box_min.z(),
+                               box_max.x(), box_max.y(), box_max.z());
+                }
+                continue;
+            }
+            if (std::getenv("AVOIDANCE_DEBUG") != nullptr) {
+                fmt::print(" -- [AVOIDANCE_DEBUG] zone {} center=[{:.3f},{:.3f},{:.3f}] "
+                           "radius={:.3f} INJECTED into box=[{:.3f},{:.3f},{:.3f}]-[{:.3f},{:.3f},{:.3f}] "
+                           "pc_size_before={}\n",
+                           i, center.x(), center.y(), center.z(), radius,
+                           box_min.x(), box_min.y(), box_min.z(),
+                           box_max.x(), box_max.y(), box_max.z(), pc.size());
+            }
+            const double sample_r = radius - robot_r_;
+            const double z_min = std::max(
+                    static_cast<double>(box_min.z()), virtual_groud_height_);
+            const double z_max = std::min(
+                    static_cast<double>(box_max.z()), virtual_ceil_height_);
+            if (z_min > z_max) {
+                continue;
+            }
+
+            // Repeated rings form the same vertical cylinder that A* sees.
+            // Keep adjacent rings close enough that CIRI cannot leak between
+            // sparse samples while optimizing a smooth trajectory.  Including
+            // both ends also closes gaps at local-box boundaries.
+            constexpr double kMaxRingSpacing = 0.25;
+            const int ring_intervals = std::max(
+                    1, static_cast<int>(std::ceil((z_max - z_min) /
+                                                  kMaxRingSpacing)));
+            constexpr int kRingPoints = 16;
+            for (int level = 0; level <= ring_intervals; ++level) {
+                const double alpha = static_cast<double>(level) / ring_intervals;
+                const double z = z_min + alpha * (z_max - z_min);
+                for (int k = 0; k < kRingPoints; ++k) {
+                    const double theta = 2.0 * M_PI * static_cast<double>(k) /
+                                         kRingPoints;
+                    // Perfectly symmetric samples can drive CIRI's ellipsoid
+                    // fit into a degenerate NaN/Inf case.  A deterministic,
+                    // level-dependent radius jitter breaks that symmetry
+                    // without materially changing the exclusion radius.
+                    const double jitter = 0.03 * sample_r * std::sin(
+                            7.0 * static_cast<double>(k) +
+                            3.0 * static_cast<double>(level) + 1.0);
+                    const double r_k = sample_r + jitter;
+                    pc.emplace_back(center.x() + r_k * std::cos(theta),
+                                    center.y() + r_k * std::sin(theta), z);
+                }
+            }
+        }
+    }
+
+    bool
+    CorridorGenerator::SearchPolytopeOnPath(const vec_Vec3f &path, PolytopeVec &sfcs,
+                                            Vec3f &shifted_start_pt,
+                                            bool cut_first_poly,
+                                            const vec_Vec3f &avoidance_centers,
+                                            const std::vector<double> &avoidance_radii) {
+        // https://whimsical.com/flow-3TASJFwe1dASYYY2xHEmze
+        // password: wtr
+        //	TimeConsuming t___("SearchPolytopeOnPath");
+        sfcs.clear();
+        if (path.empty()) {
+            return false;
+        }
+
+        vector<Line> seed_lines;
+        int first_id, second_id;
+        Polytope overlap;
+        Vec3f interior_pt;
+        double interior_depth;
+        Polytope temp_poly, temp_poly_fix_p;
+        int max_loop = 1000;
+        int cnt_loop = 0;
+        const auto first_unoccupied = sequence_guards::firstUnoccupiedIndex(
+                path, [this](const Vec3f& point) {
+                    return map_ptr_->isOccupiedInflate(point);
+                });
+        if (first_unoccupied == path.size()) {
+            ros_ptr_->warn(
+                    " -- [CORRIDOR_SEED_REJECT] reason=all_path_points_occupied points={} action=no_corridor",
+                    path.size());
+            return false;
+        }
+        first_id = static_cast<int>(first_unoccupied);
+
+        if(first_id!=0){
+            shifted_start_pt = path[first_id];
+            double dis = (path[first_id] - path[0]).norm() * 1.2;
+            GenerateEmptyPolytope(path[0], dis, temp_poly);
+            sfcs.emplace_back(temp_poly);
+        }
+
+        while (cnt_loop++ < max_loop) {
+            second_id = first_id;
+            for (int j = first_id + 1; j < path.size(); j++) {
+                bool reach_segment = false;
+                const bool segment_in_range =
+                        (path[j] - path[first_id]).norm() <= seed_line_max_length_;
+                const bool segment_free = use_inflated_seed_lines_
+                        ? (segment_in_range &&
+                           map_ptr_->isLineFree(path[first_id], path[j], true, false))
+                        : map_ptr_->isLineFree(path[first_id], path[j], seed_line_max_length_,
+                                               line_seed_neighbor_list);
+                if (!segment_free) {
+                    reach_segment = true;
+                }
+                if (reach_segment) {
+                    second_id = j - 1;
+                    if (second_id - 1 > first_id) {
+                        second_id -= 1;
+                    }
+                    break;
+                }
+                second_id = j;
+            }
+
+            if (second_id == first_id && second_id + 1 < path.size()) {
+                second_id += 1;
+            }
+
+            seed_lines.emplace_back(path[first_id], path[second_id]);
+            if ((path[first_id] - path[second_id]).norm() > seed_line_max_length_ * 1.5) {
+                fmt::print("first: {}\n second: {}\n seed line max: {}\n", path[first_id].transpose(),
+                           path[second_id].transpose(), seed_line_max_length_);
+                throw std::runtime_error("seed line too long");
+                return false;
+            }
+            if (!GeneratePolytopeFromLine(seed_lines.back(), temp_poly,
+                                          avoidance_centers, avoidance_radii)) {
+                cout << YELLOW << " -- [SUPER] GeneratePolytopeFromLine failed." << RESET << endl;
+                return false;
+            }
+
+// viz for debug
+//            ros_ptr_->vizCiriPolytope(temp_poly, "debug");
+//            usleep(10000);
+
+            if (!sfcs.empty()) {
+                overlap = sfcs.back().CrossWith(temp_poly);
+                interior_depth = geometry_utils::findInteriorDist(overlap.GetPlanes(), interior_pt);
+                temp_poly.overlap_depth_with_last_one = interior_depth;
+                temp_poly.interior_pt_with_last_one = interior_pt;
+                if (interior_depth < min_overlap_threshold_) {
+                    if (!GeneratePolytopeFromPoint(path[first_id], temp_poly_fix_p,
+                                                   avoidance_centers, avoidance_radii)) {
+                        cout << YELLOW << " -- [SUPER] GeneratePolytopeFromPoint failed." << RESET << endl;
+                        return false;
+                    }
+                    overlap = sfcs.back().CrossWith(temp_poly_fix_p);
+                    interior_depth = geometry_utils::findInteriorDist(overlap.GetPlanes(), interior_pt);
+                    if (interior_depth <= 0.01) {
+                        ros_ptr_->warn(
+                                " -- [SUPER] Cannot find continuous corridor on path, overlap only {}, force return.",
+                                interior_depth);
+// viz for debug
+//                        ros_ptr_->vizCiriPointCloud(latest_pc);
+//                        usleep(100000);
+//                        exit(-1);
+                        return false;
+                    }
+                    temp_poly_fix_p.overlap_depth_with_last_one = interior_depth;
+                    temp_poly_fix_p.interior_pt_with_last_one = interior_pt;
+                    sfcs.push_back(temp_poly_fix_p);
+                    overlap = sfcs.back().CrossWith(temp_poly);
+                    interior_depth = geometry_utils::findInteriorDist(overlap.GetPlanes(), interior_pt);
+                    if (interior_depth <= 0.01) {
+                        ros_ptr_->warn(
+                                " -- [SUPER] Cannot find continuous corridor on path, overlap only {}, force return.",
+                                interior_depth);
+                        // viz for debug
+//                        ros_ptr_->vizCiriPointCloud(latest_pc);
+//                        usleep(100000);
+//                        exit(-1);
+                        return false;
+                    }
+                } else {
+                    int temp_id = sfcs.size() - 2;
+                    if (temp_id > 0) {
+                        overlap = sfcs[temp_id].CrossWith(temp_poly);
+                        interior_depth = geometry_utils::findInteriorDist(overlap.GetPlanes(), interior_pt);
+                        if (interior_depth > sfcs[temp_id + 1].overlap_depth_with_last_one * 0.25) {
+                            temp_poly.overlap_depth_with_last_one = interior_depth;
+                            temp_poly.interior_pt_with_last_one = interior_pt;
+                            sfcs.pop_back();
+                        }
+                    }
+                }
+            }
+
+            sfcs.push_back(temp_poly);
+            if (second_id == path.size() - 1) {
+                break;
+            }
+            first_id = second_id;
+        }
+        // Delete last polytope if the second last one contains the last point
+
+
+        if (cnt_loop >= max_loop) {
+            cout << YELLOW << " -- [SUPER] Reach max iteration, failed." << RESET << endl;
+            return false;
+        }
+
+        if (sfcs.empty()) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    void CorridorGenerator::getSeedBBox(const Vec3f &p1, const Vec3f &p2, Vec3f &box_min, Vec3f &box_max) {
+        box_min = p1.cwiseMin(p2);
+        box_max = p1.cwiseMax(p2);
+        box_min -= Vec3f(bound_dis_, bound_dis_, bound_dis_);
+        box_max += Vec3f(bound_dis_, bound_dis_, bound_dis_);
+//        box_min.z() = std::max(box_min.z(), virtual_groud_height_);
+//        box_max.z() = std::min(box_max.z(), virtual_ceil_height_);
+    }
+
+    bool CorridorGenerator::GeneratePolytopeFromPoint(const Vec3f &pt, Polytope &polytope,
+                                                      const vec_Vec3f &avoidance_centers,
+                                                      const std::vector<double> &avoidance_radii) {
+        Eigen::Vector3d box_max, box_min;
+        vec_E<Vec3f> pc;
+        getSeedBBox(pt, pt, box_min, box_max);
+        // TODO the box did not consider the robot_r
+        map_ptr_->boundBoxByLocalMap(box_min, box_max);
+        if (use_inflated_obstacles_) {
+            map_ptr_->boxSearchInflate(box_min, box_max, OCCUPIED, pc);
+        }
+        else {
+            map_ptr_->boxSearch(box_min, box_max, OCCUPIED, pc);
+        }
+        appendAvoidanceZonePoints(box_min, box_max, avoidance_centers,
+                                  avoidance_radii, pc);
+        box_min.z() += robot_r_;
+        box_max.z() -= robot_r_;
+        MatD4f planes;
+        Eigen::Vector3d a = pt, b = pt;
+        Eigen::Matrix<double, 6, 4> bd = Eigen::Matrix<double, 6, 4>::Zero();
+        bd(0, 0) = 1.0;
+        bd(1, 0) = -1.0;
+        bd(2, 1) = 1.0;
+        bd(3, 1) = -1.0;
+        bd(4, 2) = 1.0;
+        bd(5, 2) = -1.0;
+        bd(0, 3) = -box_max.x();
+        bd(1, 3) = box_min.x();
+        bd(2, 3) = -box_max.y();
+        bd(3, 3) = box_min.y();
+        bd(4, 3) = -box_max.z();
+        bd(5, 3) = box_min.z();
+        // 将vector放到Eigen里，准备开始分解
+        if (pc.empty()) {
+            // 障碍物点云为空，直接返回一个方块
+            // Ax + By + Cz + D = 0
+            planes.resize(6, 4);
+            planes.row(0) << 1, 0, 0, -box_max.x();
+            planes.row(1) << 0, 1, 0, -box_max.y();
+            planes.row(2) << 0, 0, 1, -box_max.z();
+            planes.row(3) << -1, 0, 0, box_min.x();
+            planes.row(4) << 0, -1, 0, box_min.y();
+            planes.row(5) << 0, 0, -1, box_min.z();
+            polytope.SetPlanes(planes);
+            polytope.SetSeedLine(Line{pt, pt});
+            return true;
+        }
+        latest_pc.insert(latest_pc.end(), pc.begin(), pc.end());
+        Eigen::Map<const Eigen::Matrix<double, 3, -1, Eigen::ColMajor>> pp(pc[0].data(), 3, pc.size());
+        rog_map::TimeConsuming tc("emvp", false);
+        RET_CODE success = ciri_->comvexDecomposition(bd, pp, a, b);
+        double dt = tc.stop();
+        if (success == SUCCESS) {
+            ciri_cnt++;
+            ciri_t += dt;
+            ciri_->getPolytope(polytope);
+            polytope.SetSeedLine(Line{pt, pt});
+            return true;
+        } else {
+            cout << YELLOW << " -- [SUPER] CSpaceFiri failed." << RESET << endl;
+            cout << YELLOW << "\t box_min =" << box_min.transpose() << endl;
+            cout << YELLOW << "\t box_max = " << box_max.transpose() << endl;
+            cout << YELLOW << "\t seed pt = " << pt.transpose() << endl;
+            polytope.Reset();
+            return false;
+        }
+
+    }
+
+    bool CorridorGenerator::GenerateEmptyPolytope(const super_utils::Vec3f &pt,
+                                                  const double & dis,
+                                                  Polytope & polytope){
+        Eigen::Vector3d box_max, box_min;
+        box_min = pt;
+        box_max = pt;
+        box_min -= Vec3f(dis, dis, dis);
+        box_max += Vec3f(dis, dis, dis);
+        MatD4f planes;
+        Eigen::Matrix<double, 6, 4> bd = Eigen::Matrix<double, 6, 4>::Zero();
+        bd(0, 0) = 1.0;
+        bd(1, 0) = -1.0;
+        bd(2, 1) = 1.0;
+        bd(3, 1) = -1.0;
+        bd(4, 2) = 1.0;
+        bd(5, 2) = -1.0;
+        bd(0, 3) = -box_max.x();
+        bd(1, 3) = box_min.x();
+        bd(2, 3) = -box_max.y();
+        bd(3, 3) = box_min.y();
+        bd(4, 3) = -box_max.z();
+        bd(5, 3) = box_min.z();
+        // 障碍物点云为空，直接返回一个方块
+        // Ax + By + Cz + D = 0
+        planes.resize(6, 4);
+        planes.row(0) << 1, 0, 0, -box_max.x();
+        planes.row(1) << 0, 1, 0, -box_max.y();
+        planes.row(2) << 0, 0, 1, -box_max.z();
+        planes.row(3) << -1, 0, 0, box_min.x();
+        planes.row(4) << 0, -1, 0, box_min.y();
+        planes.row(5) << 0, 0, -1, box_min.z();
+        polytope.SetPlanes(planes);
+        polytope.SetSeedLine(Line{pt, pt});
+        return true;
+    }
+
+    bool CorridorGenerator::GeneratePolytopeFromLine(Line &line, Polytope &polytope,
+                                                     const vec_Vec3f &avoidance_centers,
+                                                     const std::vector<double> &avoidance_radii) {
+        Eigen::Vector3d box_max, box_min;
+        vec_E<Vec3f> pc, pts{line.first, line.second};
+        getSeedBBox(line.first, line.second, box_min, box_max);
+        map_ptr_->boundBoxByLocalMap(box_min, box_max);
+        if (use_inflated_obstacles_) {
+            map_ptr_->boxSearchInflate(box_min, box_max, OCCUPIED, pc);
+        }
+        else {
+            map_ptr_->boxSearch(box_min, box_max, OCCUPIED, pc);
+        }
+        appendAvoidanceZonePoints(box_min, box_max, avoidance_centers,
+                                  avoidance_radii, pc);
+        box_min.z() += robot_r_;
+        box_max.z() -= robot_r_;
+        MatD4f planes;
+        Eigen::Vector3d a = line.first, b = line.second;
+        Eigen::Matrix<double, 6, 4> bd = Eigen::Matrix<double, 6, 4>::Zero();
+        bd(0, 0) = 1.0;
+        bd(1, 0) = -1.0;
+        bd(2, 1) = 1.0;
+        bd(3, 1) = -1.0;
+        bd(4, 2) = 1.0;
+        bd(5, 2) = -1.0;
+        bd(0, 3) = -box_max.x();
+        bd(1, 3) = box_min.x();
+        bd(2, 3) = -box_max.y();
+        bd(3, 3) = box_min.y();
+        bd(4, 3) = -box_max.z();
+        bd(5, 3) = box_min.z();
+        // 将vector放到Eigen里，准备开始分解
+        if (pc.empty()) {
+            // 障碍物点云为空，直接返回一个方块
+            // Ax + By + Cz + D = 0g
+            planes.resize(6, 4);
+            planes.row(0) << 1, 0, 0, -box_max.x();
+            planes.row(1) << 0, 1, 0, -box_max.y();
+            planes.row(2) << 0, 0, 1, -box_max.z();
+            planes.row(3) << -1, 0, 0, box_min.x();
+            planes.row(4) << 0, -1, 0, box_min.y();
+            planes.row(5) << 0, 0, -1, box_min.z();
+            polytope.SetPlanes(planes);
+            polytope.SetSeedLine(line);
+            return true;
+        }
+        // save to latest pc
+        latest_pc.insert(latest_pc.end(), pc.begin(), pc.end());
+        Eigen::Map<const Eigen::Matrix<double, 3, -1, Eigen::ColMajor>> pp(pc[0].data(), 3, pc.size());
+        rog_map::TimeConsuming tc("emvp", false);
+        RET_CODE success = ciri_->comvexDecomposition(bd, pp, a, b);
+        double dt = tc.stop();
+        if (success == SUCCESS) {
+            ciri_cnt++;
+            ciri_t += dt;
+            ciri_->getPolytope(polytope);
+            polytope.SetSeedLine(line);
+            return true;
+        } else {
+            polytope.Reset();
+            cout << YELLOW << "\t box_min = " << box_min.transpose() << RESET << endl;
+            cout << YELLOW << "\t box_max =" << box_max.transpose() << RESET << endl;
+            cout << YELLOW << "\t seed line =" << line.first.transpose() << " --> " << line.second.transpose()
+                 << RESET << endl;
+
+//            failed_traj_log << 889900 << endl;
+//            failed_traj_log << bd << endl;
+//            failed_traj_log << 0 << endl;
+//            failed_traj_log << pp << endl;
+//            failed_traj_log << 0 << endl;
+//            failed_traj_log << a.transpose() << endl;
+//            failed_traj_log << 0 << endl;
+//            failed_traj_log << b.transpose() << endl;
+//            failed_traj_log << 0 << endl;
+//            failed_traj_log << robot_r_ << endl;
+//            failed_traj_log << 0 << endl;
+//            failed_traj_log << iris_iter_num_ << endl;
+            return false;
+        }
+
+    }
+
+    // 2026-08-19: matches the SUPER paper's actual backup-corridor
+    // construction (theorem 1, Materials and Methods / "Backup corridor
+    // generation") -- CIRI decomposition sourced directly from an
+    // externally-supplied point cloud (an accumulated 1-2s raw LIDAR
+    // window) instead of the committed occupancy map, so the known-free
+    // guarantee does not depend on map-commit latency. Mirrors
+    // GeneratePolytopeFromLine exactly except for where pc comes from.
+    // Third attempt at this in this investigation (see docs/
+    // viability_guard_ciri_avoidance_2026-08-15.md 8.4/8.10); the first
+    // two were reverted for reasons unrelated to this function itself
+    // (map-sourced shortcut; LiDAR-emptiness-vs-occupancy confusion;
+    // an unexplained subscription/freeze bug). Used shadow-only for now.
+    bool CorridorGenerator::GeneratePolytopeFromLineAndCloud(
+            Line &line, const vec_Vec3f &external_pc, Polytope &polytope) {
+        Eigen::Vector3d box_max, box_min;
+        getSeedBBox(line.first, line.second, box_min, box_max);
+        map_ptr_->boundBoxByLocalMap(box_min, box_max);
+        vec_E<Vec3f> pc;
+        pc.reserve(external_pc.size());
+        for (const auto &pt : external_pc) {
+            if ((pt.array() >= box_min.array()).all() &&
+                (pt.array() <= box_max.array()).all()) {
+                pc.push_back(pt);
+            }
+        }
+        box_min.z() += robot_r_;
+        box_max.z() -= robot_r_;
+        MatD4f planes;
+        Eigen::Vector3d a = line.first, b = line.second;
+        Eigen::Matrix<double, 6, 4> bd = Eigen::Matrix<double, 6, 4>::Zero();
+        bd(0, 0) = 1.0;
+        bd(1, 0) = -1.0;
+        bd(2, 1) = 1.0;
+        bd(3, 1) = -1.0;
+        bd(4, 2) = 1.0;
+        bd(5, 2) = -1.0;
+        bd(0, 3) = -box_max.x();
+        bd(1, 3) = box_min.x();
+        bd(2, 3) = -box_max.y();
+        bd(3, 3) = box_min.y();
+        bd(4, 3) = -box_max.z();
+        bd(5, 3) = box_min.z();
+        if (pc.empty()) {
+            // No accumulated points fell inside the local box. Per the
+            // paper's theorem 1, this is only a valid known-free
+            // conclusion if the input cloud was "sufficiently dense" to
+            // begin with -- an empty local box from a healthy, dense
+            // accumulator legitimately means open space (mirrors
+            // GeneratePolytopeFromLine's identical convention for an
+            // empty map query). The caller is responsible for checking
+            // accumulator health (recency, total point count) BEFORE
+            // calling this function; this function cannot tell the
+            // difference between "healthy accumulator, genuinely open"
+            // and "starved accumulator, unknown" on its own.
+            planes.resize(6, 4);
+            planes.row(0) << 1, 0, 0, -box_max.x();
+            planes.row(1) << 0, 1, 0, -box_max.y();
+            planes.row(2) << 0, 0, 1, -box_max.z();
+            planes.row(3) << -1, 0, 0, box_min.x();
+            planes.row(4) << 0, -1, 0, box_min.y();
+            planes.row(5) << 0, 0, -1, box_min.z();
+            polytope.SetPlanes(planes);
+            polytope.SetSeedLine(line);
+            return true;
+        }
+        Eigen::Map<const Eigen::Matrix<double, 3, -1, Eigen::ColMajor>> pp(
+                pc[0].data(), 3, pc.size());
+        rog_map::TimeConsuming tc("emvp_cloud", false);
+        RET_CODE success = ciri_->comvexDecomposition(bd, pp, a, b);
+        tc.stop();
+        if (success == SUCCESS) {
+            ciri_->getPolytope(polytope);
+            polytope.SetSeedLine(line);
+            return true;
+        }
+        polytope.Reset();
+        return false;
+    }
+
+}

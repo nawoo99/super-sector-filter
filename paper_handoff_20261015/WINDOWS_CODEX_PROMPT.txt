@@ -1,0 +1,16 @@
+SUPER 기반 Adaptive Sector Filtering 논문 작성을 위한 코드와 최종 실험자료를 검토해줘.
+
+먼저 paper_handoff_20261015/README.md와 그 안의 provenance/snapshot_summary.json을 읽어. 아래의 접두어 없는 경로는 paper_handoff_20261015 디렉터리 기준이야.
+full_source/super_ws/src/SUPER가 전체 구현이고, full_source/super-sector-filter는 연구 스크립트·설정·문서·패치 미러야. upstream SUPER나 예전 패치만으로 대체하면 안 돼.
+
+전체 소스는 2026-10-15 현재 복사본이며, 실험 당시 동일성이 검증된 파일과 검증되지 않은 파일이 provenance에 구분돼 있어. 모든 파일을 실험 당시 완전 동결본이라고 단정하지 말고, 구현 설명에 쓰는 파일의 SHA256와 검증 근거를 확인해줘.
+
+최신 결과는 별도로 받은 codex_final_results_20261014_all.zip이야. 해당 폴더의 00_READ_ME_FIRST.md, 02_implementation_clarifications.md, 01_final_results.md, 08_cpu_without_simulator.md를 먼저 읽고 data/ CSV·JSON과 교차검증해줘. ZIP이 아직 없다면 results_summary를 읽되 원본 기록이 필요한 항목은 미확인으로 남겨.
+
+본실험은 7개 맵 × Full·Active-Yaw Sector·Adaptive × 10회 = 210회이고, 별도 Forest 사전시험 30회는 합산하지 마. Normal 1–5, Urban, Forest의 비용 평균을 각각 계산해줘. 목표 도달·접촉·무접촉 완주·미완주를 구분하고 미완주를 충돌로 바꾸지 마.
+
+평균 CPU(cores), 누적 CPU(core-s), 지도 처리시간(ms/frame), 누적 지도 처리시간(s/run), 입력 대역폭(MiB/s), 실행당 입력량(MiB/run), 메모리를 구분해줘. 시뮬레이터 제외 함수 CPU는 완전한 자율주행 CPU가 아니라 계측 함수의 exclusive CPU 소계야.
+
+Adaptive 복구는 Full 360° 관측이며 Active-Yaw Sector의 yaw 탐색과 다르다. 식 (4)의 저장 속도 방향과 식 (5)의 별도 탈출 해제 조건은 구현 정정 문서와 실제 코드를 기준으로 설명해줘.
+
+코드와 결과를 수정하거나 실험을 실행하지 말고, 확인된 근거만으로 한국어 학술 논문을 정리해줘. 수치·구현·설명 사이에 불일치가 있으면 파일과 위치를 별도 근거 노트에 기록하고, 추정한 성능·통계 유의성·실제 비행 검증을 만들어 넣지 마.

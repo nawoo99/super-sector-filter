@@ -1,0 +1,43 @@
+#############| For UAV simulation |#################################
+pcd_name: "seed_maps/seed7.pcd"
+mesh_resource: "package://perfect_drone_sim/meshes/yunque-M.dae"
+init_position:
+  x: 0
+  y: 0
+  z: 1.5
+init_yaw: 0.0
+
+#############|For LiDAR perception simulation |#####################
+is_360lidar: true
+polar_resolution: 0.4
+downsample_res: 0.1
+vertical_fov: 178.0
+sensing_blind: 0.1
+sensing_horizon: 15
+sensing_rate: 10
+print_time_consumption: false
+lidar_type: 2
+depth_image_en: false
+
+# v2 changes only the infeasible v1 PVAJ horizon from 0.8 s to 0.6 s.
+side_entry_v2:
+  enabled: true
+  speed_min_mps: 2.0
+  yaw_velocity_mismatch_min_deg: 50.0
+  hold_s: 0.02
+  prediction_s: 0.6
+  trigger_distance_min_m: 0.8
+  trigger_distance_max_m: 3.5
+  trigger_waypoint_x: 24.0
+  trigger_waypoint_y: 24.0
+  trigger_waypoint_radius_m: 2.0
+  trap_waypoint_radius_m: 2.0
+  sector_half_angle_deg: 45.0
+  angular_margin_deg: 2.0
+  max_nudge_deg: 20.0
+  radius_m: 0.25
+  height_m: 3.0
+  point_spacing_m: 0.05
+  z_spacing_m: 0.10
+  sensing_horizon_m: 15.0
+  intensity: 14545.0

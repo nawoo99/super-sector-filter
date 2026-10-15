@@ -1,4 +1,23 @@
-# Sector Filter for SUPER (LiDAR-native planner) on Gazebo/PX4
+# SUPER Adaptive Sector Filtering — final V6 research handoff
+
+**Current paper-writing entry point:** [Full source and experimental evidence (2026-10-15)](paper_handoff_20261015/README.md).
+
+This handoff contains the complete selected source trees from `super-sector-filter`
+and `super_ws/src` (including modified/untracked implementation files), file-level
+provenance, final V6 result summaries, and links to downloadable source, seven-map
+runtime assets and complete original experiment records. Start there for Windows
+Codex paper work. Do not treat the historical Gazebo/PX4 description below as the
+configuration of the final MARSIM/PerfectDrone V6 experiment. The current Sector
+baseline is **Active-Yaw Sector**, not the historical fixed-heading baseline.
+
+The full current source tree is a reconstruction: only the files individually
+matched to the frozen evidence are experimentally byte-verified. Unpinned files
+are explicitly marked in the handoff inventory. No experiments were rerun for
+this upload, and no upstream `hku-mars/SUPER` repository was changed.
+
+---
+
+# Historical integration notes: Sector Filter on Gazebo/PX4
 
 Integrating an adaptive **horizontal sector filter** into [SUPER](https://github.com/hku-mars/SUPER)
 (HKU-MARS, *Science Robotics* 2025), a LiDAR-native high-speed MAV planner, and

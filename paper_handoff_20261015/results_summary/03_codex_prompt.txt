@@ -1,0 +1,27 @@
+첨부한 codex_final_results_20261014_all 자료를 SUPER 기반 Adaptive Sector Filtering 연구의 최종 실험 결과로 사용해줘. 이전 _all이 없는 묶음보다 이 전체 기록 전달본을 우선해.
+
+먼저 00_READ_ME_FIRST.md, 02_implementation_clarifications.md, 01_final_results.md, 08_cpu_without_simulator.md, data/08_metric_definitions.md 순서로 읽고, 이후 필요한 CSV와 JSON을 확인해줘. 요약으로 알 수 없는 항목은 이제 함께 들어 있는 recorded_trials의 원본 로그·JSON·JSONL·CSV에서 확인해줘.
+
+최종 본실험은 2026-10-08 동결 V6 결과이며, 맵1~5·도심지·숲 7맵 × Full·Active-Yaw Sector·Adaptive 3모드 × 각10회 = 210회야. 이 묶음의 정리일 2026-10-14를 새로운 실험일로 쓰지 마. 별도 숲 사전시험30회, 과거600회, 탐색 실험과 영상 촬영6회는 합산하지 마.
+
+Full과 Adaptive는 각각 목표 도달70/70, 접촉0/70, 무접촉 완주70/70이야. Active-Yaw Sector는 목표 도달68/70, 접촉 주행2/70, 무접촉 완주67/70, 접촉 또는 미완주인 미션 실패3/70이야. 무접촉 미완주를 충돌로 바꾸거나 접촉 후 도달을 무접촉 성공으로 바꾸지 마.
+
+Normal맵1~5는 모드당50회로 묶어 평균하고, 도심지와 숲은 각각 모드당10회로 따로 계산해. 맵별 결과도7개로 유지해. 평균CPU(cores), 누적CPU(core-s/run), 입력대역폭(MiB/s), 실행당총입력량(MiB/run), 지도처리시간(ms/frame), 주행당누적지도처리시간(s/run), 메모리·주파수와 Adaptive Full전환횟수를 단위와 표본수에 맞춰 구분해. CSV/JSON의 반올림 전 수치로 계산하고, Full 대비 감소율 기준을 밝혀줘.
+
+원본686개 필드는 data/05_all_recorded_fields_210.csv에 있고, 보조 통계와 결측 현황도 포함돼 있어. 기록되지 않은 항목은0으로 채우지 마. 전체 raw CSV는 요약만으로 필요한 값을 확인할 수 없을 때 사용해. 주행당 누적 지도처리시간은 유효 프레임 구간의 ROG-Map Total 경과시간 합이며 전체CPU시간이나 전체지도서브시스템CPU시간이 아니야.
+
+이번에는 함수별 CPU 원본 보고와 시뮬레이터 콜백 제외 계측 함수 CPU 소계도 포함돼 있어. cpu_analysis에 주행210행·단계8190행·원본보고88136행·역할표식770개와 맵별21행·환경별9행·누적CPU·계측구간·Full감소율을 넣었어. exclusive CPU만 합산한 함수 소계와 전체 실험cgroup CPU를 구분해. 누락된 실행기·DDS·미션CPU까지 포함한 완전자율주행CPU로 표현하거나, 소계cores에 전체미션시간을 곱하지 마.
+
+recorded_trials에는 정확한 최종 본실험210회와 별도사전시험30회의 기록파일4720개 전체가 들어 있어. 각 모드summary의 상세 프로세스·스레드 CPU, GPU사용률·메모리·전력, CPU시계열, odometry·메모리·cgroup·지도프레임·mission/stack로그·접촉감사까지 보존했어. measurement_details는 summary JSON을 검색하기 쉬운 표로 펼친 것이고, 원자료 범위와해시는 index와검증보고서를 확인해. GPU는장치전체·배경포함지표이지 자율주행GPU단독비용이 아니야. 원본보존용별명파일을 별도주행으로 중복집계하지 마.
+
+Adaptive의 식(4)는 좁은 관측 상태의 중심각 규칙이야. 정지 복구에서는 Full360°로 전환하며, 제자리yaw탐색은 Active-Yaw Sector에만 적용돼. 식(5)의 출발허가Le와 초기위치탈출완료·해제Ee는 별도조건이고, 탈출 중에는 이동할 수 있지만 Full관측을 유지해. 이 정정은 원고 설명을 실제 구현에 맞추는 것이지 실험 후 알고리즘을 변경한 것이 아니야.
+
+목표고도1.5m는 명목 목표이며 실제고도고정이 아니야. 실제 미션전환은3D거리<1.5m, 결과의 독립관측기는XY거리<1.5m를 사용하므로 구분해. 7m/s는 최대궤적속도 설정이지 일정 주행속도가 아니야.
+
+센서 설정은 명목10Hz지만 원자료 sensor_hz는(sensor_frames−1)/sensor_span_s로 계산한 로그 기반 실제 소스 생성 주파수야. 복사된 data/08_metric_definitions.md의 sensor_hz를 명목값이라고 부른 부분은 02_implementation_clarifications.md의 정정으로 대체해. 지도 처리 frames/s와도 구분해.
+
+맵과 웨이포인트 그림은 data/environment_maps/에 있어. 점선은 방문순서이지 실제궤적이 아니야. Map5-R2는 개발중 수정한 맵이므로 독립적인 미튜닝blindtest로 표현하지 마. Urban·Forest를 통제된blind-zone stress로 이름만 바꾸지 마.
+
+관측된100%완주와 접촉0회를 실제비행안전 또는 모집단100%보장으로 확대하지 마. 이상적추종시뮬레이션이고 접촉은수신위치표본의기하학적판정이야. 수행하지않은통계검정·실제비행·참고문헌·성능수치를 만들어 넣지 마.
+
+결과를 정리할 때 조건·분모·단위를 명시하고, 초록·본문·표·그림·결론의 수치가 일치하는지 확인해. 첨부 결과는 읽기전용 근거로 취급해. 내가 따로 요청하기 전에는 재실험, planner수정, 설정변경, 저장소push 또는 원본판정변경을 하지 마.

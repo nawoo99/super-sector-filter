@@ -1,0 +1,260 @@
+{
+  "schema": "codex-final-implementation-evidence-v1",
+  "review_date_kst": "2026-10-14",
+  "runtime_modified": false,
+  "result_labels_modified": false,
+  "notes": "Stored excerpts explain existing implementation; unlisted source files are explicitly qualified.",
+  "sources": [
+    {
+      "path": "/root/super_ws/src/SUPER/mission_planner/Apps/native_sector_cpp.cpp",
+      "sha256": "7181af08265554c2c092be70ab3343132c3a7781148e1667c9369ce211ca98ab",
+      "frozen_inventory_path": "/root/super_ws/src/SUPER/mission_planner/Apps/native_sector_cpp.cpp",
+      "matches_frozen_inventory": true,
+      "provenance_scope": "hash_matches_frozen_inventory",
+      "excerpts": [
+        {
+          "first_line": 688,
+          "last_line": 722,
+          "text": "  native_sector::SensorAcquisition acquisitionRequest() {\n    const super_utils::thread_cpu_profile::Scope cpu_scope(\n        super_utils::thread_cpu_profile::Stage::FrontendAcquisition);\n    std::lock_guard<std::mutex> lock(state_mutex_);\n    const double center = sectorCenterLocked();\n    return {options_.sensor_acquisition, effectiveFullOpen(),\n            event_recovery_.cycle, center, options_.half_angle_deg};\n  }\n\n  void submitAcquiredCloud(const sensor_msgs::msg::PointCloud2::SharedPtr &msg,\n                           const native_sector::SensorAcquisition &acquisition) {\n    enqueueCloud(msg, acquisition);\n  }\n\nprivate:\n  // Caller holds state_mutex_. One selector is shared by source acquisition,\n  // legacy cloud filtering and diagnostics so their reported axes cannot drift.\n  double sectorCenterLocked() const {\n    return native_sector::sectorHeading(\n        options_.mode == \"adaptive\" || options_.mode == \"velocity\",\n        body_aligned_event_sector_, velocity_yaw_, yaw_);\n  }\n\n  bool body_aligned_event_sector_{false};\n\n  bool statefulMode() const {\n    return options_.mode == \"adaptive\" || options_.mode == \"trigger\" ||\n           options_.mode == \"legacy-trigger\";\n  }\n\n  bool effectiveFullOpen() const {\n    if (options_.event_recovery) return event_recovery_.active;\n    return options_.mode == \"full\" ||\n           (statefulMode() && effective_recovery_open_) ||\n           replan_guard_open_ || trajectory_guard_open_;"
+        },
+        {
+          "first_line": 1180,
+          "last_line": 1228,
+          "text": "  void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {\n    const super_utils::thread_cpu_profile::Scope cpu_scope(\n        super_utils::thread_cpu_profile::Stage::FrontendOdom);\n    std::lock_guard<std::mutex> lock(state_mutex_);\n    const auto &p = msg->pose.pose.position;\n    const auto &q = msg->pose.pose.orientation;\n    drone_ = std::array<double, 3>{p.x, p.y, p.z};\n    yaw_ = std::atan2(2.0 * (q.w * q.z + q.x * q.y),\n                      1.0 - 2.0 * (q.y * q.y + q.z * q.z));\n    const auto &v = msg->twist.twist.linear;\n    const double speed = std::hypot(v.x, v.y);\n    latest_velocity_ = std::array<double, 3>{v.x, v.y, v.z};\n    latest_odom_receive_time_ = RiskClock::now();\n    latest_speed_mps_ = speed;\n    if (options_.mode == \"adaptive\" &&\n        options_.slowdown_full_refresh_v > 0.0) {\n      if (speed >= options_.slowdown_full_refresh_rearm_v) {\n        slowdown_full_refresh_armed_ = true;\n      } else if (slowdown_full_refresh_armed_ &&\n                 speed <= options_.slowdown_full_refresh_v) {\n        slowdown_full_refresh_armed_ = false;\n        slowdown_full_refresh_pending_ = true;\n        ++slowdown_full_refresh_triggers_;\n      }\n    }\n    const double velocity_update_v =\n        (options_.mode == \"velocity\" || options_.mode == \"adaptive\")\n            ? options_.resume_v\n            : 0.2;\n    if (speed > velocity_update_v)\n      velocity_yaw_ = std::atan2(v.y, v.x);\n\n    if (!statefulMode())\n      return;\n    const double now = nowSeconds();\n    if (options_.event_recovery) {\n      // A stopped initial vehicle does not constitute a stall. Initial\n      // PlanFromRest failures use the replan-status event instead.\n      if (speed > options_.resume_v) armed_ = true;\n      if (armed_ && speed < options_.stall_v && !event_recovery_.active) {\n        if (!slow_since_s_) slow_since_s_ = now;\n        if (now - *slow_since_s_ >= options_.stall_t)\n          requestEventRecovery(\"stalled\");\n      } else {\n        slow_since_s_.reset();\n      }\n      return;\n    }\n    if (!armed_) {"
+        }
+      ]
+    },
+    {
+      "path": "/root/super_ws/src/SUPER/mission_planner/include/mission_planner/sector_heading_policy.hpp",
+      "sha256": "60c3367f56d9f3f79730054adc8fed0e13f353cb20e7a1129e9ba9d8e262518a",
+      "frozen_inventory_path": "/root/super_ws/src/SUPER/mission_planner/include/mission_planner/sector_heading_policy.hpp",
+      "matches_frozen_inventory": true,
+      "provenance_scope": "hash_matches_frozen_inventory",
+      "excerpts": [
+        {
+          "first_line": 1,
+          "last_line": 23,
+          "text": "#pragma once\n\n#include <cstring>\n#include <optional>\n\nnamespace native_sector {\n// Default-off ablation: event Adaptive uses the same body-forward sector as\n// Fixed Sector. It changes neither aperture nor the certified Full handshake.\ninline bool exactBodyHeadingOptIn(const char* value) {\n  return value && std::strcmp(value, \"1\") == 0;\n}\n\ninline bool usesVelocityHeading(bool velocity_mode, bool body_aligned_event) {\n  return velocity_mode && !body_aligned_event;\n}\n\ninline double sectorHeading(bool velocity_mode, bool body_aligned_event,\n                            const std::optional<double>& velocity_yaw,\n                            double body_yaw) {\n  return usesVelocityHeading(velocity_mode, body_aligned_event) && velocity_yaw\n      ? *velocity_yaw : body_yaw;\n}\n}  // namespace native_sector"
+        }
+      ]
+    },
+    {
+      "path": "/root/super_ws/src/SUPER/super_planner/include/ros_interface/ros2/fsm_ros2.hpp",
+      "sha256": "66f6f5642424f05a9da3c867ad3f76ff97dd8383e156024c08fb79aab44734fa",
+      "frozen_inventory_path": "/root/super_ws/src/SUPER/super_planner/include/ros_interface/ros2/fsm_ros2.hpp",
+      "matches_frozen_inventory": true,
+      "provenance_scope": "hash_matches_frozen_inventory",
+      "excerpts": [
+        {
+          "first_line": 293,
+          "last_line": 304,
+          "text": "        static bool activeYawScanSettingEnabled() {\n            static const bool enabled = active_yaw_scan::enabledSetting(\n                    std::getenv(\"SUPER_SECTOR_ACTIVE_YAW_SCAN\"));\n            return enabled;\n        }\n\n        bool activeYawScanEnabled() const {\n            return activeYawScanSettingEnabled() &&\n                    !cfg_.event_recovery_en && stoppedDepartureV4Enabled();\n        }\n\n        void onGoalQueuedLocked(const bool distinct_identity) override {"
+        },
+        {
+          "first_line": 603,
+          "last_line": 691,
+          "text": "        static bool needsRecoveryEscapeHold(\n                const TrajectorySafetyResult &certificate,\n                const CmdTraj::Sample &sample) {\n            if (!certificate.safe() ||\n                (!certificate.used_clearance_escape &&\n                 !certificate.used_initial_footprint_egress)) {\n                return false;\n            }\n            return std::isfinite(certificate.clearance_escape_completed_tt) &&\n                    certificate.clearance_escape_completed_tt >= 0.0 &&\n                    sample.trajectory_time + 1.0e-6 <\n                            certificate.clearance_escape_completed_tt;\n        }\n\n        // Called from the main FSM callback after refreshSafetyCertificate\n        // has accepted the current committed trajectory against the current\n        // map. The Full->Sector edge is released only when the certified\n        // escape prefix is in the past and the live certificate no longer\n        // consumes an escape exception.\n        bool tryCompleteRecoveryEscapeHold() {\n            bool released = false;\n            std::uint64_t generation = 0;\n            std::uint64_t escape_generation = 0;\n            std::uint64_t map_version = 0;\n            double trajectory_time = 0.0;\n            double release_wt = 0.0;\n            {\n                // Match the recovery-completion lock order.\n                std::lock_guard<std::mutex> refresh(full_refresh_mutex_);\n                std::lock_guard<std::mutex> safety(safety_mutex_);\n                if (!recovery_escape_hold_pending_) return false;\n\n                const auto snapshot =\n                        planner_ptr_->getCommittedSharedTrajectorySnapshot();\n                const auto health = map_ptr_->getMapHealthSnapshot();\n                CmdTraj::Sample sample;\n                if (snapshot.empty ||\n                    !planner_ptr_->getOneCommandSample(\n                            sample, snapshot.generation) ||\n                    sample.finished ||\n                    !sample.pvaj.array().isFinite().all() ||\n                    ros_ptr_->getSimTime() + 1.0e-6 <\n                            recovery_escape_hold_release_wt_ ||\n                    !safety_certificate_valid_ ||\n                    !safety_certificate_.safe() ||\n                    safety_certificate_.trajectory_generation !=\n                            snapshot.generation ||\n                    safety_certificate_.map_version != health.map_version ||\n                    safety_revalidation_requested_.load(\n                            std::memory_order_acquire) ||\n                    safety_certificate_.checked_from_tt >\n                            sample.trajectory_time ||\n                    safety_certificate_.checked_to_tt <\n                            sample.trajectory_time ||\n                    safety_certificate_.used_clearance_escape ||\n                    safety_certificate_.used_initial_footprint_egress) {\n                    return false;\n                }\n\n                bool expected = true;\n                if (!trajectory_guard_recovery_announced_.compare_exchange_strong(\n                            expected, false, std::memory_order_acq_rel)) {\n                    return false;\n                }\n                generation = snapshot.generation;\n                escape_generation = recovery_escape_hold_generation_;\n                map_version = health.map_version;\n                trajectory_time = sample.trajectory_time;\n                release_wt = recovery_escape_hold_release_wt_;\n                recovery_escape_hold_pending_ = false;\n                recovery_escape_hold_generation_ = 0;\n                recovery_escape_hold_release_wt_ =\n                        -std::numeric_limits<double>::infinity();\n                clearFullRefreshRecoveryGateLocked();\n                released = true;\n            }\n            if (released) {\n                std_msgs::msg::Bool inactive;\n                inactive.data = false;\n                trajectory_guard_recovery_pub_->publish(inactive);\n                ros_ptr_->info(\n                        \" -- [EVENT_RECOVERY_ESCAPE_RELEASE] escape_gen={} \"\n                        \"current_gen={} map={} trajectory_tt={:.3f} \"\n                        \"release_wt={:.3f}\",\n                        escape_generation, generation, map_version,\n                        trajectory_time, release_wt);\n                ros_ptr_->info(\n                        \" -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=false\");\n            }"
+        },
+        {
+          "first_line": 4394,
+          "last_line": 4415,
+          "text": "                            async_recovery::sameDemand(before, current) &&\n                            safety_brake_active_.load(std::memory_order_acquire) &&\n                            safety_brake_finished_.load(std::memory_order_acquire) &&\n                            asyncRecoveryStablePoseLocked() &&\n                            !pending_goal_.valid && !goal_update_in_progress_ &&\n                            !stop.load(std::memory_order_acquire) &&\n                            health.map_version == release_health.map_version;\n                    if (refreshed && final_identity_current) {\n                        stopped_release = planner_ptr_->releaseStoppedDeparture(\n                                result.generation_after,\n                                release_health.map_version,\n                                ros_ptr_->getSimTime(), brake_hold.pvaj);\n                    }\n                    release_ready = stopped_release.accepted;\n                    if (release_ready) {\n                        message.start_wt_pos = stopped_release.release_wt;\n                        if (snapshot.yaw_traj && !snapshot.yaw_traj->empty()) {\n                            message.start_wt_yaw = stopped_release.release_wt;\n                        }\n                        ros_ptr_->getSimTime(message.header.stamp.sec,\n                                             message.header.stamp.nanosec);\n                        sample.start_wt = stopped_release.release_wt;"
+        },
+        {
+          "first_line": 4464,
+          "last_line": 4498,
+          "text": "                    active_brake_body_replaced_ = false;\n                    clearActiveYawScanLocked();\n                    if (asyncGenerateEnabled()) clearAsyncGenerateQuarantineLocked();\n                    // Command publication uses this same safety lock. The\n                    // exact certified path is published before releasing it.\n                    mpc_cmd_pub_->publish(message);\n                    if (cfg_.event_recovery_en) {\n                        ros_ptr_->info(\n                                \" -- [EVENT_RECOVERY_PATH_READY] request_seq={} stamp_ns={} \"\n                                \"ack_map={} certified_map={} generation_before={} generation_after={}\",\n                                current.ack.target, current.ack.stamp, current.ack.map,\n                                certified_map, before.generation_before, result.generation_after);\n                    }\n                    if (needsRecoveryEscapeHold(safety_certificate_, sample)) {\n                        recovery_escape_hold_pending_ = true;\n                        recovery_escape_hold_generation_ =\n                                result.generation_after;\n                        recovery_escape_hold_release_wt_ = sample.start_wt +\n                                safety_certificate_.clearance_escape_completed_tt;\n                        ros_ptr_->info(\n                                \" -- [EVENT_RECOVERY_ESCAPE_HOLD] gen={} map={} \"\n                                \"trajectory_tt={:.3f} release_wt={:.3f} \"\n                                \"action=retain_full_until_ordinary_certificate\",\n                                result.generation_after, certified_map,\n                                sample.trajectory_time,\n                                recovery_escape_hold_release_wt_);\n                    } else {\n                        bool expected = true;\n                        if (trajectory_guard_recovery_announced_.compare_exchange_strong(\n                                    expected, false, std::memory_order_acq_rel)) {\n                            clearFullRefreshRecoveryGateLocked();\n                            std_msgs::msg::Bool inactive;\n                            inactive.data = false;\n                            trajectory_guard_recovery_pub_->publish(inactive);\n                            ros_ptr_->info(\" -- [TRAJ_GUARD_RECOVERY_SIGNAL] active=false\");"
+        }
+      ]
+    },
+    {
+      "path": "/root/super_ws/src/SUPER/super_planner/src/super_core/super_planner.cpp",
+      "sha256": "792b64a7da9fd1df3ff63ae486148d442d33ac4ec50257967896eb03577d6f3f",
+      "frozen_inventory_path": "/root/super_ws/src/SUPER/super_planner/src/super_core/super_planner.cpp",
+      "matches_frozen_inventory": true,
+      "provenance_scope": "hash_matches_frozen_inventory",
+      "excerpts": [
+        {
+          "first_line": 3424,
+          "last_line": 3474,
+          "text": "            before.start_wt != stopped_departure_stage_.prepared_start_wt) {\n            out.reason = \"TRAJECTORY_CHANGED\";\n            return out;\n        }\n        if (before.initial_egress.valid() &&\n            !before.initial_egress.usable(expected_generation,\n                                           before.start_wt, 0.0)) {\n            out.reason = \"EGRESS_RECEIPT_MISMATCH\";\n            return out;\n        }\n        StatePVAJ candidate_zero;\n        if (!before.pos_traj->getState(0.0, candidate_zero) ||\n            !candidate_zero.array().isFinite().all()) {\n            out.reason = \"INVALID_ZERO_SAMPLE\";\n            return out;\n        }\n        const auto continuity = trajectory_handoff::comparePva(\n                held_pva, candidate_zero);\n        out.position_error_m = continuity.position_error_m;\n        out.velocity_error_mps = continuity.velocity_error_mps;\n        out.acceleration_error_mps2 =\n                continuity.acceleration_error_mps2;\n        if (!continuity.continuous) {\n            out.reason = continuity.reason;\n            return out;\n        }\n\n        ExpTraj rebased_exp = last_exp_traj_info_;\n        if (!rebased_exp.rebaseStartWallTime(release_wt)) {\n            out.reason = \"EXP_CLOCK_REBASE_FAILED\";\n            return out;\n        }\n        const double old_start_wt = before.start_wt;\n        if (!cmd_traj_info_.rebaseStoppedCandidate(expected_generation,\n                                                   release_wt)) {\n            out.reason = \"COMMAND_CLOCK_REBASE_FAILED\";\n            return out;\n        }\n        last_exp_traj_info_ = std::move(rebased_exp);\n        if (std::isfinite(guard_rest_to_rest_hold_until_wt_) &&\n            guard_rest_to_rest_hold_until_wt_ >= old_start_wt) {\n            guard_rest_to_rest_hold_until_wt_ += release_wt - old_start_wt;\n        }\n        stopped_departure_stage_.valid = false;\n        out.trajectory = cmd_traj_info_.sharedSnapshot();\n        out.accepted = !out.trajectory.empty &&\n                out.trajectory.generation == expected_generation &&\n                out.trajectory.start_wt == release_wt;\n        out.reason = out.accepted ? \"RELEASED\" : \"POST_REBASE_MISMATCH\";\n        if (out.accepted) {\n            ros_ptr_->info("
+        }
+      ]
+    },
+    {
+      "path": "/root/super_ws/src/SUPER/mars_uav_sim/perfect_drone_sim/include/perfect_drone_sim/ros2_perfect_drone_model.hpp",
+      "sha256": "3a551fc3aff5cdd5286b1996b805fa133440b68626b0156fcf90e070d458e055",
+      "frozen_inventory_path": "/root/super_ws/forest_liveness_trial_v6_20261006/install/perfect_drone_sim/include/perfect_drone_sim/ros2_perfect_drone_model.hpp",
+      "matches_frozen_inventory": true,
+      "provenance_scope": "hash_matches_frozen_inventory",
+      "excerpts": [
+        {
+          "first_line": 651,
+          "last_line": 673,
+          "text": "                        static_cast<unsigned long>(static_pc_latched_poll_callbacks_.load(std::memory_order_relaxed)));\n            }\n            double span_s = 0.0;\n            if (first_sensor_frame_time_ && last_sensor_frame_time_) {\n                span_s = std::chrono::duration<double>(\n                        *last_sensor_frame_time_ - *first_sensor_frame_time_)\n                                 .count();\n            }\n            const double rate_hz = span_s > 0.0 && sensor_frame_count_ > 1\n                    ? static_cast<double>(sensor_frame_count_ - 1) / span_s\n                    : 0.0;\n            std::lock_guard<std::mutex> side_entry_lock(side_entry_v1_mutex_);\n            RCLCPP_INFO(\n                    this->get_logger(),\n                    \"[SENSOR_CADENCE_SUMMARY] frames=%lu span_s=%.6f \"\n                    \"hz=%.6f raw_published=%lu direct_handoffs=%lu \"\n                    \"payload_bytes=%lu side_entry_v1_enabled=%d \"\n                    \"side_entry_v1_spawned=%d side_entry_v1_injected_frames=%lu\",\n                    static_cast<unsigned long>(sensor_frame_count_), span_s,\n                    rate_hz,\n                    static_cast<unsigned long>(raw_cloud_publish_count_),\n                    static_cast<unsigned long>(direct_cloud_handoff_count_),\n                    static_cast<unsigned long>(sensor_payload_bytes_),"
+        },
+        {
+          "first_line": 752,
+          "last_line": 776,
+          "text": "            const auto acquisition = acquisition_provider_\n                    ? acquisition_provider_() : AcquisitionWindow{};\n            const auto acquisition_stamp = this->get_clock()->now();\n            const Eigen::Vector3f scan_position = position_.cast<float>();\n            Eigen::Quaternionf scan_rotation = q_.cast<float>();\n            if (acquisition.enabled) {\n                if (side_entry_v1_cfg_.enabled || !acquired_cloud_observer_)\n                    throw std::runtime_error(\"source acquisition requires typed handoff and no synthetic obstacle injection\");\n                render_ptr_->setHorizontalAcquisition(acquisition.full, acquisition.half_angle_deg);\n                if (!acquisition.full) {\n                    // Steer horizontal azimuth in the actual sensor plane;\n                    // retain the vehicle's roll/pitch, not a post-cloud crop.\n                    const Eigen::Vector3f world_heading(\n                            std::cos(acquisition.center_yaw_rad),\n                            std::sin(acquisition.center_yaw_rad), 0.0f);\n                    const auto body_heading = scan_rotation.conjugate() * world_heading;\n                    const float azimuth = std::atan2(body_heading.y(), body_heading.x());\n                    scan_rotation = scan_rotation * Eigen::Quaternionf(\n                            Eigen::AngleAxisf(azimuth, Eigen::Vector3f::UnitZ()));\n                }\n            }\n            const auto cur_t = sensor_fixed_render_time_s_.value_or(\n                    this->get_clock()->now().seconds());\n            render_ptr_->renderOnceInWorld(scan_position, scan_rotation, cur_t, local_map);\n#ifdef SUPER_SIM_CPU_PROFILE_SUPPORT"
+        }
+      ]
+    },
+    {
+      "path": "/root/super_ws/src/SUPER/mars_uav_sim/marsim_render/src/marsim_render.cpp",
+      "sha256": "ffe399a2451940ea337fa6357dfb065dd2f9cb5e96f666ac8c1caa39236d49f1",
+      "frozen_inventory_path": null,
+      "matches_frozen_inventory": null,
+      "provenance_scope": "current_read_only_explanatory_source_not_directly_enumerated",
+      "excerpts": [
+        {
+          "first_line": 1,
+          "last_line": 27,
+          "text": "#include <utility>\n\n#include \"marsim_render/marsim_render.hpp\"\n\nnamespace marsim {\n    using namespace std::chrono;\n    using namespace cv;\n    using std::cout;\n    using std::endl;\n    using PointType = pcl::PointXYZI;\n\n    void MarsimRender::setHorizontalAcquisition(bool full, double half_angle_deg) {\n        if (cfg_.lidar_type != GENERAL_360 || original_yaw_fov_ != 360.0 ||\n            !std::isfinite(half_angle_deg) || half_angle_deg <= 0.0 || half_angle_deg > 180.0) {\n            throw std::invalid_argument(\"source acquisition requires GENERAL_360 and a valid horizontal window\");\n        }\n        const double requested_fov = full ? original_yaw_fov_ : 2.0 * half_angle_deg;\n        // Do not overshoot the requested FoV when resolution does not divide it.\n        const int width = full ? original_width_ : std::max(1, static_cast<int>(\n                std::floor(requested_fov / cfg_.polar_resolution + 1e-5)));\n        acquisition_window_enabled_ = true;\n        if (width == cfg_.width) return;\n        cfg_.width = width;\n        cfg_.yaw_fov = full ? original_yaw_fov_ : width * cfg_.polar_resolution;\n        mypixels.resize(static_cast<std::size_t>(width) * cfg_.height);\n        red_pixels.resize(static_cast<std::size_t>(width) * cfg_.height);\n        ray_sin_azimuth_.resize(width);"
+        }
+      ]
+    },
+    {
+      "path": "/root/super_ws/src/SUPER/mission_planner/include/waypoint_mission/ros2_waypoint_planner.hpp",
+      "sha256": "ebc509b6336512d3098e382bb30c7e8f0f5794cc12fc8bb46290c5b5287f73ab",
+      "frozen_inventory_path": null,
+      "matches_frozen_inventory": null,
+      "provenance_scope": "current_read_only_explanatory_source_not_directly_enumerated",
+      "excerpts": [
+        {
+          "first_line": 55,
+          "last_line": 70,
+          "text": "        void OdomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {\n            had_odom = true;\n            odom_rcv_time = nh_->get_clock()->now().seconds();\n            cur_position = Eigen::Vector3d(msg->pose.pose.position.x,\n                                           msg->pose.pose.position.y,\n                                           msg->pose.pose.position.z);\n        }\n\n        bool CloseToPoint(Vec3f &position) {\n            return (position - cur_position).norm() < cfg_.switch_dis;\n        }\n\n        bool CloseToPoint(Vec3f &position, int id) {\n            return (position - cur_position).norm() < cfg_.switch_dis_vec[id];\n        }\n"
+        },
+        {
+          "first_line": 131,
+          "last_line": 140,
+          "text": "            if (CloseToPoint(cfg_.waypoints[waypoint_counter], waypoint_counter)) {\n                cout << RED << \" -- [MISSION] Close to goal {}, switch to next.\" << RESET << endl;\n                waypoint_counter++;\n                new_goal = true;\n                if (waypoint_counter >= cfg_.waypoints.size()) {\n                    // 结束，停止发布。\n                    waypoint_counter = cfg_.waypoints.size() - 1;\n                    triggered = false;\n                    new_goal = false;\n                }"
+        }
+      ]
+    },
+    {
+      "path": "/root/super-sector-filter/scripts/native_campaign/native_loop_monitor.py",
+      "sha256": "f11777e680e4d4279c8d34ca7dfd86c55e98c9a7f6cd835e801a1f8a877f0813",
+      "frozen_inventory_path": "/root/super-sector-filter/scripts/native_campaign/native_loop_monitor.py",
+      "matches_frozen_inventory": true,
+      "provenance_scope": "hash_matches_frozen_inventory",
+      "excerpts": [
+        {
+          "first_line": 947,
+          "last_line": 955,
+          "text": "\n        if self.waypoint_index < len(WPS):\n            target_x, target_y = WPS[self.waypoint_index]\n            distance_sq = (p.x - target_x) ** 2 + (p.y - target_y) ** 2\n            if distance_sq < ARGS.switch_dist**2:\n                self.waypoint_index += 1\n                if self.waypoint_index >= len(WPS):\n                    self.done_time = time.time()\n"
+        }
+      ]
+    },
+    {
+      "path": "/root/super-sector-filter/scripts/native_campaign/native_campaign.py",
+      "sha256": "867b071cf54bbd77eff79251ca2252c8a650310a7b331ff9825bf5890731ef30",
+      "frozen_inventory_path": null,
+      "matches_frozen_inventory": null,
+      "provenance_scope": "current_read_only_explanatory_source_not_directly_enumerated",
+      "excerpts": [
+        {
+          "first_line": 693,
+          "last_line": 722,
+          "text": "def parse_sensor_cadence_log(path):\n    \"\"\"Read the simulator's final source-generation cadence summary.\"\"\"\n    pattern = re.compile(\n        r\"\\[SENSOR_CADENCE_SUMMARY\\]\\s+\"\n        r\"frames=(\\d+)\\s+span_s=([0-9.]+)\\s+hz=([0-9.]+)\\s+\"\n        r\"raw_published=(\\d+)\\s+direct_handoffs=(\\d+)\\s+\"\n        r\"payload_bytes=(\\d+)\"\n    )\n    result = {}\n    dropout_pattern = re.compile(\n        r\"\\[SENSOR_BURST_DROPOUT_SUMMARY\\]\\s+\"\n        r\"enabled=(\\d+)\\s+warmup_s=([0-9.]+)\\s+\"\n        r\"period_s=([0-9.]+)\\s+duration_s=([0-9.]+)\\s+\"\n        r\"phase_s=([0-9.]+)\\s+phase_env_override=(\\d+)\\s+\"\n        r\"rendered=(\\d+)\\s+delivered=(\\d+)\\s+dropped=(\\d+)\\s+\"\n        r\"bursts=(\\d+)\\s+max_consecutive_dropped=(\\d+)\\s+\"\n        r\"max_delivered_gap_s=([0-9.]+)\\s+dropped_payload_bytes=(\\d+)\"\n    )\n    with open(path, errors=\"replace\") as stream:\n        for line in stream:\n            match = pattern.search(line)\n            if match:\n                result.update({\n                    \"sensor_frames\": int(match.group(1)),\n                    \"sensor_span_s\": float(match.group(2)),\n                    \"sensor_hz\": float(match.group(3)),\n                    \"sensor_raw_published\": int(match.group(4)),\n                    \"sensor_direct_handoffs\": int(match.group(5)),\n                    \"sensor_payload_bytes\": int(match.group(6)),\n                })"
+        }
+      ]
+    },
+    {
+      "path": "/root/super_ws/src/SUPER/super_planner/src/super_core/fsm.cpp",
+      "sha256": "813f0a1ac9d0be1ce0d687518c8f65ef0f419ba88f34bfdfa156de2009b34139",
+      "frozen_inventory_path": "/root/super_ws/src/SUPER/super_planner/src/super_core/fsm.cpp",
+      "matches_frozen_inventory": true,
+      "provenance_scope": "hash_matches_frozen_inventory",
+      "excerpts": [
+        {
+          "first_line": 313,
+          "last_line": 332,
+          "text": "        }\n\n        GoalUpdateScope goal_update{*this};\n        goal_update.consumed = pending_goal;\n        auto click_point = pending_goal.goal_p;\n        if (cfg_.click_height > -5) {\n            click_point.z() = cfg_.click_height;\n        }\n\n        Vec3f goal_p;\n        if (planner_ptr_->getMap()->getNearestInfCellNot(GridType::OCCUPIED, click_point, goal_p, 3.0)) {\n            cout << GREEN << \" -- [Fsm] Get goal at \" << RESET << goal_p.transpose() << endl;\n        } else {\n            fmt::print(fg(fmt::color::indian_red), \"Goal is deeply occupied, skip this goal.\\n\");\n            return false;\n        }\n\n        if ((robot_state_.p - goal_p).norm() < 0.1) {\n            //                print(fg(color::gray), \" -- [Rviz] Too close to goal, skip this target.\\n\");\n            return false;"
+        }
+      ]
+    },
+    {
+      "path": "/root/super_ws/src/SUPER/mission_planner/data/loop24.txt",
+      "sha256": "81a2cc901c470fa83bf24d6d9b06d2ebd6216db27c9b9417235088eec53c4b21",
+      "frozen_inventory_path": "/root/super_ws/src/SUPER/mission_planner/data/loop24.txt",
+      "matches_frozen_inventory": true,
+      "provenance_scope": "hash_matches_frozen_inventory",
+      "excerpts": [
+        {
+          "first_line": 1,
+          "last_line": 5,
+          "text": "24 24 1.5 1.5\n-24 24 1.5 1.5\n-24 -24 1.5 1.5\n24 -24 1.5 1.5\n0 0 1.5 1.5"
+        }
+      ]
+    },
+    {
+      "path": "/root/super_ws/forest_liveness_trial_v6_20261006/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7_event_recovery_v1_nearhit_v3.yaml",
+      "sha256": "09fb5e118b6adba02ab8fc65ef916094e48bbd3077788926bef4cbdcfe2f5a6c",
+      "frozen_inventory_path": "/root/super_ws/forest_liveness_trial_v6_20261006/install/super_planner/share/super_planner/config/static_seedmaps_guard_viability_tight_v7_event_recovery_v1_nearhit_v3.yaml",
+      "matches_frozen_inventory": true,
+      "provenance_scope": "hash_matches_frozen_inventory",
+      "excerpts": [
+        {
+          "first_line": 47,
+          "last_line": 54,
+          "text": "  event_recovery:\n    enable: true\n  click_goal_en: true\n  click_goal_topic: \"/planning/click_goal\"\n  click_height: 1.5\n  click_yaw_en: true\n  replan_rate: 15.0\n  cmd_topic: \"/planning/pos_cmd\""
+        },
+        {
+          "first_line": 270,
+          "last_line": 277,
+          "text": "    save_log_en: false\n    print_optimizer_log: false\n\n  boundary:\n    max_vel: 7.0\n    max_acc: 20.0\n    max_jerk: 120.0\n    max_omg: 2.5"
+        }
+      ]
+    },
+    {
+      "path": "/root/super_ws/forest_liveness_trial_v6_20261006/install/perfect_drone_sim/share/perfect_drone_sim/config/urban_blocks_u01.yaml",
+      "sha256": "09590ce3ddc5566b20252f4932f9a3d144b15cc70e989a8d4ae7ea27f5077bed",
+      "frozen_inventory_path": "/root/super_ws/forest_liveness_trial_v6_20261006/install/perfect_drone_sim/share/perfect_drone_sim/config/urban_blocks_u01.yaml",
+      "matches_frozen_inventory": true,
+      "provenance_scope": "hash_matches_frozen_inventory",
+      "excerpts": [
+        {
+          "first_line": 1,
+          "last_line": 22,
+          "text": "#############| For UAV simulation |#################################\npcd_name: \"seed_maps/urban_blocks_u01.pcd\"\nmesh_resource: \"package://perfect_drone_sim/meshes/yunque-M.dae\"\ninit_position:\n  x: 0\n  y: 0\n  z: 1.5\ninit_yaw: 0.0\n\n#############|For LiDAR perception simulation |#################################\nis_360lidar: true\npolar_resolution: 0.4\ndownsample_res: 0.1\nvertical_fov: 178.0\nsensing_blind: 0.1\nsensing_horizon: 15\nsensing_rate: 10\nprint_time_consumption: false\nlidar_type: 2\ndepth_image_en: false"
+        }
+      ]
+    }
+  ],
+  "actual_primary_mode_logs": [
+    {
+      "mode": "adaptive",
+      "path": "/root/super-sector-filter/results/topology_polyline_v6_n10_20261006/seven_map_n10/urban_blocks_u01/r01/adaptive/artifacts/urban_blocks_u01_run99506_adaptive.attempt1.stack.log",
+      "sha256": "d97a9774ffbfd10d38538573bdbc4c19d575d64e64d7ebe69036d27bb92e1159",
+      "matches_frozen_inventory": true,
+      "selected_lines": [
+        {
+          "line": 350,
+          "text": "[perfect_drone_adaptive_node-1] [INFO] [1791281840.540298492] [fsm_node]:  -- [ACTIVE_YAW_SCAN] enabled=false mode=fixed_sector trigger=distinct_goal_or_failed_stopped_plan sequence=stop_yaw_fresh_map_replan rate_deg_s=40.0 yaw_tolerance_deg=8.0 settle_s=0.20 default_off=true"
+        },
+        {
+          "line": 355,
+          "text": "[perfect_drone_adaptive_node-1] [INFO] [1791281840.543074338] [native_sector_cpp]: [SECTOR_HEADING_POLICY] body_aligned_event=0 velocity_center=1"
+        }
+      ]
+    },
+    {
+      "mode": "sector",
+      "path": "/root/super-sector-filter/results/topology_polyline_v6_n10_20261006/seven_map_n10/urban_blocks_u01/r01/sector/artifacts/urban_blocks_u01_run99506_sector.attempt1.stack.log",
+      "sha256": "87ee25c7a16d1e53f7558f96ffff740d4c49045d908f640def4c11dccb015033",
+      "matches_frozen_inventory": true,
+      "selected_lines": [
+        {
+          "line": 350,
+          "text": "[perfect_drone_adaptive_node-1] [INFO] [1791282017.939027048] [fsm_node]:  -- [ACTIVE_YAW_SCAN] enabled=true mode=fixed_sector trigger=distinct_goal_or_failed_stopped_plan sequence=stop_yaw_fresh_map_replan rate_deg_s=40.0 yaw_tolerance_deg=8.0 settle_s=0.20 default_off=true"
+        },
+        {
+          "line": 355,
+          "text": "[perfect_drone_adaptive_node-1] [INFO] [1791282017.941845394] [native_sector_cpp]: [SECTOR_HEADING_POLICY] body_aligned_event=0 velocity_center=0"
+        }
+      ]
+    }
+  ]
+}

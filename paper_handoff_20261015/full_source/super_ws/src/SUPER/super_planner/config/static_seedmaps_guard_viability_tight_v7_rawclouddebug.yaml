@@ -1,0 +1,288 @@
+# EXPERIMENTAL ONLY, UNTESTED: pre-commit viability guard (horizon_s=2.0)
+# plus a shrunk topology-reroute avoidance zone (max_radius_m 1.8->1.0,
+# growth_m 0.25->0.2; widening to 3.5 m was tried first and made things
+# worse -- it swallowed a whole cluster of small obstacles including the
+# ~1.5 m passable gap between them, instead of routing around one large
+# obstacle). Both of those 5-run gates got 0/5 pass, 0/5 contact, but capped
+# around 2-4/5 waypoints at 120s.
+#
+# certifiedStopExistsFrom() was then instrumented (TRAJ_GUARD_VIABILITY_STOP_FAIL,
+# env VIABILITY_DEBUG=1) and showed ~80% of stop-viability failures were
+# CLEARANCE_MARGIN, not OCCUPIED, across speeds from 2.9 to 6.7 m/s -- i.e.
+# not a speed problem. rog_map's isOccupiedInflate (inflation_step=3 *
+# inflation_resolution=0.1 = 0.3 m) is 0.1 m more conservative than the true
+# physical robot_r=0.2 m used for OCCUPIED, and the independent straight-line
+# brake trajectory routinely grazed that extra buffer without ever touching a
+# real obstacle. super_planner.cpp's certifiedStopExistsFrom() now accepts a
+# CLEARANCE_MARGIN result (not just SAFE) as a viable stop, on the reasoning
+# that an emergency stop should trade the extra conservative buffer for
+# having a certified fallback at all; only true physical contact or map
+# problems still fail it. A quick single-run diagnostic after this fix
+# dropped STOP_FAIL occurrences from 21 to 4 (the remaining 4 were pure
+# dynamics infeasibility, not margin). Do not use as a flight-ready
+# configuration or cite its results until a gate run is recorded.
+fsm:
+  click_goal_en: true
+  click_goal_topic: "/planning/click_goal"
+  click_height: 1.5
+  click_yaw_en: true
+  replan_rate: 15.0
+  cmd_topic: "/planning/pos_cmd"
+  mpc_cmd_topic: "/planning_cmd/poly_traj"
+  timer_en: true
+  trajectory_guard:
+    enable: true
+    shadow: false
+    # Reserve 0.20 s of freshness budget for constructing and atomically
+    # certifying the stop.  The optional raw-cloud supplement remains disabled:
+    # step34 proved that a fresh hazard can still have an empty certified-brake
+    # set at v=7, so it must not be presented as a completed recovery policy.
+    max_map_age_s: 0.75
+    brake_trigger_map_age_s: 0.55
+    raw_cloud:
+      # 2026-08-18: briefly turned this on to feed a raw-scan-accumulation
+      # window into a CIRI-based brake corridor (see docs/
+      # viability_guard_ciri_avoidance_2026-08-15.md for the full attempt
+      # and why it was reverted -- correlated with map commits freezing
+      # for 8+ seconds and the raw cloud subscription itself never
+      # receiving a message, cause not found). Back to disabled, matching
+      # the last validated-good state.
+      # 2026-08-19: diagnostic-only copy of tight_v7 with this flipped on,
+      # purely to check whether guard_cloud_sub_ receives messages (see
+      # TRAJ_GUARD_RAW_DEBUG logging in fsm_ros2.hpp's mainFsmTimerCallback).
+      # Safe to fly with: a permanently-STALE raw cloud is treated as safe
+      # (rawCloudCommittedTrajectorySafe only brakes on a genuine OCCUPIED
+      # detection), so this cannot behave worse than the tight_v7 baseline
+      # even if the subscription is still broken. Not for campaign use.
+      enable: true
+      max_age_s: 0.75
+      clearance_m: 0.30
+    validation_sample_dt_s: 0.005
+    shadow_min_interval_s: 0.0
+    additional_clearance_m: 0.0
+    brake_max_duration_s: 3.0
+    brake_max_acc_mps2: 20.0
+    brake_max_jerk_mps3: 120.0
+    escape_max_duration_s: 1.0
+    # Only active for a stopped PlanFromRest attempt after a raw EXP guard
+    # rejection, while using the inflated recovery corridor.
+    escape_entry_grace_s: 0.0
+    # 2026-08-17: reject guard points that fall in never-observed raw-grid
+    # space (not just confirmed-occupied). See rog_map's known_pages fix --
+    # isOccupiedInflate alone can't tell "confirmed empty" from "LiDAR never
+    # swept this", and a seed9 sweep run made contact during an already-
+    # certified brake for exactly that reason.
+    unknown_as_occupied: true
+
+super_planner:
+  backup_traj_en: true
+  detailed_log_en: true
+  visualization_en: false
+  use_fov_cut: false
+  print_log: false
+  visual_process: false
+  frontend_in_known_free: false
+  goal_yaw_en: false
+  goal_vel_en: false
+  corridor_bound_dis: 0.8
+  corridor_line_max_length: 1.0
+  safe_corridor_line_max_length: 6.0
+  iris_iter_num: 2
+  obs_skip_num: 2
+  replan_forward_dt: 0.1
+  planning_horizon: 7.0
+  sensing_horizon: -1
+  receding_dis: 1.0
+  robot_r: 0.2
+  # Raw-point CIRI remains the candidate generator; the composite inflated-map
+  # certificate below remains the operational hard gate.
+  corridor_use_inflated_obstacles: false
+  # step13 showed that inflated seed-line LOS harmed recovery (0/5); retain raw
+  # line visibility while keeping the option available for isolated studies.
+  corridor_use_inflated_seed_lines: false
+  corridor_guard_retry_inflated: true
+  # 2026-08-19: once guard-corridor retry mode is entered it previously
+  # stayed on until a candidate committed, so a persistent CLEARANCE_MARGIN
+  # rejection retried the same tight-margin generator forever (seed7/9/10
+  # stall analysis). Every 4th consecutive retry-mode attempt now falls
+  # back to the normal generator instead. See super_planner.cpp's
+  # GenerateExpTrajectory corridor-selection comment.
+  guard_corridor_retry_alternate_every: 4
+  # Certified-stop recovery: each rejected EXP point becomes a temporary
+  # A* exclusion sphere. Repeated hits grow that sphere, forcing a different
+  # guide-path topology instead of resubmitting the same local corridor.
+  guard_topology_reroute:
+    enable: true
+    radius_m: 0.8
+    growth_m: 0.2
+    max_radius_m: 1.0
+    max_zones: 6
+    max_stop_speed_mps: 0.2
+  # Pre-commit viability guard (new, untested): mirrors the runtime brake's
+  # dynamics limits so the prediction matches what activateEmergencyBrake()
+  # could actually certify.
+  guard_viability:
+    enable: true
+    horizon_s: 2.0
+    sample_dt_s: 0.3
+    brake_max_acc_mps2: 20.0
+    brake_max_jerk_mps3: 120.0
+    brake_min_duration_s: 0.4
+    brake_max_duration_s: 3.0
+    brake_attempts: 12
+    speed_scale_step: 1.25
+    speed_scale_max: 3.0
+    max_retries: 4
+  corridor_min_margin: 0.2
+  corridor_pref_margin: 0.3
+  yaw_dot_max: 3.0
+  # Yaw mode: 1 heading to velocity, 2 heading to goal
+  yaw_mode: 1
+  mpc_horizon: 15
+
+traj_opt:
+  switch:
+    save_log_en: false
+    print_optimizer_log: false
+
+  boundary:
+    max_vel: 7.0
+    max_acc: 20.0
+    max_jerk: 120.0
+    max_omg: 2.5
+    max_acc_thr: 17.0
+    min_acc_thr: 6.0
+    penna_margin: 0.05
+
+  exp_traj:
+    # 1 for xi 2 for pos
+    pos_constraint_type: 1
+    energy_cost_type: 4
+    block_energy_cost: false
+    opt_accuracy: 5.0e-6
+    scale_factor: 1.0
+    integral_reso: 15
+    smooth_eps: 0.01
+    penna_t: 1.0e+7
+    penna_pos: 5.0e+9
+    penna_vel: 5.0e+8
+    penna_acc: 5.0e+8
+    penna_jerk: -5.0e+8
+    penna_attract: 5.0e+8
+    penna_omg: -1
+    penna_thr: -1
+
+  backup_traj:
+    uniform_time_en: true
+    pos_constraint_type: 2
+    piece_num: 2
+    energy_cost_type: 4
+    block_energy_cost: true
+    opt_accuracy: 1.0e-5
+    scale_factor: 1.0
+    integral_reso: 12
+    smooth_eps: 0.01
+    penna_t: 100.0
+    penna_ts: 1.0e+7
+    penna_pos: 1.0e+10
+    penna_vel: 1.0e+8
+    penna_acc: 1.0e+8
+    penna_jerk: -1.0e+6
+    penna_omg: -1
+    penna_thr: -1
+
+  flatness:
+    mass: 1.64
+    dh: 0.35
+    dv: 0.35
+    cp: 0.001
+    v_eps: 0.0001
+    grav: 9.81
+
+
+astar:
+  map_voxel_num: [ 500, 500, 100 ]
+  visual_process: false
+  allow_diag: true
+  # 0 DIAG; 1 MANHATTAN; 2 EUCLIDEAN
+  heu_type: 2
+  debug_visualization_en: false
+
+
+rog_map:
+  resolution: 0.05
+  inflation_resolution: 0.1
+  inflation_step: 3
+  unk_inflation_en: false
+  unk_inflation_step: 1
+  map_size: [ 70,70,6 ]
+  # If the map rolling is disable, the map origin [m] should be set.
+  fix_map_origin: [ 0,0,1.5 ]
+  frontier_extraction_en: false
+
+  # Virtual ceil and ground
+  virtual_ceil_height: 3.5
+  virtual_ground_height: -0.1
+
+  load_pcd_en: false
+
+  map_sliding:
+    enable: false
+    # The minimum distance [m] to slide the map.
+    threshold: 3.0
+
+  esdf:
+    enable: false
+    resolution: 0.1
+    # The range of esdf around the odom [m].
+    local_update_box: [ 5,5,3 ]
+
+  # If [enable = true], the ROG-Map will actively take ros topic as input.
+  #  else user should call function [updateMap] to update the map.
+  ros_callback:
+    enable: true
+    # Guarded full mode does not filter points. Subscribe to the simulator
+    # directly instead of adding a Python/DDS passthrough hop.
+    cloud_topic: "/cloud_registered"
+    odom_topic: "/lidar_slam/odom"
+    odom_timeout: 2.0
+
+
+  visualization:
+    enable: false
+    # when enabled, use rqt_reconfigure to change the visualization parameters.
+    use_dynamic_reconfigure: false
+    # The rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.
+    time_rate: 2
+    # The frame rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.
+    frame_rate: 0
+    # visualization range along the odom [m].
+    range: [ 15, 15,4 ]
+    frame_id: "world"
+    pub_unknown_map_en: false
+
+  # Intensity filter for input point cloud. If the point intensity is less than this value,
+  # it will be ignored (to avoid noise like dusk).
+  intensity_thresh: -10
+  # The temporal downsample rate for input point cloud.
+  #  e.g. if set to k, the point cloud will be downsampled to 1/k.
+  point_filt_num: 1
+
+  # Probabilistc update
+  raycasting:
+    # if disable, the map will only maintain occupied information, and all other grid
+    # will be considered as unknown.
+    enable: false
+    batch_update_size: 1
+    local_update_box: [ 100,100,5 ]
+    # The range of raycasting [m].
+    ray_range: [0.5, 100 ]
+
+    p_min: 0.12
+    p_miss: 0.49
+    p_free: 0.499
+    p_occ: 0.85
+    p_hit: 0.9
+    p_max: 0.98
+    # The threshold of a non-occupied inf map grid to be considered as free. [0.0-1.0]
+    unk_thresh: 1.0

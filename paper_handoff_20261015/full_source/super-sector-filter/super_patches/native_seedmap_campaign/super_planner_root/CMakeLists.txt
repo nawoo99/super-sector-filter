@@ -1,0 +1,193 @@
+cmake_minimum_required(VERSION 3.5)
+project(super_planner)
+
+set(CMAKE_CXX_STANDARD 17)
+option(RELEASE "Enable Release mode" ON)
+#if (RELEASE)
+set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_CXX_FLAGS "-O3 -Wall")
+#else ()
+#    set(CMAKE_BUILD_TYPE Debug)
+#    set(CMAKE_CXX_FLAGS "-O -Wall -g")
+#endif ()
+
+add_compile_options(-Werror=return-type)
+add_definitions(-DROOT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/\")
+
+# Define the voxelize and raycasting method
+add_definitions(-DORIGIN_AT_CORNER)
+add_definitions(-DFMT_HEADER_ONLY)
+add_definitions(-DUSE_ROS2)
+
+
+string(TOUPPER $ENV{ROS_DISTRO} ROS_VERSION)
+message(STATUS "ROS version: ${ROS_VERSION}")
+
+# Do not override CMAKE_PREFIX_PATH: colcon/ament supplies the ordered
+# underlay and overlay prefixes.  A hard-coded legacy install here silently
+# selected the old rog_map during isolated diagnostic builds.
+include_directories(
+        SYSTEM
+        include
+        ../../../devel/include
+        ${catkin_INCLUDE_DIRS}
+        ${Eigen3_INCLUDE_DIRS}
+        ${PCL_INCLUDE_DIRS}
+)
+
+
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rog_map REQUIRED)
+find_package(mars_quadrotor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(PCL REQUIRED)
+find_package(pcl_conversions REQUIRED)
+find_package(mission_planner REQUIRED)
+
+
+set(includes
+        include
+        ${Eigen_INCLUDE_DIRS}
+        #            ${OpenCV_INCLUDE_DIRS}
+        ${PCL_INCLUDE_DIRS}
+)
+
+set(third_party_libs
+        #            ${OpenCV_LIBRARIES}
+        ${PCL_LIBRARIES}
+        yaml-cpp
+        -ldw
+)
+
+set(ros_libs
+        rclcpp
+        std_msgs
+        mars_quadrotor_msgs
+        sensor_msgs
+        tf2_ros
+        nav_msgs
+        geometry_msgs
+        visualization_msgs
+        rog_map
+        tf2_ros
+        pcl_conversions
+
+)
+
+include_directories(
+        ${includes}
+)
+
+
+#=================FOR libsuper ============================#
+#    file(GLOB_RECURSE srcs CONFIGURE_DEPENDS src/*.cpp include/*.h include/*.hpp)
+file(GLOB_RECURSE srcs CONFIGURE_DEPENDS src/*.cpp include/*.h include/*.hpp)
+add_library(super
+        ${srcs}
+)
+target_include_directories(super PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        ${Eigen_INCLUDE_DIRS}
+        ${PCL_INCLUDE_DIRS}
+)
+ament_target_dependencies(super PUBLIC
+        ${ros_libs}
+)
+target_link_libraries(super PUBLIC
+        ${third_party_libs}
+)
+
+#=================FOR Benchmark Node ============================#
+add_executable(fsm_node
+        Apps/fsm_node_ros2.cpp
+)
+target_link_libraries(fsm_node PUBLIC
+        super
+        ${third_party_libs}
+)
+ament_target_dependencies(fsm_node PUBLIC
+        ${ros_libs}
+)
+
+add_executable(fsm_node_with_sector
+        Apps/fsm_node_with_sector_ros2.cpp
+)
+target_link_libraries(fsm_node_with_sector PUBLIC
+        super
+        mission_planner::native_sector_cpp_component
+        ${third_party_libs}
+)
+ament_target_dependencies(fsm_node_with_sector PUBLIC
+        ${ros_libs}
+        mission_planner
+)
+
+#=================INSTALL all targets ============================#
+
+install(
+        TARGETS
+        super
+        EXPORT super_targets
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include
+)
+
+install(
+        TARGETS
+        fsm_node
+        fsm_node_with_sector
+        RUNTIME DESTINATION lib/${PROJECT_NAME}
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include
+        RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+ament_export_include_directories(${includes})
+ament_export_targets(super_targets HAS_LIBRARY_TARGET)
+ament_export_libraries(super)
+ament_export_dependencies(${ros_libs})
+
+install(DIRECTORY include/
+        DESTINATION include/
+)
+
+# install the launch file
+install(DIRECTORY
+        launch
+        config
+        DESTINATION share/${PROJECT_NAME}/
+)
+
+if(BUILD_TESTING)
+    find_package(ament_cmake_gtest REQUIRED)
+    ament_add_gtest(command_publication_policy_test
+            test/command_publication_policy_test.cpp)
+    target_include_directories(command_publication_policy_test PRIVATE include)
+    ament_add_gtest(path_publication_policy_test
+            test/path_publication_policy_test.cpp)
+    target_include_directories(path_publication_policy_test PRIVATE include)
+    ament_add_gtest(brake_motion_estimate_policy_test
+            test/brake_motion_estimate_policy_test.cpp)
+    target_include_directories(brake_motion_estimate_policy_test PRIVATE include)
+    ament_add_gtest(active_yaw_scan_policy_test
+            test/active_yaw_scan_policy_test.cpp)
+    target_include_directories(active_yaw_scan_policy_test PRIVATE include)
+    add_executable(stopped_departure_clock_test
+            test/stopped_departure_clock_test.cpp)
+    target_link_libraries(stopped_departure_clock_test PRIVATE super)
+    add_test(NAME stopped_departure_clock_test
+             COMMAND stopped_departure_clock_test)
+endif()
+
+
+ament_package()

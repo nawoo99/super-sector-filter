@@ -1,0 +1,214 @@
+fsm:
+  click_goal_en: true
+  click_goal_topic: "/planning/click_goal"
+  click_height: 1.5
+  click_yaw_en: true
+  replan_rate: 15.0
+  cmd_topic: "/planning/pos_cmd"
+  mpc_cmd_topic: "/planning_cmd/poly_traj"
+  timer_en: true
+
+super_planner:
+  backup_traj_en: true
+  detailed_log_en: false
+  visualization_en: false
+  use_fov_cut: false
+  print_log: false
+  visual_process: false
+  frontend_in_known_free: false
+  goal_yaw_en: false
+  goal_vel_en: false
+  corridor_bound_dis: 0.8
+  corridor_line_max_length: 1.0
+  safe_corridor_line_max_length: 6.0
+  iris_iter_num: 2
+  obs_skip_num: 2
+  replan_forward_dt: 0.1
+  planning_horizon: 7.0
+  sensing_horizon: -1
+  receding_dis: 1.0
+  robot_r: 0.2
+  # yaw_dot_max lowered 3.0->1.5: at a perimeter corner the velocity heading swings
+  # ~135 deg; at 3.0 rad/s (~172 deg/s) that yaw snap coincided with the altitude sink
+  # (fast yaw bleeds vertical thrust). 1.5 rad/s yaws gently through the corner.
+  yaw_dot_max: 1.5
+  # Yaw mode: 1 heading to velocity, 2 heading to goal
+  yaw_mode: 1
+  mpc_horizon: 15
+
+traj_opt:
+  switch:
+    save_log_en: false
+    print_optimizer_log: false
+
+  boundary:
+    # The z-band is widened toward the original SUPER `static_dense` envelope (see
+    # virtual_ground/ceil below) so SUPER's escape search no longer TIME_OUTs. Speed,
+    # though, is set to what our control interface can TRACK, not SUPER's 8 m/s: we
+    # feed SUPER's trajectory to PX4 as POSITION setpoints (offboard.py -> PX4 position
+    # controller), NOT via SUPER's native geometric (attitude+thrust) controller. At
+    # 8 m/s the position controller couldn't follow -> the drone outran the planner
+    # ("Replan over time", corridor-gen failures) and plowed through obstacles. 3 m/s
+    # keeps the drone within the position controller's tracking envelope.
+    # (Same limits for sector ON/OFF, so the comparison is unaffected.)
+    max_vel: 0.9   # validated clean-flight baseline. A re-tuned 1.5 test (see results/
+    max_acc: 3.5   # speed_cmp_1p5) still gave scrappy flight (weak TWR) AND adaptive
+    max_jerk: 25.0 # collided MORE than sector there, so 1.5 was reverted.
+    max_omg: 2.5
+    max_acc_thr: 17.0
+    min_acc_thr: 6.0
+    penna_margin: 0.05
+
+  exp_traj:
+    # 1 for xi 2 for pos
+    pos_constraint_type: 1
+    energy_cost_type: 4
+    block_energy_cost: false
+    opt_accuracy: 5.0e-6
+    scale_factor: 1.0
+    integral_reso: 15
+    smooth_eps: 0.01
+    penna_t: 1.0e+7
+    penna_pos: 5.0e+9
+    penna_vel: 5.0e+8
+    penna_acc: 5.0e+8
+    penna_jerk: -5.0e+8
+    penna_attract: 5.0e+8
+    penna_omg: -1
+    penna_thr: -1
+
+  backup_traj:
+    uniform_time_en: true
+    pos_constraint_type: 2
+    piece_num: 2
+    energy_cost_type: 4
+    block_energy_cost: true
+    opt_accuracy: 1.0e-5
+    scale_factor: 1.0
+    integral_reso: 12
+    smooth_eps: 0.01
+    penna_t: 100.0
+    penna_ts: 1.0e+7
+    penna_pos: 1.0e+10
+    penna_vel: 1.0e+8
+    penna_acc: 1.0e+8
+    penna_jerk: -1.0e+6
+    penna_omg: -1
+    penna_thr: -1
+
+  flatness:
+    mass: 1.64
+    dh: 0.35
+    dv: 0.35
+    cp: 0.001
+    v_eps: 0.0001
+    grav: 9.81
+
+
+astar:
+  map_voxel_num: [ 500, 500, 100 ]
+  visual_process: false
+  allow_diag: true
+  # 0 DIAG; 1 MANHATTAN; 2 EUCLIDEAN
+  heu_type: 2
+  debug_visualization_en: false
+
+
+rog_map:
+  resolution: 0.05
+  inflation_resolution: 0.1
+  # inflation = step * inflation_resolution = 0.3 m. 0.4 over-constrained the dense field
+  # and forced SUPER into long, erratic detours (the drone got lost), so keep 0.3. The
+  # altitude-floor protection in offboard.py is what actually saves a clipped/dipped drone
+  # now (it suppresses horizontal accel and climbs out before it wedges below the ground).
+  inflation_step: 3
+  unk_inflation_en: false
+  unk_inflation_step: 1
+  # FIXED map (sliding disabled), centered at fix_map_origin → covers ±size/2.
+  # Campaign worlds are square ±12 m (gen_world.py AREA=24), so the box must reach
+  # ±14 in x AND y; the old [15,110,6] (a long y-corridor from SUPER's benchmark)
+  # only covered x∈[-7.5,7.5] → obstacles past that were unmapped (blind flight).
+  map_size: [ 34,34,6 ]
+  # If the map rolling is disable, the map origin [m] should be set.
+  fix_map_origin: [ 0,0,1.0 ]
+  frontier_extraction_en: false
+
+  # Virtual band [0.5, 2.8]. ceil 2.8 < pillar 3 m so the drone can't fly OVER
+  # obstacles (lateral avoidance = the sector-filter premise). ground RAISED from
+  # the original -0.1 to 0.5: at -0.1 the LiDAR's ground returns (z~0) were mapped as
+  # an OCCUPIED layer, and when the drone sank to ~0.3 m it got sandwiched between
+  # that ground-occupancy and the pillars -> CIRI corridor generation failed
+  # (GeneratePolytopeFromLine) and it rammed obstacles. ground 0.5 drops the ground
+  # returns (below the floor) and keeps SUPER from planning the drone down onto the
+  # floor, while still leaving a 2.3 m band (vs the old fatal 1 m) for 3D weaving.
+  virtual_ceil_height: 2.8
+  virtual_ground_height: 0.2
+
+  load_pcd_en: false
+
+  map_sliding:
+    enable: false
+    # The minimum distance [m] to slide the map.
+    threshold: 3.0
+
+  esdf:
+    enable: false
+    resolution: 0.1
+    # The range of esdf around the odom [m].
+    local_update_box: [ 5,5,3 ]
+
+  # If [enable = true], the ROG-Map will actively take ros topic as input.
+  #  else user should call function [updateMap] to update the map.
+  ros_callback:
+    enable: true
+    cloud_topic: "/cloud_registered"
+    odom_topic: "/lidar_slam/odom"
+    odom_timeout: 2.0
+
+
+  visualization:
+    enable: true
+    # when enabled, use rqt_reconfigure to change the visualization parameters.
+    use_dynamic_reconfigure: false
+    # The rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.
+    time_rate: 2
+    # The frame rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.
+    frame_rate: 0
+    # visualization range along the odom [m].
+    range: [ 15, 15,4 ]
+    frame_id: "world"
+    pub_unknown_map_en: false
+
+  # Intensity filter for input point cloud. If the point intensity is less than this value,
+  # it will be ignored (to avoid noise like dusk).
+  intensity_thresh: -10
+  # The temporal downsample rate for input point cloud.
+  #  e.g. if set to k, the point cloud will be downsampled to 1/k.
+  point_filt_num: 1
+
+  # Probabilistc update
+  raycasting:
+    # if disable, the map will only maintain occupied information, and all other grid
+    # will be considered as unknown.
+    enable: false
+    batch_update_size: 1
+    local_update_box: [ 100,100,5 ]
+    # The range of raycasting [m].
+    ray_range: [0.5, 100 ]
+
+    p_min: 0.12
+    p_miss: 0.49
+    p_free: 0.499
+    p_occ: 0.85
+    p_hit: 0.9
+    p_max: 0.98
+    # The threshold of a non-occupied inf map grid to be considered as free. [0.0-1.0]
+    # for counter map, if each cell contains N cells in prob map, then only when
+    # N_unk > N * unk_thresh cells are unknown, the cell will be considered as unknown.
+    # example: 1) if unk_thresh is set 0.0, then once at least one cell in prob map is unknown,
+    #             the cell will be considered as unknown.
+    #         2) if unk_thresh is set to 1.0, then only all cells in prob map are unknown,
+    #             the cell will be considered as unknown.
+    # in all, 1.0 is more aggressive while 0.0 is more conservative.
+    unk_thresh: 1.0
+

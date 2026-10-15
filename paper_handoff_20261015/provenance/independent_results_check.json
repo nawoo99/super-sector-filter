@@ -1,0 +1,55 @@
+{
+  "schema": "independent-selected-results-audit-v1",
+  "status": "PASS",
+  "audit_date_kst": "2026-10-15",
+  "handoff": "/root/super-github-upload-20261015.csWUD2/repo/paper_handoff_20261015",
+  "inventory": "provenance/result_summary_inventory.json",
+  "selected_results": {
+    "inventory_files": 118,
+    "actual_files": 118,
+    "copied_sizes_and_sha256_match_inventory": true,
+    "original_source_sizes_and_sha256_match_inventory": true,
+    "unchanged_source_hashes_confirmed": true,
+    "missing_files": 0,
+    "unexpected_files": 0,
+    "hash_or_size_mismatches": 0
+  },
+  "main_cohort": {
+    "rows": 210,
+    "unique_row_identities": 210,
+    "identity_fields": ["stage", "map", "repeat", "mode"],
+    "frozen_original_fields_per_row": 27,
+    "frozen_field_mismatch_rows": 0,
+    "runs_per_mode": {"full": 70, "sector": 70, "adaptive": 70},
+    "outcomes": {
+      "full": {"goal_complete": 70, "contact_runs": 0, "contact_free_complete": 70, "mission_failure": 0},
+      "sector": {"goal_complete": 68, "contact_runs": 2, "contact_free_complete": 67, "mission_failure": 3},
+      "adaptive": {"goal_complete": 70, "contact_runs": 0, "contact_free_complete": 70, "mission_failure": 0}
+    },
+    "separate_gate_not_pooled": true
+  },
+  "cpu_subtotal": {
+    "rows": 210,
+    "runs_per_mode": {"full": 70, "sector": 70, "adaptive": 70},
+    "complete_simulator_excluded_cpu_available_false": 210,
+    "complete_simulator_excluded_cpu_flag_missing": 0,
+    "environment_means_match_csv_and_displayed_tables": true,
+    "mean_cores": {
+      "Normal1-5": {"full": 0.4952275147637209, "sector": 0.23338541482280284, "adaptive": 0.3171820577984417},
+      "Urban": {"full": 0.47612907310546704, "sector": 0.21743240798736901, "adaptive": 0.314619726945699},
+      "Forest": {"full": 0.5162408562744196, "sector": 0.21110981127094305, "adaptive": 0.3106286785537126}
+    },
+    "interpretation": "Instrumented exclusive-function CPU subtotal over shorter profile windows, not complete simulator-excluded whole-flight autonomy CPU."
+  },
+  "documentation_review": {
+    "readme_prompt_and_final_summary_reviewed": true,
+    "curated_summary_vs_complete_archive_distinguished": true,
+    "cpu_scope_and_window_limits_preserved": true,
+    "material_wrong_claims_found": 0
+  },
+  "limitations": [
+    "This checks selected result copies and their preserved numerical claims, not the complete raw archive or entire source reconstruction.",
+    "Runtime asset manifest and release publication were pending and were not validated by this audit.",
+    "No rebuild, new experiment, or primary snapshot modification was performed."
+  ]
+}
